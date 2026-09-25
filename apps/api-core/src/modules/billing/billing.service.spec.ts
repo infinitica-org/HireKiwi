@@ -20,6 +20,12 @@ describe('BillingService', () => {
     planId: 'p0000000-0000-0000-0000-000000000001',
   };
 
+  const mockOtherCompany = {
+    id: 'a0000000-0000-0000-0000-000000000002',
+    name: 'Other Corp',
+    planId: 'p0000000-0000-0000-0000-000000000001',
+  };
+
   const mockProPlan = {
     id: 'p0000000-0000-0000-0000-000000000002',
     code: 'PRO',
@@ -70,6 +76,7 @@ describe('BillingService', () => {
       createSubscription: vi.fn(),
       fetchSubscription: vi.fn(),
       fetchPayment: vi.fn(),
+      cancelSubscription: vi.fn(),
       verifyCheckoutSignature: vi.fn(),
       verifyWebhookSignature: vi.fn(),
     };
@@ -88,6 +95,163 @@ describe('BillingService', () => {
       auditPublisherMock as unknown as AuditPublisherService,
       redisMock as unknown as RedisService,
     );
+  });
+
+  describe('getSubscription', () => {
+    it('retrieves subscription for the authenticated company', async () => {
+      const mockSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockProPlan.id,
+        pendingPlanId: null,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+        gracePeriodEndsAt: null,
+        isEnterpriseContract: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: mockProPlan,
+        pendingPlan: null,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockSub);
+
+      const res = await service.getSubscription(mockCompany.id);
+
+      expect(res).not.toBeNull();
+      expect(res?.id).toBe(mockSub.id);
+      expect(res?.companyId).toBe(mockCompany.id);
+      expect(res?.planCode).toBe('PRO');
+      expect(prismaMock.employerSubscription.findUnique).toHaveBeenCalledWith({
+        where: { companyId: mockCompany.id },
+        include: { plan: true, pendingPlan: true },
+      });
+    });
+
+    it('returns null when company has no subscription', async () => {
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(null);
+
+      const res = await service.getSubscription(mockCompany.id);
+
+      expect(res).toBeNull();
+    });
+
+    it('prevents cross-company subscription retrieval', async () => {
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(null);
+
+      const res = await service.getSubscription(mockOtherCompany.id);
+
+      expect(res).toBeNull();
+      expect(prismaMock.employerSubscription.findUnique).toHaveBeenCalledWith({
+        where: { companyId: mockOtherCompany.id },
+        include: { plan: true, pendingPlan: true },
+      });
+    });
+  });
+
+  describe('cancelSubscription', () => {
+    const mockActiveSub = {
+      id: 's0000000-0000-0000-0000-000000000001',
+      companyId: mockCompany.id,
+      planId: mockProPlan.id,
+      pendingPlanId: null,
+      razorpaySubscriptionId: 'sub_rzp_123',
+      status: 'ACTIVE',
+      billingInterval: 'MONTHLY',
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: new Date(),
+      cancelAtPeriodEnd: false,
+      canceledAt: null,
+      gracePeriodEndsAt: null,
+      isEnterpriseContract: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      plan: mockProPlan,
+      pendingPlan: null,
+    };
+
+    it('cancels active subscription renewal at period end', async () => {
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockActiveSub);
+      razorpayMock.cancelSubscription.mockResolvedValue({
+        id: 'sub_rzp_123',
+        status: 'active',
+        cancel_at_cycle_end: true,
+      });
+
+      const updatedSub = {
+        ...mockActiveSub,
+        cancelAtPeriodEnd: true,
+      };
+
+      prismaMock.employerSubscription.update.mockResolvedValue(updatedSub);
+
+      const res = await service.cancelSubscription('user-1', mockCompany.id);
+
+      expect(res.cancelAtPeriodEnd).toBe(true);
+      expect(res.status).toBe('ACTIVE'); // Status remains ACTIVE during period
+      expect(razorpayMock.cancelSubscription).toHaveBeenCalledWith({
+        razorpaySubscriptionId: 'sub_rzp_123',
+        cancelAtCycleEnd: true,
+      });
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.subscription_cancel_requested',
+        }),
+      );
+    });
+
+    it('rejects cancellation for non-existent subscription', async () => {
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(null);
+
+      await expect(service.cancelSubscription('user-1', mockCompany.id)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('rejects cancellation for subscription in CANCELED or EXPIRED state', async () => {
+      prismaMock.employerSubscription.findUnique.mockResolvedValue({
+        ...mockActiveSub,
+        status: 'CANCELED',
+      });
+
+      await expect(service.cancelSubscription('user-1', mockCompany.id)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('handles provider cancellation failure gracefully', async () => {
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockActiveSub);
+      razorpayMock.cancelSubscription.mockRejectedValue(new Error('Razorpay 500 Network Error'));
+
+      await expect(service.cancelSubscription('user-1', mockCompany.id)).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.subscription_cancellation_failed',
+        }),
+      );
+    });
+
+    it('handles cross-company cancellation attempt securely', async () => {
+      // User belongs to mockCompany, but mockOtherCompany is passed
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(null);
+
+      await expect(service.cancelSubscription('user-1', mockOtherCompany.id)).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(prismaMock.employerSubscription.findUnique).toHaveBeenCalledWith({
+        where: { companyId: mockOtherCompany.id },
+        include: { plan: true, pendingPlan: true },
+      });
+    });
   });
 
   describe('createCheckoutSession', () => {

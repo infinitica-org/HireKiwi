@@ -6,9 +6,11 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type {
+  BillingInterval,
   CheckoutSessionResponseDto,
   CreateCheckoutSessionDto,
   EmployerSubscriptionDto,
+  EmployerSubscriptionStatus,
   VerifyPaymentDto,
 } from '@smart/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
@@ -320,22 +322,148 @@ export class BillingService {
       },
     });
 
+    return this.toEmployerSubscriptionDto(updatedSubscription);
+  }
+
+  /**
+   * Retrieves current employer subscription for the authenticated company.
+   * Scoped strictly to companyId.
+   */
+  async getSubscription(companyId: string): Promise<EmployerSubscriptionDto | null> {
+    const subscription = await this.prisma.employerSubscription.findUnique({
+      where: { companyId },
+      include: { plan: true, pendingPlan: true },
+    });
+
+    if (!subscription) {
+      return null;
+    }
+
+    return this.toEmployerSubscriptionDto(subscription);
+  }
+
+  /**
+   * Schedules employer subscription cancellation at the end of the current billing period.
+   * Cancels renewal via provider API and sets cancelAtPeriodEnd = true.
+   * Retains paid access and ACTIVE status until period end / provider webhook confirmation.
+   */
+  async cancelSubscription(userId: string, companyId: string): Promise<EmployerSubscriptionDto> {
+    const subscription = await this.prisma.employerSubscription.findUnique({
+      where: { companyId },
+      include: { plan: true, pendingPlan: true },
+    });
+
+    if (!subscription) {
+      throw new BadRequestException({
+        error: 'subscription_not_found',
+        message: 'No subscription found to cancel for this company.',
+        statusCode: 400,
+      });
+    }
+
+    const cancelableStatuses = ['ACTIVE', 'GRACE_PERIOD', 'PAST_DUE'];
+    if (!cancelableStatuses.includes(subscription.status)) {
+      throw new BadRequestException({
+        error: 'invalid_subscription_state',
+        message: `Subscription in '${subscription.status}' status cannot be canceled.`,
+        statusCode: 400,
+      });
+    }
+
+    if (subscription.cancelAtPeriodEnd) {
+      return this.toEmployerSubscriptionDto(subscription);
+    }
+
+    if (subscription.razorpaySubscriptionId) {
+      try {
+        await this.razorpayProvider.cancelSubscription({
+          razorpaySubscriptionId: subscription.razorpaySubscriptionId,
+          cancelAtCycleEnd: true,
+        });
+      } catch (err) {
+        await this.auditPublisher.record({
+          actorId: userId,
+          action: 'billing.subscription_cancellation_failed',
+          resourceType: 'subscription',
+          resourceId: subscription.id,
+          reasonCode: 'PROVIDER_CANCELLATION_ERROR',
+          metadata: {
+            companyId,
+            razorpaySubscriptionId: subscription.razorpaySubscriptionId,
+            error: (err as Error).message,
+          },
+        });
+
+        throw new BadRequestException({
+          error: 'provider_cancellation_failed',
+          message: `Failed to cancel subscription with provider: ${(err as Error).message}`,
+          statusCode: 400,
+        });
+      }
+    }
+
+    const updated = await this.prisma.employerSubscription.update({
+      where: { id: subscription.id },
+      data: {
+        cancelAtPeriodEnd: true,
+      },
+      include: { plan: true, pendingPlan: true },
+    });
+
+    await this.auditPublisher.record({
+      actorId: userId,
+      action: 'billing.subscription_cancel_requested',
+      resourceType: 'subscription',
+      resourceId: updated.id,
+      reasonCode: 'CANCEL_AT_PERIOD_END_REQUESTED',
+      metadata: {
+        companyId,
+        razorpaySubscriptionId: updated.razorpaySubscriptionId,
+        planCode: updated.plan.code,
+      },
+    });
+
+    return this.toEmployerSubscriptionDto(updated);
+  }
+
+  private toEmployerSubscriptionDto(subscription: {
+    id: string;
+    companyId: string;
+    planId: string;
+    pendingPlanId: string | null;
+    razorpaySubscriptionId: string | null;
+    status: string;
+    billingInterval: string;
+    currentPeriodStart: Date;
+    currentPeriodEnd: Date;
+    cancelAtPeriodEnd: boolean;
+    canceledAt: Date | null;
+    gracePeriodEndsAt: Date | null;
+    isEnterpriseContract: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    plan: { code: string; name: string };
+    pendingPlan?: { code: string } | null;
+  }): EmployerSubscriptionDto {
     return {
-      id: updatedSubscription.id,
-      companyId: updatedSubscription.companyId,
-      planId: updatedSubscription.planId,
-      planCode: updatedSubscription.plan.code,
-      planName: updatedSubscription.plan.name,
-      status: updatedSubscription.status,
-      billingInterval: updatedSubscription.billingInterval,
-      currentPeriodStart: updatedSubscription.currentPeriodStart.toISOString(),
-      currentPeriodEnd: updatedSubscription.currentPeriodEnd.toISOString(),
-      cancelAtPeriodEnd: updatedSubscription.cancelAtPeriodEnd,
-      canceledAt: updatedSubscription.canceledAt?.toISOString() ?? null,
-      gracePeriodEndsAt: updatedSubscription.gracePeriodEndsAt?.toISOString() ?? null,
-      isEnterpriseContract: updatedSubscription.isEnterpriseContract,
-      createdAt: updatedSubscription.createdAt.toISOString(),
-      updatedAt: updatedSubscription.updatedAt.toISOString(),
+      id: subscription.id,
+      companyId: subscription.companyId,
+      planId: subscription.planId,
+      planCode: subscription.plan.code,
+      planName: subscription.plan.name,
+      pendingPlanId: subscription.pendingPlanId ?? null,
+      pendingPlanCode: subscription.pendingPlan?.code ?? null,
+      razorpaySubscriptionId: subscription.razorpaySubscriptionId ?? null,
+      status: subscription.status as EmployerSubscriptionStatus,
+      billingInterval: subscription.billingInterval as BillingInterval,
+      currentPeriodStart: subscription.currentPeriodStart.toISOString(),
+      currentPeriodEnd: subscription.currentPeriodEnd.toISOString(),
+      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+      canceledAt: subscription.canceledAt?.toISOString() ?? null,
+      gracePeriodEndsAt: subscription.gracePeriodEndsAt?.toISOString() ?? null,
+      isEnterpriseContract: subscription.isEnterpriseContract,
+      createdAt: subscription.createdAt.toISOString(),
+      updatedAt: subscription.updatedAt.toISOString(),
     };
   }
 

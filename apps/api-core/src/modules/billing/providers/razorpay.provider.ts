@@ -38,6 +38,17 @@ export interface RazorpayPaymentResource {
   readonly amount?: number;
 }
 
+export interface CancelProviderSubscriptionInput {
+  readonly razorpaySubscriptionId: string;
+  readonly cancelAtCycleEnd?: boolean;
+}
+
+export interface RazorpayCancelSubscriptionResult {
+  readonly id: string;
+  readonly status: string;
+  readonly cancel_at_cycle_end: boolean;
+}
+
 @Injectable()
 export class RazorpayProvider {
   private readonly logger = new Logger(RazorpayProvider.name);
@@ -194,6 +205,69 @@ export class RazorpayProvider {
     }
 
     return (await response.json()) as RazorpayPaymentResource;
+  }
+
+  /**
+   * Cancels a Razorpay subscription at cycle end or immediately.
+   */
+  async cancelSubscription(
+    input: CancelProviderSubscriptionInput,
+  ): Promise<RazorpayCancelSubscriptionResult> {
+    const cancelAtCycleEnd = input.cancelAtCycleEnd ?? true;
+
+    if (!this.isConfigured) {
+      if (env.NODE_ENV === 'production') {
+        throw new Error('Razorpay API keys missing in production environment.');
+      }
+      if (input.razorpaySubscriptionId.startsWith('sub_stub_')) {
+        return {
+          id: input.razorpaySubscriptionId,
+          status: 'active',
+          cancel_at_cycle_end: true,
+        };
+      }
+      throw new Error(
+        `Cannot cancel subscription ${input.razorpaySubscriptionId} without Razorpay credentials.`,
+      );
+    }
+
+    const authHeader = Buffer.from(`${env.RAZORPAY_KEY_ID}:${env.RAZORPAY_KEY_SECRET}`).toString(
+      'base64',
+    );
+
+    const response = await fetch(
+      `https://api.razorpay.com/v1/subscriptions/${input.razorpaySubscriptionId}/cancel`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${authHeader}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cancel_at_cycle_end: cancelAtCycleEnd ? 1 : 0,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.error(
+        `Failed to cancel Razorpay subscription ${input.razorpaySubscriptionId}: ${errorText}`,
+      );
+      throw new Error(`Razorpay subscription cancellation failed: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as {
+      id: string;
+      status: string;
+      cancel_at_cycle_end?: boolean | number;
+    };
+
+    return {
+      id: data.id,
+      status: data.status,
+      cancel_at_cycle_end: Boolean(data.cancel_at_cycle_end),
+    };
   }
 
   /**

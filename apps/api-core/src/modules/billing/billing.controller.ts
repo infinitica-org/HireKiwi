@@ -1,5 +1,13 @@
-import { Body, Controller, ForbiddenException, Inject, Post, Req, Headers } from '@nestjs/common';
-import type { FastifyRequest } from 'fastify';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Headers,
+  Inject,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   API_PREFIX,
@@ -8,16 +16,39 @@ import {
   type CheckoutSessionResponseDto,
   type EmployerSubscriptionDto,
 } from '@smart/contracts';
+import type { FastifyRequest } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
-import { Roles } from '../../common/guards/roles.decorator.js';
 import { Public } from '../../common/guards/public.decorator.js';
+import { Roles } from '../../common/guards/roles.decorator.js';
 import { BillingService } from './billing.service.js';
 
 @ApiTags('billing')
 @Controller(`${API_PREFIX}/billing`)
 export class BillingController {
   constructor(@Inject(BillingService) private readonly billingService: BillingService) {}
+
+  @Get('subscription/me')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retrieve authenticated employer subscription status (Phase 3A).' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current subscription retrieved or null if unsubscribed.',
+  })
+  @ApiResponse({ status: 403, description: 'Caller is not associated with a company account.' })
+  async getSubscription(@CurrentUser() user: RequestUser): Promise<EmployerSubscriptionDto | null> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.getSubscription(companyId);
+  }
 
   @Post('subscriptions/checkout')
   @Roles('COMPANY')
@@ -70,6 +101,30 @@ export class BillingController {
 
     const parsedInput = VerifyPaymentSchema.parse(body);
     return this.billingService.verifyPayment(user.sub, companyId, parsedInput);
+  }
+
+  @Post('subscriptions/cancel')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Cancel employer subscription renewal at end of current period (Phase 3A).',
+  })
+  @ApiResponse({ status: 200, description: 'Subscription scheduled for period-end cancellation.' })
+  @ApiResponse({
+    status: 400,
+    description: 'No active subscription or invalid state for cancellation.',
+  })
+  async cancelSubscription(@CurrentUser() user: RequestUser): Promise<EmployerSubscriptionDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.cancelSubscription(user.sub, companyId);
   }
 
   @Post('webhooks/razorpay')

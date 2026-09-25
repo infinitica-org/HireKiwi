@@ -2068,6 +2068,11 @@ export function supportApi(client: SmartApiClient) {
 
 export function billingApi(client: SmartApiClient) {
   return {
+    getSubscription: () =>
+      client.get(prefixed('/billing/subscription/me'), {
+        schema: EmployerSubscriptionSchema.nullable(),
+      }),
+
     createCheckoutSession: (body: CreateCheckoutSessionDto) =>
       client.post(prefixed('/billing/subscriptions/checkout'), body, {
         schema: CheckoutSessionResponseSchema,
@@ -2077,6 +2082,15 @@ export function billingApi(client: SmartApiClient) {
       client.post(prefixed('/billing/subscriptions/verify'), body, {
         schema: EmployerSubscriptionSchema,
       }),
+
+    cancelSubscription: () =>
+      client.post(
+        prefixed('/billing/subscriptions/cancel'),
+        {},
+        {
+          schema: EmployerSubscriptionSchema,
+        },
+      ),
   };
 }
 
