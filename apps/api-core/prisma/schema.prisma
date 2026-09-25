@@ -216,6 +216,34 @@ enum CompanyVerificationDocumentUploadedBy {
   SUPER_ADMIN
 }
 
+enum BillingInterval {
+  MONTHLY
+  ANNUAL
+}
+
+enum EmployerSubscriptionStatus {
+  PENDING
+  ACTIVE
+  PAST_DUE
+  GRACE_PERIOD
+  CANCELED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PAID
+  UNPAID
+  VOID
+}
+
 enum SkillProficiency {
   BEGINNER
   INTERMEDIATE
@@ -494,6 +522,7 @@ model User {
   institutionsUpdated                  Institution[]                 @relation("InstitutionUpdatedBy")
   companiesCreated                     Company[]                     @relation("CompanyCreatedBy")
   companiesUpdated                     Company[]                     @relation("CompanyUpdatedBy")
+  enterpriseContractsApproved          EnterpriseContract[]          @relation("EnterpriseContractApprovedBy")
 
 
   trustCasesAsCandidate        TrustCase[]               @relation("UserTrustCases")
@@ -986,6 +1015,11 @@ model Company {
   onboardingSessions    CompanyOnboardingSession[]
   verifications         CompanyVerification[]
   verificationDocuments CompanyVerificationDocument[]
+  subscription          EmployerSubscription?
+  subscriptionUsages    SubscriptionUsage[]
+  paymentTransactions   PaymentTransaction[]
+  invoices              EmployerInvoice[]
+  enterpriseContract    EnterpriseContract?
 
   @@index([organizationId])
   @@map("companies")
@@ -1475,21 +1509,138 @@ model AuditLog {
 }
 
 model SubscriptionPlan {
-  id                String   @id @default(uuid()) @db.Uuid
-  code              PlanCode @unique
-  name              String
-  candidateCapacity Int?     @map("candidate_capacity")
-  /// Base price in Indian Rupees (minor-unit paise: 750000 = ₹7,500). NULL means price not set.
-  priceInr          Int?     @map("price_inr")
+  id                   String                 @id @default(uuid()) @db.Uuid
+  code                 PlanCode               @unique
+  name                 String
+  candidateCapacity    Int?                   @map("candidate_capacity")
+  /// Base price in Indian Rupees (whole INR: 7500 = ₹7,500). NULL means price not set.
+  priceInr             Int?                   @map("price_inr")
   /// True for the Talent Intelligence Suite (custom pricing — no public rate card).
-  isCustomPrice     Boolean  @default(false) @map("is_custom_price")
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  isCustomPrice        Boolean                @default(false) @map("is_custom_price")
+  maxActiveJobs        Int?                   @map("max_active_jobs")
+  maxCandidateSearches Int?                   @map("max_candidate_searches")
+  maxDirectMessages    Int?                   @map("max_direct_messages")
+  maxEmployerSeats     Int?                   @map("max_employer_seats")
+  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  institutions Institution[]
-  companies    Company[]
-  entitlements PlanEntitlement[]
+  institutions         Institution[]
+  companies            Company[]
+  entitlements         PlanEntitlement[]
+  subscriptions        EmployerSubscription[]
+  pendingSubscriptions EmployerSubscription[] @relation("PendingSubscriptionPlan")
 
   @@map("subscription_plans")
+}
+
+model EmployerSubscription {
+  id                     String                     @id @default(uuid()) @db.Uuid
+  companyId              String                     @unique @map("company_id") @db.Uuid
+  company                Company                    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  planId                 String                     @map("plan_id") @db.Uuid
+  plan                   SubscriptionPlan           @relation(fields: [planId], references: [id])
+  pendingPlanId          String?                    @map("pending_plan_id") @db.Uuid
+  pendingPlan            SubscriptionPlan?          @relation("PendingSubscriptionPlan", fields: [pendingPlanId], references: [id], onDelete: SetNull)
+  razorpaySubscriptionId String?                    @unique @map("razorpay_subscription_id")
+  status                 EmployerSubscriptionStatus @default(PENDING)
+  billingInterval        BillingInterval            @default(MONTHLY) @map("billing_interval")
+  currentPeriodStart     DateTime                   @map("current_period_start") @db.Timestamptz(6)
+  currentPeriodEnd       DateTime                   @map("current_period_end") @db.Timestamptz(6)
+  cancelAtPeriodEnd      Boolean                    @default(false) @map("cancel_at_period_end")
+  canceledAt             DateTime?                  @map("canceled_at") @db.Timestamptz(6)
+  gracePeriodEndsAt      DateTime?                  @map("grace_period_ends_at") @db.Timestamptz(6)
+  isEnterpriseContract   Boolean                    @default(false) @map("is_enterprise_contract")
+  createdAt              DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  transactions           PaymentTransaction[]
+  invoices               EmployerInvoice[]
+
+  @@index([companyId])
+  @@index([status])
+  @@map("employer_subscriptions")
+}
+
+model SubscriptionUsage {
+  id                     String   @id @default(uuid()) @db.Uuid
+  companyId              String   @map("company_id") @db.Uuid
+  company                Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  periodStart            DateTime @map("period_start") @db.Timestamptz(6)
+  periodEnd              DateTime @map("period_end") @db.Timestamptz(6)
+  candidateSearchesCount Int      @default(0) @map("candidate_searches_count")
+  directMessagesCount    Int      @default(0) @map("direct_messages_count")
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([companyId, periodStart])
+  @@index([companyId, periodStart, periodEnd])
+  @@map("subscription_usages")
+}
+
+model PaymentTransaction {
+  id                String                @id @default(uuid()) @db.Uuid
+  companyId         String                @map("company_id") @db.Uuid
+  company           Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  subscriptionId    String?               @map("subscription_id") @db.Uuid
+  subscription      EmployerSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  razorpayPaymentId String?               @unique @map("razorpay_payment_id")
+  razorpayOrderId   String?               @map("razorpay_order_id")
+  amountInr         Int                   @map("amount_inr")
+  currency          String                @default("INR")
+  status            PaymentStatus
+  failureReason     String?               @map("failure_reason")
+  rawWebhookPayload Json?                 @map("raw_webhook_payload")
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  invoices EmployerInvoice[]
+
+  @@index([companyId])
+  @@map("payment_transactions")
+}
+
+model EmployerInvoice {
+  id             String                @id @default(uuid()) @db.Uuid
+  invoiceNumber  String                @unique @map("invoice_number")
+  companyId      String                @map("company_id") @db.Uuid
+  company        Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  subscriptionId String?               @map("subscription_id") @db.Uuid
+  subscription   EmployerSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  transactionId  String?               @map("transaction_id") @db.Uuid
+  transaction    PaymentTransaction?   @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  subtotalInr    Int                   @map("subtotal_inr")
+  appliedTaxRate Decimal               @default(0) @map("applied_tax_rate") @db.Decimal(5, 2)
+  taxInr         Int                   @default(0) @map("tax_inr")
+  totalInr       Int                   @map("total_inr")
+  gstin          String?
+  status         InvoiceStatus         @default(UNPAID)
+  pdfStorageKey  String?               @map("pdf_storage_key")
+  issuedAt       DateTime              @default(now()) @map("issued_at") @db.Timestamptz(6)
+  paidAt         DateTime?             @map("paid_at") @db.Timestamptz(6)
+  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([companyId])
+  @@map("employer_invoices")
+}
+
+model EnterpriseContract {
+  id                   String   @id @default(uuid()) @db.Uuid
+  contractNumber       String   @unique @map("contract_number")
+  companyId            String   @unique @map("company_id") @db.Uuid
+  company              Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customPriceInr       Int             @map("custom_price_inr")
+  billingInterval      BillingInterval @map("billing_interval")
+  maxActiveJobs        Int?     @map("max_active_jobs")
+  maxCandidateSearches Int?     @map("max_candidate_searches")
+  maxDirectMessages    Int?     @map("max_direct_messages")
+  maxEmployerSeats     Int?     @map("max_employer_seats")
+  startDate            DateTime @map("start_date") @db.Timestamptz(6)
+  endDate              DateTime @map("end_date") @db.Timestamptz(6)
+  termsNotes           String?  @map("terms_notes") @db.Text
+  approvedById         String?  @map("approved_by_id") @db.Uuid
+  approvedBy           User?    @relation("EnterpriseContractApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("enterprise_contracts")
 }
 
 model FeatureFlag {
