@@ -96,6 +96,16 @@ export const ROLE_RATE_LIMITS: readonly RateLimitPolicy[] = [
     rationale:
       'Institutional ERP and recruiter integrations poll on a schedule, not interactively.',
   },
+  {
+    key: 'role.company',
+    scope: 'USER',
+    limit: 100,
+    windowSeconds: 60,
+    burst: 25,
+    redisKey: 'rl:company:{id}',
+    rationale:
+      'Employer portal search, candidate inspection, job management, and subscription operations.',
+  },
 ] as const;
 
 /* --------------------- endpoint-specific hard throttles -------------------- */

@@ -88,9 +88,13 @@ import type {
   SupportHistoryResponse,
   SupportSessionResponse,
   EvidenceSkillDisputeRequest,
+  CreateCheckoutSessionDto,
+  VerifyPaymentDto,
 } from '@smart/contracts';
 import {
   API_PREFIX,
+  CheckoutSessionResponseSchema,
+  EmployerSubscriptionSchema,
   ReviewEvidenceResponseSchema,
   SupportDiagnosticResponseSchema,
   SupportGrantResponseSchema,
@@ -2062,6 +2066,20 @@ export function supportApi(client: SmartApiClient) {
   };
 }
 
+export function billingApi(client: SmartApiClient) {
+  return {
+    createCheckoutSession: (body: CreateCheckoutSessionDto) =>
+      client.post(prefixed('/billing/subscriptions/checkout'), body, {
+        schema: CheckoutSessionResponseSchema,
+      }),
+
+    verifyPayment: (body: VerifyPaymentDto) =>
+      client.post(prefixed('/billing/subscriptions/verify'), body, {
+        schema: EmployerSubscriptionSchema,
+      }),
+  };
+}
+
 export function createSmartApi(client: SmartApiClient) {
   return {
     auth: authApi(client),
@@ -2081,6 +2099,7 @@ export function createSmartApi(client: SmartApiClient) {
     system: systemApi(client),
     trust: trustApi(client),
     support: supportApi(client),
+    billing: billingApi(client),
   };
 }
 

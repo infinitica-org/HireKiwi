@@ -4994,6 +4994,43 @@ export const ROUTES: readonly RouteSpec[] = [
     slaMs: 150,
     summary: 'Lookup accounts by ID, email, name, username, slug, or tenant.',
   },
+  /* ------------------------------ employer billing ---------------------------- */
+  {
+    method: 'POST',
+    path: '/billing/subscriptions/checkout',
+    module: 'billing',
+    owner: 'Vishal V',
+    roles: ['COMPANY'],
+    rateLimit: 'role.company',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 300,
+    summary: 'Create or reuse a subscription checkout session.',
+  },
+  {
+    method: 'POST',
+    path: '/billing/subscriptions/verify',
+    module: 'billing',
+    owner: 'Vishal V',
+    roles: ['COMPANY'],
+    rateLimit: 'role.company',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 300,
+    summary: 'Verify payment signature and activate employer subscription.',
+  },
+  {
+    method: 'POST',
+    path: '/billing/webhooks/razorpay',
+    module: 'billing',
+    owner: 'Vishal V',
+    roles: ['PUBLIC'],
+    rateLimit: 'role.public',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 200,
+    summary: 'Razorpay webhook event handler for subscriptions and payments.',
+  },
 ] as const;
 
 export function findRoute(method: RouteSpec['method'], path: string): RouteSpec | undefined {
