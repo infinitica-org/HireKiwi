@@ -91,6 +91,7 @@ import type {
   CreateCheckoutSessionDto,
   VerifyPaymentDto,
   UpgradePlanDto,
+  DowngradePlanDto,
 } from '@smart/contracts';
 import {
   API_PREFIX,
@@ -2095,6 +2096,11 @@ export function billingApi(client: SmartApiClient) {
 
     upgradeSubscription: (body: UpgradePlanDto) =>
       client.post(prefixed('/billing/subscriptions/upgrade'), body, {
+        schema: EmployerSubscriptionSchema,
+      }),
+
+    downgradeSubscription: (body: DowngradePlanDto) =>
+      client.post(prefixed('/billing/subscriptions/downgrade'), body, {
         schema: EmployerSubscriptionSchema,
       }),
   };

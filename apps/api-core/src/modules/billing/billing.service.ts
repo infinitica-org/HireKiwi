@@ -13,6 +13,8 @@ import type {
   EmployerSubscriptionStatus,
   VerifyPaymentDto,
   UpgradePlanDto,
+  DowngradePlanDto,
+  PlanCode,
 } from '@smart/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
@@ -403,10 +405,15 @@ export class BillingService {
       }
     }
 
+    const freePlan = await this.prisma.subscriptionPlan.findUnique({
+      where: { code: 'FREE' },
+    });
+
     const updated = await this.prisma.employerSubscription.update({
       where: { id: subscription.id },
       data: {
         cancelAtPeriodEnd: true,
+        pendingPlanId: freePlan ? freePlan.id : null,
       },
       include: { plan: true, pendingPlan: true },
     });
@@ -582,6 +589,211 @@ export class BillingService {
     return this.toEmployerSubscriptionDto(updated);
   }
 
+  /**
+   * Schedules a subscription downgrade for the end of the current billing period (Phase 4B).
+   * For paid -> paid (e.g. PRO -> BASIC): calls Razorpay with schedule_change_at = 'cycle_end'.
+   * For paid -> FREE: calls Razorpay cancelSubscription with cancelAtCycleEnd = true.
+   * EmployerSubscription.planId and Company.planId remain on current plan until cycle-end provider confirmation.
+   * EmployerSubscription.pendingPlanId is updated to the target plan ID.
+   */
+  async downgradeSubscription(
+    userId: string,
+    companyId: string,
+    input: DowngradePlanDto,
+  ): Promise<EmployerSubscriptionDto> {
+    const subscription = await this.prisma.employerSubscription.findUnique({
+      where: { companyId },
+      include: { plan: true, pendingPlan: true },
+    });
+
+    if (!subscription) {
+      throw new BadRequestException({
+        error: 'subscription_not_found',
+        message: 'No subscription found to downgrade for this company.',
+        statusCode: 400,
+      });
+    }
+
+    const downgradeableStatuses = ['ACTIVE', 'GRACE_PERIOD', 'PAST_DUE'];
+    if (!downgradeableStatuses.includes(subscription.status)) {
+      throw new BadRequestException({
+        error: 'invalid_subscription_state',
+        message: `Subscription in '${subscription.status}' status cannot be downgraded.`,
+        statusCode: 400,
+      });
+    }
+
+    const targetPlanCode = input.planCode;
+    if ((targetPlanCode as string) === 'ENTERPRISE' || (targetPlanCode as string) === 'PRO') {
+      throw new BadRequestException({
+        error: 'invalid_downgrade_target',
+        message: `Self-service downgrade to '${targetPlanCode}' is not supported.`,
+        statusCode: 400,
+      });
+    }
+
+    const targetPlan = await this.prisma.subscriptionPlan.findUnique({
+      where: { code: targetPlanCode },
+    });
+
+    if (!targetPlan) {
+      throw new BadRequestException({
+        error: 'invalid_plan',
+        message: `Subscription plan '${targetPlanCode}' is not available.`,
+        statusCode: 400,
+      });
+    }
+
+    const planRank: Record<string, number> = {
+      FREE: 0,
+      BASIC: 1,
+      PRO: 2,
+      ENTERPRISE: 3,
+    };
+
+    const currentRank = planRank[subscription.plan.code] ?? 0;
+    const targetRank = planRank[targetPlan.code] ?? 0;
+
+    if (targetRank >= currentRank) {
+      throw new BadRequestException({
+        error: 'invalid_downgrade_target',
+        message: `Target plan '${targetPlanCode}' is not a downgrade from current plan '${subscription.plan.code}'.`,
+        statusCode: 400,
+      });
+    }
+
+    const isFreeTarget = targetPlanCode === 'FREE';
+
+    if (
+      subscription.pendingPlanId === targetPlan.id &&
+      subscription.cancelAtPeriodEnd === isFreeTarget
+    ) {
+      return this.toEmployerSubscriptionDto(subscription);
+    }
+
+    const resolvedInterval = (input.billingInterval ??
+      subscription.billingInterval) as BillingInterval;
+
+    if (isFreeTarget) {
+      if (subscription.razorpaySubscriptionId) {
+        try {
+          await this.razorpayProvider.cancelSubscription({
+            razorpaySubscriptionId: subscription.razorpaySubscriptionId,
+            cancelAtCycleEnd: true,
+          });
+        } catch (err) {
+          await this.auditPublisher.record({
+            actorId: userId,
+            action: 'billing.subscription_downgrade_failed',
+            resourceType: 'subscription',
+            resourceId: subscription.id,
+            reasonCode: 'PROVIDER_DOWNGRADE_ERROR',
+            metadata: {
+              companyId,
+              currentPlanCode: subscription.plan.code,
+              targetPlanCode: targetPlan.code,
+              error: (err as Error).message,
+            },
+          });
+
+          throw new BadRequestException({
+            error: 'provider_downgrade_failed',
+            message: `Failed to schedule downgrade with provider: ${(err as Error).message}`,
+            statusCode: 400,
+          });
+        }
+      }
+
+      const updated = await this.prisma.employerSubscription.update({
+        where: { id: subscription.id },
+        data: {
+          pendingPlanId: targetPlan.id,
+          cancelAtPeriodEnd: true,
+        },
+        include: { plan: true, pendingPlan: true },
+      });
+
+      await this.auditPublisher.record({
+        actorId: userId,
+        action: 'billing.subscription_downgrade_scheduled',
+        resourceType: 'subscription',
+        resourceId: updated.id,
+        reasonCode: 'DOWNGRADE_SCHEDULED_FREE_CYCLE_END',
+        metadata: {
+          companyId,
+          currentPlanCode: subscription.plan.code,
+          targetPlanCode: targetPlan.code,
+          billingInterval: resolvedInterval,
+          razorpaySubscriptionId: updated.razorpaySubscriptionId,
+          replacedPendingPlan: Boolean(subscription.pendingPlanId),
+        },
+      });
+
+      return this.toEmployerSubscriptionDto(updated);
+    } else {
+      const targetRazorpayPlanId = targetPlan.code;
+
+      if (subscription.razorpaySubscriptionId) {
+        try {
+          await this.razorpayProvider.updateSubscription({
+            razorpaySubscriptionId: subscription.razorpaySubscriptionId,
+            razorpayPlanId: targetRazorpayPlanId,
+            scheduleChangeAt: 'cycle_end',
+            customerNotify: true,
+          });
+        } catch (err) {
+          await this.auditPublisher.record({
+            actorId: userId,
+            action: 'billing.subscription_downgrade_failed',
+            resourceType: 'subscription',
+            resourceId: subscription.id,
+            reasonCode: 'PROVIDER_DOWNGRADE_ERROR',
+            metadata: {
+              companyId,
+              currentPlanCode: subscription.plan.code,
+              targetPlanCode: targetPlan.code,
+              error: (err as Error).message,
+            },
+          });
+
+          throw new BadRequestException({
+            error: 'provider_downgrade_failed',
+            message: `Failed to schedule downgrade with provider: ${(err as Error).message}`,
+            statusCode: 400,
+          });
+        }
+      }
+
+      const updated = await this.prisma.employerSubscription.update({
+        where: { id: subscription.id },
+        data: {
+          pendingPlanId: targetPlan.id,
+          cancelAtPeriodEnd: false,
+          billingInterval: resolvedInterval,
+        },
+        include: { plan: true, pendingPlan: true },
+      });
+
+      await this.auditPublisher.record({
+        actorId: userId,
+        action: 'billing.subscription_downgrade_scheduled',
+        resourceType: 'subscription',
+        resourceId: updated.id,
+        reasonCode: 'DOWNGRADE_SCHEDULED_CYCLE_END',
+        metadata: {
+          companyId,
+          currentPlanCode: subscription.plan.code,
+          targetPlanCode: targetPlan.code,
+          billingInterval: resolvedInterval,
+          razorpaySubscriptionId: updated.razorpaySubscriptionId,
+          replacedPendingPlan: Boolean(subscription.pendingPlanId),
+        },
+      });
+
+      return this.toEmployerSubscriptionDto(updated);
+    }
+  }
+
   private toEmployerSubscriptionDto(subscription: {
     id: string;
     companyId: string;
@@ -644,7 +856,7 @@ export class BillingService {
       id?: string;
       event?: string;
       payload?: {
-        subscription?: { entity?: { id?: string } };
+        subscription?: { entity?: { id?: string; plan_id?: string; status?: string } };
         payment?: {
           entity?: {
             id?: string;
@@ -697,6 +909,7 @@ export class BillingService {
 
     const subscription = await this.prisma.employerSubscription.findFirst({
       where: { razorpaySubscriptionId: providerSubId },
+      include: { plan: true, pendingPlan: true },
     });
 
     if (!subscription) {
@@ -714,14 +927,34 @@ export class BillingService {
     switch (eventName) {
       case 'subscription.authenticated':
       case 'subscription.activated':
-      case 'subscription.charged': {
-        const activePlanId = subscription.pendingPlanId ?? subscription.planId;
+      case 'subscription.charged':
+      case 'subscription.updated': {
+        const providerPlanCode = subEntity?.plan_id;
+        let activePlanId = subscription.planId;
+        let isDowngradeApplied = false;
+
+        if (providerPlanCode) {
+          const providerPlan = await this.prisma.subscriptionPlan.findUnique({
+            where: { code: providerPlanCode as PlanCode },
+          });
+
+          if (providerPlan) {
+            if (subscription.pendingPlanId && subscription.pendingPlanId === providerPlan.id) {
+              activePlanId = providerPlan.id;
+              isDowngradeApplied = true;
+            } else if (!subscription.pendingPlanId) {
+              activePlanId = providerPlan.id;
+            }
+          }
+        }
+
         await this.prisma.employerSubscription.update({
           where: { id: subscription.id },
           data: {
             status: 'ACTIVE',
             planId: activePlanId,
-            pendingPlanId: null,
+            pendingPlanId: isDowngradeApplied ? null : subscription.pendingPlanId,
+            cancelAtPeriodEnd: isDowngradeApplied ? false : subscription.cancelAtPeriodEnd,
             currentPeriodStart: now,
             currentPeriodEnd: periodEnd,
             gracePeriodEndsAt: null,
@@ -748,14 +981,25 @@ export class BillingService {
           });
         }
 
-        await this.auditPublisher.record({
-          actorId: null,
-          action: 'billing.subscription_activated',
-          resourceType: 'subscription',
-          resourceId: subscription.id,
-          reasonCode: 'WEBHOOK_SUBSCRIPTION_CHARGED',
-          metadata: { providerSubId, eventName },
-        });
+        if (isDowngradeApplied) {
+          await this.auditPublisher.record({
+            actorId: null,
+            action: 'billing.subscription_downgrade_applied',
+            resourceType: 'subscription',
+            resourceId: subscription.id,
+            reasonCode: 'WEBHOOK_DOWNGRADE_CONFIRMED',
+            metadata: { providerSubId, eventName, planId: activePlanId },
+          });
+        } else {
+          await this.auditPublisher.record({
+            actorId: null,
+            action: 'billing.subscription_activated',
+            resourceType: 'subscription',
+            resourceId: subscription.id,
+            reasonCode: 'WEBHOOK_SUBSCRIPTION_CHARGED',
+            metadata: { providerSubId, eventName },
+          });
+        }
         break;
       }
 
@@ -797,40 +1041,66 @@ export class BillingService {
         break;
       }
 
-      case 'subscription.cancelled': {
-        await this.prisma.employerSubscription.update({
-          where: { id: subscription.id },
-          data: {
-            status: 'CANCELED',
-            canceledAt: now,
-          },
-        });
-
-        await this.auditPublisher.record({
-          actorId: null,
-          action: 'billing.subscription_canceled',
-          resourceType: 'subscription',
-          resourceId: subscription.id,
-          reasonCode: 'WEBHOOK_SUBSCRIPTION_CANCELLED',
-          metadata: { providerSubId },
-        });
-        break;
-      }
-
+      case 'subscription.cancelled':
       case 'subscription.completed': {
+        const isFreeDowngrade =
+          subscription.cancelAtPeriodEnd || subscription.pendingPlan?.code === 'FREE';
+
+        if (isFreeDowngrade) {
+          const freePlan = await this.prisma.subscriptionPlan.findUnique({
+            where: { code: 'FREE' },
+          });
+
+          if (freePlan) {
+            await this.prisma.employerSubscription.update({
+              where: { id: subscription.id },
+              data: {
+                status: 'ACTIVE',
+                planId: freePlan.id,
+                pendingPlanId: null,
+                cancelAtPeriodEnd: false,
+                canceledAt: now,
+              },
+            });
+
+            await this.prisma.company.update({
+              where: { id: subscription.companyId },
+              data: { planId: freePlan.id },
+            });
+
+            await this.auditPublisher.record({
+              actorId: null,
+              action: 'billing.subscription_downgrade_applied',
+              resourceType: 'subscription',
+              resourceId: subscription.id,
+              reasonCode: 'WEBHOOK_FREE_DOWNGRADE_CONFIRMED',
+              metadata: { providerSubId, eventName, planCode: 'FREE' },
+            });
+            break;
+          }
+        }
+
+        const nextStatus = eventName === 'subscription.cancelled' ? 'CANCELED' : 'EXPIRED';
         await this.prisma.employerSubscription.update({
           where: { id: subscription.id },
           data: {
-            status: 'EXPIRED',
+            status: nextStatus,
+            canceledAt: eventName === 'subscription.cancelled' ? now : undefined,
           },
         });
 
         await this.auditPublisher.record({
           actorId: null,
-          action: 'billing.subscription_expired',
+          action:
+            eventName === 'subscription.cancelled'
+              ? 'billing.subscription_canceled'
+              : 'billing.subscription_expired',
           resourceType: 'subscription',
           resourceId: subscription.id,
-          reasonCode: 'WEBHOOK_SUBSCRIPTION_COMPLETED',
+          reasonCode:
+            eventName === 'subscription.cancelled'
+              ? 'WEBHOOK_SUBSCRIPTION_CANCELLED'
+              : 'WEBHOOK_SUBSCRIPTION_COMPLETED',
           metadata: { providerSubId },
         });
         break;

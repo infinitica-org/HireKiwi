@@ -118,6 +118,12 @@ export const UpgradePlanSchema = z.object({
 });
 export type UpgradePlanDto = z.infer<typeof UpgradePlanSchema>;
 
+export const DowngradePlanSchema = z.object({
+  planCode: z.enum(['FREE', 'BASIC']),
+  billingInterval: BillingIntervalSchema.optional(),
+});
+export type DowngradePlanDto = z.infer<typeof DowngradePlanSchema>;
+
 /* -------------------------------------------------------------------------- */
 /*                              Invoice DTOs                                  */
 /* -------------------------------------------------------------------------- */

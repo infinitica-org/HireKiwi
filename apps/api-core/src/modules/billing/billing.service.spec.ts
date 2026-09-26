@@ -34,6 +34,14 @@ describe('BillingService', () => {
     isCustomPrice: false,
   };
 
+  const mockBasicPlan = {
+    id: 'p0000000-0000-0000-0000-000000000004',
+    code: 'BASIC',
+    name: 'Basic Plan',
+    priceInr: 2500,
+    isCustomPrice: false,
+  };
+
   const mockFreePlan = {
     id: 'p0000000-0000-0000-0000-000000000001',
     code: 'FREE',
@@ -966,6 +974,514 @@ describe('BillingService', () => {
       });
 
       expect(result.pendingPlanId).toBeNull();
+    });
+  });
+
+  describe('downgradeSubscription & Phase 4B Webhooks', () => {
+    it('schedules PRO -> BASIC downgrade at cycle end and preserves active PRO plan', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockProPlan.id,
+        pendingPlanId: null,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 86400 * 1000),
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+        gracePeriodEndsAt: null,
+        isEnterpriseContract: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: mockProPlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockImplementation(async ({ where }: any) => {
+        if (where.code === 'BASIC') return mockBasicPlan;
+        return null;
+      });
+
+      razorpayMock.updateSubscription.mockResolvedValue({
+        id: 'sub_rzp_123',
+        status: 'active',
+        plan_id: 'PRO',
+        has_scheduled_changes: true,
+      });
+
+      const updatedSub = {
+        ...mockCurrentSub,
+        pendingPlanId: mockBasicPlan.id,
+        pendingPlan: mockBasicPlan,
+      };
+      prismaMock.employerSubscription.update.mockResolvedValue(updatedSub);
+
+      const result = await service.downgradeSubscription('user-1', mockCompany.id, {
+        planCode: 'BASIC',
+      });
+
+      expect(razorpayMock.updateSubscription).toHaveBeenCalledWith({
+        razorpaySubscriptionId: 'sub_rzp_123',
+        razorpayPlanId: 'BASIC',
+        scheduleChangeAt: 'cycle_end',
+        customerNotify: true,
+      });
+
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockCurrentSub.id },
+          data: expect.objectContaining({
+            pendingPlanId: mockBasicPlan.id,
+            cancelAtPeriodEnd: false,
+          }),
+        }),
+      );
+
+      expect(prismaMock.company.update).not.toHaveBeenCalled();
+      expect(result.planId).toBe(mockProPlan.id);
+      expect(result.pendingPlanId).toBe(mockBasicPlan.id);
+    });
+
+    it('schedules PRO -> FREE downgrade via cycle-end cancellation', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockProPlan.id,
+        pendingPlanId: null,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 86400 * 1000),
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+        gracePeriodEndsAt: null,
+        isEnterpriseContract: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: mockProPlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockImplementation(async ({ where }: any) => {
+        if (where.code === 'FREE') return mockFreePlan;
+        return null;
+      });
+
+      razorpayMock.cancelSubscription.mockResolvedValue({ id: 'sub_rzp_123' });
+
+      const updatedSub = {
+        ...mockCurrentSub,
+        pendingPlanId: mockFreePlan.id,
+        cancelAtPeriodEnd: true,
+        pendingPlan: mockFreePlan,
+      };
+      prismaMock.employerSubscription.update.mockResolvedValue(updatedSub);
+
+      const result = await service.downgradeSubscription('user-1', mockCompany.id, {
+        planCode: 'FREE',
+      });
+
+      expect(razorpayMock.cancelSubscription).toHaveBeenCalledWith({
+        razorpaySubscriptionId: 'sub_rzp_123',
+        cancelAtCycleEnd: true,
+      });
+
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            pendingPlanId: mockFreePlan.id,
+            cancelAtPeriodEnd: true,
+          }),
+        }),
+      );
+
+      expect(result.planId).toBe(mockProPlan.id);
+      expect(result.pendingPlanId).toBe(mockFreePlan.id);
+      expect(result.cancelAtPeriodEnd).toBe(true);
+    });
+
+    it('rejects same-plan downgrade request (BASIC -> BASIC)', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        status: 'ACTIVE',
+        plan: mockBasicPlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockBasicPlan);
+
+      await expect(
+        service.downgradeSubscription('user-1', mockCompany.id, { planCode: 'BASIC' }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(razorpayMock.updateSubscription).not.toHaveBeenCalled();
+    });
+
+    it('rejects upgrade passed to downgrade endpoint (BASIC -> PRO)', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        status: 'ACTIVE',
+        plan: mockBasicPlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockProPlan);
+
+      await expect(
+        service.downgradeSubscription('user-1', mockCompany.id, { planCode: 'PRO' as any }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects ENTERPRISE plan downgrade target', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        status: 'ACTIVE',
+        plan: mockProPlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+
+      await expect(
+        service.downgradeSubscription('user-1', mockCompany.id, { planCode: 'ENTERPRISE' as any }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('records audit event and leaves DB unchanged on provider downgrade failure', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockProPlan.id,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        plan: mockProPlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockBasicPlan);
+      razorpayMock.updateSubscription.mockRejectedValue(new Error('Razorpay error'));
+
+      await expect(
+        service.downgradeSubscription('user-1', mockCompany.id, { planCode: 'BASIC' }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.subscription_downgrade_failed',
+        }),
+      );
+      expect(prismaMock.employerSubscription.update).not.toHaveBeenCalled();
+    });
+
+    it('returns existing state idempotently for identical repeated downgrade request', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockProPlan.id,
+        pendingPlanId: mockBasicPlan.id,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 86400 * 1000),
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+        gracePeriodEndsAt: null,
+        isEnterpriseContract: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: mockProPlan,
+        pendingPlan: mockBasicPlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockBasicPlan);
+
+      const result = await service.downgradeSubscription('user-1', mockCompany.id, {
+        planCode: 'BASIC',
+      });
+
+      expect(razorpayMock.updateSubscription).not.toHaveBeenCalled();
+      expect(prismaMock.employerSubscription.update).not.toHaveBeenCalled();
+      expect(result.pendingPlanId).toBe(mockBasicPlan.id);
+    });
+
+    it('applies pending paid downgrade on period-end webhook confirmation', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockProPlan.id,
+        pendingPlanId: mockBasicPlan.id,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        plan: mockProPlan,
+        pendingPlan: mockBasicPlan,
+      };
+
+      prismaMock.employerSubscription.findFirst.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockBasicPlan);
+      prismaMock.employerSubscription.update.mockResolvedValue({
+        ...mockCurrentSub,
+        planId: mockBasicPlan.id,
+        pendingPlanId: null,
+      });
+      prismaMock.company.update.mockResolvedValue({});
+      razorpayMock.verifyWebhookSignature.mockReturnValue(true);
+
+      const webhookPayload = JSON.stringify({
+        id: 'evt_123',
+        event: 'subscription.charged',
+        payload: {
+          subscription: {
+            entity: { id: 'sub_rzp_123', plan_id: 'BASIC' },
+          },
+        },
+      });
+
+      const result = await service.handleWebhook(webhookPayload, 'sig_123');
+
+      expect(result.processed).toBe(true);
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            planId: mockBasicPlan.id,
+            pendingPlanId: null,
+            cancelAtPeriodEnd: false,
+          }),
+        }),
+      );
+      expect(prismaMock.company.update).toHaveBeenCalledWith({
+        where: { id: mockCompany.id },
+        data: { planId: mockBasicPlan.id },
+      });
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.subscription_downgrade_applied',
+        }),
+      );
+    });
+
+    it('applies FREE downgrade on period-end cancellation webhook', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockProPlan.id,
+        pendingPlanId: mockFreePlan.id,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        cancelAtPeriodEnd: true,
+        billingInterval: 'MONTHLY',
+        plan: mockProPlan,
+        pendingPlan: mockFreePlan,
+      };
+
+      prismaMock.employerSubscription.findFirst.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockFreePlan);
+      prismaMock.employerSubscription.update.mockResolvedValue({
+        ...mockCurrentSub,
+        planId: mockFreePlan.id,
+        pendingPlanId: null,
+        cancelAtPeriodEnd: false,
+      });
+      prismaMock.company.update.mockResolvedValue({});
+      razorpayMock.verifyWebhookSignature.mockReturnValue(true);
+
+      const webhookPayload = JSON.stringify({
+        id: 'evt_456',
+        event: 'subscription.cancelled',
+        payload: {
+          subscription: {
+            entity: { id: 'sub_rzp_123' },
+          },
+        },
+      });
+
+      const result = await service.handleWebhook(webhookPayload, 'sig_456');
+
+      expect(result.processed).toBe(true);
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'ACTIVE',
+            planId: mockFreePlan.id,
+            pendingPlanId: null,
+            cancelAtPeriodEnd: false,
+          }),
+        }),
+      );
+      expect(prismaMock.company.update).toHaveBeenCalledWith({
+        where: { id: mockCompany.id },
+        data: { planId: mockFreePlan.id },
+      });
+    });
+
+    it('sets pendingPlanId to FREE on explicit cancellation when a paid downgrade was pending', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockProPlan.id,
+        pendingPlanId: mockBasicPlan.id,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 86400 * 1000),
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+        gracePeriodEndsAt: null,
+        isEnterpriseContract: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: mockProPlan,
+        pendingPlan: mockBasicPlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockFreePlan);
+      razorpayMock.cancelSubscription.mockResolvedValue({ id: 'sub_rzp_123' });
+      prismaMock.employerSubscription.update.mockResolvedValue({
+        ...mockCurrentSub,
+        cancelAtPeriodEnd: true,
+        pendingPlanId: mockFreePlan.id,
+        pendingPlan: mockFreePlan,
+      });
+
+      const result = await service.cancelSubscription('user-1', mockCompany.id);
+
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            cancelAtPeriodEnd: true,
+            pendingPlanId: mockFreePlan.id,
+          }),
+        }),
+      );
+      expect(result.pendingPlanId).toBe(mockFreePlan.id);
+      expect(result.cancelAtPeriodEnd).toBe(true);
+    });
+
+    it('does not apply downgrade when provider webhook before cycle end reports current active plan', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockProPlan.id,
+        pendingPlanId: mockBasicPlan.id,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        cancelAtPeriodEnd: false,
+        billingInterval: 'MONTHLY',
+        plan: mockProPlan,
+        pendingPlan: mockBasicPlan,
+      };
+
+      prismaMock.employerSubscription.findFirst.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockProPlan);
+      prismaMock.employerSubscription.update.mockResolvedValue({
+        ...mockCurrentSub,
+        planId: mockProPlan.id,
+        pendingPlanId: mockBasicPlan.id,
+      });
+      prismaMock.company.update.mockResolvedValue({});
+      razorpayMock.verifyWebhookSignature.mockReturnValue(true);
+
+      const webhookPayload = JSON.stringify({
+        id: 'evt_mid_cycle',
+        event: 'subscription.charged',
+        payload: {
+          subscription: {
+            entity: { id: 'sub_rzp_123', plan_id: 'PRO' },
+          },
+        },
+      });
+
+      const result = await service.handleWebhook(webhookPayload, 'sig_mid_cycle');
+
+      expect(result.processed).toBe(true);
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            planId: mockProPlan.id,
+            pendingPlanId: mockBasicPlan.id,
+          }),
+        }),
+      );
+      expect(prismaMock.company.update).toHaveBeenCalledWith({
+        where: { id: mockCompany.id },
+        data: { planId: mockProPlan.id },
+      });
+    });
+
+    it('overrides pending FREE downgrade and clears cancelAtPeriodEnd when upgrading to PRO', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockBasicPlan.id,
+        pendingPlanId: mockFreePlan.id,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 86400 * 1000),
+        cancelAtPeriodEnd: true,
+        canceledAt: null,
+        gracePeriodEndsAt: null,
+        isEnterpriseContract: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: mockBasicPlan,
+        pendingPlan: mockFreePlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockProPlan);
+      razorpayMock.updateSubscription.mockResolvedValue({
+        id: 'sub_rzp_123',
+        status: 'active',
+        plan_id: 'PRO',
+      });
+      prismaMock.employerSubscription.update.mockResolvedValue({
+        ...mockCurrentSub,
+        planId: mockProPlan.id,
+        pendingPlanId: null,
+        cancelAtPeriodEnd: false,
+        plan: mockProPlan,
+        pendingPlan: null,
+      });
+      prismaMock.company.update.mockResolvedValue({});
+
+      const result = await service.upgradeSubscription('user-1', mockCompany.id, {
+        planCode: 'PRO',
+      });
+
+      expect(razorpayMock.updateSubscription).toHaveBeenCalledWith({
+        razorpaySubscriptionId: 'sub_rzp_123',
+        razorpayPlanId: 'PRO',
+        scheduleChangeAt: 'now',
+        customerNotify: true,
+      });
+
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            planId: mockProPlan.id,
+            pendingPlanId: null,
+            cancelAtPeriodEnd: false,
+          }),
+        }),
+      );
+      expect(prismaMock.company.update).toHaveBeenCalledWith({
+        where: { id: mockCompany.id },
+        data: { planId: mockProPlan.id },
+      });
+      expect(result.planId).toBe(mockProPlan.id);
+      expect(result.pendingPlanId).toBeNull();
+      expect(result.cancelAtPeriodEnd).toBe(false);
     });
   });
 

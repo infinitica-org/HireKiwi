@@ -5057,6 +5057,18 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'POST',
+    path: '/billing/subscriptions/downgrade',
+    module: 'billing',
+    owner: 'Vishal V',
+    roles: ['COMPANY'],
+    rateLimit: 'role.company',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 300,
+    summary: 'Schedule employer subscription downgrade for current billing period end.',
+  },
+  {
+    method: 'POST',
     path: '/billing/webhooks/razorpay',
     module: 'billing',
     owner: 'Vishal V',

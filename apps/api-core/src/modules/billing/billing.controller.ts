@@ -14,6 +14,7 @@ import {
   CreateCheckoutSessionSchema,
   VerifyPaymentSchema,
   UpgradePlanSchema,
+  DowngradePlanSchema,
   type CheckoutSessionResponseDto,
   type EmployerSubscriptionDto,
 } from '@smart/contracts';
@@ -157,6 +158,37 @@ export class BillingController {
 
     const parsedInput = UpgradePlanSchema.parse(body);
     return this.billingService.upgradeSubscription(user.sub, companyId, parsedInput);
+  }
+
+  @Post('subscriptions/downgrade')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Schedule employer subscription downgrade for current billing period end (Phase 4B).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Subscription downgrade scheduled for end of current billing period.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid plan transition, same/higher plan rank, or provider downgrade error.',
+  })
+  async downgradeSubscription(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<EmployerSubscriptionDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    const parsedInput = DowngradePlanSchema.parse(body);
+    return this.billingService.downgradeSubscription(user.sub, companyId, parsedInput);
   }
 
   @Post('webhooks/razorpay')
