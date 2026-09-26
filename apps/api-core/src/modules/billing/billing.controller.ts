@@ -5,6 +5,7 @@ import {
   Get,
   Headers,
   Inject,
+  Param,
   Post,
   Req,
 } from '@nestjs/common';
@@ -19,6 +20,7 @@ import {
   VerifyPaymentMethodReplacementSchema,
   type CheckoutSessionResponseDto,
   type EmployerSubscriptionDto,
+  type EmployerInvoiceDto,
 } from '@smart/contracts';
 import type { FastifyRequest } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -254,6 +256,69 @@ export class BillingController {
 
     const parsedInput = VerifyPaymentMethodReplacementSchema.parse(body);
     return this.billingService.verifyPaymentMethodReplacement(user.sub, companyId, parsedInput);
+  }
+
+  @Get('invoices')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List billing invoices for authenticated employer company.' })
+  @ApiResponse({ status: 200, description: 'List of company invoices ordered newest first.' })
+  @ApiResponse({ status: 403, description: 'Caller is not associated with a company account.' })
+  async listInvoices(@CurrentUser() user: RequestUser): Promise<EmployerInvoiceDto[]> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.listInvoices(companyId);
+  }
+
+  @Get('invoices/:invoiceId')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get invoice details by ID for authenticated employer company.' })
+  @ApiResponse({ status: 200, description: 'Invoice details.' })
+  @ApiResponse({ status: 404, description: 'Invoice not found or access denied.' })
+  async getInvoice(
+    @CurrentUser() user: RequestUser,
+    @Param('invoiceId') invoiceId: string,
+  ): Promise<EmployerInvoiceDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.getInvoice(companyId, invoiceId);
+  }
+
+  @Get('invoices/:invoiceId/download')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get secure PDF download URL for an invoice.' })
+  @ApiResponse({ status: 200, description: 'Signed download URL generated.' })
+  @ApiResponse({ status: 404, description: 'Invoice not found or access denied.' })
+  async downloadInvoicePdf(
+    @CurrentUser() user: RequestUser,
+    @Param('invoiceId') invoiceId: string,
+  ): Promise<{ downloadUrl: string }> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.getInvoiceDownloadUrl(companyId, invoiceId);
   }
 
   @Post('webhooks/razorpay')

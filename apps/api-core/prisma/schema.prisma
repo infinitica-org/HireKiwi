@@ -1936,7 +1936,7 @@ model EmployerInvoice {
   company        Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
   subscriptionId String?               @map("subscription_id") @db.Uuid
   subscription   EmployerSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-  transactionId  String?               @map("transaction_id") @db.Uuid
+  transactionId  String?               @unique @map("transaction_id") @db.Uuid
   transaction    PaymentTransaction?   @relation(fields: [transactionId], references: [id], onDelete: SetNull)
   subtotalInr    Int                   @map("subtotal_inr")
   appliedTaxRate Decimal               @default(0) @map("applied_tax_rate") @db.Decimal(5, 2)

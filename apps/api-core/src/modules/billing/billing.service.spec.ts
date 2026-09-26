@@ -58,6 +58,8 @@ describe('BillingService', () => {
     isCustomPrice: true,
   };
 
+  let storageMock: any;
+
   beforeEach(() => {
     prismaMock = {
       company: {
@@ -76,6 +78,21 @@ describe('BillingService', () => {
       paymentTransaction: {
         findUnique: vi.fn(),
         create: vi.fn(),
+      },
+      employerInvoice: {
+        findUnique: vi.fn(),
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn().mockImplementation(async (args: any) => ({
+          id: 'inv-0000000-0000-0000-0000-000000000001',
+          ...args.data,
+          createdAt: args.data?.issuedAt ?? new Date(),
+          updatedAt: new Date(),
+        })),
+        update: vi.fn().mockImplementation(async (args: any) => ({
+          id: args.where?.id ?? 'inv-0000000-0000-0000-0000-000000000001',
+          ...args.data,
+        })),
       },
     };
 
@@ -96,6 +113,12 @@ describe('BillingService', () => {
 
     redisMock = {
       set: vi.fn().mockResolvedValue('OK'),
+      incr: vi.fn().mockResolvedValue(1),
+    };
+
+    storageMock = {
+      putObjectBuffer: vi.fn().mockResolvedValue(undefined),
+      getSignedDownloadUrl: vi.fn().mockResolvedValue('https://storage.local/invoice.pdf'),
     };
 
     service = new BillingService(
@@ -103,6 +126,7 @@ describe('BillingService', () => {
       razorpayMock as unknown as RazorpayProvider,
       auditPublisherMock as unknown as AuditPublisherService,
       redisMock as unknown as RedisService,
+      storageMock as unknown as any,
     );
   });
 
@@ -349,7 +373,13 @@ describe('BillingService', () => {
 
     it('activates subscription only when provider confirms authenticated/active state', async () => {
       prismaMock.employerSubscription.findUnique.mockResolvedValue(mockSub);
-      prismaMock.paymentTransaction.findUnique.mockResolvedValue(null);
+      prismaMock.company.findUnique.mockResolvedValue(mockCompany);
+      prismaMock.paymentTransaction.findUnique.mockImplementation(async ({ where }: any) => {
+        if (where?.id) {
+          return { id: where.id, amountInr: 7500, status: 'SUCCESS' };
+        }
+        return null;
+      });
       prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockProPlan);
       razorpayMock.verifyCheckoutSignature.mockReturnValue(true);
       razorpayMock.fetchSubscription.mockResolvedValue({
@@ -1761,12 +1791,18 @@ describe('BillingService', () => {
         },
       });
 
+      prismaMock.company.findUnique.mockResolvedValue(mockCompany);
       prismaMock.employerSubscription.findUnique.mockResolvedValue(mockActiveSub);
       prismaMock.employerSubscription.update.mockResolvedValue({
         ...mockActiveSub,
         razorpaySubscriptionId: 'sub_new_456',
       });
-      prismaMock.paymentTransaction.findUnique.mockResolvedValue(null);
+      prismaMock.paymentTransaction.findUnique.mockImplementation(async ({ where }: any) => {
+        if (where?.id) {
+          return { id: where.id, amountInr: 7500, status: 'SUCCESS' };
+        }
+        return null;
+      });
       prismaMock.paymentTransaction.create.mockResolvedValue({ id: 'tx-wh-1' });
       razorpayMock.cancelSubscription.mockResolvedValue({});
 
@@ -1791,15 +1827,17 @@ describe('BillingService', () => {
       const result = await service.handleWebhook(JSON.stringify(payload), 'valid_sig');
 
       expect(result.processed).toBe(true);
-      expect(prismaMock.paymentTransaction.create).toHaveBeenCalledWith({
-        data: {
-          companyId: mockCompany.id,
-          subscriptionId: mockActiveSub.id,
-          razorpayPaymentId: 'pay_wh_999',
-          amountInr: 7500,
-          status: 'SUCCESS',
-        },
-      });
+      expect(prismaMock.paymentTransaction.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            companyId: mockCompany.id,
+            subscriptionId: mockActiveSub.id,
+            razorpayPaymentId: 'pay_wh_999',
+            amountInr: 7500,
+            status: 'SUCCESS',
+          }),
+        }),
+      );
     });
 
     it('webhook ignores stale replacement session when previous_subscription_id does not match DB', async () => {
@@ -1840,6 +1878,162 @@ describe('BillingService', () => {
 
       expect(result.processed).toBe(true);
       expect(prismaMock.employerSubscription.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Employer Billing Invoices (T5)', () => {
+    const mockTx = {
+      id: 'tx-0000000-0000-0000-0000-000000000001',
+      companyId: mockCompany.id,
+      subscriptionId: 's0000000-0000-0000-0000-000000000001',
+      razorpayPaymentId: 'pay_123456',
+      amountInr: 7500,
+      status: 'SUCCESS',
+      createdAt: new Date('2026-09-26T10:00:00Z'),
+    };
+
+    const mockCompanyWithGstin = {
+      ...mockCompany,
+      gstin: '29ABCDE1234F1Z5',
+    };
+
+    const mockInvoice = {
+      id: 'inv-0000000-0000-0000-0000-000000000001',
+      invoiceNumber: 'INV-202609-00001',
+      companyId: mockCompany.id,
+      subscriptionId: mockTx.subscriptionId,
+      transactionId: mockTx.id,
+      subtotalInr: 7500,
+      appliedTaxRate: 0,
+      taxInr: 0,
+      totalInr: 7500,
+      gstin: '29ABCDE1234F1Z5',
+      status: 'PAID',
+      pdfStorageKey: `invoices/${mockCompany.id}/inv-0000000-0000-0000-0000-000000000001.pdf`,
+      issuedAt: mockTx.createdAt,
+      paidAt: mockTx.createdAt,
+      createdAt: mockTx.createdAt,
+    };
+
+    describe('createInvoiceForSuccessfulPayment', () => {
+      it('creates invoice with correct company GSTIN, status, and PDF storage', async () => {
+        prismaMock.employerInvoice.findUnique.mockResolvedValue(null);
+        prismaMock.paymentTransaction.findUnique.mockResolvedValue(mockTx);
+        prismaMock.company.findUnique.mockResolvedValue(mockCompanyWithGstin);
+        redisMock.incr.mockResolvedValue(1);
+        prismaMock.employerInvoice.create.mockResolvedValue(mockInvoice);
+        prismaMock.employerInvoice.update.mockResolvedValue(mockInvoice);
+
+        const invoice = await service.createInvoiceForSuccessfulPayment(
+          mockCompany.id,
+          mockTx.id,
+          mockTx.subscriptionId,
+        );
+
+        expect(invoice.invoiceNumber).toBe('INV-202609-00001');
+        expect(invoice.gstin).toBe('29ABCDE1234F1Z5');
+        expect(invoice.totalInr).toBe(7500);
+        expect(invoice.status).toBe('PAID');
+        expect(storageMock.putObjectBuffer).toHaveBeenCalledWith(
+          expect.objectContaining({
+            contentType: 'application/pdf',
+          }),
+        );
+        expect(auditPublisherMock.record).toHaveBeenCalledWith(
+          expect.objectContaining({
+            action: 'billing.invoice_generated',
+            reasonCode: 'INVOICE_CREATED',
+          }),
+        );
+      });
+
+      it('is idempotent: returns existing invoice on repeated call', async () => {
+        prismaMock.employerInvoice.findUnique.mockResolvedValue(mockInvoice);
+
+        const invoice = await service.createInvoiceForSuccessfulPayment(
+          mockCompany.id,
+          mockTx.id,
+          mockTx.subscriptionId,
+        );
+
+        expect(invoice.id).toBe(mockInvoice.id);
+        expect(prismaMock.employerInvoice.create).not.toHaveBeenCalled();
+      });
+
+      it('handles P2002 unique constraint race condition gracefully', async () => {
+        prismaMock.employerInvoice.findUnique
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(mockInvoice);
+        prismaMock.paymentTransaction.findUnique.mockResolvedValue(mockTx);
+        prismaMock.company.findUnique.mockResolvedValue(mockCompanyWithGstin);
+        redisMock.incr.mockResolvedValue(1);
+
+        const p2002Error: any = new Error('Unique constraint failed');
+        p2002Error.code = 'P2002';
+        prismaMock.employerInvoice.create.mockRejectedValue(p2002Error);
+
+        const invoice = await service.createInvoiceForSuccessfulPayment(
+          mockCompany.id,
+          mockTx.id,
+          mockTx.subscriptionId,
+        );
+
+        expect(invoice.id).toBe(mockInvoice.id);
+      });
+    });
+
+    describe('listInvoices', () => {
+      it('lists invoices for company ordered newest first', async () => {
+        prismaMock.employerInvoice.findMany.mockResolvedValue([mockInvoice]);
+
+        const invoices = await service.listInvoices(mockCompany.id);
+
+        expect(invoices).toHaveLength(1);
+        expect(invoices[0].id).toBe(mockInvoice.id);
+        expect(prismaMock.employerInvoice.findMany).toHaveBeenCalledWith({
+          where: { companyId: mockCompany.id },
+          orderBy: { createdAt: 'desc' },
+        });
+      });
+    });
+
+    describe('getInvoice', () => {
+      it('retrieves invoice details when owned by company', async () => {
+        prismaMock.employerInvoice.findFirst.mockResolvedValue(mockInvoice);
+
+        const invoice = await service.getInvoice(mockCompany.id, mockInvoice.id);
+
+        expect(invoice.id).toBe(mockInvoice.id);
+      });
+
+      it('throws 404 when invoice belongs to another company', async () => {
+        prismaMock.employerInvoice.findFirst.mockResolvedValue(null);
+
+        await expect(service.getInvoice(mockOtherCompany.id, mockInvoice.id)).rejects.toThrow(
+          BadRequestException,
+        );
+      });
+    });
+
+    describe('getInvoiceDownloadUrl', () => {
+      it('generates signed download URL for company invoice', async () => {
+        prismaMock.employerInvoice.findFirst.mockResolvedValue({
+          ...mockInvoice,
+          company: mockCompanyWithGstin,
+        });
+
+        const res = await service.getInvoiceDownloadUrl(mockCompany.id, mockInvoice.id);
+
+        expect(res.downloadUrl).toBe('https://storage.local/invoice.pdf');
+      });
+
+      it('throws 404 when downloading invoice of another company', async () => {
+        prismaMock.employerInvoice.findFirst.mockResolvedValue(null);
+
+        await expect(
+          service.getInvoiceDownloadUrl(mockOtherCompany.id, mockInvoice.id),
+        ).rejects.toThrow(BadRequestException);
+      });
     });
   });
 });

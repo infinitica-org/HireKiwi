@@ -169,6 +169,7 @@ import type {
 import {
   API_PREFIX,
   CheckoutSessionResponseSchema,
+  EmployerInvoiceSchema,
   EmployerSubscriptionSchema,
   ReviewEvidenceResponseSchema,
   SupportDiagnosticResponseSchema,
@@ -2309,6 +2310,21 @@ export function billingApi(client: SmartApiClient) {
     verifyPaymentMethodReplacement: (body: VerifyPaymentMethodReplacementDto) =>
       client.post(prefixed('/billing/subscriptions/payment-method/replace/verify'), body, {
         schema: EmployerSubscriptionSchema,
+      }),
+
+    listInvoices: () =>
+      client.get(prefixed('/billing/invoices'), {
+        schema: z.array(EmployerInvoiceSchema),
+      }),
+
+    getInvoice: (invoiceId: string) =>
+      client.get(prefixed(`/billing/invoices/${invoiceId}`), {
+        schema: EmployerInvoiceSchema,
+      }),
+
+    getInvoiceDownloadUrl: (invoiceId: string) =>
+      client.get(prefixed(`/billing/invoices/${invoiceId}/download`), {
+        schema: z.object({ downloadUrl: z.string() }),
       }),
   };
 }

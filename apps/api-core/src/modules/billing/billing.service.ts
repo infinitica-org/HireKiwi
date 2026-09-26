@@ -3,12 +3,15 @@ import {
   Inject,
   Injectable,
   Logger,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import type { EmployerInvoice } from '../../generated/prisma/index.js';
 import type {
   BillingInterval,
   CheckoutSessionResponseDto,
   CreateCheckoutSessionDto,
+  EmployerInvoiceDto,
   EmployerSubscriptionDto,
   EmployerSubscriptionStatus,
   VerifyPaymentDto,
@@ -18,8 +21,10 @@ import type {
   PlanCode,
 } from '@smart/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
+import { env } from '../../platform/config/env.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { RedisService } from '../../platform/redis/redis.service.js';
+import { StorageService } from '../../platform/storage/storage.service.js';
 import { RazorpayProvider } from './providers/razorpay.provider.js';
 
 @Injectable()
@@ -31,6 +36,7 @@ export class BillingService {
     @Inject(RazorpayProvider) private readonly razorpayProvider: RazorpayProvider,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
     @Inject(RedisService) private readonly redis: RedisService,
+    @Optional() @Inject(StorageService) private readonly storageService?: StorageService,
   ) {}
 
   /**
@@ -277,7 +283,7 @@ export class BillingService {
     });
     const amountInr = plan?.priceInr ?? 0;
 
-    await this.prisma.paymentTransaction.create({
+    const paymentTx = await this.prisma.paymentTransaction.create({
       data: {
         companyId,
         subscriptionId: subscription.id,
@@ -287,6 +293,8 @@ export class BillingService {
         status: 'SUCCESS',
       },
     });
+
+    await this.createInvoiceForSuccessfulPayment(companyId, paymentTx.id, subscription.id);
 
     const now = new Date();
     const periodEnd = new Date(
@@ -1378,7 +1386,7 @@ export class BillingService {
 
         if (paymentEntity?.id) {
           const amountInPaise = paymentEntity.amount ?? 0;
-          await this.prisma.paymentTransaction.create({
+          const paymentTx = await this.prisma.paymentTransaction.create({
             data: {
               companyId: subscription.companyId,
               subscriptionId: subscription.id,
@@ -1389,6 +1397,11 @@ export class BillingService {
               rawWebhookPayload: payload,
             },
           });
+          await this.createInvoiceForSuccessfulPayment(
+            subscription.companyId,
+            paymentTx.id,
+            subscription.id,
+          );
         }
 
         if (isDowngradeApplied) {
@@ -1522,5 +1535,307 @@ export class BillingService {
     }
 
     return { processed: true };
+  }
+
+  /**
+   * Idempotently generates an EmployerInvoice for a successful payment transaction.
+   * Keyed by unique transactionId constraint.
+   */
+  async createInvoiceForSuccessfulPayment(
+    companyId: string,
+    transactionId: string,
+    subscriptionId?: string | null,
+  ): Promise<EmployerInvoiceDto> {
+    const existingInvoice = await this.prisma.employerInvoice.findUnique({
+      where: { transactionId },
+    });
+    if (existingInvoice) {
+      return this.mapInvoiceToDto(existingInvoice);
+    }
+
+    const tx = await this.prisma.paymentTransaction.findUnique({
+      where: { id: transactionId },
+    });
+    if (!tx || tx.status !== 'SUCCESS') {
+      throw new BadRequestException({
+        error: 'invalid_transaction_for_invoice',
+        message: 'Invoice can only be created for successful payment transactions.',
+        statusCode: 400,
+      });
+    }
+
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+    });
+    if (!company) {
+      throw new BadRequestException({
+        error: 'company_not_found',
+        message: 'Company not found.',
+        statusCode: 400,
+      });
+    }
+
+    const taxRatePercent = env.BILLING_TAX_RATE_PERCENT ?? 0;
+    const totalInr = tx.amountInr;
+    let subtotalInr = totalInr;
+    let taxInr = 0;
+
+    if (taxRatePercent > 0) {
+      subtotalInr = Math.round(totalInr / (1 + taxRatePercent / 100));
+      taxInr = totalInr - subtotalInr;
+    }
+
+    const now = new Date();
+    const yearMonth = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+    const invoiceNumber = await this.generateUniqueInvoiceNumber(yearMonth);
+
+    let invoice;
+    try {
+      invoice = await this.prisma.employerInvoice.create({
+        data: {
+          invoiceNumber,
+          companyId,
+          subscriptionId: subscriptionId ?? tx.subscriptionId ?? null,
+          transactionId: tx.id,
+          subtotalInr,
+          appliedTaxRate: taxRatePercent,
+          taxInr,
+          totalInr,
+          gstin: company.gstin ?? null,
+          status: 'PAID',
+          issuedAt: tx.createdAt,
+          paidAt: tx.createdAt,
+        },
+      });
+    } catch (err: unknown) {
+      if ((err as { code?: string })?.code === 'P2002') {
+        const racedInvoice = await this.prisma.employerInvoice.findUnique({
+          where: { transactionId },
+        });
+        if (racedInvoice) {
+          return this.mapInvoiceToDto(racedInvoice);
+        }
+      }
+      throw err;
+    }
+
+    if (invoice) {
+      try {
+        const pdfBuffer = await this.generateInvoicePdfBuffer(invoice, company.name);
+        const storageKey = `invoices/${companyId}/${invoice.id}.pdf`;
+        if (this.storageService) {
+          await this.storageService.putObjectBuffer({
+            objectKey: storageKey,
+            buffer: pdfBuffer,
+            contentType: 'application/pdf',
+          });
+          const updatedInvoice = await this.prisma.employerInvoice.update({
+            where: { id: invoice.id },
+            data: { pdfStorageKey: storageKey },
+          });
+          if (updatedInvoice) {
+            invoice = updatedInvoice;
+          }
+        }
+      } catch (pdfErr) {
+        this.logger.warn(
+          `Failed to store PDF for invoice ${invoice.id}: ${(pdfErr as Error).message}`,
+        );
+      }
+    }
+
+    await this.auditPublisher.record({
+      actorId: 'system',
+      action: 'billing.invoice_generated',
+      resourceType: 'invoice',
+      resourceId: invoice?.id ?? `inv-${transactionId}`,
+      reasonCode: 'INVOICE_CREATED',
+      metadata: {
+        invoiceNumber: invoice?.invoiceNumber ?? invoiceNumber,
+        companyId,
+        totalInr,
+        taxInr,
+      },
+    });
+
+    return invoice
+      ? this.mapInvoiceToDto(invoice)
+      : {
+          id: `inv-${transactionId}`,
+          invoiceNumber,
+          companyId,
+          subtotalInr,
+          appliedTaxRate: taxRatePercent,
+          taxInr,
+          totalInr,
+          gstin: company.gstin ?? null,
+          status: 'PAID',
+          pdfStorageKey: null,
+          issuedAt: tx.createdAt.toISOString(),
+          paidAt: tx.createdAt.toISOString(),
+          createdAt: now.toISOString(),
+        };
+  }
+
+  async listInvoices(companyId: string): Promise<EmployerInvoiceDto[]> {
+    const invoices = await this.prisma.employerInvoice.findMany({
+      where: { companyId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return invoices.map((inv) => this.mapInvoiceToDto(inv));
+  }
+
+  async getInvoice(companyId: string, invoiceId: string): Promise<EmployerInvoiceDto> {
+    const invoice = await this.prisma.employerInvoice.findFirst({
+      where: { id: invoiceId, companyId },
+    });
+    if (!invoice) {
+      throw new BadRequestException({
+        error: 'invoice_not_found',
+        message: 'Invoice not found or access denied.',
+        statusCode: 404,
+      });
+    }
+    return this.mapInvoiceToDto(invoice);
+  }
+
+  async getInvoiceDownloadUrl(
+    companyId: string,
+    invoiceId: string,
+  ): Promise<{ downloadUrl: string }> {
+    const invoice = await this.prisma.employerInvoice.findFirst({
+      where: { id: invoiceId, companyId },
+      include: { company: true },
+    });
+    if (!invoice) {
+      throw new BadRequestException({
+        error: 'invoice_not_found',
+        message: 'Invoice not found or access denied.',
+        statusCode: 404,
+      });
+    }
+
+    let storageKey = invoice.pdfStorageKey;
+    if (!storageKey || !this.storageService) {
+      const pdfBuffer = await this.generateInvoicePdfBuffer(invoice, invoice.company.name);
+      storageKey = `invoices/${companyId}/${invoice.id}.pdf`;
+      if (this.storageService) {
+        await this.storageService.putObjectBuffer({
+          objectKey: storageKey,
+          buffer: pdfBuffer,
+          contentType: 'application/pdf',
+        });
+        await this.prisma.employerInvoice.update({
+          where: { id: invoice.id },
+          data: { pdfStorageKey: storageKey },
+        });
+      }
+    }
+
+    if (this.storageService && storageKey) {
+      const downloadUrl = await this.storageService.getSignedDownloadUrl(storageKey);
+      return { downloadUrl };
+    }
+
+    return { downloadUrl: `/api/v1/billing/invoices/${invoiceId}/download` };
+  }
+
+  private async generateUniqueInvoiceNumber(yearMonth: string): Promise<string> {
+    const redisKey = `billing:invoice_seq:${yearMonth}`;
+    let nextSeq: number;
+    try {
+      nextSeq = await this.redis.incr(redisKey);
+    } catch {
+      const prefix = `INV-${yearMonth}-`;
+      const highest = await this.prisma.employerInvoice.findFirst({
+        where: { invoiceNumber: { startsWith: prefix } },
+        orderBy: { invoiceNumber: 'desc' },
+        select: { invoiceNumber: true },
+      });
+      if (highest) {
+        const lastSeq = parseInt(highest.invoiceNumber.replace(prefix, ''), 10);
+        nextSeq = isNaN(lastSeq) ? 1 : lastSeq + 1;
+      } else {
+        nextSeq = 1;
+      }
+    }
+    const indexStr = String(nextSeq).padStart(5, '0');
+    return `INV-${yearMonth}-${indexStr}`;
+  }
+
+  private async generateInvoicePdfBuffer(
+    invoice: EmployerInvoice,
+    companyName: string,
+  ): Promise<Buffer> {
+    const safeCompanyName = companyName.replace(/[()\\]/g, '');
+    const lines = [
+      '%PDF-1.4',
+      '1 0 obj <</Type /Catalog /Pages 2 0 R>> endobj',
+      '2 0 obj <</Type /Pages /Kids [3 0 R] /Count 1>> endobj',
+      '3 0 obj <</Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources <</Font <</F1 5 0 R>>>> >> endobj',
+      '5 0 obj <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>> endobj',
+    ];
+
+    const contentText = [
+      `BT`,
+      `/F1 16 Tf 50 720 Td (INVOICE - SMART PLATFORM) Tj`,
+      `/F1 10 Tf 0 -30 Td (Invoice Number: ${invoice.invoiceNumber}) Tj`,
+      `0 -15 Td (Company: ${safeCompanyName}) Tj`,
+      `0 -15 Td (Date: ${invoice.issuedAt.toISOString().slice(0, 10)}) Tj`,
+      `0 -15 Td (GSTIN: ${invoice.gstin || 'N/A'}) Tj`,
+      `0 -25 Td (------------------------------------------------) Tj`,
+      `0 -20 Td (Subtotal: INR ${invoice.subtotalInr}) Tj`,
+      `0 -15 Td (Tax Rate: ${invoice.appliedTaxRate}%) Tj`,
+      `0 -15 Td (Tax Amount: INR ${invoice.taxInr}) Tj`,
+      `0 -20 Td (Total Amount Paid: INR ${invoice.totalInr}) Tj`,
+      `0 -25 Td (Status: ${invoice.status}) Tj`,
+      `ET`,
+    ].join('\n');
+
+    const streamObj = `4 0 obj <</Length ${contentText.length}>> stream\n${contentText}\nendstream\nendobj`;
+    lines.push(streamObj);
+
+    lines.push(
+      'xref',
+      '0 6',
+      '0000000000 65535 f ',
+      '0000000009 00000 n ',
+      '0000000056 00000 n ',
+      '0000000056 00000 n ',
+      '0000000111 00000 n ',
+      '0000000300 00000 n ',
+      '0000000230 00000 n ',
+      'trailer <</Size 6 /Root 1 0 R>>',
+      'startxref',
+      '400',
+      '%%EOF',
+    );
+
+    return Buffer.from(lines.join('\n'));
+  }
+
+  private mapInvoiceToDto(invoice: EmployerInvoice): EmployerInvoiceDto {
+    const toIsoStr = (val: Date | string | null | undefined): string => {
+      if (!val) return new Date().toISOString();
+      if (typeof val === 'string') return val;
+      if (val instanceof Date) return val.toISOString();
+      return new Date(val).toISOString();
+    };
+
+    return {
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      companyId: invoice.companyId,
+      subtotalInr: invoice.subtotalInr,
+      appliedTaxRate: Number(invoice.appliedTaxRate),
+      taxInr: invoice.taxInr,
+      totalInr: invoice.totalInr,
+      gstin: invoice.gstin,
+      status: invoice.status,
+      pdfStorageKey: invoice.pdfStorageKey,
+      issuedAt: toIsoStr(invoice.issuedAt),
+      paidAt: invoice.paidAt ? toIsoStr(invoice.paidAt) : null,
+      createdAt: toIsoStr(invoice.createdAt),
+    };
   }
 }
