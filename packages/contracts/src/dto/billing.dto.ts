@@ -112,6 +112,12 @@ export const VerifyPaymentSchema = z.object({
 });
 export type VerifyPaymentDto = z.infer<typeof VerifyPaymentSchema>;
 
+export const UpgradePlanSchema = z.object({
+  planCode: z.enum(['BASIC', 'PRO']),
+  billingInterval: BillingIntervalSchema.optional(),
+});
+export type UpgradePlanDto = z.infer<typeof UpgradePlanSchema>;
+
 /* -------------------------------------------------------------------------- */
 /*                              Invoice DTOs                                  */
 /* -------------------------------------------------------------------------- */

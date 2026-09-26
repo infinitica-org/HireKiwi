@@ -13,6 +13,7 @@ import {
   API_PREFIX,
   CreateCheckoutSessionSchema,
   VerifyPaymentSchema,
+  UpgradePlanSchema,
   type CheckoutSessionResponseDto,
   type EmployerSubscriptionDto,
 } from '@smart/contracts';
@@ -125,6 +126,37 @@ export class BillingController {
     }
 
     return this.billingService.cancelSubscription(user.sub, companyId);
+  }
+
+  @Post('subscriptions/upgrade')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Upgrade employer subscription immediately with prorated billing (Phase 4A).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Subscription upgraded immediately with provider proration.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid plan transition, same/lower plan rank, or provider upgrade error.',
+  })
+  async upgradeSubscription(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<EmployerSubscriptionDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    const parsedInput = UpgradePlanSchema.parse(body);
+    return this.billingService.upgradeSubscription(user.sub, companyId, parsedInput);
   }
 
   @Post('webhooks/razorpay')

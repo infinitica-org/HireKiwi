@@ -77,6 +77,7 @@ describe('BillingService', () => {
       fetchSubscription: vi.fn(),
       fetchPayment: vi.fn(),
       cancelSubscription: vi.fn(),
+      updateSubscription: vi.fn(),
       verifyCheckoutSignature: vi.fn(),
       verifyWebhookSignature: vi.fn(),
     };
@@ -595,6 +596,376 @@ describe('BillingService', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('upgradeSubscription', () => {
+    it('successfully upgrades subscription from FREE to PRO with provider update', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockFreePlan.id,
+        pendingPlanId: null,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 86400 * 1000),
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+        gracePeriodEndsAt: null,
+        isEnterpriseContract: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: mockFreePlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockProPlan);
+      razorpayMock.updateSubscription.mockResolvedValue({
+        id: 'sub_rzp_123',
+        status: 'active',
+        plan_id: 'PRO',
+      });
+
+      const updatedSub = {
+        ...mockCurrentSub,
+        planId: mockProPlan.id,
+        plan: mockProPlan,
+      };
+      prismaMock.employerSubscription.update.mockResolvedValue(updatedSub);
+      prismaMock.company.update.mockResolvedValue({});
+
+      const result = await service.upgradeSubscription('user-1', mockCompany.id, {
+        planCode: 'PRO',
+        billingInterval: 'MONTHLY',
+      });
+
+      expect(razorpayMock.updateSubscription).toHaveBeenCalledWith({
+        razorpaySubscriptionId: 'sub_rzp_123',
+        razorpayPlanId: 'PRO',
+        scheduleChangeAt: 'now',
+        customerNotify: true,
+      });
+
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockCurrentSub.id },
+          data: expect.objectContaining({
+            planId: mockProPlan.id,
+            pendingPlanId: null,
+            status: 'ACTIVE',
+          }),
+        }),
+      );
+
+      expect(prismaMock.company.update).toHaveBeenCalledWith({
+        where: { id: mockCompany.id },
+        data: { planId: mockProPlan.id },
+      });
+
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.subscription_upgraded',
+          resourceId: mockCurrentSub.id,
+        }),
+      );
+
+      expect(result.planCode).toBe('PRO');
+    });
+
+    it('rejects upgrade to ENTERPRISE plan requiring custom contract', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        status: 'ACTIVE',
+        plan: mockFreePlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+
+      await expect(
+        service.upgradeSubscription('user-1', mockCompany.id, {
+          planCode: 'ENTERPRISE' as any,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects upgrade to lower or equal plan rank (e.g. PRO -> BASIC)', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        status: 'ACTIVE',
+        plan: mockProPlan,
+      };
+
+      const mockBasicPlan = {
+        id: 'p0000000-0000-0000-0000-000000000004',
+        code: 'BASIC',
+        name: 'Basic Plan',
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockBasicPlan);
+
+      await expect(
+        service.upgradeSubscription('user-1', mockCompany.id, {
+          planCode: 'BASIC',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('handles provider failure gracefully without updating local DB', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockFreePlan.id,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        plan: mockFreePlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockProPlan);
+      razorpayMock.updateSubscription.mockRejectedValue(new Error('Razorpay network error'));
+
+      await expect(
+        service.upgradeSubscription('user-1', mockCompany.id, {
+          planCode: 'PRO',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prismaMock.employerSubscription.update).not.toHaveBeenCalled();
+      expect(prismaMock.company.update).not.toHaveBeenCalled();
+
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.subscription_upgrade_failed',
+        }),
+      );
+    });
+
+    it('rejects upgrade and keeps DB unchanged when provider returns mismatched plan_id', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockFreePlan.id,
+        pendingPlanId: null,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        plan: mockFreePlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockProPlan);
+      razorpayMock.updateSubscription.mockResolvedValue({
+        id: 'sub_rzp_123',
+        status: 'active',
+        plan_id: 'BASIC',
+      });
+
+      await expect(
+        service.upgradeSubscription('user-1', mockCompany.id, {
+          planCode: 'PRO',
+          billingInterval: 'MONTHLY',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prismaMock.employerSubscription.update).not.toHaveBeenCalled();
+      expect(prismaMock.company.update).not.toHaveBeenCalled();
+
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.subscription_upgrade_failed',
+        }),
+      );
+    });
+
+    it('preserves existing billing interval when billingInterval is omitted', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockFreePlan.id,
+        pendingPlanId: null,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'ANNUAL',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 86400 * 1000),
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+        gracePeriodEndsAt: null,
+        isEnterpriseContract: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: mockFreePlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockProPlan);
+      razorpayMock.updateSubscription.mockResolvedValue({
+        id: 'sub_rzp_123',
+        status: 'active',
+        plan_id: 'PRO',
+      });
+
+      const updatedSub = {
+        ...mockCurrentSub,
+        planId: mockProPlan.id,
+        plan: mockProPlan,
+        billingInterval: 'ANNUAL',
+      };
+      prismaMock.employerSubscription.update.mockResolvedValue(updatedSub);
+      prismaMock.company.update.mockResolvedValue({});
+
+      await service.upgradeSubscription('user-1', mockCompany.id, {
+        planCode: 'PRO',
+      });
+
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            billingInterval: 'ANNUAL',
+          }),
+        }),
+      );
+    });
+
+    it('handles explicit ANNUAL billing interval requested by client', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockFreePlan.id,
+        pendingPlanId: null,
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 86400 * 1000),
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+        gracePeriodEndsAt: null,
+        isEnterpriseContract: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: mockFreePlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockProPlan);
+      razorpayMock.updateSubscription.mockResolvedValue({
+        id: 'sub_rzp_123',
+        status: 'active',
+        plan_id: 'PRO',
+      });
+
+      const updatedSub = {
+        ...mockCurrentSub,
+        planId: mockProPlan.id,
+        plan: mockProPlan,
+        billingInterval: 'ANNUAL',
+      };
+      prismaMock.employerSubscription.update.mockResolvedValue(updatedSub);
+      prismaMock.company.update.mockResolvedValue({});
+
+      await service.upgradeSubscription('user-1', mockCompany.id, {
+        planCode: 'PRO',
+        billingInterval: 'ANNUAL',
+      });
+
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            billingInterval: 'ANNUAL',
+          }),
+        }),
+      );
+    });
+
+    it('rejects upgrade before provider call when target plan code is empty', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        status: 'ACTIVE',
+        plan: mockFreePlan,
+      };
+
+      const mockPlanNoCode = {
+        id: 'p0000000-0000-0000-0000-000000000099',
+        code: '',
+        name: 'Invalid Plan',
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockPlanNoCode);
+
+      await expect(
+        service.upgradeSubscription('user-1', mockCompany.id, {
+          planCode: 'PRO',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(razorpayMock.updateSubscription).not.toHaveBeenCalled();
+      expect(prismaMock.employerSubscription.update).not.toHaveBeenCalled();
+    });
+
+    it('clears pre-existing pendingPlanId upon successful upgrade', async () => {
+      const mockCurrentSub = {
+        id: 's0000000-0000-0000-0000-000000000001',
+        companyId: mockCompany.id,
+        planId: mockFreePlan.id,
+        pendingPlanId: 'p0000000-0000-0000-0000-000000000004',
+        razorpaySubscriptionId: 'sub_rzp_123',
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 86400 * 1000),
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+        gracePeriodEndsAt: null,
+        isEnterpriseContract: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        plan: mockFreePlan,
+      };
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
+      prismaMock.subscriptionPlan.findUnique.mockResolvedValue(mockProPlan);
+      razorpayMock.updateSubscription.mockResolvedValue({
+        id: 'sub_rzp_123',
+        status: 'active',
+        plan_id: 'PRO',
+      });
+
+      const updatedSub = {
+        ...mockCurrentSub,
+        planId: mockProPlan.id,
+        pendingPlanId: null,
+        plan: mockProPlan,
+      };
+      prismaMock.employerSubscription.update.mockResolvedValue(updatedSub);
+      prismaMock.company.update.mockResolvedValue({});
+
+      const result = await service.upgradeSubscription('user-1', mockCompany.id, {
+        planCode: 'PRO',
+      });
+
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            planId: mockProPlan.id,
+            pendingPlanId: null,
+          }),
+        }),
+      );
+
+      expect(prismaMock.company.update).toHaveBeenCalledWith({
+        where: { id: mockCompany.id },
+        data: { planId: mockProPlan.id },
+      });
+
+      expect(result.pendingPlanId).toBeNull();
     });
   });
 

@@ -90,6 +90,7 @@ import type {
   EvidenceSkillDisputeRequest,
   CreateCheckoutSessionDto,
   VerifyPaymentDto,
+  UpgradePlanDto,
 } from '@smart/contracts';
 import {
   API_PREFIX,
@@ -2091,6 +2092,11 @@ export function billingApi(client: SmartApiClient) {
           schema: EmployerSubscriptionSchema,
         },
       ),
+
+    upgradeSubscription: (body: UpgradePlanDto) =>
+      client.post(prefixed('/billing/subscriptions/upgrade'), body, {
+        schema: EmployerSubscriptionSchema,
+      }),
   };
 }
 

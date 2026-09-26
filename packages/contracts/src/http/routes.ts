@@ -5045,6 +5045,18 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'POST',
+    path: '/billing/subscriptions/upgrade',
+    module: 'billing',
+    owner: 'Vishal V',
+    roles: ['COMPANY'],
+    rateLimit: 'role.company',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 300,
+    summary: 'Upgrade employer subscription immediately with prorated billing.',
+  },
+  {
+    method: 'POST',
     path: '/billing/webhooks/razorpay',
     module: 'billing',
     owner: 'Vishal V',

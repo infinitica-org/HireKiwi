@@ -49,6 +49,20 @@ export interface RazorpayCancelSubscriptionResult {
   readonly cancel_at_cycle_end: boolean;
 }
 
+export interface UpdateProviderSubscriptionInput {
+  readonly razorpaySubscriptionId: string;
+  readonly razorpayPlanId: string;
+  readonly scheduleChangeAt?: 'now' | 'cycle_end';
+  readonly customerNotify?: boolean;
+}
+
+export interface RazorpayUpdateSubscriptionResult {
+  readonly id: string;
+  readonly status: string;
+  readonly plan_id: string;
+  readonly schedule_change_at?: string;
+}
+
 @Injectable()
 export class RazorpayProvider {
   private readonly logger = new Logger(RazorpayProvider.name);
@@ -267,6 +281,74 @@ export class RazorpayProvider {
       id: data.id,
       status: data.status,
       cancel_at_cycle_end: Boolean(data.cancel_at_cycle_end),
+    };
+  }
+
+  /**
+   * Updates an existing Razorpay subscription plan immediately ('now') or at cycle end ('cycle_end').
+   */
+  async updateSubscription(
+    input: UpdateProviderSubscriptionInput,
+  ): Promise<RazorpayUpdateSubscriptionResult> {
+    const scheduleChangeAt = input.scheduleChangeAt ?? 'now';
+
+    if (!this.isConfigured) {
+      if (env.NODE_ENV === 'production') {
+        throw new Error('Razorpay API keys missing in production environment.');
+      }
+      if (input.razorpaySubscriptionId.startsWith('sub_stub_')) {
+        return {
+          id: input.razorpaySubscriptionId,
+          status: 'active',
+          plan_id: input.razorpayPlanId,
+          schedule_change_at: scheduleChangeAt,
+        };
+      }
+      throw new Error(
+        `Cannot update subscription ${input.razorpaySubscriptionId} without Razorpay credentials.`,
+      );
+    }
+
+    const authHeader = Buffer.from(`${env.RAZORPAY_KEY_ID}:${env.RAZORPAY_KEY_SECRET}`).toString(
+      'base64',
+    );
+
+    const response = await fetch(
+      `https://api.razorpay.com/v1/subscriptions/${input.razorpaySubscriptionId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Basic ${authHeader}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan_id: input.razorpayPlanId,
+          schedule_change_at: scheduleChangeAt,
+          customer_notify: input.customerNotify ? 1 : 0,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.error(
+        `Failed to update Razorpay subscription ${input.razorpaySubscriptionId}: ${errorText}`,
+      );
+      throw new Error(`Razorpay subscription update failed: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as {
+      id: string;
+      status: string;
+      plan_id: string;
+      schedule_change_at?: string;
+    };
+
+    return {
+      id: data.id,
+      status: data.status,
+      plan_id: data.plan_id,
+      schedule_change_at: data.schedule_change_at,
     };
   }
 

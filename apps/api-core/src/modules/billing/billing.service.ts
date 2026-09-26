@@ -12,6 +12,7 @@ import type {
   EmployerSubscriptionDto,
   EmployerSubscriptionStatus,
   VerifyPaymentDto,
+  UpgradePlanDto,
 } from '@smart/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
@@ -420,6 +421,161 @@ export class BillingService {
         companyId,
         razorpaySubscriptionId: updated.razorpaySubscriptionId,
         planCode: updated.plan.code,
+      },
+    });
+
+    return this.toEmployerSubscriptionDto(updated);
+  }
+
+  /**
+   * Upgrades employer subscription immediately to a higher self-service plan (BASIC or PRO).
+   * Plan change and proration are executed by Razorpay provider.
+   * Company.planId and EmployerSubscription.planId are updated only after provider confirmation.
+   * Clears pendingPlanId on successful upgrade.
+   */
+  async upgradeSubscription(
+    userId: string,
+    companyId: string,
+    input: UpgradePlanDto,
+  ): Promise<EmployerSubscriptionDto> {
+    const subscription = await this.prisma.employerSubscription.findUnique({
+      where: { companyId },
+      include: { plan: true, pendingPlan: true },
+    });
+
+    if (!subscription) {
+      throw new BadRequestException({
+        error: 'subscription_not_found',
+        message: 'No subscription found to upgrade for this company.',
+        statusCode: 400,
+      });
+    }
+
+    const upgradeableStatuses = ['ACTIVE', 'GRACE_PERIOD', 'PAST_DUE', 'PENDING'];
+    if (!upgradeableStatuses.includes(subscription.status)) {
+      throw new BadRequestException({
+        error: 'invalid_subscription_state',
+        message: `Subscription in '${subscription.status}' status cannot be upgraded.`,
+        statusCode: 400,
+      });
+    }
+
+    if ((input.planCode as string) === 'ENTERPRISE') {
+      throw new BadRequestException({
+        error: 'enterprise_contract_required',
+        message: 'ENTERPRISE plan requires a custom enterprise contract.',
+        statusCode: 400,
+      });
+    }
+
+    const targetPlan = await this.prisma.subscriptionPlan.findUnique({
+      where: { code: input.planCode },
+    });
+
+    if (!targetPlan) {
+      throw new BadRequestException({
+        error: 'invalid_plan',
+        message: `Subscription plan '${input.planCode}' is not available.`,
+        statusCode: 400,
+      });
+    }
+
+    const planRank: Record<string, number> = {
+      FREE: 0,
+      BASIC: 1,
+      PRO: 2,
+      ENTERPRISE: 3,
+    };
+
+    const currentRank = planRank[subscription.plan.code] ?? 0;
+    const targetRank = planRank[targetPlan.code] ?? 0;
+
+    if (targetRank <= currentRank) {
+      throw new BadRequestException({
+        error: 'invalid_upgrade_target',
+        message: `Target plan '${input.planCode}' is not an upgrade from current plan '${subscription.plan.code}'.`,
+        statusCode: 400,
+      });
+    }
+
+    const resolvedInterval = (input.billingInterval ??
+      subscription.billingInterval) as BillingInterval;
+    const targetRazorpayPlanId = targetPlan.code;
+
+    if (!targetRazorpayPlanId) {
+      throw new BadRequestException({
+        error: 'missing_razorpay_plan',
+        message: `Target plan '${targetPlan.code}' has no configured Razorpay plan ID for '${resolvedInterval}' interval.`,
+        statusCode: 400,
+      });
+    }
+
+    if (subscription.razorpaySubscriptionId) {
+      try {
+        const updateResult = await this.razorpayProvider.updateSubscription({
+          razorpaySubscriptionId: subscription.razorpaySubscriptionId,
+          razorpayPlanId: targetRazorpayPlanId,
+          scheduleChangeAt: 'now',
+          customerNotify: true,
+        });
+
+        if (!updateResult || updateResult.plan_id !== targetRazorpayPlanId) {
+          throw new Error(
+            `Provider response plan '${updateResult?.plan_id}' did not match requested target plan '${targetRazorpayPlanId}'.`,
+          );
+        }
+      } catch (err) {
+        await this.auditPublisher.record({
+          actorId: userId,
+          action: 'billing.subscription_upgrade_failed',
+          resourceType: 'subscription',
+          resourceId: subscription.id,
+          reasonCode: 'PROVIDER_UPGRADE_ERROR',
+          metadata: {
+            companyId,
+            currentPlanCode: subscription.plan.code,
+            targetPlanCode: targetPlan.code,
+            error: (err as Error).message,
+          },
+        });
+
+        throw new BadRequestException({
+          error: 'provider_upgrade_failed',
+          message: `Failed to upgrade subscription with provider: ${(err as Error).message}`,
+          statusCode: 400,
+        });
+      }
+    }
+
+    const updated = await this.prisma.employerSubscription.update({
+      where: { id: subscription.id },
+      data: {
+        planId: targetPlan.id,
+        pendingPlanId: null,
+        billingInterval: resolvedInterval,
+        status: 'ACTIVE',
+        cancelAtPeriodEnd: false,
+      },
+      include: { plan: true, pendingPlan: true },
+    });
+
+    await this.prisma.company.update({
+      where: { id: companyId },
+      data: { planId: targetPlan.id },
+    });
+
+    await this.auditPublisher.record({
+      actorId: userId,
+      action: 'billing.subscription_upgraded',
+      resourceType: 'subscription',
+      resourceId: updated.id,
+      reasonCode: 'SELF_SERVICE_UPGRADE_CONFIRMED',
+      metadata: {
+        companyId,
+        previousPlanCode: subscription.plan.code,
+        targetPlanCode: targetPlan.code,
+        billingInterval: resolvedInterval,
+        razorpaySubscriptionId: updated.razorpaySubscriptionId,
       },
     });
 
