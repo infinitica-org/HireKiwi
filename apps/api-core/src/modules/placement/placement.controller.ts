@@ -456,9 +456,15 @@ export class PlacementController {
     @Param('applicationId') applicationId: string,
     @Body() body: unknown,
     @TenantId() institutionId: string,
+    @CurrentUser() user?: RequestUser,
   ): Promise<ApplicationDto> {
     const parsed = PatchApplicationStageRequestSchema.parse(body);
-    return this.service.patchApplicationStage(institutionId, applicationId, parsed.stage);
+    return this.service.patchApplicationStage(
+      institutionId,
+      applicationId,
+      parsed.stage,
+      user?.sub,
+    );
   }
 
   @Get('applications/:applicationId/confidence')
@@ -498,8 +504,9 @@ export class PlacementController {
   async sendToCompany(
     @Param('applicationId') applicationId: string,
     @TenantId() institutionId: string,
+    @CurrentUser() user?: RequestUser,
   ): Promise<ApplicationDto> {
-    return this.service.sendToCompany(institutionId, applicationId);
+    return this.service.sendToCompany(institutionId, applicationId, user?.sub);
   }
 
   @Post('outcomes')

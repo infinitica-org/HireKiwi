@@ -99,12 +99,12 @@ export const ROLE_RATE_LIMITS: readonly RateLimitPolicy[] = [
   {
     key: 'role.company',
     scope: 'USER',
-    limit: 100,
+    limit: 150,
     windowSeconds: 60,
-    burst: 25,
+    burst: 40,
     redisKey: 'rl:company:{id}',
     rationale:
-      'Employer portal search, candidate inspection, job management, and subscription operations.',
+      'Company recruiters managing job openings, candidate evaluations, interview slots, and subscription operations.',
   },
 ] as const;
 

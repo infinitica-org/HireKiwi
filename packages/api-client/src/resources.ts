@@ -1,3 +1,65 @@
+import {
+  AdminConversationViewSchema,
+  DeleteMessageResponseSchema,
+  ListBlocksResponseSchema,
+  ListConversationsResponseSchema,
+  ListMessagesResponseSchema,
+  MarkReadResponseSchema,
+  MuteConversationResponseSchema,
+  SearchMessagesResponseSchema,
+  SendMessageResponseSchema,
+  UnreadCountResponseSchema,
+  BlockedUserSchema,
+  type AdminConversationQuery,
+  type ListConversationsQuery,
+  type ListMessagesQuery,
+  type SearchMessagesQuery,
+  type SendMessageRequest,
+  type StartConversationRequest,
+} from '@smart/contracts';
+import {
+  ApplicationOutcomeSchema,
+  AssignRecruiterResponseSchema,
+  CandidateNoteSchema,
+  ListCandidateNotesResponseSchema,
+  TransitionApplicationResponseSchema,
+  type AddCandidateNoteRequest,
+  type AssignRecruiterRequest,
+  type RecordApplicationOutcomeRequest,
+  type TransitionApplicationRequest,
+  ApplicationPreviewSchema,
+  ApplyToJobResponseSchema,
+  ListEmployerApplicantsResponseSchema,
+  ListStudentApplicationsResponseSchema,
+  StudentApplicationDetailSchema,
+  type ApplyToJobRequest,
+  type ListEmployerApplicantsQuery,
+  type WithdrawApplicationRequest,
+} from '@smart/contracts';
+import {
+  JobFlagResponseSchema,
+  ListSavedJobsResponseSchema,
+  ListStudentJobsResponseSchema,
+  ReportSchema,
+  StudentJobDetailSchema,
+  type CreateReportRequest,
+  type HideJobRequest,
+  type ListStudentJobsQuery,
+} from '@smart/contracts';
+import {
+  CompanyMemberSchema,
+  CompanyProfileSchema,
+  ListCompanyMembersResponseSchema,
+  CompanyReviewSchema,
+  ListCompanyReviewsResponseSchema,
+  type RespondToReviewRequest,
+  type CreateCompanyReviewRequest,
+  LocationSearchResponseSchema,
+  type DeactivateCompanyMemberRequest,
+  type InviteRecruiterRequest,
+  type UpdateCompanyMemberRoleRequest,
+  type UpdateCompanyProfileRequest,
+} from '@smart/contracts';
 import type {
   AddCertificateSkillsRequest,
   AuditLogSection,
@@ -92,6 +154,7 @@ import type {
   VerifyPaymentDto,
   UpgradePlanDto,
   DowngradePlanDto,
+  ResolveEvidenceDisputeRequest,
 } from '@smart/contracts';
 import {
   API_PREFIX,
@@ -111,6 +174,8 @@ import {
   VerificationEventDtoSchema,
   AiHealthDtoSchema,
   AiUsageSummaryDtoSchema,
+  AdverseImpactReportDtoSchema,
+  ListAiAuditLogsResponseSchema,
   AttemptSessionDtoSchema,
   BlobWsPayloadSchema,
   CompleteAttemptResponseSchema,
@@ -208,6 +273,9 @@ import {
   ProjectSkillMappingDtoSchema,
   VerificationDecisionDtoSchema,
   EvidenceSkillDisputeResponseSchema,
+  EvidenceSkillDisputeRowSchema,
+  ResolveEvidenceDisputeResponseSchema,
+  MatchFitDtoSchema,
   SkillVerifyInterviewDtoSchema,
   SkillVerifyPrepareDtoSchema,
   SkillVerifySessionDtoSchema,
@@ -288,6 +356,11 @@ import {
   VoidWorkExperienceResponseSchema,
   ApproveWorkExperienceAuthenticityResponseSchema,
   VoidCandidateCertificateResponseSchema,
+  type ToggleModelVersionRequest,
+  type ToggleModelVersionResponse,
+  ToggleModelVersionResponseSchema,
+  ListRegisteredPromptsResponseSchema,
+  type CorrectStudentCapabilityRequest,
 } from '@smart/contracts';
 import { z } from 'zod';
 import type { SmartApiClient } from './client.js';
@@ -1420,6 +1493,17 @@ export function evidenceApi(client: SmartApiClient) {
       client.post(prefixed('/users/me/evidence-skill-disputes'), body, {
         schema: EvidenceSkillDisputeResponseSchema,
       }),
+
+    listAdminEvidenceSkillDisputes: (query?: { status?: string }) =>
+      client.get(prefixed('/admin/evidence-skill-disputes'), {
+        schema: z.array(EvidenceSkillDisputeRowSchema),
+        query,
+      }),
+
+    resolveAdminEvidenceSkillDispute: (disputeId: string, body: ResolveEvidenceDisputeRequest) =>
+      client.post(prefixed(`/admin/evidence-skill-disputes/${disputeId}/resolve`), body, {
+        schema: ResolveEvidenceDisputeResponseSchema,
+      }),
   };
 }
 
@@ -1675,6 +1759,11 @@ export function placementApi(client: SmartApiClient) {
     /** Candidate My Applications. Identity is the access token; no studentId query. */
     listMyApplications: () =>
       client.get(prefixed('/me/applications'), { schema: ListMyApplicationsResponseSchema }),
+
+    getApplicationFit: (applicationId: string) =>
+      client.get(prefixed(`/me/applications/${applicationId}/fit`), {
+        schema: MatchFitDtoSchema,
+      }),
 
     getCandidateEvidenceProvenance: (studentId: string) =>
       client.get(prefixed(`/placement/candidates/${studentId}/evidence`), {
@@ -1953,6 +2042,41 @@ export function evaluationApi(client: SmartApiClient) {
         schema: RunSdeSkillFormCodeResponseSchema,
         timeoutMs: 60_000,
       }),
+
+    listRegisteredPrompts: () =>
+      client.get(prefixed('/admin/ai-prompts'), {
+        schema: ListRegisteredPromptsResponseSchema,
+      }),
+
+    listAiAuditLogs: () =>
+      client.get(prefixed('/admin/ai-audit-logs'), {
+        schema: ListAiAuditLogsResponseSchema,
+      }),
+
+    getAdverseImpact: (params?: { trackCode?: string; levelNumber?: number }) => {
+      const q = new URLSearchParams();
+      if (params?.trackCode) q.set('trackCode', params.trackCode);
+      if (params?.levelNumber) q.set('levelNumber', String(params.levelNumber));
+      const qs = q.toString();
+      return client.get(prefixed(`/analytics/adverse-impact${qs ? `?${qs}` : ''}`), {
+        schema: AdverseImpactReportDtoSchema,
+      });
+    },
+
+    toggleModelVersion: (body: ToggleModelVersionRequest) =>
+      client.post<ToggleModelVersionResponse>(prefixed('/admin/ai-models/toggle'), body, {
+        schema: ToggleModelVersionResponseSchema,
+      }),
+
+    listCapabilityReviewQueue: (limit = 50) =>
+      client.get(prefixed(`/admin/student-capabilities/review-queue?limit=${limit}`), {
+        schema: ListCapabilityInferenceReviewQueueResponseSchema,
+      }),
+
+    correctCapability: (capabilityId: string, body: CorrectStudentCapabilityRequest) =>
+      client.post(prefixed(`/admin/student-capabilities/${capabilityId}/correct`), body, {
+        schema: CorrectStudentCapabilityResponseSchema,
+      }),
   };
 }
 
@@ -2106,6 +2230,313 @@ export function billingApi(client: SmartApiClient) {
   };
 }
 
+/** EMP-02 — company profile and team. Mutations carry an Idempotency-Key so a retry never repeats. */
+function employerApi(client: SmartApiClient) {
+  const mutate = (key: string, extra: Record<string, string> = {}) => ({
+    headers: { 'idempotency-key': key, ...extra },
+  });
+  return {
+    getCompany: () => client.get(prefixed('/employer/company'), { schema: CompanyProfileSchema }),
+
+    updateCompany: (params: {
+      body: UpdateCompanyProfileRequest;
+      version: number;
+      idempotencyKey: string;
+    }) =>
+      client.patch(prefixed('/employer/company'), params.body, {
+        schema: CompanyProfileSchema,
+        ...mutate(params.idempotencyKey, { 'if-match': String(params.version) }),
+      }),
+
+    uploadLogo: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return client.postForm(prefixed('/employer/company/logo/upload'), formData, {
+        schema: z.object({ logoFileId: z.string(), previewUrl: z.string() }),
+      });
+    },
+
+    searchLocations: (q: string) =>
+      client.get(prefixed('/locations/search'), {
+        query: { q },
+        schema: LocationSearchResponseSchema,
+      }),
+
+    listReviews: () =>
+      client.get(prefixed('/employer/reviews'), { schema: ListCompanyReviewsResponseSchema }),
+
+    respondToReview: (reviewId: string, body: RespondToReviewRequest, idempotencyKey: string) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed(`/employer/reviews/${reviewId}/response`),
+        body,
+        schema: CompanyReviewSchema,
+        ...mutate(idempotencyKey),
+      }),
+
+    /** Move an applicant to another stage. 409 = someone else moved it; 422 = not an allowed move. */
+    transitionApplication: (
+      applicationId: string,
+      body: TransitionApplicationRequest,
+      idempotencyKey: string,
+    ) =>
+      client.post(prefixed(`/employer/applications/${applicationId}/transition`), body, {
+        schema: TransitionApplicationResponseSchema,
+        ...mutate(idempotencyKey),
+      }),
+
+    listCandidateNotes: (applicationId: string) =>
+      client.get(prefixed(`/employer/applications/${applicationId}/notes`), {
+        schema: ListCandidateNotesResponseSchema,
+      }),
+
+    addCandidateNote: (
+      applicationId: string,
+      body: AddCandidateNoteRequest,
+      idempotencyKey: string,
+    ) =>
+      client.post(prefixed(`/employer/applications/${applicationId}/notes`), body, {
+        schema: CandidateNoteSchema,
+        ...mutate(idempotencyKey),
+      }),
+
+    assignRecruiter: (
+      applicationId: string,
+      body: AssignRecruiterRequest,
+      idempotencyKey: string,
+    ) =>
+      client.post(prefixed(`/employer/applications/${applicationId}/assignee`), body, {
+        schema: AssignRecruiterResponseSchema,
+        ...mutate(idempotencyKey),
+      }),
+
+    recordOutcome: (
+      applicationId: string,
+      body: RecordApplicationOutcomeRequest,
+      idempotencyKey: string,
+    ) =>
+      client.post(prefixed(`/employer/applications/${applicationId}/outcome`), body, {
+        schema: ApplicationOutcomeSchema,
+        ...mutate(idempotencyKey),
+      }),
+
+    listApplicants: (jobId: string, query: Partial<ListEmployerApplicantsQuery> = {}) =>
+      client.get(prefixed(`/employer/jobs/${jobId}/applicants`), {
+        query: {
+          status: query.status,
+          sort: query.sort,
+          cursor: query.cursor,
+          limit: query.limit,
+        },
+        schema: ListEmployerApplicantsResponseSchema,
+      }),
+
+    listMembers: () =>
+      client.get(prefixed('/employer/members'), { schema: ListCompanyMembersResponseSchema }),
+
+    inviteRecruiter: (body: InviteRecruiterRequest, idempotencyKey: string) =>
+      client.post(prefixed('/employer/invitations'), body, {
+        schema: z.object({ invitationId: z.string(), email: z.string() }),
+        ...mutate(idempotencyKey),
+      }),
+
+    changeMemberRole: (
+      memberId: string,
+      body: UpdateCompanyMemberRoleRequest,
+      idempotencyKey: string,
+    ) =>
+      client.patch(prefixed(`/employer/members/${memberId}`), body, {
+        schema: CompanyMemberSchema,
+        ...mutate(idempotencyKey),
+      }),
+
+    deactivateMember: (
+      memberId: string,
+      body: DeactivateCompanyMemberRequest,
+      idempotencyKey: string,
+    ) =>
+      client.post(prefixed(`/employer/members/${memberId}/deactivate`), body, {
+        schema: CompanyMemberSchema,
+        ...mutate(idempotencyKey),
+      }),
+
+    reactivateMember: (memberId: string, idempotencyKey: string) =>
+      client.post(prefixed(`/employer/members/${memberId}/reactivate`), undefined, {
+        schema: CompanyMemberSchema,
+        ...mutate(idempotencyKey),
+      }),
+  };
+}
+
+/** APP-01 — student applications. Apply and withdraw carry an Idempotency-Key. */
+function studentApplicationsApi(client: SmartApiClient) {
+  return {
+    preview: (jobId: string) =>
+      client.get(prefixed(`/student/jobs/${jobId}/application-preview`), {
+        schema: ApplicationPreviewSchema,
+      }),
+    apply: (jobId: string, body: ApplyToJobRequest, idempotencyKey: string) =>
+      client.post(prefixed(`/student/jobs/${jobId}/applications`), body, {
+        schema: ApplyToJobResponseSchema,
+        headers: { 'idempotency-key': idempotencyKey },
+      }),
+    list: () =>
+      client.get(prefixed('/student/applications'), {
+        schema: ListStudentApplicationsResponseSchema,
+      }),
+    detail: (applicationId: string) =>
+      client.get(prefixed(`/student/applications/${applicationId}`), {
+        schema: StudentApplicationDetailSchema,
+      }),
+    withdraw: (applicationId: string, body: WithdrawApplicationRequest, idempotencyKey: string) =>
+      client.post(prefixed(`/student/applications/${applicationId}/withdraw`), body, {
+        schema: StudentApplicationDetailSchema,
+        headers: { 'idempotency-key': idempotencyKey },
+      }),
+  };
+}
+
+/** JOB-02 — student job discovery. PUT/DELETE are idempotent; the report POST carries a key. */
+function studentJobsApi(client: SmartApiClient) {
+  return {
+    list: (query: Partial<ListStudentJobsQuery> = {}) =>
+      client.get(prefixed('/student/jobs'), {
+        query: {
+          fit: query.fit,
+          type: query.type,
+          location: query.location,
+          mode: query.mode,
+          cursor: query.cursor,
+          limit: query.limit,
+        },
+        schema: ListStudentJobsResponseSchema,
+      }),
+    detail: (jobId: string) =>
+      client.get(prefixed(`/student/jobs/${jobId}`), { schema: StudentJobDetailSchema }),
+    listSaved: () =>
+      client.get(prefixed('/student/saved-jobs'), { schema: ListSavedJobsResponseSchema }),
+    save: (jobId: string) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed(`/student/saved-jobs/${jobId}`),
+        schema: JobFlagResponseSchema,
+      }),
+    unsave: (jobId: string) =>
+      client.delete(prefixed(`/student/saved-jobs/${jobId}`), { schema: JobFlagResponseSchema }),
+    hide: (jobId: string, body: HideJobRequest = {}) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed(`/student/hidden-jobs/${jobId}`),
+        body,
+        schema: JobFlagResponseSchema,
+      }),
+    unhide: (jobId: string) =>
+      client.delete(prefixed(`/student/hidden-jobs/${jobId}`), { schema: JobFlagResponseSchema }),
+    report: (body: CreateReportRequest, idempotencyKey: string) =>
+      client.post(prefixed('/reports'), body, {
+        schema: ReportSchema,
+        headers: { 'idempotency-key': idempotencyKey },
+      }),
+  };
+}
+
+/** Public company profile (verified companies only; anyone may read). */
+function companiesApi(client: SmartApiClient) {
+  return {
+    /** A student reviews a company they applied to (Th6-355). */
+    createReview: (body: CreateCompanyReviewRequest, idempotencyKey: string) =>
+      client.post(prefixed('/me/company-reviews'), body, {
+        schema: CompanyReviewSchema,
+        headers: { 'idempotency-key': idempotencyKey },
+      }),
+
+    getPublic: (idOrSlug: string) =>
+      client.get(prefixed(`/companies/${encodeURIComponent(idOrSlug)}`), {
+        schema: CompanyProfileSchema,
+        anonymous: true,
+      }),
+  };
+}
+
+/** COM-01 — direct messaging (Th6-422 to Th6-430). Every write takes the caller's Idempotency-Key. */
+function messagingApi(client: SmartApiClient) {
+  const key = (idempotencyKey: string) => ({ headers: { 'idempotency-key': idempotencyKey } });
+  return {
+    /** Th6-422 — start a conversation (or add to the existing one). */
+    start: (body: StartConversationRequest, idempotencyKey: string) =>
+      client.post(prefixed('/conversations'), body, {
+        schema: SendMessageResponseSchema,
+        ...key(idempotencyKey),
+      }),
+    /** Th6-424 — my conversations, newest activity first. */
+    listConversations: (query?: Partial<ListConversationsQuery>) =>
+      client.request({
+        method: 'GET',
+        path: prefixed('/conversations'),
+        query,
+        schema: ListConversationsResponseSchema,
+      }),
+    send: (conversationId: string, body: SendMessageRequest, idempotencyKey: string) =>
+      client.post(prefixed(`/conversations/${conversationId}/messages`), body, {
+        schema: SendMessageResponseSchema,
+        ...key(idempotencyKey),
+      }),
+    listMessages: (conversationId: string, query?: Partial<ListMessagesQuery>) =>
+      client.request({
+        method: 'GET',
+        path: prefixed(`/conversations/${conversationId}/messages`),
+        query,
+        schema: ListMessagesResponseSchema,
+      }),
+    deleteMessage: (conversationId: string, messageId: string) =>
+      client.delete(prefixed(`/conversations/${conversationId}/messages/${messageId}`), {
+        schema: DeleteMessageResponseSchema,
+      }),
+    markRead: (conversationId: string) =>
+      client.post(
+        prefixed(`/conversations/${conversationId}/read`),
+        {},
+        {
+          schema: MarkReadResponseSchema,
+        },
+      ),
+    setMuted: (conversationId: string, muted: boolean) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed(`/conversations/${conversationId}/mute`),
+        body: { muted },
+        schema: MuteConversationResponseSchema,
+      }),
+    /** Th6-425 */
+    search: (query: Partial<SearchMessagesQuery> & { q: string }) =>
+      client.request({
+        method: 'GET',
+        path: prefixed('/messages/search'),
+        query,
+        schema: SearchMessagesResponseSchema,
+      }),
+    /** Th6-426 */
+    unreadCount: () =>
+      client.get(prefixed('/me/unread-count'), { schema: UnreadCountResponseSchema }),
+    /** Th6-427 */
+    listBlocks: () => client.get(prefixed('/blocks'), { schema: ListBlocksResponseSchema }),
+    block: (userId: string) =>
+      client.post(prefixed('/blocks'), { userId }, { schema: BlockedUserSchema }),
+    unblock: (userId: string) => client.delete(prefixed(`/blocks/${userId}`)),
+    /** Th6-427 — report a message (targetType MESSAGE); a repeat returns the existing report. */
+    reportMessage: (body: CreateReportRequest, idempotencyKey: string) =>
+      client.post(prefixed('/reports'), body, { schema: ReportSchema, ...key(idempotencyKey) }),
+    /** Th6-430 — moderators only; the reason is audited. */
+    adminConversation: (reportId: string, query: AdminConversationQuery) =>
+      client.request({
+        method: 'GET',
+        path: prefixed(`/admin/reports/${reportId}/conversation`),
+        query,
+        schema: AdminConversationViewSchema,
+      }),
+  };
+}
+
 export function createSmartApi(client: SmartApiClient) {
   return {
     auth: authApi(client),
@@ -2126,6 +2557,11 @@ export function createSmartApi(client: SmartApiClient) {
     trust: trustApi(client),
     support: supportApi(client),
     billing: billingApi(client),
+    employer: employerApi(client),
+    companies: companiesApi(client),
+    studentJobs: studentJobsApi(client),
+    studentApplications: studentApplicationsApi(client),
+    messaging: messagingApi(client),
   };
 }
 

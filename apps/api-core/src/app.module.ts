@@ -18,6 +18,10 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { CalibrationModule } from './modules/calibration/calibration.module.js';
 import { CandidateCertificatesModule } from './modules/candidate-certificates/candidate-certificates.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
+import { ApplicationsModule } from './modules/applications/applications.module.js';
+import { MessagingModule } from './modules/messaging/messaging.module.js';
+import { StudentJobsModule } from './modules/student-jobs/student-jobs.module.js';
+import { CompanyProfileModule } from './modules/company-profile/company-profile.module.js';
 import { CertificateModule } from './modules/certificate/certificate.module.js';
 import { CorroborationModule } from './modules/corroboration/corroboration.module.js';
 import { EvidenceModule } from './modules/evidence/evidence.module.js';
@@ -25,6 +29,7 @@ import { SignalIngestionModule } from './modules/signal-ingestion/signal-ingesti
 import { EvaluationModule } from './modules/evaluation/evaluation.module.js';
 import { SignalEncoderModule } from './modules/signal-encoder/signal-encoder.module.js';
 import { InstitutionsModule } from './modules/institutions/institutions.module.js';
+import { InterviewsModule } from './modules/interviews/interviews.module.js';
 import { MatchingModule } from './modules/matching/matching.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { PlacementModule } from './modules/placement/placement.module.js';
@@ -78,10 +83,15 @@ import { StorageModule } from './platform/storage/storage.module.js';
     UsersModule,
     UsernameModule,
     AccountModule,
+    CompanyProfileModule,
+    StudentJobsModule,
+    ApplicationsModule,
+    MessagingModule,
     DashboardModule,
     ReadinessModule,
     WorkExperienceModule,
     InstitutionsModule,
+    InterviewsModule,
     CatalogModule,
     AssessmentModule,
     SandboxModule,
