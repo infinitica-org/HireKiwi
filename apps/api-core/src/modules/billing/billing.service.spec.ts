@@ -1502,4 +1502,344 @@ describe('BillingService', () => {
       }
     });
   });
+
+  describe('Ticket 4 — Payment Method Replacement Flow', () => {
+    const mockActiveSub = {
+      id: 's0000000-0000-0000-0000-000000000001',
+      companyId: mockCompany.id,
+      planId: mockProPlan.id,
+      pendingPlanId: null,
+      razorpaySubscriptionId: 'sub_old_123',
+      status: 'ACTIVE',
+      billingInterval: 'MONTHLY',
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: new Date(Date.now() + 30 * 86400 * 1000),
+      cancelAtPeriodEnd: false,
+      canceledAt: null,
+      gracePeriodEndsAt: null,
+      isEnterpriseContract: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      plan: mockProPlan,
+      pendingPlan: null,
+    };
+
+    it('creates replacement session sub_new without mutating sub_old in database', async () => {
+      prismaMock.company.findUnique.mockResolvedValue(mockCompany);
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockActiveSub);
+      razorpayMock.createSubscription.mockResolvedValue({
+        providerSubscriptionId: 'sub_new_456',
+      });
+
+      const res = await service.createPaymentMethodReplacementSession('user-1', mockCompany.id);
+
+      expect(res.subscriptionId).toBe(mockActiveSub.id);
+      expect(res.razorpaySubscriptionId).toBe('sub_new_456');
+      expect(res.companyName).toBe('Acme Corp');
+
+      expect(razorpayMock.createSubscription).toHaveBeenCalledWith({
+        planCode: 'PRO',
+        billingInterval: 'MONTHLY',
+        amountInr: 7500,
+        companyId: mockCompany.id,
+        notes: {
+          company_id: mockCompany.id,
+          purpose: 'payment_method_replacement',
+          previous_subscription_id: 'sub_old_123',
+        },
+      });
+
+      // Database is NOT updated yet
+      expect(prismaMock.employerSubscription.update).not.toHaveBeenCalled();
+
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.payment_method_replacement_requested',
+          metadata: expect.objectContaining({
+            companyId: mockCompany.id,
+            previousSubscriptionId: 'sub_old_123',
+            replacementSubscriptionId: 'sub_new_456',
+          }),
+        }),
+      );
+    });
+
+    it('rejects replacement session creation for FREE plan', async () => {
+      prismaMock.company.findUnique.mockResolvedValue(mockCompany);
+      prismaMock.employerSubscription.findUnique.mockResolvedValue({
+        ...mockActiveSub,
+        plan: mockFreePlan,
+      });
+
+      await expect(
+        service.createPaymentMethodReplacementSession('user-1', mockCompany.id),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('verifies sub_new, cancels sub_old, and updates database atomically', async () => {
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockActiveSub);
+      prismaMock.paymentTransaction.findUnique.mockResolvedValue(null);
+      razorpayMock.verifyCheckoutSignature.mockReturnValue(true);
+      razorpayMock.fetchSubscription.mockResolvedValue({
+        id: 'sub_new_456',
+        status: 'authenticated',
+        notes: { company_id: mockCompany.id },
+      });
+      razorpayMock.fetchPayment.mockResolvedValue({ id: 'pay_new_789', status: 'captured' });
+      razorpayMock.cancelSubscription.mockResolvedValue({});
+
+      const updatedSub = {
+        ...mockActiveSub,
+        razorpaySubscriptionId: 'sub_new_456',
+        status: 'ACTIVE',
+      };
+      prismaMock.employerSubscription.update.mockResolvedValue(updatedSub);
+      prismaMock.paymentTransaction.create.mockResolvedValue({ id: 'tx-1' });
+
+      const res = await service.verifyPaymentMethodReplacement('user-1', mockCompany.id, {
+        razorpayPaymentId: 'pay_new_789',
+        razorpaySubscriptionId: 'sub_new_456',
+        razorpaySignature: 'sig_valid_replacement',
+      });
+
+      expect(res.razorpaySubscriptionId).toBe('sub_new_456');
+
+      // Verifies sub_old cancellation was called immediately
+      expect(razorpayMock.cancelSubscription).toHaveBeenCalledWith({
+        razorpaySubscriptionId: 'sub_old_123',
+        cancelAtCycleEnd: false,
+      });
+
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockActiveSub.id },
+          data: expect.objectContaining({
+            razorpaySubscriptionId: 'sub_new_456',
+            status: 'ACTIVE',
+          }),
+        }),
+      );
+
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.payment_method_replaced',
+        }),
+      );
+    });
+
+    it('rejects cross-company sub_new during replacement verification', async () => {
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockActiveSub);
+      prismaMock.paymentTransaction.findUnique.mockResolvedValue(null);
+      razorpayMock.verifyCheckoutSignature.mockReturnValue(true);
+      razorpayMock.fetchSubscription.mockResolvedValue({
+        id: 'sub_new_456',
+        status: 'authenticated',
+        notes: { company_id: mockOtherCompany.id }, // Belongs to Other Corp!
+      });
+
+      await expect(
+        service.verifyPaymentMethodReplacement('user-1', mockCompany.id, {
+          razorpayPaymentId: 'pay_new_789',
+          razorpaySubscriptionId: 'sub_new_456',
+          razorpaySignature: 'sig_valid',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('handles sub_old cancellation failure gracefully while preserving sub_new', async () => {
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockActiveSub);
+      prismaMock.paymentTransaction.findUnique.mockResolvedValue(null);
+      razorpayMock.verifyCheckoutSignature.mockReturnValue(true);
+      razorpayMock.fetchSubscription.mockResolvedValue({
+        id: 'sub_new_456',
+        status: 'authenticated',
+        notes: { company_id: mockCompany.id },
+      });
+      razorpayMock.fetchPayment.mockResolvedValue({ id: 'pay_new_789', status: 'captured' });
+      razorpayMock.cancelSubscription.mockRejectedValue(new Error('Razorpay 500 network error'));
+
+      const updatedSub = {
+        ...mockActiveSub,
+        razorpaySubscriptionId: 'sub_new_456',
+      };
+      prismaMock.employerSubscription.update.mockResolvedValue(updatedSub);
+      prismaMock.paymentTransaction.create.mockResolvedValue({ id: 'tx-1' });
+
+      const res = await service.verifyPaymentMethodReplacement('user-1', mockCompany.id, {
+        razorpayPaymentId: 'pay_new_789',
+        razorpaySubscriptionId: 'sub_new_456',
+        razorpaySignature: 'sig_valid',
+      });
+
+      expect(res.razorpaySubscriptionId).toBe('sub_new_456');
+
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.old_subscription_cancellation_failed',
+        }),
+      );
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.payment_method_replaced',
+        }),
+      );
+    });
+
+    it('webhook resolves replacement sub_new via provider notes when DB still holds sub_old', async () => {
+      razorpayMock.verifyWebhookSignature.mockReturnValue(true);
+      redisMock.set.mockResolvedValue('OK');
+
+      // Initial DB lookup by sub_new returns null because DB still points to sub_old
+      prismaMock.employerSubscription.findFirst.mockResolvedValue(null);
+
+      // Webhook fetches sub_new authoritatively from provider
+      razorpayMock.fetchSubscription.mockResolvedValue({
+        id: 'sub_new_456',
+        status: 'authenticated',
+        notes: {
+          company_id: mockCompany.id,
+          purpose: 'payment_method_replacement',
+        },
+      });
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockActiveSub);
+      prismaMock.employerSubscription.update.mockResolvedValue({
+        ...mockActiveSub,
+        razorpaySubscriptionId: 'sub_new_456',
+      });
+      razorpayMock.cancelSubscription.mockResolvedValue({});
+
+      const payload = {
+        id: 'evt_replacement_wh_1',
+        event: 'subscription.authenticated',
+        payload: {
+          subscription: {
+            entity: {
+              id: 'sub_new_456',
+            },
+          },
+        },
+      };
+
+      const result = await service.handleWebhook(JSON.stringify(payload), 'valid_sig');
+
+      expect(result.processed).toBe(true);
+      expect(razorpayMock.cancelSubscription).toHaveBeenCalledWith({
+        razorpaySubscriptionId: 'sub_old_123',
+        cancelAtCycleEnd: false,
+      });
+      expect(prismaMock.employerSubscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockActiveSub.id },
+          data: expect.objectContaining({
+            razorpaySubscriptionId: 'sub_new_456',
+            status: 'ACTIVE',
+          }),
+        }),
+      );
+      expect(auditPublisherMock.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'billing.payment_method_replaced',
+          reasonCode: 'WEBHOOK_REPLACEMENT_CONFIRMED',
+        }),
+      );
+    });
+
+    it('webhook replacement creates payment transaction when payment entity is present in payload', async () => {
+      razorpayMock.verifyWebhookSignature.mockReturnValue(true);
+      redisMock.set.mockResolvedValue('OK');
+
+      prismaMock.employerSubscription.findFirst.mockResolvedValue(null);
+
+      razorpayMock.fetchSubscription.mockResolvedValue({
+        id: 'sub_new_456',
+        status: 'authenticated',
+        notes: {
+          company_id: mockCompany.id,
+          purpose: 'payment_method_replacement',
+          previous_subscription_id: 'sub_old_123',
+        },
+      });
+
+      prismaMock.employerSubscription.findUnique.mockResolvedValue(mockActiveSub);
+      prismaMock.employerSubscription.update.mockResolvedValue({
+        ...mockActiveSub,
+        razorpaySubscriptionId: 'sub_new_456',
+      });
+      prismaMock.paymentTransaction.findUnique.mockResolvedValue(null);
+      prismaMock.paymentTransaction.create.mockResolvedValue({ id: 'tx-wh-1' });
+      razorpayMock.cancelSubscription.mockResolvedValue({});
+
+      const payload = {
+        id: 'evt_replacement_wh_2',
+        event: 'subscription.authenticated',
+        payload: {
+          subscription: {
+            entity: {
+              id: 'sub_new_456',
+            },
+          },
+          payment: {
+            entity: {
+              id: 'pay_wh_999',
+              amount: 750000, // 7500 INR in paise
+            },
+          },
+        },
+      };
+
+      const result = await service.handleWebhook(JSON.stringify(payload), 'valid_sig');
+
+      expect(result.processed).toBe(true);
+      expect(prismaMock.paymentTransaction.create).toHaveBeenCalledWith({
+        data: {
+          companyId: mockCompany.id,
+          subscriptionId: mockActiveSub.id,
+          razorpayPaymentId: 'pay_wh_999',
+          amountInr: 7500,
+          status: 'SUCCESS',
+        },
+      });
+    });
+
+    it('webhook ignores stale replacement session when previous_subscription_id does not match DB', async () => {
+      razorpayMock.verifyWebhookSignature.mockReturnValue(true);
+      redisMock.set.mockResolvedValue('OK');
+
+      prismaMock.employerSubscription.findFirst.mockResolvedValue(null);
+
+      razorpayMock.fetchSubscription.mockResolvedValue({
+        id: 'sub_stale_web_1',
+        status: 'authenticated',
+        notes: {
+          company_id: mockCompany.id,
+          purpose: 'payment_method_replacement',
+          previous_subscription_id: 'sub_old_123',
+        },
+      });
+
+      // DB has already moved to sub_latest_999
+      prismaMock.employerSubscription.findUnique.mockResolvedValue({
+        ...mockActiveSub,
+        razorpaySubscriptionId: 'sub_latest_999',
+      });
+
+      const payload = {
+        id: 'evt_replacement_stale',
+        event: 'subscription.authenticated',
+        payload: {
+          subscription: {
+            entity: {
+              id: 'sub_stale_web_1',
+            },
+          },
+        },
+      };
+
+      const result = await service.handleWebhook(JSON.stringify(payload), 'valid_sig');
+
+      expect(result.processed).toBe(true);
+      expect(prismaMock.employerSubscription.update).not.toHaveBeenCalled();
+    });
+  });
 });

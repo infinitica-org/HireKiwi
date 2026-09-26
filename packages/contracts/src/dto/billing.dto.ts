@@ -124,6 +124,18 @@ export const DowngradePlanSchema = z.object({
 });
 export type DowngradePlanDto = z.infer<typeof DowngradePlanSchema>;
 
+export const ReplacePaymentMethodSchema = z.object({}).optional();
+export type ReplacePaymentMethodDto = z.infer<typeof ReplacePaymentMethodSchema>;
+
+export const VerifyPaymentMethodReplacementSchema = z.object({
+  razorpayPaymentId: z.string().min(1),
+  razorpaySubscriptionId: z.string().min(1),
+  razorpaySignature: z.string().min(1),
+});
+export type VerifyPaymentMethodReplacementDto = z.infer<
+  typeof VerifyPaymentMethodReplacementSchema
+>;
+
 /* -------------------------------------------------------------------------- */
 /*                              Invoice DTOs                                  */
 /* -------------------------------------------------------------------------- */

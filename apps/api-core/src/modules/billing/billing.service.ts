@@ -12,6 +12,7 @@ import type {
   EmployerSubscriptionDto,
   EmployerSubscriptionStatus,
   VerifyPaymentDto,
+  VerifyPaymentMethodReplacementDto,
   UpgradePlanDto,
   DowngradePlanDto,
   PlanCode,
@@ -794,6 +795,305 @@ export class BillingService {
     }
   }
 
+  /**
+   * Provisions a replacement Razorpay subscription (sub_new) for updating an employer's payment details.
+   * Does NOT mutate local subscription ID or cancel sub_old until sub_new is authoritatively verified.
+   */
+  async createPaymentMethodReplacementSession(
+    userId: string,
+    companyId: string,
+  ): Promise<CheckoutSessionResponseDto> {
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+    });
+    if (!company) {
+      throw new BadRequestException({
+        error: 'company_not_found',
+        message: 'Company profile not found for authenticated user.',
+        statusCode: 400,
+      });
+    }
+
+    const subscription = await this.prisma.employerSubscription.findUnique({
+      where: { companyId },
+      include: { plan: true },
+    });
+
+    if (!subscription) {
+      throw new BadRequestException({
+        error: 'subscription_not_found',
+        message: 'No subscription found to update payment details.',
+        statusCode: 400,
+      });
+    }
+
+    if (subscription.plan.code === 'FREE') {
+      throw new BadRequestException({
+        error: 'invalid_plan_for_payment_update',
+        message: 'FREE plan does not have an active paid subscription or payment details.',
+        statusCode: 400,
+      });
+    }
+
+    if (subscription.plan.code === 'ENTERPRISE' || subscription.plan.isCustomPrice) {
+      throw new BadRequestException({
+        error: 'enterprise_contact_required',
+        message:
+          'Enterprise custom plans require account representative assistance for billing changes.',
+        statusCode: 400,
+      });
+    }
+
+    const eligibleStatuses = ['ACTIVE', 'GRACE_PERIOD', 'PAST_DUE'];
+    if (!eligibleStatuses.includes(subscription.status)) {
+      throw new BadRequestException({
+        error: 'invalid_subscription_state',
+        message: `Subscription in '${subscription.status}' status cannot update payment method.`,
+        statusCode: 400,
+      });
+    }
+
+    const amountInr =
+      subscription.billingInterval === 'ANNUAL'
+        ? Math.round((subscription.plan.priceInr ?? 0) * 10)
+        : (subscription.plan.priceInr ?? 0);
+
+    const subOld = subscription.razorpaySubscriptionId ?? '';
+
+    const providerResult = await this.razorpayProvider.createSubscription({
+      planCode: subscription.plan.code,
+      billingInterval: subscription.billingInterval as BillingInterval,
+      amountInr,
+      companyId,
+      notes: {
+        company_id: companyId,
+        purpose: 'payment_method_replacement',
+        previous_subscription_id: subOld,
+      },
+    });
+
+    await this.auditPublisher.record({
+      actorId: userId,
+      action: 'billing.payment_method_replacement_requested',
+      resourceType: 'subscription',
+      resourceId: subscription.id,
+      reasonCode: 'PAYMENT_METHOD_REPLACEMENT_INITIATED',
+      metadata: {
+        companyId,
+        previousSubscriptionId: subOld,
+        replacementSubscriptionId: providerResult.providerSubscriptionId,
+        planCode: subscription.plan.code,
+        billingInterval: subscription.billingInterval,
+      },
+    });
+
+    return {
+      subscriptionId: subscription.id,
+      razorpaySubscriptionId: providerResult.providerSubscriptionId,
+      razorpayKeyId: this.razorpayProvider.keyId,
+      amountInr,
+      currency: 'INR',
+      companyName: company.name,
+    };
+  }
+
+  /**
+   * Verifies Razorpay payment signature and authoritative provider state for replacement subscription sub_new.
+   * Cancels sub_old immediately upon successful establishment and updates EmployerSubscription.razorpaySubscriptionId to sub_new.
+   */
+  async verifyPaymentMethodReplacement(
+    userId: string,
+    companyId: string,
+    input: VerifyPaymentMethodReplacementDto,
+  ): Promise<EmployerSubscriptionDto> {
+    const subscription = await this.prisma.employerSubscription.findUnique({
+      where: { companyId },
+      include: { plan: true },
+    });
+
+    if (!subscription) {
+      throw new BadRequestException({
+        error: 'subscription_not_found',
+        message: 'No subscription found for this company.',
+        statusCode: 400,
+      });
+    }
+
+    const eligibleStatuses = ['ACTIVE', 'GRACE_PERIOD', 'PAST_DUE'];
+    if (!eligibleStatuses.includes(subscription.status)) {
+      throw new BadRequestException({
+        error: 'invalid_subscription_state',
+        message: `Subscription in '${subscription.status}' status cannot update payment method.`,
+        statusCode: 400,
+      });
+    }
+
+    const existingTx = await this.prisma.paymentTransaction.findUnique({
+      where: { razorpayPaymentId: input.razorpayPaymentId },
+    });
+    if (existingTx) {
+      if (subscription.razorpaySubscriptionId === input.razorpaySubscriptionId) {
+        return this.toEmployerSubscriptionDto(subscription);
+      }
+      throw new BadRequestException({
+        error: 'payment_already_processed',
+        message: 'This payment transaction has already been verified and processed.',
+        statusCode: 400,
+      });
+    }
+
+    const isValidSignature = this.razorpayProvider.verifyCheckoutSignature({
+      razorpayPaymentId: input.razorpayPaymentId,
+      razorpaySubscriptionId: input.razorpaySubscriptionId,
+      razorpaySignature: input.razorpaySignature,
+    });
+
+    if (!isValidSignature) {
+      throw new BadRequestException({
+        error: 'invalid_payment_signature',
+        message: 'Payment verification failed: invalid signature.',
+        statusCode: 400,
+      });
+    }
+
+    let providerSubscription;
+    try {
+      providerSubscription = await this.razorpayProvider.fetchSubscription(
+        input.razorpaySubscriptionId,
+      );
+    } catch (err) {
+      throw new BadRequestException({
+        error: 'provider_lookup_failed',
+        message: `Failed to verify replacement subscription state with Razorpay: ${(err as Error).message}`,
+        statusCode: 400,
+      });
+    }
+
+    const validProviderStatuses = ['authenticated', 'active'];
+    if (!validProviderStatuses.includes(providerSubscription.status.toLowerCase())) {
+      throw new BadRequestException({
+        error: 'provider_payment_not_authenticated',
+        message: `Replacement subscription status '${providerSubscription.status}' is not authenticated or active with provider.`,
+        statusCode: 400,
+      });
+    }
+
+    const providerCompanyId = providerSubscription.notes?.company_id;
+    if (providerCompanyId && providerCompanyId !== companyId) {
+      throw new BadRequestException({
+        error: 'cross_company_replacement_rejected',
+        message: 'Submitted replacement subscription belongs to a different company account.',
+        statusCode: 400,
+      });
+    }
+
+    const prevSubIdInNotes = providerSubscription.notes?.previous_subscription_id;
+    if (
+      prevSubIdInNotes &&
+      subscription.razorpaySubscriptionId &&
+      subscription.razorpaySubscriptionId !== input.razorpaySubscriptionId &&
+      prevSubIdInNotes !== subscription.razorpaySubscriptionId
+    ) {
+      throw new BadRequestException({
+        error: 'stale_replacement_session',
+        message:
+          'The replacement session is no longer valid because the subscription payment method has already been updated.',
+        statusCode: 400,
+      });
+    }
+
+    let providerPayment;
+    try {
+      providerPayment = await this.razorpayProvider.fetchPayment(input.razorpayPaymentId);
+    } catch (err) {
+      throw new BadRequestException({
+        error: 'provider_payment_lookup_failed',
+        message: `Failed to verify payment state with Razorpay: ${(err as Error).message}`,
+        statusCode: 400,
+      });
+    }
+
+    const validPaymentStatuses = ['captured', 'authorized'];
+    if (!validPaymentStatuses.includes(providerPayment.status.toLowerCase())) {
+      throw new BadRequestException({
+        error: 'provider_payment_not_captured',
+        message: `Payment status '${providerPayment.status}' is not captured or authorized with provider.`,
+        statusCode: 400,
+      });
+    }
+
+    const subOld = subscription.razorpaySubscriptionId;
+
+    if (subOld === input.razorpaySubscriptionId) {
+      return this.toEmployerSubscriptionDto(subscription);
+    }
+
+    if (subOld) {
+      try {
+        await this.razorpayProvider.cancelSubscription({
+          razorpaySubscriptionId: subOld,
+          cancelAtCycleEnd: false,
+        });
+      } catch (err) {
+        this.logger.error(
+          `Failed to cancel old Razorpay subscription '${subOld}' during replacement: ${(err as Error).message}`,
+        );
+        await this.auditPublisher.record({
+          actorId: userId,
+          action: 'billing.old_subscription_cancellation_failed',
+          resourceType: 'subscription',
+          resourceId: subscription.id,
+          reasonCode: 'PROVIDER_OLD_CANCELLATION_ERROR',
+          metadata: {
+            companyId,
+            previousSubscriptionId: subOld,
+            replacementSubscriptionId: input.razorpaySubscriptionId,
+            error: (err as Error).message,
+          },
+        });
+      }
+    }
+
+    const amountInr = subscription.plan.priceInr ?? 0;
+
+    await this.prisma.paymentTransaction.create({
+      data: {
+        companyId,
+        subscriptionId: subscription.id,
+        razorpayPaymentId: input.razorpayPaymentId,
+        amountInr,
+        status: 'SUCCESS',
+      },
+    });
+
+    const updatedSubscription = await this.prisma.employerSubscription.update({
+      where: { id: subscription.id },
+      data: {
+        status: 'ACTIVE',
+        razorpaySubscriptionId: input.razorpaySubscriptionId,
+        gracePeriodEndsAt: null,
+        canceledAt: null,
+      },
+      include: { plan: true },
+    });
+
+    await this.auditPublisher.record({
+      actorId: userId,
+      action: 'billing.payment_method_replaced',
+      resourceType: 'subscription',
+      resourceId: subscription.id,
+      reasonCode: 'PAYMENT_METHOD_REPLACED_CONFIRMED',
+      metadata: {
+        companyId,
+        previousSubscriptionId: subOld,
+        razorpaySubscriptionId: input.razorpaySubscriptionId,
+        razorpayPaymentId: input.razorpayPaymentId,
+      },
+    });
+
+    return this.toEmployerSubscriptionDto(updatedSubscription);
+  }
+
   private toEmployerSubscriptionDto(subscription: {
     id: string;
     companyId: string;
@@ -907,10 +1207,120 @@ export class BillingService {
       return { processed: true };
     }
 
-    const subscription = await this.prisma.employerSubscription.findFirst({
+    let subscription = await this.prisma.employerSubscription.findFirst({
       where: { razorpaySubscriptionId: providerSubId },
       include: { plan: true, pendingPlan: true },
     });
+
+    if (!subscription) {
+      try {
+        const providerSub = await this.razorpayProvider.fetchSubscription(providerSubId);
+        const targetCompanyId = providerSub.notes?.company_id;
+        const isReplacement = providerSub.notes?.purpose === 'payment_method_replacement';
+
+        if (
+          targetCompanyId &&
+          isReplacement &&
+          ['authenticated', 'active'].includes(providerSub.status.toLowerCase())
+        ) {
+          const targetSubscription = await this.prisma.employerSubscription.findUnique({
+            where: { companyId: targetCompanyId },
+            include: { plan: true, pendingPlan: true },
+          });
+
+          if (targetSubscription && targetSubscription.razorpaySubscriptionId !== providerSubId) {
+            const prevSubInNotes = providerSub.notes?.previous_subscription_id;
+            if (
+              prevSubInNotes &&
+              targetSubscription.razorpaySubscriptionId &&
+              prevSubInNotes !== targetSubscription.razorpaySubscriptionId
+            ) {
+              this.logger.warn(
+                `Stale replacement webhook ignored for provider sub '${providerSubId}': expected previous '${prevSubInNotes}', current is '${targetSubscription.razorpaySubscriptionId}'.`,
+              );
+              return { processed: true };
+            }
+
+            const subOld = targetSubscription.razorpaySubscriptionId;
+            if (subOld) {
+              try {
+                await this.razorpayProvider.cancelSubscription({
+                  razorpaySubscriptionId: subOld,
+                  cancelAtCycleEnd: false,
+                });
+              } catch (err) {
+                this.logger.error(
+                  `Failed to cancel old subscription ${subOld} in webhook replacement: ${(err as Error).message}`,
+                );
+                await this.auditPublisher.record({
+                  actorId: null,
+                  action: 'billing.old_subscription_cancellation_failed',
+                  resourceType: 'subscription',
+                  resourceId: targetSubscription.id,
+                  reasonCode: 'PROVIDER_OLD_CANCELLATION_ERROR',
+                  metadata: {
+                    companyId: targetCompanyId,
+                    previousSubscriptionId: subOld,
+                    replacementSubscriptionId: providerSubId,
+                    error: (err as Error).message,
+                  },
+                });
+              }
+            }
+
+            const paymentEntity = payload.payload?.payment?.entity;
+            if (paymentEntity?.id) {
+              const existingTx = await this.prisma.paymentTransaction.findUnique({
+                where: { razorpayPaymentId: paymentEntity.id },
+              });
+              if (!existingTx) {
+                const amountInr = paymentEntity.amount
+                  ? Math.round(paymentEntity.amount / 100)
+                  : (targetSubscription.plan.priceInr ?? 0);
+                await this.prisma.paymentTransaction.create({
+                  data: {
+                    companyId: targetCompanyId,
+                    subscriptionId: targetSubscription.id,
+                    razorpayPaymentId: paymentEntity.id,
+                    amountInr,
+                    status: 'SUCCESS',
+                  },
+                });
+              }
+            }
+
+            subscription = await this.prisma.employerSubscription.update({
+              where: { id: targetSubscription.id },
+              data: {
+                status: 'ACTIVE',
+                razorpaySubscriptionId: providerSubId,
+                gracePeriodEndsAt: null,
+                canceledAt: null,
+              },
+              include: { plan: true, pendingPlan: true },
+            });
+
+            await this.auditPublisher.record({
+              actorId: null,
+              action: 'billing.payment_method_replaced',
+              resourceType: 'subscription',
+              resourceId: subscription.id,
+              reasonCode: 'WEBHOOK_REPLACEMENT_CONFIRMED',
+              metadata: {
+                companyId: targetCompanyId,
+                previousSubscriptionId: subOld,
+                razorpaySubscriptionId: providerSubId,
+                eventName,
+              },
+            });
+          }
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Lookup for replacement subscription '${providerSubId}' failed: ${(err as Error).message}`,
+        );
+      }
+    }
 
     if (!subscription) {
       this.logger.warn(

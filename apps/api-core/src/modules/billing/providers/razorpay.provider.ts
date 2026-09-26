@@ -8,6 +8,7 @@ export interface CreateProviderSubscriptionInput {
   readonly billingInterval: BillingInterval;
   readonly amountInr: number;
   readonly companyId: string;
+  readonly notes?: Record<string, string>;
 }
 
 export interface CreateProviderSubscriptionResult {
@@ -28,6 +29,7 @@ export interface RazorpaySubscriptionResource {
   readonly status: string;
   readonly plan_id?: string;
   readonly customer_id?: string;
+  readonly notes?: Record<string, string>;
 }
 
 export interface RazorpayPaymentResource {
@@ -122,6 +124,7 @@ export class RazorpayProvider {
             company_id: input.companyId,
             plan_code: input.planCode,
             billing_interval: input.billingInterval,
+            ...input.notes,
           },
         }),
       });
@@ -159,6 +162,9 @@ export class RazorpayProvider {
         return {
           id: subscriptionId,
           status: 'authenticated',
+          notes: {
+            purpose: subscriptionId.includes('replace') ? 'payment_method_replacement' : 'checkout',
+          },
         };
       }
       throw new Error(`Cannot fetch subscription ${subscriptionId} without Razorpay credentials.`);

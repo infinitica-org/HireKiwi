@@ -154,6 +154,8 @@ import type {
   VerifyPaymentDto,
   UpgradePlanDto,
   DowngradePlanDto,
+  ReplacePaymentMethodDto,
+  VerifyPaymentMethodReplacementDto,
   ResolveEvidenceDisputeRequest,
 } from '@smart/contracts';
 import {
@@ -2225,6 +2227,16 @@ export function billingApi(client: SmartApiClient) {
 
     downgradeSubscription: (body: DowngradePlanDto) =>
       client.post(prefixed('/billing/subscriptions/downgrade'), body, {
+        schema: EmployerSubscriptionSchema,
+      }),
+
+    replacePaymentMethod: (body?: ReplacePaymentMethodDto) =>
+      client.post(prefixed('/billing/subscriptions/payment-method/replace'), body ?? {}, {
+        schema: CheckoutSessionResponseSchema,
+      }),
+
+    verifyPaymentMethodReplacement: (body: VerifyPaymentMethodReplacementDto) =>
+      client.post(prefixed('/billing/subscriptions/payment-method/replace/verify'), body, {
         schema: EmployerSubscriptionSchema,
       }),
   };

@@ -320,6 +320,8 @@ exports[`declarative throttle matrix (S1-VV-05) > snapshots method+path → poli
   "POST /billing/subscriptions/cancel": "role.company",
   "POST /billing/subscriptions/checkout": "role.company",
   "POST /billing/subscriptions/downgrade": "role.company",
+  "POST /billing/subscriptions/payment-method/replace": "role.company",
+  "POST /billing/subscriptions/payment-method/replace/verify": "role.company",
   "POST /billing/subscriptions/upgrade": "role.company",
   "POST /billing/subscriptions/verify": "role.company",
   "POST /billing/webhooks/razorpay": "role.public",

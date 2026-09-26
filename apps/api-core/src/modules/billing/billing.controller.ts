@@ -15,6 +15,8 @@ import {
   VerifyPaymentSchema,
   UpgradePlanSchema,
   DowngradePlanSchema,
+  ReplacePaymentMethodSchema,
+  VerifyPaymentMethodReplacementSchema,
   type CheckoutSessionResponseDto,
   type EmployerSubscriptionDto,
 } from '@smart/contracts';
@@ -189,6 +191,69 @@ export class BillingController {
 
     const parsedInput = DowngradePlanSchema.parse(body);
     return this.billingService.downgradeSubscription(user.sub, companyId, parsedInput);
+  }
+
+  @Post('subscriptions/payment-method/replace')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Create a replacement subscription session for updating payment details (Phase 5).',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Replacement checkout session created with Razorpay details.',
+  })
+  @ApiResponse({ status: 400, description: 'No active subscription or invalid plan state.' })
+  @ApiResponse({ status: 403, description: 'Caller is not associated with an active company.' })
+  async createPaymentMethodReplacementSession(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<CheckoutSessionResponseDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    if (body && typeof body === 'object' && Object.keys(body).length > 0) {
+      ReplacePaymentMethodSchema.parse(body);
+    }
+    return this.billingService.createPaymentMethodReplacementSession(user.sub, companyId);
+  }
+
+  @Post('subscriptions/payment-method/replace/verify')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Verify Razorpay replacement subscription payment and update payment method (Phase 5).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Replacement subscription verified and local payment method updated.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid signature, provider lookup error, or cross-company mismatch.',
+  })
+  async verifyPaymentMethodReplacement(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<EmployerSubscriptionDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    const parsedInput = VerifyPaymentMethodReplacementSchema.parse(body);
+    return this.billingService.verifyPaymentMethodReplacement(user.sub, companyId, parsedInput);
   }
 
   @Post('webhooks/razorpay')
