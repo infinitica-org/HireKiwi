@@ -206,10 +206,10 @@ describe('DataRequestsCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit request' }));
 
     await waitFor(() =>
-      expect(users.createDataRequest).toHaveBeenCalledWith({
-        type: 'CORRECTION',
-        details: 'Fix my graduation year.',
-      }),
+      expect(users.createDataRequest).toHaveBeenCalledWith(
+        { type: 'CORRECTION', details: 'Fix my graduation year.' },
+        expect.any(String),
+      ),
     );
     expect(await screen.findByText('Request submitted.')).toBeTruthy();
     expect(await screen.findByText('OPEN')).toBeTruthy();
@@ -244,7 +244,10 @@ describe('DataRequestsCard', () => {
     expect(screen.queryByLabelText('Details')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Submit request' }));
     await waitFor(() =>
-      expect(users.createDataRequest).toHaveBeenCalledWith({ type: 'EXPORT', details: '' }),
+      expect(users.createDataRequest).toHaveBeenCalledWith(
+        { type: 'EXPORT', details: '' },
+        expect.any(String),
+      ),
     );
 
     fireEvent.click(await screen.findByRole('button', { name: 'Download' }));
