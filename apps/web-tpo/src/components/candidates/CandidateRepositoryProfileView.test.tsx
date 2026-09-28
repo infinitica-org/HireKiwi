@@ -24,7 +24,7 @@ afterEach(() => {
 const mockClaim: SkillClaimDto = {
   claimId: '22222222-2222-4222-8222-222222222222',
   studentId: baseCandidate.userId,
-  skillCode: 'JAVASCRIPT_TYPESCRIPT_FULL_STACK_DEVELOPMENT',
+  skillCode: 'JAVASCRIPT',
   proficiency: 'INTERMEDIATE',
   status: 'VERIFIED',
   strikes: 0,
@@ -76,7 +76,7 @@ describe('CandidateRepositoryProfileView', () => {
       />,
     );
 
-    expect(screen.getAllByText(/JavaScript \/ TypeScript/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/JavaScript/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Level 2 proficiency/).length).toBeGreaterThan(0);
     expect(screen.getAllByText('Verified').length).toBeGreaterThan(0);
   });

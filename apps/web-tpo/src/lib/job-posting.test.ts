@@ -29,7 +29,7 @@ describe('job posting payload', () => {
         aboutCompany: 'About copy',
         driveSpoc: 'tpo@campus.edu',
       },
-      new Map([['ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION', 'ADVANCED']]),
+      new Map([['JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT', 'ADVANCED']]),
       [
         {
           documentId: '33333333-3333-4333-8333-333333333333',
@@ -67,7 +67,7 @@ describe('job posting payload', () => {
         minCollegePercentage: '70',
         backlogsAllowedChoice: 'no',
       },
-      new Map([['ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION', 'BEGINNER']]),
+      new Map([['JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT', 'BEGINNER']]),
       [],
       null,
     );
@@ -91,7 +91,7 @@ describe('job posting payload', () => {
         minYearsExperience: '6',
         maxYearsExperience: '2',
       },
-      new Map([['ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION', 'BEGINNER']]),
+      new Map([['JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT', 'BEGINNER']]),
       [],
       null,
     );
@@ -102,7 +102,7 @@ describe('job posting payload', () => {
   it('turns a blank required field into a plain-language error', () => {
     const parsed = buildCreateOpeningPayload(
       { ...EMPTY_JOB_POSTING_FORM, companyName: 'Infinitica Labs', roleTitle: 'Backend Engineer' },
-      new Map([['ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION', 'BEGINNER']]),
+      new Map([['JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT', 'BEGINNER']]),
       [],
       null,
     );
@@ -115,7 +115,7 @@ describe('job posting payload', () => {
   it('passes the custom company-selection message through unchanged', () => {
     const parsed = buildCreateOpeningPayload(
       { ...EMPTY_JOB_POSTING_FORM, roleTitle: 'Backend Engineer', location: 'Coimbatore' },
-      new Map([['ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION', 'BEGINNER']]),
+      new Map([['JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT', 'BEGINNER']]),
       [],
       null,
     );

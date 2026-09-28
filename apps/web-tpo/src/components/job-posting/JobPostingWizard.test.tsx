@@ -7,7 +7,7 @@ import { JobPostingWizard } from './JobPostingWizard';
 vi.mock('@smart/contracts', async (importOriginal) => {
   const actual = (await importOriginal()) as typeof SmartContracts;
   const testSkill = actual.SKILL_DEFINITIONS.find(
-    (skill) => skill.code === 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+    (skill) => skill.code === 'JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT',
   );
   if (!testSkill) throw new Error('Expected test skill in SKILL_DEFINITIONS');
   return { ...actual, SKILL_DEFINITIONS: [testSkill] };
@@ -26,7 +26,7 @@ const opening = {
   domain: 'SOFTWARE_IT' as const,
   requiredSkills: [
     {
-      skillCode: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+      skillCode: 'JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT',
       minProficiency: 'ADVANCED' as const,
     },
   ],
@@ -60,7 +60,7 @@ async function fillValidForm() {
   fireEvent.change(screen.getByLabelText('Location'), { target: { value: 'Coimbatore' } });
   goToStep('Role & Requirements');
   fireEvent.change(screen.getByLabelText('Add required skill'), {
-    target: { value: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION' },
+    target: { value: 'JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Add skill' }));
 }
