@@ -8,6 +8,7 @@ describe('NotificationsService', () => {
     const createdAt = new Date('2026-09-02T10:00:00.000Z');
     const prisma = {
       notification: {
+        findUnique: vi.fn().mockResolvedValue(null),
         create: vi.fn().mockResolvedValue({
           id: randomUUID(),
           kind: 'OPPORTUNITY',
@@ -224,6 +225,82 @@ describe('NotificationsService', () => {
       expect(prisma.notification.create.mock.calls[0]?.[0].data.dedupeKey).toBe(
         'application:app-1:employer:withdrawn:member-1',
       );
+    });
+  });
+
+  describe('older call sites get dedupe keys too (S6-VV-122, #435)', () => {
+    function harness() {
+      const created = {
+        id: 'n-1',
+        kind: 'VERIFICATION_RESULT',
+        title: 't',
+        body: 'b',
+        linkUrl: null,
+        readAt: null,
+        createdAt: new Date('2026-09-28T00:00:00.000Z'),
+      };
+      const prisma = {
+        notification: {
+          findUnique: vi.fn().mockResolvedValue(null),
+          create: vi.fn().mockResolvedValue(created),
+        },
+      };
+      const emailQueue = { add: vi.fn().mockResolvedValue(undefined) };
+      const service = new NotificationsService(prisma as never, emailQueue as never);
+      const keyOf = () => prisma.notification.create.mock.calls[0]?.[0].data.dedupeKey;
+      return { prisma, emailQueue, service, keyOf };
+    }
+    const student = { userId: 'u-1', email: 'student@smart.local', fullName: 'Alex Student' };
+
+    it('keys a verification result on its Kafka event id', async () => {
+      const { service, keyOf } = harness();
+      await service.notifyVerificationResult({
+        ...student,
+        skillName: 'SQL',
+        status: 'VERIFIED',
+        detail: 'Passed.',
+        claimId: 'claim-1',
+        eventId: 'evt-1',
+      });
+      expect(keyOf()).toBe('skill-verification:evt-1');
+    });
+
+    it('keys an evidence-fusion level change on its Kafka event id', async () => {
+      const { service, keyOf } = harness();
+      await service.notifySkillInferenceLevelChange({
+        ...student,
+        skillCode: 'SQL',
+        previousLevel: null,
+        newLevel: 'INTERMEDIATE',
+        confidence: 'HIGH',
+        outcome: 'INFERRED',
+        eventId: 'evt-2',
+      });
+      expect(keyOf()).toBe('skill-inference:evt-2');
+    });
+
+    it('shares the stage-change key for a shortlist, so one transition notifies once', async () => {
+      const { service, keyOf } = harness();
+      await service.notifyOpportunityShortlisted({
+        ...student,
+        companyName: 'Acme',
+        roleTitle: 'Engineer',
+        applicationId: 'app-1',
+        openingId: 'job-1',
+      });
+      expect(keyOf()).toBe('application:app-1:status:SHORTLISTED');
+    });
+
+    it('uses the notification id as the email job id, so a retried enqueue sends once', async () => {
+      const { service, emailQueue } = harness();
+      await service.notifyVerificationResult({
+        ...student,
+        skillName: 'SQL',
+        status: 'LOCKED',
+        detail: 'Cooldown.',
+        claimId: 'claim-1',
+      });
+      expect(emailQueue.add.mock.calls[0]?.[2]).toEqual({ jobId: 'notification-n-1' });
     });
   });
 });

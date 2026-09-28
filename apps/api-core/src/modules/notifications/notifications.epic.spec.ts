@@ -142,6 +142,7 @@ describe('Epic NOTIF-01: Multi-Tenant Notifications & Delivery Queue (Th6-I401..
         to: 'student@example.test',
         template: 'welcome',
       }),
+      { jobId: expect.stringMatching(/^notification-/) },
     );
   });
 });
