@@ -1,12 +1,29 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Bot, Cpu, ShieldAlert, CheckCircle } from 'lucide-react';
+import { Bot, Cpu, ShieldAlert, CheckCircle, Edit3, X } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
-import { DataTable, PageStack, TableCell, TableRow } from '@/components/admin-ui';
+import {
+  DataTable,
+  PageStack,
+  TableCell,
+  TableRow,
+  AdminInput,
+  NativeSelect,
+  Field,
+  controlButtonClassName,
+} from '@/components/admin-ui';
 import { Button } from '@smart/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
 import { api } from '@/lib/api';
+
+const PROFICIENCY_OPTIONS = [
+  'BEGINNER',
+  'INTERMEDIATE',
+  'PROFICIENT',
+  'ADVANCED',
+  'PROFESSIONAL',
+] as const;
 
 interface RegisteredPrompt {
   promptRef: string;
@@ -98,6 +115,66 @@ export default function AiGovernanceAdminPage() {
       cancelled = true;
     };
   }, []);
+
+  const [selectedReviewItem, setSelectedReviewItem] = useState<CapabilityReviewItem | null>(null);
+  const [reviewProficiency, setReviewProficiency] = useState<string>('');
+  const [reviewConfidence, setReviewConfidence] = useState<string>('0.75');
+  const [reviewerNote, setReviewerNote] = useState<string>('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
+  async function reloadCapabilityQueue() {
+    try {
+      const res = await api.evaluation.listCapabilityReviewQueue(20);
+      setCapabilityQueue(res.items);
+    } catch {
+      // ignore
+    }
+  }
+
+  function openReview(item: CapabilityReviewItem) {
+    setSelectedReviewItem(item);
+    setReviewProficiency(item.proficiency);
+    setReviewConfidence('0.75');
+    setReviewerNote('');
+    setReviewError(null);
+  }
+
+  async function handleSubmitReview() {
+    if (!selectedReviewItem) return;
+    if (!reviewerNote.trim() || reviewerNote.trim().length < 5) {
+      setReviewError('Reviewer rationale note must be at least 5 characters.');
+      return;
+    }
+
+    const conf = parseFloat(reviewConfidence);
+    if (isNaN(conf) || conf < 0 || conf > 1) {
+      setReviewError('Confidence score must be a number between 0 and 1.');
+      return;
+    }
+
+    setSubmittingReview(true);
+    setReviewError(null);
+
+    try {
+      await api.evaluation.correctCapability(selectedReviewItem.capabilityId, {
+        proficiency: reviewProficiency as (typeof PROFICIENCY_OPTIONS)[number],
+        confidenceScore: conf,
+        reviewerNote: reviewerNote.trim(),
+      });
+      setStatusMessage(
+        `Capability "${selectedReviewItem.capabilityLabel}" successfully reviewed and adjudicated.`,
+      );
+      setSelectedReviewItem(null);
+      await reloadCapabilityQueue();
+    } catch (err) {
+      setReviewError(
+        err instanceof Error ? err.message : 'Failed to submit capability correction.',
+      );
+    } finally {
+      setSubmittingReview(false);
+    }
+  }
 
   async function handleToggleModel(
     provider: 'ANTHROPIC' | 'GOOGLE' | 'OPENROUTER',
@@ -267,6 +344,7 @@ export default function AiGovernanceAdminPage() {
                 'Proficiency',
                 'Confidence',
                 'Model Version',
+                'Action',
               ]}
             >
               {capabilityQueue.map((item) => (
@@ -296,6 +374,16 @@ export default function AiGovernanceAdminPage() {
                   <TableCell className="text-xs font-mono text-zinc-500">
                     {item.modelVersion}
                   </TableCell>
+                  <TableCell className="text-xs">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openReview(item)}
+                      className="h-7 text-xs flex items-center gap-1.5"
+                    >
+                      <Edit3 className="size-3" /> Review
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </DataTable>
@@ -306,6 +394,115 @@ export default function AiGovernanceAdminPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Adjudication Modal for Low-Confidence Decisions (I563) */}
+      {selectedReviewItem ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-md border border-zinc-200/90 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-heading text-lg font-bold text-zinc-950 dark:text-zinc-100">
+                  Adjudicate Low-Confidence Capability Inference
+                </h3>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  Verify evidence or correct proficiency/confidence before publishing this
+                  capability to the candidate profile.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedReviewItem(null)}
+                className="rounded p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                aria-label="Close dialog"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4 text-xs">
+              {reviewError && (
+                <div className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs text-red-800">
+                  {reviewError}
+                </div>
+              )}
+
+              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 space-y-1">
+                <div>
+                  <span className="font-semibold text-zinc-700">Capability: </span>
+                  <span className="text-zinc-900 font-medium">
+                    {selectedReviewItem.capabilityLabel}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-zinc-700">Skill Code: </span>
+                  <span className="font-mono text-zinc-800">
+                    {selectedReviewItem.skillCode || 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-zinc-700">Inferred Confidence: </span>
+                  <span className="font-mono text-amber-700 font-bold">
+                    {(selectedReviewItem.confidenceScore * 100).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+
+              <Field label="Proficiency Level">
+                <NativeSelect
+                  value={reviewProficiency}
+                  onChange={(e) => setReviewProficiency(e.target.value)}
+                >
+                  {PROFICIENCY_OPTIONS.map((level) => (
+                    <option key={level} value={level}>
+                      {level}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </Field>
+
+              <Field label="Adjusted Confidence Score (0.00 - 1.00)">
+                <AdminInput
+                  type="number"
+                  step="0.05"
+                  min="0"
+                  max="1"
+                  value={reviewConfidence}
+                  onChange={(e) => setReviewConfidence(e.target.value)}
+                  placeholder="0.75"
+                />
+              </Field>
+
+              <Field label="Reviewer Rationale Note (Required, min 5 chars)">
+                <textarea
+                  className="w-full min-h-[80px] rounded-md border border-zinc-300 bg-white p-2 text-xs text-zinc-900 shadow-2xs outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                  value={reviewerNote}
+                  onChange={(e) => setReviewerNote(e.target.value)}
+                  placeholder="e.g. Validated project repository artifact commits and interview transcript."
+                />
+              </Field>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedReviewItem(null)}
+                disabled={submittingReview}
+              >
+                Cancel
+              </Button>
+              <button
+                type="button"
+                className={controlButtonClassName}
+                onClick={() => void handleSubmitReview()}
+                disabled={submittingReview}
+              >
+                {submittingReview ? 'Submitting...' : 'Approve & Save Correction'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* AI Evaluation Audit Trail */}
       <Card>

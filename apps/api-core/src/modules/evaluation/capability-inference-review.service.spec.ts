@@ -44,6 +44,7 @@ describe('CapabilityInferenceReviewService', () => {
       confidenceScore: 0.75,
       capabilityLabel: 'Query tuning',
     });
+    const auditCreate = vi.fn().mockResolvedValue({ id: 'audit-1' });
     const skillInference = { recomputeForSkill: vi.fn().mockResolvedValue({}) };
     const service = new CapabilityInferenceReviewService(
       {
@@ -57,6 +58,9 @@ describe('CapabilityInferenceReviewService', () => {
             capabilityLabel: 'Query tuning',
           }),
           update,
+        },
+        auditLog: {
+          create: auditCreate,
         },
       } as never,
       skillInference as never,
@@ -73,5 +77,18 @@ describe('CapabilityInferenceReviewService', () => {
       '11111111-1111-4111-8111-111111111111',
       'SQL_QUERY_OPTIMIZATION',
     );
+    expect(auditCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        actorId: '22222222-2222-4222-8222-222222222222',
+        action: 'capability_inference.corrected',
+        resourceType: 'student_capability',
+        resourceId: CAP_ID,
+        metadata: expect.objectContaining({
+          prior: { proficiency: 'BEGINNER', confidenceScore: 0.4 },
+          updated: { proficiency: 'INTERMEDIATE', confidenceScore: 0.75 },
+          reviewerNote: 'Reviewer validated transcript evidence.',
+        }),
+      }),
+    });
   });
 });

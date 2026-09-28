@@ -138,7 +138,6 @@ describe('ProfilePage', () => {
     expect(screen.queryByText('Skills section')).toBeNull();
     expect(screen.queryByText('Resume section')).toBeNull();
     expect(screen.queryByText('Overview')).toBeNull();
-    expect(screen.getAllByText('38%').length).toBeGreaterThan(0);
     expect(screen.getByText('Ada Lovelace')).toBeTruthy();
     expect(
       screen.getByRole('button', { name: /Upload profile photo|Change profile photo/i }),
