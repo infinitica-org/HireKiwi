@@ -60,6 +60,7 @@ import {
   resolveCurrentSessionVerification,
 } from './company-onboarding-session.access.js';
 import { incompleteSubmissionError } from './company-onboarding-submit-issues.js';
+import { assertEmailDomainReceivesMail } from './email-domain-mx.js';
 import { OrganizationsService } from './organizations.service.js';
 
 const EDITABLE_STATUSES = new Set([
@@ -87,6 +88,7 @@ export class CompanyOnboardingService {
   async startSession(body: StartCompanyOnboardingRequest): Promise<StartCompanyOnboardingResponse> {
     const workEmail = body.representative.workEmail.toLowerCase();
     await this.assertStartAllowed(workEmail, body.website);
+    await assertEmailDomainReceivesMail(workEmail);
 
     const { raw, hash } = generateOnboardingSessionToken();
     const expiresAt = onboardingSessionExpiresAt();

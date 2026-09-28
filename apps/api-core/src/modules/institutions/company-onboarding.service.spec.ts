@@ -6,6 +6,11 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Onboarding start checks the email domain's MX record (S6-VV-155); unit tests never hit real DNS.
+vi.mock('node:dns/promises', () => ({
+  resolveMx: vi.fn().mockResolvedValue([{ exchange: 'mx.example.net', priority: 10 }]),
+}));
 import type { CompanySignupProfile, CompanyVerification } from '@smart/contracts';
 import { hashOnboardingSecret } from './company-onboarding.util.js';
 import { CompanyOnboardingService } from './company-onboarding.service.js';

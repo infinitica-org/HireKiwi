@@ -1456,7 +1456,7 @@ export const ROUTES: readonly RouteSpec[] = [
     module: 'company-profile',
     owner: 'Th6-EMP-02',
     roles: ['COMPANY'],
-    rateLimit: 'auth.invite',
+    rateLimit: 'company.team.invite',
     criticality: 'INTERACTIVE',
     execution: 'SYNC',
     slaMs: 300,

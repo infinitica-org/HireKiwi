@@ -523,6 +523,17 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     rationale: 'Agenda-to-paper LLM generation; per-candidate cap so regen cannot blow cost.',
   },
   {
+    key: 'company.team.invite',
+    scope: 'USER',
+    limit: 20,
+    windowSeconds: 3600,
+    burst: 5,
+    redisKey: 'rl:company:team:invite:user:{id}',
+    rationale:
+      'S6-VV-155 (#609): recruiter invites send email; a per-owner hourly cap stops a compromised or scripted account from spamming.',
+    onViolation: 'ALERT',
+  },
+  {
     key: 'company.onboarding.start',
     scope: 'IP',
     limit: 10,
