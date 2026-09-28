@@ -41,6 +41,10 @@ export const EVIDENCE_EXPIRATION_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 export const EVIDENCE_RECONCILIATION_QUEUE = 'evidence_reconciliation' as const;
 
+export const BILLING_GRACE_EXPIRY_QUEUE = 'billing_grace_expiry' as const;
+export const BILLING_GRACE_EXPIRY_JOB_ID = 'billing-grace-expiry-hourly' as const;
+export const BILLING_GRACE_EXPIRY_INTERVAL_MS = 60 * 60 * 1000;
+
 export const DEFAULT_JOB_OPTIONS = {
   attempts: 5,
   backoff: { type: 'exponential' as const, delay: 2_000 },

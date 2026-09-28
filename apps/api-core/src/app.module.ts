@@ -47,6 +47,7 @@ import { UsersModule } from './modules/users/users.module.js';
 import { WorkExperienceModule } from './modules/work-experience/work-experience.module.js';
 import { WebhooksModule } from './modules/webhooks/webhooks.module.js';
 import { TrustModule } from './modules/trust/trust.module.js';
+import { BillingModule } from './modules/billing/billing.module.js';
 import { ConfigModule } from './platform/config/config.module.js';
 import { AuditModule } from './platform/audit/audit.module.js';
 import { env } from './platform/config/env.js';
@@ -115,6 +116,7 @@ import { StorageModule } from './platform/storage/storage.module.js';
     WebhooksModule,
     TrustModule,
     SupportModule,
+    BillingModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

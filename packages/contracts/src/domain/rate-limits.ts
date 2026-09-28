@@ -104,7 +104,7 @@ export const ROLE_RATE_LIMITS: readonly RateLimitPolicy[] = [
     burst: 40,
     redisKey: 'rl:company:{id}',
     rationale:
-      'Company recruiters managing job openings, candidate evaluations, and interview slots.',
+      'Company recruiters managing job openings, candidate evaluations, interview slots, and subscription operations.',
   },
 ] as const;
 

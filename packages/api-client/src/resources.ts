@@ -186,10 +186,22 @@ import type {
   SupportHistoryResponse,
   SupportSessionResponse,
   EvidenceSkillDisputeRequest,
+  CreateCheckoutSessionDto,
+  VerifyPaymentDto,
+  UpgradePlanDto,
+  DowngradePlanDto,
+  ReplacePaymentMethodDto,
+  VerifyPaymentMethodReplacementDto,
   ResolveEvidenceDisputeRequest,
 } from '@smart/contracts';
 import {
   API_PREFIX,
+  CheckoutSessionResponseSchema,
+  EmployerInvoiceSchema,
+  EmployerSubscriptionSchema,
+  CompanyQuotaOverviewSchema,
+  EnterpriseContractSchema,
+  type CreateEnterpriseContractDto,
   ReviewEvidenceResponseSchema,
   SupportDiagnosticResponseSchema,
   SupportGrantResponseSchema,
@@ -2285,6 +2297,107 @@ export function supportApi(client: SmartApiClient) {
   };
 }
 
+export function billingApi(client: SmartApiClient) {
+  return {
+    getSubscription: () =>
+      client.get(prefixed('/billing/subscription/me'), {
+        schema: EmployerSubscriptionSchema.nullable(),
+      }),
+
+    createCheckoutSession: (body: CreateCheckoutSessionDto) =>
+      client.post(prefixed('/billing/subscriptions/checkout'), body, {
+        schema: CheckoutSessionResponseSchema,
+      }),
+
+    verifyPayment: (body: VerifyPaymentDto) =>
+      client.post(prefixed('/billing/subscriptions/verify'), body, {
+        schema: EmployerSubscriptionSchema,
+      }),
+
+    cancelSubscription: () =>
+      client.post(
+        prefixed('/billing/subscriptions/cancel'),
+        {},
+        {
+          schema: EmployerSubscriptionSchema,
+        },
+      ),
+
+    upgradeSubscription: (body: UpgradePlanDto) =>
+      client.post(prefixed('/billing/subscriptions/upgrade'), body, {
+        schema: EmployerSubscriptionSchema,
+      }),
+
+    downgradeSubscription: (body: DowngradePlanDto) =>
+      client.post(prefixed('/billing/subscriptions/downgrade'), body, {
+        schema: EmployerSubscriptionSchema,
+      }),
+
+    replacePaymentMethod: (body?: ReplacePaymentMethodDto) =>
+      client.post(prefixed('/billing/subscriptions/payment-method/replace'), body ?? {}, {
+        schema: CheckoutSessionResponseSchema,
+      }),
+
+    verifyPaymentMethodReplacement: (body: VerifyPaymentMethodReplacementDto) =>
+      client.post(prefixed('/billing/subscriptions/payment-method/replace/verify'), body, {
+        schema: EmployerSubscriptionSchema,
+      }),
+
+    listInvoices: () =>
+      client.get(prefixed('/billing/invoices'), {
+        schema: z.array(EmployerInvoiceSchema),
+      }),
+
+    getInvoice: (invoiceId: string) =>
+      client.get(prefixed(`/billing/invoices/${invoiceId}`), {
+        schema: EmployerInvoiceSchema,
+      }),
+
+    getInvoiceDownloadUrl: (invoiceId: string) =>
+      client.get(prefixed(`/billing/invoices/${invoiceId}/download`), {
+        schema: z.object({ downloadUrl: z.string() }),
+      }),
+
+    getQuotaOverview: () =>
+      client.get(prefixed('/billing/quotas/me'), {
+        schema: CompanyQuotaOverviewSchema,
+      }),
+
+    createEnterpriseContract: (body: CreateEnterpriseContractDto) =>
+      client.post(prefixed('/admin/billing/enterprise-contracts'), body, {
+        schema: EnterpriseContractSchema,
+      }),
+
+    listEnterpriseContracts: () =>
+      client.get(prefixed('/admin/billing/enterprise-contracts'), {
+        schema: z.array(EnterpriseContractSchema),
+      }),
+
+    getEnterpriseContract: (contractId: string) =>
+      client.get(prefixed(`/admin/billing/enterprise-contracts/${contractId}`), {
+        schema: EnterpriseContractSchema,
+      }),
+
+    approveEnterpriseContract: (contractId: string) =>
+      client.post(
+        prefixed(`/admin/billing/enterprise-contracts/${contractId}/approve`),
+        {},
+        {
+          schema: EnterpriseContractSchema,
+        },
+      ),
+
+    terminateEnterpriseContract: (contractId: string) =>
+      client.post(
+        prefixed(`/admin/billing/enterprise-contracts/${contractId}/terminate`),
+        {},
+        {
+          schema: EnterpriseContractSchema,
+        },
+      ),
+  };
+}
+
 /** EMP-02 — company profile and team. Mutations carry an Idempotency-Key so a retry never repeats. */
 function employerApi(client: SmartApiClient) {
   const mutate = (key: string, extra: Record<string, string> = {}) => ({
@@ -2745,6 +2858,7 @@ export function createSmartApi(client: SmartApiClient) {
     system: systemApi(client),
     trust: trustApi(client),
     support: supportApi(client),
+    billing: billingApi(client),
     employer: employerApi(client),
     companies: companiesApi(client),
     studentJobs: studentJobsApi(client),
