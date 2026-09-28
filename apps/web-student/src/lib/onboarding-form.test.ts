@@ -239,7 +239,7 @@ describe('onboarding-form', () => {
     form.phoneNumber = '9876543210';
     form.linkedinUrl = 'https://www.linkedin.com/in/ada';
     form.languages = [{ id: '1', language: 'English', proficiency: 'Fluent' }];
-    form.catalogSkills = { VERSION_CONTROL_CODE_COLLABORATION: 'INTERMEDIATE' };
+    form.catalogSkills = { GIT: 'INTERMEDIATE' };
     form.codingProficiencies = [{ id: 'a', language: 'Python', proficiency: 'ADVANCED' }];
     form.frameworkProficiencies = [{ id: 'b', framework: 'React', proficiency: 'BEGINNER' }];
     form.jobPreferences = {
@@ -257,7 +257,7 @@ describe('onboarding-form', () => {
         { type: 'language', name: 'English', proficiency: 'Fluent' },
         {
           type: 'technical',
-          name: 'Git & Version Control',
+          name: 'Git',
           proficiency: 'INTERMEDIATE',
         },
         { type: 'technical', name: 'Python', proficiency: 'ADVANCED' },

@@ -219,7 +219,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
 
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container, {}, { isCurrent: true });
-    selectCatalogSkill('Git & Version Control');
+    selectCatalogSkill('Git');
 
     const file = new File(['%PDF-1.4 offer'], 'offer.pdf', { type: 'application/pdf' });
     fireEvent.change(screen.getByLabelText('Proof document'), { target: { files: [file] } });
@@ -267,7 +267,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
       { verifierEmail: 'manager@acme.com' },
       { isCurrent: true },
     );
-    selectCatalogSkill('Git & Version Control');
+    selectCatalogSkill('Git');
 
     const file = new File(['%PDF-1.4 direct'], 'offer-direct.pdf', { type: 'application/pdf' });
     fireEvent.change(screen.getByLabelText('Proof document'), { target: { files: [file] } });
@@ -305,7 +305,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
 
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container, { endDate: '2025-05-30' }, { isCurrent: false });
-    selectCatalogSkill('Git & Version Control');
+    selectCatalogSkill('Git');
 
     // 1. Add Offer Letter
     const offerFile = new File(['%PDF-1.4 offer'], 'offer.pdf', { type: 'application/pdf' });
@@ -347,7 +347,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
   it('displays a validation error naming the missing relieving letter when an ended role has only an offer letter attached', async () => {
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container, { endDate: '2025-05-30' }, { isCurrent: false });
-    selectCatalogSkill('Git & Version Control');
+    selectCatalogSkill('Git');
 
     const offerFile = new File(['%PDF-1.4 offer'], 'offer.pdf', { type: 'application/pdf' });
     fireEvent.change(screen.getByLabelText('Document type'), { target: { value: 'OFFER_LETTER' } });
@@ -369,7 +369,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     const { container } = await openAddExperienceModal();
 
     fillMandatoryWorkExperienceFields(container, {}, { isCurrent: true });
-    selectCatalogSkill('Git & Version Control');
+    selectCatalogSkill('Git');
 
     fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
 
@@ -646,7 +646,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
   it('prevents save when domain is empty', async () => {
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container, { domain: '' }, { isCurrent: true });
-    selectCatalogSkill('Git & Version Control');
+    selectCatalogSkill('Git');
 
     fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
 
@@ -657,7 +657,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
   it('prevents save when responsibilities are empty', async () => {
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container, { responsibilities: '' }, { isCurrent: true });
-    selectCatalogSkill('Git & Version Control');
+    selectCatalogSkill('Git');
 
     fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
 
@@ -687,7 +687,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
   it('prevents save for ended employment when End Date is missing', async () => {
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container);
-    selectCatalogSkill('Git & Version Control');
+    selectCatalogSkill('Git');
 
     fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
 
@@ -709,7 +709,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
     fillMandatoryWorkExperienceFields(container, {}, { isCurrent: true });
     expect(screen.queryByText('End date *')).toBeNull();
     expect(screen.getByText(/^End date$/i)).toBeTruthy();
-    selectCatalogSkill('Git & Version Control');
+    selectCatalogSkill('Git');
 
     fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
 
@@ -789,7 +789,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
   it('does not call the API when mandatory validation fails', async () => {
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container, { domain: '   ' }, { isCurrent: true });
-    selectCatalogSkill('Git & Version Control');
+    selectCatalogSkill('Git');
 
     fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
 
