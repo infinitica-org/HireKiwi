@@ -725,9 +725,14 @@ describe('admin user role and access bindings (#169 / #171)', () => {
 
   it('posts /admin/users/:id/role', async () => {
     const { api, calls } = apiWith({ userId, role: 'PLACEMENT_STAFF' });
-    const result = await api.onboarding.assignUserRole(userId, { role: 'PLACEMENT_STAFF' });
+    const result = await api.onboarding.assignUserRole(userId, {
+      role: 'PLACEMENT_STAFF',
+      reason: 'Moved to the placement desk',
+    });
     expect(calls[0]?.url).toBe(`https://api.smart.test/api/v1/admin/users/${userId}/role`);
-    expect(calls[0]?.init.body).toBe(JSON.stringify({ role: 'PLACEMENT_STAFF' }));
+    expect(calls[0]?.init.body).toBe(
+      JSON.stringify({ role: 'PLACEMENT_STAFF', reason: 'Moved to the placement desk' }),
+    );
     expect(result.role).toBe('PLACEMENT_STAFF');
   });
 

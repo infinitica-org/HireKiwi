@@ -1366,7 +1366,7 @@ export function onboardingApi(client: SmartApiClient) {
       }),
 
     /** Switch an institution staff member between INSTITUTION_ADMIN and PLACEMENT_STAFF. */
-    assignUserRole: (userId: string, body: { role: InstitutionStaffRole }) =>
+    assignUserRole: (userId: string, body: { role: InstitutionStaffRole; reason: string }) =>
       client.post(prefixed(`/admin/users/${userId}/role`), body, {
         schema: AssignRoleResponseSchema,
       }),

@@ -13,9 +13,13 @@ export class UsersAdminController {
 
   @Post(':userId/role')
   @RequirePermission('user.role.assign')
-  assignRole(@Param('userId') userId: string, @Body() body: unknown) {
+  assignRole(
+    @Param('userId') userId: string,
+    @Body() body: unknown,
+    @CurrentUser() actor: RequestUser,
+  ) {
     const parsed = AssignRoleRequestSchema.parse(body);
-    return this.userAdmin.assignRole(userId, parsed.role);
+    return this.userAdmin.assignRole(userId, parsed.role, parsed.reason, actor.sub);
   }
 
   @Post(':userId/hold')
