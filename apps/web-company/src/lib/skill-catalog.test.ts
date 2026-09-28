@@ -36,7 +36,7 @@ describe('skill catalog', () => {
 
   it('recognises catalog codes and rejects anything else', () => {
     expect(isCatalogSkill(need(SKILL_DEFINITIONS[0]).code)).toBe(true);
-    for (const bad of ['REACT', 'random skill', '', 'python']) {
+    for (const bad of ['NOT_A_SKILL_123', 'random skill', '', 'python_invalid_code']) {
       expect(isCatalogSkill(bad)).toBe(false);
     }
   });
@@ -68,7 +68,7 @@ describe('required skills mapping', () => {
   });
 
   it('would have been rejected before: a free-text name becomes an invalid code', () => {
-    const legacyCode = 'React'.toUpperCase().replace(/\s+/g, '_');
+    const legacyCode = 'Non Existent Skill'.toUpperCase().replace(/\s+/g, '_');
     expect(
       SkillRequirementSchema.safeParse({ skillCode: legacyCode, minProficiency: 'BEGINNER' })
         .success,

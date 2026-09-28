@@ -649,7 +649,7 @@ describe('S6-VV-148 employer visibility', () => {
       await controller.match(
         {
           jdId: openingId,
-          requiredSkillCodes: ['ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION'],
+          requiredSkillCodes: ['POSTGRESQL'],
         },
         resolveTenantId(tpoAdmin as never),
       );

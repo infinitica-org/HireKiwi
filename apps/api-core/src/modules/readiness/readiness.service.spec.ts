@@ -21,10 +21,10 @@ import {
 } from './readiness.service.js';
 
 const PY = 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT';
-const SQL = 'SQL_QUERY_OPTIMIZATION';
+const SQL = 'POSTGRESQL';
 const API = 'RESTFUL_GRAPHQL_API_DESIGN';
-const DOCKER = 'CONTAINERIZATION_ORCHESTRATION';
-const NOSQL = 'NOSQL_DATABASE_ENGINEERING';
+const DOCKER = 'DOCKER';
+const NOSQL = 'MONGODB';
 
 const claim = (code: string, status = 'VERIFIED', proficiency = 'INTERMEDIATE'): ClaimInput => ({
   status,
@@ -177,23 +177,26 @@ describe('I333 evidence completeness (blueprint requirements)', () => {
     }
   });
 
-  it('requires real-world application evidence at ADVANCED for skills whose blueprint says so', () => {
-    expect(requiredEvidenceFor(SQL, 'ADVANCED')).toEqual(['REAL_WORLD_APPLICATION']);
+  it('requires real-world application evidence at PROFESSIONAL for skills whose blueprint says so', () => {
+    expect(requiredEvidenceFor(SQL, 'PROFESSIONAL')).toEqual([
+      'REAL_WORLD_APPLICATION',
+      'SUBSTANTIAL_APPLICATION',
+    ]);
 
-    const missing = buildEvidence([claim(SQL, 'VERIFIED', 'ADVANCED')], []);
-    expect(missing.completeness).toEqual({ required: 1, available: 0, percent: 0 });
+    const missing = buildEvidence([claim(SQL, 'VERIFIED', 'PROFESSIONAL')], []);
+    expect(missing.completeness).toEqual({ required: 2, available: 0, percent: 0 });
     expect(missing.requirements[0]).toMatchObject({
       skillCode: SQL,
-      level: 'ADVANCED',
+      level: 'PROFESSIONAL',
       requirement: 'REAL_WORLD_APPLICATION',
       met: false,
     });
 
     const met = buildEvidence(
-      [claim(SQL, 'VERIFIED', 'ADVANCED')],
+      [claim(SQL, 'VERIFIED', 'PROFESSIONAL')],
       [evidence({ relatedSkillCodes: [SQL] })],
     );
-    expect(met.completeness).toEqual({ required: 1, available: 1, percent: 100 });
+    expect(met.completeness).toEqual({ required: 2, available: 2, percent: 100 });
   });
 
   it('follows each skill’s own blueprint: Python needs only the interview gate at ADVANCED', () => {
@@ -449,13 +452,13 @@ describe('I336 readiness for a specific open role (employer-defined minimums)', 
   });
 
   it('is ready in a skill only with the minimum proficiency AND its required evidence', () => {
-    const job = opening([{ code: SQL, min: 'ADVANCED' }]);
-    const claims = [claim(SQL, 'VERIFIED', 'ADVANCED')];
+    const job = opening([{ code: SQL, min: 'PROFESSIONAL' }]);
+    const claims = [claim(SQL, 'VERIFIED', 'PROFESSIONAL')];
 
     const noEvidence = buildOpeningReadiness(job, claims, []);
     expect(noEvidence.skills[0]).toMatchObject({
       status: 'MEETS_MINIMUM',
-      evidenceRequired: 1,
+      evidenceRequired: 2,
       evidenceMet: 0,
       ready: false,
     });
@@ -464,7 +467,7 @@ describe('I336 readiness for a specific open role (employer-defined minimums)', 
     const withEvidence = buildOpeningReadiness(job, claims, [
       evidence({ relatedSkillCodes: [SQL] }),
     ]);
-    expect(withEvidence.skills[0]).toMatchObject({ evidenceMet: 1, ready: true });
+    expect(withEvidence.skills[0]).toMatchObject({ evidenceMet: 2, ready: true });
     expect(withEvidence.readinessPercent).toBe(100);
   });
 
@@ -605,7 +608,7 @@ describe('I337 recommendations', () => {
   });
 
   it('asks for required evidence at HIGH priority when the blueprint needs it and it is missing', () => {
-    const rec = recsFor({ claims: [claim(SQL, 'VERIFIED', 'ADVANCED')] }).find(
+    const rec = recsFor({ claims: [claim(SQL, 'VERIFIED', 'PROFESSIONAL')] }).find(
       (r) => r.skillCode === SQL,
     );
     expect(rec).toMatchObject({
@@ -613,7 +616,7 @@ describe('I337 recommendations', () => {
       priority: 'HIGH',
       href: '/profile?section=projects',
     });
-    expect(rec?.detail).toMatch(/advanced level needs a verified real-world project/i);
+    expect(rec?.detail).toMatch(/needs a verified real-world project/i);
   });
 
   it('does not ask for required evidence that is already present', () => {
@@ -698,8 +701,8 @@ describe('I337 recommendations', () => {
 
   it('asks for the missing evidence when a role skill meets the minimum but lacks evidence', () => {
     const recs = recsFor({
-      openings: [opening([{ code: SQL, min: 'ADVANCED' }])],
-      claims: [claim(SQL, 'VERIFIED', 'ADVANCED')],
+      openings: [opening([{ code: SQL, min: 'PROFESSIONAL' }])],
+      claims: [claim(SQL, 'VERIFIED', 'PROFESSIONAL')],
     });
     expect(recs.find((r) => r.skillCode === SQL)).toMatchObject({ kind: 'ADD_REQUIRED_EVIDENCE' });
   });
