@@ -41,7 +41,7 @@ import {
   type EmailTemplateName,
 } from '../../platform/mailer/mailer.types.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
-import { extractDomain, normalizeCompanyName } from '../work-experience/company-name.util.js';
+import { extractDomain } from '../work-experience/company-name.util.js';
 import {
   EMAIL_RESEND_COOLDOWN_SECONDS,
   emailResendAvailableAt,
@@ -55,12 +55,26 @@ import {
   parseDraftStore,
 } from './company-onboarding.util.js';
 import { CompanyOnboardingDocumentService } from './company-onboarding-document.service.js';
+import { findCompanyDuplicateSignals } from './company-duplicate-signals.js';
 import {
   requireOnboardingSessionByToken,
   resolveCurrentSessionVerification,
 } from './company-onboarding-session.access.js';
 import { incompleteSubmissionError } from './company-onboarding-submit-issues.js';
 import { OrganizationsService } from './organizations.service.js';
+
+/**
+ * What the registrant sees for each duplicate block (S6-VV-110). Specific enough to act on; the
+ * wizard shows the server message as is. `details.code` stays for clients that branch on it.
+ */
+const REGISTRATION_CONFLICT_MESSAGES = {
+  COMPANY_ALREADY_REGISTERED:
+    'This company is already registered on SMART. Ask one of its owners to invite you to the team instead of registering again.',
+  COMPANY_VERIFICATION_PENDING:
+    'A registration for this company is already being reviewed. Once it is approved, ask the colleague who applied to invite you to the team.',
+  DUPLICATE_REGISTRATION_REVIEW:
+    'This email already has a SMART account. Sign in instead, or register with a different work email.',
+} as const;
 
 const EDITABLE_STATUSES = new Set([
   'DRAFT',
@@ -346,6 +360,12 @@ export class CompanyOnboardingService {
     const verification = verificationResult.data;
 
     await this.assertSubmitDuplicates(profile, verification, session);
+    const duplicateSignals = await findCompanyDuplicateSignals(this.prisma, {
+      companyId: session.companyId,
+      displayName: profile.displayName,
+      legalName: verification.legalName,
+      website: profile.website,
+    });
 
     const freePlan = await this.prisma.subscriptionPlan.findUnique({ where: { code: 'FREE' } });
     if (!freePlan) {
@@ -407,6 +427,7 @@ export class CompanyOnboardingService {
           businessRegistrationNumber: verification.businessRegistrationNumber ?? null,
           taxId: verification.taxId ?? null,
           registrationAuthority: verification.registrationAuthority ?? null,
+          duplicateSignals: duplicateSignals as unknown as Prisma.InputJsonValue,
           submittedAt,
         },
       });
@@ -445,6 +466,7 @@ export class CompanyOnboardingService {
         companyId: result.companyId,
         submissionId: result.submissionId,
         documentCount: 0,
+        duplicateSignalCount: duplicateSignals.length,
       },
     });
 
@@ -545,12 +567,16 @@ export class CompanyOnboardingService {
     }
   }
 
+  /**
+   * Hard blocks only for an exact repeat of a company that already exists: the same GSTIN or
+   * website as an approved or in-review company. Fuzzier matches (name variants, another TLD, a
+   * placement-employer entry) are reviewer signals instead (S6-VV-110, findCompanyDuplicateSignals).
+   */
   private async assertSubmitDuplicates(
     profile: CompanySignupProfile,
     verification: CompanyVerification,
     session: SessionRow,
   ): Promise<void> {
-    const normalizedLegal = normalizeCompanyName(verification.legalName);
     const websiteHost = extractDomain(profile.website);
 
     const approvedByGstin =
@@ -566,19 +592,21 @@ export class CompanyOnboardingService {
       throw this.registrationConflict('COMPANY_ALREADY_REGISTERED');
     }
 
-    const pendingCompany = await this.prisma.company.findFirst({
-      where: {
-        verificationStatus: 'PENDING',
-        id: session.companyId ? { not: session.companyId } : undefined,
-        OR: [
-          ...(verification.taxId ? [{ gstin: verification.taxId.trim() }] : []),
-          ...(websiteHost
-            ? [{ website: { contains: websiteHost, mode: 'insensitive' as const } }]
-            : []),
-          { name: { equals: profile.displayName, mode: 'insensitive' as const } },
-        ],
-      },
-    });
+    const pendingOr = [
+      ...(verification.taxId ? [{ gstin: verification.taxId.trim() }] : []),
+      ...(websiteHost
+        ? [{ website: { contains: websiteHost, mode: 'insensitive' as const } }]
+        : []),
+    ];
+    const pendingCompany =
+      pendingOr.length > 0 &&
+      (await this.prisma.company.findFirst({
+        where: {
+          verificationStatus: 'PENDING',
+          id: session.companyId ? { not: session.companyId } : undefined,
+          OR: pendingOr,
+        },
+      }));
     if (pendingCompany) {
       throw this.registrationConflict('COMPANY_VERIFICATION_PENDING');
     }
@@ -592,19 +620,14 @@ export class CompanyOnboardingService {
         throw this.registrationConflict('COMPANY_ALREADY_REGISTERED');
       }
     }
-
-    const placementMatch = await this.prisma.placementEmployer.findFirst({
-      where: { normalizedName: normalizedLegal },
-    });
-    if (placementMatch) {
-      throw this.registrationConflict('DUPLICATE_REGISTRATION_REVIEW');
-    }
   }
 
-  private registrationConflict(code: string): ConflictException {
+  private registrationConflict(
+    code: keyof typeof REGISTRATION_CONFLICT_MESSAGES,
+  ): ConflictException {
     return new ConflictException({
       error: 'conflict',
-      message: 'Company registration cannot proceed at this time.',
+      message: REGISTRATION_CONFLICT_MESSAGES[code],
       statusCode: 409,
       details: { code },
     });

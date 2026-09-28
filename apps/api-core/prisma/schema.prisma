@@ -1300,6 +1300,8 @@ model CompanyVerification {
   businessRegistrationNumber String?                   @map("business_registration_number")
   taxId                      String?                   @map("tax_id")
   registrationAuthority      String?                   @map("registration_authority")
+  /// S6-VV-110: near-duplicate companies found at submit (CompanyDuplicateSignal[]), for the reviewer.
+  duplicateSignals           Json?                     @map("duplicate_signals")
   submittedAt                DateTime?                 @map("submitted_at") @db.Timestamptz(6)
   reviewedAt                 DateTime?                 @map("reviewed_at") @db.Timestamptz(6)
   reviewedById               String?                   @map("reviewed_by_id") @db.Uuid
