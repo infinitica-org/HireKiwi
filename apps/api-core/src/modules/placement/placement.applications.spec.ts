@@ -280,4 +280,23 @@ describe('CO-T02 patch application stage', () => {
         ))(),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
+
+  it('guarantees critical hiring decisions (HIRED, OFFER) require human operator authentication (Th6-I568)', async () => {
+    const { controller, prisma } = setup();
+    const result = await controller.patchApplicationStage(
+      tpoAdmin as never,
+      applicationId,
+      { stage: 'HIRED' },
+      resolveTenantId(tpoAdmin as never),
+      tpoAdmin as never,
+    );
+
+    expect(result.stage).toBe('HIRED');
+    expect(prisma.application.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: applicationId },
+        data: expect.objectContaining({ stage: 'HIRED' }),
+      }),
+    );
+  });
 });

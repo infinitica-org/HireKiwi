@@ -79,6 +79,29 @@ export class CapabilityInferenceReviewService {
       },
     });
 
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: reviewerId,
+        action: 'capability_inference.corrected',
+        resourceType: 'student_capability',
+        resourceId: id,
+        reasonCode: request.reviewerNote.slice(0, 120),
+        metadata: {
+          studentId: row.studentId,
+          skillCode: row.skillCode,
+          prior: {
+            proficiency: row.proficiency,
+            confidenceScore: row.confidenceScore,
+          },
+          updated: {
+            proficiency: updated.proficiency,
+            confidenceScore: updated.confidenceScore,
+          },
+          reviewerNote: request.reviewerNote,
+        },
+      },
+    });
+
     if (row.skillCode) {
       await this.skillInference.recomputeForSkill(row.studentId, row.skillCode);
     }

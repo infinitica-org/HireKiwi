@@ -545,6 +545,13 @@ export const ATS_STAGES = [
 export const AtsStageSchema = z.enum(ATS_STAGES);
 export type AtsStage = z.infer<typeof AtsStageSchema>;
 
+/**
+ * Th6-I568 — Critical hiring decisions must remain strictly with employers / human operators.
+ * Autonomous transition into terminal employment stages (OFFER, HIRED) without human action is prohibited.
+ */
+export const HUMAN_HIRING_DECISION_REQUIRED = true as const;
+export const HUMAN_GATED_ATS_STAGES: readonly AtsStage[] = ['OFFER', 'HIRED'] as const;
+
 /** How a match score was produced. SKILL_CAPABILITY is the default ranker; RULES is legacy rollback. */
 export const MATCH_METHODS = ['RULES', 'SKILL_CAPABILITY', 'HYBRID'] as const;
 export const MatchMethodSchema = z.enum(MATCH_METHODS);
