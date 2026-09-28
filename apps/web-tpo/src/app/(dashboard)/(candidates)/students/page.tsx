@@ -14,7 +14,7 @@ import {
 } from '@smart/contracts';
 
 import { CandidateDetailDrawer } from '../../../../components/candidate-detail-drawer';
-import { TpoBentoPageHeader } from '../../../../components/tpo-bento/TpoBentoPageHeader';
+import { CustomSelect, type SelectOption } from '../../../../components/ui/CustomSelect';
 import { api, staffApi } from '../../../../lib/api';
 import {
   categoryLabel,
@@ -73,8 +73,11 @@ export default function CandidatesPage() {
       })
       .catch((err: unknown) => {
         setStudents([]);
-        const msg =
+        const rawMsg =
           err instanceof Error ? err.message : 'Failed to load candidates. Please try again.';
+        const msg = rawMsg.includes('failed or timed out after')
+          ? 'Failed to connect to backend server. Please check your network connection or server status and try again.'
+          : rawMsg;
         setError(msg);
       })
       .finally(() => setLoading(false));
@@ -127,96 +130,84 @@ export default function CandidatesPage() {
   }, [students]);
 
   return (
-    <div className="space-y-4 pb-12">
-      {/* Bento Page Header */}
-      <TpoBentoPageHeader
-        icon={Users}
-        title="Students"
-        description="Search and review whitelisted students, verification progress, and verified skills."
-        badge={
-          <span className="inline-flex items-center rounded-md border border-zinc-200/80 bg-zinc-100/90 px-2.5 py-0.5 text-xs font-semibold text-zinc-700">
-            {candidateCountLabel(students.length)}
-          </span>
-        }
-        actions={
-          <Link
-            href="/students/readiness"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 shadow-2xs hover:bg-zinc-50"
-          >
-            <ShieldCheck className="size-3.5" aria-hidden />
-            Readiness dashboard
-          </Link>
-        }
-      />
-
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white p-4 shadow-2xs transition-all hover:border-zinc-300">
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+    <div className="space-y-6 ">
+      {/* Separated KPI Stat Cards Grid (Clean Monochrome Theme) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 ">
+        {/* Total Candidates Stat Card */}
+        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90 e p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
               Total Candidates
-            </p>
-            <p className="mt-1 font-heading text-2xl font-bold tracking-tight text-zinc-900">
-              {totalCount.toLocaleString('en-US')}
-            </p>
-            <p className="mt-0.5 text-xs text-zinc-400">
-              {viewScope === 'MY' ? 'Assigned to your scope' : 'Enrolled institutional cohort'}
-            </p>
+            </span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100/90 text-zinc-800 shadow-2xs">
+              <Users className="size-4.5 stroke-[1.75]" />
+            </div>
           </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 shadow-2xs">
-            <Users className="size-5 stroke-[1.75]" />
+          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
+            {totalCount.toLocaleString('en-US')}
+          </div>
+          <div className="mt-3 text-xs text-zinc-500 font-medium">
+            {viewScope === 'MY' ? 'Assigned to your scope' : 'Enrolled institutional cohort'}
           </div>
         </div>
 
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white p-4 shadow-2xs transition-all hover:border-zinc-300">
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+        {/* Skills Verified Stat Card */}
+        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90 p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
               Skills Verified
-            </p>
-            <p className="mt-1 font-heading text-2xl font-bold tracking-tight text-zinc-900">
-              {verifiedCountTotal.toLocaleString('en-US')}
-            </p>
-            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-emerald-700">
-              <span className="size-1.5 rounded-full bg-emerald-500" />
-              <span>Certified candidates</span>
+            </span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100/90 text-zinc-800 shadow-2xs">
+              <ShieldCheck className="size-4.5 stroke-[1.75]" />
             </div>
           </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-emerald-200/80 bg-emerald-50 text-emerald-800 shadow-2xs">
-            <ShieldCheck className="size-5 stroke-[1.75]" />
+          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
+            {verifiedCountTotal.toLocaleString('en-US')}
           </div>
+          <div className="mt-3 text-xs text-zinc-500 font-medium">Certified candidates</div>
         </div>
 
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white p-4 shadow-2xs transition-all hover:border-zinc-300">
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+        {/* Pending Invites Stat Card */}
+        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90  p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
               Pending Invites
-            </p>
-            <p className="mt-1 font-heading text-2xl font-bold tracking-tight text-zinc-900">
-              {pendingInvitesCount.toLocaleString('en-US')}
-            </p>
-            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-amber-700">
-              <span className="size-1.5 rounded-full bg-amber-500" />
-              <span>Awaiting acceptance</span>
+            </span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100/90 text-zinc-800 shadow-2xs">
+              <Clock className="size-4.5 stroke-[1.75]" />
             </div>
           </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-amber-200/80 bg-amber-50 text-amber-800 shadow-2xs">
-            <Clock className="size-5 stroke-[1.75]" />
+          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
+            {pendingInvitesCount.toLocaleString('en-US')}
           </div>
+          <div className="mt-3 text-xs text-zinc-500 font-medium">Awaiting acceptance</div>
         </div>
       </div>
+      {/* Top Header Action Bar with Readiness Dashboard Button */}
+      {/* <div className="flex items-center">
+       
+        <Link
+          href="/students/readiness"
+          className="inline-flex items-center gap-2 rounded-md bg-zinc-950 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-2xs transition-all hover:bg-zinc-800 active:scale-[0.98]"
+        >
+          <ShieldCheck className="size-4 text-white" aria-hidden />
+          Readiness dashboard
+        </Link>
+      </div> */}
 
-      {/* Filter Toolbar */}
-      <div className="rounded-xl border border-zinc-200/80 bg-white p-3 shadow-2xs">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      {/* Main Roster & Filter Table Card */}
+      <div className="rounded-lg border border-zinc-200/90 bg-white shadow-2xs">
+        {/* Header Filter Toolbar */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between p-5 border-b border-zinc-100 bg-white rounded-t-lg">
           {/* Segmented Switcher */}
-          <div className="inline-flex items-center gap-1 rounded-lg border border-zinc-200/70 bg-zinc-100/90 p-1 w-fit shrink-0">
+          <div className="inline-flex items-center gap-1 rounded-md border border-zinc-200/80 bg-white p-1 w-fit shrink-0">
             <button
               type="button"
               onClick={() => setViewScope('ALL')}
-              className={`rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all ${
+              className={`rounded-md px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all ${
                 viewScope === 'ALL'
-                  ? 'bg-white text-zinc-900 shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
+                  ? 'bg-black text-white shadow-2xs'
+                  : 'text-zinc-600 hover:text-zinc-950'
               }`}
             >
               All Candidates
@@ -224,10 +215,10 @@ export default function CandidatesPage() {
             <button
               type="button"
               onClick={() => setViewScope('MY')}
-              className={`rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all ${
+              className={`rounded-md px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all ${
                 viewScope === 'MY'
-                  ? 'bg-white text-zinc-900 shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
+                  ? 'bg-black text-white shadow-2xs'
+                  : 'text-zinc-600 hover:text-zinc-950'
               }`}
             >
               My Assigned Students
@@ -235,99 +226,104 @@ export default function CandidatesPage() {
           </div>
 
           {/* Search and Filters */}
-          <div className="flex flex-1 flex-wrap items-center gap-2 lg:justify-end">
-            <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+          <div className="flex flex-1 flex-wrap items-center gap-3 lg:justify-end">
+            <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
               <Search
-                className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400"
+                className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400"
                 aria-hidden
               />
               <input
                 type="search"
                 placeholder="Search candidates…"
                 aria-label="Search candidates"
-                className="h-9 w-full rounded-lg border border-zinc-200 bg-zinc-50/60 pl-8.5 pr-3 text-xs text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="h-10 w-full rounded-md border border-zinc-200 bg-white pl-10 pr-3.5 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-zinc-950 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <select
-              aria-label="Filter by skill category"
-              className="h-9 rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 text-xs font-medium text-zinc-700 transition-all hover:bg-white focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            <CustomSelect
+              ariaLabel="Filter by skill category"
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              <option value="ALL">All Categories</option>
-              {SKILL_CATEGORY_IDS.map((categoryId) => (
-                <option key={categoryId} value={categoryId}>
-                  {categoryLabel(categoryId)}
-                </option>
-              ))}
-            </select>
+              onChange={setCategoryFilter}
+              options={[
+                { value: 'ALL', label: 'All Categories' },
+                ...SKILL_CATEGORY_IDS.map((categoryId) => ({
+                  value: categoryId,
+                  label: categoryLabel(categoryId),
+                })),
+              ]}
+              className="min-w-[150px]"
+            />
 
-            <select
-              aria-label="Filter by Skills"
-              className="h-9 rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 text-xs font-medium text-zinc-700 transition-all hover:bg-white focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            <CustomSelect
+              ariaLabel="Filter by Skills"
               value={skillFilter}
-              onChange={(e) => setSkillFilter(e.target.value)}
-            >
-              <option value="ALL">All Skills</option>
-              {SKILL_DEFINITIONS.map((skill) => (
-                <option key={skill.code} value={skill.code}>
-                  {skill.name}
-                </option>
-              ))}
-            </select>
+              onChange={setSkillFilter}
+              options={[
+                { value: 'ALL', label: 'All Skills' },
+                ...SKILL_DEFINITIONS.map((skill) => ({
+                  value: skill.code,
+                  label: skill.name,
+                })),
+              ]}
+              className="min-w-[140px]"
+            />
 
-            <select
-              aria-label="Filter by Proficiency"
-              className="h-9 rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 text-xs font-medium text-zinc-700 transition-all hover:bg-white focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            <CustomSelect
+              ariaLabel="Filter by Proficiency"
               value={proficiencyFilter}
-              onChange={(e) => setProficiencyFilter(e.target.value)}
-            >
-              <option value="ALL">All Levels</option>
-              <option value="PROFESSIONAL">{proficiencyLevelUiLabel('PROFESSIONAL')}</option>
-              <option value="ADVANCED">{proficiencyLevelUiLabel('ADVANCED')}</option>
-              <option value="INTERMEDIATE">{proficiencyLevelUiLabel('INTERMEDIATE')}</option>
-              <option value="BEGINNER">{proficiencyLevelUiLabel('BEGINNER')}</option>
-            </select>
+              onChange={setProficiencyFilter}
+              options={[
+                { value: 'ALL', label: 'All Levels' },
+                {
+                  value: 'PROFESSIONAL',
+                  label: `Level 5 — ${proficiencyLevelUiLabel('PROFESSIONAL')}`,
+                },
+                { value: 'ADVANCED', label: `Level 4 — ${proficiencyLevelUiLabel('ADVANCED')}` },
+                {
+                  value: 'INTERMEDIATE',
+                  label: `Level 2 — ${proficiencyLevelUiLabel('INTERMEDIATE')}`,
+                },
+                { value: 'BEGINNER', label: `Level 1 — ${proficiencyLevelUiLabel('BEGINNER')}` },
+              ]}
+              className="min-w-[140px]"
+            />
           </div>
         </div>
-      </div>
 
-      {/* Roster Table */}
-      <div className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-2xs">
+        {/* Seamless Table Structure */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[840px] text-left text-xs font-sans">
+          <table className="w-full min-w-[880px] text-left text-xs font-sans">
             <thead>
-              <tr className="border-b border-zinc-200/80 bg-zinc-50/75 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
-                <th className="px-4 py-3">Candidate</th>
-                <th className="px-4 py-3">Primary Skill Category</th>
-                <th className="px-4 py-3">Onboarding Progress</th>
-                <th className="px-4 py-3">Verification Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+              <tr className="border-b border-zinc-200/80 bg-zinc-50/60 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                <th className="px-5 py-3.5">Candidate</th>
+                <th className="px-5 py-3.5">Primary Skill Category</th>
+                <th className="px-5 py-3.5">Onboarding Progress</th>
+                <th className="px-5 py-3.5">Verification Status</th>
+                <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-zinc-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-xs text-zinc-500">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <div className="size-5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
-                      <span>Loading candidates…</span>
+                  <td colSpan={5} className="px-5 py-16 text-center text-xs text-zinc-500">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <div className="size-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-950" />
+                      <span className="font-medium">Loading candidates…</span>
                     </div>
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-rose-600">
-                    <div className="space-y-2">
+                  <td colSpan={5} className="px-5 py-10 text-center text-rose-600">
+                    <div className="space-y-3">
                       <p className="text-xs font-semibold">{error}</p>
                       <button
                         type="button"
                         onClick={loadStudents}
-                        className="rounded-lg bg-rose-50 px-3.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
+                        className="rounded-xl bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors"
                       >
                         Retry
                       </button>
@@ -336,7 +332,7 @@ export default function CandidatesPage() {
                 </tr>
               ) : filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-xs text-zinc-500">
+                  <td colSpan={5} className="px-5 py-16 text-center text-xs text-zinc-500">
                     {students.length === 0
                       ? viewScope === 'MY'
                         ? 'No students are currently assigned to your department or campus scope.'
@@ -358,62 +354,62 @@ export default function CandidatesPage() {
                       key={student.userId}
                       className="transition-colors duration-150 hover:bg-zinc-50/70"
                     >
-                      <td className="px-4 py-3.5">
+                      <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <span className="flex size-8.5 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-900 text-xs font-bold text-white shadow-2xs">
+                          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-950 font-mono text-xs font-bold text-white shadow-2xs">
                             {getInitials(student.fullName)}
                           </span>
 
                           <div className="min-w-0">
                             <div
                               onClick={() => setSelectedStudent(student)}
-                              className="font-bold text-zinc-900 hover:underline cursor-pointer text-sm"
+                              className="font-bold text-zinc-950 hover:underline cursor-pointer text-xs sm:text-sm"
                             >
                               {student.fullName}
                             </div>
 
-                            <div className="truncate text-[11px] text-zinc-500">
+                            <div className="truncate text-[11px] text-zinc-400 font-mono font-normal">
                               {student.email}
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5">
-                        <span className="inline-flex items-center rounded-md border border-zinc-200/80 bg-zinc-50 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-700">
+                      <td className="px-5 py-4">
+                        <span className="inline-flex items-center rounded-full border border-zinc-200/90 bg-zinc-100/70 px-3 py-1 text-xs font-semibold text-zinc-700">
                           {candidateCategory}
                         </span>
                       </td>
 
-                      <td className="px-4 py-3.5">
+                      <td className="px-5 py-4">
                         {student.inviteStatus === 'ACCEPTED' ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/90 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 shadow-2xs">
-                            <span className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/80 bg-emerald-50/60 px-3 py-1 text-xs font-semibold text-emerald-700">
+                            <span className="size-1.5 rounded-full bg-emerald-500" />
                             Completed
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 shadow-2xs">
-                            <span className="size-1.5 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/80 bg-amber-50/60 px-3 py-1 text-xs font-semibold text-amber-700">
+                            <span className="size-1.5 rounded-full bg-amber-500" />
                             Pending Invite
                           </span>
                         )}
                       </td>
 
-                      <td className="px-4 py-3.5">
+                      <td className="px-5 py-4">
                         {verifiedCount > 0 ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/90 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 shadow-2xs">
-                            <span className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/80 bg-emerald-50/60 px-3 py-1 text-xs font-semibold text-emerald-700">
+                            <span className="size-1.5 rounded-full bg-emerald-500" />
                             {verifiedCount} Verified
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/90 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-800 shadow-2xs">
-                            <span className="size-1.5 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/80 bg-teal-50/60 px-3 py-1 text-xs font-semibold text-teal-700">
+                            <span className="size-1.5 rounded-full bg-teal-500" />
                             In Evaluation
                           </span>
                         )}
                       </td>
 
-                      <td className="px-4 py-3.5 text-right">
+                      <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <MessageStudentButton
                             studentId={student.userId}
@@ -422,11 +418,11 @@ export default function CandidatesPage() {
                           <button
                             type="button"
                             onClick={() => setSelectedStudent(student)}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 shadow-2xs transition-all hover:bg-zinc-50 hover:border-zinc-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+                            className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 shadow-2xs hover:bg-zinc-50 transition-all active:scale-[0.98]"
                           >
                             View Details
                             <ChevronRight
-                              className="size-3 text-zinc-400"
+                              className="size-3.5 text-zinc-400"
                               strokeWidth={2}
                               aria-hidden
                             />

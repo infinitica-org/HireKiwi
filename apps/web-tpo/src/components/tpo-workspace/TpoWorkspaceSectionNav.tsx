@@ -24,22 +24,22 @@ export function TpoWorkspaceSectionNav({
   const pathname = usePathname();
 
   return (
-    <div className="tpo-workspace-section mb-6 border-b border-zinc-200/80 pb-0">
+    <div className="tpo-workspace-section ">
       {sectionTitle ? (
-        <div className="mb-4">
-          <h1 className="font-heading text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl">
+        <div className="mb-4 px-4 pt-4 ">
+          <h1 className="font-heading text-3xl font-medium tracking-tight text-zinc-950 sm:text-4xl">
             {sectionTitle}
           </h1>
           {sectionDescription ? (
-            <p className="mt-1 text-xs sm:text-sm font-medium text-zinc-500">
+            <p className="mt-1.5 text-xs sm:text-sm font-medium text-zinc-500">
               {sectionDescription}
             </p>
           ) : null}
         </div>
       ) : null}
 
-      <nav aria-label={navAriaLabel}>
-        <ul className="-mb-px flex gap-6 overflow-x-auto [scrollbar-width:none] sm:gap-8 [&::-webkit-scrollbar]:hidden">
+      <nav aria-label={navAriaLabel} className="mt-2 mb-4">
+        <ul className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200/90 p-1 shadow-2xs overflow-x-auto max-w-full">
           {items.map((item) => {
             const active = isNavLinkActive(pathname, item.href);
             const Icon = item.icon;
@@ -49,22 +49,21 @@ export function TpoWorkspaceSectionNav({
                 <Link
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
-                  className={`group relative inline-flex items-center gap-1.5 pb-2.5 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-900 ${
-                    active ? 'font-bold text-black' : 'font-medium text-zinc-500 hover:text-black'
+                  className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-xs sm:text-sm transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950 ${
+                    active
+                      ? 'bg-black font-bold text-white shadow-2xs'
+                      : 'font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-white/60'
                   }`}
                 >
                   {Icon ? (
                     <Icon
-                      className={`size-3.5 shrink-0 stroke-[1.75] ${
-                        active ? 'text-black' : 'text-zinc-400 group-hover:text-zinc-700'
+                      className={`size-4 shrink-0 stroke-[2] ${
+                        active ? 'text-white' : 'text-black'
                       }`}
                       aria-hidden
                     />
                   ) : null}
                   {item.name}
-                  {active ? (
-                    <span aria-hidden className="absolute inset-x-0 -bottom-px h-[2px] bg-black" />
-                  ) : null}
                 </Link>
               </li>
             );

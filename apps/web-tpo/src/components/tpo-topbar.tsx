@@ -1,10 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronRight, GraduationCap, LogOut, Menu } from 'lucide-react';
+import {
+  ChevronRight,
+  GraduationCap,
+  Zap,
+  Users,
+  Settings,
+  PanelLeftOpen,
+  PanelLeftClose,
+} from 'lucide-react';
 import type { AuthenticatedUser } from '@smart/contracts';
+import { UserMenu } from '@smart/ui';
 import { api } from '../lib/api';
 import { signOut } from '../lib/auth';
 
@@ -73,14 +82,13 @@ function getBreadcrumbs(pathname: string): Breadcrumb[] {
 }
 
 type TpoTopbarProps = {
-  onOpenMobileNav: () => void;
+  onToggleSidebar: () => void;
+  collapsed?: boolean;
 };
 
-export function TpoTopbar({ onOpenMobileNav }: TpoTopbarProps) {
+export function TpoTopbar({ onToggleSidebar, collapsed = true }: TpoTopbarProps) {
   const router = useRouter();
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,29 +103,27 @@ export function TpoTopbar({ onOpenMobileNav }: TpoTopbarProps) {
     };
   }, []);
 
-  useEffect(() => {
-    function onOutsideClick(event: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setProfileOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', onOutsideClick);
-    return () => document.removeEventListener('mousedown', onOutsideClick);
-  }, []);
-
   const pathname = usePathname() || '/';
   const breadcrumbs = getBreadcrumbs(pathname);
 
+  const tpoMenuItems = [
+    { label: 'Profile', icon: GraduationCap, onClick: () => router.push('/school-profile') },
+    { label: 'Settings', icon: Settings, onClick: () => router.push('/settings') },
+  ];
+
+  const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
+
   return (
-    <header className="sticky top-0 z-40 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white px-6 font-sans antialiased select-none">
+    <header className="sticky top-0 z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white/80 backdrop-blur-md px-4 sm:px-6 font-sans antialiased select-none dark:border-zinc-800/80 dark:bg-[#111111]/80">
       <div className="flex h-full items-center gap-3">
         <button
           type="button"
-          onClick={onOpenMobileNav}
-          aria-label="Open navigation menu"
-          className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 lg:hidden"
+          onClick={onToggleSidebar}
+          aria-label="Toggle navigation sidebar"
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="flex size-8 items-center justify-center rounded-md  text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:border-zinc-800 dark:bg-zinc-800/40 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
-          <Menu strokeWidth={1.5} className="size-5" />
+          <ToggleIcon className="size-4 text-zinc-600 dark:text-zinc-300" strokeWidth={1.75} />
         </button>
 
         {/* Dynamic Breadcrumb Navigation */}
@@ -150,58 +156,17 @@ export function TpoTopbar({ onOpenMobileNav }: TpoTopbarProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Support Link */}
-        <Link
-          href="/reports"
-          className="text-[13px] font-medium text-zinc-800 hover:text-black transition-colors"
-        >
-          Support
-        </Link>
-
-        {/* User Avatar Circle */}
-        <div ref={profileRef} className="relative shrink-0">
-          <button
-            type="button"
-            onClick={() => setProfileOpen((v) => !v)}
-            aria-expanded={profileOpen}
-            aria-label={`${user?.fullName ?? 'Pilot TPO'} account menu`}
-            className="flex items-center rounded-full transition-transform hover:scale-105"
-          >
-            <div className="flex size-7 items-center justify-center rounded-full bg-zinc-800 text-[11px] font-semibold text-white shadow-2xs">
-              {(user?.fullName?.charAt(0) ?? 'P').toUpperCase()}
-            </div>
-          </button>
-
-          {profileOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] p-1 shadow-[var(--ds-card-shadow)]">
-              <div className="border-b border-[var(--ds-border-subtle)] px-3 py-2.5">
-                <p className="truncate text-xs font-semibold">{user?.fullName ?? 'Pilot TPO'}</p>
-                <p className="truncate text-[11px] text-[var(--ds-text-muted)]">
-                  {user?.email ?? 'tpo@institution.edu'}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileOpen(false);
-                  router.push('/school-profile');
-                }}
-                className="flex w-full items-center gap-2 border-b rounded-sm px-3 py-3 text-xs font-medium transition-colors hover:bg-[var(--ds-surface-hover)]"
-              >
-                <GraduationCap strokeWidth={1.5} className="size-3.5" />
-                My school
-              </button>
-              <button
-                type="button"
-                onClick={() => void signOut()}
-                className="mt-1 flex w-full items-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-[var(--ds-coral)] hover:bg-[#fef4f4]"
-              >
-                <LogOut strokeWidth={1.5} className="size-3.5" /> Sign out
-              </button>
-            </div>
-          )}
-        </div>
+        {/* User Profile Menu */}
+        <UserMenu
+          user={{
+            name: user?.fullName ?? 'Pilot TPO',
+            email: user?.email ?? 'tpo@institution.edu',
+            avatarUrl: null,
+            role: 'INSTITUTION_ADMIN',
+          }}
+          menuItems={tpoMenuItems}
+          onSignOut={() => void signOut()}
+        />
       </div>
     </header>
   );

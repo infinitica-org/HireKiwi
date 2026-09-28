@@ -1,20 +1,21 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Bell,
   ChevronRight,
-  LogOut,
-  Menu,
   Building2,
   Settings,
   UserRound,
   Search,
+  Zap,
+  Users,
+  PanelLeft,
 } from 'lucide-react';
 import { useCompanyAccount } from '@/lib/use-company-account';
 import { signOut } from '@/lib/auth';
+import { UserMenu } from '@smart/ui';
 
 type Breadcrumb = { label: string; href?: string };
 
@@ -66,23 +67,17 @@ export function CompanyTopbar({ onOpenMobileNav }: CompanyTopbarProps) {
   const router = useRouter();
   const pathname = usePathname() || '/';
   const { data: account } = useCompanyAccount();
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onOutsideClick(event: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setProfileOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', onOutsideClick);
-    return () => document.removeEventListener('mousedown', onOutsideClick);
-  }, []);
 
   const breadcrumbs = getCompanyBreadcrumbs(pathname);
   const companyName = account?.companyName || 'Employer Partner';
-  const _representativeName = account?.fullName || 'Representative';
-  const userInitial = (account?.companyName || account?.fullName || 'E').charAt(0).toUpperCase();
+  const representativeName = account?.fullName || 'Representative';
+
+  const companyMenuItems = [
+    { label: 'Profile', icon: Building2, onClick: () => router.push('/company') },
+    { label: 'Upgrade Plan', icon: Zap, onClick: () => router.push('/billing') },
+    { label: 'Refer Friends', icon: Users, onClick: () => router.push('/team') },
+    { label: 'Settings', icon: Settings, onClick: () => router.push('/settings') },
+  ];
 
   return (
     <header className="sticky top-0 z-40 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white/90 px-4 backdrop-blur font-sans antialiased select-none md:px-6">
@@ -92,10 +87,11 @@ export function CompanyTopbar({ onOpenMobileNav }: CompanyTopbarProps) {
           <button
             type="button"
             onClick={onOpenMobileNav}
-            aria-label="Open navigation menu"
-            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 lg:hidden"
+            aria-label="Toggle navigation sidebar"
+            title="Toggle sidebar"
+            className="flex size-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
           >
-            <Menu strokeWidth={1.75} className="size-5" />
+            <PanelLeft className="size-4.5" />
           </button>
         ) : null}
 
@@ -149,83 +145,18 @@ export function CompanyTopbar({ onOpenMobileNav }: CompanyTopbarProps) {
           <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-emerald-500 ring-2 ring-white" />
         </button>
 
-        {/* Employer User Avatar Circle Dropdown */}
-        <div ref={profileRef} className="relative shrink-0">
-          <button
-            type="button"
-            onClick={() => setProfileOpen((v) => !v)}
-            aria-expanded={profileOpen}
-            aria-label={`${companyName} account menu`}
-            className="flex items-center gap-2 rounded-full transition-transform hover:scale-105 focus:outline-none"
-          >
-            <span className="flex size-8 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white shadow-2xs">
-              {userInitial}
-            </span>
-          </button>
-
-          {profileOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl animate-fadeIn">
-              <div className="border-b border-zinc-100 px-3 py-2.5">
-                <p className="truncate text-xs font-bold text-zinc-900">{companyName}</p>
-                <p className="truncate text-[11px] font-medium text-zinc-500">
-                  {account?.email ?? ''}
-                </p>
-                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
-                  Verified Employer
-                </span>
-              </div>
-
-              <div className="py-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProfileOpen(false);
-                    router.push('/company');
-                  }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-100"
-                >
-                  <Building2 strokeWidth={1.75} className="size-4 text-zinc-500" />
-                  Company Profile
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProfileOpen(false);
-                    router.push('/team');
-                  }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-100"
-                >
-                  <UserRound strokeWidth={1.75} className="size-4 text-zinc-500" />
-                  Teammates
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProfileOpen(false);
-                    router.push('/settings');
-                  }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-100"
-                >
-                  <Settings strokeWidth={1.75} className="size-4 text-zinc-500" />
-                  Portal Settings
-                </button>
-              </div>
-
-              <div className="border-t border-zinc-100 pt-1">
-                <button
-                  type="button"
-                  onClick={() => void signOut()}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50"
-                >
-                  <LogOut strokeWidth={1.75} className="size-4" />
-                  Sign out
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Employer User Avatar Dropdown */}
+        <UserMenu
+          user={{
+            name: representativeName || companyName,
+            email: account?.email ?? '',
+            avatarUrl: null,
+            role: 'COMPANY_ADMIN',
+            organizationName: companyName,
+          }}
+          menuItems={companyMenuItems}
+          onSignOut={() => void signOut()}
+        />
       </div>
     </header>
   );

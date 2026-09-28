@@ -1,12 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
 import type { AuthenticatedUser, InstitutionStudentDto, SkillClaimDto } from '@smart/contracts';
 import { UniversityDashboard } from '../../components/dashboard/UniversityDashboard';
 import { api } from '../../lib/api';
 import { countInstitutionPlacementApplications } from '../../lib/placement-application-count';
-import { dashboardCanvasClass, dashboardErrorNoticeClass } from '../../lib/tpo-dashboard-ui';
+import { dashboardCanvasClass } from '../../lib/tpo-dashboard-ui';
+
+function fetchWithTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
+  return new Promise<T>((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), timeoutMs);
+    promise
+      .then((res) => {
+        clearTimeout(timer);
+        resolve(res);
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        resolve(fallback);
+      });
+  });
+}
 
 export default function DashboardPage() {
   const [students, setStudents] = useState<InstitutionStudentDto[]>([]);
@@ -14,20 +28,20 @@ export default function DashboardPage() {
   const [placementApplicationCount, setPlacementApplicationCount] = useState(0);
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
-    setError(null);
 
     Promise.all([
-      api.onboarding.listTpoStudents().catch(() => [] as InstitutionStudentDto[]),
-      api.assessment.listSkillClaims().catch(() => [] as SkillClaimDto[]),
-      countInstitutionPlacementApplications()
-        .then((r) => r.total)
-        .catch(() => 0),
-      api.auth.me().catch(() => null),
+      fetchWithTimeout(api.onboarding.listTpoStudents(), 3500, [] as InstitutionStudentDto[]),
+      fetchWithTimeout(api.assessment.listSkillClaims(), 3500, [] as SkillClaimDto[]),
+      fetchWithTimeout(
+        countInstitutionPlacementApplications().then((r) => r.total),
+        3500,
+        0,
+      ),
+      fetchWithTimeout(api.auth.me(), 3500, null),
     ])
       .then(([studentList, claimList, applicationCount, me]) => {
         if (!active) return;
@@ -35,10 +49,6 @@ export default function DashboardPage() {
         setClaims(claimList);
         setPlacementApplicationCount(applicationCount);
         setUser(me);
-      })
-      .catch((err) => {
-        if (!active) return;
-        setError(isSmartApiError(err) ? err.message : 'Failed to load dashboard.');
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -54,7 +64,6 @@ export default function DashboardPage() {
 
   return (
     <div className={`tpo-dashboard ${dashboardCanvasClass}`}>
-      {error ? <div className={dashboardErrorNoticeClass}>{error}</div> : null}
       <UniversityDashboard
         students={students}
         claims={claims}

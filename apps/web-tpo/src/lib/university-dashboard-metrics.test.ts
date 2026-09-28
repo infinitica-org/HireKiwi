@@ -76,9 +76,11 @@ describe('buildUniversityRosterRows', () => {
     const rows = buildUniversityRosterRows([student({})], [claim({})]);
     expect(rows[0]).toMatchObject({
       name: 'Alex Student',
+      email: 'a@school.edu',
       major: 'Comp. Sci',
       verificationState: 'Full',
       hiredLabel: '—',
+      verifiedSkillsCount: 1,
     });
   });
 });

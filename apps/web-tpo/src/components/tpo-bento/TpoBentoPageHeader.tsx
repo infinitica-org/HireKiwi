@@ -63,15 +63,6 @@ export function TpoBentoPageHeader({
           <h1
             className={`${compact ? 'text-lg font-semibold tracking-tight text-[var(--ds-text)] md:text-xl' : bentoPageTitleClass} flex items-center gap-2`}
           >
-            {Icon ? (
-              <span
-                className={`flex shrink-0 items-center justify-center rounded-lg ${accentStyle.iconWrap} ${
-                  compact ? 'size-9' : 'size-10'
-                }`}
-              >
-                <Icon className={compact ? 'size-4' : 'size-[18px]'} strokeWidth={1.5} />
-              </span>
-            ) : null}
             {title}
           </h1>
           {badge}

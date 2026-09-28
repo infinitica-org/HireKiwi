@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { ChevronRight, LogOut, Menu, ScrollText, UserCog } from 'lucide-react';
+import { ChevronRight, ScrollText, UserCog, Zap, Settings, PanelLeft } from 'lucide-react';
 import type { AuthenticatedUser } from '@smart/contracts';
 import { SearchDialog } from './search-dialog';
+import { UserMenu } from '@smart/ui';
 
 import { api } from '../lib/api';
 import { signOut } from '../lib/auth';
@@ -47,8 +48,6 @@ type AdminTopbarProps = {
 export function AdminTopbar({ onOpenMobileNav }: AdminTopbarProps) {
   const router = useRouter();
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,18 +62,15 @@ export function AdminTopbar({ onOpenMobileNav }: AdminTopbarProps) {
     };
   }, []);
 
-  useEffect(() => {
-    function onOutsideClick(event: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setProfileOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', onOutsideClick);
-    return () => document.removeEventListener('mousedown', onOutsideClick);
-  }, []);
-
   const pathname = usePathname() || '/admin';
   const breadcrumbs = getAdminBreadcrumbs(pathname);
+
+  const adminMenuItems = [
+    { label: 'Profile', icon: UserCog, onClick: () => router.push('/admin/platform-admins') },
+    { label: 'Upgrade Plan', icon: Zap, onClick: () => router.push('/admin') },
+    { label: 'Refer Friends', icon: ScrollText, onClick: () => router.push('/admin/audit') },
+    { label: 'Settings', icon: Settings, onClick: () => router.push('/admin/settings') },
+  ];
 
   return (
     <header className="sticky top-0 z-40 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white px-6 font-sans antialiased select-none">
@@ -82,10 +78,11 @@ export function AdminTopbar({ onOpenMobileNav }: AdminTopbarProps) {
         <button
           type="button"
           onClick={onOpenMobileNav}
-          aria-label="Open navigation menu"
-          className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 lg:hidden"
+          aria-label="Toggle navigation sidebar"
+          title="Toggle sidebar"
+          className="flex size-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
         >
-          <Menu strokeWidth={1.5} className="size-5" />
+          <PanelLeft className="size-4.5" />
         </button>
 
         {/* Dynamic Breadcrumb Navigation */}
@@ -128,65 +125,17 @@ export function AdminTopbar({ onOpenMobileNav }: AdminTopbarProps) {
           Audit Log
         </Link>
 
-        {/* User Avatar Circle & Dropdown */}
-        <div ref={profileRef} className="relative shrink-0">
-          <button
-            type="button"
-            onClick={() => setProfileOpen((v) => !v)}
-            aria-expanded={profileOpen}
-            aria-label={`${user?.fullName ?? 'Admin'} account menu`}
-            className="flex items-center rounded-full transition-transform hover:scale-105"
-          >
-            <div className="flex size-7 items-center justify-center rounded-full bg-zinc-800 text-[11px] font-semibold text-white shadow-2xs">
-              {(user?.fullName?.charAt(0) ?? 'A').toUpperCase()}
-            </div>
-          </button>
-
-          {profileOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-md border border-[var(--ds-border,#e4e7ec)] bg-[var(--ds-surface,#ffffff)] p-1 shadow-[var(--ds-card-shadow)]">
-              <div className="border-b border-[var(--ds-border-subtle,#eef1f4)] px-3 py-2.5">
-                <p className="truncate text-xs font-semibold text-zinc-900">
-                  {user?.fullName ?? 'Platform Admin'}
-                </p>
-                <p className="truncate text-[11px] text-[var(--ds-text-muted,#667085)]">
-                  {user?.email ?? 'admin@smart.local'}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileOpen(false);
-                  router.push('/admin/platform-admins');
-                }}
-                className="flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-[var(--ds-surface-hover,#f8fafc)] hover:text-zinc-950"
-              >
-                <UserCog strokeWidth={1.5} className="size-3.5 text-zinc-500" />
-                Admin users
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileOpen(false);
-                  router.push('/admin/audit');
-                }}
-                className="flex w-full items-center gap-2 border-b border-zinc-100 rounded-sm px-3 py-2.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-[var(--ds-surface-hover,#f8fafc)] hover:text-zinc-950"
-              >
-                <ScrollText strokeWidth={1.5} className="size-3.5 text-zinc-500" />
-                Audit log
-              </button>
-
-              <button
-                type="button"
-                onClick={() => void signOut()}
-                className="mt-1 flex w-full items-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-[var(--ds-coral,#e5484d)] hover:bg-[#fef4f4]"
-              >
-                <LogOut strokeWidth={1.5} className="size-3.5" /> Sign out
-              </button>
-            </div>
-          )}
-        </div>
+        {/* User Profile Menu */}
+        <UserMenu
+          user={{
+            name: user?.fullName ?? 'Platform Admin',
+            email: user?.email ?? 'admin@smart.local',
+            avatarUrl: null,
+            role: 'SUPER_ADMIN',
+          }}
+          menuItems={adminMenuItems}
+          onSignOut={() => void signOut()}
+        />
       </div>
     </header>
   );
