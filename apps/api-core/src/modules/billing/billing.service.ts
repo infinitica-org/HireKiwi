@@ -1,19 +1,27 @@
 import {
   BadRequestException,
+  ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import type { EmployerInvoice } from '../../generated/prisma/index.js';
+import type { EmployerInvoice, EnterpriseContract } from '../../generated/prisma/index.js';
 import type {
   BillingInterval,
   CheckoutSessionResponseDto,
+  CompanyQuotaOverviewDto,
   CreateCheckoutSessionDto,
+  CreateEnterpriseContractDto,
   EmployerInvoiceDto,
   EmployerSubscriptionDto,
   EmployerSubscriptionStatus,
+  EnterpriseContractDto,
+  QuotaDimension,
+  QuotaLimitDto,
   VerifyPaymentDto,
   VerifyPaymentMethodReplacementDto,
   UpgradePlanDto,
@@ -38,6 +46,21 @@ export class BillingService {
     @Inject(RedisService) private readonly redis: RedisService,
     @Optional() @Inject(StorageService) private readonly storageService?: StorageService,
   ) {}
+
+  /**
+   * Resolves the Razorpay Plan ID for a given internal plan code.
+   * Uses environment variable mappings (RAZORPAY_PLAN_ID_BASIC / PRO) if set,
+   * falling back to planCode.
+   */
+  private resolveRazorpayPlanId(planCode: string): string {
+    if (planCode === 'BASIC' && env.RAZORPAY_PLAN_ID_BASIC) {
+      return env.RAZORPAY_PLAN_ID_BASIC;
+    }
+    if (planCode === 'PRO' && env.RAZORPAY_PLAN_ID_PRO) {
+      return env.RAZORPAY_PLAN_ID_PRO;
+    }
+    return planCode;
+  }
 
   /**
    * Creates or reuses a subscription checkout session for a company.
@@ -131,7 +154,7 @@ export class BillingService {
     }
 
     const providerResult = await this.razorpayProvider.createSubscription({
-      planCode: plan.code,
+      planCode: this.resolveRazorpayPlanId(plan.code),
       billingInterval: input.billingInterval,
       amountInr,
       companyId,
@@ -476,6 +499,15 @@ export class BillingService {
       });
     }
 
+    if (subscription.plan.code === 'FREE' || !subscription.razorpaySubscriptionId) {
+      throw new BadRequestException({
+        error: 'checkout_required_for_free_plan',
+        message:
+          'Upgrading from FREE plan requires completing a checkout session. Please use createCheckoutSession.',
+        statusCode: 400,
+      });
+    }
+
     if ((input.planCode as string) === 'ENTERPRISE') {
       throw new BadRequestException({
         error: 'enterprise_contract_required',
@@ -516,7 +548,7 @@ export class BillingService {
 
     const resolvedInterval = (input.billingInterval ??
       subscription.billingInterval) as BillingInterval;
-    const targetRazorpayPlanId = targetPlan.code;
+    const targetRazorpayPlanId = this.resolveRazorpayPlanId(targetPlan.code);
 
     if (!targetRazorpayPlanId) {
       throw new BadRequestException({
@@ -1352,9 +1384,21 @@ export class BillingService {
         let isDowngradeApplied = false;
 
         if (providerPlanCode) {
-          const providerPlan = await this.prisma.subscriptionPlan.findUnique({
+          let providerPlan = await this.prisma.subscriptionPlan.findUnique({
             where: { code: providerPlanCode as PlanCode },
           });
+
+          if (!providerPlan) {
+            if (env.RAZORPAY_PLAN_ID_BASIC && providerPlanCode === env.RAZORPAY_PLAN_ID_BASIC) {
+              providerPlan = await this.prisma.subscriptionPlan.findUnique({
+                where: { code: 'BASIC' },
+              });
+            } else if (env.RAZORPAY_PLAN_ID_PRO && providerPlanCode === env.RAZORPAY_PLAN_ID_PRO) {
+              providerPlan = await this.prisma.subscriptionPlan.findUnique({
+                where: { code: 'PRO' },
+              });
+            }
+          }
 
           if (providerPlan) {
             if (subscription.pendingPlanId && subscription.pendingPlanId === providerPlan.id) {
@@ -1836,6 +1880,464 @@ export class BillingService {
       issuedAt: toIsoStr(invoice.issuedAt),
       paidAt: invoice.paidAt ? toIsoStr(invoice.paidAt) : null,
       createdAt: toIsoStr(invoice.createdAt),
+    };
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* Quota Enforcement & Usage Tracking */
+  /* -------------------------------------------------------------------------- */
+
+  async assertQuotaAvailable(companyId: string, dimension: QuotaDimension): Promise<void> {
+    const overview = await this.getCompanyQuotaOverview(companyId);
+
+    const subscription = await this.prisma.employerSubscription.findUnique({
+      where: { companyId },
+    });
+
+    if (subscription && ['PAST_DUE', 'CANCELED', 'EXPIRED'].includes(subscription.status)) {
+      throw new ForbiddenException({
+        error: 'subscription_inactive',
+        message: `Subscription is in '${subscription.status}' state. Active subscription required.`,
+        statusCode: 403,
+      });
+    }
+
+    const map: Record<QuotaDimension, QuotaLimitDto> = {
+      ACTIVE_JOBS: overview.activeJobs,
+      CANDIDATE_SEARCHES: overview.candidateSearches,
+      DIRECT_MESSAGES: overview.directMessages,
+      EMPLOYER_SEATS: overview.employerSeats,
+    };
+
+    const quota = map[dimension];
+    if (quota && quota.limit !== null && quota.used >= quota.limit) {
+      throw new ForbiddenException({
+        error: 'quota_exceeded',
+        message: `Quota limit for '${dimension}' has been reached (${quota.used}/${quota.limit}).`,
+        statusCode: 403,
+      });
+    }
+  }
+
+  async incrementUsage(companyId: string, dimension: QuotaDimension, count = 1): Promise<void> {
+    const subscription = await this.prisma.employerSubscription.findUnique({
+      where: { companyId },
+    });
+
+    if (!subscription) return;
+
+    const periodStart = subscription.currentPeriodStart;
+    const periodEnd = subscription.currentPeriodEnd;
+
+    const fieldMap: Partial<
+      Record<QuotaDimension, 'candidateSearchesCount' | 'directMessagesCount'>
+    > = {
+      CANDIDATE_SEARCHES: 'candidateSearchesCount',
+      DIRECT_MESSAGES: 'directMessagesCount',
+    };
+
+    const field = fieldMap[dimension];
+    if (!field) return;
+
+    await this.prisma.subscriptionUsage.upsert({
+      where: {
+        companyId_periodStart: {
+          companyId,
+          periodStart,
+        },
+      },
+      create: {
+        companyId,
+        periodStart,
+        periodEnd,
+        [field]: count,
+      },
+      update: {
+        [field]: { increment: count },
+      },
+    });
+  }
+
+  async getCompanyQuotaOverview(companyId: string): Promise<CompanyQuotaOverviewDto> {
+    const subscription = await this.prisma.employerSubscription.findUnique({
+      where: { companyId },
+      include: { plan: true },
+    });
+
+    const activeContract = await this.prisma.enterpriseContract.findFirst({
+      where: {
+        companyId,
+        startDate: { lte: new Date() },
+        endDate: { gte: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const isEnterprise = Boolean(subscription?.isEnterpriseContract || activeContract);
+
+    const activeJobsUsed = await this.prisma.jobOpening.count({
+      where: { companyId, status: 'OPEN' },
+    });
+
+    const employerSeatsUsed = await this.prisma.user.count({
+      where: { companyId },
+    });
+
+    const periodStart = subscription?.currentPeriodStart ?? new Date();
+    const usage = await this.prisma.subscriptionUsage.findUnique({
+      where: {
+        companyId_periodStart: {
+          companyId,
+          periodStart,
+        },
+      },
+    });
+
+    const candidateSearchesUsed = usage?.candidateSearchesCount ?? 0;
+    const directMessagesUsed = usage?.directMessagesCount ?? 0;
+
+    const activeJobsLimit = isEnterprise
+      ? (activeContract?.maxActiveJobs ?? null)
+      : (subscription?.plan.maxActiveJobs ?? 2);
+
+    const candidateSearchesLimit = isEnterprise
+      ? (activeContract?.maxCandidateSearches ?? null)
+      : (subscription?.plan.maxCandidateSearches ?? 50);
+
+    const directMessagesLimit = isEnterprise
+      ? (activeContract?.maxDirectMessages ?? null)
+      : (subscription?.plan.maxDirectMessages ?? 10);
+
+    const employerSeatsLimit = isEnterprise
+      ? (activeContract?.maxEmployerSeats ?? null)
+      : (subscription?.plan.maxEmployerSeats ?? 3);
+
+    const buildQuotaLimit = (
+      dimension: QuotaDimension,
+      used: number,
+      limit: number | null,
+    ): QuotaLimitDto => {
+      const remaining = limit === null ? null : Math.max(0, limit - used);
+      return {
+        dimension,
+        used,
+        limit,
+        remaining,
+      };
+    };
+
+    return {
+      activeJobs: buildQuotaLimit('ACTIVE_JOBS', activeJobsUsed, activeJobsLimit),
+      candidateSearches: buildQuotaLimit(
+        'CANDIDATE_SEARCHES',
+        candidateSearchesUsed,
+        candidateSearchesLimit,
+      ),
+      directMessages: buildQuotaLimit('DIRECT_MESSAGES', directMessagesUsed, directMessagesLimit),
+      employerSeats: buildQuotaLimit('EMPLOYER_SEATS', employerSeatsUsed, employerSeatsLimit),
+    };
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* Grace Period Reconciliation */
+  /* -------------------------------------------------------------------------- */
+
+  async reconcileExpiredGracePeriods(): Promise<{ reconciledCount: number }> {
+    const now = new Date();
+    const expiredSubscriptions = await this.prisma.employerSubscription.findMany({
+      where: {
+        status: 'GRACE_PERIOD',
+        gracePeriodEndsAt: { lte: now },
+      },
+    });
+
+    let reconciledCount = 0;
+    for (const sub of expiredSubscriptions) {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.employerSubscription.update({
+          where: { id: sub.id },
+          data: {
+            status: 'PAST_DUE',
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            actorId: 'system',
+            action: 'billing.grace_period_expired',
+            resourceType: 'subscription',
+            resourceId: sub.id,
+            metadata: {
+              companyId: sub.companyId,
+              previousStatus: 'GRACE_PERIOD',
+              newStatus: 'PAST_DUE',
+            },
+          },
+        });
+      });
+      reconciledCount++;
+    }
+
+    return { reconciledCount };
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* Enterprise Contract Management */
+  /* -------------------------------------------------------------------------- */
+
+  async createEnterpriseContract(
+    adminUserId: string,
+    body: CreateEnterpriseContractDto,
+  ): Promise<EnterpriseContractDto> {
+    const company = await this.prisma.company.findUnique({
+      where: { id: body.companyId },
+    });
+
+    if (!company) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Company not found.',
+        statusCode: 404,
+      });
+    }
+
+    const existingContract = await this.prisma.enterpriseContract.findFirst({
+      where: {
+        OR: [{ contractNumber: body.contractNumber }, { companyId: body.companyId }],
+      },
+    });
+
+    if (existingContract) {
+      throw new ConflictException({
+        error: 'conflict',
+        message: 'An enterprise contract already exists for this company or contract number.',
+        statusCode: 409,
+      });
+    }
+
+    const contract = await this.prisma.enterpriseContract.create({
+      data: {
+        companyId: body.companyId,
+        contractNumber: body.contractNumber,
+        customPriceInr: body.customPriceInr,
+        billingInterval: body.billingInterval,
+        maxActiveJobs: body.maxActiveJobs ?? null,
+        maxCandidateSearches: body.maxCandidateSearches ?? null,
+        maxDirectMessages: body.maxDirectMessages ?? null,
+        maxEmployerSeats: body.maxEmployerSeats ?? null,
+        startDate: new Date(body.startDate),
+        endDate: new Date(body.endDate),
+        termsNotes: body.termsNotes ?? null,
+      },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: adminUserId,
+        action: 'billing.enterprise_contract_created',
+        resourceType: 'enterprise_contract',
+        resourceId: contract.id,
+        metadata: {
+          companyId: body.companyId,
+          contractNumber: body.contractNumber,
+        },
+      },
+    });
+
+    return this.mapEnterpriseContractToDto(contract);
+  }
+
+  async listEnterpriseContracts(): Promise<EnterpriseContractDto[]> {
+    const contracts = await this.prisma.enterpriseContract.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return contracts.map((c) => this.mapEnterpriseContractToDto(c));
+  }
+
+  async getEnterpriseContract(contractId: string): Promise<EnterpriseContractDto> {
+    const contract = await this.prisma.enterpriseContract.findUnique({
+      where: { id: contractId },
+    });
+
+    if (!contract) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Enterprise contract not found.',
+        statusCode: 404,
+      });
+    }
+
+    return this.mapEnterpriseContractToDto(contract);
+  }
+
+  async approveEnterpriseContract(
+    adminUserId: string,
+    contractId: string,
+  ): Promise<EnterpriseContractDto> {
+    const contract = await this.prisma.enterpriseContract.findUnique({
+      where: { id: contractId },
+    });
+
+    if (!contract) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Enterprise contract not found.',
+        statusCode: 404,
+      });
+    }
+
+    let enterprisePlan = await this.prisma.subscriptionPlan.findUnique({
+      where: { code: 'ENTERPRISE' },
+    });
+
+    if (!enterprisePlan) {
+      enterprisePlan = await this.prisma.subscriptionPlan.create({
+        data: {
+          code: 'ENTERPRISE',
+          name: 'Talent Intelligence Suite',
+          isCustomPrice: true,
+        },
+      });
+    }
+
+    const updatedContract = await this.prisma.$transaction(async (tx) => {
+      const approved = await tx.enterpriseContract.update({
+        where: { id: contractId },
+        data: {
+          approvedById: adminUserId,
+        },
+      });
+
+      const existingSubscription = await tx.employerSubscription.findUnique({
+        where: { companyId: contract.companyId },
+      });
+
+      if (existingSubscription) {
+        await tx.employerSubscription.update({
+          where: { id: existingSubscription.id },
+          data: {
+            planId: enterprisePlan.id,
+            isEnterpriseContract: true,
+            status: 'ACTIVE',
+            gracePeriodEndsAt: null,
+          },
+        });
+      } else {
+        await tx.employerSubscription.create({
+          data: {
+            companyId: contract.companyId,
+            planId: enterprisePlan.id,
+            status: 'ACTIVE',
+            billingInterval: contract.billingInterval,
+            currentPeriodStart: contract.startDate,
+            currentPeriodEnd: contract.endDate,
+            isEnterpriseContract: true,
+          },
+        });
+      }
+
+      await tx.company.update({
+        where: { id: contract.companyId },
+        data: {
+          planId: enterprisePlan.id,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorId: adminUserId,
+          action: 'billing.enterprise_contract_approved',
+          resourceType: 'enterprise_contract',
+          resourceId: contract.id,
+          metadata: {
+            companyId: contract.companyId,
+            approvedById: adminUserId,
+          },
+        },
+      });
+
+      return approved;
+    });
+
+    return this.mapEnterpriseContractToDto(updatedContract);
+  }
+
+  async terminateEnterpriseContract(
+    adminUserId: string,
+    contractId: string,
+  ): Promise<EnterpriseContractDto> {
+    const contract = await this.prisma.enterpriseContract.findUnique({
+      where: { id: contractId },
+    });
+
+    if (!contract) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Enterprise contract not found.',
+        statusCode: 404,
+      });
+    }
+
+    const now = new Date();
+    const updatedContract = await this.prisma.$transaction(async (tx) => {
+      const terminated = await tx.enterpriseContract.update({
+        where: { id: contractId },
+        data: {
+          endDate: now,
+          approvedById: null,
+        },
+      });
+
+      const subscription = await tx.employerSubscription.findUnique({
+        where: { companyId: contract.companyId },
+      });
+
+      if (subscription) {
+        await tx.employerSubscription.update({
+          where: { id: subscription.id },
+          data: {
+            isEnterpriseContract: false,
+          },
+        });
+      }
+
+      await tx.auditLog.create({
+        data: {
+          actorId: adminUserId,
+          action: 'billing.enterprise_contract_terminated',
+          resourceType: 'enterprise_contract',
+          resourceId: contract.id,
+          metadata: {
+            companyId: contract.companyId,
+            terminatedAt: now.toISOString(),
+          },
+        },
+      });
+
+      return terminated;
+    });
+
+    return this.mapEnterpriseContractToDto(updatedContract);
+  }
+
+  private mapEnterpriseContractToDto(contract: EnterpriseContract): EnterpriseContractDto {
+    return {
+      id: contract.id,
+      companyId: contract.companyId,
+      contractNumber: contract.contractNumber,
+      customPriceInr: contract.customPriceInr,
+      billingInterval: contract.billingInterval,
+      maxActiveJobs: contract.maxActiveJobs,
+      maxCandidateSearches: contract.maxCandidateSearches,
+      maxDirectMessages: contract.maxDirectMessages,
+      maxEmployerSeats: contract.maxEmployerSeats,
+      startDate: contract.startDate.toISOString(),
+      endDate: contract.endDate.toISOString(),
+      termsNotes: contract.termsNotes ?? undefined,
+      approvedById: contract.approvedById ?? undefined,
+      createdAt: contract.createdAt.toISOString(),
+      updatedAt: contract.updatedAt.toISOString(),
     };
   }
 }

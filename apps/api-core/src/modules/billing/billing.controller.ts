@@ -21,6 +21,7 @@ import {
   type CheckoutSessionResponseDto,
   type EmployerSubscriptionDto,
   type EmployerInvoiceDto,
+  type CompanyQuotaOverviewDto,
 } from '@smart/contracts';
 import type { FastifyRequest } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -319,6 +320,25 @@ export class BillingController {
     }
 
     return this.billingService.getInvoiceDownloadUrl(companyId, invoiceId);
+  }
+
+  @Get('quotas/me')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retrieve authenticated employer company quota usage and limits.' })
+  @ApiResponse({ status: 200, description: 'Quota overview.' })
+  @ApiResponse({ status: 403, description: 'Company access required.' })
+  async getQuotaOverview(@CurrentUser() user: RequestUser): Promise<CompanyQuotaOverviewDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.getCompanyQuotaOverview(companyId);
   }
 
   @Post('webhooks/razorpay')

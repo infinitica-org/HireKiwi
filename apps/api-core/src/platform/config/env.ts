@@ -193,6 +193,9 @@ const EnvSchema = z.object({
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  RAZORPAY_PLAN_ID_BASIC: z.string().optional(),
+  RAZORPAY_PLAN_ID_PRO: z.string().optional(),
+  RAZORPAY_PLAN_ID_ENTERPRISE: z.string().optional(),
   BILLING_TAX_RATE_PERCENT: z.coerce.number().min(0).max(100).optional(),
 });
 

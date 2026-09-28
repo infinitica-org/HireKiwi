@@ -638,11 +638,11 @@ describe('BillingService', () => {
   });
 
   describe('upgradeSubscription', () => {
-    it('successfully upgrades subscription from FREE to PRO with provider update', async () => {
+    it('successfully upgrades subscription from BASIC to PRO with provider update', async () => {
       const mockCurrentSub = {
         id: 's0000000-0000-0000-0000-000000000001',
         companyId: mockCompany.id,
-        planId: mockFreePlan.id,
+        planId: mockBasicPlan.id,
         pendingPlanId: null,
         razorpaySubscriptionId: 'sub_rzp_123',
         status: 'ACTIVE',
@@ -655,7 +655,7 @@ describe('BillingService', () => {
         isEnterpriseContract: false,
         createdAt: new Date(),
         updatedAt: new Date(),
-        plan: mockFreePlan,
+        plan: mockBasicPlan,
       };
 
       prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
@@ -757,10 +757,10 @@ describe('BillingService', () => {
       const mockCurrentSub = {
         id: 's0000000-0000-0000-0000-000000000001',
         companyId: mockCompany.id,
-        planId: mockFreePlan.id,
+        planId: mockBasicPlan.id,
         razorpaySubscriptionId: 'sub_rzp_123',
         status: 'ACTIVE',
-        plan: mockFreePlan,
+        plan: mockBasicPlan,
       };
 
       prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
@@ -787,12 +787,12 @@ describe('BillingService', () => {
       const mockCurrentSub = {
         id: 's0000000-0000-0000-0000-000000000001',
         companyId: mockCompany.id,
-        planId: mockFreePlan.id,
+        planId: mockBasicPlan.id,
         pendingPlanId: null,
         razorpaySubscriptionId: 'sub_rzp_123',
         status: 'ACTIVE',
         billingInterval: 'MONTHLY',
-        plan: mockFreePlan,
+        plan: mockBasicPlan,
       };
 
       prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
@@ -824,7 +824,7 @@ describe('BillingService', () => {
       const mockCurrentSub = {
         id: 's0000000-0000-0000-0000-000000000001',
         companyId: mockCompany.id,
-        planId: mockFreePlan.id,
+        planId: mockBasicPlan.id,
         pendingPlanId: null,
         razorpaySubscriptionId: 'sub_rzp_123',
         status: 'ACTIVE',
@@ -837,7 +837,7 @@ describe('BillingService', () => {
         isEnterpriseContract: false,
         createdAt: new Date(),
         updatedAt: new Date(),
-        plan: mockFreePlan,
+        plan: mockBasicPlan,
       };
 
       prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
@@ -874,7 +874,7 @@ describe('BillingService', () => {
       const mockCurrentSub = {
         id: 's0000000-0000-0000-0000-000000000001',
         companyId: mockCompany.id,
-        planId: mockFreePlan.id,
+        planId: mockBasicPlan.id,
         pendingPlanId: null,
         razorpaySubscriptionId: 'sub_rzp_123',
         status: 'ACTIVE',
@@ -887,7 +887,7 @@ describe('BillingService', () => {
         isEnterpriseContract: false,
         createdAt: new Date(),
         updatedAt: new Date(),
-        plan: mockFreePlan,
+        plan: mockBasicPlan,
       };
 
       prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
@@ -925,8 +925,9 @@ describe('BillingService', () => {
       const mockCurrentSub = {
         id: 's0000000-0000-0000-0000-000000000001',
         companyId: mockCompany.id,
+        razorpaySubscriptionId: 'sub_rzp_123',
         status: 'ACTIVE',
-        plan: mockFreePlan,
+        plan: mockBasicPlan,
       };
 
       const mockPlanNoCode = {
@@ -952,7 +953,7 @@ describe('BillingService', () => {
       const mockCurrentSub = {
         id: 's0000000-0000-0000-0000-000000000001',
         companyId: mockCompany.id,
-        planId: mockFreePlan.id,
+        planId: mockBasicPlan.id,
         pendingPlanId: 'p0000000-0000-0000-0000-000000000004',
         razorpaySubscriptionId: 'sub_rzp_123',
         status: 'ACTIVE',
@@ -965,7 +966,7 @@ describe('BillingService', () => {
         isEnterpriseContract: false,
         createdAt: new Date(),
         updatedAt: new Date(),
-        plan: mockFreePlan,
+        plan: mockBasicPlan,
       };
 
       prismaMock.employerSubscription.findUnique.mockResolvedValue(mockCurrentSub);
@@ -2034,6 +2035,269 @@ describe('BillingService', () => {
           service.getInvoiceDownloadUrl(mockOtherCompany.id, mockInvoice.id),
         ).rejects.toThrow(BadRequestException);
       });
+    });
+  });
+
+  describe('T8: Quota Enforcement & Entitlement Resolution', () => {
+    it('calculates effective quota overview correctly merging plan and usage', async () => {
+      prismaMock.employerSubscription = {
+        ...prismaMock.employerSubscription,
+        findUnique: vi.fn().mockResolvedValue({
+          companyId: mockCompany.id,
+          plan: {
+            maxActiveJobs: 5,
+            maxCandidateSearches: 100,
+            maxDirectMessages: 50,
+            maxEmployerSeats: 3,
+          },
+          currentPeriodStart: new Date('2026-09-01'),
+          currentPeriodEnd: new Date('2026-09-30'),
+        }),
+      };
+
+      prismaMock.enterpriseContract = {
+        findFirst: vi.fn().mockResolvedValue(null),
+      };
+
+      prismaMock.jobOpening = {
+        count: vi.fn().mockResolvedValue(2),
+      };
+
+      prismaMock.user = {
+        count: vi.fn().mockResolvedValue(1),
+      };
+
+      prismaMock.subscriptionUsage = {
+        findUnique: vi.fn().mockResolvedValue({
+          candidateSearchesCount: 40,
+          directMessagesCount: 10,
+        }),
+      };
+
+      const overview = await service.getCompanyQuotaOverview(mockCompany.id);
+
+      expect(overview.activeJobs).toEqual({
+        dimension: 'ACTIVE_JOBS',
+        used: 2,
+        limit: 5,
+        remaining: 3,
+      });
+      expect(overview.candidateSearches).toEqual({
+        dimension: 'CANDIDATE_SEARCHES',
+        used: 40,
+        limit: 100,
+        remaining: 60,
+      });
+    });
+
+    it('throws ForbiddenException when quota limit is reached', async () => {
+      prismaMock.employerSubscription = {
+        ...prismaMock.employerSubscription,
+        findUnique: vi.fn().mockResolvedValue({
+          companyId: mockCompany.id,
+          status: 'ACTIVE',
+          plan: {
+            maxActiveJobs: 5,
+          },
+        }),
+      };
+
+      prismaMock.enterpriseContract = {
+        findFirst: vi.fn().mockResolvedValue(null),
+      };
+
+      prismaMock.jobOpening = {
+        count: vi.fn().mockResolvedValue(5),
+      };
+
+      prismaMock.user = { count: vi.fn().mockResolvedValue(1) };
+      prismaMock.subscriptionUsage = { findUnique: vi.fn().mockResolvedValue(null) };
+
+      await expect(service.assertQuotaAvailable(mockCompany.id, 'ACTIVE_JOBS')).rejects.toThrow();
+    });
+
+    it('throws ForbiddenException when subscription is PAST_DUE', async () => {
+      prismaMock.employerSubscription = {
+        ...prismaMock.employerSubscription,
+        findUnique: vi.fn().mockResolvedValue({
+          companyId: mockCompany.id,
+          status: 'PAST_DUE',
+        }),
+      };
+
+      await expect(service.assertQuotaAvailable(mockCompany.id, 'ACTIVE_JOBS')).rejects.toThrow();
+    });
+  });
+
+  describe('T9: Grace Period Expiry Reconciliation', () => {
+    it('reconciles expired grace period subscriptions to PAST_DUE and logs audit', async () => {
+      const expiredSub = {
+        id: 'sub-grace-1',
+        companyId: mockCompany.id,
+        status: 'GRACE_PERIOD',
+        gracePeriodEndsAt: new Date(Date.now() - 3600 * 1000),
+      };
+
+      prismaMock.employerSubscription = {
+        ...prismaMock.employerSubscription,
+        findMany: vi.fn().mockResolvedValue([expiredSub]),
+      };
+
+      prismaMock.$transaction = vi.fn().mockImplementation(async (cb: any) => {
+        const txMock = {
+          employerSubscription: {
+            update: vi.fn().mockResolvedValue({}),
+          },
+          auditLog: {
+            create: vi.fn().mockResolvedValue({}),
+          },
+        };
+        return cb(txMock);
+      });
+
+      const res = await service.reconcileExpiredGracePeriods();
+
+      expect(res.reconciledCount).toBe(1);
+    });
+  });
+
+  describe('T10: Enterprise Contract Management', () => {
+    const mockContractInput = {
+      companyId: mockCompany.id,
+      contractNumber: 'ENT-2026-001',
+      customPriceInr: 500000,
+      billingInterval: 'ANNUAL' as const,
+      maxActiveJobs: 50,
+      maxCandidateSearches: 5000,
+      maxDirectMessages: 2000,
+      maxEmployerSeats: 25,
+      startDate: '2026-01-01T00:00:00.000Z',
+      endDate: '2026-12-31T23:59:59.000Z',
+      termsNotes: 'Custom tier',
+    };
+
+    const mockContractRow = {
+      id: 'ent-c-1',
+      companyId: mockCompany.id,
+      contractNumber: 'ENT-2026-001',
+      customPriceInr: 500000,
+      billingInterval: 'ANNUAL',
+      maxActiveJobs: 50,
+      maxCandidateSearches: 5000,
+      maxDirectMessages: 2000,
+      maxEmployerSeats: 25,
+      startDate: new Date('2026-01-01'),
+      endDate: new Date('2026-12-31'),
+      termsNotes: 'Custom tier',
+      approvedById: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('creates enterprise contract draft successfully', async () => {
+      prismaMock.company.findUnique.mockResolvedValue(mockCompany);
+      prismaMock.enterpriseContract = {
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(mockContractRow),
+      };
+      prismaMock.auditLog = {
+        create: vi.fn().mockResolvedValue({}),
+      };
+
+      const result = await service.createEnterpriseContract('admin-1', mockContractInput);
+
+      expect(result.id).toBe('ent-c-1');
+      expect(result.contractNumber).toBe('ENT-2026-001');
+    });
+
+    it('approves enterprise contract and updates subscription and company', async () => {
+      prismaMock.enterpriseContract = {
+        findUnique: vi.fn().mockResolvedValue(mockContractRow),
+      };
+      prismaMock.subscriptionPlan = {
+        findUnique: vi.fn().mockResolvedValue(mockEnterprisePlan),
+      };
+
+      prismaMock.$transaction = vi.fn().mockImplementation(async (cb: any) => {
+        const txMock = {
+          enterpriseContract: {
+            update: vi.fn().mockResolvedValue({
+              ...mockContractRow,
+              approvedById: 'admin-1',
+            }),
+          },
+          employerSubscription: {
+            findUnique: vi.fn().mockResolvedValue(null),
+            create: vi.fn().mockResolvedValue({}),
+          },
+          company: {
+            update: vi.fn().mockResolvedValue({}),
+          },
+          auditLog: {
+            create: vi.fn().mockResolvedValue({}),
+          },
+        };
+        return cb(txMock);
+      });
+
+      const result = await service.approveEnterpriseContract('admin-1', 'ent-c-1');
+
+      expect(result.approvedById).toBe('admin-1');
+    });
+
+    it('terminates active enterprise contract', async () => {
+      prismaMock.enterpriseContract = {
+        findUnique: vi.fn().mockResolvedValue({
+          ...mockContractRow,
+          approvedById: 'admin-1',
+        }),
+      };
+
+      prismaMock.$transaction = vi.fn().mockImplementation(async (cb: any) => {
+        const txMock = {
+          enterpriseContract: {
+            update: vi.fn().mockResolvedValue({
+              ...mockContractRow,
+              approvedById: null,
+              endDate: new Date(),
+            }),
+          },
+          employerSubscription: {
+            findUnique: vi.fn().mockResolvedValue({
+              id: 'sub-1',
+              companyId: mockCompany.id,
+            }),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          auditLog: {
+            create: vi.fn().mockResolvedValue({}),
+          },
+        };
+        return cb(txMock);
+      });
+
+      const result = await service.terminateEnterpriseContract('admin-1', 'ent-c-1');
+
+      expect(result.approvedById).toBeUndefined();
+    });
+  });
+
+  describe('upgradeSubscription', () => {
+    it('throws BadRequestException when upgrading from FREE plan without checkout', async () => {
+      prismaMock.employerSubscription.findUnique.mockResolvedValue({
+        id: 'sub-free-1',
+        companyId: mockCompany.id,
+        status: 'ACTIVE',
+        billingInterval: 'MONTHLY',
+        razorpaySubscriptionId: null,
+        plan: mockFreePlan,
+      });
+
+      await expect(
+        service.upgradeSubscription('user-1', mockCompany.id, {
+          planCode: 'BASIC',
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });
