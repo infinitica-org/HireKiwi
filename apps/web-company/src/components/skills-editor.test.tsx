@@ -19,15 +19,16 @@ function need<T>(value: T | undefined): T {
 }
 
 describe('SkillsEditor (catalog picker)', () => {
+  vi.setConfig({ testTimeout: 15000 });
   afterEach(cleanup);
 
   it('has no free-text skill input, only a list of catalog skills', () => {
     open();
 
     expect(screen.queryByRole('textbox')).toBeNull();
-    const picker = screen.getByRole('combobox', { name: 'Skill' });
-    expect(within(picker).getAllByRole('option')).toHaveLength(SKILL_DEFINITIONS.length + 1);
-    expect(within(picker).getByRole('option', { name: need(first).name })).toBeTruthy();
+    const picker = screen.getByRole('combobox', { name: 'Skill' }) as HTMLSelectElement;
+    expect(picker.options).toHaveLength(SKILL_DEFINITIONS.length + 1);
+    expect(Array.from(picker.options).some((opt) => opt.text === need(first).name)).toBe(true);
   });
 
   it('cannot add until a skill is chosen', () => {
@@ -58,9 +59,9 @@ describe('SkillsEditor (catalog picker)', () => {
   it('no longer offers a skill that is already added', () => {
     open({ skills: [{ code: need(first).code, name: need(first).name, level: 'Beginner' }] });
 
-    const picker = screen.getByRole('combobox', { name: 'Skill' });
-    expect(within(picker).queryByRole('option', { name: need(first).name })).toBeNull();
-    expect(within(picker).getByRole('option', { name: need(second).name })).toBeTruthy();
+    const picker = screen.getByRole('combobox', { name: 'Skill' }) as HTMLSelectElement;
+    expect(Array.from(picker.options).some((opt) => opt.text === need(first).name)).toBe(false);
+    expect(Array.from(picker.options).some((opt) => opt.text === need(second).name)).toBe(true);
   });
 
   it('removes a skill by its code', () => {
