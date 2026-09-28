@@ -525,7 +525,7 @@ describe('assessmentApi contracts', () => {
   });
 
   it('parses POST /assessment/complete as CompleteAttemptResponse', async () => {
-    const { fetchImpl } = stubFetch([
+    const { fetchImpl, calls } = stubFetch([
       {
         body: {
           attemptId: sessionBody.attemptId,
@@ -547,6 +547,10 @@ describe('assessmentApi contracts', () => {
       }),
     );
     const result = await api.assessment.complete({ attemptId: sessionBody.attemptId });
+    // S6-VV-124: keyed on the attempt, so a double submit replays instead of a 409.
+    expect(new Headers(calls[0]?.init.headers).get('idempotency-key')).toBe(
+      `attempt-complete-${sessionBody.attemptId}`,
+    );
     expect(result.status).toBe('EVALUATED');
     expect(result.evaluationJobId).toBeNull();
     expect(result.scorePercent).toBe(1);

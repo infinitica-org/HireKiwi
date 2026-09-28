@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Inject, Param, Patch, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   API_PREFIX,
@@ -11,6 +11,7 @@ import {
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
+import { IdempotencyService } from '../company-profile/idempotency.service.js';
 import { AccountService } from './account.service.js';
 import { DataExportService } from './data-export.service.js';
 
@@ -22,6 +23,7 @@ export class AccountController {
   constructor(
     @Inject(AccountService) private readonly service: AccountService,
     @Inject(DataExportService) private readonly exports: DataExportService,
+    @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
   ) {}
 
   @Get('personal')
@@ -80,8 +82,19 @@ export class AccountController {
 
   @Post('data-requests')
   @ApiOperation({ summary: 'Request correction or deletion of my data.' })
-  createDataRequest(@CurrentUser() user: RequestUser, @Body() body: unknown) {
-    return this.service.createDataRequest(user.sub, CreateDataRequestSchema.parse(body));
+  createDataRequest(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+  ) {
+    const parsed = CreateDataRequestSchema.parse(body);
+    return this.idempotency.once({
+      userId: user.sub,
+      scope: 'account.data-requests.create',
+      key: idempotencyKey,
+      request: parsed,
+      execute: () => this.service.createDataRequest(user.sub, parsed),
+    });
   }
 
   @Get('data-requests/:requestId/download')

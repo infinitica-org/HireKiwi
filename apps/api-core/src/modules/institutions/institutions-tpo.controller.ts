@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Inject,
   Param,
   Patch,
@@ -33,6 +34,7 @@ import { Roles } from '../../common/guards/roles.decorator.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { AuditAccess } from '../../common/decorators/audit-access.decorator.js';
+import { IdempotencyService } from '../company-profile/idempotency.service.js';
 import { InstitutionsService } from './institutions.service.js';
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js';
 import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard.js';
@@ -41,7 +43,10 @@ import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard.js';
 @UseGuards(TenantScopeGuard)
 @Roles('INSTITUTION_ADMIN')
 export class InstitutionsTpoController {
-  constructor(@Inject(InstitutionsService) private readonly institutions: InstitutionsService) {}
+  constructor(
+    @Inject(InstitutionsService) private readonly institutions: InstitutionsService,
+    @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
+  ) {}
 
   @Get('entitlements')
   entitlements(@TenantId() institutionId: string) {
@@ -265,8 +270,20 @@ export class InstitutionsTpoController {
   }
 
   @Post('batches/:batchId/invites/send')
-  sendInvites(@Param('batchId') batchId: string, @TenantId() institutionId: string) {
-    return this.institutions.sendBatchInvites(batchId, institutionId);
+  sendInvites(
+    @Param('batchId') batchId: string,
+    @TenantId() institutionId: string,
+    @CurrentUser() user: RequestUser,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+  ) {
+    // S6-VV-124: a double click must not email a whole batch twice.
+    return this.idempotency.once({
+      userId: user.sub,
+      scope: `tpo.batch-invites.send:${batchId}`,
+      key: idempotencyKey,
+      request: { batchId },
+      execute: () => this.institutions.sendBatchInvites(batchId, institutionId),
+    });
   }
 
   @Post('invitations/:invitationId/resend')

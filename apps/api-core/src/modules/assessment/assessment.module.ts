@@ -21,6 +21,7 @@ import { CertVerificationAssessmentService } from './cert-verification-assessmen
 import { SkillClaimDeclareModule } from './skill-claim-declare.module.js';
 import { SkillVerifyGradeProcessor } from './skill-verify-grade.processor.js';
 import { SkillVerificationService } from './skill-verification.service.js';
+import { IdempotencyService } from '../company-profile/idempotency.service.js';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { SkillVerificationService } from './skill-verification.service.js';
     SkillVerifyGradeProcessor,
     CertVerificationAssessmentService,
     AssessmentIntelligenceService,
+    IdempotencyService,
   ],
   exports: [AssessmentService, ItemRotationService, CertVerificationAssessmentService],
 })
