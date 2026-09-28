@@ -1154,6 +1154,17 @@ export function onboardingApi(client: SmartApiClient) {
     updateCompany: (companyId: string, body: UpdateCompanyRequest) =>
       client.patch(prefixed(`/admin/companies/${companyId}`), body, { schema: CompanyDtoSchema }),
 
+    listCompanyMembers: (companyId: string) =>
+      client.get(prefixed(`/admin/companies/${companyId}/members`), {
+        schema: ListCompanyMembersResponseSchema,
+      }),
+
+    /** #167: make an active member an owner when the company has no reachable owner. */
+    assignCompanyOwner: (companyId: string, body: { memberId: string; reason: string }) =>
+      client.post(prefixed(`/admin/companies/${companyId}/owner`), body, {
+        schema: CompanyMemberSchema,
+      }),
+
     holdCompany: (companyId: string, body: TenantActionReason) =>
       client.post(prefixed(`/admin/companies/${companyId}/hold`), body, {
         schema: CompanyDtoSchema,
