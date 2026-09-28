@@ -48,7 +48,7 @@ describe('WorkExperienceService', () => {
       isCurrent: true,
       domain: 'Software Engineering',
       responsibilities: 'Built and maintained backend services.',
-      skillsClaimed: ['GITOPS_CONTINUOUS_DELIVERY', 'SQL_QUERY_OPTIMIZATION'],
+      skillsClaimed: ['PYTHON_APPLICATION_BACKEND_DEVELOPMENT', 'SQL_QUERY_OPTIMIZATION'],
       documents: [OFFER_DOC],
       ...overrides,
     };

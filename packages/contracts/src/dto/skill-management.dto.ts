@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { SKILL_TAXONOMY_TIERS, type SkillTaxonomyTier } from '../domain/skill-taxonomy.js';
-import { SkillCategoryIdSchema } from './catalog.dto.js';
+import type { SkillTaxonomyTier } from '../domain/skill-taxonomy.js';
+import { SkillCategoryIdSchema, SkillTaxonomyTierSchema } from './catalog.dto.js';
 
 export const SkillStatusSchema = z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']);
 export type SkillStatus = z.infer<typeof SkillStatusSchema>;
 
-export const SkillTaxonomyTierSchema = z.enum(SKILL_TAXONOMY_TIERS);
+export { SkillTaxonomyTierSchema };
 export type { SkillTaxonomyTier };
 
 export const CreateSkillDtoSchema = z.object({

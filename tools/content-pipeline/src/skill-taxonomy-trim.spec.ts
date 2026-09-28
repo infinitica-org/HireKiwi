@@ -38,10 +38,10 @@ const REMOVED = [
 ] as const;
 
 describe('skill@1 taxonomy trim', () => {
-  it('keeps 51 assessable skills across 14 categories', () => {
-    expect(SKILL_DEFINITIONS).toHaveLength(51);
-    expect(SKILL_CODES).toHaveLength(51);
-    expect(new Set(SKILL_CODES).size).toBe(51);
+  it('keeps 947 assessable skills across 14 categories', () => {
+    expect(SKILL_DEFINITIONS).toHaveLength(947);
+    expect(SKILL_CODES).toHaveLength(947);
+    expect(new Set(SKILL_CODES).size).toBe(947);
     expect(new Set(SKILL_DEFINITIONS.map((skill) => skill.categoryId)).size).toBe(14);
   });
 

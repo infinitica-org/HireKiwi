@@ -25,10 +25,10 @@ const validBody = {
   domain: 'SOFTWARE_IT',
   requiredSkills: [
     {
-      skillCode: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+      skillCode: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
       minProficiency: 'INTERMEDIATE',
     },
-    { skillCode: 'SQL_QUERY_OPTIMIZATION', minProficiency: 'BEGINNER' },
+    { skillCode: 'POSTGRESQL', minProficiency: 'BEGINNER' },
   ],
   minYearsExperience: 1,
   maxYearsExperience: 4,
@@ -67,9 +67,9 @@ function storedOpening(overrides: Record<string, unknown> = {}) {
     requiredSkills: [
       {
         minProficiency: 'INTERMEDIATE',
-        skill: { code: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION' },
+        skill: { code: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT' },
       },
-      { minProficiency: 'BEGINNER', skill: { code: 'SQL_QUERY_OPTIMIZATION' } },
+      { minProficiency: 'BEGINNER', skill: { code: 'POSTGRESQL' } },
     ],
     ...overrides,
   };
@@ -78,8 +78,8 @@ function storedOpening(overrides: Record<string, unknown> = {}) {
 /** Seeded taxonomy rows the service resolves `skillCode` against. */
 function setup(options: { seededCodes?: string[]; rows?: unknown[]; row?: unknown } = {}) {
   const seededCodes = options.seededCodes ?? [
-    'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
-    'SQL_QUERY_OPTIMIZATION',
+    'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
+    'POSTGRESQL',
   ];
   const prisma = {
     skill: {
@@ -214,10 +214,10 @@ describe('CO-T01 create opening', () => {
     expect(data.maxYearsExperience).toBe(4);
     expect(data.requiredSkills.create).toEqual([
       {
-        skillId: 'skill-ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+        skillId: 'skill-PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
         minProficiency: 'INTERMEDIATE',
       },
-      { skillId: 'skill-SQL_QUERY_OPTIMIZATION', minProficiency: 'BEGINNER' },
+      { skillId: 'skill-POSTGRESQL', minProficiency: 'BEGINNER' },
     ]);
   });
 
@@ -278,7 +278,7 @@ describe('CO-T01 create opening', () => {
 
     expect(prisma.skill.findMany).toHaveBeenCalledWith({
       where: {
-        code: { in: ['ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION', 'SQL_QUERY_OPTIMIZATION'] },
+        code: { in: ['PYTHON_APPLICATION_BACKEND_DEVELOPMENT', 'POSTGRESQL'] },
       },
       select: { id: true, code: true },
     });
@@ -287,7 +287,7 @@ describe('CO-T01 create opening', () => {
 
   it('rejects a taxonomy code that is valid in contracts but unseeded, creating nothing', async () => {
     const { controller, prisma } = setup({
-      seededCodes: ['ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION'],
+      seededCodes: ['PYTHON_APPLICATION_BACKEND_DEVELOPMENT'],
     });
 
     await expect(controller.createOpening(tpoAdmin as never, validBody)).rejects.toBeInstanceOf(
@@ -306,7 +306,7 @@ describe('CO-T01 create opening', () => {
       {
         requiredSkills: [
           {
-            skillCode: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+            skillCode: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
             minProficiency: 'EXPERT',
           },
         ],
@@ -394,10 +394,10 @@ describe('CO-T01 get one opening', () => {
     });
     expect(dto.requiredSkills).toEqual([
       {
-        skillCode: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+        skillCode: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
         minProficiency: 'INTERMEDIATE',
       },
-      { skillCode: 'SQL_QUERY_OPTIMIZATION', minProficiency: 'BEGINNER' },
+      { skillCode: 'POSTGRESQL', minProficiency: 'BEGINNER' },
     ]);
   });
 

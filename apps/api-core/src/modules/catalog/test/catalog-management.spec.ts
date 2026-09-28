@@ -115,21 +115,21 @@ describe('CatalogService - Skill Management (Th6-I297 & Th6-I298)', () => {
     });
 
     const mergeResult = service.mergeSkills({
-      targetSkillCode: 'JAVASCRIPT_TYPESCRIPT_FULL_STACK_DEVELOPMENT',
+      targetSkillCode: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
       sourceSkillCodes: ['JS_LEGACY', 'ECMASCRIPT_6'],
       addAsAliases: true,
     });
 
-    expect(mergeResult.targetSkillCode).toBe('JAVASCRIPT_TYPESCRIPT_FULL_STACK_DEVELOPMENT');
+    expect(mergeResult.targetSkillCode).toBe('PYTHON_APPLICATION_BACKEND_DEVELOPMENT');
     expect(mergeResult.mergedSkillCodes).toEqual(['JS_LEGACY', 'ECMASCRIPT_6']);
     expect(mergeResult.aliasesAdded).toContain('JS');
     expect(mergeResult.aliasesAdded).toContain('ECMAScript');
 
     // Searching by newly added alias should return target skill
     const searchByAlias = service.listManagedSkills({ search: 'ECMAScript' });
-    expect(
-      searchByAlias.some((s) => s.code === 'JAVASCRIPT_TYPESCRIPT_FULL_STACK_DEVELOPMENT'),
-    ).toBe(true);
+    expect(searchByAlias.some((s) => s.code === 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT')).toBe(
+      true,
+    );
 
     // Source skills should be archived
     const archivedList = service.listManagedSkills({ status: 'ARCHIVED' });
@@ -139,8 +139,8 @@ describe('CatalogService - Skill Management (Th6-I297 & Th6-I298)', () => {
   it('throws BadRequestException if source skill equals target skill during merge', () => {
     expect(() =>
       service.mergeSkills({
-        targetSkillCode: 'JAVASCRIPT_TYPESCRIPT_FULL_STACK_DEVELOPMENT',
-        sourceSkillCodes: ['JAVASCRIPT_TYPESCRIPT_FULL_STACK_DEVELOPMENT'],
+        targetSkillCode: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
+        sourceSkillCodes: ['PYTHON_APPLICATION_BACKEND_DEVELOPMENT'],
       }),
     ).toThrow(BadRequestException);
   });
@@ -157,19 +157,16 @@ describe('CatalogService - Skill Management (Th6-I297 & Th6-I298)', () => {
   it('maps recommended and optional skills to a target job role successfully (Th6-I299)', () => {
     const result = service.mapSkillsToRole({
       roleId: 'BACKEND_DEVELOPER',
-      recommendedSkillCodes: [
-        'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
-        'RELATIONAL_DATABASE_DESIGN_ADMINISTRATION',
-      ],
-      optionalSkillCodes: ['CONTAINERIZATION_ORCHESTRATION'],
+      recommendedSkillCodes: ['PYTHON_APPLICATION_BACKEND_DEVELOPMENT', 'POSTGRESQL'],
+      optionalSkillCodes: ['DOCKER'],
     });
 
     expect(result.roleId).toBe('BACKEND_DEVELOPER');
     expect(result.recommendedSkillCodes).toEqual([
       'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
-      'RELATIONAL_DATABASE_DESIGN_ADMINISTRATION',
+      'POSTGRESQL',
     ]);
-    expect(result.optionalSkillCodes).toEqual(['CONTAINERIZATION_ORCHESTRATION']);
+    expect(result.optionalSkillCodes).toEqual(['DOCKER']);
   });
 
   it('throws NotFoundException when mapping skills to an invalid roleId', () => {

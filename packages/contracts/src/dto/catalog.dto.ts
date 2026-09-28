@@ -24,10 +24,13 @@ import {
   SKILL_CATEGORY_IDS,
   SKILL_CODE_SET,
   SKILL_TAXONOMY_DOMAINS,
+  SKILL_TAXONOMY_TIERS,
   SKILL_TAXONOMY_VERSION,
   groupSkillsByCategory,
 } from '../domain/skills.js';
 import { IsoDateTimeSchema, ScoreSchema, UuidSchema, WeightSchema } from './common.js';
+
+export const SkillTaxonomyTierSchema = z.enum(SKILL_TAXONOMY_TIERS);
 
 /** skill@1 code only — never free-text names (SK-T01 / JD pickers). */
 export const TaxonomySkillCodeSchema = z
@@ -44,6 +47,7 @@ export const SkillLibraryItemDtoSchema = z.object({
   categoryId: SkillCategoryIdSchema,
   categoryName: z.string().min(1),
   domain: z.enum(SKILL_TAXONOMY_DOMAINS),
+  tier: SkillTaxonomyTierSchema.default('TIER_1_TECHNOLOGY'),
   competencyBars: z.object({
     BEGINNER: z.string().min(1),
     INTERMEDIATE: z.string().min(1),
@@ -81,6 +85,7 @@ export function buildSkillLibraryResponse(): SkillLibraryResponse {
         categoryId: skill.categoryId,
         categoryName: skill.categoryName,
         domain: skill.domain,
+        tier: skill.tier,
         competencyBars: { ...DEFAULT_COMPETENCY_BARS },
         corroborationEligible: skill.corroborationEligible,
         assessmentRequiredForClaim: skill.assessmentRequiredForClaim,
