@@ -20,7 +20,10 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({ trustProxy: true, logger: false }),
-    { bufferLogs: true },
+    // The JSON parser below keeps the raw body for webhook signatures (S6-VB-01). Nest's default
+    // body parsers must stay off: with them on, app.listen() registers a second
+    // application/json parser and boot fails with FST_ERR_CTP_ALREADY_PRESENT.
+    { bufferLogs: true, bodyParser: false },
   );
 
   const fastifyInstance = app.getHttpAdapter().getInstance();
