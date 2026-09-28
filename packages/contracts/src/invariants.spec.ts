@@ -27,6 +27,8 @@ import {
   getRateLimitPolicy,
   getTopicSpec,
   getTrackDefinition,
+  HUMAN_GATED_ATS_STAGES,
+  HUMAN_HIRING_DECISION_REQUIRED,
   routesExceedingLatencyBudget,
   sdeV4FormCodeForCatalogSkill,
   skillFocusOptions,
@@ -137,6 +139,20 @@ describe('rate limit matrix', () => {
 
   it('fails loudly for an unregistered policy key', () => {
     expect(() => getRateLimitPolicy('nope')).toThrow(/unlimited endpoints do not ship/);
+  });
+
+  it('enforces employer rate limit policies against candidate harvesting (I403)', () => {
+    const profileView = getRateLimitPolicy('employer.profileView');
+    expect(profileView.scope).toBe('USER');
+    expect(profileView.limit).toBe(100);
+    expect(profileView.windowSeconds).toBe(3600);
+    expect(profileView.onViolation).toBe('ALERT');
+
+    const searchBulk = getRateLimitPolicy('employer.searchBulk');
+    expect(searchBulk.scope).toBe('USER');
+    expect(searchBulk.limit).toBe(60);
+    expect(searchBulk.windowSeconds).toBe(3600);
+    expect(searchBulk.onViolation).toBe('ALERT');
   });
 });
 
@@ -642,5 +658,13 @@ describe('proctoring routes (S4-RM-01)', () => {
     });
     expect(getRateLimitPolicy('proctoring.telemetry').limit).toBe(40);
     expect(getTopicSpec(SMART_TOPICS.proctoringSnapshotReady).producerModule).toBe('proctoring');
+  });
+});
+
+describe('hiring decision governance (Th6-I568)', () => {
+  it('guarantees that critical hiring decisions remain strictly with human employers', () => {
+    expect(HUMAN_HIRING_DECISION_REQUIRED).toBe(true);
+    expect(HUMAN_GATED_ATS_STAGES).toContain('HIRED');
+    expect(HUMAN_GATED_ATS_STAGES).toContain('OFFER');
   });
 });

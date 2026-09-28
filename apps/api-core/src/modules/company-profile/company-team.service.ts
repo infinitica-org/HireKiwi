@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import type {
   CompanyMember,
   DeactivateCompanyMemberRequest,
@@ -8,6 +8,7 @@ import type {
 } from '@smart/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
+import { BillingService } from '../billing/billing.service.js';
 import { InvitationsService } from '../invitations/invitations.service.js';
 import { requireCompanyActor } from './company-access.js';
 import { IdempotencyService } from './idempotency.service.js';
@@ -60,6 +61,7 @@ export class CompanyTeamService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
     @Inject(InvitationsService) private readonly invitations: InvitationsService,
+    @Optional() @Inject(BillingService) private readonly billingService?: BillingService,
   ) {}
 
   async list(userId: string): Promise<ListCompanyMembersResponse> {
@@ -78,6 +80,7 @@ export class CompanyTeamService {
     params: { key: string; body: InviteRecruiterRequest },
   ): Promise<{ invitationId: string; email: string }> {
     const actor = await requireCompanyActor(this.prisma, userId, 'company.team.invite');
+    await this.billingService?.assertQuotaAvailable(actor.companyId, 'EMPLOYER_SEATS');
     const email = params.body.email.toLowerCase();
 
     const company = await this.prisma.company.findUnique({ where: { id: actor.companyId } });
@@ -261,6 +264,7 @@ export class CompanyTeamService {
     params: { key: string; memberId: string },
   ): Promise<CompanyMember> {
     const actor = await requireCompanyActor(this.prisma, userId, 'company.team.manage');
+    await this.billingService?.assertQuotaAvailable(actor.companyId, 'EMPLOYER_SEATS');
     return this.idempotency.run({
       userId,
       scope: `employer.members.reactivate:${params.memberId}`,

@@ -29,6 +29,8 @@ export function BrandLoadingScreen({ message, className = '' }: BrandLoadingScre
           className="size-6 animate-spin rounded-full border-[2.5px] border-zinc-200 border-t-zinc-800"
           aria-hidden="true"
         />
+
+        {message && <div className="text-sm font-medium text-zinc-500">{message}</div>}
       </div>
     </div>
   );

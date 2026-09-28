@@ -1,0 +1,359 @@
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Headers,
+  Inject,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  API_PREFIX,
+  CreateCheckoutSessionSchema,
+  VerifyPaymentSchema,
+  UpgradePlanSchema,
+  DowngradePlanSchema,
+  ReplacePaymentMethodSchema,
+  VerifyPaymentMethodReplacementSchema,
+  type CheckoutSessionResponseDto,
+  type EmployerSubscriptionDto,
+  type EmployerInvoiceDto,
+  type CompanyQuotaOverviewDto,
+} from '@smart/contracts';
+import type { FastifyRequest } from 'fastify';
+import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
+import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
+import { Public } from '../../common/guards/public.decorator.js';
+import { Roles } from '../../common/guards/roles.decorator.js';
+import { BillingService } from './billing.service.js';
+
+@ApiTags('billing')
+@Controller(`${API_PREFIX}/billing`)
+export class BillingController {
+  constructor(@Inject(BillingService) private readonly billingService: BillingService) {}
+
+  @Get('subscription/me')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retrieve authenticated employer subscription status (Phase 3A).' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current subscription retrieved or null if unsubscribed.',
+  })
+  @ApiResponse({ status: 403, description: 'Caller is not associated with a company account.' })
+  async getSubscription(@CurrentUser() user: RequestUser): Promise<EmployerSubscriptionDto | null> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.getSubscription(companyId);
+  }
+
+  @Post('subscriptions/checkout')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create or reuse a subscription checkout session (Phase 2).' })
+  @ApiResponse({ status: 201, description: 'Checkout session created with Razorpay details.' })
+  @ApiResponse({
+    status: 400,
+    description: 'FREE or ENTERPRISE plan cannot be checked out self-service.',
+  })
+  @ApiResponse({ status: 403, description: 'Caller is not associated with an active company.' })
+  async createCheckoutSession(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<CheckoutSessionResponseDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    const parsedInput = CreateCheckoutSessionSchema.parse(body);
+    return this.billingService.createCheckoutSession(user.sub, companyId, parsedInput);
+  }
+
+  @Post('subscriptions/verify')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verify Razorpay payment signature and activate subscription.' })
+  @ApiResponse({ status: 200, description: 'Subscription activated and company plan synced.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid signature or cross-company verification rejected.',
+  })
+  async verifyPayment(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<EmployerSubscriptionDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    const parsedInput = VerifyPaymentSchema.parse(body);
+    return this.billingService.verifyPayment(user.sub, companyId, parsedInput);
+  }
+
+  @Post('subscriptions/cancel')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Cancel employer subscription renewal at end of current period (Phase 3A).',
+  })
+  @ApiResponse({ status: 200, description: 'Subscription scheduled for period-end cancellation.' })
+  @ApiResponse({
+    status: 400,
+    description: 'No active subscription or invalid state for cancellation.',
+  })
+  async cancelSubscription(@CurrentUser() user: RequestUser): Promise<EmployerSubscriptionDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.cancelSubscription(user.sub, companyId);
+  }
+
+  @Post('subscriptions/upgrade')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Upgrade employer subscription immediately with prorated billing (Phase 4A).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Subscription upgraded immediately with provider proration.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid plan transition, same/lower plan rank, or provider upgrade error.',
+  })
+  async upgradeSubscription(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<EmployerSubscriptionDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    const parsedInput = UpgradePlanSchema.parse(body);
+    return this.billingService.upgradeSubscription(user.sub, companyId, parsedInput);
+  }
+
+  @Post('subscriptions/downgrade')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Schedule employer subscription downgrade for current billing period end (Phase 4B).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Subscription downgrade scheduled for end of current billing period.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid plan transition, same/higher plan rank, or provider downgrade error.',
+  })
+  async downgradeSubscription(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<EmployerSubscriptionDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    const parsedInput = DowngradePlanSchema.parse(body);
+    return this.billingService.downgradeSubscription(user.sub, companyId, parsedInput);
+  }
+
+  @Post('subscriptions/payment-method/replace')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Create a replacement subscription session for updating payment details (Phase 5).',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Replacement checkout session created with Razorpay details.',
+  })
+  @ApiResponse({ status: 400, description: 'No active subscription or invalid plan state.' })
+  @ApiResponse({ status: 403, description: 'Caller is not associated with an active company.' })
+  async createPaymentMethodReplacementSession(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<CheckoutSessionResponseDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    if (body && typeof body === 'object' && Object.keys(body).length > 0) {
+      ReplacePaymentMethodSchema.parse(body);
+    }
+    return this.billingService.createPaymentMethodReplacementSession(user.sub, companyId);
+  }
+
+  @Post('subscriptions/payment-method/replace/verify')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Verify Razorpay replacement subscription payment and update payment method (Phase 5).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Replacement subscription verified and local payment method updated.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid signature, provider lookup error, or cross-company mismatch.',
+  })
+  async verifyPaymentMethodReplacement(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<EmployerSubscriptionDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    const parsedInput = VerifyPaymentMethodReplacementSchema.parse(body);
+    return this.billingService.verifyPaymentMethodReplacement(user.sub, companyId, parsedInput);
+  }
+
+  @Get('invoices')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List billing invoices for authenticated employer company.' })
+  @ApiResponse({ status: 200, description: 'List of company invoices ordered newest first.' })
+  @ApiResponse({ status: 403, description: 'Caller is not associated with a company account.' })
+  async listInvoices(@CurrentUser() user: RequestUser): Promise<EmployerInvoiceDto[]> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.listInvoices(companyId);
+  }
+
+  @Get('invoices/:invoiceId')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get invoice details by ID for authenticated employer company.' })
+  @ApiResponse({ status: 200, description: 'Invoice details.' })
+  @ApiResponse({ status: 404, description: 'Invoice not found or access denied.' })
+  async getInvoice(
+    @CurrentUser() user: RequestUser,
+    @Param('invoiceId') invoiceId: string,
+  ): Promise<EmployerInvoiceDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.getInvoice(companyId, invoiceId);
+  }
+
+  @Get('invoices/:invoiceId/download')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get secure PDF download URL for an invoice.' })
+  @ApiResponse({ status: 200, description: 'Signed download URL generated.' })
+  @ApiResponse({ status: 404, description: 'Invoice not found or access denied.' })
+  async downloadInvoicePdf(
+    @CurrentUser() user: RequestUser,
+    @Param('invoiceId') invoiceId: string,
+  ): Promise<{ downloadUrl: string }> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.getInvoiceDownloadUrl(companyId, invoiceId);
+  }
+
+  @Get('quotas/me')
+  @Roles('COMPANY')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retrieve authenticated employer company quota usage and limits.' })
+  @ApiResponse({ status: 200, description: 'Quota overview.' })
+  @ApiResponse({ status: 403, description: 'Company access required.' })
+  async getQuotaOverview(@CurrentUser() user: RequestUser): Promise<CompanyQuotaOverviewDto> {
+    const companyId = user.companyId;
+    if (!companyId) {
+      throw new ForbiddenException({
+        error: 'company_required',
+        message: 'Authenticated user is not linked to a company account.',
+        statusCode: 403,
+      });
+    }
+
+    return this.billingService.getCompanyQuotaOverview(companyId);
+  }
+
+  @Post('webhooks/razorpay')
+  @Public()
+  @ApiOperation({ summary: 'Razorpay webhook receiver for subscription and payment events.' })
+  @ApiResponse({ status: 200, description: 'Webhook event processed idempotently.' })
+  @ApiResponse({ status: 400, description: 'Invalid webhook signature or payload.' })
+  async handleRazorpayWebhook(
+    @Req() request: FastifyRequest,
+    @Headers('x-razorpay-signature') signature: string | undefined,
+  ): Promise<{ processed: boolean; duplicate?: boolean }> {
+    const rawBody =
+      ((request as unknown as Record<string, unknown>).rawBody as string | undefined) ??
+      (typeof request.body === 'string' ? request.body : JSON.stringify(request.body ?? {}));
+
+    return this.billingService.handleWebhook(rawBody, signature ?? '');
+  }
+}

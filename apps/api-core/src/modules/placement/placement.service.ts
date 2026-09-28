@@ -125,6 +125,8 @@ function parseAttachedDocuments(raw: unknown): JobOpeningAttachedDocument[] | nu
   return parsed.data;
 }
 
+import { BillingService } from '../billing/billing.service.js';
+
 /** Coerce legacy rows so list/get does not 500 the whole institution when one field is null. */
 function normalizeOpeningRow(row: OpeningRow): OpeningRow {
   const domain = SkillTaxonomyDomainSchema.safeParse(row.domainCode);
@@ -248,6 +250,7 @@ export class PlacementService {
     @InjectQueue(JD_PARSE_QUEUE) private readonly jdParseQueue: Queue<{ openingId: string }>,
     @Optional() @Inject(StorageService) private readonly storageService?: StorageService,
     @Optional() @Inject(ApplicationService) private readonly applications?: ApplicationService,
+    @Optional() @Inject(BillingService) private readonly billingService?: BillingService,
   ) {}
 
   private requireApplications(): ApplicationService {
@@ -378,6 +381,11 @@ export class PlacementService {
     createdById: string,
     body: CreateJobOpeningRequest,
   ): Promise<JobOpeningDto> {
+    const companyId = (body as unknown as { companyId?: string }).companyId;
+    if (companyId) {
+      await this.billingService?.assertQuotaAvailable(companyId, 'ACTIVE_JOBS');
+    }
+
     const requestedCodes = body.requiredSkills.map((requirement) => requirement.skillCode);
 
     let companyName = body.companyName?.trim() ?? '';

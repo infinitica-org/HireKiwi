@@ -3,15 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  ChevronRight,
-  GraduationCap,
-  Zap,
-  Users,
-  Settings,
-  PanelLeftOpen,
-  PanelLeftClose,
-} from 'lucide-react';
+import { ChevronRight, GraduationCap, Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import type { AuthenticatedUser } from '@smart/contracts';
 import { UserMenu } from '@smart/ui';
 import { api } from '../lib/api';

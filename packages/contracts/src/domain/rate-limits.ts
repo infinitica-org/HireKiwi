@@ -104,7 +104,7 @@ export const ROLE_RATE_LIMITS: readonly RateLimitPolicy[] = [
     burst: 40,
     redisKey: 'rl:company:{id}',
     rationale:
-      'Company recruiters managing job openings, candidate evaluations, and interview slots.',
+      'Company recruiters managing job openings, candidate evaluations, interview slots, and subscription operations.',
   },
 ] as const;
 
@@ -594,6 +594,26 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     burst: 2,
     redisKey: 'rl:company:onboarding:submit:ip:{id}',
     rationale: 'Final onboarding submission is irreversible for review queue ordering.',
+  },
+  {
+    key: 'employer.profileView',
+    scope: 'USER',
+    limit: 100,
+    windowSeconds: 3600,
+    burst: 20,
+    redisKey: 'rl:employer:profile_view:user:{id}',
+    rationale: 'I403 — caps employer profile access and prevents bulk harvesting of student data.',
+    onViolation: 'ALERT',
+  },
+  {
+    key: 'employer.searchBulk',
+    scope: 'USER',
+    limit: 60,
+    windowSeconds: 3600,
+    burst: 10,
+    redisKey: 'rl:employer:search:user:{id}',
+    rationale: 'I403 — caps candidate search frequency to prevent automated bulk harvesting.',
+    onViolation: 'ALERT',
   },
 ] as const;
 

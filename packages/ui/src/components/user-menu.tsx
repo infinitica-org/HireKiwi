@@ -1,16 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect, ComponentType } from 'react';
-import {
-  LogOut,
-  ChevronDown,
-  Shield,
-  Building,
-  UserRound,
-  Zap,
-  Users,
-  Settings,
-} from 'lucide-react';
+import { useState, useRef, useEffect, type ComponentType } from 'react';
+import { LogOut, ChevronDown, Building, UserRound, Zap, Users, Settings } from 'lucide-react';
 import type { UserRole } from '../navigation/role-nav-config';
 
 export interface UserMenuItem {
@@ -33,38 +24,11 @@ export interface UserMenuProps {
   className?: string;
 }
 
-function roleBadgeLabel(role?: string): string {
-  if (!role) return 'User';
-  switch (role) {
-    case 'SUPER_ADMIN':
-    case 'SYSTEM_ADMIN':
-      return 'Super Admin';
-    case 'INSTITUTION_ADMIN':
-    case 'TPO_ADMIN':
-      return 'Institution Admin';
-    case 'COMPANY_ADMIN':
-    case 'RECRUITER':
-      return 'Employer Recruiter';
-    case 'STUDENT':
-    case 'CANDIDATE':
-      return 'Student';
-    default:
-      return role;
-  }
-}
-
 export function UserMenu({ user, onSignOut, menuItems, className = '' }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const name = user?.name || user?.email?.split('@')[0] || 'Authenticated User';
-  const roleLabel = roleBadgeLabel(user?.role);
-  const initials = name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

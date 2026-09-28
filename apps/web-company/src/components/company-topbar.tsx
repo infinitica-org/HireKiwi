@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Building2,
   Settings,
-  UserRound,
   Search,
   Zap,
   Users,

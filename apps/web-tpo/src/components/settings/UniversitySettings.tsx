@@ -2,20 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import {
-  Building2,
-  CheckCircle2,
-  Cpu,
-  Globe,
-  Lock,
-  Plus,
-  Settings,
-  Shield,
-  Trash2,
-  Users,
-  Briefcase,
-  Sparkles,
-} from 'lucide-react';
+import { CheckCircle2, Globe, Lock, Plus, Trash2 } from 'lucide-react';
 import { isSmartApiError } from '@smart/api-client';
 import type { PlacementEmployerSummary, TenantEntitlementsDto } from '@smart/contracts';
 import { StaffManagementWorkspace } from '../staff/StaffManagementWorkspace';
@@ -32,26 +19,7 @@ import {
   saveAutoApproveInvites,
   saveExtraEmailDomains,
 } from '../../lib/tpo-institution-settings';
-import {
-  bentoCardClass,
-  bentoCardMutedClass,
-  bentoChipClass,
-  bentoPageStackClass,
-  bentoTableBodyRowClass,
-  bentoTableCellClass,
-  bentoTableClass,
-  bentoTableHeadCellClass,
-  bentoTableHeadRowClass,
-  bentoTableShellClass,
-  dashboardErrorNoticeClass,
-  dashboardMintBadgeClass,
-  dashboardPendingBadgeClass,
-  dashboardPrimaryButtonClass,
-  dashboardSectionSubtitleClass,
-  dashboardSectionTitleClass,
-  dashboardSuccessNoticeClass,
-} from '../../lib/tpo-dashboard-ui';
-import { inputClass, labelClass, secondaryButtonClass } from '../../lib/tpo-ui';
+import { dashboardErrorNoticeClass, dashboardSuccessNoticeClass } from '../../lib/tpo-dashboard-ui';
 
 type SettingsTab = 'all' | 'staff' | 'domains' | 'campuses' | 'employers' | 'plan';
 
@@ -196,7 +164,6 @@ export function UniversitySettings() {
   const verificationStatus = entitlements?.verificationStatus ?? 'APPROVED';
   const studentCount = entitlements?.candidateUsage ?? 0;
   const capacity = entitlements?.candidateCapacity;
-  const tier = entitlements?.planCode;
 
   const showStaff = activeTab === 'all' || activeTab === 'staff';
   const showDomains = activeTab === 'all' || activeTab === 'domains';

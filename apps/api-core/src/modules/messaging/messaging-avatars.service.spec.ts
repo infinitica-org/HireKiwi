@@ -32,7 +32,12 @@ function build(
     block: { findMany: vi.fn(async () => []) },
     $queryRaw: vi.fn(async () => []),
   };
-  const service = new MessagingService(prisma as any, {} as ContactRulesService, storage as any);
+  const service = new MessagingService(
+    prisma as any,
+    {} as ContactRulesService,
+    undefined,
+    storage as any,
+  );
   return { prisma, service };
 }
 

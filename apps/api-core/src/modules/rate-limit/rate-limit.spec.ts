@@ -137,6 +137,20 @@ describe('RateLimitService', () => {
     expect(failOpenOnRedisError('test')).toBe(true);
     expect(failOpenOnRedisError('production')).toBe(false);
   });
+
+  it('correctly consumes employer rate limit policies (I403)', async () => {
+    const redis = { eval: vi.fn(async () => [1, 5, 1_771_574_400]) };
+    const service = new RateLimitService(redis as never, { enqueueEnvelope: vi.fn() } as never);
+    const decision = await service.consume(
+      'employer.profileView',
+      'user-emp-123',
+      'COMPANY',
+      '/placement/saved-candidates',
+    );
+    expect(decision.allowed).toBe(true);
+    expect(decision.limit).toBe(100);
+    expect(decision.count).toBe(5);
+  });
 });
 
 describe('RateLimitInterceptor', () => {

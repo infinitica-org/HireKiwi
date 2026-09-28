@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { MessageStudentButton } from '../../../../components/message-student-button';
 import { useEffect, useMemo, useState } from 'react';
 import { Search, Clock, ChevronRight, Users, ShieldCheck } from 'lucide-react';
@@ -14,17 +13,13 @@ import {
 } from '@smart/contracts';
 
 import { CandidateDetailDrawer } from '../../../../components/candidate-detail-drawer';
-import { CustomSelect, type SelectOption } from '../../../../components/ui/CustomSelect';
+import { CustomSelect } from '../../../../components/ui/CustomSelect';
 import { api, staffApi } from '../../../../lib/api';
 import {
   categoryLabel,
   categoryNameForSkillCode,
   skillCategoryFor,
 } from '../../../../lib/skill-taxonomy';
-
-function candidateCountLabel(count: number): string {
-  return count === 1 ? '1 candidate' : `${count} candidates`;
-}
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);

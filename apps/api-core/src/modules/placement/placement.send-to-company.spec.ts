@@ -299,6 +299,7 @@ describe('AC-T06 send-to-company', () => {
       tpoAdmin as never,
       applicationId,
       resolveTenantId(tpoAdmin as never),
+      tpoAdmin as never,
     );
 
     expect(result.stage).toBe('AI_VERIFIED');

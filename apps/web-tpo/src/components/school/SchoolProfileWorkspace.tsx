@@ -25,10 +25,9 @@ import {
 import {
   bentoPageStackClass,
   dashboardErrorNoticeClass,
-  dashboardPrimaryButtonClass,
   dashboardSuccessNoticeClass,
 } from '../../lib/tpo-dashboard-ui';
-import { inputClass, labelClass } from '../../lib/tpo-ui';
+
 import { SchoolProfileCard } from './SchoolProfileCard';
 
 export function SchoolProfileWorkspace() {

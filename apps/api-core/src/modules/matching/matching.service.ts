@@ -1,7 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { InjectQueue } from '@nestjs/bullmq';
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import type { Queue } from 'bullmq';
+import { BillingService } from '../billing/billing.service.js';
 import {
   AssessmentResultSchema,
   CandidateMatchDtoSchema,
@@ -269,6 +276,7 @@ export class MatchingService {
     @Inject(InstitutionsService) private readonly institutions: InstitutionsService,
     @Inject(MatchNarrativeService) private readonly narratives: MatchNarrativeService,
     @InjectQueue(MATCH_RUN_QUEUE) private readonly matchRunQueue: Queue<{ matchRunId: string }>,
+    @Optional() @Inject(BillingService) private readonly billingService?: BillingService,
   ) {}
 
   /** @deprecated use `createMatchRun` + polling — kept for one release for backward compat. */
@@ -1351,6 +1359,11 @@ export class MatchingService {
     user: RequestUser,
     query: SearchStudentsQuery,
   ): Promise<CandidateMatchDto[]> {
+    if (user.companyId) {
+      await this.billingService?.assertQuotaAvailable(user.companyId, 'CANDIDATE_SEARCHES');
+      await this.billingService?.incrementUsage(user.companyId, 'CANDIDATE_SEARCHES', 1);
+    }
+
     const conditions: Prisma.Sql[] = [
       Prisma.sql`u.role = 'STUDENT'`,
       Prisma.sql`u.profile_visible = TRUE`,

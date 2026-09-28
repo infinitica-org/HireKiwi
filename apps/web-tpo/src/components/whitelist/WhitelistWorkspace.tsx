@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   UploadCloud,
@@ -12,7 +11,6 @@ import {
   Lock,
   UserPlus,
   Mail,
-  ShieldCheck,
   Check,
   Loader2,
   RefreshCw,
@@ -74,9 +72,6 @@ export function WhitelistWorkspace() {
   const [bulkFileImportEnabled, setBulkFileImportEnabled] = useState(true);
   const [newBatchName, setNewBatchName] = useState('');
   const [creatingBatch, setCreatingBatch] = useState(false);
-
-  // Onboarding mode tabs
-  const [activeTab, setActiveTab] = useState<'single' | 'bulk'>('single');
 
   // Single candidate
   const [singleName, setSingleName] = useState('');

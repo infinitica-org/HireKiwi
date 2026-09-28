@@ -14,8 +14,8 @@ import {
   GraduationCap,
   ShieldCheck,
   Building2,
-  KeyRound,
   BarChart3,
+  Handshake,
   Settings,
   Shield,
   type LucideIcon,
@@ -32,7 +32,8 @@ const mainNav: NavItem[] = [
   { name: 'Students', href: '/students', icon: GraduationCap },
   { name: 'Whitelist', href: '/whitelist', icon: ShieldCheck },
   { name: 'Employers', href: '/companies', icon: Building2 },
-  { name: 'Campus access', href: '/campus', icon: KeyRound },
+  { name: 'Campus access', href: '/campus', icon: Handshake },
+
   { name: 'Reports', href: '/reports', icon: BarChart3 },
 ];
 

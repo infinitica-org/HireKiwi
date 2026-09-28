@@ -8,7 +8,6 @@ import {
   computeUniversityDashboardMetrics,
   type StudentVerificationState,
 } from '../../lib/university-dashboard-metrics';
-import { greetingForHour } from '../../lib/tpo-dashboard-metrics';
 import { bentoCardClass, dashboardSkeletonClass } from '../../lib/tpo-dashboard-ui';
 
 type UniversityDashboardProps = {
@@ -65,7 +64,6 @@ export function UniversityDashboard({
 }: UniversityDashboardProps) {
   const metrics = computeUniversityDashboardMetrics(students, claims, placementApplicationCount);
   const roster = buildUniversityRosterRows(students, claims);
-  const greeting = greetingForHour(new Date().getHours());
 
   // Dynamic Recent Activity derived strictly from claims & student events
   const dynamicActivities =

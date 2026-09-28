@@ -23,6 +23,26 @@ async function bootstrap(): Promise<void> {
     { bufferLogs: true },
   );
 
+  const fastifyInstance = app.getHttpAdapter().getInstance();
+  if (fastifyInstance.hasContentTypeParser('application/json')) {
+    fastifyInstance.removeContentTypeParser('application/json');
+  }
+  fastifyInstance.addContentTypeParser(
+    'application/json',
+    { parseAs: 'string' },
+    (req: unknown, body: string, done: (err: Error | null, result?: unknown) => void) => {
+      try {
+        (req as Record<string, unknown>).rawBody = body;
+        const json = JSON.parse(body || '{}') as unknown;
+        done(null, json);
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error('Invalid JSON');
+        (error as unknown as Record<string, unknown>).statusCode = 400;
+        done(error, undefined);
+      }
+    },
+  );
+
   app.useLogger(app.get(PinoLogger));
   await app.register(helmet as never, { contentSecurityPolicy: false });
   await app.register(cookie as never);

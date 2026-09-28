@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Download, ShieldCheck, Users, Briefcase, ClipboardList } from 'lucide-react';
+import { Download, ShieldCheck, Users, Briefcase, ClipboardList } from 'lucide-react';
 import type { InstitutionStudentDto, JobOpeningDto, SkillClaimDto } from '@smart/contracts';
-import { TpoBentoPageHeader } from '../tpo-bento/TpoBentoPageHeader';
 import { api, employersApi, openingsApi } from '../../lib/api';
 import { countInstitutionPlacementApplications } from '../../lib/placement-application-count';
 import {
@@ -22,38 +21,6 @@ function getInitials(name: string): string {
     return `${parts[0]?.[0] ?? ''}${parts[1]?.[0] ?? ''}`.toUpperCase();
   }
   return (name.slice(0, 2) || 'MA').toUpperCase();
-}
-
-function ReportSection({
-  title,
-  description,
-  onExport,
-  children,
-}: {
-  title: string;
-  description: string;
-  onExport: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-xl border border-zinc-200/80 bg-white shadow-2xs overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200/80 bg-white px-5 py-4">
-        <div>
-          <h2 className="text-sm font-bold text-zinc-900">{title}</h2>
-          <p className="mt-0.5 text-xs text-zinc-400">{description}</p>
-        </div>
-        <button
-          type="button"
-          onClick={onExport}
-          className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2 text-xs font-semibold text-white shadow-2xs transition-all hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
-        >
-          <Download className="size-3.5" aria-hidden />
-          Export CSV
-        </button>
-      </div>
-      <div className="p-5">{children}</div>
-    </section>
-  );
 }
 
 export function UniversityReportsExport() {
