@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { CreditCard, CheckCircle2, AlertCircle, RefreshCw, Lock, ShieldCheck } from 'lucide-react';
 import type { EmployerSubscriptionDto } from '@smart/contracts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
 import { api, formatApiError } from '../../../lib/api';
 
 declare global {
@@ -234,6 +236,21 @@ export default function CompanySettingsPage() {
           </div>
         </div>
       </div>
+
+      <Card className="border-border/70 bg-white">
+        <CardHeader>
+          <CardTitle>Portal settings</CardTitle>
+          <CardDescription>Notification preferences and team management settings.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/settings/blocked"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            Blocked users
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   );
 }

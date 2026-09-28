@@ -1,4 +1,5 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { BillingService } from '../billing/billing.service.js';
 import {
   type ConversationCounterpart,
   type ConversationSummary,
@@ -20,6 +21,7 @@ import {
 } from '@smart/contracts';
 import { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
+import { StorageService } from '../../platform/storage/storage.service.js';
 import { requireCompanyActor } from '../company-profile/company-access.js';
 import {
   ContactRulesService,
@@ -74,6 +76,8 @@ export class MessagingService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ContactRulesService) private readonly rules: ContactRulesService,
+    @Optional() @Inject(BillingService) private readonly billingService?: BillingService,
+    @Optional() @Inject(StorageService) private readonly storage?: StorageService,
   ) {}
 
   /* ----------------------------------- Th6-422 ----------------------------------- */
@@ -205,6 +209,12 @@ export class MessagingService {
     key: string;
   }): Promise<Message> {
     const { conversationId, sender, recipientId, body, key } = params;
+
+    if (sender.companyId) {
+      await this.billingService?.assertQuotaAvailable(sender.companyId, 'DIRECT_MESSAGES');
+      await this.billingService?.incrementUsage(sender.companyId, 'DIRECT_MESSAGES', 1);
+    }
+
     const [recipientPart, senderRow] = await Promise.all([
       this.prisma.conversationParticipant.findUnique({
         where: { conversationId_userId: { conversationId, userId: recipientId } },
@@ -306,7 +316,13 @@ export class MessagingService {
           select: {
             id: true,
             fullName: true,
-            company: { select: { name: true } },
+            profilePhotoObjectKey: true,
+            company: {
+              select: {
+                name: true,
+                profile: { select: { logoFileId: true } },
+              },
+            },
             institution: { select: { name: true } },
           },
         },
@@ -314,13 +330,28 @@ export class MessagingService {
     });
     const byConversation = new Map<string, ConversationCounterpart>();
     for (const row of rows) {
+      let avatarKey: string | null = null;
+      if (row.role === 'EMPLOYER' && row.user.company?.profile?.logoFileId) {
+        avatarKey = row.user.company.profile.logoFileId;
+      } else if (row.user.profilePhotoObjectKey) {
+        avatarKey = row.user.profilePhotoObjectKey;
+      }
+
+      let avatarUrl: string | null = null;
+      if (avatarKey && this.storage) {
+        try {
+          avatarUrl = await this.storage.getSignedDownloadUrl(avatarKey);
+        } catch {
+          avatarUrl = null;
+        }
+      }
+
       byConversation.set(row.conversationId, {
         userId: row.user.id,
         name: row.user.fullName,
         role: row.role,
         orgName: row.user.company?.name ?? row.user.institution?.name ?? null,
-        // TODO: signed photo URLs are minted per request elsewhere; messaging shows initials for now.
-        avatarUrl: null,
+        avatarUrl,
       });
     }
     return byConversation;

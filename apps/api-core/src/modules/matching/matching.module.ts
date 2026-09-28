@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AiGatewayModule } from '../ai-gateway/ai-gateway.module.js';
+import { BillingModule } from '../billing/billing.module.js';
 import { EvidenceModule } from '../evidence/evidence.module.js';
 import { InstitutionsModule } from '../institutions/institutions.module.js';
 import { JdParseProcessor } from './jd-parse.processor.js';
@@ -11,7 +12,7 @@ import { OpeningJdParseService } from './opening-jd-parse.service.js';
 import { PlacementMatchController } from './placement-match.controller.js';
 
 @Module({
-  imports: [AiGatewayModule, InstitutionsModule, EvidenceModule],
+  imports: [AiGatewayModule, InstitutionsModule, EvidenceModule, BillingModule],
   controllers: [MatchingController, PlacementMatchController],
   providers: [
     MatchingService,
