@@ -20,11 +20,11 @@ import {
   type ReadinessInputs,
 } from './readiness.service.js';
 
-const PY = 'PYTHON';
-const SQL = 'SQL';
-const API = 'REST_API';
-const DOCKER = 'DOCKER';
-const NOSQL = 'MONGODB';
+const PY = 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT';
+const SQL = 'SQL_QUERY_OPTIMIZATION';
+const API = 'RESTFUL_GRAPHQL_API_DESIGN';
+const DOCKER = 'CONTAINERIZATION_ORCHESTRATION';
+const NOSQL = 'NOSQL_DATABASE_ENGINEERING';
 
 const claim = (code: string, status = 'VERIFIED', proficiency = 'INTERMEDIATE'): ClaimInput => ({
   status,

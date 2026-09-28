@@ -597,7 +597,7 @@ describe('WE-T03 manager endorsement contracts', () => {
       isCurrent: true,
       responsibilities: 'Led frontend platform architecture.',
       skillsClaimed: [
-        'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+        'JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT',
         'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
       ],
       managerEmail: 'boss@acme.com',
@@ -620,7 +620,7 @@ describe('WE-T03 manager endorsement contracts', () => {
     );
     expect(result.candidateName).toBe('Jane Doe');
     expect(result.skillsClaimed).toEqual([
-      'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+      'JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT',
       'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
     ]);
     expect(result.isExpired).toBe(false);

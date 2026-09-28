@@ -51,7 +51,7 @@ describe('WorkExperienceService', () => {
       isCurrent: true,
       domain: 'Software Engineering',
       responsibilities: 'Built and maintained backend services.',
-      skillsClaimed: ['GIT', 'SQL'],
+      skillsClaimed: ['GIT', 'SQL_QUERY_OPTIMIZATION'],
       documents: [OFFER_DOC],
       ...overrides,
     };
@@ -67,7 +67,7 @@ describe('WorkExperienceService', () => {
       isCurrent: false,
       domain: 'Software Engineering',
       responsibilities: 'Built and maintained backend services.',
-      skills: ['SQL'],
+      skills: ['SQL_QUERY_OPTIMIZATION'],
       companyWebsite: 'https://acme.com',
       companyLinkedinUrl: 'https://linkedin.com/company/acme',
       companyId: null,
@@ -3139,7 +3139,7 @@ describe('WorkExperienceService', () => {
         expect(res.candidateName).toBe('John Doe');
         expect(res.companyName).toBe('Acme Corp');
         expect(res.role).toBe('Senior Software Engineer');
-        expect(res.skillsClaimed).toContain('SQL');
+        expect(res.skillsClaimed).toContain('SQL_QUERY_OPTIMIZATION');
         expect(res.isExpired).toBe(false);
         expect(res.isAlreadyResponded).toBe(false);
         expect(evidenceSync.syncWorkExperienceEvidenceRecord).not.toHaveBeenCalled();
@@ -3241,7 +3241,7 @@ describe('WorkExperienceService', () => {
 
         const res = await service.submitManagerEndorsement(VALID_MANAGER_TOKEN, {
           confirmed: true,
-          skillRatings: [{ skillCode: 'SQL', rating: 5 }],
+          skillRatings: [{ skillCode: 'SQL_QUERY_OPTIMIZATION', rating: 5 }],
           comments: 'Great engineer!',
         });
 
