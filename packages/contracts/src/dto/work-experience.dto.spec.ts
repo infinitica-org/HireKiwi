@@ -34,7 +34,7 @@ function buildValidOngoingSubmission(overrides: Record<string, unknown> = {}) {
     isCurrent: true,
     domain: 'Software Engineering',
     responsibilities: 'Built backend services and APIs.',
-    skillsClaimed: ['VERSION_CONTROL_CODE_COLLABORATION'],
+    skillsClaimed: ['PYTHON_APPLICATION_BACKEND_DEVELOPMENT'],
     documents: [OFFER_DOCUMENT],
     ...overrides,
   };

@@ -325,7 +325,7 @@ describe('EvaluationService SDE v4 skill form', () => {
         proficiency: 'BEGINNER',
         attemptId: 'attempt-pentest-diagnostic',
         stage: 'DIAGNOSTIC',
-        catalogSkillCode: 'PENETRATION_TESTING_VULNERABILITY_ASSESSMENT',
+        catalogSkillCode: 'BURP_SUITE',
       },
       OWNER_ID,
     );

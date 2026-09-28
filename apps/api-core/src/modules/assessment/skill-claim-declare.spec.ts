@@ -58,11 +58,11 @@ describe('declareSkillClaim', () => {
       strikes: 0,
       lockedUntil: null,
       lastAttemptId: null,
-      skill: { code: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION' },
+      skill: { code: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT' },
     });
 
     const row = await service.declareSkillClaim(studentUser(), {
-      skillCode: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+      skillCode: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
       proficiency: 'BEGINNER',
     });
 
@@ -77,7 +77,7 @@ describe('declareSkillClaim', () => {
       }),
     );
     expect(row.status).toBe('DECLARED');
-    expect(row.skillCode).toBe('ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION');
+    expect(row.skillCode).toBe('PYTHON_APPLICATION_BACKEND_DEVELOPMENT');
   });
 
   it('rejects unknown skill codes', async () => {

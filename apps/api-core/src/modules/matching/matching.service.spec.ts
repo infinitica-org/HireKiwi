@@ -30,11 +30,11 @@ const openingRow = {
   requiredSkills: [
     {
       minProficiency: 'INTERMEDIATE',
-      skill: { code: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION', domain: 'SOFTWARE_IT' },
+      skill: { code: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT', domain: 'SOFTWARE_IT' },
     },
     {
       minProficiency: 'BEGINNER',
-      skill: { code: 'SQL_QUERY_OPTIMIZATION', domain: 'SOFTWARE_IT' },
+      skill: { code: 'POSTGRESQL', domain: 'SOFTWARE_IT' },
     },
   ],
 };
@@ -50,11 +50,11 @@ function verifiedStudent(overrides: Record<string, unknown> = {}) {
     headlineTier: null,
     skills: [
       {
-        code: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+        code: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
         domain: 'SOFTWARE_IT',
         proficiency: 'INTERMEDIATE',
       },
-      { code: 'SQL_QUERY_OPTIMIZATION', domain: 'SOFTWARE_IT', proficiency: 'BEGINNER' },
+      { code: 'POSTGRESQL', domain: 'SOFTWARE_IT', proficiency: 'BEGINNER' },
     ],
     ...overrides,
   };
@@ -274,12 +274,12 @@ describe('SE-T05 POST /placement/match', () => {
         verifiedStudent({
           skills: [
             {
-              code: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+              code: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
               domain: 'SOFTWARE_IT',
               proficiency: 'BEGINNER',
             },
             {
-              code: 'SQL_QUERY_OPTIMIZATION',
+              code: 'POSTGRESQL',
               domain: 'SOFTWARE_IT',
               proficiency: 'BEGINNER',
             },
