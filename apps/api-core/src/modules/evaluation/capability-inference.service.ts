@@ -237,7 +237,9 @@ export class CapabilityInferenceService {
       capabilityLabel: cap.capabilityLabel,
       category: cap.category,
       confidenceScore: cap.confidence,
-      proficiency: cap.proficiency,
+      proficiency: ((cap.proficiency as string) === 'PROFICIENT'
+        ? 'ADVANCED'
+        : cap.proficiency) as import('@smart/contracts').ProficiencyLevel,
       evidenceRefs: cap.evidenceRefs,
     }));
   }

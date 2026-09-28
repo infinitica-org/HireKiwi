@@ -1,8 +1,12 @@
 import { z } from 'zod';
+import { SKILL_TAXONOMY_TIERS, type SkillTaxonomyTier } from '../domain/skill-taxonomy.js';
 import { SkillCategoryIdSchema } from './catalog.dto.js';
 
 export const SkillStatusSchema = z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']);
 export type SkillStatus = z.infer<typeof SkillStatusSchema>;
+
+export const SkillTaxonomyTierSchema = z.enum(SKILL_TAXONOMY_TIERS);
+export type { SkillTaxonomyTier };
 
 export const CreateSkillDtoSchema = z.object({
   code: z
@@ -14,6 +18,7 @@ export const CreateSkillDtoSchema = z.object({
   name: z.string().trim().min(2).max(150),
   categoryId: SkillCategoryIdSchema,
   categoryName: z.string().trim().optional(),
+  tier: SkillTaxonomyTierSchema.default('TIER_1_TECHNOLOGY'),
   description: z.string().trim().max(1000).optional(),
   corroborationEligible: z.boolean().default(true),
   assessmentRequiredForClaim: z.boolean().default(true),
@@ -28,6 +33,7 @@ export type UpdateSkillDto = z.infer<typeof UpdateSkillDtoSchema>;
 
 export const SkillQueryDtoSchema = z.object({
   categoryId: SkillCategoryIdSchema.optional(),
+  tier: SkillTaxonomyTierSchema.optional(),
   status: SkillStatusSchema.optional(),
   search: z.string().optional(),
 });
@@ -39,6 +45,7 @@ export const SkillManagementRecordSchema = z.object({
   name: z.string(),
   categoryId: SkillCategoryIdSchema,
   categoryName: z.string(),
+  tier: SkillTaxonomyTierSchema.default('TIER_1_TECHNOLOGY'),
   description: z.string().optional(),
   corroborationEligible: z.boolean(),
   assessmentRequiredForClaim: z.boolean(),

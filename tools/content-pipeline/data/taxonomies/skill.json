@@ -18,7 +18,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT",
@@ -33,7 +34,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "JAVASCRIPT_TYPESCRIPT_FULL_STACK_DEVELOPMENT",
@@ -48,7 +50,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "GO_GOLANG_FOR_HIGH_PERFORMANCE_SERVICES",
@@ -63,7 +66,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "C_NET_ENTERPRISE_DEVELOPMENT",
@@ -78,7 +82,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "C_SYSTEMS_PERFORMANCE_ENGINEERING",
@@ -93,7 +98,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "RUST_FOR_SYSTEMS_RELIABILITY_ENGINEERING",
@@ -108,7 +114,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "KOTLIN_FOR_ANDROID_BACKEND_SERVICES",
@@ -123,7 +130,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "SWIFT_FOR_IOS_MACOS_DEVELOPMENT",
@@ -138,7 +146,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "SQL_QUERY_OPTIMIZATION",
@@ -153,7 +162,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "R_FOR_STATISTICAL_COMPUTING",
@@ -168,7 +178,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "SCALA_FOR_DISTRIBUTED_DATA_SYSTEMS",
@@ -183,7 +194,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         }
       ]
     },
@@ -204,7 +216,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_3_STANDARD_PROTOCOL_FORMAT"
         },
         {
           "code": "ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION",
@@ -219,7 +232,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         }
       ]
     },
@@ -240,7 +254,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_2_PLATFORM_ECOSYSTEM"
         },
         {
           "code": "MICROSOFT_AZURE_CLOUD_ENGINEERING",
@@ -255,7 +270,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_2_PLATFORM_ECOSYSTEM"
         },
         {
           "code": "GOOGLE_CLOUD_PLATFORM_GCP_ENGINEERING",
@@ -270,7 +286,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_2_PLATFORM_ECOSYSTEM"
         }
       ]
     },
@@ -291,7 +308,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "CONTAINERIZATION_ORCHESTRATION",
@@ -306,7 +324,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_2_PLATFORM_ECOSYSTEM"
         },
         {
           "code": "OBSERVABILITY_MONITORING",
@@ -321,7 +340,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "GITOPS_CONTINUOUS_DELIVERY",
@@ -336,7 +356,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         }
       ]
     },
@@ -357,7 +378,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "NOSQL_DATABASE_ENGINEERING",
@@ -372,7 +394,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "DATA_MODELING_NORMALIZATION",
@@ -387,7 +410,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_3_STANDARD_PROTOCOL_FORMAT"
         },
         {
           "code": "DATABASE_PERFORMANCE_TUNING_INDEXING",
@@ -402,7 +426,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         }
       ]
     },
@@ -423,7 +448,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "BIG_DATA_PROCESSING_FRAMEWORKS",
@@ -438,7 +464,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         }
       ]
     },
@@ -459,7 +486,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "DEEP_LEARNING_NEURAL_NETWORK_ENGINEERING",
@@ -474,7 +502,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "NATURAL_LANGUAGE_PROCESSING_NLP",
@@ -489,7 +518,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "LARGE_LANGUAGE_MODEL_LLM_APPLICATION_ENGINEERING",
@@ -504,7 +534,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "MLOPS_MODEL_LIFECYCLE_MANAGEMENT",
@@ -519,7 +550,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "COMPUTER_VISION_ENGINEERING",
@@ -534,7 +566,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "STATISTICAL_ANALYSIS_EXPERIMENTATION",
@@ -549,7 +582,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         }
       ]
     },
@@ -570,7 +604,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "CLOUD_SECURITY_ENGINEERING",
@@ -585,7 +620,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "PENETRATION_TESTING_VULNERABILITY_ASSESSMENT",
@@ -600,7 +636,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         }
       ]
     },
@@ -621,7 +658,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "CONTINUOUS_TESTING_QUALITY_ENGINEERING",
@@ -636,7 +674,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "API_CONTRACT_TESTING",
@@ -651,7 +690,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_3_STANDARD_PROTOCOL_FORMAT"
         }
       ]
     },
@@ -672,7 +712,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_2_PLATFORM_ECOSYSTEM"
         },
         {
           "code": "NATIVE_IOS_DEVELOPMENT",
@@ -687,7 +728,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_2_PLATFORM_ECOSYSTEM"
         }
       ]
     },
@@ -708,7 +750,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "FRONTEND_PERFORMANCE_ENGINEERING",
@@ -723,7 +766,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "STATE_MANAGEMENT_COMPONENT_ARCHITECTURE",
@@ -738,7 +782,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         }
       ]
     },
@@ -759,7 +804,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_3_STANDARD_PROTOCOL_FORMAT"
         },
         {
           "code": "LINUX_SYSTEMS_ADMINISTRATION",
@@ -774,7 +820,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         }
       ]
     },
@@ -795,7 +842,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_2_PLATFORM_ECOSYSTEM"
         },
         {
           "code": "INTERNET_OF_THINGS_IOT_ENGINEERING",
@@ -810,7 +858,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         },
         {
           "code": "AUGMENTED_VIRTUAL_REALITY_DEVELOPMENT",
@@ -825,7 +874,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_1_TECHNOLOGY"
         }
       ]
     },
@@ -846,7 +896,8 @@
             "PROFESSIONAL": "Sets standards / architecture / strategy"
           },
           "corroborationEligible": true,
-          "assessmentRequiredForClaim": true
+          "assessmentRequiredForClaim": true,
+          "tier": "TIER_2_PLATFORM_ECOSYSTEM"
         }
       ]
     }

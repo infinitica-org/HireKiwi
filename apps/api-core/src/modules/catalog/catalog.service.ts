@@ -128,6 +128,7 @@ export class CatalogService {
       name: parsed.name,
       categoryId: parsed.categoryId,
       categoryName,
+      tier: parsed.tier || 'TIER_1_TECHNOLOGY',
       description: parsed.description || '',
       corroborationEligible: parsed.corroborationEligible ?? true,
       assessmentRequiredForClaim: parsed.assessmentRequiredForClaim ?? true,
@@ -161,6 +162,7 @@ export class CatalogService {
         name: predefined.name,
         categoryId: predefined.categoryId,
         categoryName: predefined.categoryName,
+        tier: predefined.tier,
         description: '',
         corroborationEligible: predefined.corroborationEligible,
         assessmentRequiredForClaim: predefined.assessmentRequiredForClaim,
@@ -183,6 +185,7 @@ export class CatalogService {
             categoryName: SKILL_CATEGORIES[parsed.categoryId]?.name || parsed.categoryId,
           }
         : {}),
+      ...(parsed.tier ? { tier: parsed.tier } : {}),
       ...(parsed.description !== undefined ? { description: parsed.description } : {}),
       ...(parsed.corroborationEligible !== undefined
         ? { corroborationEligible: parsed.corroborationEligible }
@@ -586,6 +589,7 @@ export class CatalogService {
       name: def.name,
       categoryId: def.categoryId,
       categoryName: def.categoryName,
+      tier: def.tier,
       description: '',
       corroborationEligible: def.corroborationEligible,
       assessmentRequiredForClaim: def.assessmentRequiredForClaim,
@@ -606,6 +610,7 @@ export class CatalogService {
         name: def.name,
         categoryId: def.categoryId,
         categoryName: def.categoryName,
+        tier: def.tier,
         description: '',
         corroborationEligible: def.corroborationEligible,
         assessmentRequiredForClaim: def.assessmentRequiredForClaim,
@@ -624,6 +629,9 @@ export class CatalogService {
 
     if (query?.categoryId) {
       list = list.filter((s) => s.categoryId === query.categoryId);
+    }
+    if (query?.tier) {
+      list = list.filter((s) => s.tier === query.tier);
     }
     if (query?.status) {
       list = list.filter((s) => s.status === query.status);

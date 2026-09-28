@@ -854,7 +854,8 @@ export class EvaluationService {
                 marksEarned: item.marksEarned,
                 marksMax: item.marksMax,
               })),
-              targetProficiency: bundle.targetProficiency ?? request.proficiency,
+              targetProficiency: (bundle.targetProficiency ??
+                request.proficiency) as import('@smart/contracts').ProficiencyLevel,
             }),
           );
           passed = intelligence.assessmentComplete;
