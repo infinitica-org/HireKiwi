@@ -8,6 +8,7 @@ import {
   ReverseEnforcementRequestSchema,
 } from '@smart/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
+import { TenantScope } from '../../common/decorators/tenant-id.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { TrustService } from './trust.service.js';
@@ -23,11 +24,12 @@ export class TrustController {
   @Roles('SUPER_ADMIN', 'INSTITUTION_ADMIN')
   @ApiOperation({ summary: 'List candidate trust cases with optional status/severity filtering.' })
   listCases(
+    @TenantScope() institutionId: string | null,
     @Query('status') status?: TrustCaseStatus,
     @Query('severity') severity?: TrustCaseSeverity,
     @Query('candidateId') candidateId?: string,
   ) {
-    return this.service.listCases({ status, severity, candidateId });
+    return this.service.listCases({ status, severity, candidateId, institutionId });
   }
 
   @Post('cases')
@@ -45,8 +47,8 @@ export class TrustController {
   @ApiOperation({
     summary: 'Get full multi-domain trust case detail and supporting evidence timeline.',
   })
-  getCaseDetail(@Param('caseId') caseId: string) {
-    return this.service.getCaseDetail(caseId);
+  getCaseDetail(@TenantScope() institutionId: string | null, @Param('caseId') caseId: string) {
+    return this.service.getCaseDetail(caseId, institutionId);
   }
 
   @Post('cases/:caseId/assign')

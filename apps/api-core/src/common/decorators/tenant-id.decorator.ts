@@ -24,3 +24,20 @@ export const TenantId = createParamDecorator((_data: unknown, context: Execution
     context.switchToHttp().getRequest<FastifyRequest & { user?: RequestUser }>().user,
   ),
 );
+
+/**
+ * S6-VV-153 (#619): for routes shared by SUPER_ADMIN and institution staff. `null` means
+ * platform-wide and is only ever returned for SUPER_ADMIN; anyone else gets their own institution
+ * (or 403 without one). The handler must filter by it whenever it is not null.
+ */
+export function resolveTenantScope(user: RequestUser | undefined): string | null {
+  if (user?.role === 'SUPER_ADMIN') return null;
+  return resolveTenantId(user);
+}
+
+export const TenantScope = createParamDecorator(
+  (_data: unknown, context: ExecutionContext): string | null =>
+    resolveTenantScope(
+      context.switchToHttp().getRequest<FastifyRequest & { user?: RequestUser }>().user,
+    ),
+);

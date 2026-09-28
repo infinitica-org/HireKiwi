@@ -321,4 +321,36 @@ describe('TrustService', () => {
       });
     });
   });
+
+  describe('institution scoping (S6-VV-153, #619)', () => {
+    it("lists only the institution's own students' cases and reports", async () => {
+      prisma.trustCase.findMany.mockResolvedValue([]);
+      prisma.trustReport.findMany.mockResolvedValue([]);
+
+      await service.listCases({ institutionId: 'inst-a' });
+      await service.listReports({ institutionId: 'inst-a' });
+
+      expect(prisma.trustCase.findMany.mock.calls[0][0].where).toEqual({
+        candidate: { institutionId: 'inst-a' },
+      });
+      expect(prisma.trustReport.findMany.mock.calls[0][0].where).toEqual({
+        targetUser: { institutionId: 'inst-a' },
+      });
+    });
+
+    it('keeps SUPER_ADMIN platform-wide', async () => {
+      prisma.trustCase.findMany.mockResolvedValue([]);
+      await service.listCases({ institutionId: null });
+      expect(prisma.trustCase.findMany.mock.calls[0][0].where).toEqual({});
+    });
+
+    it("treats another institution's case as not found", async () => {
+      prisma.trustCase.findFirst.mockResolvedValue(null);
+      await expect(service.getCaseDetail(mockCaseId, 'inst-a')).rejects.toThrow(NotFoundException);
+      expect(prisma.trustCase.findFirst.mock.calls[0][0].where).toEqual({
+        id: mockCaseId,
+        candidate: { institutionId: 'inst-a' },
+      });
+    });
+  });
 });

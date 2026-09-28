@@ -47,6 +47,7 @@ function buildService(overrides?: { prisma?: Record<string, unknown> }) {
     },
     evidenceSkillDispute: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn().mockResolvedValue([]),
       create: vi.fn(),
       update: vi.fn(),
@@ -895,7 +896,7 @@ describe('EvidenceService credential upload validation', () => {
       const { service, prisma } = buildService();
       const disputeId = 'dispute-1';
       const reviewerId = 'admin-1';
-      prisma.evidenceSkillDispute.findUnique.mockResolvedValueOnce({
+      prisma.evidenceSkillDispute.findFirst.mockResolvedValueOnce({
         id: disputeId,
         studentId: 'student-1',
         evidenceId: 'evidence-1',
@@ -932,7 +933,7 @@ describe('EvidenceService credential upload validation', () => {
 
     it('throws NotFoundException when resolving non-existent dispute', async () => {
       const { service, prisma } = buildService();
-      prisma.evidenceSkillDispute.findUnique.mockResolvedValueOnce(null);
+      prisma.evidenceSkillDispute.findFirst.mockResolvedValueOnce(null);
 
       await expect(
         service.resolveEvidenceSkillDispute('admin-1', 'missing-dispute', {
@@ -940,6 +941,32 @@ describe('EvidenceService credential upload validation', () => {
           reviewNote: 'No justification provided',
         }),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it("scopes an institution admin to its own students' disputes (S6-VV-153)", async () => {
+      const { service, prisma } = buildService();
+      await service.listEvidenceSkillDisputes(
+        { sub: 'tpo-a', role: 'INSTITUTION_ADMIN', inst: 'inst-a' } as never,
+        { institutionId: 'inst-a' },
+      );
+      expect(prisma.evidenceSkillDispute.findMany.mock.calls[0]?.[0].where).toEqual({
+        student: { institutionId: 'inst-a' },
+      });
+
+      prisma.evidenceSkillDispute.findFirst.mockResolvedValueOnce(null);
+      await expect(
+        service.resolveEvidenceSkillDispute(
+          'tpo-a',
+          'dispute-of-inst-b',
+          { resolution: 'REJECTED', reviewNote: 'Not ours' },
+          'inst-a',
+        ),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(prisma.evidenceSkillDispute.findFirst.mock.calls[0]?.[0].where).toEqual({
+        id: 'dispute-of-inst-b',
+        student: { institutionId: 'inst-a' },
+      });
+      expect(prisma.evidenceSkillDispute.update).not.toHaveBeenCalled();
     });
   });
 });

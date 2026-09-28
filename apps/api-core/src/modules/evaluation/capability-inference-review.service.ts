@@ -18,10 +18,14 @@ export class CapabilityInferenceReviewService {
     private readonly skillInference: EvidenceSkillInferenceService,
   ) {}
 
-  async listReviewQueue(limit = 50) {
+  /** `institutionId` null = platform-wide (SUPER_ADMIN); otherwise that institution's students only. */
+  async listReviewQueue(limit = 50, institutionId: string | null = null) {
     const take = Math.min(Math.max(limit, 1), 100);
     const rows = await this.prisma.studentCapability.findMany({
-      where: { confidenceScore: { lt: LOW_CONFIDENCE_THRESHOLD } },
+      where: {
+        confidenceScore: { lt: LOW_CONFIDENCE_THRESHOLD },
+        ...(institutionId ? { student: { institutionId } } : {}),
+      },
       orderBy: { inferredAt: 'desc' },
       take,
     });
@@ -40,7 +44,12 @@ export class CapabilityInferenceReviewService {
     });
   }
 
-  async correctCapability(capabilityId: string, body: unknown, reviewerId: string) {
+  async correctCapability(
+    capabilityId: string,
+    body: unknown,
+    reviewerId: string,
+    institutionId: string | null = null,
+  ) {
     const id = UuidSchema.parse(capabilityId);
     const request = CorrectStudentCapabilityRequestSchema.parse(body);
     if (request.proficiency === undefined && request.confidenceScore === undefined) {
@@ -51,7 +60,10 @@ export class CapabilityInferenceReviewService {
       });
     }
 
-    const row = await this.prisma.studentCapability.findUnique({ where: { id } });
+    // Another institution's student's row is indistinguishable from a missing one (S6-VV-153).
+    const row = await this.prisma.studentCapability.findFirst({
+      where: { id, ...(institutionId ? { student: { institutionId } } : {}) },
+    });
     if (!row) {
       throw new NotFoundException({
         error: 'not_found',

@@ -1334,10 +1334,17 @@ export class EvidenceService {
     };
   }
 
-  async listEvidenceSkillDisputes(user: RequestUser, filters?: { status?: string }) {
-    const where: { studentId?: string; status?: string } = {};
+  async listEvidenceSkillDisputes(
+    user: RequestUser,
+    filters?: { status?: string; institutionId?: string | null },
+  ) {
+    const where: { studentId?: string; status?: string; student?: { institutionId: string } } = {};
     if (user.role === 'STUDENT') {
       where.studentId = user.sub;
+    }
+    // S6-VV-153 (#619): an institution admin reviews only its own students' disputes.
+    if (filters?.institutionId) {
+      where.student = { institutionId: filters.institutionId };
     }
     if (filters?.status) {
       where.status = filters.status;
@@ -1355,9 +1362,11 @@ export class EvidenceService {
     reviewerId: string,
     disputeId: string,
     body: ResolveEvidenceDisputeRequest,
+    institutionId: string | null = null,
   ): Promise<ResolveEvidenceDisputeResponse> {
-    const dispute = await this.prisma.evidenceSkillDispute.findUnique({
-      where: { id: disputeId },
+    // Another institution's dispute is indistinguishable from a missing one (S6-VV-153).
+    const dispute = await this.prisma.evidenceSkillDispute.findFirst({
+      where: { id: disputeId, ...(institutionId ? { student: { institutionId } } : {}) },
     });
     if (!dispute) {
       throw new NotFoundException({
