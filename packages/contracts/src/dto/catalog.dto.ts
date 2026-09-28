@@ -47,6 +47,7 @@ export const SkillLibraryItemDtoSchema = z.object({
   competencyBars: z.object({
     BEGINNER: z.string().min(1),
     INTERMEDIATE: z.string().min(1),
+    PROFICIENT: z.string().min(1),
     ADVANCED: z.string().min(1),
     PROFESSIONAL: z.string().min(1),
   }),
@@ -105,6 +106,7 @@ export const SeSkillLibraryItemDtoSchema = z.object({
   competencyBars: z.object({
     BEGINNER: z.string().min(1),
     INTERMEDIATE: z.string().min(1),
+    PROFICIENT: z.string().min(1),
     ADVANCED: z.string().min(1),
     PROFESSIONAL: z.string().min(1),
   }),
