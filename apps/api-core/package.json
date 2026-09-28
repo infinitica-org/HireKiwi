@@ -65,6 +65,7 @@
     "@smart/observability": "workspace:*",
     "@smart/prompts": "workspace:*",
     "@smart/scoring-engine": "workspace:*",
+    "@zip.js/zip.js": "2.18.2",
     "class-transformer": "catalog:",
     "class-validator": "catalog:",
     "bullmq": "6.2.0",

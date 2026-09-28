@@ -147,6 +147,30 @@ export function DataRequestsCard() {
           ))}
         </ul>
       )}
+      {download?.password ? (
+        <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+          <p className="font-semibold">Your export is an encrypted ZIP file.</p>
+          <p className="mt-1">
+            Open it with this password (keep it private; it is not sent by email):
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <code className="rounded bg-white px-2 py-1 font-mono text-sm tracking-wide text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
+              {download.password}
+            </code>
+            <button
+              type="button"
+              className="underline"
+              onClick={() => void navigator.clipboard?.writeText(download.password ?? '')}
+            >
+              Copy
+            </button>
+          </div>
+          <p className="mt-2 text-zinc-500">
+            Windows&apos; built-in unzip can&apos;t open AES-encrypted files; use 7-Zip, macOS
+            Archive Utility, or any modern unzip tool.
+          </p>
+        </div>
+      ) : null}
       {download && download.files.length > 0 ? (
         <div className="mt-3 text-xs text-zinc-600 dark:text-zinc-400">
           <p className="font-semibold">Your uploaded files (links work for a few minutes):</p>
