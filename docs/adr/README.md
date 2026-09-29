@@ -19,5 +19,7 @@ Accepted ADRs for SMART. One decision per file. Owner: Tino (`@brittytino`).
 | [0013](./0013-v1-retry-and-credentials.md)   | One reattempt, 35-day refresh, licenses | Accepted |
 | [0014](./0014-proctoring-sidecar.md)         | Proctoring CV sidecar + snapshots       | Proposed |
 | [0015](./0015-perf-testing-observability.md) | Performance-testing suite + OTel scope  | Accepted |
+| [0016](./0016-cryptographic-certs-and-server-timer.md) | Cryptographic certs & server-authoritative timer | Accepted |
+| [0017](./0017-vector-matching-ai-failover.md) | Semantic vector matching with deterministic AI failover | Accepted |
 
 If an ADR conflicts with `ARCHITECTURE.md`, open a PR to fix the ADR or the architecture doc — do not leave them divergent.

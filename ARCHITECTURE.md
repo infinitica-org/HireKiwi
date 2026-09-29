@@ -1,8 +1,17 @@
 # SMART — Master Technical Architecture & Product Specification
 
-> **Version:** v2.0  
-> **Maintainer:** Infinitica Engineering Team  
+> **Version:** v2.1 (Updated Sprint 6 — 29 Sep 2026)
+> **Maintainer:** Infinitica Engineering Team
 > **Purpose:** Single source of truth for SMART's product vision, microservice architecture, rate limiting specification, Claude AI engine, scoring mechanics, domain taxonomies, placement overlay, public verification, and phased delivery plan.
+
+> **Sprint 6 Implementation Status (as of 2026-09-29):**
+> The following sections of this document have moved from design to production implementation:
+> - §6 Scoring Engine — fully implemented; HMAC-SHA256 cryptographic certificates issued on completion (ADR-0016)
+> - §10 Placement Overlay — vector cosine-similarity matching live with deterministic JD fallback extractor (ADR-0017)
+> - §11 Public Verification — full credential view, tamper detection, revocation/supersession states, print alignment
+> - §13 Anti-Cheating — server-authoritative assessment timer via BullMQ force-submit processor (ADR-0016)
+> - §14 Institutional Growth — TPO partnership onboarding lifecycle and 10k-row async bulk whitelist importer
+
 
 ---
 
