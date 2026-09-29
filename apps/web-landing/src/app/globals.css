@@ -3,7 +3,7 @@
 @source '../components/**/*.{ts,tsx}';
 
 @theme {
-  --color-bg: #131313;
+ 
   --color-surface: #ffffff;
   --color-surface-dark: #3a302e;
   --color-ink: #111111;
