@@ -51,6 +51,7 @@ export class SkillInferenceUpdatedConsumer implements OnModuleInit {
               newLevel: event.inferredProficiency,
               confidence: event.confidence,
               outcome: event.outcome,
+              eventId: parsed.data.meta.eventId,
             });
           });
         },
