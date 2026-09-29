@@ -22,6 +22,7 @@ import { InstitutionsCampusesController } from './institutions-campuses.controll
 import { CampusesService } from './campuses.service.js';
 import { InstitutionsService } from './institutions.service.js';
 import { OrganizationsService } from './organizations.service.js';
+import { BulkWhitelistImportProcessor } from './bulk-whitelist-import.processor.js';
 
 @Module({
   imports: [InvitationsModule, StorageModule, MessagingModule, ReadinessModule],
@@ -47,6 +48,7 @@ import { OrganizationsService } from './organizations.service.js';
     CompanyOnboardingDocumentService,
     CompanyOnboardingService,
     IdempotencyService,
+    BulkWhitelistImportProcessor,
   ],
   exports: [
     InstitutionsService,

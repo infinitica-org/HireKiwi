@@ -1,13 +1,16 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { isSmartApiError } from '@smart/api-client';
 import {
   API_PREFIX,
   BatchImportMappingSchema,
   BatchImportResultDtoSchema,
+  BulkWhitelistProgressDtoSchema,
+  z,
   type BatchImportMapping,
   type BatchImportResultDto,
+  type BulkWhitelistProgressDto,
 } from '@smart/contracts';
 import { Alert, Button } from '@smart/ui';
 import { api, apiClient } from '../lib/api';
@@ -84,8 +87,12 @@ export function BatchImportWizard({
   const [inviteOk, setInviteOk] = useState(false);
   const [enqueued, setEnqueued] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [asyncJobId, setAsyncJobId] = useState<string | null>(null);
+  const [asyncProgress, setAsyncProgress] = useState<BulkWhitelistProgressDto | null>(null);
+  const [, setAsyncPolling] = useState(false);
 
   const importPath = `${API_PREFIX}/tpo/batches/${batchId}/members/import`;
+  const asyncImportPath = `${API_PREFIX}/tpo/batches/${batchId}/members/import-async`;
 
   function reset() {
     setFile(null);
@@ -196,6 +203,81 @@ export function BatchImportWizard({
       setBusy(false);
     }
   }
+
+  const pollAsyncStatus = useCallback(
+    async (jobId: string) => {
+      setAsyncPolling(true);
+      const poll = async () => {
+        try {
+          const status = await apiClient.get(
+            `${API_PREFIX}/tpo/batches/${batchId}/members/import-status/${jobId}`,
+            { schema: BulkWhitelistProgressDtoSchema },
+          );
+          setAsyncProgress(status);
+          if (status.status === 'COMPLETED' || status.status === 'FAILED') {
+            setAsyncPolling(false);
+            if (status.status === 'COMPLETED') {
+              onComplete?.();
+            } else {
+              setError('Import failed. Please try again.');
+            }
+            return;
+          }
+          setTimeout(poll, 2000);
+        } catch {
+          setAsyncPolling(false);
+          setError('Could not check import status. Please refresh the page.');
+        }
+      };
+      await poll();
+    },
+    [batchId, onComplete],
+  );
+
+  async function confirmAndImportAsync() {
+    if (!file || !mappingReady) return;
+    const payload = toBatchImportMapping(mapping);
+    setConfirmed(payload);
+    setBusy(true);
+    setError(null);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      body.append('mapping', JSON.stringify(payload));
+      const { jobId } = (await apiClient.postForm(asyncImportPath, body, {
+        schema: z.object({ jobId: z.string() }),
+      })) as { jobId: string };
+      setAsyncJobId(jobId);
+      await pollAsyncStatus(jobId);
+    } catch (caught) {
+      setError(safeMessage(caught, 'Async import could not be started. Please try again.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function downloadErrorReport() {
+    if (!asyncJobId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { url } = (await apiClient.get(
+        `${API_PREFIX}/tpo/batches/${batchId}/members/import-errors/${asyncJobId}`,
+        { schema: z.object({ url: z.string() }) },
+      )) as { url: string };
+      window.open(url, '_blank');
+    } catch (caught) {
+      setError(safeMessage(caught, 'Could not download error report.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      setAsyncPolling(false);
+    };
+  }, []);
 
   const selected = Object.values(mapping).filter(Boolean);
   const duplicate = new Set(selected).size !== selected.length;
@@ -351,14 +433,24 @@ export function BatchImportWizard({
               >
                 Replace file
               </button>
-              <button
-                type="button"
-                disabled={!mappingReady || busy}
-                onClick={() => void confirmAndImport()}
-                className="h-9 inline-flex items-center justify-center gap-2 rounded-md bg-black px-5 text-xs font-semibold text-white shadow-2xs transition hover:bg-zinc-800 disabled:opacity-50"
-              >
-                Confirm mapping
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={!mappingReady || busy}
+                  onClick={() => void confirmAndImportAsync()}
+                  className="h-9 inline-flex items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 text-xs font-semibold text-zinc-700 shadow-2xs transition hover:bg-zinc-50 disabled:opacity-50"
+                >
+                  Background import
+                </button>
+                <button
+                  type="button"
+                  disabled={!mappingReady || busy}
+                  onClick={() => void confirmAndImport()}
+                  className="h-9 inline-flex items-center justify-center gap-2 rounded-md bg-black px-5 text-xs font-semibold text-white shadow-2xs transition hover:bg-zinc-800 disabled:opacity-50"
+                >
+                  Confirm mapping
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -374,6 +466,72 @@ export function BatchImportWizard({
           onSend={() => void sendInvites()}
           onReset={reset}
         />
+      ) : null}
+      {asyncProgress ? (
+        <div className="space-y-4">
+          <h3 className="font-heading text-lg font-semibold tracking-tight text-ink">
+            Import progress
+          </h3>
+          <div className="rounded-[var(--radius-card)] border border-[var(--surface-border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-ink">
+                {asyncProgress.status === 'COMPLETED'
+                  ? 'Import completed'
+                  : asyncProgress.status === 'FAILED'
+                    ? 'Import failed'
+                    : 'Processing…'}
+              </span>
+              <span className="text-ink-muted">
+                {asyncProgress.processedRows}/{asyncProgress.totalRows} rows
+              </span>
+            </div>
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-200">
+              <div
+                className="h-full rounded-full bg-black transition-all"
+                style={{
+                  width: `${asyncProgress.totalRows > 0 ? Math.round((asyncProgress.processedRows / asyncProgress.totalRows) * 100) : 0}%`,
+                }}
+              />
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="rounded-lg bg-zinc-50 p-3">
+                <p className="text-lg font-semibold text-emerald-700">{asyncProgress.validRows}</p>
+                <p className="text-xs text-zinc-500">Valid</p>
+              </div>
+              <div className="rounded-lg bg-zinc-50 p-3">
+                <p className="text-lg font-semibold text-rose-700">{asyncProgress.invalidRows}</p>
+                <p className="text-xs text-zinc-500">Invalid</p>
+              </div>
+              <div className="rounded-lg bg-zinc-50 p-3">
+                <p className="text-lg font-semibold text-blue-700">{asyncProgress.importedRows}</p>
+                <p className="text-xs text-zinc-500">Imported</p>
+              </div>
+              <div className="rounded-lg bg-zinc-50 p-3">
+                <p className="text-lg font-semibold text-zinc-700">{asyncProgress.totalRows}</p>
+                <p className="text-xs text-zinc-500">Total</p>
+              </div>
+            </div>
+            {asyncProgress.status === 'COMPLETED' && asyncProgress.invalidRows > 0 ? (
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => void downloadErrorReport()}
+                  disabled={busy}
+                  isLoading={busy}
+                >
+                  Download Import-Errors-Report.xlsx
+                </Button>
+              </div>
+            ) : null}
+            {asyncProgress.status === 'COMPLETED' ? (
+              <div className="mt-4">
+                <Button variant="ghost" onClick={reset} disabled={busy}>
+                  Import another file
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </div>
       ) : null}
     </section>
   );

@@ -163,6 +163,7 @@ describe('InstitutionsService company activation email', () => {
       {} as never,
       noopRedis as never,
       {} as never,
+      {} as never,
       emailQueue as never,
     );
 

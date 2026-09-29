@@ -62,5 +62,68 @@ export const PartnershipDecisionResponseSchema = z.object({
   decisionDate: IsoDateTimeSchema.optional(),
   nextSteps: z.string(),
   provisionedInstitutionId: z.string().optional(),
+  activationToken: z.string().optional(),
+  activationUrl: z.string().optional(),
 });
 export type PartnershipDecisionResponse = z.infer<typeof PartnershipDecisionResponseSchema>;
+
+export const SMART_ORG_PROVISIONED_ACTION = 'smart.org.provisioned' as const;
+
+export const ActivationTokenDetailsSchema = z.object({
+  token: z.string(),
+  partnershipRequestId: UuidSchema,
+  name: z.string(),
+  domain: z.string(),
+  contactName: z.string(),
+  contactEmail: EmailSchema,
+  expiresAt: IsoDateTimeSchema,
+});
+export type ActivationTokenDetails = z.infer<typeof ActivationTokenDetailsSchema>;
+
+export const ActivatePartnershipAccountRequestSchema = z.object({
+  token: z.string().min(1, 'Activation token is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(200),
+  confirmCollegeName: z.string().trim().min(2).max(200),
+  confirmDomain: InstitutionDomainSchema,
+  primaryCampus: z.object({
+    name: z.string().trim().min(2).max(120),
+    code: z.string().trim().min(1).max(40).optional(),
+    city: z.string().trim().min(2).max(120).optional(),
+  }),
+  regionalCampuses: z
+    .array(
+      z.object({
+        name: z.string().trim().min(2).max(120),
+        code: z.string().trim().min(1).max(40).optional(),
+        city: z.string().trim().min(2).max(120).optional(),
+      }),
+    )
+    .optional()
+    .default([]),
+});
+export type ActivatePartnershipAccountRequest = z.infer<
+  typeof ActivatePartnershipAccountRequestSchema
+>;
+
+export const ActivatePartnershipAccountResponseSchema = z.object({
+  institutionId: UuidSchema,
+  name: z.string(),
+  domain: z.string(),
+  primaryCampusId: UuidSchema,
+  campusIds: z.array(UuidSchema),
+  tpoUser: z.object({
+    userId: UuidSchema,
+    email: EmailSchema,
+    fullName: z.string(),
+    role: z.string(),
+  }),
+  auditLog: z.object({
+    action: z.literal(SMART_ORG_PROVISIONED_ACTION),
+    timestamp: IsoDateTimeSchema,
+    provisionerId: UuidSchema,
+    ipAddress: z.string(),
+  }),
+});
+export type ActivatePartnershipAccountResponse = z.infer<
+  typeof ActivatePartnershipAccountResponseSchema
+>;

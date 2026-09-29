@@ -44,6 +44,8 @@ import {
   PDF_GENERATION_QUEUE,
   SANDBOX_EXECUTION_DLQ,
   SANDBOX_EXECUTION_QUEUE,
+  BULK_WHITELIST_IMPORT_DLQ,
+  BULK_WHITELIST_IMPORT_QUEUE,
 } from './queue.names.js';
 
 const queues = [
@@ -78,6 +80,8 @@ const queues = [
   { name: DSR_EXPORT_DLQ },
   { name: DSR_ERASURE_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: DSR_ERASURE_DLQ },
+  { name: BULK_WHITELIST_IMPORT_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
+  { name: BULK_WHITELIST_IMPORT_DLQ },
 ];
 
 @Global()
