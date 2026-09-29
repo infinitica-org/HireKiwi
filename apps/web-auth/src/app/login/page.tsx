@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Sign in · SMART',
-  description: 'Sign in to SMART — role-specific readiness certification for your institution.',
+  description:
+    'Sign in to SMART — Intellectual Talent Network and role-specific readiness certification for your institution.',
 };
 
 export default function LoginPage() {

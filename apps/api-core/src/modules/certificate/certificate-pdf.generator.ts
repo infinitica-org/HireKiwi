@@ -60,7 +60,7 @@ export async function generateCertificatePdfBuffer(data: CertificatePdfData): Pr
         .fontSize(10)
         .font('Helvetica')
         .fillColor('#64748b')
-        .text('ROLE-SPECIFIC READINESS CERTIFICATION', 60, 88);
+        .text('INTELLECTUAL TALENT NETWORK · READINESS CERTIFICATION', 60, 88);
 
       // Certificate Title
       doc

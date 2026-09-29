@@ -6,7 +6,8 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Create an account · SMART',
-  description: 'Register for SMART — role-specific readiness certification for your institution.',
+  description:
+    'Register for SMART — Intellectual Talent Network and role-specific readiness certification for your institution.',
 };
 
 export default function RegisterPage() {
