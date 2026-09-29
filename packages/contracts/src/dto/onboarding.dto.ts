@@ -840,6 +840,19 @@ export type CompanyVerificationReviewDocumentDto = z.infer<
   typeof CompanyVerificationReviewDocumentDtoSchema
 >;
 
+/**
+ * S6-VV-110 (#347): a near-duplicate found when the company registered. Shown to the reviewer as a
+ * warning; the registration was not blocked. `matchedCompanyId` is null for a placement-employer
+ * record (a TPO's list entry, not an account).
+ */
+export const CompanyDuplicateSignalSchema = z.object({
+  kind: z.enum(['NAME_MATCH', 'DOMAIN_ROOT_MATCH', 'PLACEMENT_EMPLOYER_MATCH']),
+  matchedCompanyId: UuidSchema.nullable(),
+  matchedName: z.string(),
+  matchedStatus: TenantVerificationStatusSchema.nullable(),
+});
+export type CompanyDuplicateSignal = z.infer<typeof CompanyDuplicateSignalSchema>;
+
 export const CompanyVerificationReviewDetailDtoSchema = z.object({
   tenantType: z.literal('company'),
   tenantId: UuidSchema,
@@ -855,6 +868,7 @@ export const CompanyVerificationReviewDetailDtoSchema = z.object({
    * `null` when either side is missing.
    */
   representativeEmailMatchesWebsite: z.boolean().nullable().optional(),
+  duplicateSignals: z.array(CompanyDuplicateSignalSchema).default([]),
   registrationCountry: z.string().trim().length(2).optional(),
   legalName: z.string(),
   submittedAt: IsoDateTimeSchema,

@@ -129,6 +129,7 @@ function setupCompanyEpicTest() {
         updatedAt: new Date(),
       }),
       findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
       findUnique: vi.fn().mockResolvedValue({
         id: companyId,
         name: 'Acme Corp',
