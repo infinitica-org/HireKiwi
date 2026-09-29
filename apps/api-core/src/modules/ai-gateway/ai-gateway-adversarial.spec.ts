@@ -33,6 +33,14 @@ describe("Peer Audit: Ramansh's AI Gateway & Reliability Controls", () => {
       // Mock Google configured and returning successful Gemini completion
       vi.spyOn(google, 'isConfigured', 'get').mockReturnValue(true);
       vi.spyOn(google, 'complete').mockResolvedValue({
+        output: {
+          matchedAnchor: 'SILVER',
+          barsScore: 75,
+          confidence: 0.9,
+          justification: 'Candidate explained technical architecture clearly.',
+          evidence: ['Postgres for relational integrity'],
+          observedGaps: ['Did not discuss alternative NOSQL options'],
+        },
         rawText: JSON.stringify({
           matchedAnchor: 'SILVER',
           barsScore: 75,
@@ -41,9 +49,11 @@ describe("Peer Audit: Ramansh's AI Gateway & Reliability Controls", () => {
           evidence: ['Postgres for relational integrity'],
           observedGaps: ['Did not discuss alternative NOSQL options'],
         }),
+        provider: 'GOOGLE',
+        model: 'gemini-2.5-pro',
         promptTokens: 120,
         completionTokens: 80,
-        providerModel: 'gemini-2.5-pro',
+        latencyMs: 15,
       });
 
       const auditService = new AiGatewayAuditService({
@@ -84,7 +94,7 @@ describe("Peer Audit: Ramansh's AI Gateway & Reliability Controls", () => {
           isTranscript: false,
           referenceNotes: [],
         },
-        correlation: {},
+        correlation: { responseId: '33333333-3333-4333-8333-333333333333' },
       };
 
       const startTime = performance.now();
