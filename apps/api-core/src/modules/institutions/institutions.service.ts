@@ -103,6 +103,20 @@ import {
 
 const MAX_BATCH_IMPORT_ROWS = 10_000;
 
+/**
+ * CWE-1236: Neutralize spreadsheet formula-trigger prefixes (=, +, -, @, \t, \r).
+ * Prepends a single quote (') so downstream spreadsheet consumers treat the cell as literal text.
+ */
+export function sanitizeSpreadsheetCellText(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  const firstChar = trimmed[0];
+  if (firstChar === '=' || firstChar === '+' || firstChar === '-' || firstChar === '@') {
+    return `'${trimmed}`;
+  }
+  return trimmed;
+}
+
 /** `BUSINESS_REGISTRATION` → "Business registration". */
 function humanizeEnum(value: string): string {
   const words = value.toLowerCase().split('_').join(' ');
@@ -2710,13 +2724,12 @@ export class InstitutionsService {
     const seenEmails = new Set<string>();
     for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber += 1) {
       const source = sheet.getRow(rowNumber);
-      const fullName = String(source.getCell(nameColumn).text ?? '').trim();
+      const fullName = sanitizeSpreadsheetCellText(String(source.getCell(nameColumn).text ?? ''));
       const email = String(source.getCell(emailColumn).text ?? '')
         .trim()
         .toLowerCase();
-      const groupLabel = groupColumn
-        ? String(source.getCell(groupColumn).text ?? '').trim() || undefined
-        : undefined;
+      const rawGroup = groupColumn ? String(source.getCell(groupColumn).text ?? '') : '';
+      const groupLabel = rawGroup ? sanitizeSpreadsheetCellText(rawGroup) || undefined : undefined;
       let message: string | undefined;
       const candidate = AddBatchMemberRequestSchema.safeParse({ fullName, email, groupLabel });
       if (!fullName && !email && !groupLabel) message = 'Row is empty.';
