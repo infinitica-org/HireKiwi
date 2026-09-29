@@ -2533,8 +2533,8 @@ describe('WorkExperienceService', () => {
     const experienceId = randomUUID();
     /** 32-byte manager endorsement token as lowercase hex (matches randomBytes(32).toString('hex')). */
     const VALID_MANAGER_TOKEN = 'a'.repeat(64);
-    const TTL_120H = 120 * 60 * 60 * 1000;
-    const TTL_72H = 72 * 60 * 60 * 1000;
+    const TTL_14D = 14 * 24 * 60 * 60 * 1000;
+    const TTL_7D = 7 * 24 * 60 * 60 * 1000;
     const mockExp = {
       id: experienceId,
       studentId: mockStudentId,
@@ -2617,7 +2617,7 @@ describe('WorkExperienceService', () => {
           id: endorsementId,
           experienceId,
           managerEmail: 'manager@sub.acme.com',
-          expiresAt: new Date(Date.now() + 120 * 3600 * 1000),
+          expiresAt: new Date(Date.now() + 14 * 24 * 3600 * 1000),
           status: 'PENDING',
         });
 
@@ -2659,7 +2659,7 @@ describe('WorkExperienceService', () => {
           id: endorsementId,
           experienceId,
           managerEmail: 'manager@othercorp.com',
-          expiresAt: new Date(Date.now() + 120 * 3600 * 1000),
+          expiresAt: new Date(Date.now() + 14 * 24 * 3600 * 1000),
           status: 'PENDING',
         });
 
@@ -2718,14 +2718,14 @@ describe('WorkExperienceService', () => {
         ).rejects.toBeInstanceOf(BadRequestException);
       });
 
-      it('dispatches manager endorsement request and schedules 3d reminder & 5d expiry jobs', async () => {
+      it('dispatches manager endorsement request and schedules 7d reminder & 14d expiry jobs', async () => {
         prisma.workExperience.findUnique.mockResolvedValue(mockExp);
         const endorsementId = randomUUID();
         prisma.workExperienceManagerEndorsement.create.mockResolvedValue({
           id: endorsementId,
           experienceId,
           managerEmail: 'manager@acme.com',
-          expiresAt: new Date(Date.now() + 120 * 3600 * 1000),
+          expiresAt: new Date(Date.now() + 14 * 24 * 3600 * 1000),
           status: 'PENDING',
         });
 
@@ -2765,6 +2765,9 @@ describe('WorkExperienceService', () => {
           expect.objectContaining({
             template: 'work-experience-manager-invite',
             to: 'manager@acme.com',
+            data: expect.objectContaining({
+              expiresAtFormatted: '14 days',
+            }),
           }),
           { jobId: `manager-invite:${endorsementId}` },
         );
@@ -2773,7 +2776,7 @@ describe('WorkExperienceService', () => {
           'send-manager-reminder',
           expect.objectContaining({ endorsementId }),
           expect.objectContaining({
-            delay: TTL_72H,
+            delay: TTL_7D,
             jobId: `manager-reminder:${endorsementId}`,
           }),
         );
@@ -2782,7 +2785,7 @@ describe('WorkExperienceService', () => {
           'expire-manager-endorsement',
           { endorsementId, experienceId },
           expect.objectContaining({
-            delay: TTL_120H,
+            delay: TTL_14D,
             jobId: `manager-expire:${endorsementId}`,
           }),
         );
@@ -2802,7 +2805,7 @@ describe('WorkExperienceService', () => {
               id: endorsementId,
               experienceId,
               managerEmail: 'manager@acme.com',
-              expiresAt: new Date(Date.now() + TTL_120H),
+              expiresAt: new Date(Date.now() + TTL_14D),
               status: 'PENDING',
             });
           },
@@ -2814,6 +2817,37 @@ describe('WorkExperienceService', () => {
           (call: unknown[]) => call[0] === 'send',
         )?.[1];
         expect(invitePayload?.data?.surveyUrl).toContain('/work-experience/manager-survey/');
+        expect(invitePayload?.data?.expiresAtFormatted).toBe('14 days');
+      });
+
+      it('calculates expiresAt as exactly 14 days (336 hours) from creation timestamp', async () => {
+        prisma.workExperience.findUnique.mockResolvedValue(mockExp);
+        const startTime = Date.now();
+        let capturedExpiresAt: Date | undefined;
+
+        prisma.workExperienceManagerEndorsement.create.mockImplementation(
+          ({ data }: { data: Record<string, unknown> }) => {
+            capturedExpiresAt = data.expiresAt as Date;
+            return Promise.resolve({
+              id: randomUUID(),
+              experienceId,
+              managerEmail: 'manager@acme.com',
+              expiresAt: capturedExpiresAt,
+              status: 'PENDING',
+            });
+          },
+        );
+
+        await service.sendManagerEndorsement(mockStudentId, experienceId, validEndorsementRequest);
+
+        expect(capturedExpiresAt).toBeDefined();
+        if (!capturedExpiresAt) {
+          throw new Error('Expected capturedExpiresAt to be defined.');
+        }
+        const expectedMin = startTime + 14 * 24 * 60 * 60 * 1000;
+        const expectedMax = Date.now() + 14 * 24 * 60 * 60 * 1000;
+        expect(capturedExpiresAt.getTime()).toBeGreaterThanOrEqual(expectedMin);
+        expect(capturedExpiresAt.getTime()).toBeLessThanOrEqual(expectedMax);
       });
 
       it('returns existing active pending request without creating duplicate rows', async () => {
@@ -2822,7 +2856,7 @@ describe('WorkExperienceService', () => {
           id: randomUUID(),
           managerEmail: 'manager@acme.com',
           managerName: 'Jane Smith',
-          expiresAt: new Date(Date.now() + 120 * 3600 * 1000),
+          expiresAt: new Date(Date.now() + 14 * 24 * 3600 * 1000),
         };
         prisma.workExperienceManagerEndorsement.findFirst.mockImplementation(
           ({ where }: { where: { status?: string } }) => {
@@ -2862,7 +2896,7 @@ describe('WorkExperienceService', () => {
                 id: randomUUID(),
                 managerEmail: 'manager@acme.com',
                 managerName: 'Jane Smith',
-                expiresAt: new Date(Date.now() + 120 * 3600 * 1000),
+                expiresAt: new Date(Date.now() + 14 * 24 * 3600 * 1000),
               });
             }
             return Promise.resolve(null);
@@ -2904,7 +2938,7 @@ describe('WorkExperienceService', () => {
           id: endorsementId,
           experienceId,
           managerEmail: 'manager@acme.com',
-          expiresAt: new Date(Date.now() + 120 * 3600 * 1000),
+          expiresAt: new Date(Date.now() + 14 * 24 * 3600 * 1000),
           status: 'PENDING',
         });
 
@@ -2926,7 +2960,7 @@ describe('WorkExperienceService', () => {
           id: endorsementId,
           experienceId,
           managerEmail: 'manager@acme.com',
-          expiresAt: new Date(Date.now() + 120 * 3600 * 1000),
+          expiresAt: new Date(Date.now() + 14 * 24 * 3600 * 1000),
           status: 'PENDING',
         });
 
