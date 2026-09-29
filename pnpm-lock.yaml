@@ -285,6 +285,9 @@ importers:
       '@smart/scoring-engine':
         specifier: workspace:*
         version: link:../../packages/scoring-engine
+      '@zip.js/zip.js':
+        specifier: 2.18.2
+        version: 2.18.2
       bullmq:
         specifier: 6.2.0
         version: 6.2.0(ioredis@6.0.0(supports-color@7.2.0))(pg@8.16.3)
@@ -4704,6 +4707,10 @@ packages:
 
   '@vitest/utils@4.1.11':
     resolution: {integrity: sha512-zTCVGpyFsGWBhllOyKlTw/vnr6D9qxsfSDyfbyZmTyjHw5N/VuvzHpHoQjm2ZJzn4RJgx5w4r7V0er69CmLgPQ==}
+
+  '@zip.js/zip.js@2.18.2':
+    resolution: {integrity: sha512-J1jwg0Kv5Aab50VlVZ6hp2rzGL/J0YLjBnkF6oJoIjmpxx9+tHgjRELGKryKnDZEcGXKjv7ibwxAziFiWHdR2A==}
+    engines: {bun: '>=0.7.0', deno: '>=1.0.0', node: '>=18.0.0'}
 
   abstract-logging@2.0.1:
     resolution: {integrity: sha512-2BjRTZxTPvheOvGbBslFSYOUkr+SjPtOnrLP33f+VIWLzezQpZcqVg7ja3L4dBXmzzgwT+a029jRx5PCi3JuiA==}
@@ -12034,6 +12041,8 @@ snapshots:
       '@vitest/pretty-format': 4.1.11
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.1
+
+  '@zip.js/zip.js@2.18.2': {}
 
   abstract-logging@2.0.1: {}
 

@@ -235,6 +235,7 @@ describe('DataRequestsCard', () => {
       bundleUrl: 'https://signed/bundle.json',
       files: [{ objectKey: 'evidence/u/cv.pdf', url: 'https://signed/cv.pdf' }],
       linksExpireInSeconds: 900,
+      password: 'ab12-cd34-ef56-0789-abcd-ef01',
     });
     renderWithClient(<DataRequestsCard />);
 
@@ -252,6 +253,8 @@ describe('DataRequestsCard', () => {
       expect(open).toHaveBeenCalledWith('https://signed/bundle.json', '_blank', 'noopener'),
     );
     expect(await screen.findByRole('link', { name: 'cv.pdf' })).toBeTruthy();
+    // S6-VV-152: the ZIP password is shown only after the authenticated download call.
+    expect(screen.getByText('ab12-cd34-ef56-0789-abcd-ef01')).toBeTruthy();
   });
 });
 

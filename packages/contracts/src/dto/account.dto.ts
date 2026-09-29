@@ -125,6 +125,8 @@ export const DataExportDownloadSchema = z.object({
   bundleUrl: z.string(),
   files: z.array(z.object({ objectKey: z.string(), url: z.string() })),
   linksExpireInSeconds: z.number().int().positive(),
+  /** S6-VV-152: password of the encrypted ZIP; null for older plain-JSON exports. */
+  password: z.string().nullable().optional(),
 });
 export type DataExportDownload = z.infer<typeof DataExportDownloadSchema>;
 
