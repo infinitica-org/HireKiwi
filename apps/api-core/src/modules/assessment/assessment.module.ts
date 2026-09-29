@@ -20,6 +20,7 @@ import { ItemRotationService } from './item-rotation.service.js';
 import { CertVerificationAssessmentService } from './cert-verification-assessment.service.js';
 import { SkillClaimDeclareModule } from './skill-claim-declare.module.js';
 import { SkillVerifyGradeProcessor } from './skill-verify-grade.processor.js';
+import { AssessmentForceSubmitProcessor } from './assessment-force-submit.processor.js';
 import { SkillVerificationService } from './skill-verification.service.js';
 
 @Module({
@@ -48,6 +49,7 @@ import { SkillVerificationService } from './skill-verification.service.js';
     ItemRotationService,
     SkillVerificationService,
     SkillVerifyGradeProcessor,
+    AssessmentForceSubmitProcessor,
     CertVerificationAssessmentService,
     AssessmentIntelligenceService,
   ],
