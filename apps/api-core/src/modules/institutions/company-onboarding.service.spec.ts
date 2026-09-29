@@ -6,6 +6,11 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Onboarding start checks the email domain's MX record (S6-VV-155); unit tests never hit real DNS.
+vi.mock('node:dns/promises', () => ({
+  resolveMx: vi.fn().mockResolvedValue([{ exchange: 'mx.example.net', priority: 10 }]),
+}));
 import type { CompanySignupProfile, CompanyVerification } from '@smart/contracts';
 import { hashOnboardingSecret } from './company-onboarding.util.js';
 import { CompanyOnboardingService } from './company-onboarding.service.js';
@@ -65,6 +70,7 @@ describe('CompanyOnboardingService', () => {
       user: { findUnique: vi.fn().mockResolvedValue(null) },
       company: {
         findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
         findUnique: vi.fn().mockResolvedValue(null),
         create: vi.fn(),
         update: vi.fn(),
@@ -369,6 +375,61 @@ describe('CompanyOnboardingService', () => {
       expect(audit.record).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'company.onboarding.submitted' }),
       );
+    });
+
+    it('lets a same-name company through to review with the match attached (S6-VV-110)', async () => {
+      prisma.companyOnboardingSession.findUnique.mockResolvedValue(verifiedSession);
+      prisma.company.create.mockResolvedValue({ id: COMPANY_ID });
+      prisma.companyVerification.create.mockResolvedValue({
+        id: '55555555-5555-4555-8555-555555555555',
+      });
+      const pendingTwin = {
+        id: '66666666-6666-4666-8666-666666666666',
+        name: 'Acme Labs',
+        website: null,
+        verificationStatus: 'PENDING',
+      };
+      prisma.company.findMany.mockResolvedValueOnce([pendingTwin]);
+      prisma.placementEmployer.findFirst.mockResolvedValue({ name: 'Acme Labs' });
+
+      const result = await service.submit(raw, {
+        attestations: { authorizedToRepresent: true, informationAccurate: true },
+      });
+
+      expect(result.onboardingStatus).toBe('PENDING_REVIEW');
+      const stored = prisma.companyVerification.create.mock.calls[0][0].data.duplicateSignals;
+      expect(stored).toEqual([
+        {
+          kind: 'NAME_MATCH',
+          matchedCompanyId: pendingTwin.id,
+          matchedName: 'Acme Labs',
+          matchedStatus: 'PENDING',
+        },
+        {
+          kind: 'PLACEMENT_EMPLOYER_MATCH',
+          matchedCompanyId: null,
+          matchedName: 'Acme Labs',
+          matchedStatus: null,
+        },
+      ]);
+    });
+
+    it('still blocks an exact repeat of an approved company, with a message that says what to do', async () => {
+      prisma.companyOnboardingSession.findUnique.mockResolvedValue(verifiedSession);
+      prisma.company.findFirst.mockResolvedValueOnce({ id: 'approved', gstin: '29ABCDE1234F1Z5' });
+
+      await expect(
+        service.submit(raw, {
+          attestations: { authorizedToRepresent: true, informationAccurate: true },
+        }),
+      ).rejects.toMatchObject({
+        status: 409,
+        response: expect.objectContaining({
+          details: { code: 'COMPANY_ALREADY_REGISTERED' },
+          message: expect.stringContaining('invite you to the team'),
+        }),
+      });
+      expect(prisma.companyVerification.create).not.toHaveBeenCalled();
     });
 
     it('requires email verification and full draft', async () => {

@@ -35,6 +35,36 @@ describe('CapabilityInferenceReviewService', () => {
     expect(result.items[0]?.inferredAt).toBe(inferredAt.toISOString());
   });
 
+  it("shows an institution admin only its own students' capabilities (S6-VV-153)", async () => {
+    const findMany = vi.fn().mockResolvedValue([]);
+    const findFirst = vi.fn().mockResolvedValue(null);
+    const update = vi.fn();
+    const service = new CapabilityInferenceReviewService(
+      { studentCapability: { findMany, findFirst, update } } as never,
+      { recomputeForSkill: vi.fn() } as never,
+    );
+
+    await service.listReviewQueue(10, 'inst-a');
+    expect(findMany.mock.calls[0]?.[0].where).toEqual({
+      confidenceScore: { lt: 0.55 },
+      student: { institutionId: 'inst-a' },
+    });
+
+    await expect(
+      service.correctCapability(
+        CAP_ID,
+        { proficiency: 'INTERMEDIATE', reviewerNote: 'Checked the transcript.' },
+        'tpo-a',
+        'inst-a',
+      ),
+    ).rejects.toMatchObject({ status: 404 });
+    expect(findFirst.mock.calls[0]?.[0].where).toEqual({
+      id: CAP_ID,
+      student: { institutionId: 'inst-a' },
+    });
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it('updates low-confidence capability and recomputes skill inference', async () => {
     const update = vi.fn().mockResolvedValue({
       id: CAP_ID,
@@ -49,7 +79,7 @@ describe('CapabilityInferenceReviewService', () => {
     const service = new CapabilityInferenceReviewService(
       {
         studentCapability: {
-          findUnique: vi.fn().mockResolvedValue({
+          findFirst: vi.fn().mockResolvedValue({
             id: CAP_ID,
             studentId: '11111111-1111-4111-8111-111111111111',
             skillCode: 'SQL_QUERY_OPTIMIZATION',

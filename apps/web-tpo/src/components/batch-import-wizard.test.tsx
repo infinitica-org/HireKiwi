@@ -160,7 +160,7 @@ describe('BatchImportWizard', () => {
     vi.mocked(api.onboarding.sendBatchInvites).mockResolvedValueOnce({ enqueued: 7 });
     fireEvent.click(send);
     expect(await screen.findByText('7 invitations queued successfully')).toBeDefined();
-    expect(api.onboarding.sendBatchInvites).toHaveBeenCalledWith('batch-1');
+    expect(api.onboarding.sendBatchInvites).toHaveBeenCalledWith('batch-1', expect.any(String));
   });
 
   it('handles empty results, keeps send disabled, and shows a safe import failure', async () => {

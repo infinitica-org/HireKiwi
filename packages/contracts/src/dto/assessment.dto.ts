@@ -64,6 +64,10 @@ export const AttemptSessionDtoSchema = z.object({
   startedAt: IsoDateTimeSchema,
   /** Server-computed hard deadline. Auto-submit fires at this instant. */
   expiresAt: IsoDateTimeSchema,
+  /** Explicit authoritative expiry timestamp in Redis (AC1). */
+  expires_at: IsoDateTimeSchema.optional(),
+  /** Authoritative server clock at response time. Used for client drift reconciliation (AC2). */
+  serverNow: IsoDateTimeSchema.optional(),
   /** Authoritative remaining time. Reconcile the local countdown against this. */
   serverRemainingSeconds: z.number().int().nonnegative(),
   totalItems: z.number().int(),
@@ -85,6 +89,8 @@ export const NextItemDtoSchema = z.object({
   totalItems: z.number().int(),
   /** Draft the candidate previously saved for this item, if any. */
   savedDraft: z.unknown().optional(),
+  /** Authoritative server clock at response time (AC2). */
+  serverNow: IsoDateTimeSchema.optional(),
   serverRemainingSeconds: z.number().int().nonnegative(),
 });
 export type NextItemDto = z.infer<typeof NextItemDtoSchema>;
@@ -139,6 +145,8 @@ export const SaveDraftResponseSchema = z.object({
   /** False when a newer draft already exists for this item. */
   superseded: z.boolean(),
   answeredItems: z.number().int(),
+  /** Authoritative server clock at response time (AC2). */
+  serverNow: IsoDateTimeSchema.optional(),
   serverRemainingSeconds: z.number().int().nonnegative(),
 });
 export type SaveDraftResponse = z.infer<typeof SaveDraftResponseSchema>;

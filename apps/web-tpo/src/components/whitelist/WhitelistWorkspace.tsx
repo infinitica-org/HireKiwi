@@ -96,6 +96,8 @@ export function WhitelistWorkspace() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  // One key per "send pending invites" click: a double click emails the batch once (S6-VV-124).
+  const sendBatchKey = useRef(crypto.randomUUID());
 
   // ── Load entitlements + batches ──
   async function loadScaffold() {
@@ -577,7 +579,8 @@ export function WhitelistWorkspace() {
                 onClick={async () => {
                   setActionLoadingId('send-batch');
                   try {
-                    await api.onboarding.sendBatchInvites(selectedBatchId);
+                    await api.onboarding.sendBatchInvites(selectedBatchId, sendBatchKey.current);
+                    sendBatchKey.current = crypto.randomUUID();
                     setSuccessMsg('Pending invitations queued for email delivery.');
                     await loadMembers();
                   } catch {

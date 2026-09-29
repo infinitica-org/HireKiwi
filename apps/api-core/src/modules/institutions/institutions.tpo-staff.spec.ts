@@ -210,6 +210,8 @@ describe('InstitutionsService Staff Operations', () => {
       email: mockCreatedUser.email,
       role: 'PLACEMENT_STAFF',
       groupLabel: 'Engineering',
+      campusId: null,
+      campusName: null,
       inviteStatus: 'PENDING',
       lastSentAt: null,
       acceptedAt: null,
@@ -265,7 +267,7 @@ describe('InstitutionsService Staff Operations', () => {
 
     expect(mockPrisma.user.update).toHaveBeenCalledWith({
       where: { id: targetUserId },
-      data: { role: 'INSTITUTION_ADMIN' },
+      data: expect.objectContaining({ role: 'INSTITUTION_ADMIN' }),
     });
 
     expect(mockAuditLog.record).toHaveBeenCalledWith(

@@ -2245,8 +2245,8 @@ export class WorkExperienceService {
     // 3. Generate single-use token (hash stored; raw sent in email)
     const rawToken = randomBytes(32).toString('hex');
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
-    const TTL_120H = 120 * 60 * 60 * 1000; // 5 days
-    const expiresAt = new Date(Date.now() + TTL_120H);
+    const TTL_14D = 14 * 24 * 60 * 60 * 1000; // 14 days (336 hours)
+    const expiresAt = new Date(Date.now() + TTL_14D);
 
     const endorsement = await this.prisma.workExperienceManagerEndorsement.create({
       data: {
@@ -2273,7 +2273,7 @@ export class WorkExperienceService {
           ? exp.endDate.toISOString().substring(0, 10)
           : 'N/A',
       surveyUrl,
-      expiresAtFormatted: '5 days',
+      expiresAtFormatted: '14 days',
     };
 
     if (this.emailQueue) {
@@ -2288,27 +2288,27 @@ export class WorkExperienceService {
         { jobId: `manager-invite:${endorsement.id}` },
       );
 
-      // Day-3 (72h) reminder
+      // Day-7 (168h) reminder
       await this.emailQueue.add(
         'send-manager-reminder',
         {
           endorsementId: endorsement.id,
           to: managerEmail,
           template: 'work-experience-manager-reminder',
-          data: { ...emailData, expiresAtFormatted: '2 days' },
+          data: { ...emailData, expiresAtFormatted: '7 days' },
         } as WorkExperienceManagerReminderJobPayload,
         {
-          delay: 72 * 60 * 60 * 1000,
+          delay: 7 * 24 * 60 * 60 * 1000,
           jobId: `manager-reminder:${endorsement.id}`,
         },
       );
 
-      // Day-5 (120h) expiry marker
+      // Day-14 (336h) expiry marker
       await this.emailQueue.add(
         'expire-manager-endorsement',
         { endorsementId: endorsement.id, experienceId },
         {
-          delay: TTL_120H,
+          delay: TTL_14D,
           jobId: `manager-expire:${endorsement.id}`,
         },
       );
@@ -2694,6 +2694,7 @@ export class WorkExperienceService {
         email: student.email,
         kind: 'VERIFICATION_RESULT',
         title: `Manager endorsement confirmed: ${experienceLabel}`,
+        dedupeKey: `endorsement:${params.endorsementId}:confirmed`,
         body: `Your manager confirmed your work experience for ${experienceLabel}.`,
         linkUrl: profileUrl,
         emailTemplate: 'verification-passed',
@@ -2718,6 +2719,7 @@ export class WorkExperienceService {
       email: student.email,
       kind: 'VERIFICATION_RESULT',
       title: `Manager endorsement disputed: ${experienceLabel}`,
+      dedupeKey: `endorsement:${params.endorsementId}:disputed`,
       body: `Your manager disputed the endorsement for ${experienceLabel}. Review your work experience entry to update details or request a new endorsement.`,
       linkUrl: profileUrl,
       emailTemplate: 'verification-failed',

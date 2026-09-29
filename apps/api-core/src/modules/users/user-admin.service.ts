@@ -27,7 +27,16 @@ export class UserAdminService {
   async assignRole(
     userId: string,
     role: AssignableRole,
+    reason: string,
+    actorId: string,
   ): Promise<{ userId: string; role: AssignableRole }> {
+    if (userId === actorId) {
+      throw new UnprocessableEntityException({
+        error: 'cannot_change_own_role',
+        message: 'Ask another administrator to change your role.',
+        statusCode: 422,
+      });
+    }
     const user = await this.requireUser(userId);
     // Only moves between institution staff roles: students, company users and platform admins
     // get their role from how their account was created, never from this switch.
@@ -44,6 +53,16 @@ export class UserAdminService {
       where: { id: user.id },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: { role: role as any },
+    });
+    // S6-VV-100 (#172): permission changes are audited with who did it, the before and after
+    // role, and why, so /admin/audit-logs?action=user.role_changed answers "who made them admin?".
+    await this.auditPublisher.record({
+      actorId,
+      action: 'user.role_changed',
+      resourceType: 'user',
+      resourceId: user.id,
+      reasonCode: reason,
+      metadata: { prior: { role: user.role }, next: { role: updated.role } },
     });
     // The role is baked into access tokens; revoke them so the new role applies now.
     await this.auth.revokeAllForUser(user.id);

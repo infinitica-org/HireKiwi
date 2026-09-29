@@ -20,7 +20,30 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({ trustProxy: true, logger: false }),
-    { bufferLogs: true, rawBody: true },
+    // The JSON parser below keeps the raw body for webhook signatures (S6-VB-01). Nest's default
+    // body parsers must stay off: with them on, app.listen() registers a second
+    // application/json parser and boot fails with FST_ERR_CTP_ALREADY_PRESENT.
+    { bufferLogs: true, bodyParser: false },
+  );
+
+  const fastifyInstance = app.getHttpAdapter().getInstance();
+  if (fastifyInstance.hasContentTypeParser('application/json')) {
+    fastifyInstance.removeContentTypeParser('application/json');
+  }
+  fastifyInstance.addContentTypeParser(
+    'application/json',
+    { parseAs: 'string' },
+    (req: unknown, body: string, done: (err: Error | null, result?: unknown) => void) => {
+      try {
+        (req as Record<string, unknown>).rawBody = body;
+        const json = JSON.parse(body || '{}') as unknown;
+        done(null, json);
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error('Invalid JSON');
+        (error as unknown as Record<string, unknown>).statusCode = 400;
+        done(error, undefined);
+      }
+    },
   );
 
   app.useLogger(app.get(PinoLogger));
@@ -47,7 +70,7 @@ async function bootstrap(): Promise<void> {
   const openApi = new DocumentBuilder()
     .setTitle('SMART API')
     .setDescription(
-      'Platform core for role-specific readiness certification. Health probes are unauthenticated; product routes use Bearer JWT.',
+      'Platform core for the SMART Intellectual Talent Network & role-specific readiness certification. Health probes are unauthenticated; product routes use Bearer JWT.',
     )
     .setVersion(env.APP_VERSION)
     .addBearerAuth()

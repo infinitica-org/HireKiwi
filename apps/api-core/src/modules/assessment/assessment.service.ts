@@ -49,8 +49,11 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import type { Queue } from 'bullmq';
 import { attemptsStarted, cacheOperations, draftsSaved, getContext } from '@smart/observability';
 import { Effect, Either } from 'effect';
 import { z } from 'zod';
@@ -64,6 +67,7 @@ import { AuditPublisherService } from '../../platform/audit/audit-publisher.serv
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { RedisService } from '../../platform/redis/redis.service.js';
 import { env } from '../../platform/config/env.js';
+import { ASSESSMENT_FORCE_SUBMIT_QUEUE } from '../../platform/queue/queue.names.js';
 import { ItemRotationService } from './item-rotation.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { Prisma } from '../../generated/prisma/index.js';
@@ -136,6 +140,9 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
     @Inject(KafkaOutboxService) private readonly outbox: KafkaOutboxService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
     @Inject(AiGatewayService) private readonly aiGateway: AiGatewayService,
+    @Optional()
+    @InjectQueue(ASSESSMENT_FORCE_SUBMIT_QUEUE)
+    private readonly forceSubmitQueue?: Queue,
   ) {}
 
   onModuleInit() {
@@ -640,6 +647,116 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
+  /**
+   * Force-submit an attempt when the authoritative timer expires + grace period fires.
+   * Transition: IN_PROGRESS -> SUBMITTED.
+   * Atomically locks all further answer submissions and flushes Redis drafts to PostgreSQL.
+   */
+  async forceSubmitAttempt(attemptId: string): Promise<void> {
+    const attempt = await this.prisma.attempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        level: { include: { track: true } },
+        responses: { include: { item: { include: { options: true } } } },
+      },
+    });
+
+    if (!attempt || attempt.status !== 'IN_PROGRESS') {
+      this.logger.log(
+        `Attempt ${attemptId} is not in IN_PROGRESS status (${attempt?.status ?? 'NOT_FOUND'}); force-submit no-op.`,
+      );
+      return;
+    }
+
+    // Flush any pending drafts in Redis to PostgreSQL before transitioning
+    await this.flushDraftsToPostgres();
+
+    // Re-fetch attempt after flush so formattedResponses contains the latest answers
+    const freshAttempt = await this.prisma.attempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        level: { include: { track: true } },
+        responses: { include: { item: { include: { options: true } } } },
+      },
+    });
+
+    const targetAttempt = freshAttempt ?? attempt;
+    const submittedAt = new Date();
+
+    const updated = await this.prisma.attempt.updateMany({
+      where: { id: attemptId, status: 'IN_PROGRESS' },
+      data: { status: 'SUBMITTED', completedAt: submittedAt },
+    });
+
+    if (updated.count === 0) {
+      this.logger.log(`Attempt ${attemptId} was updated concurrently; force-submit no-op.`);
+      return;
+    }
+
+    // Update Redis session to SUBMITTED and locked
+    try {
+      const cached = await this.redis.get(`session:assessment:${attemptId}`);
+      if (cached) {
+        const session = JSON.parse(cached) as AttemptSessionDto;
+        session.status = 'SUBMITTED';
+        session.locked = true;
+        session.serverRemainingSeconds = 0;
+        await this.saveRedisSession(session);
+      }
+    } catch {
+      // Best-effort cache update
+    }
+
+    const responses = (targetAttempt.responses ?? []).map((row) => {
+      const raw = row.answer;
+      let answer: unknown = raw;
+      if (raw && typeof raw === 'object' && !Array.isArray(raw) && '_clientSequence' in raw) {
+        const { _clientSequence, ...rest } = raw as Record<string, unknown>;
+        answer = rest;
+      }
+      const itemId = row.item.id;
+      const competencyIdRaw =
+        typeof row.item.competencyId === 'string' ? row.item.competencyId : itemId;
+      const responseId = UuidSchema.safeParse(row.id).success ? row.id : randomUUID();
+      const competencyId = UuidSchema.safeParse(competencyIdRaw).success ? competencyIdRaw : itemId;
+      return {
+        responseId,
+        itemId,
+        competencyId,
+        itemWeight: 1,
+        answer,
+        objectKey: null,
+      };
+    });
+
+    await this.outbox.enqueueAssessmentSubmitted({
+      meta: {
+        eventId: randomUUID(),
+        eventType: SMART_TOPICS.assessmentSubmitted,
+        version: 1 as const,
+        occurredAt: submittedAt.toISOString(),
+        traceId: getContext()?.correlationId ?? randomUUID(),
+        source: 'assessment',
+      },
+      data: {
+        attemptId: targetAttempt.id,
+        studentId: targetAttempt.userId,
+        trackCode: targetAttempt.level.track.code as TrackCode,
+        levelNumber: (targetAttempt.level.levelNumber ?? 1) as LevelNumber,
+        status: 'SUBMITTED' as AttemptStatus,
+        autoSubmitted: true,
+        integrityFlag: (targetAttempt.integrityFlag ?? 'CLEAN') as IntegrityFlag,
+        submittedAt: submittedAt.toISOString(),
+        responses,
+      },
+    });
+
+    this.logger.log(
+      { attemptId, status: 'SUBMITTED', autoSubmitted: true },
+      'assessment.force-submitted',
+    );
+  }
+
   private async scoreResponses(
     responses: readonly {
       id: string;
@@ -872,13 +989,23 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
   async saveDraft(studentId: string, dto: SaveDraftRequest): Promise<SaveDraftResponse> {
     const session = await this.getSession(studentId, dto.attemptId);
 
-    if (session.locked || session.serverRemainingSeconds <= 0) {
+    const authoritativeExpiryMs = new Date(session.expires_at || session.expiresAt).getTime();
+    const serverNow = new Date();
+    const serverNowMs = serverNow.getTime();
+
+    if (
+      session.locked ||
+      session.status !== 'IN_PROGRESS' ||
+      serverNowMs >= authoritativeExpiryMs
+    ) {
       throw new ForbiddenException({
         error: 'forbidden',
         message: 'Assessment session is locked or expired.',
         statusCode: 403,
       });
     }
+
+    const remainingSeconds = Math.max(0, Math.floor((authoritativeExpiryMs - serverNowMs) / 1000));
 
     const draftKey = `draft:assessment:${dto.attemptId}:${dto.itemId}`;
     const draftsSetKey = `drafts:set:${dto.attemptId}`;
@@ -916,7 +1043,8 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
           accepted: false,
           superseded: true,
           answeredItems: answeredCount,
-          serverRemainingSeconds: session.serverRemainingSeconds,
+          serverNow: serverNow.toISOString(),
+          serverRemainingSeconds: remainingSeconds,
         };
       }
 
@@ -962,7 +1090,8 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
           accepted: true,
           superseded: false,
           answeredItems: answeredCount,
-          serverRemainingSeconds: session.serverRemainingSeconds,
+          serverNow: serverNow.toISOString(),
+          serverRemainingSeconds: remainingSeconds,
         };
       }
     }
@@ -982,7 +1111,8 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
           accepted: false,
           superseded: true,
           answeredItems: dbAnswered,
-          serverRemainingSeconds: session.serverRemainingSeconds,
+          serverNow: serverNow.toISOString(),
+          serverRemainingSeconds: remainingSeconds,
         };
       }
     }
@@ -1025,7 +1155,8 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
       accepted: true,
       superseded: false,
       answeredItems: dbAnsweredCount,
-      serverRemainingSeconds: session.serverRemainingSeconds,
+      serverNow: serverNow.toISOString(),
+      serverRemainingSeconds: remainingSeconds,
     };
   }
 
@@ -1130,6 +1261,30 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
     const sessionDto = this.buildSessionDto(attempt);
     await this.saveRedisSession(sessionDto);
 
+    // Schedule delayed force-submission job at expiresAt + 15s grace period
+    const GRACE_PERIOD_MS = 15_000;
+    const delay = Math.max(0, expiresAt.getTime() + GRACE_PERIOD_MS - Date.now());
+    if (this.forceSubmitQueue) {
+      try {
+        await this.forceSubmitQueue.add(
+          'force-submit',
+          { attemptId: attempt.id, studentId },
+          {
+            delay,
+            jobId: `force-submit:${attempt.id}`,
+            removeOnComplete: true,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 1000 },
+          },
+        );
+      } catch (err) {
+        this.logger.warn(
+          { err, attemptId: attempt.id },
+          'Failed to schedule assessment force-submit delayed job',
+        );
+      }
+    }
+
     // Increment metric ONLY for newly created attempts
     attemptsStarted.inc({
       track_code: dto.trackCode,
@@ -1144,7 +1299,7 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
     try {
       const cached = await this.redis.get(redisKey);
       if (cached) {
-        const session = JSON.parse(cached) as AttemptSessionDto;
+        const session = JSON.parse(cached) as AttemptSessionDto & { expires_at?: string };
         if (session.studentId !== studentId) {
           throw new ForbiddenException({
             error: 'forbidden',
@@ -1152,8 +1307,13 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
             statusCode: 403,
           });
         }
-        const expiresAtMs = new Date(session.expiresAt).getTime();
-        session.serverRemainingSeconds = Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
+        const authoritativeExpiry = session.expires_at || session.expiresAt;
+        const expiresAtMs = new Date(authoritativeExpiry).getTime();
+        const now = Date.now();
+        session.serverNow = new Date(now).toISOString();
+        session.expires_at = new Date(expiresAtMs).toISOString();
+        session.expiresAt = session.expires_at;
+        session.serverRemainingSeconds = Math.max(0, Math.floor((expiresAtMs - now) / 1000));
         session.locked = session.status !== 'IN_PROGRESS' || session.serverRemainingSeconds <= 0;
         session.locked = session.locked || (await this.proctorLocked(attemptId));
         return session;
@@ -1367,6 +1527,7 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
         item: null,
         index: currentItemIndex,
         totalItems: session.totalItems || items.length,
+        serverNow: new Date().toISOString(),
         serverRemainingSeconds: session.serverRemainingSeconds,
       };
     }
@@ -1420,14 +1581,17 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
       index: currentItemIndex,
       totalItems: session.totalItems || items.length,
       savedDraft,
+      serverNow: new Date().toISOString(),
       serverRemainingSeconds: session.serverRemainingSeconds,
     };
   }
 
   private buildSessionDto(attempt: AttemptWithLevelAndResponses): AttemptSessionDto {
     const expiresAtMs = attempt.expiresAt.getTime();
-    const remainingSeconds = Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
+    const now = Date.now();
+    const remainingSeconds = Math.max(0, Math.floor((expiresAtMs - now) / 1000));
     const isLocked = attempt.status !== 'IN_PROGRESS' || remainingSeconds <= 0;
+    const expiresAtIso = attempt.expiresAt.toISOString();
 
     return {
       attemptId: attempt.id,
@@ -1438,7 +1602,9 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
       status: attempt.status as AttemptStatus,
       formId: attempt.formCode,
       startedAt: attempt.startedAt.toISOString(),
-      expiresAt: attempt.expiresAt.toISOString(),
+      expiresAt: expiresAtIso,
+      expires_at: expiresAtIso,
+      serverNow: new Date(now).toISOString(),
       serverRemainingSeconds: remainingSeconds,
       totalItems: attempt.level.itemCount ?? 0,
       answeredItems: attempt.responses?.length ?? 0,
@@ -1459,7 +1625,18 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
   private async saveRedisSession(session: AttemptSessionDto): Promise<void> {
     try {
       const redisKey = `session:assessment:${session.attemptId}`;
-      await this.redis.setex(redisKey, SESSION_TTL_SECONDS, JSON.stringify(session));
+      const expiresAtMs = new Date(session.expires_at || session.expiresAt).getTime();
+      const remainingSeconds = Math.max(0, Math.ceil((expiresAtMs - Date.now()) / 1000));
+      // Derive TTL: session remaining seconds + 15s grace + 300s safety buffer
+      const derivedTtl = remainingSeconds + 15 + 300;
+      const ttl = Math.max(SESSION_TTL_SECONDS, derivedTtl);
+
+      const payload = {
+        ...session,
+        expires_at: session.expires_at || session.expiresAt,
+        expiresAt: session.expiresAt,
+      };
+      await this.redis.setex(redisKey, ttl, JSON.stringify(payload));
     } catch {
       // Fail open
     }

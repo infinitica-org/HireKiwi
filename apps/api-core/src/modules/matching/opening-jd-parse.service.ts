@@ -12,6 +12,7 @@ import { JD_SKILL_EXTRACT_PROMPT_REF } from '@smart/prompts';
 import { z } from 'zod';
 import { AiGatewayService } from '../ai-gateway/ai-gateway.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
+import { extractSkillsOfflineFallback } from './jd-fallback-extractor.js';
 
 const RawJdSkillExtractSchema = z.object({
   requiredSkills: z
@@ -68,12 +69,20 @@ export class OpeningJdParseService {
       await this.persistExtract(openingId, extracted);
     } catch (error) {
       this.logger.warn(
-        `JD parse failed for opening ${openingId}: ${error instanceof Error ? error.message : 'unknown'}`,
+        `AI JD parse failed for opening ${openingId}: ${error instanceof Error ? error.message : 'unknown'}; falling back to offline keyword extraction.`,
       );
-      await this.prisma.jobOpening.update({
-        where: { id: openingId },
-        data: { jdParseStatus: 'FAILED' },
-      });
+      try {
+        const fallback = extractSkillsOfflineFallback(opening.roleTitle, opening.rawText.trim());
+        await this.persistExtract(openingId, fallback);
+      } catch (fallbackErr) {
+        this.logger.error(
+          `Fallback JD parse also failed for opening ${openingId}: ${fallbackErr instanceof Error ? fallbackErr.message : 'unknown'}`,
+        );
+        await this.prisma.jobOpening.update({
+          where: { id: openingId },
+          data: { jdParseStatus: 'FAILED' },
+        });
+      }
     }
   }
 

@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Inject,
   Param,
   Patch,
@@ -33,6 +34,7 @@ import { Roles } from '../../common/guards/roles.decorator.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { AuditAccess } from '../../common/decorators/audit-access.decorator.js';
+import { IdempotencyService } from '../company-profile/idempotency.service.js';
 import { InstitutionsService } from './institutions.service.js';
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js';
 import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard.js';
@@ -41,7 +43,10 @@ import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard.js';
 @UseGuards(TenantScopeGuard)
 @Roles('INSTITUTION_ADMIN')
 export class InstitutionsTpoController {
-  constructor(@Inject(InstitutionsService) private readonly institutions: InstitutionsService) {}
+  constructor(
+    @Inject(InstitutionsService) private readonly institutions: InstitutionsService,
+    @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
+  ) {}
 
   @Get('entitlements')
   entitlements(@TenantId() institutionId: string) {
@@ -250,6 +255,84 @@ export class InstitutionsTpoController {
     );
   }
 
+  @Post('batches/:batchId/members/import-async')
+  @RequireFlag('bulk_batch_import')
+  async importMembersAsync(
+    @Param('batchId') batchId: string,
+    @Req() request: FastifyRequest,
+    @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
+  ) {
+    const partsIter = (
+      request as FastifyRequest & {
+        parts: () => AsyncIterableIterator<Multipart>;
+      }
+    ).parts();
+
+    let fileBuffer: Buffer | null = null;
+    let fileName = '';
+    let mimeType = 'application/octet-stream';
+    let rawMapping: unknown;
+
+    try {
+      for await (const part of partsIter) {
+        if (part.type === 'file') {
+          const file = part as MultipartFile;
+          mimeType = file.mimetype;
+          fileName = file.filename;
+          fileBuffer = await file.toBuffer();
+        } else if (part.type === 'field' && part.fieldname === 'mapping') {
+          try {
+            rawMapping = JSON.parse(String(part.value)) as unknown;
+          } catch {
+            throw new BadRequestException('Column mapping must be valid JSON.');
+          }
+        }
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException(
+        'The uploaded file exceeds the 5 MB limit or could not be read.',
+      );
+    }
+
+    if (!fileBuffer) {
+      throw new BadRequestException('Choose a CSV or XLSX file to upload.');
+    }
+
+    const parsedMapping = rawMapping ? BatchImportMappingSchema.safeParse(rawMapping) : undefined;
+    if (parsedMapping && !parsedMapping.success) {
+      throw new BadRequestException(
+        parsedMapping.error.issues[0]?.message ?? 'Column mapping is invalid.',
+      );
+    }
+
+    return this.institutions.enqueueBulkWhitelistImport({
+      batchId,
+      institutionId,
+      fileBuffer,
+      fileName,
+      mimeType,
+      mapping: parsedMapping?.data,
+      actorId: user.sub,
+    });
+  }
+
+  @Get('batches/:batchId/members/import-status/:jobId')
+  async getImportStatus(@Param('jobId') jobId: string, @TenantId() institutionId: string) {
+    return this.institutions.getBulkWhitelistImportStatus(jobId, institutionId);
+  }
+
+  @Get('batches/:batchId/members/import-errors/:jobId')
+  async getImportErrorReport(
+    @Param('jobId') jobId: string,
+    @Res() reply: FastifyReply,
+    @TenantId() institutionId: string,
+  ) {
+    const { url } = await this.institutions.getBulkWhitelistErrorReportUrl(jobId, institutionId);
+    reply.redirect(url);
+  }
+
   @Get('batches/:batchId/import-template')
   async importTemplate(
     @Param('batchId') batchId: string,
@@ -265,8 +348,20 @@ export class InstitutionsTpoController {
   }
 
   @Post('batches/:batchId/invites/send')
-  sendInvites(@Param('batchId') batchId: string, @TenantId() institutionId: string) {
-    return this.institutions.sendBatchInvites(batchId, institutionId);
+  sendInvites(
+    @Param('batchId') batchId: string,
+    @TenantId() institutionId: string,
+    @CurrentUser() user: RequestUser,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+  ) {
+    // S6-VV-124: a double click must not email a whole batch twice.
+    return this.idempotency.once({
+      userId: user.sub,
+      scope: `tpo.batch-invites.send:${batchId}`,
+      key: idempotencyKey,
+      request: { batchId },
+      execute: () => this.institutions.sendBatchInvites(batchId, institutionId),
+    });
   }
 
   @Post('invitations/:invitationId/resend')

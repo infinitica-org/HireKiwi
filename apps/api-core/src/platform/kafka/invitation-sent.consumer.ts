@@ -55,6 +55,8 @@ export class InvitationSentConsumer implements OnModuleInit {
               title,
               body,
               linkUrl: event.inviteUrl,
+              // A resend is a new event (new id) and should email again; a redelivery is not.
+              dedupeKey: `invitation-sent:${parsed.data.meta.eventId}`,
               emailTemplate: template,
               emailData: {
                 fullName: event.fullName,

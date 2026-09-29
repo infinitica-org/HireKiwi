@@ -525,7 +525,7 @@ describe('assessmentApi contracts', () => {
   });
 
   it('parses POST /assessment/complete as CompleteAttemptResponse', async () => {
-    const { fetchImpl } = stubFetch([
+    const { fetchImpl, calls } = stubFetch([
       {
         body: {
           attemptId: sessionBody.attemptId,
@@ -547,6 +547,10 @@ describe('assessmentApi contracts', () => {
       }),
     );
     const result = await api.assessment.complete({ attemptId: sessionBody.attemptId });
+    // S6-VV-124: keyed on the attempt, so a double submit replays instead of a 409.
+    expect(new Headers(calls[0]?.init.headers).get('idempotency-key')).toBe(
+      `attempt-complete-${sessionBody.attemptId}`,
+    );
     expect(result.status).toBe('EVALUATED');
     expect(result.evaluationJobId).toBeNull();
     expect(result.scorePercent).toBe(1);
@@ -725,9 +729,14 @@ describe('admin user role and access bindings (#169 / #171)', () => {
 
   it('posts /admin/users/:id/role', async () => {
     const { api, calls } = apiWith({ userId, role: 'PLACEMENT_STAFF' });
-    const result = await api.onboarding.assignUserRole(userId, { role: 'PLACEMENT_STAFF' });
+    const result = await api.onboarding.assignUserRole(userId, {
+      role: 'PLACEMENT_STAFF',
+      reason: 'Moved to the placement desk',
+    });
     expect(calls[0]?.url).toBe(`https://api.smart.test/api/v1/admin/users/${userId}/role`);
-    expect(calls[0]?.init.body).toBe(JSON.stringify({ role: 'PLACEMENT_STAFF' }));
+    expect(calls[0]?.init.body).toBe(
+      JSON.stringify({ role: 'PLACEMENT_STAFF', reason: 'Moved to the placement desk' }),
+    );
     expect(result.role).toBe('PLACEMENT_STAFF');
   });
 

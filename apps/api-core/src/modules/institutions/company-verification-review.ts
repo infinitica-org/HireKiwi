@@ -4,7 +4,13 @@ import type {
   ResolveVerificationRequest,
   VerificationQueueItemDto,
 } from '@smart/contracts';
-import { CompanyAddressSchema, CompanyVerificationReviewDetailDtoSchema } from '@smart/contracts';
+import {
+  CompanyAddressSchema,
+  CompanyDuplicateSignalSchema,
+  CompanyVerificationReviewDetailDtoSchema,
+  type CompanyDuplicateSignal,
+} from '@smart/contracts';
+import { z } from 'zod';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { env } from '../../platform/config/env.js';
 import type { PrismaService } from '../../platform/prisma/prisma.service.js';
@@ -157,6 +163,7 @@ export async function getCompanyVerificationReviewDetail(
     onboardingStatus: session?.onboardingStatus ?? null,
     representativeEmail: session?.representativeEmail,
     representativeEmailMatchesWebsite,
+    duplicateSignals: parseDuplicateSignals(verification.duplicateSignals),
     registrationCountry: verification.registrationCountry,
     legalName: verification.legalName,
     submittedAt: verification.submittedAt?.toISOString() ?? verification.createdAt.toISOString(),
@@ -411,6 +418,12 @@ export async function resolveCompanyVerification(
     activationEmail: result.provisioning?.activationEmail ?? null,
     resubmissionEmail: result.resubmissionEmail,
   };
+}
+
+/** Stored signals are advisory; a malformed row must never break the review page. */
+function parseDuplicateSignals(value: unknown): CompanyDuplicateSignal[] {
+  const parsed = z.array(CompanyDuplicateSignalSchema).safeParse(value ?? []);
+  return parsed.success ? parsed.data : [];
 }
 
 async function findOpenCompanyVerification(

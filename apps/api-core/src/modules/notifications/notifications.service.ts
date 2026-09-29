@@ -77,11 +77,12 @@ export class NotificationsService {
     }
 
     if (params.email && params.emailTemplate && params.emailData) {
-      await this.emailQueue.add('send', {
-        to: params.email,
-        template: params.emailTemplate,
-        data: params.emailData,
-      });
+      await this.emailQueue.add(
+        'send',
+        { to: params.email, template: params.emailTemplate, data: params.emailData },
+        // S6-VV-122 (#435): one email job per notification row, so a retried enqueue is a no-op.
+        { jobId: `notification-${row.id}` },
+      );
     }
 
     this.logger.log(`Notification queued for user ${params.userId} (${params.kind})`);
@@ -224,6 +225,7 @@ export class NotificationsService {
         applicationId: params.applicationId,
         openingId: params.openingId,
       },
+      dedupeKey: `application:${params.applicationId}:status:SHORTLISTED`,
     });
   }
 
@@ -275,6 +277,8 @@ export class NotificationsService {
     status: 'VERIFIED' | 'BEGINNER_REATTEMPT' | 'LOCKED';
     detail: string;
     claimId: string;
+    /** Kafka event id: a redelivered event must not notify twice (S6-VV-122). */
+    eventId?: string;
   }): Promise<NotificationDto> {
     const profileUrl = `${env.STUDENT_APP_URL}/profile`;
     const templateByStatus: Record<
@@ -317,6 +321,7 @@ export class NotificationsService {
         claimId: params.claimId,
         status: params.status,
       },
+      dedupeKey: params.eventId ? `skill-verification:${params.eventId}` : undefined,
     });
   }
 
@@ -329,6 +334,8 @@ export class NotificationsService {
     newLevel: string | null;
     confidence: 'LOW' | 'MEDIUM' | 'HIGH';
     outcome: 'INFERRED' | 'INSUFFICIENT_EVIDENCE' | 'VETO_BLOCKED';
+    /** Kafka event id: a redelivered event must not notify twice (S6-VV-122). */
+    eventId?: string;
   }): Promise<NotificationDto> {
     const skillsUrl = `${env.STUDENT_APP_URL}/assessments/skills`;
     const previousLabel = params.previousLevel?.replaceAll('_', ' ').toLowerCase() ?? 'none';
@@ -360,6 +367,7 @@ export class NotificationsService {
         newLevel: params.newLevel,
         outcome: params.outcome,
       },
+      dedupeKey: params.eventId ? `skill-inference:${params.eventId}` : undefined,
     });
   }
 }

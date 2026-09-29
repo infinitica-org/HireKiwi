@@ -710,12 +710,14 @@ export function usersApi(client: SmartApiClient) {
     listDataRequests: () =>
       client.get(prefixed('/users/me/data-requests'), { schema: DataRequestListResponseSchema }),
 
-    createDataRequest: (body: CreateDataRequest) =>
+    /** Pass the same `idempotencyKey` for one user intent so a double submit creates one request. */
+    createDataRequest: (body: CreateDataRequest, idempotencyKey?: string) =>
       client.request({
         method: 'POST',
         path: prefixed('/users/me/data-requests'),
         body,
         schema: DataRequestResponseSchema,
+        headers: idempotencyKey ? { 'idempotency-key': idempotencyKey } : undefined,
       }),
 
     /** S6-VV-115 — fresh short-lived links to a finished export. */
@@ -1154,6 +1156,17 @@ export function onboardingApi(client: SmartApiClient) {
     updateCompany: (companyId: string, body: UpdateCompanyRequest) =>
       client.patch(prefixed(`/admin/companies/${companyId}`), body, { schema: CompanyDtoSchema }),
 
+    listCompanyMembers: (companyId: string) =>
+      client.get(prefixed(`/admin/companies/${companyId}/members`), {
+        schema: ListCompanyMembersResponseSchema,
+      }),
+
+    /** #167: make an active member an owner when the company has no reachable owner. */
+    assignCompanyOwner: (companyId: string, body: { memberId: string; reason: string }) =>
+      client.post(prefixed(`/admin/companies/${companyId}/owner`), body, {
+        schema: CompanyMemberSchema,
+      }),
+
     holdCompany: (companyId: string, body: TenantActionReason) =>
       client.post(prefixed(`/admin/companies/${companyId}/hold`), body, {
         schema: CompanyDtoSchema,
@@ -1366,7 +1379,7 @@ export function onboardingApi(client: SmartApiClient) {
       }),
 
     /** Switch an institution staff member between INSTITUTION_ADMIN and PLACEMENT_STAFF. */
-    assignUserRole: (userId: string, body: { role: InstitutionStaffRole }) =>
+    assignUserRole: (userId: string, body: { role: InstitutionStaffRole; reason: string }) =>
       client.post(prefixed(`/admin/users/${userId}/role`), body, {
         schema: AssignRoleResponseSchema,
       }),
@@ -1434,9 +1447,11 @@ export function onboardingApi(client: SmartApiClient) {
         schema: z.array(BatchMemberDtoSchema),
       }),
 
-    sendBatchInvites: (batchId: string) =>
+    /** Pass the same `idempotencyKey` for one click so a double click emails the batch once. */
+    sendBatchInvites: (batchId: string, idempotencyKey?: string) =>
       client.post(prefixed(`/tpo/batches/${batchId}/invites/send`), undefined, {
         schema: SendBatchInvitesResultDtoSchema,
+        headers: idempotencyKey ? { 'idempotency-key': idempotencyKey } : undefined,
       }),
 
     resendStudentInvitation: (invitationId: string) =>
@@ -1748,9 +1763,11 @@ export function assessmentApi(client: SmartApiClient) {
         }),
       }),
 
+    // An attempt completes once, so its id is the natural key: a repeat replays the first result.
     complete: (body: { attemptId: string }) =>
       client.post(prefixed('/assessment/complete'), body, {
         schema: CompleteAttemptResponseSchema,
+        headers: { 'idempotency-key': `attempt-complete-${body.attemptId}` },
       }),
 
     reportIntegrityEvent: (body: unknown) =>
@@ -1839,10 +1856,11 @@ export function certificateApi(client: SmartApiClient) {
      * without an account — so it must never send an Authorization header that
      * would make it look like an authenticated request in the logs.
      */
-    verify: (certificateId: string) =>
+    verify: (certificateId: string, sig?: string) =>
       client.get(prefixed(`/verify/${certificateId}`), {
         schema: PublicVerificationDtoSchema,
         anonymous: true,
+        query: sig ? { sig } : undefined,
       }),
   };
 }

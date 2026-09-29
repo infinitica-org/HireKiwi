@@ -16,11 +16,13 @@ import { InstitutionsPartnershipController } from './institutions-partnership.co
 import { InstitutionsStudentController } from './institutions-student.controller.js';
 import { InstitutionsTpoController } from './institutions-tpo.controller.js';
 import { UniversityStudentsController } from './university-students.controller.js';
+import { IdempotencyService } from '../company-profile/idempotency.service.js';
 import { UniversityStudentsService } from './university-students.service.js';
 import { InstitutionsCampusesController } from './institutions-campuses.controller.js';
 import { CampusesService } from './campuses.service.js';
 import { InstitutionsService } from './institutions.service.js';
 import { OrganizationsService } from './organizations.service.js';
+import { BulkWhitelistImportProcessor } from './bulk-whitelist-import.processor.js';
 
 @Module({
   imports: [InvitationsModule, StorageModule, MessagingModule, ReadinessModule],
@@ -45,6 +47,8 @@ import { OrganizationsService } from './organizations.service.js';
     OrganizationsService,
     CompanyOnboardingDocumentService,
     CompanyOnboardingService,
+    IdempotencyService,
+    BulkWhitelistImportProcessor,
   ],
   exports: [
     InstitutionsService,

@@ -4,14 +4,14 @@
 
 ## What Smart is
 
-Smart is a role-specific readiness certification platform. It assesses students against real competency requirements for a specific job track — not a generic employability score — and issues a criterion-referenced Gold/Silver/Bronze certificate that's transparent about its own methodology and honest about its own maturity. The certificate is student-controlled and verifiable, designed to be checked and trusted by an employer, not just filed away by an institution.
+Smart is an **Intellectual Talent Network** and role-specific readiness verification platform. It unites candidates, academic institutions, and employers onto a single verified talent graph where every profile claim is backed by unfakeable evidence (projects, repositories, manager vouchers, and proctored evaluations). It assesses candidates against real competency requirements for specific job tracks — not generic employability scores — and issues criterion-referenced Gold / Silver / Bronze certificates that are cryptographically signed (HMAC-SHA256), student-controlled, and publicly verifiable. Through semantic vector matching (`pgvector`), Smart directly connects verified talent to high-fit employer opportunities.
 
 **Positioning statement**
 
-> For placement offices and students who are done trusting opaque, one-size-fits-all employability scores — Smart certifies exactly what a specific role requires, shows its work, and tracks whether it's actually predicting real hiring outcomes. Unlike legacy assessment platforms that sell scale and generality, Smart sells precision and proof.
+> For placement offices, students, and employers who are done trusting unverified resumes and opaque employability scores — Smart is an Intellectual Talent Network that certifies exactly what a specific role requires, backs every claim with unfakeable evidence, and matches verified readiness directly to hiring demand. Unlike legacy assessment platforms that sell scale and unverified generality, Smart provides precision, proof, and a living talent network.
 
 **One-liner**
-Smart tells you who's actually ready for the job — and shows its work.
+Smart is an Intellectual Talent Network that proves who is actually ready for the job — backed by unfakeable evidence and cryptographic proof.
 
 ---
 

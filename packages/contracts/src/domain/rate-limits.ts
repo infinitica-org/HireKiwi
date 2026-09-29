@@ -523,6 +523,17 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     rationale: 'Agenda-to-paper LLM generation; per-candidate cap so regen cannot blow cost.',
   },
   {
+    key: 'company.team.invite',
+    scope: 'USER',
+    limit: 20,
+    windowSeconds: 3600,
+    burst: 5,
+    redisKey: 'rl:company:team:invite:user:{id}',
+    rationale:
+      'S6-VV-155 (#609): recruiter invites send email; a per-owner hourly cap stops a compromised or scripted account from spamming.',
+    onViolation: 'ALERT',
+  },
+  {
     key: 'company.onboarding.start',
     scope: 'IP',
     limit: 10,
@@ -614,6 +625,25 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     redisKey: 'rl:employer:search:user:{id}',
     rationale: 'I403 — caps candidate search frequency to prevent automated bulk harvesting.',
     onViolation: 'ALERT',
+  },
+  {
+    key: 'partnership.activate.read',
+    scope: 'IP',
+    limit: 30,
+    windowSeconds: 60,
+    burst: 10,
+    redisKey: 'rl:partnership:read:{id}',
+    rationale: 'Public lookup of activation token details before setup.',
+  },
+  {
+    key: 'partnership.activate.submit',
+    scope: 'IP',
+    limit: 5,
+    windowSeconds: 60,
+    burst: 2,
+    redisKey: 'rl:partnership:activate:{id}',
+    rationale: 'Account activation, password setting and campus creation.',
+    onViolation: 'IP_CHALLENGE',
   },
 ] as const;
 

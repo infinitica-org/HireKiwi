@@ -43,9 +43,12 @@ export class TrustService {
     status?: TrustCaseStatus;
     severity?: TrustCaseSeverity;
     candidateId?: string;
+    /** S6-VV-153: an institution admin sees only its own students' cases; null = platform-wide. */
+    institutionId?: string | null;
   }) {
     return this.prisma.trustCase.findMany({
       where: {
+        ...(filter.institutionId ? { candidate: { institutionId: filter.institutionId } } : {}),
         ...(filter.status ? { status: filter.status } : {}),
         ...(filter.severity ? { severity: filter.severity } : {}),
         ...(filter.candidateId ? { candidateId: filter.candidateId } : {}),
@@ -109,9 +112,10 @@ export class TrustService {
     return trustCase;
   }
 
-  async getCaseDetail(caseId: string) {
-    const trustCase = await this.prisma.trustCase.findUnique({
-      where: { id: caseId },
+  async getCaseDetail(caseId: string, institutionId: string | null = null) {
+    // Another institution's case is indistinguishable from a missing one (S6-VV-153).
+    const trustCase = await this.prisma.trustCase.findFirst({
+      where: { id: caseId, ...(institutionId ? { candidate: { institutionId } } : {}) },
       include: {
         candidate: {
           select: {
@@ -561,9 +565,15 @@ export class TrustService {
     return report;
   }
 
-  async listReports(filter: { status?: TrustReportStatus; category?: TrustReportCategory }) {
+  async listReports(filter: {
+    status?: TrustReportStatus;
+    category?: TrustReportCategory;
+    /** S6-VV-153: reports about the institution's own students only; null = platform-wide. */
+    institutionId?: string | null;
+  }) {
     return this.prisma.trustReport.findMany({
       where: {
+        ...(filter.institutionId ? { targetUser: { institutionId: filter.institutionId } } : {}),
         ...(filter.status ? { status: filter.status } : {}),
         ...(filter.category ? { category: filter.category } : {}),
       },

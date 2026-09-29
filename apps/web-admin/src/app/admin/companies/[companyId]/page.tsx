@@ -22,6 +22,7 @@ import {
 } from '@/components/admin-ui';
 import { api } from '@/lib/api';
 import { formatRecordActors } from '@/lib/record-actors';
+import { CompanyTeamCard } from './team-card';
 
 export default function CompanyDetailPage() {
   const params = useParams<{ companyId: string }>();
@@ -198,6 +199,7 @@ export default function CompanyDetailPage() {
           </div>
         </CardContent>
       </Card>
+      <CompanyTeamCard companyId={companyId} />
     </PageStack>
   );
 }

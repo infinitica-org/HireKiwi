@@ -62,24 +62,34 @@ export function StaffTable({
     }
   }
 
+  function reasonOrError(): string | null {
+    if (reason.trim().length < 8) {
+      onError('Enter a reason of at least 8 characters before changing a staff member.');
+      return null;
+    }
+    return reason.trim();
+  }
+
   function changeRole(member: InstitutionAdminDto, role: InstitutionStaffRole) {
     const label = ROLE_LABELS[role];
+    const why = reasonOrError();
+    if (!why) return;
     if (!window.confirm(`Make ${member.fullName} ${label}? They will be signed out everywhere.`)) {
       return;
     }
     void run(
       member.userId,
-      () => api.onboarding.assignUserRole(member.userId, { role }),
+      () => api.onboarding.assignUserRole(member.userId, { role, reason: why }),
       `${member.fullName} is now ${label}.`,
-    );
+    ).then((ok) => {
+      if (ok) setReason('');
+    });
   }
 
   function toggleHold(member: InstitutionAdminDto) {
-    if (reason.trim().length < 8) {
-      onError('Enter a reason of at least 8 characters to hold or release a staff member.');
-      return;
-    }
-    const body = { reason: reason.trim() };
+    const why = reasonOrError();
+    if (!why) return;
+    const body = { reason: why };
     void run(
       member.userId,
       () =>
@@ -96,7 +106,7 @@ export function StaffTable({
 
   return (
     <div className="space-y-3">
-      <Field label="Reason for hold / release (required, 8+ characters)">
+      <Field label="Reason for a role change, hold or release (required, 8+ characters, audited)">
         <AdminInput
           value={reason}
           onChange={(e) => setReason(e.target.value)}

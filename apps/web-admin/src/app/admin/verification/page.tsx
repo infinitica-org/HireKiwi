@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type {
+  CompanyDuplicateSignal,
   CompanyVerificationReviewDetailDto,
   IntegrityQueueItemDto,
   VerificationQueueItemDto,
@@ -34,6 +35,12 @@ import {
   TableRow,
 } from '@/components/admin-ui';
 import { api } from '@/lib/api';
+
+const DUPLICATE_SIGNAL_LABELS: Record<CompanyDuplicateSignal['kind'], string> = {
+  NAME_MATCH: 'Same name as',
+  DOMAIN_ROOT_MATCH: 'Same website brand as',
+  PLACEMENT_EMPLOYER_MATCH: 'Listed by a TPO as',
+};
 
 function formatApiError(error: unknown, fallback: string): string {
   if (isSmartApiError(error) && error.details.length > 0) {
@@ -773,6 +780,37 @@ export default function VerificationPage() {
                       works there; a parent-company domain can be legitimate.
                     </span>
                   </p>
+                ) : null}
+                {companyDetail.duplicateSignals.length > 0 ? (
+                  <div className="flex items-start gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <div>
+                      <p>
+                        Possible duplicate. Check that this isn&apos;t a company that already has an
+                        account before approving:
+                      </p>
+                      <ul className="mt-1 list-disc pl-4">
+                        {companyDetail.duplicateSignals.map((signal) => (
+                          <li
+                            key={`${signal.kind}:${signal.matchedCompanyId ?? signal.matchedName}`}
+                          >
+                            {DUPLICATE_SIGNAL_LABELS[signal.kind]}:{' '}
+                            {signal.matchedCompanyId ? (
+                              <a
+                                className="font-medium underline"
+                                href={`/admin/companies/${signal.matchedCompanyId}`}
+                              >
+                                {signal.matchedName}
+                              </a>
+                            ) : (
+                              <span className="font-medium">{signal.matchedName}</span>
+                            )}
+                            {signal.matchedStatus ? ` (${signal.matchedStatus.toLowerCase()})` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
                 ) : null}
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Business Reg Number:</span>

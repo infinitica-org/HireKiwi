@@ -206,10 +206,10 @@ describe('DataRequestsCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit request' }));
 
     await waitFor(() =>
-      expect(users.createDataRequest).toHaveBeenCalledWith({
-        type: 'CORRECTION',
-        details: 'Fix my graduation year.',
-      }),
+      expect(users.createDataRequest).toHaveBeenCalledWith(
+        { type: 'CORRECTION', details: 'Fix my graduation year.' },
+        expect.any(String),
+      ),
     );
     expect(await screen.findByText('Request submitted.')).toBeTruthy();
     expect(await screen.findByText('OPEN')).toBeTruthy();
@@ -235,6 +235,7 @@ describe('DataRequestsCard', () => {
       bundleUrl: 'https://signed/bundle.json',
       files: [{ objectKey: 'evidence/u/cv.pdf', url: 'https://signed/cv.pdf' }],
       linksExpireInSeconds: 900,
+      password: 'ab12-cd34-ef56-0789-abcd-ef01',
     });
     renderWithClient(<DataRequestsCard />);
 
@@ -244,7 +245,10 @@ describe('DataRequestsCard', () => {
     expect(screen.queryByLabelText('Details')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Submit request' }));
     await waitFor(() =>
-      expect(users.createDataRequest).toHaveBeenCalledWith({ type: 'EXPORT', details: '' }),
+      expect(users.createDataRequest).toHaveBeenCalledWith(
+        { type: 'EXPORT', details: '' },
+        expect.any(String),
+      ),
     );
 
     fireEvent.click(await screen.findByRole('button', { name: 'Download' }));
@@ -252,6 +256,8 @@ describe('DataRequestsCard', () => {
       expect(open).toHaveBeenCalledWith('https://signed/bundle.json', '_blank', 'noopener'),
     );
     expect(await screen.findByRole('link', { name: 'cv.pdf' })).toBeTruthy();
+    // S6-VV-152: the ZIP password is shown only after the authenticated download call.
+    expect(screen.getByText('ab12-cd34-ef56-0789-abcd-ef01')).toBeTruthy();
   });
 });
 

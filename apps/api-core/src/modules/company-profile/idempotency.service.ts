@@ -11,6 +11,17 @@ export interface IdempotentOutcome<T> {
 
 const MAX_KEY_LENGTH = 200;
 
+/** Ledger body written by `once()`: a reservation while running, then the stored response. */
+type OnceBody<T> = { state: 'pending' } | { state: 'done'; result: T };
+
+function keyReused(): ConflictException {
+  return new ConflictException({
+    error: 'idempotency_key_reused',
+    message: 'This Idempotency-Key was already used with a different request.',
+    statusCode: 409,
+  });
+}
+
 /**
  * Idempotency-Key ledger for employer mutations. The first request with a key runs and stores its
  * response in the same transaction as the write; a retry with the same key replays that response
@@ -49,14 +60,66 @@ export class IdempotencyService {
       where: { userId_scope_key: { userId: params.userId, scope: params.scope, key: params.key } },
     });
     if (!existing) return undefined;
-    if (existing.requestHash !== this.hashRequest(params.request)) {
+    if (existing.requestHash !== this.hashRequest(params.request)) throw keyReused();
+    return existing.responseBody as T;
+  }
+
+  /**
+   * S6-VV-124 (#584): an *optional* Idempotency-Key for creates that send email or run long work
+   * outside one transaction (DSR create, batch invites, assessment completion). Without a header
+   * the request just runs. With one, the key is reserved before the work starts, so a double
+   * submit that arrives while the first is running gets 409 `request_in_progress` instead of
+   * running twice, and one that arrives after gets the first response replayed. If the work
+   * fails, the reservation is released so the user can retry with the same key.
+   */
+  async once<T>(params: {
+    userId: string;
+    scope: string;
+    key: string | undefined;
+    request: unknown;
+    execute: () => Promise<T>;
+  }): Promise<T> {
+    if (params.key === undefined || params.key.trim() === '') return params.execute();
+    const identity = {
+      userId: params.userId,
+      scope: params.scope,
+      key: IdempotencyService.requireKey(params.key),
+    };
+    const requestHash = this.hashRequest(params.request);
+    const pending: OnceBody<T> = { state: 'pending' };
+
+    try {
+      await this.prisma.idempotencyRecord.create({
+        data: { ...identity, requestHash, responseBody: pending as Prisma.InputJsonValue },
+      });
+    } catch (error) {
+      if ((error as { code?: string }).code !== 'P2002') throw error;
+      const existing = await this.prisma.idempotencyRecord.findUnique({
+        where: { userId_scope_key: identity },
+      });
+      if (existing && existing.requestHash !== requestHash) throw keyReused();
+      const body = existing?.responseBody as OnceBody<T> | null | undefined;
+      if (body?.state === 'done') return body.result;
       throw new ConflictException({
-        error: 'idempotency_key_reused',
-        message: 'This Idempotency-Key was already used with a different request.',
+        error: 'request_in_progress',
+        message: 'This request is already being processed. Wait a moment, then refresh.',
         statusCode: 409,
       });
     }
-    return existing.responseBody as T;
+
+    let result: T;
+    try {
+      result = await params.execute();
+    } catch (error) {
+      await this.prisma.idempotencyRecord.deleteMany({ where: identity });
+      throw error;
+    }
+    const done: OnceBody<T> = { state: 'done', result };
+    await this.prisma.idempotencyRecord.update({
+      where: { userId_scope_key: identity },
+      data: { responseBody: done as unknown as Prisma.InputJsonValue },
+    });
+    return result;
   }
 
   /** Records a response for flows that cannot run inside one transaction (e.g. invite + email). */
@@ -97,13 +160,7 @@ export class IdempotencyService {
         where: { userId_scope_key: identity },
       });
       if (!existing) return undefined;
-      if (existing.requestHash !== requestHash) {
-        throw new ConflictException({
-          error: 'idempotency_key_reused',
-          message: 'This Idempotency-Key was already used with a different request.',
-          statusCode: 409,
-        });
-      }
+      if (existing.requestHash !== requestHash) throw keyReused();
       return existing.responseBody as T;
     };
 

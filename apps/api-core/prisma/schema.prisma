@@ -893,6 +893,9 @@ model Certificate {
   highestLevelCleared Int               @map("highest_level_cleared")
   headlineTier        CertifiableTier   @map("headline_tier")
   tierTrail           Json              @map("tier_trail")
+  signature           String?           @map("signature")
+  qrCodeKey           String?           @map("qr_code_key")
+  pdfKey              String?           @map("pdf_key")
   status              CertificateStatus @default(PENDING_ISSUE)
   isPublic            Boolean           @default(false) @map("is_public")
   verificationSlug    String            @unique @map("verification_slug")
@@ -1300,6 +1303,8 @@ model CompanyVerification {
   businessRegistrationNumber String?                   @map("business_registration_number")
   taxId                      String?                   @map("tax_id")
   registrationAuthority      String?                   @map("registration_authority")
+  /// S6-VV-110: near-duplicate companies found at submit (CompanyDuplicateSignal[]), for the reviewer.
+  duplicateSignals           Json?                     @map("duplicate_signals")
   submittedAt                DateTime?                 @map("submitted_at") @db.Timestamptz(6)
   reviewedAt                 DateTime?                 @map("reviewed_at") @db.Timestamptz(6)
   reviewedById               String?                   @map("reviewed_by_id") @db.Uuid

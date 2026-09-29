@@ -287,7 +287,11 @@ export const InviteUserRequestSchema = z.object({
 });
 export type InviteUserRequest = z.infer<typeof InviteUserRequestSchema>;
 
-export const StaffRoleSchema = z.enum(['PLACEMENT_STAFF', 'INSTITUTION_ADMIN']);
+export const StaffRoleSchema = z.enum([
+  'PLACEMENT_STAFF',
+  'INSTITUTION_ADMIN',
+  'DEPARTMENTAL_ADVISOR',
+]);
 export type StaffRole = z.infer<typeof StaffRoleSchema>;
 
 export const InviteStaffRequestSchema = z.object({
@@ -296,6 +300,7 @@ export const InviteStaffRequestSchema = z.object({
   email: EmailSchema,
   role: StaffRoleSchema.default('PLACEMENT_STAFF'),
   department: z.string().trim().max(200).optional().nullable(),
+  campusId: UuidSchema.optional().nullable(),
 });
 export type InviteStaffRequest = z.infer<typeof InviteStaffRequestSchema>;
 
@@ -306,6 +311,7 @@ export type UpdateStaffRoleRequest = z.infer<typeof UpdateStaffRoleRequestSchema
 
 export const UpdateStaffCampusRequestSchema = z.object({
   campus: z.string().trim().max(200).nullable().optional(),
+  campusId: UuidSchema.nullable().optional(),
 });
 export type UpdateStaffCampusRequest = z.infer<typeof UpdateStaffCampusRequestSchema>;
 
@@ -315,6 +321,8 @@ export const StaffMemberDtoSchema = z.object({
   fullName: z.string(),
   role: StaffRoleSchema,
   groupLabel: z.string().nullable(),
+  campusId: UuidSchema.nullable().optional(),
+  campusName: z.string().nullable().optional(),
   inviteStatus: InvitationStatusSchema.nullable(),
   lastSentAt: IsoDateTimeSchema.nullable(),
   acceptedAt: IsoDateTimeSchema.nullable(),
@@ -538,6 +546,37 @@ export const SendBatchInvitesResultDtoSchema = z.object({
   enqueued: z.number().int().nonnegative(),
 });
 export type SendBatchInvitesResultDto = z.infer<typeof SendBatchInvitesResultDtoSchema>;
+
+/* ------------------- bulk whitelist import (Th6-I606) ------------------- */
+
+export const BulkWhitelistUploadRequestSchema = z.object({
+  batchId: UuidSchema,
+  mapping: BatchImportMappingSchema.optional(),
+});
+export type BulkWhitelistUploadRequest = z.infer<typeof BulkWhitelistUploadRequestSchema>;
+
+export const BulkWhitelistJobStatusSchema = z.enum(['QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED']);
+export type BulkWhitelistJobStatus = z.infer<typeof BulkWhitelistJobStatusSchema>;
+
+export const BulkWhitelistProgressDtoSchema = z.object({
+  jobId: UuidSchema,
+  status: BulkWhitelistJobStatusSchema,
+  totalRows: z.number().int().nonnegative(),
+  processedRows: z.number().int().nonnegative(),
+  validRows: z.number().int().nonnegative(),
+  invalidRows: z.number().int().nonnegative(),
+  importedRows: z.number().int().nonnegative(),
+  errorReportUrl: z.string().nullable(),
+  createdAt: IsoDateTimeSchema,
+  updatedAt: IsoDateTimeSchema,
+});
+export type BulkWhitelistProgressDto = z.infer<typeof BulkWhitelistProgressDtoSchema>;
+
+export const BulkWhitelistErrorResponseSchema = z.object({
+  jobId: UuidSchema,
+  message: z.string(),
+});
+export type BulkWhitelistErrorResponse = z.infer<typeof BulkWhitelistErrorResponseSchema>;
 
 export const AuditLogDtoSchema = z.object({
   auditLogId: UuidSchema,
@@ -840,6 +879,19 @@ export type CompanyVerificationReviewDocumentDto = z.infer<
   typeof CompanyVerificationReviewDocumentDtoSchema
 >;
 
+/**
+ * S6-VV-110 (#347): a near-duplicate found when the company registered. Shown to the reviewer as a
+ * warning; the registration was not blocked. `matchedCompanyId` is null for a placement-employer
+ * record (a TPO's list entry, not an account).
+ */
+export const CompanyDuplicateSignalSchema = z.object({
+  kind: z.enum(['NAME_MATCH', 'DOMAIN_ROOT_MATCH', 'PLACEMENT_EMPLOYER_MATCH']),
+  matchedCompanyId: UuidSchema.nullable(),
+  matchedName: z.string(),
+  matchedStatus: TenantVerificationStatusSchema.nullable(),
+});
+export type CompanyDuplicateSignal = z.infer<typeof CompanyDuplicateSignalSchema>;
+
 export const CompanyVerificationReviewDetailDtoSchema = z.object({
   tenantType: z.literal('company'),
   tenantId: UuidSchema,
@@ -855,6 +907,7 @@ export const CompanyVerificationReviewDetailDtoSchema = z.object({
    * `null` when either side is missing.
    */
   representativeEmailMatchesWebsite: z.boolean().nullable().optional(),
+  duplicateSignals: z.array(CompanyDuplicateSignalSchema).default([]),
   registrationCountry: z.string().trim().length(2).optional(),
   legalName: z.string(),
   submittedAt: IsoDateTimeSchema,

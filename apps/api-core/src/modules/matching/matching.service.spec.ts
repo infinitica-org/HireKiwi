@@ -682,5 +682,37 @@ describe('S6-VV-148 employer visibility', () => {
       expect(sqlText).toContain("ILIKE '%immediate%'");
       expect(sqlText).toContain('projects p_def');
     });
+
+    it('Th6-I611: returns candidates with similarityScore and radar competency breakdown', async () => {
+      const { service, prisma } = setup();
+      prisma.$queryRaw.mockResolvedValueOnce([
+        {
+          id: studentId,
+          fullName: 'Alice Developer',
+          primaryTrackCode: 'TECH_FULLSTACK',
+          certificateId: 'cert-1',
+          highestLevelCleared: 3,
+          headlineTier: 'GOLD',
+          skills: [
+            {
+              code: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
+              domain: 'SOFTWARE_IT',
+              proficiency: 'PROFESSIONAL',
+            },
+          ],
+        },
+      ]);
+
+      const candidates = await service.searchStudents(
+        { sub: actorId, role: 'COMPANY', inst: undefined } as never,
+        { q: 'developer' },
+      );
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]?.studentId).toBe(studentId);
+      expect(candidates[0]?.similarityScore).toBeGreaterThan(0);
+      expect(candidates[0]?.method).toBe('HYBRID');
+      expect(candidates[0]?.explanation.verifiedSkills).toBeDefined();
+    });
   });
 });

@@ -20,6 +20,10 @@ import {
   resolveSeedTpoFullName,
   seedAccountEmails,
 } from '../src/platform/prisma/seed-accounts.js';
+import {
+  seedTieredSkills,
+  TIERED_SKILL_CATALOG,
+} from '../src/platform/prisma/seed-tiered-skills.js';
 
 const DATA_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -160,14 +164,15 @@ async function main(): Promise<void> {
     }
   }
 
+  const allValidSkillCodes = [...SKILL_CODES, ...TIERED_SKILL_CATALOG.map((s) => s.code)];
   await prisma.skillClaim.deleteMany({
-    where: { skill: { code: { notIn: [...SKILL_CODES] } } },
+    where: { skill: { code: { notIn: allValidSkillCodes } } },
   });
   await prisma.jobOpeningSkill.deleteMany({
-    where: { skill: { code: { notIn: [...SKILL_CODES] } } },
+    where: { skill: { code: { notIn: allValidSkillCodes } } },
   });
   await prisma.skill.deleteMany({
-    where: { code: { notIn: [...SKILL_CODES] } },
+    where: { code: { notIn: allValidSkillCodes } },
   });
   for (const skill of SKILL_DEFINITIONS) {
     await prisma.skill.upsert({
@@ -176,6 +181,7 @@ async function main(): Promise<void> {
       create: { code: skill.code, name: skill.name, domain: skill.domain, active: true },
     });
   }
+  await seedTieredSkills(prisma);
 
   const seedDomain = resolveSeedEmailDomain();
   const seedPassword = resolveSeedPassword();
