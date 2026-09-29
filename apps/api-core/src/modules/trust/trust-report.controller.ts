@@ -7,6 +7,7 @@ import {
 } from '@smart/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Public } from '../../common/guards/public.decorator.js';
+import { TenantScope } from '../../common/decorators/tenant-id.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { TrustService } from './trust.service.js';
@@ -32,10 +33,11 @@ export class TrustReportController {
   @Roles('SUPER_ADMIN', 'INSTITUTION_ADMIN')
   @ApiOperation({ summary: 'List abuse reports in the moderation queue.' })
   listReports(
+    @TenantScope() institutionId: string | null,
     @Query('status') status?: TrustReportStatus,
     @Query('category') category?: TrustReportCategory,
   ) {
-    return this.service.listReports({ status, category });
+    return this.service.listReports({ status, category, institutionId });
   }
 
   @Post('admin/trust/reports/:reportId/resolve')
