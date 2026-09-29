@@ -122,6 +122,15 @@ describe('l1-mcq helpers', () => {
     expect(new Date(props.serverNow).getTime()).toBe(
       new Date('2026-09-02T11:00:00.000Z').getTime() - 1800 * 1000,
     );
+
+    const explicitProps = timerPropsFromSession(
+      session({
+        expires_at: '2026-09-02T11:00:00.000Z',
+        serverNow: '2026-09-02T10:30:00.000Z',
+      }),
+    );
+    expect(explicitProps.serverNow).toBe('2026-09-02T10:30:00.000Z');
+    expect(explicitProps.duration).toBe(3600);
   });
 
   it('locks when the server reports locked, expired, or a non-progress status', () => {

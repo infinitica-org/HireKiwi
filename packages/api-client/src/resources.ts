@@ -1856,10 +1856,11 @@ export function certificateApi(client: SmartApiClient) {
      * without an account — so it must never send an Authorization header that
      * would make it look like an authenticated request in the logs.
      */
-    verify: (certificateId: string) =>
+    verify: (certificateId: string, sig?: string) =>
       client.get(prefixed(`/verify/${certificateId}`), {
         schema: PublicVerificationDtoSchema,
         anonymous: true,
+        query: sig ? { sig } : undefined,
       }),
   };
 }
