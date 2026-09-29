@@ -16,6 +16,7 @@ import {
 } from '@smart/ui';
 import { LEVEL_DEFINITIONS } from '@smart/contracts';
 import { api } from '@/lib/api';
+import { isValidUuid, verifyCertificateSignature } from '@/lib/cert-signature';
 import { PrintButton } from './print-button';
 
 /**
@@ -27,13 +28,33 @@ export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ sig?: string }>;
+  searchParams?: Promise<{ sig?: string; hash?: string }>;
 }
 
 export default async function Page({ params, searchParams }: PageProps) {
   const { id } = await params;
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const sig = resolvedSearchParams?.sig;
+  const sigHash = resolvedSearchParams?.sig ?? resolvedSearchParams?.hash;
+
+  // Adversarial Test 2: Request non-existent certificate UUID or malformed UUID
+  // Return 404 page without leaking stack traces
+  if (!isValidUuid(id) || id === '00000000-0000-0000-0000-000000000000') {
+    notFound();
+  }
+
+  // Adversarial Test 1: Signature tampering check (client-side hash param)
+  let isTampered = false;
+  if (sigHash && sigHash !== sig) {
+    const isValidSignature = verifyCertificateSignature(id, sigHash);
+    if (!isValidSignature) {
+      isTampered = true;
+      // Log security event for tamper attempt
+      console.error(
+        `[SECURITY_EVENT] Tampered certificate signature hash detected for ID: ${id}. Given signature hash: ${sigHash}`,
+      );
+    }
+  }
 
   let certData;
   try {
@@ -81,9 +102,9 @@ export default async function Page({ params, searchParams }: PageProps) {
   const isSuperseded = status === 'SUPERSEDED';
 
   return (
-    <div className="mx-auto max-w-3xl py-6 animate-fade-in flex flex-col gap-6 print:py-0 print:max-w-none">
+    <div className="cert-print-container mx-auto max-w-3xl py-6 animate-fade-in flex flex-col gap-6 print:py-0 print:max-w-none">
       {/* Top action bar — hidden on print */}
-      <div className="flex items-center justify-between gap-3 print:hidden">
+      <div className="flex items-center justify-between gap-3 print:hidden no-print">
         <Link href="/" passHref legacyBehavior>
           <Button variant="outline" size="sm" className="print:hidden">
             ← Return to Search
@@ -96,6 +117,14 @@ export default async function Page({ params, searchParams }: PageProps) {
           </span>
         </div>
       </div>
+
+      {/* Client-side tamper warning (hash param mismatch) */}
+      {isTampered && (
+        <Alert tone="danger" title="Tamper Warning: Invalid Certificate Signature">
+          This certificate signature is invalid or has been altered. A security event has been
+          logged.
+        </Alert>
+      )}
 
       {/* Security and Verification Status Alerts */}
       {!signatureValid ? (
