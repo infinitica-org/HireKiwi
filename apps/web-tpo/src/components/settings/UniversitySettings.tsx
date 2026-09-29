@@ -2,25 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import {
-  Building2,
-  CheckCircle2,
-  Cpu,
-  Globe,
-  Lock,
-  Plus,
-  Settings,
-  Shield,
-  Trash2,
-  Users,
-  Briefcase,
-  Sparkles,
-} from 'lucide-react';
+import { CheckCircle2, Globe, Lock, Plus, Trash2 } from 'lucide-react';
 import { isSmartApiError } from '@smart/api-client';
 import type { PlacementEmployerSummary, TenantEntitlementsDto } from '@smart/contracts';
 import { StaffManagementWorkspace } from '../staff/StaffManagementWorkspace';
 import { CampusesSection } from './CampusesSection';
-import { TpoBentoPageHeader } from '../tpo-bento/TpoBentoPageHeader';
+
 import { api, employersApi } from '../../lib/api';
 import { normalizeEmailDomain } from '../../lib/domain-validation';
 import {
@@ -32,26 +19,7 @@ import {
   saveAutoApproveInvites,
   saveExtraEmailDomains,
 } from '../../lib/tpo-institution-settings';
-import {
-  bentoCardClass,
-  bentoCardMutedClass,
-  bentoChipClass,
-  bentoPageStackClass,
-  bentoTableBodyRowClass,
-  bentoTableCellClass,
-  bentoTableClass,
-  bentoTableHeadCellClass,
-  bentoTableHeadRowClass,
-  bentoTableShellClass,
-  dashboardErrorNoticeClass,
-  dashboardMintBadgeClass,
-  dashboardPendingBadgeClass,
-  dashboardPrimaryButtonClass,
-  dashboardSectionSubtitleClass,
-  dashboardSectionTitleClass,
-  dashboardSuccessNoticeClass,
-} from '../../lib/tpo-dashboard-ui';
-import { inputClass, labelClass, secondaryButtonClass } from '../../lib/tpo-ui';
+import { dashboardErrorNoticeClass, dashboardSuccessNoticeClass } from '../../lib/tpo-dashboard-ui';
 
 type SettingsTab = 'all' | 'staff' | 'domains' | 'campuses' | 'employers' | 'plan';
 
@@ -96,7 +64,7 @@ export function UniversitySettings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<SettingsTab>('all');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('staff');
 
   const primaryDomain = entitlements?.domain ?? null;
 
@@ -196,7 +164,6 @@ export function UniversitySettings() {
   const verificationStatus = entitlements?.verificationStatus ?? 'APPROVED';
   const studentCount = entitlements?.candidateUsage ?? 0;
   const capacity = entitlements?.candidateCapacity;
-  const tier = entitlements?.planCode;
 
   const showStaff = activeTab === 'all' || activeTab === 'staff';
   const showDomains = activeTab === 'all' || activeTab === 'domains';
@@ -205,85 +172,21 @@ export function UniversitySettings() {
   const showPlan = activeTab === 'all' || activeTab === 'plan';
 
   return (
-    <div className={bentoPageStackClass}>
-      <TpoBentoPageHeader
-        compact
-        title="Settings"
-        description="Manage verified email domains, campus cohorts, employer approvals, staff access, and plan entitlements."
-        icon={Settings}
-        accent="amber"
-        badge={<span className={bentoChipClass}>Institution Console</span>}
-      />
-
-      {/* Overview Snapshot Bar */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className={`${bentoCardClass} !p-4 flex items-center gap-3.5`}>
-          <div className="flex size-10 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 shrink-0">
-            <Building2 className="size-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-              Institution
-            </p>
-            <p className="truncate text-sm font-bold text-zinc-900">
-              {entitlements?.institutionName ?? 'Institution Account'}
-            </p>
-          </div>
-        </div>
-
-        <div className={`${bentoCardClass} !p-4 flex items-center gap-3.5`}>
-          <div className="flex size-10 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 shrink-0">
-            <CheckCircle2 className="size-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-              Verification
-            </p>
-            <p className="truncate text-sm font-bold text-zinc-900">
-              {verificationStatus === 'APPROVED'
-                ? 'Verified Account'
-                : verificationStatus === 'PENDING'
-                  ? 'Pending Review'
-                  : verificationStatus}
-            </p>
-          </div>
-        </div>
-
-        <div className={`${bentoCardClass} !p-4 flex items-center gap-3.5`}>
-          <div className="flex size-10 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 shrink-0">
-            <Users className="size-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-              Students Enrolled
-            </p>
-            <p className="truncate text-sm font-bold text-zinc-900">
-              {studentCount.toLocaleString('en-US')}
-              {capacity ? (
-                <span className="text-xs font-normal text-zinc-500"> / {capacity}</span>
-              ) : (
-                <span className="text-xs font-normal text-zinc-500"> / Unlimited</span>
-              )}
-            </p>
-          </div>
-        </div>
-
-        <div className={`${bentoCardClass} !p-4 flex items-center gap-3.5`}>
-          <div className="flex size-10 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 shrink-0">
-            <Cpu className="size-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-              Plan Code
-            </p>
-            <p className="truncate text-sm font-bold text-zinc-900">{tier ?? 'INSTITUTION_PRO'}</p>
-          </div>
+    <div className="space-y-6 pb-12 pt-6">
+      {/* Clean Page Title & Header */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between px-1">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">Settings</h1>
+          <p className="mt-1 text-xs sm:text-sm font-medium text-zinc-500">
+            Manage verified email domains, campus cohorts, employer approvals, staff access, and
+            plan entitlements.
+          </p>
         </div>
       </div>
 
-      {/* Navigation Filter Tabs */}
-      <div className="flex items-center justify-between border-b border-zinc-200/80 pb-3 pt-1">
-        <div className="flex flex-wrap gap-1 rounded-md border border-zinc-200/80 bg-zinc-100 p-1">
+      {/* Navigation Filter Tabs - Matching Workspace Section Nav */}
+      <nav aria-label="Settings sections" className="mt-2 mb-4">
+        <ul className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200/90 p-1 shadow-2xs overflow-x-auto max-w-full">
           {[
             { id: 'all', label: 'All Settings' },
             { id: 'staff', label: 'Staff & Access' },
@@ -291,22 +194,26 @@ export function UniversitySettings() {
             { id: 'campuses', label: `Campuses (${campusCount})` },
             { id: 'employers', label: `Employer Queue (${employerQueue.length})` },
             { id: 'plan', label: 'Plan & Profile' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id as SettingsTab)}
-              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
-                activeTab === tab.id
-                  ? 'bg-black text-white shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+          ].map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <li key={tab.id} className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as SettingsTab)}
+                  className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-xs sm:text-sm transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950 ${
+                    active
+                      ? 'bg-black font-bold text-white shadow-2xs'
+                      : 'font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-white/60'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
 
       {error ? <div className={dashboardErrorNoticeClass}>{error}</div> : null}
       {notice ? <div className={dashboardSuccessNoticeClass}>{notice}</div> : null}
@@ -320,32 +227,28 @@ export function UniversitySettings() {
 
       {/* Section: Email Domains */}
       {showDomains ? (
-        <section id="settings-domains" className={bentoCardClass}>
-          <div className="flex items-center gap-2">
-            <Globe className="size-4 text-zinc-700" />
-            <h2 className={dashboardSectionTitleClass}>Verified student email domains</h2>
+        <section
+          id="settings-domains"
+          className="rounded-xl border border-zinc-200/90 bg-white p-6 shadow-2xs space-y-5"
+        >
+          <div>
+            <h2 className="text-base font-bold text-zinc-950">Verified Student Email Domains</h2>
+            <p className="mt-0.5 text-xs text-zinc-500 font-medium">
+              Only students with email addresses from these verified domains can be whitelisted and
+              provisioned into your institution cohorts.
+            </p>
           </div>
-          <p className={`mt-1 ${dashboardSectionSubtitleClass}`}>
-            Only students with email addresses from these verified domains can be whitelisted and
-            provisioned into your institution cohorts.
-          </p>
 
-          <div className="mt-5 space-y-3">
-            <div
-              className={`${bentoCardMutedClass} flex flex-wrap items-center justify-between gap-3 !p-3.5`}
-            >
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200/80 bg-zinc-50/60 p-3.5">
               <div className="flex items-center gap-2.5">
-                <div className="flex size-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-900">
-                  <Lock className="size-3.5" />
-                </div>
-                <div>
-                  <span className="font-mono text-sm font-semibold text-zinc-900">
-                    @{primaryDomain ?? '…'}
-                  </span>
-                  <span className="ml-2 text-xs text-zinc-500">Primary domain</span>
-                </div>
+                <Lock className="size-4 text-zinc-600 shrink-0" />
+                <span className="font-mono text-sm font-semibold text-zinc-900">
+                  @{primaryDomain ?? '…'}
+                </span>
+                <span className="text-xs text-zinc-500 font-medium">Primary domain</span>
               </div>
-              <span className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-zinc-900">
+              <span className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
                 SMART Verified
               </span>
             </div>
@@ -353,18 +256,16 @@ export function UniversitySettings() {
             {extraDomains.map((domain) => (
               <div
                 key={domain}
-                className={`${bentoCardMutedClass} flex flex-wrap items-center justify-between gap-3 !p-3.5`}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200/80 bg-white p-3.5"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="flex size-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-900">
-                    <Globe className="size-3.5" />
-                  </div>
+                  <Globe className="size-4 text-zinc-600 shrink-0" />
                   <span className="font-mono text-sm font-semibold text-zinc-900">@{domain}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleRemoveExtra(domain)}
-                  className={`${secondaryButtonClass} !py-1.5 !text-xs text-zinc-900 hover:bg-zinc-100`}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-50"
                 >
                   <Trash2 className="size-3.5" aria-hidden />
                   Remove
@@ -373,9 +274,9 @@ export function UniversitySettings() {
             ))}
           </div>
 
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-end pt-1">
             <div className="flex-1">
-              <label className={labelClass} htmlFor="extra-domain">
+              <label className="text-xs font-semibold text-zinc-700" htmlFor="extra-domain">
                 Add another verified domain
               </label>
               <input
@@ -384,23 +285,27 @@ export function UniversitySettings() {
                 value={newDomain}
                 onChange={(e) => setNewDomain(e.target.value)}
                 placeholder="e.g. north.riverdale.edu"
-                className={`${inputClass} mt-1.5`}
+                className="h-9 w-full rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900 mt-1"
               />
             </div>
-            <button type="button" onClick={handleAddDomain} className={dashboardPrimaryButtonClass}>
+            <button
+              type="button"
+              onClick={handleAddDomain}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-zinc-800"
+            >
               <Plus className="size-4" aria-hidden />
               Add domain
             </button>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-zinc-200/80 pt-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-zinc-100 pt-4">
             <div>
               <p className="text-sm font-semibold text-zinc-900">
                 Auto-approve new students from these domains
               </p>
-              <p className="mt-0.5 text-xs text-zinc-500">
+              <p className="mt-0.5 text-xs text-zinc-500 font-medium">
                 When enabled, bulk whitelist uploads will immediately queue invitation emails
-                without requiring manual individual dispatch.
+                without requiring manual dispatch.
               </p>
             </div>
             <Toggle
@@ -422,41 +327,37 @@ export function UniversitySettings() {
 
       {/* Section: Employer Approval Queue */}
       {showEmployers ? (
-        <section id="settings-employers" className={bentoCardClass}>
-          <div className="flex items-center gap-2">
-            <Briefcase className="size-4 text-zinc-700" />
-            <h2 className={dashboardSectionTitleClass}>Employer approval queue</h2>
+        <section
+          id="settings-employers"
+          className="rounded-xl border border-zinc-200/90 bg-white p-6 shadow-2xs space-y-4"
+        >
+          <div>
+            <h2 className="text-base font-bold text-zinc-950">Employer Approval Queue</h2>
+            <p className="mt-0.5 text-xs text-zinc-500 font-medium">
+              Review and approve hiring partners requesting access to post job openings and source
+              candidates from your institution.
+            </p>
           </div>
-          <p className={`mt-1 ${dashboardSectionSubtitleClass}`}>
-            Review and approve hiring partners requesting access to post job openings and source
-            candidates from your institution.
-          </p>
 
-          <div className={`${bentoTableShellClass} mt-5`}>
-            <table className={`${bentoTableClass} min-w-[640px]`}>
+          <div className="overflow-x-auto rounded-lg border border-zinc-200/80 bg-white mt-4">
+            <table className="w-full min-w-[640px] text-left text-xs font-sans">
               <thead>
-                <tr className={bentoTableHeadRowClass}>
-                  <th className={bentoTableHeadCellClass}>Employer Name</th>
-                  <th className={bentoTableHeadCellClass}>Status</th>
-                  <th className={`${bentoTableHeadCellClass} text-right`}>Actions</th>
+                <tr className="border-b border-zinc-200/80 bg-zinc-50/60 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                  <th className="px-5 py-3.5">Employer Name</th>
+                  <th className="px-5 py-3.5">Status</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-zinc-100">
                 {loading ? (
                   <tr>
-                    <td
-                      colSpan={3}
-                      className={`${bentoTableCellClass} py-8 text-center text-xs text-zinc-400`}
-                    >
+                    <td colSpan={3} className="px-5 py-8 text-center text-xs text-zinc-500">
                       Loading queue…
                     </td>
                   </tr>
                 ) : employerQueue.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={3}
-                      className={`${bentoTableCellClass} py-8 text-center text-xs text-zinc-500`}
-                    >
+                    <td colSpan={3} className="px-5 py-8 text-center text-xs text-zinc-500">
                       No pending employers waiting for approval.
                     </td>
                   </tr>
@@ -464,32 +365,39 @@ export function UniversitySettings() {
                   employerQueue.map((employer) => {
                     const verified = Boolean(employer.website?.trim());
                     return (
-                      <tr key={employer.employerId} className={bentoTableBodyRowClass}>
-                        <td className={bentoTableCellClass}>
-                          <div className="font-semibold text-zinc-900">{employer.name}</div>
+                      <tr
+                        key={employer.employerId}
+                        className="transition-colors hover:bg-zinc-50/60"
+                      >
+                        <td className="px-5 py-3.5">
+                          <div className="font-bold text-zinc-900">{employer.name}</div>
                           <div className="text-xs text-zinc-500">
                             {employer.sector ?? 'Recruiting partner'}
                           </div>
                         </td>
-                        <td className={bentoTableCellClass}>
+                        <td className="px-5 py-3.5">
                           {verified ? (
-                            <span className={dashboardMintBadgeClass}>Verified company</span>
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/90 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 shadow-2xs">
+                              Verified Company
+                            </span>
                           ) : (
-                            <span className={dashboardPendingBadgeClass}>Not yet verified</span>
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-700">
+                              Not Yet Verified
+                            </span>
                           )}
                         </td>
-                        <td className={`${bentoTableCellClass} text-right`}>
+                        <td className="px-5 py-3.5 text-right">
                           <div className="flex flex-wrap justify-end gap-2">
                             <button
                               type="button"
                               onClick={() => handleDismissEmployer(employer.employerId)}
-                              className={secondaryButtonClass}
+                              className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-50"
                             >
                               Deny
                             </button>
                             <Link
                               href={`/companies/${employer.employerId}`}
-                              className={dashboardPrimaryButtonClass}
+                              className="inline-flex items-center justify-center gap-2 rounded-md bg-black px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-zinc-800"
                             >
                               Approve
                             </Link>
@@ -508,90 +416,63 @@ export function UniversitySettings() {
       {/* Section: Plan & Institution Profile */}
       {showPlan ? (
         <section id="settings-plan" className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-zinc-700" />
-            <h2 className={dashboardSectionTitleClass}>Institution profile & plan</h2>
-          </div>
+          <div className="rounded-xl border border-zinc-200/90 bg-white p-6 shadow-2xs space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-zinc-950">Institution Profile & Plan</h2>
+              <p className="mt-0.5 text-xs text-zinc-500 font-medium">
+                Verified institutional profile details and seat capacity tier.
+              </p>
+            </div>
 
-          <div className={`${bentoCardClass} space-y-4`}>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div>
-                <label className={labelClass}>Institution Name</label>
-                <div
-                  className={`${bentoCardMutedClass} mt-1.5 flex items-center gap-2 font-semibold text-zinc-900`}
-                >
-                  <Building2 className="size-4 text-zinc-700 shrink-0" />
-                  <span className="truncate">
-                    {entitlements?.institutionName ?? 'Institution account'}
-                  </span>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 pt-2">
+              <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/50 p-4">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                  Institution Name
+                </span>
+                <div className="mt-1.5 font-bold text-zinc-900 truncate">
+                  {entitlements?.institutionName ?? 'Institution Account'}
                 </div>
               </div>
 
-              <div>
-                <label className={labelClass}>Verification Status</label>
-                <div className={`${bentoCardMutedClass} mt-1.5 font-semibold`}>
+              <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/50 p-4">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                  Verification Status
+                </span>
+                <div className="mt-1.5 font-bold">
                   {verificationStatus === 'APPROVED' ? (
-                    <span className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-zinc-900">
-                      <CheckCircle2 className="size-3.5" /> Verified Institution
-                    </span>
-                  ) : verificationStatus === 'PENDING' ? (
-                    <span className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-zinc-700">
-                      <Shield className="size-3.5" /> Pending Verification
+                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                      <CheckCircle2 className="size-3.5 text-emerald-600" /> Verified Institution
                     </span>
                   ) : (
-                    <span className={dashboardErrorNoticeClass}>{verificationStatus}</span>
+                    <span className="text-xs font-semibold text-zinc-700">
+                      {verificationStatus}
+                    </span>
                   )}
                 </div>
               </div>
 
-              <div>
-                <label className={labelClass}>Whitelisted Students</label>
-                <div
-                  className={`${bentoCardMutedClass} mt-1.5 flex items-center gap-2 font-semibold text-zinc-900`}
-                >
-                  <Users className="size-4 text-zinc-700 shrink-0" />
+              <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/50 p-4">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                  Whitelisted Students
+                </span>
+                <div className="mt-1.5 font-heading text-2xl font-bold text-zinc-950">
                   {studentCount.toLocaleString('en-US')}
                 </div>
               </div>
             </div>
 
-            <div
-              className={`${bentoCardMutedClass} flex items-start gap-2.5 text-xs text-zinc-500 !p-3.5`}
-            >
-              <Globe className="mt-0.5 size-4 shrink-0 text-zinc-400" />
-              <span>
-                Provisioning is locked to your verified domains. Contact SMART Enterprise Support to
-                change your primary institutional domain on file.
-              </span>
-            </div>
-          </div>
-
-          <div className={bentoCardClass}>
-            {loading ? (
-              <p className="text-xs text-zinc-400">Loading entitlements…</p>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className={bentoCardMutedClass}>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                    Plan Tier
-                  </span>
-                  <div className="mt-1.5 flex items-center gap-2 text-base font-bold text-zinc-900">
-                    <Cpu className="size-4 text-zinc-700" />
-                    {tier ?? 'INSTITUTION_PRO'}
-                  </div>
-                </div>
-                <div className={bentoCardMutedClass}>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                    Candidate Capacity
-                  </span>
-                  <div className="mt-1.5 text-base font-bold text-zinc-900">
-                    {capacity != null
-                      ? `${studentCount.toLocaleString()} / ${capacity.toLocaleString()} seats`
-                      : `${studentCount.toLocaleString()} seats · Unlimited`}
-                  </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pt-2">
+              <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/50 p-4">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                  Candidate Capacity
+                </span>
+                <div className="mt-1.5 font-heading text-xl font-bold text-zinc-950">
+                  {capacity != null
+                    ? `${studentCount.toLocaleString()} / ${capacity.toLocaleString()} seats`
+                    : `${studentCount.toLocaleString()} seats · Unlimited`}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </section>
       ) : null}

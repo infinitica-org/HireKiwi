@@ -21,23 +21,24 @@ afterEach(() => {
 
 describe('TpoTopbar', () => {
   it('has breadcrumb navigation and profile menu', () => {
-    render(<TpoTopbar onOpenMobileNav={vi.fn()} />);
+    render(<TpoTopbar onToggleSidebar={vi.fn()} />);
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toBeDefined();
     expect(screen.getByText('Dashboard')).toBeDefined();
-    expect(screen.getByRole('link', { name: 'Support' })).toBeDefined();
   });
 
-  it('opens mobile nav via menu button', () => {
-    const onOpen = vi.fn();
-    render(<TpoTopbar onOpenMobileNav={onOpen} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Open navigation menu' }));
-    expect(onOpen).toHaveBeenCalled();
+  it('opens sidebar via toggle button', () => {
+    const onToggle = vi.fn();
+    render(<TpoTopbar onToggleSidebar={onToggle} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle navigation sidebar' }));
+    expect(onToggle).toHaveBeenCalled();
   });
 
-  it('opens profile menu with My school and Sign out', () => {
-    render(<TpoTopbar onOpenMobileNav={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /Pilot TPO account menu/i }));
-    expect(screen.getByRole('button', { name: 'My school' })).toBeDefined();
-    expect(screen.getByRole('button', { name: /Sign out/i })).toBeDefined();
+  it('opens profile menu with account options', async () => {
+    render(<TpoTopbar onToggleSidebar={vi.fn()} />);
+    const menuBtn = screen.getByRole('button', { name: /User menu for/i });
+    expect(menuBtn).toBeDefined();
+    fireEvent.click(menuBtn);
+    expect(screen.getByText('Profile')).toBeDefined();
+    expect(screen.getByText('Settings')).toBeDefined();
   });
 });

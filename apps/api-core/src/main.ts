@@ -27,6 +27,9 @@ async function bootstrap(): Promise<void> {
   );
 
   const fastifyInstance = app.getHttpAdapter().getInstance();
+  if (fastifyInstance.hasContentTypeParser('application/json')) {
+    fastifyInstance.removeContentTypeParser('application/json');
+  }
   fastifyInstance.addContentTypeParser(
     'application/json',
     { parseAs: 'string' },

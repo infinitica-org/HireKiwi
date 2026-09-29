@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   UploadCloud,
@@ -12,15 +11,18 @@ import {
   Lock,
   UserPlus,
   Mail,
-  ShieldCheck,
   Check,
   Loader2,
   RefreshCw,
+  LayoutGrid,
+  Users,
+  X,
+  Plus,
 } from 'lucide-react';
 import { isSmartApiError } from '@smart/api-client';
+import { CustomSelect } from '../ui/CustomSelect';
 import type { BatchDto, BatchMemberDto } from '@smart/contracts';
 import { BatchImportWizard } from '../batch-import-wizard';
-import { TpoBentoPageHeader } from '../tpo-bento/TpoBentoPageHeader';
 import { api } from '../../lib/api';
 import { validateInstitutionEmail } from '../../lib/domain-validation';
 import { loadAutoApproveInvites, loadExtraEmailDomains } from '../../lib/tpo-institution-settings';
@@ -71,19 +73,19 @@ export function WhitelistWorkspace() {
   const [newBatchName, setNewBatchName] = useState('');
   const [creatingBatch, setCreatingBatch] = useState(false);
 
-  // Onboarding mode tabs
-  const [activeTab, setActiveTab] = useState<'single' | 'bulk'>('single');
-
   // Single candidate
   const [singleName, setSingleName] = useState('');
   const [singleEmail, setSingleEmail] = useState('');
   const [singleGroupLabel, setSingleGroupLabel] = useState('');
   const [singleSubmitting, setSingleSubmitting] = useState(false);
+  const [isSingleModalOpen, setIsSingleModalOpen] = useState(false);
 
   // Bulk paste
   const [bulkText, setBulkText] = useState('');
   const [parsedBulk, setParsedBulk] = useState<{ email: string; isValid: boolean }[]>([]);
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkTab, setBulkTab] = useState<'paste' | 'file'>('paste');
 
   // Invitation roster (for selected batch)
   const [members, setMembers] = useState<BatchMemberDto[]>([]);
@@ -258,6 +260,7 @@ export function WhitelistWorkspace() {
       setSingleName('');
       setSingleEmail('');
       setSingleGroupLabel('');
+      setIsSingleModalOpen(false);
       await loadMembers();
     } catch (caught) {
       setError(safeMsg(caught, 'Failed to onboard candidate. Please try again.'));
@@ -318,6 +321,7 @@ export function WhitelistWorkspace() {
       );
       setBulkText('');
       setParsedBulk([]);
+      setIsBulkModalOpen(false);
       await loadMembers();
     } else {
       setError(`All ${failed.length} candidate(s) failed. They may already be enrolled.`);
@@ -378,100 +382,146 @@ export function WhitelistWorkspace() {
   const activeMembers = members.filter((m) => m.emailVerified);
 
   return (
-    <div className="space-y-4 pb-12">
-      <TpoBentoPageHeader
-        compact
-        title="Whitelist"
-        description="Upload and invite candidates by email, bulk paste, or CSV. Only verified institutional domains are accepted."
-        icon={UserPlus}
-        badge={
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200/80 bg-zinc-100/90 px-2.5 py-0.5 text-xs font-semibold text-zinc-700">
-            <Lock className="size-3 text-zinc-500" /> Domain Locked
-          </span>
-        }
-        aside={
-          <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-2.5 rounded-xl border border-zinc-200/80 bg-white p-3 shadow-2xs">
-              <div className="flex size-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-2xs">
-                <ShieldCheck className="size-4" />
-              </div>
-              <div>
-                <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                  Institution Domain
-                </span>
-                {scaffoldLoading ? (
-                  <Loader2 className="size-3 animate-spin text-zinc-400" />
-                ) : (
-                  <span className="font-mono text-xs font-bold text-zinc-900">
-                    @{domain ?? '(unknown)'}
-                  </span>
-                )}
-              </div>
+    <div className="space-y-4 pb-12 px-4 pt-6">
+      {/* Borderless Header */}
+      <div className="py-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-medium text-zinc-950">Add Students</h1>
+          <p className="mt-0.5 text-xs sm:text-sm text-zinc-500 font-medium">
+            Upload and invite candidates by email, bulk paste, or CSV into cohort batches.
+          </p>
+        </div>
+      </div>
+
+      {/* KPI Stats Grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90  p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+              Active Batches
+            </span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100/90 text-zinc-800 shadow-2xs">
+              <LayoutGrid className="size-4.5 stroke-[1.75]" />
             </div>
-            <Link href="/settings" className="text-xs font-semibold text-zinc-900 hover:underline">
-              Domain settings →
-            </Link>
           </div>
-        }
-      />
+          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
+            {batches.length.toLocaleString('en-US')}
+          </div>
+          <div className="mt-3 text-xs font-medium text-zinc-500">Target cohorts available</div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90 p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+              Onboarded Candidates
+            </span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100/90 text-zinc-800 shadow-2xs">
+              <Users className="size-4.5 stroke-[1.75]" />
+            </div>
+          </div>
+          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
+            {batches.reduce((sum, b) => sum + (b.memberCount || 0), 0).toLocaleString('en-US')}
+          </div>
+          <div className="mt-3 text-xs font-medium text-zinc-500">Total cohort members</div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90  p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+              Domain Lock
+            </span>
+            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100/90 text-zinc-800 shadow-2xs">
+              <Lock className="size-4.5 stroke-[1.75]" />
+            </div>
+          </div>
+          <div className="mt-2 font-heading text-2xl font-extrabold text-zinc-950 truncate">
+            {domain ? `@${domain}` : 'Locked'}
+          </div>
+          <div className="mt-3 text-xs font-medium text-zinc-500">
+            Verified email domain restriction
+          </div>
+        </div>
+      </div>
 
       {/* Active Batch Selector */}
-      <div className="rounded-xl border border-zinc-200/80 bg-white p-4 shadow-2xs">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-          Target Batch Cohort
-        </p>
-        {scaffoldLoading ? (
-          <div className="flex items-center gap-2 py-1 text-xs text-zinc-500">
-            <Loader2 className="size-4 animate-spin" /> Loading batches…
+      <div className="rounded-xl border border-zinc-200/80 bg-white shadow-2xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200/80 px-5 py-4 rounded-t-xl">
+          <div>
+            <h2 className="text-base font-bold text-zinc-900">Target Batch Cohort</h2>
+            <p className="mt-0.5 text-xs text-zinc-700">
+              Select or manage active student batches for onboarding.
+            </p>
           </div>
-        ) : batches.length === 0 ? (
-          <form
-            onSubmit={handleCreateBatch}
-            className="flex flex-col gap-2.5 sm:flex-row sm:items-end"
-          >
-            <div className="min-w-0 flex-1">
-              <label
-                className="mb-1.5 block text-xs font-semibold text-zinc-700"
-                htmlFor="whitelist-new-batch"
-              >
-                Create a batch to upload into
-              </label>
-              <input
-                id="whitelist-new-batch"
-                type="text"
-                value={newBatchName}
-                onChange={(e) => setNewBatchName(e.target.value)}
-                placeholder="e.g. Main Campus 2026"
-                className="h-9 w-full rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 text-xs text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
-              />
+          <span className="inline-flex items-center rounded-md border border-zinc-200/80 bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700">
+            {batches.length} {batches.length === 1 ? 'active batch' : 'active batches'}
+          </span>
+        </div>
+        <div className="p-5">
+          {scaffoldLoading ? (
+            <div className="flex items-center gap-2 py-1 text-xs text-zinc-500">
+              <Loader2 className="size-4 animate-spin" /> Loading batches…
             </div>
-            <button
-              type="submit"
-              disabled={creatingBatch || !newBatchName.trim()}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-zinc-800 disabled:opacity-50"
+          ) : batches.length === 0 ? (
+            <form
+              onSubmit={handleCreateBatch}
+              className="flex flex-col gap-2.5 sm:flex-row sm:items-end"
             >
-              {creatingBatch ? 'Creating…' : 'Create batch'}
-            </button>
-          </form>
-        ) : (
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <select
-              aria-label="Select batch for onboarding"
-              value={selectedBatchId}
-              onChange={(e) => setSelectedBatchId(e.target.value)}
-              className="h-9.5 w-full rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 text-xs font-semibold text-zinc-900 transition-all hover:bg-white focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900 sm:max-w-md"
-            >
-              {batches.map((b) => (
-                <option key={b.batchId} value={b.batchId}>
-                  {b.name} {b.code ? `(${b.code})` : ''} — {b.memberCount} members
-                </option>
-              ))}
-            </select>
-            <span className="text-xs text-zinc-400">
-              {batches.length} active {batches.length === 1 ? 'batch' : 'batches'}
-            </span>
-          </div>
-        )}
+              <div className="min-w-0 flex-1">
+                <label
+                  className="mb-1.5 block text-xs font-semibold text-zinc-700"
+                  htmlFor="whitelist-new-batch"
+                >
+                  Create a batch to upload into
+                </label>
+                <input
+                  id="whitelist-new-batch"
+                  type="text"
+                  value={newBatchName}
+                  onChange={(e) => setNewBatchName(e.target.value)}
+                  placeholder="e.g. Main Campus 2026"
+                  className="h-9 w-full rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 text-xs text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={creatingBatch || !newBatchName.trim()}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2 text-xs font-semibold text-white shadow-2xs transition hover:bg-zinc-800 disabled:opacity-50"
+              >
+                {creatingBatch ? 'Creating…' : 'Create batch'}
+              </button>
+            </form>
+          ) : (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <CustomSelect
+                ariaLabel="Select batch for onboarding"
+                value={selectedBatchId}
+                onChange={setSelectedBatchId}
+                options={batches.map((b) => ({
+                  value: b.batchId,
+                  label: `${b.name}${b.code ? ` (${b.code})` : ''}`,
+                  sublabel: `${b.memberCount} members`,
+                }))}
+                className="w-full sm:max-w-md"
+              />
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsSingleModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2.5 text-xs font-semibold text-white shadow-2xs transition hover:bg-zinc-800 active:scale-[0.98]"
+                >
+                  <Plus className="size-4" /> Single Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsBulkModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-md border border-zinc-200/90 bg-white px-4 py-2.5 text-xs font-semibold text-zinc-900 shadow-2xs transition hover:bg-zinc-50 hover:border-zinc-300 active:scale-[0.98]"
+                >
+                  <UploadCloud className="size-4 text-zinc-700" /> Bulk Upload
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Notifications */}
@@ -505,213 +555,6 @@ export function WhitelistWorkspace() {
           </button>
         </div>
       ) : null}
-
-      {/* Onboarding Mode Workspace */}
-      <div className="rounded-xl border border-zinc-200/80 bg-white p-5 shadow-2xs">
-        {/* Segmented Switcher */}
-        <div className="inline-flex items-center gap-1 rounded-lg border border-zinc-200/70 bg-zinc-100/90 p-1 mb-5">
-          {(
-            [
-              ['single', 'Single candidate', Mail],
-              ['bulk', 'Bulk whitelist upload', UploadCloud],
-            ] as const
-          ).map(([tab, label, Icon]) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                activeTab === tab
-                  ? 'bg-white text-zinc-900 shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <Icon className="size-3.5 shrink-0" /> {label}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'single' && (
-          <form onSubmit={handleSingleSubmit} className="max-w-2xl space-y-3.5">
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-700">
-                Candidate Full Name
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Aarav Sharma"
-                className="h-9 w-full rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 text-xs text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                value={singleName}
-                onChange={(e) => setSingleName(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-700">
-                Candidate Institutional Email
-              </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  placeholder={`student@${domain ?? 'institution.edu'}`}
-                  className="h-9 w-full rounded-lg border border-zinc-200 bg-zinc-50/60 pl-3 pr-10 text-xs text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                  value={singleEmail}
-                  onChange={(e) => setSingleEmail(e.target.value)}
-                />
-                {singleEmail && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {isSingleValid ? (
-                      <CheckCircle className="size-4 text-emerald-600" />
-                    ) : (
-                      <AlertCircle className="size-4 text-rose-600" />
-                    )}
-                  </div>
-                )}
-              </div>
-              <p className="mt-1 text-[11px] text-zinc-400">
-                Must belong to @{domain ?? '(loading…)'} or its subdomains. Candidate selects their
-                stream during onboarding.
-              </p>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-700">
-                Group / Section <span className="font-normal text-zinc-400">(Optional)</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. CSE-A, Batch 2026, Section 1"
-                className="h-9 w-full rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 text-xs text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                value={singleGroupLabel}
-                onChange={(e) => setSingleGroupLabel(e.target.value)}
-              />
-              <p className="mt-1 text-[11px] text-zinc-400">
-                Optional group or section label to organize candidates within the batch.
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={singleSubmitting || !singleName || !singleEmail || !selectedBatchId}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2.5 text-xs font-semibold text-white shadow-2xs transition hover:bg-zinc-800 disabled:opacity-50"
-            >
-              {singleSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="size-3.5 animate-spin" /> Onboarding…
-                </span>
-              ) : (
-                'Onboard Candidate & Send Invitation'
-              )}
-            </button>
-          </form>
-        )}
-
-        {activeTab === 'bulk' && (
-          <div className="space-y-8">
-            <div className="max-w-2xl space-y-3.5">
-              <div>
-                <h3 className="text-sm font-bold text-zinc-900">Quick paste</h3>
-                <p className="mt-0.5 text-xs text-zinc-400">
-                  Paste institutional emails only — names are inferred from the address. For full
-                  name and group columns, use file upload below.
-                </p>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-zinc-700">
-                  Candidate emails (one per line or comma-separated)
-                </label>
-                <textarea
-                  rows={5}
-                  placeholder={`student1@${domain ?? 'institution.edu'}\nstudent2@${domain ?? 'institution.edu'}\nstudent3@${domain ?? 'institution.edu'}`}
-                  className="w-full rounded-lg border border-zinc-200 bg-zinc-50/60 p-3 font-mono text-xs text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                  value={bulkText}
-                  onChange={(e) => setBulkText(e.target.value)}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={handleBulkParse}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200/90 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-900 shadow-2xs transition hover:bg-zinc-50 hover:border-zinc-300"
-              >
-                Validate Emails
-              </button>
-
-              {parsedBulk.length > 0 && (
-                <div className="space-y-3 pt-2">
-                  <h4 className="text-xs font-bold text-zinc-900">
-                    Validation Results ({parsedBulk.filter((p) => p.isValid).length} Valid /{' '}
-                    {parsedBulk.filter((p) => !p.isValid).length} Invalid)
-                  </h4>
-
-                  <div className="max-h-48 divide-y divide-zinc-100 overflow-y-auto rounded-lg border border-zinc-200/80 bg-zinc-50/50">
-                    {parsedBulk.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between px-3 py-2 text-xs"
-                      >
-                        <span className="font-mono text-zinc-700">{item.email}</span>
-                        {item.isValid ? (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-                            <Check className="size-3 text-emerald-600" /> Valid Domain
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
-                            <AlertCircle className="size-3 text-rose-600" /> Invalid Domain
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => void handleBulkSubmit()}
-                    disabled={
-                      bulkSubmitting ||
-                      parsedBulk.filter((p) => p.isValid).length === 0 ||
-                      !selectedBatchId
-                    }
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2.5 text-xs font-semibold text-white shadow-2xs transition hover:bg-zinc-800 disabled:opacity-50"
-                  >
-                    {bulkSubmitting ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="size-3.5 animate-spin" /> Onboarding…
-                      </span>
-                    ) : (
-                      `Onboard ${parsedBulk.filter((p) => p.isValid).length} Valid Candidate(s)`
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-zinc-100 pt-6">
-              {!selectedBatchId ? (
-                <p className="text-xs text-zinc-500">
-                  Create or select an active batch above to upload a CSV or Excel roster.
-                </p>
-              ) : !bulkFileImportEnabled ? (
-                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-600">
-                  File import (CSV/Excel) is not enabled on your institution plan. Use{' '}
-                  <strong className="text-zinc-900">Quick paste</strong> above, or contact SMART to
-                  enable bulk file import.
-                </div>
-              ) : (
-                <BatchImportWizard
-                  batchId={selectedBatchId}
-                  heading="File upload (CSV or Excel)"
-                  autoSendInvites={autoApproveInvites}
-                  onComplete={() => {
-                    void loadMembers();
-                    setSuccessMsg('Import finished. Review invitations below.');
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Pending & Active Invitations Table */}
       <div className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-2xs">
@@ -910,6 +753,275 @@ export function WhitelistWorkspace() {
           </div>
         )}
       </div>
+
+      {/* Modal Popup Dialog for Single Candidate Onboarding */}
+      {isSingleModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg rounded-md border border-zinc-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
+              <div className="flex items-center gap-2.5">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200/80">
+                  <UserPlus className="size-5 stroke-[2]" />
+                </div>
+                <div>
+                  <h2 className="text-base font-medium text-zinc-950">Add Candidate to Batch</h2>
+                  <p className="text-xs text-zinc-500 font-medium">
+                    Send invitation & provision access for institutional student
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSingleModalOpen(false)}
+                className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                aria-label="Close dialog"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSingleSubmit} className="mt-5 space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-bold text-zinc-800">
+                  Candidate Full Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Aarav Sharma"
+                  className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3.5 text-xs sm:text-sm text-zinc-950 placeholder:text-zinc-400 transition-all focus:border-zinc-950 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950"
+                  value={singleName}
+                  onChange={(e) => setSingleName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-bold text-zinc-800">
+                  Candidate Institutional Email <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    placeholder={`student@${domain ?? 'institution.edu'}`}
+                    className="h-10 w-full rounded-md border border-zinc-200 bg-white pl-3.5 pr-10 text-xs sm:text-sm text-zinc-950 placeholder:text-zinc-400 transition-all focus:border-zinc-950 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950"
+                    value={singleEmail}
+                    onChange={(e) => setSingleEmail(e.target.value)}
+                    required
+                  />
+                  {singleEmail ? (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {isSingleValid ? (
+                        <CheckCircle className="size-4 text-emerald-600" />
+                      ) : (
+                        <AlertCircle className="size-4 text-rose-600" />
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-[11px] font-medium text-zinc-400">
+                  Must belong to @{domain ?? 'institution domain'} or verified alias.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-bold text-zinc-800">
+                  Group / Section <span className="font-normal text-zinc-400">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. CSE-A, Batch 2026, Section 1"
+                  className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3.5 text-xs sm:text-sm text-zinc-950 placeholder:text-zinc-400 transition-all focus:border-zinc-950 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950"
+                  value={singleGroupLabel}
+                  onChange={(e) => setSingleGroupLabel(e.target.value)}
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-3 border-t border-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setIsSingleModalOpen(false)}
+                  className="h-10 rounded-md border border-zinc-200 bg-white px-4 text-xs sm:text-sm font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={singleSubmitting || !singleName || !singleEmail || !selectedBatchId}
+                  className="h-10 inline-flex items-center justify-center gap-2 rounded-md bg-black px-5 text-xs sm:text-sm font-semibold text-white shadow-2xs transition hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:opacity-50"
+                >
+                  {singleSubmitting ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : (
+                    <>
+                      <UserPlus className="size-4" aria-hidden /> Onboard Candidate
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+      {/* Modal Popup Dialog for Bulk Candidate Onboarding */}
+      {isBulkModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-md border border-zinc-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-zinc-100 mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200/80">
+                  <UploadCloud className="size-5 stroke-[2]" />
+                </div>
+                <div>
+                  <h2 className="text-base font-medium text-zinc-950">Bulk Whitelist Upload</h2>
+                  <p className="text-xs text-zinc-500 font-medium">
+                    Upload multiple candidates via quick paste or CSV file import
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBulkModalOpen(false)}
+                className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                aria-label="Close dialog"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Segmented Switcher inside Bulk Modal */}
+            <div className="inline-flex items-center gap-1 rounded-md border border-zinc-200/70 bg-zinc-100/90 p-2 mb-5">
+              <button
+                type="button"
+                onClick={() => setBulkTab('paste')}
+                className={`flex items-center gap-1.5 rounded-md px-3.5 py-2 text-xs font-semibold transition-all ${
+                  bulkTab === 'paste'
+                    ? 'bg-black text-white shadow-2xs font-bold'
+                    : 'text-zinc-600 hover:text-zinc-950 font-medium'
+                }`}
+              >
+                <Mail className="size-3.5 shrink-0" /> Quick Email Paste
+              </button>
+              <button
+                type="button"
+                onClick={() => setBulkTab('file')}
+                className={`flex items-center gap-1.5 rounded-md px-3.5 py-2 text-xs font-semibold transition-all ${
+                  bulkTab === 'file'
+                    ? 'bg-black text-white shadow-2xs font-bold'
+                    : 'text-zinc-600 hover:text-zinc-950 font-medium'
+                }`}
+              >
+                <UploadCloud className="size-3.5 shrink-0" /> CSV / Excel File Upload
+              </button>
+            </div>
+
+            {bulkTab === 'paste' ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-zinc-800">
+                    Candidate Emails (one per line or comma-separated)
+                  </label>
+                  <textarea
+                    rows={6}
+                    placeholder={`student1@${domain ?? 'institution.edu'}\nstudent2@${domain ?? 'institution.edu'}\nstudent3@${domain ?? 'institution.edu'}`}
+                    className="w-full rounded-md border border-zinc-200 bg-white p-3 font-mono text-xs text-zinc-950 placeholder:text-zinc-400 transition-all focus:border-zinc-950 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950"
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={handleBulkParse}
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 h-9 text-xs font-semibold text-zinc-800 shadow-2xs transition hover:bg-zinc-50"
+                  >
+                    Validate Emails
+                  </button>
+                  {parsedBulk.length > 0 ? (
+                    <span className="text-xs font-medium text-zinc-500">
+                      {parsedBulk.filter((p) => p.isValid).length} Valid /{' '}
+                      {parsedBulk.filter((p) => !p.isValid).length} Invalid
+                    </span>
+                  ) : null}
+                </div>
+
+                {parsedBulk.length > 0 ? (
+                  <div className="space-y-3 pt-2">
+                    <div className="max-h-40 divide-y divide-zinc-100 overflow-y-auto rounded-md border border-zinc-200/80 bg-zinc-50/50">
+                      {parsedBulk.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between px-3 py-2 text-xs"
+                        >
+                          <span className="font-mono text-zinc-700">{item.email}</span>
+                          {item.isValid ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                              <Check className="size-3 text-emerald-600" /> Valid Domain
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
+                              <AlertCircle className="size-3 text-rose-600" /> Invalid Domain
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-3 flex items-center justify-end gap-3 border-t border-zinc-100">
+                      <button
+                        type="button"
+                        onClick={() => setIsBulkModalOpen(false)}
+                        className="h-10 rounded-md border border-zinc-200 bg-white px-4 text-xs sm:text-sm font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleBulkSubmit()}
+                        disabled={
+                          bulkSubmitting ||
+                          parsedBulk.filter((p) => p.isValid).length === 0 ||
+                          !selectedBatchId
+                        }
+                        className="h-10 inline-flex items-center justify-center gap-2 rounded-md bg-black px-5 text-xs sm:text-sm font-semibold text-white shadow-2xs transition hover:bg-zinc-800 disabled:opacity-50"
+                      >
+                        {bulkSubmitting ? (
+                          <Loader2 className="size-4 animate-spin" aria-hidden />
+                        ) : (
+                          `Onboard ${parsedBulk.filter((p) => p.isValid).length} Candidate(s)`
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div>
+                {!selectedBatchId ? (
+                  <p className="text-xs text-zinc-500">
+                    Please select an active target batch first.
+                  </p>
+                ) : !bulkFileImportEnabled ? (
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-600">
+                    File import (CSV/Excel) is not enabled on your institution plan.
+                  </div>
+                ) : (
+                  <BatchImportWizard
+                    batchId={selectedBatchId}
+                    heading="File upload (CSV or Excel)"
+                    autoSendInvites={autoApproveInvites}
+                    onComplete={() => {
+                      void loadMembers();
+                      setIsBulkModalOpen(false);
+                      setSuccessMsg('Import finished. Candidate roster updated.');
+                    }}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

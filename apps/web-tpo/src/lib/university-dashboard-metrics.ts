@@ -11,9 +11,11 @@ export type UniversityDashboardMetrics = {
 export type UniversityRosterRow = {
   userId: string;
   name: string;
+  email: string;
   major: string;
   verificationState: StudentVerificationState;
   hiredLabel: string;
+  verifiedSkillsCount: number;
 };
 
 function verifiedClaimCountByStudent(claims: SkillClaimDto[]): Map<string, number> {
@@ -59,8 +61,10 @@ export function buildUniversityRosterRows(
   return students.map((student) => ({
     userId: student.userId,
     name: student.fullName,
+    email: student.email,
     major: student.batchName?.trim() || 'Undeclared',
     verificationState: verificationStateForStudent(student, verifiedByStudent),
     hiredLabel: '—',
+    verifiedSkillsCount: verifiedByStudent.get(student.userId) ?? 0,
   }));
 }

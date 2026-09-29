@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, ChevronRight, LogOut, Menu, UserRound } from 'lucide-react';
+import { Bell, ChevronRight, UserRound, Zap, Users, Settings, PanelLeft } from 'lucide-react';
 import { useCurrentUser } from '@/lib/candidate-identity';
-import { CandidateAvatar } from '@/components/profile/CandidateAvatar';
 import { signOut } from '@/lib/auth';
+import { UserMenu } from '@smart/ui';
 
 type Breadcrumb = { label: string; href?: string };
 
@@ -42,21 +41,16 @@ export type StudentTopbarProps = {
 export function StudentTopbar({ onOpenMobileNav }: StudentTopbarProps) {
   const router = useRouter();
   const { data: user } = useCurrentUser();
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onOutsideClick(event: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setProfileOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', onOutsideClick);
-    return () => document.removeEventListener('mousedown', onOutsideClick);
-  }, []);
 
   const pathname = usePathname() || '/dashboard';
   const breadcrumbs = getStudentBreadcrumbs(pathname);
+
+  const studentMenuItems = [
+    { label: 'Profile', icon: UserRound, onClick: () => router.push('/public-profile') },
+    { label: 'Upgrade Plan', icon: Zap, onClick: () => router.push('/profile') },
+    { label: 'Refer Friends', icon: Users, onClick: () => router.push('/profile') },
+    { label: 'Settings', icon: Settings, onClick: () => router.push('/profile') },
+  ];
 
   return (
     <header className="sticky top-0 z-40 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white px-6 font-sans antialiased select-none dark:border-zinc-800 dark:bg-[#111111]">
@@ -64,10 +58,11 @@ export function StudentTopbar({ onOpenMobileNav }: StudentTopbarProps) {
         <button
           type="button"
           onClick={onOpenMobileNav}
-          aria-label="Open navigation menu"
-          className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 lg:hidden"
+          aria-label="Toggle navigation sidebar"
+          title="Toggle sidebar"
+          className="flex size-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
         >
-          <Menu strokeWidth={1.5} className="size-5" />
+          <PanelLeft className="size-4.5" />
         </button>
 
         {/* Dynamic Breadcrumb Navigation */}
@@ -110,57 +105,17 @@ export function StudentTopbar({ onOpenMobileNav }: StudentTopbarProps) {
           <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-zinc-900" />
         </button>
 
-        {/* User Avatar Circle Dropdown */}
-        <div ref={profileRef} className="relative shrink-0">
-          <button
-            type="button"
-            onClick={() => setProfileOpen((v) => !v)}
-            aria-expanded={profileOpen}
-            aria-label={`${user?.fullName ?? 'Candidate'} account menu`}
-            className="flex items-center rounded-full transition-transform hover:scale-105 focus:outline-none"
-          >
-            <CandidateAvatar
-              fullName={user?.fullName}
-              profilePhotoUrl={user?.profilePhotoUrl}
-              className="size-7 border border-zinc-900 bg-zinc-900 text-xs font-bold text-white shadow-2xs dark:border-zinc-700 dark:bg-zinc-800"
-              fallbackClassName="bg-zinc-900 text-xs font-bold text-white"
-            />
-          </button>
-
-          {profileOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-800 dark:bg-[#161616]">
-              <div className="border-b border-zinc-100 px-3 py-2.5 dark:border-zinc-800">
-                <p className="truncate text-xs font-bold text-zinc-900 dark:text-white">
-                  {user?.fullName ?? 'Candidate'}
-                </p>
-                <p className="truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                  {user?.email ?? ''}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileOpen(false);
-                  router.push('/public-profile');
-                }}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              >
-                <UserRound strokeWidth={1.75} className="size-4 text-zinc-500" />
-                Public profile
-              </button>
-
-              <button
-                type="button"
-                onClick={() => void signOut()}
-                className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-              >
-                <LogOut strokeWidth={1.75} className="size-4" />
-                Sign out
-              </button>
-            </div>
-          )}
-        </div>
+        {/* User Profile Menu (Avatar + Name + Email + Chevron trigger + Dropdown) */}
+        <UserMenu
+          user={{
+            name: user?.fullName ?? 'Candidate',
+            email: user?.email ?? '',
+            avatarUrl: user?.profilePhotoUrl ?? null,
+            role: 'STUDENT',
+          }}
+          menuItems={studentMenuItems}
+          onSignOut={() => void signOut()}
+        />
       </div>
     </header>
   );

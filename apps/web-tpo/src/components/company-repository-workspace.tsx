@@ -291,9 +291,9 @@ export function CompanyRepositoryWorkspace() {
         />
       ) : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="">
         <input
-          className={`${inputClass} max-w-md flex-1`}
+          className={`${inputClass} w-full`}
           placeholder="Search companies…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}

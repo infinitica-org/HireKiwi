@@ -198,27 +198,29 @@ export function BatchImportWizard({
   const duplicate = new Set(selected).size !== selected.length;
   const mappingReady = Boolean(mapping.fullName && mapping.email && !duplicate);
   const zone = dragging
-    ? 'border-accent bg-accent-deep/20'
-    : 'border-[var(--surface-border)] bg-[var(--surface-muted)]';
+    ? 'border-zinc-950 bg-zinc-100/90'
+    : 'border-zinc-200/90 bg-zinc-50/50 hover:bg-zinc-100/80 hover:border-zinc-400';
   const pending = result?.pendingInvitations ?? 0;
   const step = !file ? 0 : result ? 2 : 1;
 
   return (
     <section className="space-y-5" aria-labelledby="bulk-provisioning-title">
-      <h2 id="bulk-provisioning-title" className="text-xl font-semibold text-ink">
+      <h2 id="bulk-provisioning-title" className="text-xl font-bold text-zinc-950">
         {heading}
       </h2>
-      <ol className="grid grid-cols-3 gap-1" aria-label="Provisioning progress">
+      <ol className="grid grid-cols-3 gap-1.5" aria-label="Provisioning progress">
         {['Upload', 'Map columns', 'Preview'].map((label, index) => (
           <li key={label} aria-current={step === index ? 'step' : undefined}>
             <div
-              className={`h-1.5 rounded-full ${step >= index ? 'bg-accent' : 'bg-[var(--surface-border)]'}`}
+              className={`h-1.5 rounded-full transition-all ${
+                step >= index ? 'bg-black' : 'bg-zinc-200'
+              }`}
             />
           </li>
         ))}
       </ol>
       <div aria-live="polite" aria-atomic="true">
-        {busy ? <p className="text-sm text-ink-muted">Processing securely…</p> : null}
+        {busy ? <p className="text-xs font-semibold text-zinc-500">Processing securely…</p> : null}
         {error ? <Alert tone="danger" title={error} role="alert" /> : null}
       </div>
       {file || result ? null : (
@@ -250,23 +252,28 @@ export function BatchImportWizard({
               const next = event.dataTransfer.files[0];
               if (next && !busy) void chooseFile(next);
             }}
-            className={`group relative min-h-56 w-full overflow-hidden rounded-2xl border-2 border-dashed p-8 text-center outline-none transition focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60 ${zone}`}
+            className={`group relative min-h-48 w-full overflow-hidden rounded-2xl border-2 border-dashed p-8 text-center outline-none transition focus-visible:ring-2 focus-visible:ring-black disabled:cursor-not-allowed disabled:opacity-60 ${zone}`}
           >
             <span
               aria-hidden="true"
-              className="motion-safe:animate-pulse absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent to-transparent"
+              className="motion-safe:animate-pulse absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-zinc-950 to-transparent"
             />
-            <span className="block text-base font-semibold text-ink">
+            <span className="block text-base font-bold text-zinc-950">
               {dragging ? 'Drop the file to continue' : 'Drop a roster here or browse'}
             </span>
-            <span className="mt-2 block text-sm text-ink-muted">
+            <span className="mt-1.5 block text-xs font-medium text-zinc-500">
               CSV or XLSX · maximum 5 MB · row 1 must contain headers
             </span>
           </button>
-          <div className="flex justify-center">
-            <Button variant="ghost" disabled={busy} onClick={() => void downloadTemplate()}>
+          <div className="flex justify-center pt-1">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void downloadTemplate()}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-800 hover:text-black hover:underline"
+            >
               Download XLSX template
-            </Button>
+            </button>
           </div>
         </div>
       )}
@@ -302,7 +309,7 @@ export function BatchImportWizard({
                     setConfirmed(null);
                     setMapping((current) => ({ ...current, [field.key]: event.target.value }));
                   }}
-                  className="min-h-10 rounded-lg border border-[var(--surface-border)] bg-[var(--surface-bg)] px-3 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="h-10 rounded-md border border-zinc-200 bg-white px-3.5 text-xs sm:text-sm font-medium text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
                 >
                   <option value="">Do not import</option>
                   {headers.map((header) => (
@@ -321,24 +328,34 @@ export function BatchImportWizard({
               />
             ) : null}
             {!mapping.fullName || !mapping.email ? (
-              <p className="text-sm text-ink-muted" role="status">
+              <p className="text-xs font-medium text-zinc-500" role="status">
                 Map both Full Name and Email to continue.
               </p>
             ) : null}
             {confirmed && !result ? (
-              <p className="text-sm text-ink" role="status">
+              <p className="text-xs font-medium text-zinc-800" role="status">
                 {`Mapping payload ready: fullName=${confirmed.fullName}; email=${confirmed.email}${
                   confirmed.groupLabel ? `; groupLabel=${confirmed.groupLabel}` : ''
                 }`}
               </p>
             ) : null}
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-              <Button variant="ghost" onClick={reset} disabled={busy}>
+            <div className="flex items-center justify-between pt-3 border-t border-zinc-100">
+              <button
+                type="button"
+                onClick={reset}
+                disabled={busy}
+                className="h-9 rounded-md border border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-all"
+              >
                 Replace file
-              </Button>
-              <Button disabled={!mappingReady || busy} onClick={() => void confirmAndImport()}>
+              </button>
+              <button
+                type="button"
+                disabled={!mappingReady || busy}
+                onClick={() => void confirmAndImport()}
+                className="h-9 inline-flex items-center justify-center gap-2 rounded-md bg-black px-5 text-xs font-semibold text-white shadow-2xs transition hover:bg-zinc-800 disabled:opacity-50"
+              >
                 Confirm mapping
-              </Button>
+              </button>
             </div>
           </div>
         </div>

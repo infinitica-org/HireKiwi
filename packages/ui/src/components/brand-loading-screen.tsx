@@ -1,41 +1,36 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { SmartLogo } from './smart-logo';
+import smartLogoImg from '../assets/images/Logos/WebP/Smart-logo.png';
 
 export interface BrandLoadingScreenProps {
   message?: ReactNode;
   className?: string;
 }
 
-export function BrandLoadingScreen({
-  message = 'Waking up your dashboard…',
-  className = '',
-}: BrandLoadingScreenProps) {
+export function BrandLoadingScreen({ message, className = '' }: BrandLoadingScreenProps) {
+  const logoSrc =
+    typeof smartLogoImg === 'string' ? smartLogoImg : (smartLogoImg as { src?: string })?.src || '';
+
   return (
     <div
       role="status"
       aria-live="polite"
-      className={`flex min-h-screen w-full flex-col items-center justify-center bg-[#f4f5f6] px-4 text-center select-none ${className}`}
+      className={`flex min-h-screen w-full flex-col items-center justify-center bg-white px-4 text-center select-none ${className}`}
     >
-      {/* Outer Soft Glow Circle container */}
-      <div className="relative flex items-center justify-center">
-        {/* Layer 1: Ambient Outer Pulse Glow */}
+      <div className="flex flex-col items-center justify-center gap-6">
+        {/* Squircle Brand Logo Badge using Smart-logo.png */}
+        <div className="relative flex size-20 sm:size-22 items-center justify-center overflow-hidden rounded-[22px] bg-[#d9f953] p-3 shadow-md shadow-lime-500/15 border border-black/5">
+          <img src={logoSrc} alt="SMART" className="size-full object-contain" />
+        </div>
+
+        {/* Minimalist Circular Ring Spinner (Matching screenshot) */}
         <div
-          className="absolute -inset-2 rounded-full bg-emerald-300/30 blur-2xl animate-pulse"
+          className="size-6 animate-spin rounded-full border-[2.5px] border-zinc-200 border-t-zinc-800"
           aria-hidden="true"
         />
 
-        {/* Layer 2: Soft Mint/Teal Gradient Circle (Matching Image 2) */}
-        <div className="relative flex size-56 sm:size-64 items-center justify-center rounded-full bg-gradient-to-br from-[#e4f3ef] via-[#e2f1ed] to-[#d8f3ec] shadow-sm shadow-emerald-500/5">
-          {/* SMART wordmark logo in solid dark tone */}
-          <SmartLogo kind="text" tone="on-light" className="h-9 sm:h-11 w-auto" />
-        </div>
-      </div>
-
-      {/* Message Text below the circle */}
-      <div className="mt-8 text-base sm:text-lg font-normal tracking-tight text-[#4b5563]">
-        {message}
+        {message && <div className="text-sm font-medium text-zinc-500">{message}</div>}
       </div>
     </div>
   );

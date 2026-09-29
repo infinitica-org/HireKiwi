@@ -25,10 +25,9 @@ import {
 import {
   bentoPageStackClass,
   dashboardErrorNoticeClass,
-  dashboardPrimaryButtonClass,
   dashboardSuccessNoticeClass,
 } from '../../lib/tpo-dashboard-ui';
-import { inputClass, labelClass } from '../../lib/tpo-ui';
+
 import { SchoolProfileCard } from './SchoolProfileCard';
 
 export function SchoolProfileWorkspace() {
@@ -156,22 +155,37 @@ export function SchoolProfileWorkspace() {
             onPickBanner={(file) => void handleImage(file, 'banner')}
           />
 
-          <section className="space-y-3 pt-1">
+          <section className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-900">About Institution</h3>
+                <p className="text-xs text-zinc-500">
+                  Overview text shown to recruiting employers on your public profile
+                </p>
+              </div>
+              <span className="text-xs font-mono text-zinc-400">{form.about.length} / 2000</span>
+            </div>
+
             <div>
-              <label className={labelClass} htmlFor="school-about">
-                About
-              </label>
               <textarea
                 id="school-about"
-                className={`${inputClass} min-h-[100px] resize-y py-2`}
+                className="w-full min-h-[110px] resize-y rounded-xl border border-zinc-200 bg-zinc-50/30 p-3 text-sm text-zinc-800 placeholder-zinc-400 transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 value={form.about}
                 onChange={(e) => setForm((prev) => ({ ...prev, about: e.target.value }))}
+                placeholder="Describe your institution, key programs, student achievements, or recruitment focus..."
                 maxLength={2000}
               />
             </div>
-            <button type="button" onClick={handleSaveAbout} className={dashboardPrimaryButtonClass}>
-              Save
-            </button>
+
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={handleSaveAbout}
+                className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.98] shadow-xs cursor-pointer"
+              >
+                Save About Details
+              </button>
+            </div>
           </section>
         </>
       )}
