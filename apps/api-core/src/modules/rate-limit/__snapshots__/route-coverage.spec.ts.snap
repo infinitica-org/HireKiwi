@@ -384,7 +384,7 @@ exports[`declarative throttle matrix (S1-VV-05) > snapshots method+path → poli
   "POST /employer/applications/:id/transition": "role.student",
   "POST /employer/campus-access": "role.company",
   "POST /employer/company/logo/upload": "role.student",
-  "POST /employer/invitations": "auth.invite",
+  "POST /employer/invitations": "company.team.invite",
   "POST /employer/members/:memberId/deactivate": "role.student",
   "POST /employer/members/:memberId/reactivate": "role.student",
   "POST /evaluation/cert-agenda/generate": "evaluation.certAgenda",
