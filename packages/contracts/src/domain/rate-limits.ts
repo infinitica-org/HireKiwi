@@ -626,6 +626,25 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     rationale: 'I403 — caps candidate search frequency to prevent automated bulk harvesting.',
     onViolation: 'ALERT',
   },
+  {
+    key: 'partnership.activate.read',
+    scope: 'IP',
+    limit: 30,
+    windowSeconds: 60,
+    burst: 10,
+    redisKey: 'rl:partnership:read:{id}',
+    rationale: 'Public lookup of activation token details before setup.',
+  },
+  {
+    key: 'partnership.activate.submit',
+    scope: 'IP',
+    limit: 5,
+    windowSeconds: 60,
+    burst: 2,
+    redisKey: 'rl:partnership:activate:{id}',
+    rationale: 'Account activation, password setting and campus creation.',
+    onViolation: 'IP_CHALLENGE',
+  },
 ] as const;
 
 export const ALL_RATE_LIMIT_POLICIES: readonly RateLimitPolicy[] = [

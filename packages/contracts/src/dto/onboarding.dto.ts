@@ -287,7 +287,11 @@ export const InviteUserRequestSchema = z.object({
 });
 export type InviteUserRequest = z.infer<typeof InviteUserRequestSchema>;
 
-export const StaffRoleSchema = z.enum(['PLACEMENT_STAFF', 'INSTITUTION_ADMIN']);
+export const StaffRoleSchema = z.enum([
+  'PLACEMENT_STAFF',
+  'INSTITUTION_ADMIN',
+  'DEPARTMENTAL_ADVISOR',
+]);
 export type StaffRole = z.infer<typeof StaffRoleSchema>;
 
 export const InviteStaffRequestSchema = z.object({
@@ -296,6 +300,7 @@ export const InviteStaffRequestSchema = z.object({
   email: EmailSchema,
   role: StaffRoleSchema.default('PLACEMENT_STAFF'),
   department: z.string().trim().max(200).optional().nullable(),
+  campusId: UuidSchema.optional().nullable(),
 });
 export type InviteStaffRequest = z.infer<typeof InviteStaffRequestSchema>;
 
@@ -306,6 +311,7 @@ export type UpdateStaffRoleRequest = z.infer<typeof UpdateStaffRoleRequestSchema
 
 export const UpdateStaffCampusRequestSchema = z.object({
   campus: z.string().trim().max(200).nullable().optional(),
+  campusId: UuidSchema.nullable().optional(),
 });
 export type UpdateStaffCampusRequest = z.infer<typeof UpdateStaffCampusRequestSchema>;
 
@@ -315,6 +321,8 @@ export const StaffMemberDtoSchema = z.object({
   fullName: z.string(),
   role: StaffRoleSchema,
   groupLabel: z.string().nullable(),
+  campusId: UuidSchema.nullable().optional(),
+  campusName: z.string().nullable().optional(),
   inviteStatus: InvitationStatusSchema.nullable(),
   lastSentAt: IsoDateTimeSchema.nullable(),
   acceptedAt: IsoDateTimeSchema.nullable(),

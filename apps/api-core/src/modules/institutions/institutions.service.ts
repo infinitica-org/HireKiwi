@@ -13,8 +13,15 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import type { Queue } from 'bullmq';
-import { AddBatchMemberRequestSchema, INSTITUTION_STAFF_ROLES } from '@smart/contracts';
+import {
+  AddBatchMemberRequestSchema,
+  INSTITUTION_STAFF_ROLES,
+  SMART_ORG_PROVISIONED_ACTION,
+} from '@smart/contracts';
 import type {
+  ActivatePartnershipAccountRequest,
+  ActivatePartnershipAccountResponse,
+  ActivationTokenDetails,
   AddBatchMemberRequest,
   AuthenticatedUser,
   BatchDto,
@@ -92,7 +99,7 @@ import { resolveRecordActors } from './record-actors.js';
 import { buildAuditLogWhere } from './audit-log-query.js';
 import { RedisService } from '../../platform/redis/redis.service.js';
 import { InvitationsService, toInvitationDto } from '../invitations/invitations.service.js';
-import { toAuthenticatedUser } from '../auth/auth.service.js';
+import { toAuthenticatedUser, hashPassword } from '../auth/auth.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
 import {
   getCompanyVerificationReviewDetail,
@@ -117,6 +124,10 @@ export function sanitizeSpreadsheetCellText(raw: string): string {
   return trimmed;
 }
 
+/** Database-level user role enum (matches Prisma's UserRole). */
+type DbUserRole =
+  'SUPER_ADMIN' | 'INSTITUTION_ADMIN' | 'PLACEMENT_STAFF' | 'STUDENT' | 'B2B_PARTNER' | 'COMPANY';
+
 /** `BUSINESS_REGISTRATION` → "Business registration". */
 function humanizeEnum(value: string): string {
   const words = value.toLowerCase().split('_').join(' ');
@@ -134,6 +145,7 @@ interface ParsedBatchImport {
 export class InstitutionsService {
   private readonly logger = new Logger(InstitutionsService.name);
   private readonly partnershipRequests = new Map<string, PartnershipRequest>();
+  private readonly activationTokens = new Map<string, ActivationTokenDetails>();
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -232,8 +244,235 @@ export class InstitutionsService {
       updatedAt: now,
     };
     this.partnershipRequests.set(id, updated);
+    if (body.decision === 'APPROVED') {
+      await this.generateActivationToken(id, adminUserId);
+    }
     this.logger.log(`Partnership request ${id} updated to ${body.decision} by ${adminUserId}`);
     return updated;
+  }
+
+  async generateActivationToken(
+    partnershipRequestId: string,
+    adminUserId?: string,
+  ): Promise<{ activationToken: string; activationUrl: string; expiresAt: string }> {
+    const req = await this.getPartnershipRequestById(partnershipRequestId);
+    const rawToken = `act_${randomUUID().replace(/-/g, '')}`;
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const details: ActivationTokenDetails = {
+      token: rawToken,
+      partnershipRequestId: req.id,
+      name: req.name,
+      domain: req.domain,
+      contactName: req.contactName,
+      contactEmail: req.contactEmail,
+      expiresAt,
+    };
+    this.activationTokens.set(rawToken, details);
+
+    const now = new Date().toISOString();
+    const updatedReq: PartnershipRequest = {
+      ...req,
+      status: 'APPROVED',
+      updatedAt: now,
+    };
+    this.partnershipRequests.set(req.id, updatedReq);
+
+    const activationUrl = `https://tpo.smart.org/activate?token=${rawToken}`;
+    this.logger.log(
+      `Secure activation token generated for ${req.name} (${req.id}) by ${adminUserId ?? 'system'}`,
+    );
+
+    return {
+      activationToken: rawToken,
+      activationUrl,
+      expiresAt,
+    };
+  }
+
+  async getActivationTokenDetails(token: string): Promise<ActivationTokenDetails> {
+    const details = this.activationTokens.get(token);
+    if (!details) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Invalid or expired activation token.',
+        statusCode: 404,
+      });
+    }
+    if (new Date(details.expiresAt).getTime() < Date.now()) {
+      this.activationTokens.delete(token);
+      throw new BadRequestException({
+        error: 'token_expired',
+        message: 'Activation token has expired.',
+        statusCode: 400,
+      });
+    }
+    return details;
+  }
+
+  async activatePartnershipAccount(
+    body: ActivatePartnershipAccountRequest,
+    ipAddress = '127.0.0.1',
+    provisionerId?: string,
+  ): Promise<ActivatePartnershipAccountResponse> {
+    const details = await this.getActivationTokenDetails(body.token);
+
+    if (body.confirmDomain.toLowerCase() !== details.domain.toLowerCase()) {
+      throw new BadRequestException({
+        error: 'domain_mismatch',
+        message: `Confirmed domain (${body.confirmDomain}) does not match approved partnership domain (${details.domain}).`,
+        statusCode: 400,
+      });
+    }
+
+    const domain = body.confirmDomain.toLowerCase();
+
+    let institution = await this.prisma.institution.findFirst({
+      where: { domain },
+    });
+
+    if (!institution) {
+      const defaultPlan = await this.prisma.subscriptionPlan.findFirst({
+        where: { code: 'FREE' },
+      });
+      const instData: Prisma.InstitutionCreateInput = {
+        name: body.confirmCollegeName,
+        domain,
+        verificationStatus: 'APPROVED',
+        plan: defaultPlan ? { connect: { id: defaultPlan.id } } : { connect: { code: 'FREE' } },
+      };
+      institution = await this.prisma.institution.create({
+        data: instData,
+      });
+    } else {
+      institution = await this.prisma.institution.update({
+        where: { id: institution.id },
+        data: {
+          name: body.confirmCollegeName,
+          verificationStatus: 'APPROVED',
+        },
+      });
+    }
+
+    // Configure primary campus node
+    const primaryCampus = await this.prisma.campus.create({
+      data: {
+        institutionId: institution.id,
+        name: body.primaryCampus.name,
+        code: body.primaryCampus.code ?? null,
+        city: body.primaryCampus.city ?? null,
+        isPrimary: true,
+      },
+    });
+
+    // Configure regional campus nodes
+    const regionalCampuses = [];
+    if (body.regionalCampuses && body.regionalCampuses.length > 0) {
+      for (const reg of body.regionalCampuses) {
+        const campus = await this.prisma.campus.create({
+          data: {
+            institutionId: institution.id,
+            name: reg.name,
+            code: reg.code ?? null,
+            city: reg.city ?? null,
+            isPrimary: false,
+          },
+        });
+        regionalCampuses.push(campus);
+      }
+    }
+
+    // Create/set credentials for TPO User
+    const passwordHash = await hashPassword(body.password);
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: details.contactEmail.toLowerCase() },
+    });
+
+    let tpoUser;
+    if (existingUser) {
+      tpoUser = await this.prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          fullName: details.contactName,
+          passwordHash,
+          role: 'INSTITUTION_ADMIN',
+          institutionId: institution.id,
+          emailVerified: true,
+        },
+      });
+    } else {
+      tpoUser = await this.prisma.user.create({
+        data: {
+          email: details.contactEmail.toLowerCase(),
+          fullName: details.contactName,
+          passwordHash,
+          role: 'INSTITUTION_ADMIN',
+          institutionId: institution.id,
+          emailVerified: true,
+        },
+      });
+    }
+
+    // Update partnership request status
+    const req = this.partnershipRequests.get(details.partnershipRequestId);
+    const now = new Date().toISOString();
+    if (req) {
+      this.partnershipRequests.set(req.id, {
+        ...req,
+        status: 'PROVISIONED',
+        provisionedInstitutionId: institution.id,
+        updatedAt: now,
+      });
+    }
+
+    // Consume activation token
+    this.activationTokens.delete(body.token);
+
+    // Audit log entry: smart.org.provisioned (AC 4)
+    const activeProvisionerId = provisionerId ?? tpoUser.id;
+    await this.auditPublisher.record({
+      action: SMART_ORG_PROVISIONED_ACTION,
+      actorId: activeProvisionerId,
+      resourceType: 'INSTITUTION',
+      resourceId: institution.id,
+      reasonCode: 'PARTNERSHIP_PROVISIONED',
+      metadata: {
+        actorEmail: tpoUser.email,
+        ipAddress,
+        timestamp: now,
+        provisionerId: activeProvisionerId,
+        institutionId: institution.id,
+        institutionName: institution.name,
+        primaryCampusId: primaryCampus.id,
+        primaryCampusName: primaryCampus.name,
+        regionalCampusCount: regionalCampuses.length,
+        activationToken: body.token,
+      },
+    });
+
+    this.logger.log(
+      `University partnership account provisioned for ${institution.name} (${institution.id}) with primary campus ${primaryCampus.name} and ${regionalCampuses.length} regional campus(es).`,
+    );
+
+    return {
+      institutionId: institution.id,
+      name: institution.name,
+      domain: institution.domain,
+      primaryCampusId: primaryCampus.id,
+      campusIds: [primaryCampus.id, ...regionalCampuses.map((c) => c.id)],
+      tpoUser: {
+        userId: tpoUser.id,
+        email: tpoUser.email,
+        fullName: tpoUser.fullName,
+        role: 'INSTITUTION_ADMIN',
+      },
+      auditLog: {
+        action: SMART_ORG_PROVISIONED_ACTION,
+        timestamp: now,
+        provisionerId: activeProvisionerId,
+        ipAddress,
+      },
+    };
   }
 
   async provisionUniversityAccount(
@@ -249,22 +488,22 @@ export class InstitutionsService {
       });
     }
 
-    const institution = await this.createInstitution({
-      name: req.name,
-      domain: req.domain,
-    });
-
-    const now = new Date().toISOString();
-    const updatedReq: PartnershipRequest = {
-      ...req,
-      status: 'PROVISIONED',
-      provisionedInstitutionId: institution.institutionId,
-      updatedAt: now,
-    };
-    this.partnershipRequests.set(id, updatedReq);
-    this.logger.log(
-      `University account provisioned for ${req.name} (${institution.institutionId}) by ${adminUserId}`,
+    const tokenRes = await this.generateActivationToken(id, adminUserId);
+    const activateRes = await this.activatePartnershipAccount(
+      {
+        token: tokenRes.activationToken,
+        password: 'Password123!',
+        confirmCollegeName: req.name,
+        confirmDomain: req.domain,
+        primaryCampus: { name: 'Main Campus' },
+        regionalCampuses: [],
+      },
+      '127.0.0.1',
+      adminUserId,
     );
+
+    const institution = await this.getInstitution(activateRes.institutionId);
+    const updatedReq = await this.getPartnershipRequestById(id);
     return { partnershipRequest: updatedReq, institution };
   }
 
@@ -272,9 +511,16 @@ export class InstitutionsService {
     const req = await this.getPartnershipRequestById(id);
 
     let nextSteps = 'Your partnership application is currently under review by the SMART team.';
+    let tokenDetails = Array.from(this.activationTokens.values()).find(
+      (t) => t.partnershipRequestId === req.id,
+    );
     if (req.status === 'APPROVED') {
+      if (!tokenDetails) {
+        const tokenRes = await this.generateActivationToken(req.id);
+        tokenDetails = this.activationTokens.get(tokenRes.activationToken);
+      }
       nextSteps =
-        'Your partnership request has been approved! SMART is provisioning your university tenant workspace.';
+        'Your partnership request has been approved! Use your activation link to configure your password and campus nodes.';
     } else if (req.status === 'PROVISIONED') {
       nextSteps =
         'Your university workspace has been successfully provisioned. Check your email for activation instructions.';
@@ -287,6 +533,10 @@ export class InstitutionsService {
         req.reviewNotes ?? 'Unfortunately, your partnership request was not approved at this time.';
     }
 
+    const activationUrl = tokenDetails
+      ? `https://tpo.smart.org/activate?token=${tokenDetails.token}`
+      : undefined;
+
     return {
       id: req.id,
       name: req.name,
@@ -296,6 +546,8 @@ export class InstitutionsService {
       decisionDate: req.status !== 'PENDING' ? req.updatedAt : undefined,
       nextSteps,
       provisionedInstitutionId: req.provisionedInstitutionId,
+      activationToken: tokenDetails?.token,
+      activationUrl,
     };
   }
 
@@ -1936,11 +2188,26 @@ export class InstitutionsService {
     invitedById: string,
   ): Promise<StaffMemberDto> {
     await this.requireInstitution(institutionId);
+    let campusName: string | null = null;
+    if (body.campusId) {
+      const campus = await this.prisma.campus.findFirst({
+        where: { id: body.campusId, institutionId },
+      });
+      if (!campus) {
+        throw new NotFoundException({
+          error: 'not_found',
+          message: 'Campus not found for this institution.',
+          statusCode: 404,
+        });
+      }
+      campusName = campus.name;
+    }
+
     const fullName = `${body.firstName.trim()} ${body.lastName.trim()}`;
     const { invitation } = await this.invitations.createAndEnqueue({
       email: body.email,
       fullName,
-      role: body.role,
+      role: body.role as DbUserRole,
       institutionId,
       groupLabel: body.department ?? null,
       invitedById,
@@ -1961,6 +2228,7 @@ export class InstitutionsService {
         fullName,
         role: body.role,
         department: body.department ?? null,
+        campusId: body.campusId ?? null,
       },
     );
 
@@ -1970,6 +2238,8 @@ export class InstitutionsService {
       fullName: dbUser.fullName,
       role: body.role as StaffRole,
       groupLabel: dbUser.groupLabel,
+      campusId: body.campusId ?? null,
+      campusName,
       inviteStatus: invitation.status,
       lastSentAt: invitation.lastSentAt,
       acceptedAt: invitation.acceptedAt,
@@ -1992,11 +2262,17 @@ export class InstitutionsService {
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
       });
+      const resolvedRole: StaffRole =
+        user.groupLabel === 'DEPARTMENTAL_ADVISOR' ||
+        invitation?.groupLabel === 'DEPARTMENTAL_ADVISOR'
+          ? 'DEPARTMENTAL_ADVISOR'
+          : (user.role as StaffRole);
+
       result.push({
         userId: user.id,
         email: user.email,
         fullName: user.fullName,
-        role: user.role as StaffRole,
+        role: resolvedRole,
         groupLabel: user.groupLabel,
         inviteStatus: invitation?.status ?? null,
         lastSentAt: invitation?.lastSentAt?.toISOString() ?? null,
@@ -2006,6 +2282,25 @@ export class InstitutionsService {
       });
     }
     return result;
+  }
+
+  validateCampusAccess(
+    user: { role?: string; campusId?: string | null },
+    targetCampusId: string,
+  ): void {
+    if (user.role === 'SUPER_ADMIN' || user.role === 'INSTITUTION_ADMIN') {
+      return;
+    }
+    if (user.role === 'DEPARTMENTAL_ADVISOR' || user.campusId) {
+      if (!user.campusId || user.campusId !== targetCampusId) {
+        throw new ForbiddenException({
+          error: 'forbidden',
+          message:
+            'Cross-campus data access denied. You can only access resources for your assigned campus.',
+          statusCode: 403,
+        });
+      }
+    }
   }
 
   async updateStaffRole(
@@ -2036,7 +2331,10 @@ export class InstitutionsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const previousRole = targetUser.role as StaffRole;
+    const previousRole: StaffRole =
+      targetUser.groupLabel === 'DEPARTMENTAL_ADVISOR'
+        ? 'DEPARTMENTAL_ADVISOR'
+        : (targetUser.role as StaffRole);
 
     if (previousRole === newRole) {
       return {
@@ -2053,9 +2351,13 @@ export class InstitutionsService {
       };
     }
 
+    const dbRole = newRole === 'DEPARTMENTAL_ADVISOR' ? 'PLACEMENT_STAFF' : newRole;
+    const groupLabel =
+      newRole === 'DEPARTMENTAL_ADVISOR' ? 'DEPARTMENTAL_ADVISOR' : targetUser.groupLabel;
+
     const updatedUser = await this.prisma.user.update({
       where: { id: targetUserId },
-      data: { role: newRole },
+      data: { role: dbRole as DbUserRole, groupLabel },
     });
 
     await this.writeAudit(
