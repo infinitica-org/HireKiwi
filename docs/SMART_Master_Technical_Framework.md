@@ -9,16 +9,17 @@
 
 ## 1. Executive Summary & Core Philosophy
 
-SMART is a **role-specific readiness certification platform**. It assesses students against real competency requirements for a specific job track — not a generic employability score — and issues a criterion-referenced **Gold / Silver / Bronze** certificate that is:
+SMART is an **Intellectual Talent Network** and role-specific readiness verification platform. It assesses candidates against real competency requirements for specific job tracks backed by unfakeable evidence — not generic employability scores — and issues criterion-referenced **Gold / Silver / Bronze** certificates that are:
 
-- Transparent about its own methodology.
-- Honest about its calibration maturity.
-- Student-controlled and publicly verifiable.
-- Backed by correlation data from real hiring outcomes.
+- **Evidence-anchored**: Backed by verified work experience, code repositories, and server-authoritative assessments.
+- **Transparent** about methodology, scoring rubrics, and Angoff cutoffs.
+- **Honest** about calibration maturity via published Confidence Notes.
+- **Student-controlled & cryptographically verifiable**: Signed with platform HMAC-SHA256 keys and verifiable via dynamic QR codes.
+- **Vector-matched**: Connected directly to hiring pipelines via semantic candidate-to-job matching (`pgvector`).
 
 ### 1.1 Positioning Statement
 
-_For placement offices and students who are done trusting opaque, one-size-fits-all employability scores — SMART certifies exactly what a specific role requires, shows its work, and tracks whether it's actually predicting real hiring outcomes._
+_For placement offices, enterprise talent teams, and candidates done with opaque resumes and generic employability scores — SMART is an Intellectual Talent Network that certifies exactly what a specific role requires, verifies evidence against fraud, and semantically matches verified readiness to real hiring demand._
 
 ### 1.2 The Three Core Values
 

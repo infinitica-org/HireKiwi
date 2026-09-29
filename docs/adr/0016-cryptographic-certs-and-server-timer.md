@@ -1,0 +1,72 @@
+# ADR-0016: Cryptographic Certificate Issuance & Server-Authoritative Assessment Timer
+
+| Field      | Value                        |
+|-----------|------------------------------|
+| **Status** | Accepted                    |
+| **Date**   | 2026-09-29                  |
+| **Author** | Vishal Bharath R (@vishalbharath) |
+| **Reviewer** | Tino (@brittytino)        |
+| **Ticket** | S6-VB-04                    |
+
+---
+
+## Context
+
+Two related security problems were identified in Sprint 6:
+
+1. **Assessment timer integrity:** The existing timer was client-driven. A candidate could manipulate the client clock or disconnect at expiry to avoid submission, creating an unfair advantage and potential data inconsistency (open `STARTED` attempts that never transition to `SUBMITTED`).
+
+2. **Certificate tamper-resistance:** Issued certificates had no cryptographic integrity protection. A certificate ID could be shared with a modified display (altered tier, candidate name, etc.) and there was no server-side or client-side way to detect tampering.
+
+---
+
+## Decision
+
+### 1. Server-Authoritative Assessment Timer
+
+All assessment attempt timers are now enforced server-side via a **BullMQ delayed job** (`AssessmentForceSubmitProcessor`), scheduled at attempt start with the server-computed deadline. The delayed job:
+
+- Force-submits the attempt at deadline regardless of client state or network condition.
+- Guards against duplicate force-submissions by checking attempt state before DB write.
+- Uses queue `bull:queue:assessment_force_submit`.
+
+Client-side timers remain as UX affordances only; they have **no authority** over submission.
+
+### 2. HMAC-SHA256 Cryptographic Certificate Signatures
+
+Certificates are issued with a deterministic canonical payload signed with HMAC-SHA256 using a secret (`CERTIFICATE_HMAC_SECRET`). The signature hash is stored in the `Certificate.signatureHash` column and exposed on the public verification endpoint.
+
+The verification app:
+- Checks `signatureValid` from the API response (server-side HMAC verification).
+- Additionally validates a client-supplied `?hash=` query parameter against the certificate UUID locally (`cert-signature.ts`) as a defense-in-depth tamper check.
+- Renders a `[SECURITY_EVENT]`-logged tamper warning alert on any signature mismatch.
+
+### 3. QR Code & Async PDF
+
+- QR codes encode the full public verification URL with the certificate ID.
+- PDF generation is async via BullMQ (`bull:queue:certificate_pdf_generation`) to avoid blocking the HTTP request path.
+
+---
+
+## Consequences
+
+### Positive
+- Assessment expiry is now deterministic and unfalsifiable.
+- Certificate integrity is verifiable by any third party with the public verification URL.
+- `[SECURITY_EVENT]` audit trail exists for tamper attempts.
+- 404 wall on non-existent UUIDs prevents stack-trace leakage.
+
+### Negative / Trade-offs
+- `CERTIFICATE_HMAC_SECRET` must be rotated securely and documented in the key-management runbook.
+- `certificate.service.ts` grew to ~420 lines; a follow-up `CertificateIssuanceStrategy` extraction is recommended.
+- BullMQ delayed jobs for assessment timers require Redis to be reliable; a Redis restart during an assessment could lose in-flight delay jobs (acceptable given Redis persistence is configured).
+
+---
+
+## Alternatives Considered
+
+| Alternative | Why Rejected |
+|-------------|-------------|
+| Client-enforced timer only | Client can be manipulated; no server authority. |
+| RSA/ECDSA certificate signatures | Higher compute cost per issuance; HMAC-SHA256 is sufficient for single-issuer use case. |
+| Synchronous PDF generation | Blocks HTTP thread; unacceptable latency for large certificates. |

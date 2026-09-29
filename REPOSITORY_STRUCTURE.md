@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary & Architectural Decisions
 
-SMART is a role-specific readiness certification platform designed to support high-volume candidate throughput, strict API rate-limiting, real-time code execution, LLM-based evaluation, and public certificate verification. To maximize code reuse, enforce typed boundaries between services, and keep local and CI builds fast, the platform is organized as a **Turborepo-managed pnpm workspace monorepo**.
+SMART is an Intellectual Talent Network and role-specific readiness verification platform designed to support high-volume candidate throughput, strict API rate-limiting, real-time code execution, LLM-based evaluation, semantic vector candidate matching, and public cryptographic certificate verification. To maximize code reuse, enforce typed boundaries between services, and keep local and CI builds fast, the platform is organized as a **Turborepo-managed pnpm workspace monorepo**.
 
 ### 1.1 Key Stack Choices
 

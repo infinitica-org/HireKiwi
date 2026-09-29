@@ -1,6 +1,6 @@
 # SMART Platform Playbook
 
-### Talent Verification Architecture, Standards & Build Reference
+### Intellectual Talent Network & Talent Verification Architecture, Standards & Build Reference
 
 |                   |                                                                   |
 | ----------------- | ----------------------------------------------------------------- |
@@ -13,7 +13,7 @@
 
 ## 1. Purpose
 
-This playbook is the single reference for how SMART is built, verified, and scaled. It defines the product's non-negotiable principles, the standards that resolve every ambiguous design question raised during specification, the end-to-end flows, the data and service architecture, and the roadmap to the platform's target end-state.
+This playbook is the single reference for how SMART is built, verified, and scaled as an **Intellectual Talent Network**. It defines the product's non-negotiable principles, the standards that resolve every ambiguous design question raised during specification, the end-to-end flows, the data and service architecture, and the roadmap to the platform's target end-state. SMART unites candidates, academic placement infrastructure, and enterprise talent ecosystems on a foundation of unfakeable evidence, cryptographic credentials, and semantic vector matching.
 
 It is written to be built from directly. Where a decision has been made, it is stated as a standard, not a suggestion. Where a decision genuinely belongs to business or legal rather than engineering, it is named explicitly in §12 rather than left ambiguous.
 

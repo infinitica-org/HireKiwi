@@ -33,4 +33,4 @@ Project rules under `.cursor/rules/*.mdc` apply at all times. `02-dev-workflow.m
 
 ## Product summary
 
-SMART is a role-specific readiness certification platform, assessed on a five-level by three-tier grid and issued as a transparent, publicly verifiable credential.
+SMART is an Intellectual Talent Network and role-specific readiness verification platform. Candidates build verified talent profiles backed by unfakeable evidence, assessed on a multi-tier (Gold / Silver / Bronze) criterion-referenced competency grid, issued cryptographically signed (HMAC-SHA256), publicly verifiable credentials, and connected to opportunities via semantic vector matching across academic placement infrastructure and enterprise workforce mobility.

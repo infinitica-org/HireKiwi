@@ -70,7 +70,7 @@ async function bootstrap(): Promise<void> {
   const openApi = new DocumentBuilder()
     .setTitle('SMART API')
     .setDescription(
-      'Platform core for role-specific readiness certification. Health probes are unauthenticated; product routes use Bearer JWT.',
+      'Platform core for the SMART Intellectual Talent Network & role-specific readiness certification. Health probes are unauthenticated; product routes use Bearer JWT.',
     )
     .setVersion(env.APP_VERSION)
     .addBearerAuth()
