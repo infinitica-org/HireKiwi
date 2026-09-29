@@ -1,5 +1,6 @@
 import { ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import type {
+  AssignCompanyOwnerRequest,
   CompanyMember,
   DeactivateCompanyMemberRequest,
   InviteRecruiterRequest,
@@ -72,6 +73,57 @@ export class CompanyTeamService {
       orderBy: { createdAt: 'asc' },
     });
     return { members: rows.map(toCompanyMember) };
+  }
+
+  /** SUPER_ADMIN view of a company's team, for the ownership override below. */
+  async listForAdmin(companyId: string): Promise<ListCompanyMembersResponse> {
+    await this.requireCompany(companyId);
+    const rows = await this.prisma.user.findMany({
+      where: { companyId, role: 'COMPANY' },
+      select: MEMBER_SELECT,
+      orderBy: { createdAt: 'asc' },
+    });
+    return { members: rows.map(toCompanyMember) };
+  }
+
+  /**
+   * S6-VV-109 (#167): a SUPER_ADMIN makes an active member an owner, for the case where the only
+   * owner left and nobody can manage the team. Owners hand over among themselves with changeRole;
+   * this path exists for when that is impossible, so it always needs a reason and is audited.
+   */
+  async assignOwnerAsAdmin(
+    companyId: string,
+    body: AssignCompanyOwnerRequest,
+    actorId: string,
+  ): Promise<CompanyMember> {
+    await this.requireCompany(companyId);
+    return this.prisma.$transaction(async (tx) => {
+      const member = await this.requireMember(tx, companyId, body.memberId);
+      if (member.deactivatedAt || !member.passwordHash) {
+        throw conflict(
+          'member_not_active',
+          'Only an active member who has accepted their invitation can become an owner.',
+        );
+      }
+      const before = member.companyRole ?? 'RECRUITER';
+      if (before === 'OWNER') return toCompanyMember(member);
+      const updated = await tx.user.update({
+        where: { id: member.id },
+        data: { companyRole: 'OWNER' },
+        select: MEMBER_SELECT,
+      });
+      await tx.auditLog.create({
+        data: {
+          actorId,
+          action: 'company.owner_assigned_by_admin',
+          resourceType: 'user',
+          resourceId: member.id,
+          reasonCode: body.reason,
+          metadata: { companyId, before: { role: before }, after: { role: 'OWNER' } },
+        },
+      });
+      return toCompanyMember(updated);
+    });
   }
 
   /** Recruiter invite through the shared invitation flow (same model, token and email as Th6-200). */
@@ -316,6 +368,20 @@ export class CompanyTeamService {
       data: { createdById: params.toMemberId },
     });
     return moved.count;
+  }
+
+  private async requireCompany(companyId: string): Promise<void> {
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+      select: { id: true },
+    });
+    if (!company) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Company not found.',
+        statusCode: 404,
+      });
+    }
   }
 
   private async requireMember(

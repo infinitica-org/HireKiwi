@@ -244,6 +244,70 @@ describe('CompanyTeamService (Th6-351/352/353)', () => {
     });
   });
 
+  describe('platform owner override (S6-VV-109, #167)', () => {
+    const adminId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    const reason = 'Previous owner left the company';
+
+    it('makes an active recruiter an owner and audits it with the admin and the reason', async () => {
+      at(0).deactivatedAt = new Date(); // the only owner has left
+
+      const member = await service.assignOwnerAsAdmin(
+        IDS.companyA,
+        { memberId: IDS.recruiter, reason },
+        adminId,
+      );
+
+      expect(member).toMatchObject({ id: IDS.recruiter, role: 'OWNER', status: 'ACTIVE' });
+      expect(prisma.auditLog.create).toHaveBeenCalledWith({
+        data: {
+          actorId: adminId,
+          action: 'company.owner_assigned_by_admin',
+          resourceType: 'user',
+          resourceId: IDS.recruiter,
+          reasonCode: reason,
+          metadata: {
+            companyId: IDS.companyA,
+            before: { role: 'RECRUITER' },
+            after: { role: 'OWNER' },
+          },
+        },
+      });
+    });
+
+    it('refuses a deactivated member or one who never accepted the invitation', async () => {
+      at(1).deactivatedAt = new Date();
+      at(2).passwordHash = null;
+      for (const memberId of [IDS.recruiter, IDS.recruiter2]) {
+        await expect(
+          service.assignOwnerAsAdmin(IDS.companyA, { memberId, reason }, adminId),
+        ).rejects.toMatchObject({
+          status: 409,
+          response: expect.objectContaining({ error: 'member_not_active' }),
+        });
+      }
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.auditLog.create).not.toHaveBeenCalled();
+    });
+
+    it("404s a member of another company and doesn't re-audit an existing owner", async () => {
+      await expect(
+        service.assignOwnerAsAdmin(
+          IDS.companyA,
+          { memberId: IDS.otherCompanyUser, reason },
+          adminId,
+        ),
+      ).rejects.toMatchObject({ status: 404 });
+
+      await service.assignOwnerAsAdmin(IDS.companyA, { memberId: IDS.owner, reason }, adminId);
+      expect(prisma.auditLog.create).not.toHaveBeenCalled();
+    });
+
+    it('404s an unknown company', async () => {
+      prisma.company.findUnique.mockResolvedValueOnce(null);
+      await expect(service.listForAdmin(IDS.companyB)).rejects.toMatchObject({ status: 404 });
+    });
+  });
+
   describe('deactivate / reactivate (Th6-353)', () => {
     it('deactivates, revokes sessions and audits in one transaction', async () => {
       const member = await service.deactivate(IDS.owner, {

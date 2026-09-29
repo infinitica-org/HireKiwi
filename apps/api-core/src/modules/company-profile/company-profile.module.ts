@@ -5,6 +5,7 @@ import { CompanyProfileService } from './company-profile.service.js';
 import { CompanyReviewsService } from './company-reviews.service.js';
 import { CompanyTeamService } from './company-team.service.js';
 import { CompaniesPublicController } from './companies-public.controller.js';
+import { CompanyMembersAdminController } from './company-members-admin.controller.js';
 import { EmployerController } from './employer.controller.js';
 import { IdempotencyService } from './idempotency.service.js';
 import { LocationSearchService } from './location-search.service.js';
@@ -16,6 +17,7 @@ import { LocationsController } from './locations.controller.js';
   imports: [InvitationsModule, BillingModule],
   controllers: [
     CompaniesPublicController,
+    CompanyMembersAdminController,
     EmployerController,
     LocationsController,
     MeCompanyReviewsController,

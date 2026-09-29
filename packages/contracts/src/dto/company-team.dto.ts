@@ -135,6 +135,13 @@ export const InviteRecruiterRequestSchema = z.object({
 export type InviteRecruiterRequest = z.infer<typeof InviteRecruiterRequestSchema>;
 
 export const UpdateCompanyMemberRoleRequestSchema = z.object({ role: CompanyMemberRoleSchema });
+
+/** #167: platform override when a company's only owner has left and nobody can manage the team. */
+export const AssignCompanyOwnerRequestSchema = z.object({
+  memberId: UuidSchema,
+  reason: z.string().trim().min(8).max(500),
+});
+export type AssignCompanyOwnerRequest = z.infer<typeof AssignCompanyOwnerRequestSchema>;
 export type UpdateCompanyMemberRoleRequest = z.infer<typeof UpdateCompanyMemberRoleRequestSchema>;
 
 export const DeactivateCompanyMemberRequestSchema = z.object({
