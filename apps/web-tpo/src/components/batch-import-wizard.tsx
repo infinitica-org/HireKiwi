@@ -76,6 +76,8 @@ export function BatchImportWizard({
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<MappingState>(EMPTY);
   const [busy, setBusy] = useState(false);
+  // One key per "send" the TPO means: a double click emails the batch once (S6-VV-124).
+  const sendKey = useRef(crypto.randomUUID());
   const [dragging, setDragging] = useState(false);
   const [confirmed, setConfirmed] = useState<BatchImportMapping | null>(null);
   const [result, setResult] = useState<BatchImportResultDto | null>(null);
@@ -185,7 +187,8 @@ export function BatchImportWizard({
     setBusy(true);
     setError(null);
     try {
-      setEnqueued((await api.onboarding.sendBatchInvites(batchId)).enqueued);
+      setEnqueued((await api.onboarding.sendBatchInvites(batchId, sendKey.current)).enqueued);
+      sendKey.current = crypto.randomUUID();
       onComplete?.();
     } catch {
       setError('Invitations could not be queued. Please try again.');

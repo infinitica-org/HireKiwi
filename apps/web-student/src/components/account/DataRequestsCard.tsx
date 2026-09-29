@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery } from '@smart/ui';
 import { isSmartApiError } from '@smart/api-client';
 import {
@@ -28,6 +28,8 @@ export function DataRequestsCard() {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [download, setDownload] = useState<DataExportDownload | null>(null);
+  // One key per request the student means to make: a double submit reuses it (S6-VV-124).
+  const requestKey = useRef(crypto.randomUUID());
 
   async function openExport(requestId: string) {
     setError(null);
@@ -50,7 +52,8 @@ export function DataRequestsCard() {
     }
     setBusy(true);
     try {
-      await api.users.createDataRequest(parsed.data);
+      await api.users.createDataRequest(parsed.data, requestKey.current);
+      requestKey.current = crypto.randomUUID();
       setDetails('');
       setSubmitted(true);
       await refetch();

@@ -710,12 +710,14 @@ export function usersApi(client: SmartApiClient) {
     listDataRequests: () =>
       client.get(prefixed('/users/me/data-requests'), { schema: DataRequestListResponseSchema }),
 
-    createDataRequest: (body: CreateDataRequest) =>
+    /** Pass the same `idempotencyKey` for one user intent so a double submit creates one request. */
+    createDataRequest: (body: CreateDataRequest, idempotencyKey?: string) =>
       client.request({
         method: 'POST',
         path: prefixed('/users/me/data-requests'),
         body,
         schema: DataRequestResponseSchema,
+        headers: idempotencyKey ? { 'idempotency-key': idempotencyKey } : undefined,
       }),
 
     /** S6-VV-115 — fresh short-lived links to a finished export. */
@@ -1445,9 +1447,11 @@ export function onboardingApi(client: SmartApiClient) {
         schema: z.array(BatchMemberDtoSchema),
       }),
 
-    sendBatchInvites: (batchId: string) =>
+    /** Pass the same `idempotencyKey` for one click so a double click emails the batch once. */
+    sendBatchInvites: (batchId: string, idempotencyKey?: string) =>
       client.post(prefixed(`/tpo/batches/${batchId}/invites/send`), undefined, {
         schema: SendBatchInvitesResultDtoSchema,
+        headers: idempotencyKey ? { 'idempotency-key': idempotencyKey } : undefined,
       }),
 
     resendStudentInvitation: (invitationId: string) =>
@@ -1759,9 +1763,11 @@ export function assessmentApi(client: SmartApiClient) {
         }),
       }),
 
+    // An attempt completes once, so its id is the natural key: a repeat replays the first result.
     complete: (body: { attemptId: string }) =>
       client.post(prefixed('/assessment/complete'), body, {
         schema: CompleteAttemptResponseSchema,
+        headers: { 'idempotency-key': `attempt-complete-${body.attemptId}` },
       }),
 
     reportIntegrityEvent: (body: unknown) =>
