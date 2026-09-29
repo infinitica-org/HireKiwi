@@ -82,8 +82,10 @@ import type {
   FlaggedOrganizationCategory,
   BulkResolveCompanyVerificationsRequest,
   BulkOperationResult,
+  BulkWhitelistProgressDto,
 } from '@smart/contracts';
-import { REDIS_TTL_SECONDS } from '@smart/contracts';
+import { BulkWhitelistProgressDtoSchema, REDIS_TTL_SECONDS } from '@smart/contracts';
+import { BULK_WHITELIST_IMPORT_QUEUE } from '../../platform/queue/queue.names.js';
 import type { Prisma } from '../../generated/prisma/index.js';
 import ExcelJS from 'exceljs';
 import { batchImportRows, cacheOperations, quotaExceeded } from '@smart/observability';
@@ -152,6 +154,7 @@ export class InstitutionsService {
     @Inject(InvitationsService) private readonly invitations: InvitationsService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
     @Inject(RedisService) private readonly redis: RedisService,
+    @InjectQueue(BULK_WHITELIST_IMPORT_QUEUE) private readonly bulkImportQueue: Queue,
     @Inject(StorageService) private readonly storage: StorageService,
     @Optional()
     @InjectQueue(EMAIL_QUEUE)
@@ -2904,7 +2907,7 @@ export class InstitutionsService {
     };
   }
 
-  private async readImportSheet(
+  async readImportSheet(
     buffer: Buffer,
     fileName: string,
     mimeType: string,
@@ -2969,7 +2972,7 @@ export class InstitutionsService {
     return sheet;
   }
 
-  private readImportHeaders(sheet: ExcelJS.Worksheet): string[] {
+  readImportHeaders(sheet: ExcelJS.Worksheet): string[] {
     const headers: string[] = [];
     sheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
       const header = String(cell.text ?? '').trim();
@@ -2983,7 +2986,7 @@ export class InstitutionsService {
     return headers;
   }
 
-  private suggestImportMapping(headers: string[]): BatchImportMapping | undefined {
+  suggestImportMapping(headers: string[]): BatchImportMapping | undefined {
     const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
     const find = (aliases: string[]) =>
       headers.find((header) => aliases.includes(normalize(header)));
@@ -2994,7 +2997,7 @@ export class InstitutionsService {
     return { fullName, email, ...(groupLabel ? { groupLabel } : {}) };
   }
 
-  private positionalMapping(headers: string[]): BatchImportMapping | undefined {
+  positionalMapping(headers: string[]): BatchImportMapping | undefined {
     if (headers.length < 2) return undefined;
     return {
       fullName: headers[0] ?? '',
@@ -3003,7 +3006,7 @@ export class InstitutionsService {
     };
   }
 
-  private async parseImportRows(
+  async parseImportRows(
     sheet: ExcelJS.Worksheet,
     mapping: BatchImportMapping,
     institutionId: string,
@@ -3116,6 +3119,134 @@ export class InstitutionsService {
     const sheet = workbook.addWorksheet('Students');
     sheet.addRow(['fullName', 'email', 'group']);
     sheet.addRow(['Jane Doe', 'jane@example.edu', 'Section A']);
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  /* ------------------- bulk whitelist async import (Th6-I606) ------------------- */
+
+  async enqueueBulkWhitelistImport(params: {
+    batchId: string;
+    institutionId: string;
+    fileBuffer: Buffer;
+    fileName: string;
+    mimeType: string;
+    mapping?: BatchImportMapping;
+    actorId: string;
+  }): Promise<{ jobId: string }> {
+    const { batchId, institutionId, fileBuffer, fileName, mimeType, mapping, actorId } = params;
+    await this.requireBatch(batchId, institutionId);
+
+    const { randomUUID } = await import('node:crypto');
+    const jobId = randomUUID();
+
+    // Store job metadata in Redis for progress tracking
+    const redisKey = `bulk-import:${jobId}`;
+    await this.redis.set(
+      redisKey,
+      JSON.stringify({
+        jobId,
+        batchId,
+        institutionId,
+        status: 'QUEUED',
+        totalRows: 0,
+        processedRows: 0,
+        validRows: 0,
+        invalidRows: 0,
+        importedRows: 0,
+        errorReportUrl: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }),
+      'EX',
+      3600,
+    );
+
+    // Enqueue the job
+    await this.bulkImportQueue.add('process', {
+      jobId,
+      batchId,
+      institutionId,
+      fileBuffer: fileBuffer.toString('base64'),
+      fileName,
+      mimeType,
+      mapping,
+      actorId,
+    });
+
+    this.logger.log(`Enqueued bulk whitelist import job ${jobId} for batch ${batchId}`);
+    return { jobId };
+  }
+
+  async getBulkWhitelistImportStatus(
+    jobId: string,
+    institutionId: string,
+  ): Promise<BulkWhitelistProgressDto> {
+    const redisKey = `bulk-import:${jobId}`;
+    const raw = await this.redis.get(redisKey);
+    if (!raw) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Import job not found.',
+        statusCode: 404,
+      });
+    }
+    const data = JSON.parse(raw);
+
+    // Verify the job belongs to this institution
+    if (data.institutionId !== institutionId) {
+      throw new ForbiddenException({
+        error: 'forbidden',
+        message: 'You do not have access to this import job.',
+        statusCode: 403,
+      });
+    }
+
+    return BulkWhitelistProgressDtoSchema.parse(data);
+  }
+
+  async getBulkWhitelistErrorReportUrl(
+    jobId: string,
+    institutionId: string,
+  ): Promise<{ url: string }> {
+    const status = await this.getBulkWhitelistImportStatus(jobId, institutionId);
+    if (status.status !== 'COMPLETED') {
+      throw new BadRequestException({
+        error: 'not_completed',
+        message: 'Import job has not completed yet.',
+        statusCode: 400,
+      });
+    }
+    if (!status.errorReportUrl) {
+      throw new NotFoundException({
+        error: 'no_errors',
+        message: 'No error report available for this import.',
+        statusCode: 404,
+      });
+    }
+    return { url: status.errorReportUrl };
+  }
+
+  async buildErrorReport(
+    errors: BatchImportResultDto['errors'],
+    headers: string[],
+  ): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Import Errors');
+
+    // Header row
+    sheet.addRow(['Row Number', ...headers, 'Error Message']);
+
+    // Error rows
+    for (const error of errors) {
+      sheet.addRow([error.row, '', '', '', error.message]);
+    }
+
+    // Auto-fit columns
+    sheet.columns.forEach((column) => {
+      column.width = 20;
+    });
+
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
   }

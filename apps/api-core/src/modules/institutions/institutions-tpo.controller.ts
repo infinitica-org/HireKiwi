@@ -255,6 +255,84 @@ export class InstitutionsTpoController {
     );
   }
 
+  @Post('batches/:batchId/members/import-async')
+  @RequireFlag('bulk_batch_import')
+  async importMembersAsync(
+    @Param('batchId') batchId: string,
+    @Req() request: FastifyRequest,
+    @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
+  ) {
+    const partsIter = (
+      request as FastifyRequest & {
+        parts: () => AsyncIterableIterator<Multipart>;
+      }
+    ).parts();
+
+    let fileBuffer: Buffer | null = null;
+    let fileName = '';
+    let mimeType = 'application/octet-stream';
+    let rawMapping: unknown;
+
+    try {
+      for await (const part of partsIter) {
+        if (part.type === 'file') {
+          const file = part as MultipartFile;
+          mimeType = file.mimetype;
+          fileName = file.filename;
+          fileBuffer = await file.toBuffer();
+        } else if (part.type === 'field' && part.fieldname === 'mapping') {
+          try {
+            rawMapping = JSON.parse(String(part.value)) as unknown;
+          } catch {
+            throw new BadRequestException('Column mapping must be valid JSON.');
+          }
+        }
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException(
+        'The uploaded file exceeds the 5 MB limit or could not be read.',
+      );
+    }
+
+    if (!fileBuffer) {
+      throw new BadRequestException('Choose a CSV or XLSX file to upload.');
+    }
+
+    const parsedMapping = rawMapping ? BatchImportMappingSchema.safeParse(rawMapping) : undefined;
+    if (parsedMapping && !parsedMapping.success) {
+      throw new BadRequestException(
+        parsedMapping.error.issues[0]?.message ?? 'Column mapping is invalid.',
+      );
+    }
+
+    return this.institutions.enqueueBulkWhitelistImport({
+      batchId,
+      institutionId,
+      fileBuffer,
+      fileName,
+      mimeType,
+      mapping: parsedMapping?.data,
+      actorId: user.sub,
+    });
+  }
+
+  @Get('batches/:batchId/members/import-status/:jobId')
+  async getImportStatus(@Param('jobId') jobId: string, @TenantId() institutionId: string) {
+    return this.institutions.getBulkWhitelistImportStatus(jobId, institutionId);
+  }
+
+  @Get('batches/:batchId/members/import-errors/:jobId')
+  async getImportErrorReport(
+    @Param('jobId') jobId: string,
+    @Res() reply: FastifyReply,
+    @TenantId() institutionId: string,
+  ) {
+    const { url } = await this.institutions.getBulkWhitelistErrorReportUrl(jobId, institutionId);
+    reply.redirect(url);
+  }
+
   @Get('batches/:batchId/import-template')
   async importTemplate(
     @Param('batchId') batchId: string,

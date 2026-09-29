@@ -547,6 +547,37 @@ export const SendBatchInvitesResultDtoSchema = z.object({
 });
 export type SendBatchInvitesResultDto = z.infer<typeof SendBatchInvitesResultDtoSchema>;
 
+/* ------------------- bulk whitelist import (Th6-I606) ------------------- */
+
+export const BulkWhitelistUploadRequestSchema = z.object({
+  batchId: UuidSchema,
+  mapping: BatchImportMappingSchema.optional(),
+});
+export type BulkWhitelistUploadRequest = z.infer<typeof BulkWhitelistUploadRequestSchema>;
+
+export const BulkWhitelistJobStatusSchema = z.enum(['QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED']);
+export type BulkWhitelistJobStatus = z.infer<typeof BulkWhitelistJobStatusSchema>;
+
+export const BulkWhitelistProgressDtoSchema = z.object({
+  jobId: UuidSchema,
+  status: BulkWhitelistJobStatusSchema,
+  totalRows: z.number().int().nonnegative(),
+  processedRows: z.number().int().nonnegative(),
+  validRows: z.number().int().nonnegative(),
+  invalidRows: z.number().int().nonnegative(),
+  importedRows: z.number().int().nonnegative(),
+  errorReportUrl: z.string().nullable(),
+  createdAt: IsoDateTimeSchema,
+  updatedAt: IsoDateTimeSchema,
+});
+export type BulkWhitelistProgressDto = z.infer<typeof BulkWhitelistProgressDtoSchema>;
+
+export const BulkWhitelistErrorResponseSchema = z.object({
+  jobId: UuidSchema,
+  message: z.string(),
+});
+export type BulkWhitelistErrorResponse = z.infer<typeof BulkWhitelistErrorResponseSchema>;
+
 export const AuditLogDtoSchema = z.object({
   auditLogId: UuidSchema,
   actorId: UuidSchema.nullable(),

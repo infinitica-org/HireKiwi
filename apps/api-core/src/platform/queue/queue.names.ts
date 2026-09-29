@@ -14,6 +14,8 @@ export const ASSESSMENT_FORCE_SUBMIT_QUEUE = 'assessment_force_submit' as const;
 export const SCORE_RECALCULATION_QUEUE = 'score_recalculation' as const;
 export const DSR_EXPORT_QUEUE = 'dsr_export' as const;
 export const DSR_ERASURE_QUEUE = 'dsr_erasure' as const;
+/** Th6-I606 — background processing for bulk CSV/XLSX whitelist uploads. */
+export const BULK_WHITELIST_IMPORT_QUEUE = 'bulk_whitelist_import' as const;
 
 export const SANDBOX_EXECUTION_DLQ = 'sandbox_execution.dlq' as const;
 export const AUDIO_EVALUATION_DLQ = 'audio_evaluation.dlq' as const;
@@ -28,6 +30,7 @@ export const ASSESSMENT_FORCE_SUBMIT_DLQ = 'assessment_force_submit.dlq' as cons
 export const SCORE_RECALCULATION_DLQ = 'score_recalculation.dlq' as const;
 export const DSR_EXPORT_DLQ = 'dsr_export.dlq' as const;
 export const DSR_ERASURE_DLQ = 'dsr_erasure.dlq' as const;
+export const BULK_WHITELIST_IMPORT_DLQ = 'bulk_whitelist_import.dlq' as const;
 
 /** Playbook OQ-5: monthly batch — never intra-week. */
 export const QLIX_RECALIBRATION_JOB_ID = 'qlix-recalibration-monthly' as const;
