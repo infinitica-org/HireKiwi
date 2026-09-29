@@ -23,3 +23,5 @@ import { PlacementMatchController } from './placement-match.controller.js';
   exports: [MatchingService, OpeningJdParseService],
 })
 export class MatchingModule {}
+export * from './jd-fallback-extractor.js';
+export * from './vector-candidate-matcher.js';

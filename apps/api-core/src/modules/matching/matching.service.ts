@@ -75,6 +75,10 @@ import {
   type SkillCapabilityCandidate,
   type SkillCapabilityJob,
 } from './skill-capability-ranker.js';
+import {
+  matchCandidatesWithVectorSimilarity,
+  type CandidateVectorProfile,
+} from './vector-candidate-matcher.js';
 
 const FALLBACK_TRACK: TrackCode = 'TECH_FULLSTACK';
 
@@ -1520,28 +1524,53 @@ export class MatchingService {
       LIMIT 100
     `);
 
-    return rows.map((r) => {
+    const candidateProfiles: CandidateVectorProfile[] = rows.map((r) => {
       const highestLevel = (r.highestLevelCleared ?? 1) as LevelNumber;
       const tier = (r.headlineTier as CertifiableTier) || 'BRONZE';
       const verified = (r.skills ?? []).map((s) => ({
-        skillCode: s.code,
+        code: s.code,
+        domain: s.domain ?? 'SOFTWARE_IT',
+        proficiency: s.proficiency ?? 'INTERMEDIATE',
       }));
-      return CandidateMatchDtoSchema.parse({
+
+      return {
         studentId: r.id,
         studentName: r.fullName,
-        trackCode: r.primaryTrackCode || 'TECH_BACKEND',
+        trackCode: (r.primaryTrackCode as TrackCode) || 'TECH_FULLSTACK',
         certificateId: r.certificateId,
         highestLevelCleared: highestLevel,
         headlineTier: tier,
-        similarityScore: 0,
-        matchScore: 0.85,
-        method: 'RULES',
+        discoverableToEmployers: true, // SQL already filtered discoverable students
+        isDeactivated: false,
+        isHeld: false,
+        verifiedSkills: verified,
+        domainCompetencies: {},
+      };
+    });
+
+    const targetVector = [0.7, 0.7, 0.6, 0.5, 0.5, 0.67]; // Standard threshold baseline
+    const vectorMatches = matchCandidatesWithVectorSimilarity(candidateProfiles, targetVector);
+
+    return vectorMatches.ranked.map((match) => {
+      const verified = (match.radarBreakdown ?? []).map((rb) => ({
+        skillCode: rb.axis,
+      }));
+      return CandidateMatchDtoSchema.parse({
+        studentId: match.studentId,
+        studentName: match.studentName,
+        trackCode: match.trackCode,
+        certificateId: match.certificateId,
+        highestLevelCleared: match.highestLevelCleared,
+        headlineTier: match.headlineTier,
+        similarityScore: Math.round(match.cosineSimilarity * 100) / 100,
+        matchScore: Math.min(1, Math.round(match.cosineSimilarity * 100) / 100),
+        method: 'HYBRID',
         explanation: {
           thresholdsMet: [],
           thresholdsMissed: [],
-          strongCompetencies: verified.slice(0, 3).map((v) => v.skillCode),
-          gapCompetencies: [],
-          why: `Verified ${r.primaryTrackCode || 'technology'} specialist with Level ${highestLevel} credentials.`,
+          strongCompetencies: [...match.strongCompetencies],
+          gapCompetencies: [...match.gapCompetencies],
+          why: match.why,
           verifiedSkills: verified,
         },
       });
