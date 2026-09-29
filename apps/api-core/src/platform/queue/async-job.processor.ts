@@ -63,16 +63,93 @@ export class AudioEvaluationProcessor extends DlqAwareProcessor {
   }
 }
 
+import { Inject } from '@nestjs/common';
+import { env } from '../config/env.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { StorageService } from '../storage/storage.service.js';
+import { buildCertificateVerificationUrl } from '../../modules/certificate/certificate-crypto.util.js';
+import {
+  certificatePdfStorageKey,
+  generateCertificateQrPng,
+} from '../../modules/certificate/certificate-qr.util.js';
+import { generateCertificatePdfBuffer } from '../../modules/certificate/certificate-pdf.generator.js';
+
 @Processor(PDF_GENERATION_QUEUE)
 export class PdfGenerationProcessor extends DlqAwareProcessor {
   protected readonly logger = new Logger(PdfGenerationProcessor.name);
 
-  constructor(@InjectQueue(PDF_GENERATION_DLQ) protected readonly dlq: Queue) {
+  constructor(
+    @InjectQueue(PDF_GENERATION_DLQ) protected readonly dlq: Queue,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(StorageService) private readonly storage: StorageService,
+  ) {
     super();
   }
 
-  async process(job: Job): Promise<void> {
-    this.logger.warn(`pdf_generation ${job.id ?? ''} is not implemented yet`);
-    throw new Error('PDF generation worker is not wired yet');
+  async process(job: Job<{ certificateId: string }>): Promise<void> {
+    const certificateId = job.data?.certificateId;
+    if (!certificateId) {
+      this.logger.warn(`PDF generation job ${job.id ?? ''} is missing certificateId`);
+      return;
+    }
+
+    const cert = await this.prisma.certificate.findUnique({
+      where: { id: certificateId },
+      include: { user: true, track: true },
+    });
+
+    if (!cert) {
+      this.logger.warn(`Certificate ${certificateId} not found for PDF generation`);
+      return;
+    }
+
+    try {
+      const verificationUrl = buildCertificateVerificationUrl(
+        env.VERIFY_APP_URL,
+        cert.id,
+        cert.signature ?? '',
+      );
+      const qrPngBuffer = await generateCertificateQrPng(verificationUrl);
+
+      const candidateName = cert.user?.fullName || cert.user?.email || 'Candidate';
+      const trackName = cert.track?.name || cert.track?.code || 'Readiness Track';
+      const tierTrail =
+        cert.tierTrail && typeof cert.tierTrail === 'object'
+          ? (cert.tierTrail as Record<string, string>)
+          : {};
+
+      const pdfBuffer = await generateCertificatePdfBuffer({
+        certificateId: cert.id,
+        candidateName,
+        trackName,
+        highestLevelCleared: cert.highestLevelCleared,
+        headlineTier: cert.headlineTier,
+        tierTrail,
+        issuedAt: cert.issuedAt ?? cert.createdAt,
+        signature: cert.signature ?? '',
+        verificationUrl,
+        qrPngBuffer,
+      });
+
+      const pdfKey = certificatePdfStorageKey(cert.id);
+      await this.storage.putObjectBuffer({
+        objectKey: pdfKey,
+        buffer: pdfBuffer,
+        contentType: 'application/pdf',
+      });
+
+      await this.prisma.certificate.update({
+        where: { id: cert.id },
+        data: { pdfKey },
+      });
+
+      this.logger.log(`Generated and persisted certificate PDF artifact: ${pdfKey}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to generate certificate PDF for ${certificateId}: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
   }
 }

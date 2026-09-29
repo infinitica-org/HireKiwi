@@ -35,6 +35,10 @@ const EnvSchema = z.object({
 
   JWT_SECRET: z.string().min(32).default('local-dev-jwt-secret-change-me-now!!'),
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  CERTIFICATE_MASTER_SECRET: z
+    .string()
+    .min(32)
+    .default('local-dev-cert-master-secret-change-me-now!!'),
   REFRESH_COOKIE_NAME: z.string().default('smart_refresh'),
   REFRESH_TTL_SECONDS: z.coerce
     .number()
@@ -233,6 +237,12 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   if (data.NODE_ENV === 'production' && data.JWT_SECRET === defaultJwt) {
     throw new Error(
       'Invalid environment: JWT_SECRET must be set to a non-default value in production',
+    );
+  }
+  const defaultCertSecret = 'local-dev-cert-master-secret-change-me-now!!';
+  if (data.NODE_ENV === 'production' && data.CERTIFICATE_MASTER_SECRET === defaultCertSecret) {
+    throw new Error(
+      'Invalid environment: CERTIFICATE_MASTER_SECRET must be set to a non-default value in production',
     );
   }
   if (data.NODE_ENV === 'production' && !data.METRICS_SCRAPE_TOKEN) {
