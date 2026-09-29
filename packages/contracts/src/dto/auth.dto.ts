@@ -220,6 +220,8 @@ export const API_KEY_HEADER = 'x-smart-api-key' as const;
 
 export const AssignRoleRequestSchema = z.object({
   role: UserRoleSchema,
+  /** #172: every role change is audited with the reason the admin gave. */
+  reason: z.string().trim().min(8).max(500),
 });
 export type AssignRoleRequest = z.infer<typeof AssignRoleRequestSchema>;
 
