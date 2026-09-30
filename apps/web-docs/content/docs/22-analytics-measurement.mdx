@@ -1,0 +1,41 @@
+---
+title: 22. Analytics & Measurement
+description: Product analytics telemetry, North Star KPIs, cohort metrics, and experimentation frameworks.
+---
+
+## 22.1 Telemetry Architecture
+
+SmartZen captures behavioral, operational, and system performance telemetry via Redpanda event streams consumed by ClickHouse and visualized in Grafana:
+
+```
+[Web / API Event] ──► [Redpanda: telemetry.events.v1] ──► [ClickHouse OLAP] ──► [Grafana Dashboards]
+```
+
+---
+
+## 22.2 Metric Hierarchy & Core KPIs
+
+```
+                          [ NORTH STAR METRIC ]
+            Verified Capability Matches Hired (VCMH) > 2,500/mo
+                                     │
+      ┌──────────────────────────────┼──────────────────────────────┐
+      │                              │                              │
+[ CANDIDATE HEALTH ]        [ EMPLOYER VELOCITY ]         [ INSTITUTION TRUST ]
+• Verification Rate: >82%   • Time-to-Shortlist: <48h     • VIR (True Positive): >94%
+• Assessment Completion: >78%• Requisition Fill Rate: >65% • Placement Rate: >85%
+```
+
+---
+
+## 22.3 University & Employer Cohort Dashboards
+
+- **University Placements Dashboard:** Tracks live CTC distribution, offer acceptance rates, department-wise capability percentiles, and NIRF accreditation compliance indicators.
+- **Employer Hiring Efficiency Dashboard:** Displays funnel conversion from candidate discovery to technical interview to offer acceptance, quantifying recruitment hours saved compared to legacy ATS screening.
+
+---
+
+## 22.4 Continuous Experimentation (A/B Testing)
+
+- Controlled rollout of recommendation weights ($w_v, w_c, w_b$) across matching cohorts.
+- Prompt engineering experiments evaluated via offline Golden Dataset runs before multi-armed bandit traffic allocation.

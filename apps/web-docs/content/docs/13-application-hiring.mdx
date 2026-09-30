@@ -1,0 +1,75 @@
+---
+title: 13. Application & Hiring
+description: Application lifecycle state machines, candidate pipelines, interview workflows, and offer acceptance protocols.
+---
+
+## 13.1 Application Lifecycle State Machine
+
+The hiring journey within SmartZen is modeled as a strictly enforced finite state machine (FSM):
+
+```
+                   ┌───────────────┐
+                   │    APPLIED    │
+                   └───────┬───────┘
+                           │ Recruiter Shortlists
+                   ┌───────▼───────┐
+                   │  SHORTLISTED  │
+                   └───────┬───────┘
+                           │ Interview Scheduled
+                   ┌───────▼───────┐
+                   │  INTERVIEWING │
+                   └───────┬───────┘
+                           │ Offer Extended
+                   ┌───────▼───────┐
+                   │ OFFER_PENDING │
+                   └───────┬───────┘
+            ┌──────────────┴──────────────┐
+       Candidate Accepts           Candidate Declines
+            │                             │
+    ┌───────▼───────┐             ┌───────▼───────┐
+    │     HIRED     │             │ OFFER_DECLINED│
+    └───────────────┘             └───────────────┘
+```
+
+_At any pre-offer stage, an application can transition to `REJECTED` or `WITHDRAWN`._
+
+---
+
+## 13.2 Candidate Pipeline Schema
+
+```sql
+CREATE TYPE "ApplicationStatus" AS ENUM (
+  'APPLIED',
+  'SHORTLISTED',
+  'INTERVIEWING',
+  'OFFER_PENDING',
+  'HIRED',
+  'OFFER_DECLINED',
+  'REJECTED',
+  'WITHDRAWN'
+);
+
+CREATE TABLE "JobApplication" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "jobOpeningId" UUID NOT NULL REFERENCES "JobOpening"("id"),
+  "candidateId" UUID NOT NULL REFERENCES "CandidateProfile"("id"),
+  "status" "ApplicationStatus" NOT NULL DEFAULT 'APPLIED',
+  "matchScore" NUMERIC(5,2) NOT NULL,
+  "matchBreakdown" JSONB NOT NULL,
+  "offerLetterUri" TEXT,
+  "ctcOffered" NUMERIC(12,2),
+  "hiredAt" TIMESTAMPTZ,
+  "rejectionReason" TEXT,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT "unique_candidate_job" UNIQUE ("jobOpeningId", "candidateId")
+);
+```
+
+---
+
+## 13.3 Offer & Acceptance Protocols
+
+1. **Offer Generation:** The employer uploads an official offer letter and enters the formal CTC and joining date.
+2. **Institutional Guardrails:** If the university enforces a "Dream Offer" threshold (e.g., student placed under 6 LPA can only accept subsequent offers above 10 LPA), the platform validates the compensation criteria before allowing the candidate to accept.
+3. **Cryptographic Acceptance:** Candidate confirms acceptance via electronic acknowledgment. The application status transitions to `HIRED`, and the university placement ledger is updated automatically.

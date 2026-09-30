@@ -3,35 +3,59 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
+  ArrowRight,
+  Bot,
   Building2,
+  CheckCircle2,
+  Clock,
   GraduationCap,
-  PauseCircle,
-  ShieldAlert,
   ScrollText,
-  ArrowUpRight,
-  Users,
-  Sparkles,
+  ShieldAlert,
 } from 'lucide-react';
 import type { AdminDashboardDto, AiUsageSummaryDto } from '@smart/contracts';
 import { InlineAlert } from '@/components/admin-ui';
-import { KpiTile, OpsBoard, Panel, PlanMix, TenantMix } from '@/components/dashboard-widgets';
+import { AnimatedCircularProgressBar, NumberTicker } from '@smart/ui';
+import { formatAuditAction, formatResourceType } from '@/lib/audit-actions';
 import { api } from '@/lib/api';
 
 function LoadingOverview() {
   return (
-    <div className="flex flex-col gap-8">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-5">
-        {Array.from({ length: 7 }).map((_, index) => (
-          <div key={index} className="h-32 animate-pulse rounded-2xl bg-card" />
+    <div className="mx-auto max-w-[1400px] space-y-5 pb-12 font-sans">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-32 animate-pulse rounded-md bg-white border border-zinc-200/80"
+          />
         ))}
       </div>
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {Array.from({ length: 3 }).map((_, index) => (
-          <div key={index} className="h-56 animate-pulse rounded-2xl bg-card" />
+          <div
+            key={index}
+            className="h-32 animate-pulse rounded-md bg-white border border-zinc-200/80"
+          />
+        ))}
+      </div>
+      <div className="grid gap-5 xl:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-64 animate-pulse rounded-md bg-white border border-zinc-200/80"
+          />
         ))}
       </div>
     </div>
   );
+}
+
+function getInitials(text: string | null | undefined): string {
+  if (!text) return 'SY';
+  const parts = text.split('@')[0]?.split(/[._ -]/) || [];
+  if (parts.length >= 2 && parts[0] && parts[1]) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return text.slice(0, 2).toUpperCase();
 }
 
 export default function AdminHomePage() {
@@ -39,202 +63,629 @@ export default function AdminHomePage() {
   const [error, setError] = useState<string | null>(null);
   const [aiUsage, setAiUsage] = useState<AiUsageSummaryDto | null>(null);
 
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([]);
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
+  const [selectedOrgType, setSelectedOrgType] = useState<'ALL' | 'INSTITUTION' | 'COMPANY'>('ALL');
+  const [selectedOrgId, setSelectedOrgId] = useState('');
+
   useEffect(() => {
     api.onboarding
-      .dashboard()
-      .then(setData)
-      .catch(() => setError('Failed to load dashboard.'));
-    // Independent fetch: AI usage isn't part of AdminDashboardDto, and
-    // failing to load it shouldn't block the rest of the dashboard.
+      .listInstitutions()
+      .then((items) => setInstitutions(items.map((i) => ({ id: i.institutionId, name: i.name }))))
+      .catch(() => undefined);
+
+    api.onboarding
+      .listCompanies()
+      .then((items) => setCompanies(items.map((c) => ({ id: c.companyId, name: c.name }))))
+      .catch(() => undefined);
+
     api.onboarding
       .aiUsage()
       .then(setAiUsage)
       .catch(() => undefined);
   }, []);
 
+  useEffect(() => {
+    const query: Record<string, string> = {};
+    if (fromDate) query.from = new Date(fromDate).toISOString();
+    if (toDate) query.to = new Date(`${toDate}T23:59:59.999Z`).toISOString();
+    if (selectedOrgType === 'INSTITUTION' && selectedOrgId) query.institutionId = selectedOrgId;
+    if (selectedOrgType === 'COMPANY' && selectedOrgId) query.companyId = selectedOrgId;
+
+    api.onboarding
+      .dashboard(query)
+      .then(setData)
+      .catch(() => setError('Failed to load operational dashboard metrics.'));
+  }, [fromDate, toDate, selectedOrgType, selectedOrgId]);
+
   if (error) return <InlineAlert tone="danger" title={error} />;
   if (!data) return <LoadingOverview />;
 
   const totalTenants = Math.max(data.institutions.total, 1);
   const activePct = Math.round((data.institutions.active / totalTenants) * 100);
-  const planMax = Math.max(...data.planMix.map((row) => row.count), 1);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-5">
-        <KpiTile
-          icon={GraduationCap}
-          tone="accent"
-          label="Institutions"
-          value={data.institutions.total}
-          hint={`${data.institutions.active} active · ${data.institutions.held} held`}
-          href="/admin/institutions"
-        />
-        <KpiTile
-          icon={Users}
-          tone="accent"
-          label="Students"
-          value={data.students.total}
-          hint={`${data.students.active} active · ${data.students.held} held`}
-          href="/admin/users"
-        />
-        <KpiTile
-          icon={PauseCircle}
-          tone="inverse"
-          label="Held institutions"
-          value={data.openHolds.institutions}
-          hint="Paused tenant access"
-          href="/admin/institutions"
-        />
-        <KpiTile
-          icon={PauseCircle}
-          tone="inverse"
-          label="Held students"
-          value={data.openHolds.students}
-          hint="Paused candidate access"
-          href="/admin/users"
-        />
-        <KpiTile
-          icon={Building2}
-          tone="inverse"
-          label="Pending verification"
-          value={data.pendingVerifications}
-          hint={`${data.companies.pendingVerification} companies`}
-        />
-        <KpiTile
-          icon={ShieldAlert}
-          tone="muted"
-          label="Integrity flags"
-          value={data.flaggedAttempts}
-          hint="Awaiting review"
-          href="/admin/integrity"
-        />
-        <Link href="/admin/health" className="block rounded-2xl focus-visible:outline-none">
-          <KpiTile
-            icon={Sparkles}
-            tone="accent"
-            label="AI usage (24h)"
-            value={aiUsage?.last24h.requestCount ?? 0}
-            hint={
-              aiUsage
-                ? `$${aiUsage.last24h.totalCostUsd.toFixed(2)} spent · ${(aiUsage.last24h.fallbackRate * 100).toFixed(0)}% fallback`
-                : 'Loading…'
-            }
-          />
-        </Link>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-3">
-        <TenantMix
-          percent={activePct}
-          legend={[
-            {
-              id: 'active',
-              label: 'Active',
-              value: data.institutions.active,
-              color: 'var(--brand-teal)',
-            },
-            {
-              id: 'held',
-              label: 'On hold',
-              value: data.institutions.held,
-              color: '#ffffff',
-            },
-            {
-              id: 'off',
-              label: 'Deactivated',
-              value: data.institutions.deactivated,
-              color: 'var(--brand-ink)',
-            },
-          ]}
-        />
-        <PlanMix
-          items={data.planMix.map((row) => ({
-            id: row.code,
-            label: row.code,
-            value: row.count,
-            max: planMax,
-          }))}
-        />
-        <Panel
-          title="Recent audit"
-          description="Latest sensitive actions."
-          action={
-            <Link
-              href="/admin/audit"
-              className="inline-flex items-center gap-1 text-xs font-medium text-card-foreground/70 hover:text-card-foreground"
+    <div className="mx-auto max-w-[1400px] space-y-6 pb-12 font-sans pt-2">
+      {/* 🔍 Filter Bar for T17 Operational Dashboard */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-zinc-200/80 bg-white p-3.5 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-3 text-xs">
+          <span className="font-bold text-zinc-900">Operational Filters:</span>
+          <div className="flex items-center gap-1.5">
+            <label className="text-zinc-500 font-medium">From:</label>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-900 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-zinc-500 font-medium">To:</label>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-900 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-zinc-500 font-medium">Org Scope:</label>
+            <select
+              value={selectedOrgType}
+              onChange={(e) => {
+                setSelectedOrgType(e.target.value as 'ALL' | 'INSTITUTION' | 'COMPANY');
+                setSelectedOrgId('');
+              }}
+              className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-900 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
             >
-              Open log
-              <ArrowUpRight className="size-3.5" strokeWidth={1.75} />
-            </Link>
-          }
-        >
-          {data.recentAudit.length === 0 ? (
-            <p className="text-sm text-card-foreground/70">
-              No audit events yet.{' '}
-              <Link href="/admin/institutions" className="underline underline-offset-4">
-                Add an institution
-              </Link>
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {data.recentAudit.slice(0, 6).map((row) => (
-                <li key={row.auditLogId} className="rounded-xl bg-muted px-3 py-2.5">
-                  <p className="text-sm font-medium">{row.action}</p>
-                  <p className="text-xs text-card-foreground/70">
-                    {row.actorEmail ?? 'system'} · {new Date(row.createdAt).toLocaleString()}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
+              <option value="ALL">All Organizations</option>
+              <option value="INSTITUTION">University / Institution</option>
+              <option value="COMPANY">Company / Employer</option>
+            </select>
+          </div>
+          {selectedOrgType !== 'ALL' ? (
+            <div className="flex items-center gap-1.5">
+              <label className="text-zinc-500 font-medium">Organization:</label>
+              <select
+                value={selectedOrgId}
+                onChange={(e) => setSelectedOrgId(e.target.value)}
+                className="rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-900 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900 max-w-xs truncate"
+              >
+                <option value="">All in type</option>
+                {selectedOrgType === 'INSTITUTION'
+                  ? institutions.map((i) => (
+                      <option key={i.id} value={i.id}>
+                        {i.name}
+                      </option>
+                    ))
+                  : companies.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+              </select>
+            </div>
+          ) : null}
+        </div>
+        {fromDate || toDate || selectedOrgId || selectedOrgType !== 'ALL' ? (
+          <button
+            type="button"
+            onClick={() => {
+              setFromDate('');
+              setToDate('');
+              setSelectedOrgType('ALL');
+              setSelectedOrgId('');
+            }}
+            className="text-xs font-semibold text-zinc-600 hover:text-zinc-900 hover:underline"
+          >
+            Clear Filters
+          </button>
+        ) : null}
       </div>
 
-      <OpsBoard
-        steps={[
-          {
-            id: 'institutions',
-            label: 'Institutions',
-            hint: 'Campus tenants',
-            value: data.institutions.total,
-            icon: GraduationCap,
-            href: '/admin/institutions',
-          },
-          {
-            id: 'integrity',
-            label: 'Integrity',
-            hint: 'Flagged attempts',
-            value: data.flaggedAttempts,
-            icon: ShieldAlert,
-            href: '/admin/integrity',
-          },
-          {
-            id: 'holds-institutions',
-            label: 'Held institutions',
-            hint: 'Paused tenant access',
-            value: data.openHolds.institutions,
-            icon: PauseCircle,
-            href: '/admin/institutions',
-          },
-          {
-            id: 'holds-students',
-            label: 'Held students',
-            hint: 'Paused candidate access',
-            value: data.openHolds.students,
-            icon: PauseCircle,
-            href: '/admin/users',
-          },
-          {
-            id: 'audit',
-            label: 'Audit events',
-            hint: 'Recent trail',
-            value: data.recentAudit.length,
-            icon: ScrollText,
-            href: '/admin/audit',
-          },
-        ]}
-      />
+      {/* 📊 7 Stat Cards Grid - Clean Monochrome SaaS Styling */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-0.5">
+          <div>
+            <h2 className="font-heading text-base font-bold tracking-tight text-zinc-900">
+              Platform Overview
+            </h2>
+            <p className="text-xs text-zinc-500">Live operational counters from database</p>
+          </div>
+          <span className="text-[11px] font-medium text-zinc-400">7 active monitors</span>
+        </div>
+
+        {/* Row 1: 4 Primary Metrics */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Card 1: Universities live */}
+          <Link
+            href="/admin/institutions"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs transition-all duration-200 hover:border-zinc-300 hover:shadow-xs"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                Universities live
+              </p>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <GraduationCap className="size-5 stroke-[1.75]" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="font-heading text-3xl font-extrabold tracking-tight text-zinc-950 sm:text-4xl">
+                <NumberTicker value={data.institutions.active} className="text-zinc-950" />
+              </p>
+              <p className="mt-1 text-xs font-medium text-zinc-500">Active campus tenants</p>
+            </div>
+          </Link>
+
+          {/* Card 2: Pending provisioning */}
+          <Link
+            href="/admin/institutions"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs transition-all duration-200 hover:border-zinc-300 hover:shadow-xs"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                Pending provisioning
+              </p>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <Clock className="size-5 stroke-[1.75]" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="font-heading text-3xl font-extrabold tracking-tight text-zinc-950 sm:text-4xl">
+                <NumberTicker value={data.institutions.held} className="text-zinc-950" />
+              </p>
+              <p className="mt-1 text-xs font-medium text-zinc-500">Awaiting admin review</p>
+            </div>
+          </Link>
+
+          {/* Card 3: Employers verified */}
+          <Link
+            href="/admin/companies"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs transition-all duration-200 hover:border-zinc-300 hover:shadow-xs"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                Employers verified
+              </p>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <Building2 className="size-5 stroke-[1.75]" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="font-heading text-3xl font-extrabold tracking-tight text-zinc-950 sm:text-4xl">
+                <NumberTicker value={data.companies.total} className="text-zinc-950" />
+              </p>
+              <p className="mt-1 text-xs font-medium text-zinc-500">Partner companies</p>
+            </div>
+          </Link>
+
+          {/* Card 4: Pending verification */}
+          <Link
+            href="/admin/companies"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs transition-all duration-200 hover:border-zinc-300 hover:shadow-xs"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                Pending verification
+              </p>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <CheckCircle2 className="size-5 stroke-[1.75]" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="font-heading text-3xl font-extrabold tracking-tight text-zinc-950 sm:text-4xl">
+                <NumberTicker
+                  value={data.companies.pendingVerification}
+                  className="text-zinc-950"
+                />
+              </p>
+              <p className="mt-1 text-xs font-medium text-zinc-500">Employer review queue</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Row 2: 3 Specialized Metrics */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Card 5: Endorsements pending */}
+          <Link
+            href="/admin/verification"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs transition-all duration-200 hover:border-zinc-300 hover:shadow-xs"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                Endorsements pending
+              </p>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <Clock className="size-5 stroke-[1.75]" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="font-heading text-3xl font-extrabold tracking-tight text-zinc-950 sm:text-4xl">
+                <NumberTicker value={data.pendingVerifications} className="text-zinc-950" />
+              </p>
+              <p className="mt-1 text-xs font-medium text-zinc-500">Awaiting credential issuance</p>
+            </div>
+          </Link>
+
+          {/* Card 6: AI defense interviews run (30d) */}
+          <Link
+            href="/admin/health"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs transition-all duration-200 hover:border-zinc-300 hover:shadow-xs"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                AI defense interviews run (30d)
+              </p>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <Bot className="size-5 stroke-[1.75]" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="font-heading text-3xl font-extrabold tracking-tight text-zinc-950 sm:text-4xl">
+                <NumberTicker
+                  value={aiUsage?.last30d?.requestCount ?? 0}
+                  className="text-zinc-950"
+                />
+              </p>
+              <p className="mt-1 text-xs font-medium text-zinc-500">Automated candidate defense</p>
+            </div>
+          </Link>
+
+          {/* Card 7: Flagged profiles */}
+          <Link
+            href="/admin/integrity"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs transition-all duration-200 hover:border-zinc-300 hover:shadow-xs"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                Flagged profiles
+              </p>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <ShieldAlert className="size-5 stroke-[1.75]" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="font-heading text-3xl font-extrabold tracking-tight text-zinc-950 sm:text-4xl">
+                <NumberTicker value={data.flaggedAttempts} className="text-zinc-950" />
+              </p>
+              <p className="mt-1 text-xs font-medium text-zinc-500">Trust & safety anomalies</p>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* ⏱️ Queue Volume & Processing Time SLA (T23) */}
+      {data.queuePerformance ? (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-0.5">
+            <div>
+              <h2 className="font-heading text-base font-bold tracking-tight text-zinc-900">
+                Queue Performance & SLA Operations
+              </h2>
+              <p className="text-xs text-zinc-500">
+                Queue volume, oldest backlog age, and average processing latency
+              </p>
+            </div>
+            <span className="text-[11px] font-medium text-zinc-400">T23 Queue Monitor</span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Verification Queue Performance */}
+            <div className="rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Building2 className="size-4 text-zinc-700" />
+                  <h3 className="text-xs font-bold text-zinc-900">Company Verification Queue</h3>
+                </div>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-700">
+                  {data.queuePerformance.companyVerification.pending} pending
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-md bg-zinc-50 p-2.5">
+                  <div className="text-[10px] uppercase font-bold text-zinc-500">Backlog Age</div>
+                  <div className="mt-1 font-mono text-sm font-bold text-zinc-900">
+                    {data.queuePerformance.companyVerification.oldestPendingSeconds == null
+                      ? 'None pending'
+                      : data.queuePerformance.companyVerification.oldestPendingSeconds < 60
+                        ? `${data.queuePerformance.companyVerification.oldestPendingSeconds}s`
+                        : `${Math.floor(data.queuePerformance.companyVerification.oldestPendingSeconds / 60)}m`}
+                  </div>
+                </div>
+                <div className="rounded-md bg-zinc-50 p-2.5">
+                  <div className="text-[10px] uppercase font-bold text-zinc-500">
+                    Avg Turnaround
+                  </div>
+                  <div className="mt-1 font-mono text-sm font-bold text-zinc-900">
+                    {data.queuePerformance.companyVerification.avgProcessingTimeMs == null
+                      ? 'N/A'
+                      : data.queuePerformance.companyVerification.avgProcessingTimeMs < 1000
+                        ? `${data.queuePerformance.companyVerification.avgProcessingTimeMs}ms`
+                        : `${(data.queuePerformance.companyVerification.avgProcessingTimeMs / 1000).toFixed(1)}s`}
+                  </div>
+                </div>
+                <div className="rounded-md bg-zinc-50 p-2.5">
+                  <div className="text-[10px] uppercase font-bold text-zinc-500">Resolved</div>
+                  <div className="mt-1 font-mono text-sm font-bold text-zinc-900">
+                    {data.queuePerformance.companyVerification.completed}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Kafka Outbox Performance */}
+            <div className="rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="size-4 text-zinc-700" />
+                  <h3 className="text-xs font-bold text-zinc-900">Outbox Relay Queue</h3>
+                </div>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-700">
+                  {data.queuePerformance.kafkaOutbox.pending} in flight
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-md bg-zinc-50 p-2.5">
+                  <div className="text-[10px] uppercase font-bold text-zinc-500">In Flight</div>
+                  <div className="mt-1 font-mono text-sm font-bold text-zinc-900">
+                    {data.queuePerformance.kafkaOutbox.pending}
+                  </div>
+                </div>
+                <div className="rounded-md bg-zinc-50 p-2.5">
+                  <div className="text-[10px] uppercase font-bold text-zinc-500">Relay Latency</div>
+                  <div className="mt-1 font-mono text-sm font-bold text-zinc-900">
+                    {data.queuePerformance.kafkaOutbox.avgProcessingTimeMs == null
+                      ? 'N/A'
+                      : data.queuePerformance.kafkaOutbox.avgProcessingTimeMs < 1000
+                        ? `${data.queuePerformance.kafkaOutbox.avgProcessingTimeMs}ms`
+                        : `${(data.queuePerformance.kafkaOutbox.avgProcessingTimeMs / 1000).toFixed(1)}s`}
+                  </div>
+                </div>
+                <div className="rounded-md bg-zinc-50 p-2.5">
+                  <div className="text-[10px] uppercase font-bold text-zinc-500">Published</div>
+                  <div className="mt-1 font-mono text-sm font-bold text-zinc-900">
+                    {data.queuePerformance.kafkaOutbox.completed}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* 📊 Main Content Bento: Recent Activity & Tenant Breakdown */}
+      <div className="grid gap-5 xl:grid-cols-3">
+        {/* Panel 1: Recent Activity from Live Audit Log */}
+        <section className="xl:col-span-2 relative overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs md:p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+              <div>
+                <h2 className="font-heading text-base font-bold tracking-tight text-zinc-900">
+                  Recent Activity
+                </h2>
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  Live sensitive administrative mutations and tenant operations
+                </p>
+              </div>
+              <Link
+                href="/admin/audit"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-zinc-900 hover:underline"
+              >
+                Full audit log
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </div>
+
+            {data.recentAudit.length === 0 ? (
+              <div className="mt-6 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/60 px-6 py-10 text-center">
+                <ScrollText className="mx-auto size-8 text-zinc-400 mb-2" />
+                <p className="text-xs font-semibold text-zinc-700">No recent activity logged yet</p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Administrative actions and tenant lifecycle changes will appear here in real time.
+                </p>
+              </div>
+            ) : (
+              <ul className="mt-4 space-y-2.5">
+                {data.recentAudit.map((row) => (
+                  <li
+                    key={row.auditLogId}
+                    className="flex items-start justify-between gap-3 rounded-lg border border-zinc-100 bg-zinc-50/70 p-3 transition-colors hover:border-zinc-200 hover:bg-zinc-50"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 font-mono text-xs font-bold shadow-2xs">
+                        {getInitials(row.actorEmail)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-bold text-zinc-900">
+                            {formatAuditAction(row.action)}
+                          </p>
+                          <span className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-700">
+                            {formatResourceType(row.resourceType)}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-zinc-500">
+                          Resource:{' '}
+                          <strong className="font-mono text-zinc-700">
+                            {row.resourceId ? row.resourceId.slice(0, 8) : '—'}
+                          </strong>
+                          {' · '}
+                          Actor:{' '}
+                          <strong className="font-mono text-zinc-700">
+                            {row.actorEmail ?? 'System'}
+                          </strong>
+                        </p>
+                        {row.reasonCode ? (
+                          <p className="text-[10px] text-zinc-400 italic mt-0.5">
+                            Reason: {row.reasonCode}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                    <span className="shrink-0 font-mono text-[10px] text-zinc-400">
+                      {new Date(row.createdAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        {/* Panel 2: Institutional Tenant Health */}
+        <section className="relative overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs md:p-6 flex flex-col justify-between">
+          <div>
+            <div className="border-b border-zinc-100 pb-4">
+              <h2 className="font-heading text-base font-bold tracking-tight text-zinc-900">
+                Tenant Health
+              </h2>
+              <p className="mt-0.5 text-xs text-zinc-500">
+                Active universities versus held/provisioning
+              </p>
+            </div>
+
+            <div className="mt-5 flex flex-col items-center gap-5">
+              <AnimatedCircularProgressBar
+                value={activePct}
+                label="Live"
+                className="size-28"
+                gaugePrimaryColor="#18181b"
+                gaugeSecondaryColor="#f4f4f5"
+              />
+
+              <ul className="w-full space-y-2 text-xs">
+                <li className="flex items-center justify-between rounded-lg bg-zinc-50/80 px-3 py-2 border border-zinc-100">
+                  <span className="flex items-center gap-2 font-medium text-zinc-700">
+                    <span className="size-2 rounded-full bg-zinc-900" />
+                    Active Universities
+                  </span>
+                  <span className="font-mono font-bold text-zinc-900">
+                    {data.institutions.active}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between rounded-lg bg-zinc-50/80 px-3 py-2 border border-zinc-100">
+                  <span className="flex items-center gap-2 font-medium text-zinc-700">
+                    <span className="size-2 rounded-full bg-zinc-400" />
+                    Pending Provisioning
+                  </span>
+                  <span className="font-mono font-bold text-zinc-900">
+                    {data.institutions.held}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between rounded-lg bg-zinc-50/80 px-3 py-2 border border-zinc-100">
+                  <span className="flex items-center gap-2 font-medium text-zinc-700">
+                    <span className="size-2 rounded-full bg-zinc-300" />
+                    Deactivated / Archived
+                  </span>
+                  <span className="font-mono font-bold text-zinc-900">
+                    {data.institutions.deactivated}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-zinc-100 text-center">
+            <Link
+              href="/admin/institutions"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-900 hover:underline"
+            >
+              Configure institutions directory
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+        </section>
+      </div>
+
+      {/* Operational Queues Bar */}
+      <section className="relative overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs md:p-6">
+        <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+          <div>
+            <h2 className="font-heading text-base font-bold tracking-tight text-zinc-900">
+              Operational Queues
+            </h2>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              Direct access to system operations and pending verifications
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+          <Link
+            href="/admin/institutions"
+            className="group flex items-center justify-between rounded-md border border-zinc-100 bg-zinc-50/70 p-4 transition-all hover:border-zinc-300 hover:bg-white hover:shadow-xs"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-white border border-zinc-200/80 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <GraduationCap className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-zinc-900">Universities Directory</p>
+                <p className="text-[11px] text-zinc-500">{data.institutions.active} live tenants</p>
+              </div>
+            </div>
+            <ArrowRight className="size-4 text-zinc-400 group-hover:text-zinc-900 group-hover:translate-x-0.5 transition-all" />
+          </Link>
+
+          <Link
+            href="/admin/companies"
+            className="group flex items-center justify-between rounded-md border border-zinc-100 bg-zinc-50/70 p-4 transition-all hover:border-zinc-300 hover:bg-white hover:shadow-xs"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-white border border-zinc-200/80 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <Building2 className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-zinc-900">Employers Directory</p>
+                <p className="text-[11px] text-zinc-500">
+                  {data.companies.total.toLocaleString()} registered
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="size-4 text-zinc-400 group-hover:text-zinc-900 group-hover:translate-x-0.5 transition-all" />
+          </Link>
+
+          <Link
+            href="/admin/verification"
+            className="group flex items-center justify-between rounded-md border border-zinc-100 bg-zinc-50/70 p-4 transition-all hover:border-zinc-300 hover:bg-white hover:shadow-xs"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-white border border-zinc-200/80 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <CheckCircle2 className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-zinc-900">Verification Queue</p>
+                <p className="text-[11px] text-zinc-500">
+                  {data.pendingVerifications.toLocaleString()} pending
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="size-4 text-zinc-400 group-hover:text-zinc-900 group-hover:translate-x-0.5 transition-all" />
+          </Link>
+
+          <Link
+            href="/admin/integrity"
+            className="group flex items-center justify-between rounded-md border border-zinc-100 bg-zinc-50/70 p-4 transition-all hover:border-zinc-300 hover:bg-white hover:shadow-xs"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-white border border-zinc-200/80 text-zinc-800 shadow-2xs group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-colors">
+                <ShieldAlert className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-zinc-900">Trust & Safety</p>
+                <p className="text-[11px] text-zinc-500">{data.flaggedAttempts} flagged items</p>
+              </div>
+            </div>
+            <ArrowRight className="size-4 text-zinc-400 group-hover:text-zinc-900 group-hover:translate-x-0.5 transition-all" />
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

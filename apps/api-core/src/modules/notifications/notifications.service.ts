@@ -19,14 +19,17 @@ import type { Prisma } from '../../generated/prisma/index.js';
 
 export interface NotifyParams {
   readonly userId: string;
-  readonly email: string;
+  /** Without an email template the notification is in-app only. */
+  readonly email?: string;
   readonly kind: NotificationKind;
   readonly title: string;
   readonly body: string;
   readonly linkUrl?: string | null;
-  readonly emailTemplate: EmailTemplateName;
-  readonly emailData: EmailTemplateData;
+  readonly emailTemplate?: EmailTemplateName;
+  readonly emailData?: EmailTemplateData;
   readonly metadata?: Record<string, unknown>;
+  /** One notification per event: a second call with the same key returns the first and sends nothing. */
+  readonly dedupeKey?: string;
 }
 
 /**
@@ -42,25 +45,115 @@ export class NotificationsService {
   ) {}
 
   async notify(params: NotifyParams): Promise<NotificationDto> {
-    const row = await this.prisma.notification.create({
-      data: {
-        userId: params.userId,
-        kind: params.kind,
-        title: params.title,
-        body: params.body,
-        linkUrl: params.linkUrl ?? null,
-        metadata: (params.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
-      },
-    });
+    if (params.dedupeKey) {
+      const existing = await this.prisma.notification.findUnique({
+        where: { dedupeKey: params.dedupeKey },
+      });
+      if (existing) return toNotificationDto(existing);
+    }
 
-    await this.emailQueue.add('send', {
-      to: params.email,
-      template: params.emailTemplate,
-      data: params.emailData,
-    });
+    let row;
+    try {
+      row = await this.prisma.notification.create({
+        data: {
+          userId: params.userId,
+          kind: params.kind,
+          title: params.title,
+          body: params.body,
+          linkUrl: params.linkUrl ?? null,
+          dedupeKey: params.dedupeKey ?? null,
+          metadata: (params.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
+        },
+      });
+    } catch (error) {
+      // A concurrent call with the same key won the race: return its row and send no second email.
+      if (params.dedupeKey && (error as { code?: string }).code === 'P2002') {
+        const raced = await this.prisma.notification.findUnique({
+          where: { dedupeKey: params.dedupeKey },
+        });
+        if (raced) return toNotificationDto(raced);
+      }
+      throw error;
+    }
+
+    if (params.email && params.emailTemplate && params.emailData) {
+      await this.emailQueue.add(
+        'send',
+        { to: params.email, template: params.emailTemplate, data: params.emailData },
+        // S6-VV-122 (#435): one email job per notification row, so a retried enqueue is a no-op.
+        { jobId: `notification-${row.id}` },
+      );
+    }
 
     this.logger.log(`Notification queued for user ${params.userId} (${params.kind})`);
     return toNotificationDto(row);
+  }
+
+  /** APP-01 (Th6-389): confirmation to the student, once per application. */
+  async notifyApplicationSubmitted(params: {
+    userId: string;
+    email: string;
+    fullName: string;
+    companyName: string;
+    roleTitle: string;
+    applicationId: string;
+    referenceNumber: string;
+  }): Promise<NotificationDto> {
+    const applicationsUrl = `${env.STUDENT_APP_URL}/applications`;
+    return this.notify({
+      userId: params.userId,
+      email: params.email,
+      kind: 'APPLICATION',
+      title: `Application submitted: ${params.roleTitle}`,
+      body: `Your application for ${params.roleTitle} at ${params.companyName} was submitted (reference ${params.referenceNumber}).`,
+      linkUrl: applicationsUrl,
+      dedupeKey: `application:${params.applicationId}:submitted`,
+      emailTemplate: 'application-submitted',
+      emailData: {
+        fullName: params.fullName,
+        companyName: params.companyName,
+        roleTitle: params.roleTitle,
+        referenceNumber: params.referenceNumber,
+        applicationsUrl,
+      },
+      metadata: { applicationId: params.applicationId },
+    });
+  }
+
+  /** APP-01 (Th6-387/393): tell one company member about a new or withdrawn applicant, once each. */
+  async notifyEmployerApplicant(params: {
+    kind: 'received' | 'withdrawn';
+    userId: string;
+    email: string;
+    recipientName: string;
+    candidateName: string;
+    roleTitle: string;
+    applicationId: string;
+    openingId: string;
+  }): Promise<NotificationDto> {
+    const applicantsUrl = `${env.COMPANY_APP_URL}/jobs/${params.openingId}/applicants`;
+    const received = params.kind === 'received';
+    return this.notify({
+      userId: params.userId,
+      email: params.email,
+      kind: 'APPLICATION',
+      title: received
+        ? `New applicant for ${params.roleTitle}`
+        : `Applicant withdrew from ${params.roleTitle}`,
+      body: received
+        ? `${params.candidateName} applied for ${params.roleTitle}.`
+        : `${params.candidateName} withdrew their application for ${params.roleTitle}.`,
+      linkUrl: applicantsUrl,
+      dedupeKey: `application:${params.applicationId}:employer:${params.kind}:${params.userId}`,
+      emailTemplate: received ? 'application-received' : 'application-withdrawn',
+      emailData: {
+        recipientName: params.recipientName,
+        candidateName: params.candidateName,
+        roleTitle: params.roleTitle,
+        applicantsUrl,
+      },
+      metadata: { applicationId: params.applicationId, openingId: params.openingId },
+    });
   }
 
   async listForUser(userId: string, limit = 50): Promise<ListNotificationsResponse> {
@@ -132,6 +225,7 @@ export class NotificationsService {
         applicationId: params.applicationId,
         openingId: params.openingId,
       },
+      dedupeKey: `application:${params.applicationId}:status:SHORTLISTED`,
     });
   }
 
@@ -156,6 +250,8 @@ export class NotificationsService {
       title,
       body,
       linkUrl: applicationsUrl,
+      // APP-01: one notification per transition, however many times the event is delivered.
+      dedupeKey: `application:${params.applicationId}:status:${params.toStage}`,
       emailTemplate: 'application-stage-changed',
       emailData: {
         fullName: params.fullName,
@@ -181,6 +277,8 @@ export class NotificationsService {
     status: 'VERIFIED' | 'BEGINNER_REATTEMPT' | 'LOCKED';
     detail: string;
     claimId: string;
+    /** Kafka event id: a redelivered event must not notify twice (S6-VV-122). */
+    eventId?: string;
   }): Promise<NotificationDto> {
     const profileUrl = `${env.STUDENT_APP_URL}/profile`;
     const templateByStatus: Record<
@@ -223,6 +321,53 @@ export class NotificationsService {
         claimId: params.claimId,
         status: params.status,
       },
+      dedupeKey: params.eventId ? `skill-verification:${params.eventId}` : undefined,
+    });
+  }
+
+  async notifySkillInferenceLevelChange(params: {
+    userId: string;
+    email: string;
+    fullName: string;
+    skillCode: string;
+    previousLevel: string | null;
+    newLevel: string | null;
+    confidence: 'LOW' | 'MEDIUM' | 'HIGH';
+    outcome: 'INFERRED' | 'INSUFFICIENT_EVIDENCE' | 'VETO_BLOCKED';
+    /** Kafka event id: a redelivered event must not notify twice (S6-VV-122). */
+    eventId?: string;
+  }): Promise<NotificationDto> {
+    const skillsUrl = `${env.STUDENT_APP_URL}/assessments/skills`;
+    const previousLabel = params.previousLevel?.replaceAll('_', ' ').toLowerCase() ?? 'none';
+    const newLabel = params.newLevel?.replaceAll('_', ' ').toLowerCase() ?? 'not inferred';
+    const title = `Skill evidence update: ${params.skillCode}`;
+    const body =
+      params.outcome === 'INSUFFICIENT_EVIDENCE'
+        ? `Evidence fusion could not infer a level for ${params.skillCode} yet. Add or verify more project evidence.`
+        : `Evidence fusion for ${params.skillCode} changed from ${previousLabel} to ${newLabel} (${params.confidence.toLowerCase()} confidence). This is separate from your verified claim level.`;
+
+    return this.notify({
+      userId: params.userId,
+      email: params.email,
+      kind: 'VERIFICATION_RESULT',
+      title,
+      body,
+      linkUrl: skillsUrl,
+      emailTemplate: 'verification-passed',
+      emailData: {
+        fullName: params.fullName,
+        skillName: params.skillCode,
+        statusLabel: 'Evidence fusion updated',
+        detail: body,
+        profileUrl: skillsUrl,
+      },
+      metadata: {
+        skillCode: params.skillCode,
+        previousLevel: params.previousLevel,
+        newLevel: params.newLevel,
+        outcome: params.outcome,
+      },
+      dedupeKey: params.eventId ? `skill-inference:${params.eventId}` : undefined,
     });
   }
 }

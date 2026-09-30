@@ -13,6 +13,14 @@
  */
 
 export const queryKeys = {
+  /* ------------------------ UNI-05 campus access and events ------------------------ */
+  campusAccess: () => ['campus', 'access'] as const,
+  campusRequests: (params?: unknown) => ['campus', 'requests', params] as const,
+  campusEmployers: (params?: unknown) => ['campus', 'employers', params] as const,
+  universityEvents: (params?: unknown) => ['campus', 'university-events', params] as const,
+  universityEvent: (eventId: string) => ['campus', 'university-event', eventId] as const,
+  events: (params?: unknown) => ['campus', 'events', params] as const,
+  event: (eventId: string) => ['campus', 'event', eventId] as const,
   /* ------------------------------- identity ------------------------------- */
   me: () => ['me'] as const,
   onboarding: () => ['me', 'onboarding'] as const,
@@ -64,6 +72,13 @@ export const queryKeys = {
   jobDescription: (jdId: string) => ['placement', 'jds', jdId] as const,
   shortlist: (filters: Readonly<Record<string, unknown>>) =>
     ['placement', 'shortlist', filters] as const,
+  candidateEducation: (studentId: string) =>
+    ['placement', 'candidates', studentId, 'education'] as const,
+  candidateClaims: (studentId: string) => ['placement', 'candidates', studentId, 'claims'] as const,
+  candidateDemonstratedSkills: (studentId: string) =>
+    ['placement', 'candidates', studentId, 'skills'] as const,
+  candidateSkillExplanation: (studentId: string, skillCode: string) =>
+    ['placement', 'candidates', studentId, 'skills', skillCode, 'explanation'] as const,
 
   /* ------------------------------- analytics ------------------------------ */
   cohortReadiness: (params: Readonly<Record<string, unknown>>) =>

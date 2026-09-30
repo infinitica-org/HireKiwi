@@ -8,10 +8,12 @@ const createWorkExperience = vi.fn();
 const updateWorkExperience = vi.fn();
 const deleteWorkExperience = vi.fn();
 const sendWorkExperienceVerification = vi.fn();
+const sendWorkExperienceManagerEndorsement = vi.fn();
 const restartWorkExperienceVerification = vi.fn();
 const uploadWorkExperienceProofDocument = vi.fn();
 const attachWorkExperienceDocument = vi.fn();
 const removeWorkExperienceDocument = vi.fn();
+const resendWorkExperienceManagerEndorsement = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
@@ -26,8 +28,12 @@ vi.mock('@/lib/api', () => ({
       deleteWorkExperience: (...args: unknown[]) => deleteWorkExperience(...args),
       sendWorkExperienceVerification: (...args: unknown[]) =>
         sendWorkExperienceVerification(...args),
+      sendWorkExperienceManagerEndorsement: (...args: unknown[]) =>
+        sendWorkExperienceManagerEndorsement(...args),
       restartWorkExperienceVerification: (...args: unknown[]) =>
         restartWorkExperienceVerification(...args),
+      resendWorkExperienceManagerEndorsement: (...args: unknown[]) =>
+        resendWorkExperienceManagerEndorsement(...args),
       uploadWorkExperienceProofDocument: (...args: unknown[]) =>
         uploadWorkExperienceProofDocument(...args),
       attachWorkExperienceDocument: (...args: unknown[]) => attachWorkExperienceDocument(...args),
@@ -114,8 +120,10 @@ function fillMandatoryWorkExperienceFields(
 
 function clickExperienceSaveButton() {
   const save =
+    screen.queryByRole('button', { name: /^Submit experience$/i }) ??
+    screen.queryByRole('button', { name: /^Submit & send verification$/i }) ??
     screen.queryByRole('button', { name: /^Save changes$/i }) ??
-    screen.getByRole('button', { name: /Save & send verification/i });
+    screen.getByRole('button', { name: /^Save & send verification$/i });
   fireEvent.click(save);
 }
 
@@ -147,7 +155,9 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     updateWorkExperience.mockReset();
     deleteWorkExperience.mockReset();
     sendWorkExperienceVerification.mockReset();
+    sendWorkExperienceManagerEndorsement.mockReset();
     restartWorkExperienceVerification.mockReset();
+    resendWorkExperienceManagerEndorsement.mockReset();
     uploadWorkExperienceProofDocument.mockReset();
   });
 
@@ -230,6 +240,123 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
         'OFFER_LETTER',
       );
     });
+  });
+
+  it('automatically stages and uploads selected file when submitting without clicking Add file first', async () => {
+    createWorkExperience.mockResolvedValue({
+      ...mockOngoingExp,
+      id: 'exp-auto',
+    });
+    uploadWorkExperienceProofDocument.mockResolvedValue({
+      id: 'doc-auto',
+      experienceId: 'exp-auto',
+      documentType: 'OFFER_LETTER',
+      fileName: 'offer-direct.pdf',
+      fileUrl: 'work-experience-proofs/student-1/offer-direct.pdf',
+      fileSizeBytes: 128,
+      mimeType: 'application/pdf',
+      createdAt: '2026-09-01T00:00:00.000Z',
+    });
+    sendWorkExperienceVerification.mockResolvedValue({
+      message: 'Verification dispatched successfully',
+    });
+
+    const { container } = await openAddExperienceModal();
+    fillMandatoryWorkExperienceFields(
+      container,
+      { verifierEmail: 'manager@acme.com' },
+      { isCurrent: true },
+    );
+    selectCatalogSkill('Git & Version Control');
+
+    const file = new File(['%PDF-1.4 direct'], 'offer-direct.pdf', { type: 'application/pdf' });
+    fireEvent.change(screen.getByLabelText('Proof document'), { target: { files: [file] } });
+    // User directly clicks Submit WITHOUT clicking "Add file" first!
+    clickExperienceSaveButton();
+
+    await waitFor(() => {
+      expect(createWorkExperience).toHaveBeenCalled();
+      expect(uploadWorkExperienceProofDocument).toHaveBeenCalledWith(
+        'exp-auto',
+        file,
+        'offer-direct.pdf',
+        'OFFER_LETTER',
+      );
+    });
+  });
+
+  it('submits a new ended role when both an offer letter and a relieving letter are attached in the modal', async () => {
+    createWorkExperience.mockResolvedValue({
+      ...mockOngoingExp,
+      id: 'exp-ended',
+      isCurrent: false,
+      endDate: '2025-05-30T00:00:00.000Z',
+    });
+    uploadWorkExperienceProofDocument.mockResolvedValue({
+      id: 'doc-ended-1',
+      experienceId: 'exp-ended',
+      documentType: 'OFFER_LETTER',
+      fileName: 'offer.pdf',
+      fileUrl: 'work-experience-proofs/student-1/offer.pdf',
+      fileSizeBytes: 128,
+      mimeType: 'application/pdf',
+      createdAt: '2026-09-01T00:00:00.000Z',
+    });
+
+    const { container } = await openAddExperienceModal();
+    fillMandatoryWorkExperienceFields(container, { endDate: '2025-05-30' }, { isCurrent: false });
+    selectCatalogSkill('Git & Version Control');
+
+    // 1. Add Offer Letter
+    const offerFile = new File(['%PDF-1.4 offer'], 'offer.pdf', { type: 'application/pdf' });
+    fireEvent.change(screen.getByLabelText('Document type'), { target: { value: 'OFFER_LETTER' } });
+    fireEvent.change(screen.getByLabelText('Proof document'), { target: { files: [offerFile] } });
+    fireEvent.click(screen.getByRole('button', { name: /Add file/i }));
+
+    // 2. Add Relieving Letter
+    const relievingFile = new File(['%PDF-1.4 relieving'], 'relieving.pdf', {
+      type: 'application/pdf',
+    });
+    fireEvent.change(screen.getByLabelText('Document type'), {
+      target: { value: 'RELIEVING_LETTER' },
+    });
+    fireEvent.change(screen.getByLabelText('Proof document'), {
+      target: { files: [relievingFile] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Add file/i }));
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
+
+    await waitFor(() => {
+      expect(createWorkExperience).toHaveBeenCalled();
+      expect(uploadWorkExperienceProofDocument).toHaveBeenCalledWith(
+        'exp-ended',
+        offerFile,
+        'offer.pdf',
+        'OFFER_LETTER',
+      );
+      expect(uploadWorkExperienceProofDocument).toHaveBeenCalledWith(
+        'exp-ended',
+        relievingFile,
+        'relieving.pdf',
+        'RELIEVING_LETTER',
+      );
+    });
+  });
+
+  it('displays a validation error naming the missing relieving letter when an ended role has only an offer letter attached', async () => {
+    const { container } = await openAddExperienceModal();
+    fillMandatoryWorkExperienceFields(container, { endDate: '2025-05-30' }, { isCurrent: false });
+    selectCatalogSkill('Git & Version Control');
+
+    const offerFile = new File(['%PDF-1.4 offer'], 'offer.pdf', { type: 'application/pdf' });
+    fireEvent.change(screen.getByLabelText('Document type'), { target: { value: 'OFFER_LETTER' } });
+    fireEvent.change(screen.getByLabelText('Proof document'), { target: { files: [offerFile] } });
+    fireEvent.click(screen.getByRole('button', { name: /Add file/i }));
+
+    expect(
+      screen.getByText(/A completion or relieving letter is required when a role has ended/i),
+    ).toBeTruthy();
   });
 
   it('allows saving a draft without proof documents when mandatory fields are complete', async () => {
@@ -350,7 +477,12 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     const mockEndorsedExp = {
       ...mockOngoingExp,
       managerEndorsement: {
+        endorsementId: 'endorsement-1',
         status: 'CONFIRMED',
+        managerEmail: 'manager@acme.com',
+        managerName: 'Jane Smith',
+        sentAt: '2026-09-01T00:00:00.000Z',
+        expiresAt: '2026-09-06T00:00:00.000Z',
       },
     };
     listWorkExperiences.mockResolvedValueOnce([mockEndorsedExp]);
@@ -358,7 +490,138 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     renderWithQueryClient(<WorkExperienceSection />);
 
     expect(await screen.findByText('Manager Endorsement')).toBeTruthy();
-    expect(screen.getByText('CONFIRMED')).toBeTruthy();
+    expect(screen.getByText(/Jane Smith \(manager@acme.com\)/i)).toBeTruthy();
+    expect(screen.getByText(/Manager endorsement confirmed/i)).toBeTruthy();
+    expect(screen.getByText(/confirmed your work experience as your manager/i)).toBeTruthy();
+  });
+
+  it('requests manager endorsement with endorser email and name from the card form (VER-02)', async () => {
+    listWorkExperiences.mockResolvedValue([mockOngoingExp]);
+    sendWorkExperienceManagerEndorsement.mockResolvedValue({
+      success: true,
+      endorsementId: 'endorsement-1',
+      managerEmail: 'manager@acme.com',
+      expiresAt: '2026-09-06T00:00:00.000Z',
+      message: 'Manager endorsement request dispatched to manager@acme.com. Valid for 5 days.',
+    });
+
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    expect(await screen.findByPlaceholderText('manager@yourcompany.com')).toBeTruthy();
+    expect(screen.getByText(/Who will endorse this experience/i)).toBeTruthy();
+    expect(screen.getByText(/Endorser's work email/i)).toBeTruthy();
+    expect(screen.getByText(/Endorser's name/i)).toBeTruthy();
+    fireEvent.change(screen.getByPlaceholderText('manager@yourcompany.com'), {
+      target: { value: 'manager@acme.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Jane Smith'), {
+      target: { value: 'Jane Smith' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Request Endorsement' }));
+
+    await waitFor(() => {
+      expect(sendWorkExperienceManagerEndorsement).toHaveBeenCalledWith('exp-1', {
+        managerEmail: 'manager@acme.com',
+        managerName: 'Jane Smith',
+      });
+    });
+  });
+
+  it('keeps request endorsement disabled until endorser name meets minimum length (VER-02)', async () => {
+    listWorkExperiences.mockResolvedValue([mockOngoingExp]);
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    expect(await screen.findByText('Manager endorsement')).toBeTruthy();
+    fireEvent.change(screen.getByPlaceholderText('manager@yourcompany.com'), {
+      target: { value: 'manager@acme.com' },
+    });
+    const requestBtn = screen.getByRole('button', { name: 'Request Endorsement' });
+    expect(requestBtn).toHaveProperty('disabled', true);
+    fireEvent.change(screen.getByPlaceholderText('Jane Smith'), {
+      target: { value: 'J' },
+    });
+    expect(requestBtn).toHaveProperty('disabled', true);
+    fireEvent.change(screen.getByPlaceholderText('Jane Smith'), {
+      target: { value: 'Jane Smith' },
+    });
+    expect(requestBtn).toHaveProperty('disabled', false);
+  });
+
+  it('shows pending manager endorsement state without resubmit form (VER-02)', async () => {
+    listWorkExperiences.mockResolvedValueOnce([
+      {
+        ...mockOngoingExp,
+        managerEndorsement: {
+          endorsementId: 'endorsement-1',
+          status: 'PENDING',
+          managerEmail: 'manager@acme.com',
+          managerName: 'Jane Smith',
+          sentAt: '2026-09-01T00:00:00.000Z',
+          expiresAt: '2026-09-06T00:00:00.000Z',
+        },
+      },
+    ]);
+
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    expect(await screen.findByText('Endorsement request pending')).toBeTruthy();
+    expect(screen.getByText(/Jane Smith \(manager@acme.com\)/i)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Request Endorsement' })).toBeNull();
+  });
+
+  it('renders empty work experience state when the student has no entries (VER-02)', async () => {
+    listWorkExperiences.mockResolvedValueOnce([]);
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    expect(await screen.findByText(/No work experience yet/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Add your first experience/i })).toBeTruthy();
+  });
+
+  it('shows disputed manager endorsement helper and allows resubmit (VER-02)', async () => {
+    listWorkExperiences.mockResolvedValueOnce([
+      {
+        ...mockOngoingExp,
+        managerEndorsement: {
+          endorsementId: 'endorsement-disputed',
+          status: 'DISPUTED',
+          managerEmail: 'manager@acme.com',
+          managerName: 'Jane Smith',
+          sentAt: '2026-09-01T00:00:00.000Z',
+          expiresAt: '2026-09-06T00:00:00.000Z',
+        },
+      },
+    ]);
+
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    expect(await screen.findByText(/previous manager endorsement was disputed/i)).toBeTruthy();
+    expect(screen.getByText('Disputed')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Request Endorsement' })).toBeTruthy();
+  });
+
+  it('prefills endorser contact from expired manager endorsement summary (VER-02)', async () => {
+    listWorkExperiences.mockResolvedValueOnce([
+      {
+        ...mockOngoingExp,
+        managerEndorsement: {
+          endorsementId: 'endorsement-expired',
+          status: 'EXPIRED',
+          managerEmail: 'manager@acme.com',
+          managerName: 'Jane Smith',
+          sentAt: '2026-09-01T00:00:00.000Z',
+          expiresAt: '2026-09-06T00:00:00.000Z',
+        },
+      },
+    ]);
+
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    expect(await screen.findByText(/previous manager endorsement link expired/i)).toBeTruthy();
+    expect(screen.getByPlaceholderText('manager@yourcompany.com')).toHaveProperty(
+      'value',
+      'manager@acme.com',
+    );
+    expect(screen.getByPlaceholderText('Jane Smith')).toHaveProperty('value', 'Jane Smith');
   });
 });
 

@@ -24,12 +24,14 @@ describe('InstitutionsService Batch Operations', () => {
       batch: {
         create: vi.fn().mockResolvedValue(fakeBatch),
       },
+      campus: { findFirst: vi.fn().mockResolvedValue(null) },
     };
     const service = new InstitutionsService(
       prisma as never,
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     const dto = await service.createBatch(
       institutionId,
@@ -46,16 +48,49 @@ describe('InstitutionsService Batch Operations', () => {
       batch: {
         create: vi.fn().mockRejectedValue(new Error('Unique constraint failed')),
       },
+      campus: { findFirst: vi.fn().mockResolvedValue(null) },
     };
     const service = new InstitutionsService(
       prisma as never,
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     await expect(
       service.createBatch(institutionId, { name: 'Class of 2026' }, invitedById),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('S6-VV-112: a new batch lands on the primary campus, and the list filters by campus', async () => {
+    const campusId = randomUUID();
+    const prisma = {
+      batch: {
+        create: vi
+          .fn()
+          .mockResolvedValue({ ...fakeBatch, campusId, campus: { name: 'Main campus' } }),
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+      campus: { findFirst: vi.fn().mockResolvedValue({ id: campusId }) },
+    };
+    const service = new InstitutionsService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      noopRedis as never,
+      {} as never,
+    );
+
+    const dto = await service.createBatch(institutionId, { name: 'Class of 2026' }, invitedById);
+    expect(prisma.campus.findFirst).toHaveBeenCalledWith({
+      where: { institutionId, isPrimary: true, archivedAt: null },
+      select: { id: true },
+    });
+    expect(prisma.batch.create.mock.calls[0]?.[0].data.campusId).toBe(campusId);
+    expect(dto).toMatchObject({ campusId, campusName: 'Main campus' });
+
+    await service.listBatches(institutionId, { campusId });
+    expect(prisma.batch.findMany.mock.calls[0]?.[0].where).toEqual({ institutionId, campusId });
   });
 
   it('TPO can retrieve their institution batches', async () => {
@@ -75,6 +110,7 @@ describe('InstitutionsService Batch Operations', () => {
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     const list = await service.listBatches(institutionId);
     expect(list).toHaveLength(1);
@@ -99,6 +135,7 @@ describe('InstitutionsService Batch Operations', () => {
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     const batch = await service.getBatch(batchId, institutionId);
     expect(batch.batchId).toBe(batchId);
@@ -116,6 +153,7 @@ describe('InstitutionsService Batch Operations', () => {
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     await expect(service.getBatch(batchId, 'different-institution-id')).rejects.toBeInstanceOf(
       NotFoundException,
@@ -144,6 +182,7 @@ describe('InstitutionsService Batch Operations', () => {
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     const updated = await service.updateBatch(batchId, institutionId, {
       name: 'Updated Batch',
@@ -198,6 +237,7 @@ describe('InstitutionsService Batch Operations', () => {
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     const result = await service.addBatchMember(
       batchId,
@@ -239,6 +279,7 @@ describe('InstitutionsService Batch Operations', () => {
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     await expect(
       service.addBatchMember(
@@ -274,6 +315,7 @@ describe('InstitutionsService Batch Operations', () => {
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     await expect(
       service.addBatchMember(
@@ -342,6 +384,7 @@ describe('InstitutionsService Batch Operations', () => {
       invitations as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     const result = await service.addBatchMember(
       batchId,
@@ -394,6 +437,7 @@ describe('InstitutionsService Batch Operations', () => {
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     await service.addBatchMember(
       batchId,
@@ -436,6 +480,7 @@ describe('InstitutionsService Batch Operations', () => {
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     const members = await service.listBatchMembers(batchId, institutionId);
     expect(members).toHaveLength(1);
@@ -472,12 +517,22 @@ describe('InstitutionsService.getDashboard', () => {
       attempt: { count: vi.fn().mockResolvedValue(0) },
       subscriptionPlan: { findMany: vi.fn().mockResolvedValue([]) },
       auditLog: { findMany: vi.fn().mockResolvedValue([]) },
+      companyVerification: {
+        count: vi.fn().mockResolvedValue(0),
+        findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+      kafkaOutbox: {
+        count: vi.fn().mockResolvedValue(0),
+        findMany: vi.fn().mockResolvedValue([]),
+      },
     };
     const service = new InstitutionsService(
       prisma as never,
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
 
     const dashboard = await service.getDashboard();
@@ -512,6 +567,7 @@ describe('InstitutionsService.searchStudents (S6-VV-66 capability-aware search)'
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     const hits = await service.searchStudents({ q: 'jane' });
     expect(hits).toHaveLength(1);
@@ -534,6 +590,7 @@ describe('InstitutionsService.searchStudents (S6-VV-66 capability-aware search)'
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     const hits = await service.searchStudents({
       institutionId: instId,
@@ -564,6 +621,7 @@ describe('InstitutionsService.searchStudents (S6-VV-66 capability-aware search)'
       {} as never,
       {} as never,
       noopRedis as never,
+      {} as never,
     );
     await service.searchStudents({ q: 'jane', proficiency: 'BEGINNER' });
     const where = (prisma.user.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0].where;

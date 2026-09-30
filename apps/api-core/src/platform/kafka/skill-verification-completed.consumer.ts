@@ -52,6 +52,7 @@ export class SkillVerificationCompletedConsumer implements OnModuleInit {
               status: event.status,
               detail: event.detail,
               claimId: event.claimId,
+              eventId: parsed.data.meta.eventId,
             });
           });
         },

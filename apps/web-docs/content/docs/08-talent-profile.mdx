@@ -1,0 +1,67 @@
+---
+title: 08. Verified Talent Profile
+description: Talent profile architecture, evidence separation, cryptographic verification badges, and privacy controls.
+---
+
+## 8.1 Profile Architecture
+
+A SmartZen Verified Talent Profile is not a static PDF resume; it is an interactive, cryptographically verifiable capability dossier.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        CANDIDATE HEADER INFO                           │
+│  Name, Anonymized ID, Verified University, Graduation Year, Target Role │
+├────────────────────────────────────────────────────────────────────────┤
+│                     ROLE-SPECIFIC READINESS GAUGES                     │
+│  Full-Stack: 88% (Gold) │ DevOps: 72% (Silver) │ Data Eng: 54% (Bronze)│
+├────────────────────────────────────────────────────────────────────────┤
+│                       VERIFIED EVIDENCE VAULT                          │
+│  [Code Defense: Microservices] │ [GitHub Repos] │ [AWS Certification]  │
+├────────────────────────────────────────────────────────────────────────┤
+│                      COMPETENCY & SKILL MATRIX                         │
+│  TypeScript (Gold) │ PostgreSQL (Gold) │ Docker (Silver) │ Kafka (Silver)│
+├────────────────────────────────────────────────────────────────────────┤
+│                   CRYPTOGRAPHIC PROVENANCE BADGE                       │
+│  HMAC-SHA256 Signature │ Public Verification URL: verify.becomesmart.online│
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 8.2 Strict Separation of Verified vs Unverified Data
+
+SmartZen visually and structurally segregates claimed data from verified evidence:
+
+| Visual Element         | Claimed Data                                 | Verified Evidence                                             |
+| :--------------------- | :------------------------------------------- | :------------------------------------------------------------ |
+| **Badge Styling**      | Muted grey border, "Self-Reported" label     | Glowing Gold/Silver/Bronze badge with checkmark               |
+| **Search Weight**      | Excluded from recruiter minimum filter gates | Indexed in PostgreSQL `pgvector` HNSW index                   |
+| **Verification Proof** | None                                         | Clickable modal displaying commit SHAs and defense transcript |
+| **Tamper Status**      | Mutable by user at any time                  | Append-only; changes require re-defense                       |
+
+---
+
+## 8.3 Public Verification & Cryptographic Badges
+
+Every verified candidate profile generates an immutable verification token accessible without authentication at:
+
+```
+https://verify.becomesmart.online/profile/{verificationUuid}
+```
+
+The verification endpoint displays:
+
+1. Candidate anonymized identity or authenticated public name.
+2. Verified competencies and achieved BARS tiers.
+3. Cryptographic signature generated via `HMAC-SHA256(candidateId + competencies + issueDate, SERVER_SECRET)`.
+4. QR code for instant recruiter scanning during career fairs and in-person interviews.
+
+---
+
+## 8.4 Privacy, Consent & Anonymized Discovery
+
+In accordance with the Indian DPDP Act 2023:
+
+- **Default Blind Search:** Employers browsing candidate pools see anonymized profiles (e.g., `Candidate #4829 - Tier: Gold Backend`). Identifiers like name, email, phone number, and gender are hidden.
+- **Consent-Gated Unmasking:** When an employer expresses interest, the candidate receives an in-app and email authorization request.
+- **Revocation of Sharing:** Candidates may revoke employer access to their dossier at any time with a single click.

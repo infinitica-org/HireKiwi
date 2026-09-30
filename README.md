@@ -1,10 +1,28 @@
 # SMART
 
-SMART is a role-specific readiness certification platform. Candidates are assessed against a five-level, three-tier (Gold / Silver / Bronze) competency grid mapped to real job-track requirements, and issued a student-controlled, publicly verifiable certificate.
+SMART is an **Intellectual Talent Network** and role-specific readiness verification platform. Candidates build verified talent profiles backed by unfakeable evidence (projects, repositories, work vouchers, and proctored tasks), assessed against a criterion-referenced multi-tier (Gold / Silver / Bronze) competency grid mapped to real industry job tracks. Certified candidates receive student-controlled, cryptographically signed (HMAC-SHA256), publicly verifiable credentials, and are matched semantically to high-fit employer opportunities via vector intelligence (`pgvector`). SMART operates across two unified deployment models: embedded in academia as verified placement infrastructure, and embedded in enterprises for internal mobility and workforce readiness.
 
 Governing references: team charter and ownership — [`TEAM.md`](./TEAM.md); delivery methodology — [`docs/delivery/AGILE_PLAN.md`](./docs/delivery/AGILE_PLAN.md); architecture decision records — [`docs/adr/`](./docs/adr/); branching policy — [`docs/delivery/BRANCHING.md`](./docs/delivery/BRANCHING.md).
 
 **New to the codebase:** begin with [`docs/delivery/ENGINEER_START_CHECKLIST.md`](./docs/delivery/ENGINEER_START_CHECKLIST.md), then [`CONTRIBUTING.md`](./CONTRIBUTING.md). Product specification: [`docs/product/prd-v1/`](./docs/product/prd-v1/README.md).
+
+## What was shipped in Sprint 6
+
+The following capabilities were merged into `dev` as part of Sprint 6 and represent the current live feature surface:
+
+| Feature                                                                                                                                               | PR   | Module            |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ----------------- |
+| **Server-authoritative assessment timer** — BullMQ delayed-job force-submits on expiry regardless of client connectivity                              | #380 | `assessment`      |
+| **Cryptographic certificate issuance** — HMAC-SHA256 canonical payload, QR code, async PDF generation                                                 | #380 | `certificate`     |
+| **Public credential verification view** — tier trail, confidence note, calibration employer panel, revocation/supersession states                     | #380 | `web-verify`      |
+| **14-day manager endorsement token** — extended from 7 days; reminder + expiry scheduled via BullMQ                                                   | #380 | `work-experience` |
+| **Spreadsheet formula injection protection** — CWE-1236 neutralization for student whitelist imports                                                  | #380 | `institutions`    |
+| **JD offline fallback extractor** — heuristic skill extraction + 10-track threshold vector when AI gateway times out                                  | #379 | `matching`        |
+| **Semantic vector candidate matcher** — cosine similarity with privacy opt-out triple-gate and 5-domain radar chart                                   | #379 | `matching`        |
+| **TPO partnership onboarding** — partnership request lifecycle (create → review → provision), 7-day activation token, university account provisioning | #377 | `institutions`    |
+| **Bulk whitelist importer** — 10 000-row CSV/XLSX async import via BullMQ, email/dept/year validation, error quarantine, pre-signed error report      | #377 | `institutions`    |
+| **Peer audit: certificate tamper detection** — UUID validation, client-side HMAC hash check, `[SECURITY_EVENT]` logging, 404 stack-trace protection   | #378 | `web-verify`      |
+| **Print alignment CSS** — `@media print` single-page constraint for certificate print view                                                            | #378 | `web-verify`      |
 
 ## Ownership model
 
@@ -44,14 +62,14 @@ pnpm dev:web            # student / TPO / admin / verify / auth (`@smart/web-*`)
 
 ### Data plane (`pnpm infra:up`)
 
-| Service       | Host URL / port                          | Notes                                                     |
-| ------------- | ---------------------------------------- | --------------------------------------------------------- |
-| Postgres      | `localhost:5432`                         | `pgvector/pgvector:pg16`                                  |
-| Redis         | `localhost:6380` → container `6379`      | Windows commonly binds host `6379` already                |
-| Redpanda      | `localhost:19092`                        | Kafka-compatible                                          |
-| MinIO         | `localhost:9000` / console `:9001`       | S3-compatible                                             |
-| Mailpit       | UI `http://localhost:8025`, SMTP `:1025` | Captures outbound mail                                    |
-| Prisma Studio | `http://localhost:5555`                  | Browse and edit rows against the same database as the API |
+| Service       | Host URL / port                          | Notes                                                           |
+| ------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| Postgres      | `localhost:5432`                         | `pgvector/pgvector:pg16`                                        |
+| Redis         | `localhost:6380` → container `6379`      | Windows commonly binds host `6379` already                      |
+| Redpanda      | `localhost:19092`                        | Kafka-compatible                                                |
+| MinIO         | `localhost:9000` / console `:9001`       | S3-compatible; stores certificate PDFs and import error reports |
+| Mailpit       | UI `http://localhost:8025`, SMTP `:1025` | Captures outbound mail                                          |
+| Prisma Studio | `http://localhost:5555`                  | Browse and edit rows against the same database as the API       |
 
 Optional Compose profiles:
 
@@ -72,14 +90,15 @@ Seeded accounts exist for local and non-production environments only; credential
 
 Sign in at **http://localhost:3005/login** — the session redirects to the portal appropriate to the authenticated role.
 
-| App     | Port | Notes                                         |
-| ------- | ---- | --------------------------------------------- |
-| API     | 3000 | `/health`, `/ready`, `/api/docs`              |
-| Student | 3001 | Candidate portal                              |
-| TPO     | 3002 | Batch management and student invitations      |
-| Admin   | 3003 | Institution and platform operations           |
-| Verify  | 3004 | Public certificate lookup (no authentication) |
-| Auth    | 3005 | Login, invitation acceptance, password setup  |
+| App     | Port | Notes                                                     |
+| ------- | ---- | --------------------------------------------------------- |
+| API     | 3000 | `/health`, `/ready`, `/api/docs`                          |
+| Student | 3001 | Candidate portal                                          |
+| TPO     | 3002 | Batch management, student invitations, bulk import wizard |
+| Admin   | 3003 | Institution and platform operations                       |
+| Verify  | 3004 | Public certificate lookup (no authentication)             |
+| Auth    | 3005 | Login, invitation acceptance, password setup              |
+| Docs    | 3006 | Interactive documentation portal (Fumadocs)               |
 
 Invitation emails are captured by Mailpit (`http://localhost:8025`) in local development. Invitation links resolve on the auth application (`/invite/:token`).
 
@@ -113,4 +132,5 @@ Continuous integration runs lint, typecheck, unit tests, build, and Compose conf
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system design, scoring methodology, rate limiting
 - [`SERVICES_VIEW.md`](./SERVICES_VIEW.md) — module and service boundaries
 - [`REPOSITORY_STRUCTURE.md`](./REPOSITORY_STRUCTURE.md) — repository layout rationale
+- [`docs/delivery/issues/`](./docs/delivery/issues/) — known defects and peer audit findings
 - Role-specific blueprints: [`docs/`](./docs/)

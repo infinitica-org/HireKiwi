@@ -43,6 +43,21 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'profile_visibility.updated': 'Updated profile visibility',
   'blocked_word.created': 'Added blocked word',
   'blocked_word.removed': 'Removed blocked word',
+  'admin.level.created': 'Created assessment level',
+  'admin.level.updated': 'Updated assessment level',
+  'admin.item.created': 'Created assessment item',
+  'admin.item.updated': 'Updated assessment item',
+  'admin.cut_score.upserted': 'Upserted cut score',
+  'admin.response.graded': 'Manually graded response',
+
+  // audit-access.interceptor.ts (S6-VV-103)
+  'admin.data_accessed': 'Viewed personal data',
+  'evidence.accessed': 'Accessed sensitive evidence',
+
+  // attempt-result-recalculation.service.ts / qlix-recalibration.service.ts (S6-VV-102)
+  'score.recalculated': 'Recalculated attempt score',
+  'score.recalibration_run': 'Ran scoring recalibration',
+  'admin.skill_retake_policy.updated': 'Updated skill retake policy',
 
   // candidate-certificates.service.ts
   'candidate_certificate.voided': 'Voided candidate certificate',
@@ -137,6 +152,27 @@ export const ALLOWED_AUDIT_METADATA_KEYS = new Set<string>([
   'externalAccountId',
   'message',
 
+  // audit-access.interceptor.ts (S6-VV-103, S6-VV-104)
+  'actorRole',
+  'route',
+  'subjectId',
+  'endorsementId',
+
+  // attempt-result-recalculation.service.ts / qlix-recalibration.service.ts (S6-VV-102)
+  'trigger',
+  'levelId',
+  'previousScorePercent',
+  'nextScorePercent',
+  'previousTier',
+  'nextTier',
+  'predictor',
+  'sampleSize',
+  'correlation',
+  'auc',
+  'previousWeight',
+  'nextWeight',
+  'published',
+
   // work-experience.service.ts
   'attemptId',
   'approved',
@@ -148,10 +184,14 @@ export const ALLOWED_AUDIT_METADATA_KEYS = new Set<string>([
   'companyDomain',
   'domainMatch',
   'resolvedDomain',
+  'managerEmailDistinctStudentCount',
+  'managerEmailDisputedCount',
+  'submissionIpDistinctStudentCount',
 ]);
 
 /** Title-cases a raw `SCREAMING_SNAKE_CASE` or `dot.snake_case` string as a graceful fallback. */
-function titleCaseFallback(raw: string): string {
+function titleCaseFallback(raw?: string | null): string {
+  if (!raw || typeof raw !== 'string') return '';
   const words = raw
     .split(/[._]+/)
     .filter(Boolean)
@@ -161,7 +201,8 @@ function titleCaseFallback(raw: string): string {
 }
 
 /** Renders a raw audit `action` string as a human-readable label, falling back gracefully. */
-export function formatAuditAction(action: string): string {
+export function formatAuditAction(action?: string | null): string {
+  if (!action) return '—';
   return AUDIT_ACTION_LABELS[action] ?? titleCaseFallback(action);
 }
 
@@ -180,12 +221,14 @@ const LABEL_TO_ACTION = new Map<string, string>(
  * anything else — including a raw action substring like `institution.` — passes through
  * unchanged, since the API already filters with a case-insensitive `contains`.
  */
-export function resolveActionFilterValue(input: string): string {
+export function resolveActionFilterValue(input?: string | null): string {
+  if (!input) return '';
   const trimmed = input.trim();
   return LABEL_TO_ACTION.get(trimmed.toLowerCase()) ?? trimmed;
 }
 
 /** Renders a raw audit `resourceType` string (e.g. `candidate_certificate`, `WorkExperience`). */
-export function formatResourceType(resourceType: string): string {
+export function formatResourceType(resourceType?: string | null): string {
+  if (!resourceType) return '—';
   return titleCaseFallback(resourceType);
 }

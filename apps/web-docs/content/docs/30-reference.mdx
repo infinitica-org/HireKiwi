@@ -1,0 +1,61 @@
+---
+title: 30. Reference, Glossary & Data Dictionary
+description: Complete platform glossary, acronym index, status matrices, error code catalogue, and event registry.
+---
+
+## 30.1 Acronym Index
+
+| Acronym  | Definition                                              |
+| :------- | :------------------------------------------------------ |
+| **BARS** | Behaviorally Anchored Rating Scales                     |
+| **DPDP** | Digital Personal Data Protection Act 2023 (India)       |
+| **HMAC** | Hash-Based Message Authentication Code                  |
+| **HNSW** | Hierarchical Navigable Small World (Vector Graph Index) |
+| **JTBD** | Jobs-to-be-Done Framework                               |
+| **NFR**  | Non-Functional Requirement                              |
+| **PRD**  | Product Requirements Document                           |
+| **TPO**  | Training & Placement Officer (University)               |
+| **VIR**  | Verification Integrity Rate                             |
+| **VCMH** | Verified Capability Matches Hired (North Star Metric)   |
+
+---
+
+## 30.2 Error Code Catalogue
+
+| HTTP Status | Error Code                     | Description                                          | User Remedy                                      |
+| :---------- | :----------------------------- | :--------------------------------------------------- | :----------------------------------------------- |
+| `401`       | `SMART_401_AUTH_EXPIRED`       | JWT bearer token has expired or is invalid.          | Re-authenticate via institutional SSO.           |
+| `403`       | `SMART_403_TENANT_FORBIDDEN`   | User does not hold permissions within target tenant. | Contact campus or employer administrator.        |
+| `422`       | `SMART_422_COMPETENCY_FLOOR`   | Candidate does not satisfy minimum BARS tier.        | Complete recommended project defense.            |
+| `429`       | `SMART_429_RATE_LIMITED`       | Sliding window rate limit exceeded (100 req/min).    | Back off requests for 60 seconds.                |
+| `503`       | `SMART_503_INFERENCE_DEGRADED` | External LLM unavailable; regex fallback active.     | System operating in deterministic fallback mode. |
+
+---
+
+## 30.3 Core Event Catalogue (Redpanda / Kafka)
+
+- `candidate.onboarded.v1`: Candidate claims profile and completes initial survey.
+- `evidence.submitted.v1`: New GitHub repo or certificate registered for verification.
+- `defense.completed.v1`: Proctored AI project defense session concluded and transcribed.
+- `capability.tier_assigned.v1`: New BARS tier (Gold/Silver/Bronze) assigned and HMAC signed.
+- `match.generated.v1`: Match score computed between candidate and active job opening.
+- `application.status_changed.v1`: Candidate advances or is rejected in recruiter pipeline.
+- `telemetry.purge_executed.v1`: Nightly DPDP purge script completes deletion of expired snapshots.
+
+---
+
+## 30.4 Sprint 7 Epic & Story Index
+
+All engineering user stories are indexed and tracked in [`SMART_Sprint7_Enterprise_Hardening_Tickets.xlsx`](file:///d:/Work's/Infinitica/smart/SMART_Sprint7_Enterprise_Hardening_Tickets.xlsx):
+
+- **S7-VV-01:** University IdP SAML/OIDC Authentication
+- **S7-VV-02:** Single High-End VPS Blue-Green Zero-Downtime Deployment
+- **S7-VV-03:** k6 50k Virtual User Stress & Capacity Testing
+- **S7-SV-01:** Enterprise Student Experience & Typography Unification
+- **S7-SV-02:** Multipart Resume AST Parsing & Magic Byte Guard
+- **S7-SV-03:** WebRTC Telemetry & MediaPipe Anti-Cheat Sidecar
+- **S7-TN-01:** Criterion-Referenced BARS Rubrics & Golden Dataset Benchmark
+- **S7-TN-02:** BullMQ Server-Authoritative Anti-Cheat Session Timers
+- **S7-TN-03:** PostgreSQL pgvector Semantic Matching & Regex Fallback
+- **S7-TN-04:** DPDP Act 2023 Compliance & Automated 30-Day Purge
+- **S7-TN-05:** Fumadocs Enterprise Documentation Portal & Release Notes

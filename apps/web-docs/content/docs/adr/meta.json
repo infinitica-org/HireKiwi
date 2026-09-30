@@ -1,0 +1,23 @@
+{
+  "title": "Architecture Decision Records (ADR)",
+  "pages": [
+    "0001-stack",
+    "0002-package-manager",
+    "0003-contract-first",
+    "0004-module-boundaries",
+    "0005-ai-failover",
+    "0006-tier-authority",
+    "0007-migration-stewardship",
+    "0008-rate-limit-strategy",
+    "0009-env-topology",
+    "0010-structured-logging",
+    "0011-prd-v1-frozen",
+    "0012-mmp-placement-matching",
+    "0013-v1-retry-and-credentials",
+    "0014-proctoring-sidecar",
+    "0015-perf-testing-observability",
+    "0016-cryptographic-certs-and-server-timer",
+    "0017-vector-matching-ai-failover",
+    "README"
+  ]
+}

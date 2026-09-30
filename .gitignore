@@ -4,6 +4,7 @@ node_modules/
 
 # --- build output ---
 dist/
+dist-test/
 build/
 out/
 .next/
@@ -79,8 +80,9 @@ Smart_PRD_v1_Internal/**
 !Smart_PRD_v1_Internal/README.md
 
 # --- VPS server env copies (local reference only, never commit) ---
-kvm2-dev.env.txt
-kvm4-prod.env.txt
+vps-dev.env.txt
+vps-prod.env.txt
 
 # --- k6 run output (tools/load-tests) ---
 tools/load-tests/summary-*.json
+docs/item_45711000000070512.csv

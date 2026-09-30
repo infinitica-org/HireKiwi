@@ -239,11 +239,18 @@ function createMockOutbox() {
   } as any;
 }
 
+function createMockForceSubmitQueue() {
+  return {
+    add: vi.fn(async () => ({ id: 'mock-job-id' })),
+  } as any;
+}
+
 describe('AssessmentService (ST-04 / S1-VB-01)', () => {
   let prisma: ReturnType<typeof createMockPrisma>;
   let redis: ReturnType<typeof createMockRedis>;
   let rotation: ReturnType<typeof createMockRotation>;
   let outbox: ReturnType<typeof createMockOutbox>;
+  let forceSubmitQueue: ReturnType<typeof createMockForceSubmitQueue>;
   let service: AssessmentService;
   let attemptsStartedSpy: any;
 
@@ -252,7 +259,16 @@ describe('AssessmentService (ST-04 / S1-VB-01)', () => {
     redis = createMockRedis();
     rotation = createMockRotation();
     outbox = createMockOutbox();
-    service = new AssessmentService(prisma, redis, rotation, outbox, {} as never, {} as never);
+    forceSubmitQueue = createMockForceSubmitQueue();
+    service = new AssessmentService(
+      prisma,
+      redis,
+      rotation,
+      outbox,
+      {} as never,
+      {} as never,
+      forceSubmitQueue,
+    );
     attemptsStartedSpy = vi.spyOn(attemptsStarted, 'inc');
     vi.clearAllMocks();
   });
@@ -1108,6 +1124,173 @@ describe('AssessmentService (ST-04 / S1-VB-01)', () => {
           technicalFailure: false,
         }),
       ).rejects.toBeInstanceOf(ConflictException);
+      expect(outbox.enqueueAssessmentSubmitted).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Server-Authoritative Attempt Timer & Automated Force-Submission Guard', () => {
+    it('AC1 & AC3: startAttempt records authoritative expires_at in Redis and queues delayed BullMQ job', async () => {
+      const session = await service.startAttempt(STUDENT_ID, {
+        trackCode: 'TECH_FULLSTACK',
+        levelNumber: 1,
+      });
+
+      expect(session.attemptId).toBe(ATTEMPT_ID);
+      expect(session.expires_at).toBeDefined();
+      expect(session.expiresAt).toBeDefined();
+      expect(session.expires_at).toBe(session.expiresAt);
+      expect(session.serverNow).toBeDefined();
+
+      const rawRedisSession = await redis.get(`session:assessment:${ATTEMPT_ID}`);
+      expect(rawRedisSession).not.toBeNull();
+      const parsedRedisSession = JSON.parse(rawRedisSession ?? '{}');
+      expect(parsedRedisSession.expires_at).toBe(session.expires_at);
+      expect(parsedRedisSession.expiresAt).toBe(session.expiresAt);
+      expect(parsedRedisSession.status).toBe('IN_PROGRESS');
+
+      expect(forceSubmitQueue.add).toHaveBeenCalledTimes(1);
+      const [jobName, payload, options] = forceSubmitQueue.add.mock.calls[0];
+      expect(jobName).toBe('force-submit');
+      expect(payload).toEqual({ attemptId: ATTEMPT_ID, studentId: STUDENT_ID });
+      expect(options.jobId).toBe(`force-submit:${ATTEMPT_ID}`);
+      expect(options.delay).toBeGreaterThanOrEqual(3614_000);
+      expect(options.delay).toBeLessThanOrEqual(3616_000);
+      expect(options.removeOnComplete).toBe(true);
+      expect(options.attempts).toBe(3);
+    });
+
+    it('AC2: client clock cannot extend validity; saveDraft rejects when serverNow >= expires_at', async () => {
+      await service.startAttempt(STUDENT_ID, {
+        trackCode: 'TECH_FULLSTACK',
+        levelNumber: 1,
+      });
+
+      const rawRedis = await redis.get(`session:assessment:${ATTEMPT_ID}`);
+      const sessionData = JSON.parse(rawRedis ?? '{}');
+      const pastExpiry = new Date(Date.now() - 5000).toISOString();
+      sessionData.expires_at = pastExpiry;
+      sessionData.expiresAt = pastExpiry;
+      sessionData.serverRemainingSeconds = 0;
+      await redis.setex(`session:assessment:${ATTEMPT_ID}`, 7200, JSON.stringify(sessionData));
+
+      await expect(
+        service.saveDraft(STUDENT_ID, {
+          attemptId: ATTEMPT_ID,
+          itemId: MCQ_ITEM_ID,
+          clientSequence: 999999,
+          answer: { kind: 'MCQ', selectedOptionIds: [MCQ_OPTION_CORRECT] },
+        }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('AC2: getSession dynamically recomputes serverRemainingSeconds and locks expired session', async () => {
+      await service.startAttempt(STUDENT_ID, {
+        trackCode: 'TECH_FULLSTACK',
+        levelNumber: 1,
+      });
+
+      const rawRedis = await redis.get(`session:assessment:${ATTEMPT_ID}`);
+      const sessionData = JSON.parse(rawRedis ?? '{}');
+      const nearFuture = new Date(Date.now() + 30_000).toISOString();
+      sessionData.expires_at = nearFuture;
+      sessionData.expiresAt = nearFuture;
+      await redis.setex(`session:assessment:${ATTEMPT_ID}`, 7200, JSON.stringify(sessionData));
+
+      const retrievedSession = await service.getSession(STUDENT_ID, ATTEMPT_ID);
+      expect(retrievedSession.serverRemainingSeconds).toBeLessThanOrEqual(30);
+      expect(retrievedSession.serverRemainingSeconds).toBeGreaterThan(0);
+      expect(retrievedSession.locked).toBe(false);
+
+      const past = new Date(Date.now() - 1000).toISOString();
+      sessionData.expires_at = past;
+      sessionData.expiresAt = past;
+      await redis.setex(`session:assessment:${ATTEMPT_ID}`, 7200, JSON.stringify(sessionData));
+
+      const expiredSession = await service.getSession(STUDENT_ID, ATTEMPT_ID);
+      expect(expiredSession.serverRemainingSeconds).toBe(0);
+      expect(expiredSession.locked).toBe(true);
+    });
+
+    it('AC3: resume does not reschedule BullMQ job or extend expiration', async () => {
+      const initial = await service.startAttempt(STUDENT_ID, {
+        trackCode: 'TECH_FULLSTACK',
+        levelNumber: 1,
+      });
+      expect(forceSubmitQueue.add).toHaveBeenCalledTimes(1);
+
+      const resumed = await service.startAttempt(STUDENT_ID, {
+        trackCode: 'TECH_FULLSTACK',
+        levelNumber: 1,
+      });
+
+      expect(resumed.attemptId).toBe(initial.attemptId);
+      expect(resumed.expires_at).toBe(initial.expires_at);
+      expect(resumed.expiresAt).toBe(initial.expiresAt);
+      expect(forceSubmitQueue.add).toHaveBeenCalledTimes(1);
+    });
+
+    it('AC4: forceSubmitAttempt transitions attempt to SUBMITTED, flushes drafts, locks Redis, and emits event', async () => {
+      await service.startAttempt(STUDENT_ID, {
+        trackCode: 'TECH_FULLSTACK',
+        levelNumber: 1,
+      });
+
+      await service.saveDraft(STUDENT_ID, {
+        attemptId: ATTEMPT_ID,
+        itemId: MCQ_ITEM_ID,
+        clientSequence: 1,
+        answer: { kind: 'MCQ', selectedOptionIds: [MCQ_OPTION_CORRECT] },
+      });
+
+      await service.forceSubmitAttempt(ATTEMPT_ID);
+
+      const attempt = await prisma.attempt.findUnique({ where: { id: ATTEMPT_ID } });
+      expect(attempt?.status).toBe('SUBMITTED');
+      expect(attempt?.completedAt).toBeDefined();
+
+      const rawRedis = await redis.get(`session:assessment:${ATTEMPT_ID}`);
+      const sessionData = JSON.parse(rawRedis ?? '{}');
+      expect(sessionData.status).toBe('SUBMITTED');
+      expect(sessionData.locked).toBe(true);
+      expect(sessionData.serverRemainingSeconds).toBe(0);
+
+      expect(outbox.enqueueAssessmentSubmitted).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            attemptId: ATTEMPT_ID,
+            studentId: STUDENT_ID,
+            autoSubmitted: true,
+          }),
+        }),
+      );
+
+      await expect(
+        service.saveDraft(STUDENT_ID, {
+          attemptId: ATTEMPT_ID,
+          itemId: MCQ_ITEM_ID,
+          clientSequence: 2,
+          answer: { kind: 'MCQ', selectedOptionIds: [MCQ_OPTION_CORRECT] },
+        }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('AC4: forceSubmitAttempt is idempotent if attempt is already SUBMITTED or EVALUATED', async () => {
+      await service.startAttempt(STUDENT_ID, {
+        trackCode: 'TECH_FULLSTACK',
+        levelNumber: 1,
+      });
+
+      await service.forceSubmitAttempt(ATTEMPT_ID);
+      expect(outbox.enqueueAssessmentSubmitted).toHaveBeenCalledTimes(1);
+
+      await service.forceSubmitAttempt(ATTEMPT_ID);
+      expect(outbox.enqueueAssessmentSubmitted).toHaveBeenCalledTimes(1);
+    });
+
+    it('AC4: forceSubmitAttempt safely handles non-existent attempt without crashing', async () => {
+      await expect(
+        service.forceSubmitAttempt('00000000-0000-0000-0000-000000000000'),
+      ).resolves.toBeUndefined();
       expect(outbox.enqueueAssessmentSubmitted).not.toHaveBeenCalled();
     });
   });

@@ -43,7 +43,7 @@ const CapabilityInferenceOutputCoreSchema = z.object({
         capabilityLabel: z.string().min(10).max(500),
         category: z.string().min(2).max(200),
         confidence: z.number().min(0).max(1),
-        proficiency: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'PROFESSIONAL']),
+        proficiency: z.enum(['BEGINNER', 'INTERMEDIATE', 'PROFICIENT', 'ADVANCED', 'PROFESSIONAL']),
         evidenceRefs: z.array(z.string().max(CAPABILITY_EVIDENCE_REF_MAX)).max(10),
       }),
     )
@@ -60,7 +60,7 @@ const OUTPUT_SHAPE = `{
     "capabilityLabel": string,
     "category": string,
     "confidence": number,
-    "proficiency": "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "PROFESSIONAL",
+    "proficiency": "BEGINNER" | "INTERMEDIATE" | "PROFICIENT" | "ADVANCED" | "PROFESSIONAL",
     "evidenceRefs": string[]
   }]
 }`;
@@ -81,7 +81,8 @@ export const capabilityInferenceTemplate: PromptTemplate<
       'Infer concrete, action-oriented capability statements from QLIX project verification evidence.',
       'Each capabilityLabel must be verb-led and specific to this project — no generic resume fluff.',
       'Confidence must reflect evidence strength only; lower confidence when QLIX observations are UNCERTAIN.',
-      'Each evidenceRefs entry must be a short pointer (file path, symbol, or ≤200 character quote) — never paste long paragraphs.',
+      'Each evidenceRefs entry must be a short pointer (file path, symbol, or ≤200 character quote) referencing ONLY recorded evidence present in QLIX_DIGEST or SMART_ASSESSMENT — do NOT cite or hallucinate unrecorded files, URLs, or external artifacts.',
+      'Strictly ground all inferences: only cite evidence records that are explicitly provided in the input context.',
       'These are provisional coaching signals unless assessment-verified elsewhere — do not overstate.',
       INJECTION_GUARD,
       jsonOnly(OUTPUT_SHAPE),

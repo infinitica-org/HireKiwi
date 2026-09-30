@@ -4,8 +4,10 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import type {
+  CompanyMemberRole,
   InvitationDto,
   InvitationPreviewDto,
   InvitationStatus,
@@ -13,6 +15,7 @@ import type {
 } from '@smart/contracts';
 import { SMART_TOPICS } from '@smart/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
+import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import type { EmailTemplateName } from '../../platform/mailer/mailer.types.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
@@ -27,23 +30,31 @@ import {
 function inviteTemplateForRole(role: UserRole): EmailTemplateName {
   if (role === 'STUDENT') return 'student-invite';
   if (role === 'SUPER_ADMIN') return 'platform-admin-invite';
+  if (role === 'COMPANY') return 'company-portal-invite';
   return 'institution-admin-invite';
 }
+
+type DbUserRole =
+  'SUPER_ADMIN' | 'INSTITUTION_ADMIN' | 'PLACEMENT_STAFF' | 'STUDENT' | 'B2B_PARTNER' | 'COMPANY';
 
 @Injectable()
 export class InvitationsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(KafkaOutboxService) private readonly outbox: KafkaOutboxService,
+    @Optional()
+    @Inject(AuditPublisherService)
+    private readonly auditPublisher?: AuditPublisherService,
   ) {}
 
   async preview(rawToken: string): Promise<InvitationPreviewDto> {
     const invitation = await this.requireValidInvitation(rawToken);
+    const tenantLabel = await this.resolveInviteTenantLabel(invitation);
     return {
       fullName: invitation.fullName,
       email: invitation.email,
       role: invitation.role as InvitationPreviewDto['role'],
-      institutionName: invitation.institution?.name ?? 'SMART Platform',
+      institutionName: tenantLabel,
       batchName: invitation.batch?.name ?? null,
       expiresAt: invitation.expiresAt.toISOString(),
       status: invitation.status as InvitationStatus,
@@ -60,28 +71,54 @@ export class InvitationsService {
       });
     }
 
+    if (invitation.role === 'COMPANY') {
+      await this.assertCompanyInvitationEligible(invitation.userId);
+    }
+
     const passwordHash = await hashPassword(password);
-    const user = await this.prisma.user.update({
-      where: { id: invitation.userId },
-      data: {
-        passwordHash,
-        emailVerified: true,
-        fullName: invitation.fullName,
-        // Seed the onboarding draft with what we already know so a freshly
-        // invited student never has to retype their own name — this is the
-        // very first authenticated write for this account, so there is no
-        // existing draft to merge with or clobber.
-        ...(invitation.role === 'STUDENT'
-          ? { onboardingDetails: onboardingSeedFromFullName(invitation.fullName) }
-          : {}),
-      },
-      include: { institution: true, primaryTrack: true, secondaryTrack: true },
+    const user = await this.prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: invitation.userId },
+        data: {
+          passwordHash,
+          emailVerified: true,
+          fullName: invitation.fullName,
+          ...(invitation.role === 'STUDENT'
+            ? { onboardingDetails: onboardingSeedFromFullName(invitation.fullName) }
+            : {}),
+        },
+        include: {
+          institution: true,
+          company: true,
+          primaryTrack: true,
+          secondaryTrack: true,
+        },
+      });
+
+      await tx.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+      });
+
+      return updatedUser;
     });
 
-    await this.prisma.invitation.update({
-      where: { id: invitation.id },
-      data: { status: 'ACCEPTED', acceptedAt: new Date() },
-    });
+    if (this.auditPublisher) {
+      await this.auditPublisher.record({
+        actorId: user.id,
+        action: 'staff.account_activated',
+        resourceType: 'user',
+        resourceId: user.id,
+        reasonCode: 'INVITATION_ACCEPTED',
+        metadata: {
+          institutionId: invitation.institutionId,
+          previousState: 'INVITED',
+          newState: 'ACTIVE',
+          role: invitation.role,
+          invitationId: invitation.id,
+        },
+      });
+    }
 
     return user;
   }
@@ -96,6 +133,11 @@ export class InvitationsService {
     groupLabel?: string | null;
     invitedById: string;
     sendEmail?: boolean;
+    /** EMP-02 — employer-side invite: the company tenant and the role the invitee joins with. */
+    companyId?: string | null;
+    companyRole?: CompanyMemberRole | null;
+    /** Name shown in the invite email when the tenant is a company rather than an institution. */
+    tenantName?: string;
   }): Promise<{ invitation: InvitationDto; rawToken: string }> {
     const email = params.email.toLowerCase();
     const existing = await this.prisma.user.findUnique({ where: { email } });
@@ -107,7 +149,7 @@ export class InvitationsService {
       });
     }
 
-    let institutionName = 'SMART Platform';
+    let institutionName = params.tenantName ?? 'SMART Platform';
     if (params.institutionId) {
       const institution = await this.prisma.institution.findUnique({
         where: { id: params.institutionId },
@@ -129,11 +171,12 @@ export class InvitationsService {
       data: {
         email,
         fullName: params.fullName,
-        role: params.role as
-          'SUPER_ADMIN' | 'INSTITUTION_ADMIN' | 'PLACEMENT_STAFF' | 'STUDENT' | 'B2B_PARTNER',
+        role: params.role as DbUserRole,
         institutionId: params.institutionId,
         batchId: params.batchId ?? null,
         groupLabel: params.groupLabel ?? null,
+        companyId: params.companyId ?? null,
+        companyRole: params.companyRole ?? null,
         emailVerified: false,
         passwordHash: null,
       },
@@ -143,11 +186,12 @@ export class InvitationsService {
       data: {
         email,
         fullName: params.fullName,
-        role: params.role as
-          'SUPER_ADMIN' | 'INSTITUTION_ADMIN' | 'PLACEMENT_STAFF' | 'STUDENT' | 'B2B_PARTNER',
+        role: params.role as DbUserRole,
         institutionId: params.institutionId,
         batchId: params.batchId ?? null,
         groupLabel: params.groupLabel ?? null,
+        companyId: params.companyId ?? null,
+        companyRole: params.companyRole ?? null,
         userId: user.id,
         tokenHash: hash,
         status: 'PENDING',
@@ -278,6 +322,29 @@ export class InvitationsService {
     return buildInviteUrl(raw);
   }
 
+  /** Post-commit enqueue for company representative password setup (Phase 6). */
+  async enqueueCompanyActivationEmail(params: {
+    invitationId: string;
+    userId: string;
+    email: string;
+    fullName: string;
+    companyName: string;
+    rawToken: string;
+  }): Promise<void> {
+    await this.enqueueEmail(
+      {
+        id: params.invitationId,
+        email: params.email,
+        fullName: params.fullName,
+        userId: params.userId,
+        batch: null,
+      },
+      params.companyName,
+      params.rawToken,
+      'company-portal-invite',
+    );
+  }
+
   async enqueueForBatch(batchId: string, institutionId: string): Promise<number> {
     const pending = await this.prisma.invitation.findMany({
       where: { batchId, institutionId, status: 'PENDING' },
@@ -343,8 +410,44 @@ export class InvitationsService {
   private async findByTokenHash(hash: string) {
     return this.prisma.invitation.findUnique({
       where: { tokenHash: hash },
-      include: { institution: true, batch: true },
+      include: {
+        institution: true,
+        batch: true,
+        user: { include: { company: true } },
+      },
     });
+  }
+
+  private async resolveInviteTenantLabel(invitation: {
+    role: string;
+    institution: { name: string } | null;
+    user: { company: { name: string } | null } | null;
+  }): Promise<string> {
+    if (invitation.role === 'COMPANY') {
+      return invitation.user?.company?.name ?? 'Your company';
+    }
+    return invitation.institution?.name ?? 'SMART Platform';
+  }
+
+  private async assertCompanyInvitationEligible(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { company: true },
+    });
+    if (!user || user.role !== 'COMPANY' || !user.companyId || !user.company) {
+      throw new GoneException({
+        error: 'conflict',
+        message: 'This company account invitation is no longer valid.',
+        statusCode: 410,
+      });
+    }
+    if (user.company.verificationStatus !== 'APPROVED') {
+      throw new GoneException({
+        error: 'conflict',
+        message: 'Company verification must be approved before setting a password.',
+        statusCode: 410,
+      });
+    }
   }
 
   private async requireValidInvitation(rawToken: string) {

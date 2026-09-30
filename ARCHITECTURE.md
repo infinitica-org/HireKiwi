@@ -1,8 +1,17 @@
 # SMART — Master Technical Architecture & Product Specification
 
-> **Version:** v2.0  
-> **Maintainer:** Infinitica Engineering Team  
+> **Version:** v2.1 (Updated Sprint 6 — 29 Sep 2026)
+> **Maintainer:** Infinitica Engineering Team
 > **Purpose:** Single source of truth for SMART's product vision, microservice architecture, rate limiting specification, Claude AI engine, scoring mechanics, domain taxonomies, placement overlay, public verification, and phased delivery plan.
+
+> **Sprint 6 Implementation Status (as of 2026-09-29):**
+> The following sections of this document have moved from design to production implementation:
+>
+> - §6 Scoring Engine — fully implemented; HMAC-SHA256 cryptographic certificates issued on completion (ADR-0016)
+> - §10 Placement Overlay — vector cosine-similarity matching live with deterministic JD fallback extractor (ADR-0017)
+> - §11 Public Verification — full credential view, tamper detection, revocation/supersession states, print alignment
+> - §13 Anti-Cheating — server-authoritative assessment timer via BullMQ force-submit processor (ADR-0016)
+> - §14 Institutional Growth — TPO partnership onboarding lifecycle and 10k-row async bulk whitelist importer
 
 ---
 
@@ -31,20 +40,22 @@
 
 ## 1. System Vision & Core Philosophy
 
-SMART is a **role-specific readiness certification platform**. It assesses candidates against real competency requirements for a specific job track — not a generic aptitude score — and issues a criterion-referenced **Gold / Silver / Bronze** certificate that is:
+SMART is an **Intellectual Talent Network** and role-specific readiness verification platform. It operates as the verified infrastructure layer connecting candidates, academic institutions, and employers. Instead of trusting unverified resumes or opaque aptitude scores, SMART ensures every skill claim is backed by unfakeable evidence (repositories, vouchers, and proctored tasks), assessed against real competency requirements for specific job tracks, and certified on a criterion-referenced **Gold / Silver / Bronze** grid:
 
-- **Transparent** about its own methodology.
-- **Honest** about its calibration maturity.
-- **Student-controlled** and publicly verifiable.
-- **Backed by correlation data** from real hiring outcomes.
+- **Evidence-backed & unfakeable**: Profiles and claims anchored by verified projects, manager vouchers, and server-authoritative assessments.
+- **Transparent** about its own methodology and scoring anchors.
+- **Honest** about calibration maturity through explicit Confidence Notes.
+- **Student-controlled & cryptographically signed** (HMAC-SHA256) for instant, tamper-proof public verification.
+- **Intelligently matched**: Connecting verified talent directly to employer requirements through semantic vector matching (`pgvector`) and automated placement pipelines.
+- **Two unified deployment models**: Embedded in academia for university placement offices, and embedded in enterprises for internal mobility and talent intelligence.
 
 ### 1.1 Product Statement
 
-SMART certifies job readiness against role-specific competency requirements and publishes the methodology behind every score it issues.
+SMART is an Intellectual Talent Network that certifies role-specific readiness against verified evidence, issues tamper-proof cryptographic credentials, and connects verified candidates directly to high-fit job opportunities.
 
-### 1.2 Placement Infrastructure Positioning
+### 1.2 Placement Infrastructure & Talent Network Positioning
 
-SMART sits directly between academia and industry. It certifies readiness per specialization track based on real competencies that hiring managers demand. The ultimate metric for SMART is **Placement Conversion Rate** — tracked via whether certified students achieve higher interview-to-offer rates than non-certified baselines.
+SMART sits directly between academia, industry, and enterprise talent pools. It certifies readiness per specialization track based on real competencies that hiring managers demand, powering both institutional campus placements and enterprise workforce mobility. The ultimate metric for SMART is **Placement Conversion & Retention Rate** — tracked via whether certified candidates achieve higher interview-to-offer rates and on-the-job performance than non-certified baselines.
 
 ### 1.3 Core Values
 
@@ -122,6 +133,18 @@ To ensure high security while protecting backend databases from token validation
 > • For decoupled microservices, Kafka interfaces, and developer work item assignments, see [SERVICES_VIEW.md](file:///mnt/Data/Work%27s/Grad360%20/smart/SERVICES_VIEW.md).
 
 Target Capacity: **1 Million Active Candidates per Placement Season** with a peak concurrency of **50,000 active test takers**.
+
+### 3.0 Infrastructure Hosting Topology — Unified High-End Linux VPS with Blue-Green Deployment
+
+> **Infrastructure Directive:** SMART is deployed on a dedicated, high-performance Linux VPS (Ubuntu 24.04: 32 vCPU, 128 GB RAM, NVMe storage), hosting both Production and Development in strictly isolated Docker Compose projects with automated **Blue-Green Zero-Downtime Deployment**.
+>
+> - **Unified Host:** Single high-end VPS running Caddy reverse proxy on host ports 80/443.
+> - **Production Slice (`becomesmart.online`):** Managed via `smart-prod-blue` and `smart-prod-green` slices. Caddy dynamically shifts live traffic between Blue and Green slots upon health check pass (`GET /health`), ensuring 0 ms downtime and instant rollback capability.
+> - **Development Slice (`dev.becomesmart.online`):** Managed via `smart-dev`, completely isolated on its own network and separate PostgreSQL/Redis volumes on the same host.
+> - **Network Isolation:** PostgreSQL 16 (5432), Redis 7 (6379), Redpanda (19092), and MinIO (9000) are strictly bound to `127.0.0.1` and accessible only via SSH tunnels (`ssh -L`).
+> - **Edge Protection:** Cloudflare Edge Anycast DNS, TLS 1.3, WAF, and DDoS mitigation ahead of Caddy.
+> - **AWS Cloud-Migration Bridge:** Built following 12-factor cloud principles. All database connections, object storage, and event streams use decoupled environment variables (`DATABASE_URL`, `REDIS_URL`, `KAFKA_BROKERS`, `S3_ENDPOINT`), enabling a seamless zero-code-change migration to AWS (ECS Fargate, RDS PostgreSQL Multi-AZ with pgvector, ElastiCache, MSK, and S3).
+> - **Regulatory Compliance:** Strict Indian DPDP Act 2023 alignment. No Aadhaar or PAN numbers are collected or stored in the database. Proctoring telemetry is downsampled to periodic snapshots and purged after 30 days.
 
 ````
 ┌─────────────────────────────────────────────────────────────────────────────┐

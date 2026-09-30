@@ -18,6 +18,7 @@ import { InvitationSentConsumer } from './invitation-sent.consumer.js';
 import { KafkaOutboxService } from './kafka-outbox.service.js';
 import { KafkaService } from './kafka.service.js';
 import { SkillVerificationCompletedConsumer } from './skill-verification-completed.consumer.js';
+import { TrackUpdatedConsumer } from './track-updated.consumer.js';
 import { WebhookDispatchConsumer } from './webhook-dispatch.consumer.js';
 
 @Global()
@@ -45,6 +46,7 @@ import { WebhookDispatchConsumer } from './webhook-dispatch.consumer.js';
     CandidateSkillsDiscoveredConsumer,
     SignalIngestedEncoderConsumer,
     SkillVerificationCorroborationConsumer,
+    TrackUpdatedConsumer,
   ],
   exports: [KafkaService, KafkaOutboxService],
 })

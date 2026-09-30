@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  ForbiddenException,
   Get,
   Inject,
   Param,
@@ -41,30 +40,133 @@ import {
   type UploadJobOpeningDocumentResponse,
   type UploadJobOpeningLogoResponse,
 } from '@smart/contracts';
+import { AuditAccess } from '../../common/decorators/audit-access.decorator.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
+import { EvidenceService } from '../evidence/evidence.service.js';
+import { SkillLevelExplanationService } from '../evidence/skill-level-explanation.service.js';
 import { PlacementEmployersService } from './placement-employers.service.js';
 import { PlacementService } from './placement.service.js';
+import { TenantId } from '../../common/decorators/tenant-id.decorator.js';
 
-function requireInstitutionId(user: RequestUser): string {
-  if (!user.inst) {
-    throw new ForbiddenException({
-      error: 'forbidden',
-      message: 'Placement staff must belong to an institution.',
-      statusCode: 403,
-    });
-  }
-  return user.inst;
-}
-
+// No class-level TenantScopeGuard: the evidence-version routes also serve COMPANY,
+// B2B_PARTNER and SUPER_ADMIN callers, who have no institution. Institution-scoped
+// handlers take @TenantId(), which rejects a caller without one.
 @ApiTags('placement')
 @Controller(`${API_PREFIX}/placement`)
 export class PlacementController {
   constructor(
     @Inject(PlacementService) private readonly service: PlacementService,
     @Inject(PlacementEmployersService) private readonly employers: PlacementEmployersService,
+    @Inject(EvidenceService) private readonly evidence: EvidenceService,
+    @Inject(SkillLevelExplanationService)
+    private readonly skillExplanation: SkillLevelExplanationService,
   ) {}
+
+  @Get('candidates/:studentId/evidence')
+  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get candidate evidence records categorized by provenance (VER-01).' })
+  getCandidateEvidenceProvenance(
+    @CurrentUser() user: RequestUser,
+    @Param('studentId') studentId: string,
+  ) {
+    return this.evidence.getCandidateEvidenceProvenance(user, studentId);
+  }
+
+  @Get('candidates/:studentId/education')
+  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get a candidate's relevant education and evidence (T2)." })
+  getCandidateEducation(@CurrentUser() user: RequestUser, @Param('studentId') studentId: string) {
+    return this.evidence.getCandidateEducation(user, studentId);
+  }
+
+  @Get('candidates/:studentId/claims')
+  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get verification status for candidate individual skill claims (T3).' })
+  getCandidateSkillClaims(@CurrentUser() user: RequestUser, @Param('studentId') studentId: string) {
+    return this.evidence.getCandidateSkillClaims(user, studentId);
+  }
+
+  @Get('candidates/:studentId/skills')
+  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get a candidate's demonstrated skills and proficiency level (T4)." })
+  getCandidateDemonstratedSkills(
+    @CurrentUser() user: RequestUser,
+    @Param('studentId') studentId: string,
+  ) {
+    return this.evidence.getCandidateDemonstratedSkills(user, studentId);
+  }
+
+  @Get('candidates/:studentId/skills/:skillCode/explanation')
+  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get explanation for a candidate skill (T5).' })
+  getCandidateSkillExplanation(
+    @CurrentUser() user: RequestUser,
+    @Param('studentId') studentId: string,
+    @Param('skillCode') skillCode: string,
+  ) {
+    return this.skillExplanation.getCandidateSkillExplanation(user, studentId, skillCode);
+  }
+
+  @Post('candidates/:studentId/evidence/:evidenceId/review')
+  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Reviewer marks candidate evidence accepted, rejected, or needing information (VER-01).',
+  })
+  reviewCandidateEvidence(
+    @CurrentUser() user: RequestUser,
+    @Param('studentId') studentId: string,
+    @Param('evidenceId') evidenceId: string,
+    @Body() body: unknown,
+  ) {
+    return this.evidence.reviewEvidence(user, studentId, evidenceId, body);
+  }
+
+  @Get('candidates/:studentId/evidence/:evidenceId/versions')
+  @AuditAccess('evidence', 'evidenceId', {
+    action: 'evidence.accessed',
+    subjectParam: 'studentId',
+  })
+  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List historical evidence versions for a candidate (VER-01).' })
+  listCandidateEvidenceVersions(
+    @CurrentUser() user: RequestUser,
+    @Param('studentId') studentId: string,
+    @Param('evidenceId') evidenceId: string,
+  ) {
+    return this.evidence.listCandidateEvidenceVersions(user, studentId, evidenceId);
+  }
+
+  @Get('candidates/:studentId/evidence/:evidenceId/versions/:versionNumber')
+  @AuditAccess('evidence', 'evidenceId', {
+    action: 'evidence.accessed',
+    subjectParam: 'studentId',
+  })
+  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a specific historical evidence version (VER-01).' })
+  getCandidateEvidenceVersion(
+    @CurrentUser() user: RequestUser,
+    @Param('studentId') studentId: string,
+    @Param('evidenceId') evidenceId: string,
+    @Param('versionNumber') versionNumber: string,
+  ) {
+    return this.evidence.getCandidateEvidenceVersion(
+      user,
+      studentId,
+      evidenceId,
+      Number.parseInt(versionNumber, 10),
+    );
+  }
 
   @Get('_meta')
   meta() {
@@ -86,11 +188,11 @@ export class PlacementController {
   @ApiOperation({ summary: 'List institution employer profiles (Company Repository).' })
   @ApiBearerAuth()
   async listEmployers(
-    @CurrentUser() user: RequestUser,
     @Query() query: unknown,
+    @TenantId() institutionId: string,
   ): Promise<ListPlacementEmployersResponse> {
     return this.employers.listEmployers(
-      requireInstitutionId(user),
+      institutionId,
       ListPlacementEmployersQuerySchema.parse(query),
     );
   }
@@ -100,11 +202,11 @@ export class PlacementController {
   @ApiOperation({ summary: 'Create an employer profile for the Company Repository.' })
   @ApiBearerAuth()
   async createEmployer(
-    @CurrentUser() user: RequestUser,
     @Body() body: unknown,
+    @TenantId() institutionId: string,
   ): Promise<PlacementEmployerSummary> {
     return this.employers.createEmployer(
-      requireInstitutionId(user),
+      institutionId,
       CreatePlacementEmployerRequestSchema.parse(body),
     );
   }
@@ -114,10 +216,10 @@ export class PlacementController {
   @ApiOperation({ summary: 'Employer profile with drive history and current openings.' })
   @ApiBearerAuth()
   async getEmployer(
-    @CurrentUser() user: RequestUser,
     @Param('employerId') employerId: string,
+    @TenantId() institutionId: string,
   ): Promise<PlacementEmployerDetail> {
-    return this.employers.getEmployer(requireInstitutionId(user), employerId);
+    return this.employers.getEmployer(institutionId, employerId);
   }
 
   @Patch('employers/:employerId')
@@ -125,12 +227,12 @@ export class PlacementController {
   @ApiOperation({ summary: 'Update an employer profile.' })
   @ApiBearerAuth()
   async updateEmployer(
-    @CurrentUser() user: RequestUser,
     @Param('employerId') employerId: string,
     @Body() body: unknown,
+    @TenantId() institutionId: string,
   ): Promise<PlacementEmployerSummary> {
     return this.employers.updateEmployer(
-      requireInstitutionId(user),
+      institutionId,
       employerId,
       UpdatePlacementEmployerRequestSchema.parse(body),
     );
@@ -146,9 +248,10 @@ export class PlacementController {
   async createOpening(
     @CurrentUser() user: RequestUser,
     @Body() body: unknown,
+    @TenantId() institutionId: string,
   ): Promise<JobOpeningDto> {
     return this.service.createOpening(
-      requireInstitutionId(user),
+      institutionId,
       user.sub,
       CreateJobOpeningRequestSchema.parse(body),
     );
@@ -160,8 +263,8 @@ export class PlacementController {
   @ApiBearerAuth()
   @ApiResponse({ status: 201, description: 'Uploaded document metadata for the create payload.' })
   async uploadOpeningDocument(
-    @CurrentUser() user: RequestUser,
     @Req() request: FastifyRequest,
+    @TenantId() institutionId: string,
   ): Promise<UploadJobOpeningDocumentResponse> {
     const partsIter = (
       request as FastifyRequest & { parts: (opts?: unknown) => AsyncIterableIterator<Multipart> }
@@ -200,7 +303,7 @@ export class PlacementController {
     }
 
     const uploaded = await this.service.uploadOpeningDocument(
-      requireInstitutionId(user),
+      institutionId,
       { buffer: fileBuffer, fileName, mimeType },
       label,
     );
@@ -216,8 +319,8 @@ export class PlacementController {
     description: 'Logo storage key and preview URL for the create payload.',
   })
   async uploadOpeningLogo(
-    @CurrentUser() user: RequestUser,
     @Req() request: FastifyRequest,
+    @TenantId() institutionId: string,
   ): Promise<UploadJobOpeningLogoResponse> {
     const partsIter = (
       request as FastifyRequest & { parts: (opts?: unknown) => AsyncIterableIterator<Multipart> }
@@ -252,7 +355,7 @@ export class PlacementController {
       });
     }
 
-    const uploaded = await this.service.uploadOpeningLogo(requireInstitutionId(user), {
+    const uploaded = await this.service.uploadOpeningLogo(institutionId, {
       buffer: fileBuffer,
       fileName,
       mimeType,
@@ -266,11 +369,11 @@ export class PlacementController {
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Openings for the caller institution only.' })
   async listOpenings(
-    @CurrentUser() user: RequestUser,
     @Query() query: Record<string, string | undefined>,
+    @TenantId() institutionId: string,
   ): Promise<ListJobOpeningsResponse> {
     return this.service.listOpenings(
-      requireInstitutionId(user),
+      institutionId,
       ListJobOpeningsQuerySchema.parse(
         Object.fromEntries(Object.entries(query).filter(([, value]) => value)),
       ),
@@ -284,10 +387,10 @@ export class PlacementController {
   @ApiResponse({ status: 200, description: 'Opening with taxonomy skill requirements.' })
   @ApiResponse({ status: 404, description: 'Unknown opening, or owned by another institution.' })
   async getOpening(
-    @CurrentUser() user: RequestUser,
     @Param('openingId') openingId: string,
+    @TenantId() institutionId: string,
   ): Promise<JobOpeningDto> {
-    return this.service.getOpening(requireInstitutionId(user), openingId);
+    return this.service.getOpening(institutionId, openingId);
   }
 
   @Post('openings/:openingId/parse-jd')
@@ -296,10 +399,10 @@ export class PlacementController {
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Parse job enqueued or status returned.' })
   async parseOpeningJd(
-    @CurrentUser() user: RequestUser,
     @Param('openingId') openingId: string,
+    @TenantId() institutionId: string,
   ): Promise<ParseOpeningJdResponse> {
-    return this.service.parseOpeningJd(requireInstitutionId(user), openingId);
+    return this.service.parseOpeningJd(institutionId, openingId);
   }
 
   @Get('openings/:openingId/applications')
@@ -311,10 +414,10 @@ export class PlacementController {
   @ApiResponse({ status: 200, description: 'Applications for the job opening.' })
   @ApiResponse({ status: 404, description: 'Unknown opening, or owned by another institution.' })
   async listApplications(
-    @CurrentUser() user: RequestUser,
     @Param('openingId') openingId: string,
+    @TenantId() institutionId: string,
   ): Promise<ListApplicationsResponse> {
-    return this.service.listApplications(requireInstitutionId(user), openingId);
+    return this.service.listApplications(institutionId, openingId);
   }
 
   /**
@@ -330,11 +433,11 @@ export class PlacementController {
   @ApiResponse({ status: 404, description: 'Unknown opening or student for this institution.' })
   @ApiResponse({ status: 409, description: 'Candidate is already shortlisted for this opening.' })
   async createApplication(
-    @CurrentUser() user: RequestUser,
     @Body() body: unknown,
+    @TenantId() institutionId: string,
   ): Promise<ApplicationDto> {
     return this.service.createApplication(
-      requireInstitutionId(user),
+      institutionId,
       CreateApplicationRequestSchema.parse(body),
     );
   }
@@ -353,13 +456,10 @@ export class PlacementController {
     @CurrentUser() user: RequestUser,
     @Param('applicationId') applicationId: string,
     @Body() body: unknown,
+    @TenantId() institutionId: string,
   ): Promise<ApplicationDto> {
     const parsed = PatchApplicationStageRequestSchema.parse(body);
-    return this.service.patchApplicationStage(
-      requireInstitutionId(user),
-      applicationId,
-      parsed.stage,
-    );
+    return this.service.patchApplicationStage(institutionId, applicationId, parsed.stage, user.sub);
   }
 
   @Get('applications/:applicationId/confidence')
@@ -374,10 +474,10 @@ export class PlacementController {
     description: 'Unknown application, or owned by another institution.',
   })
   async getApplicationConfidence(
-    @CurrentUser() user: RequestUser,
     @Param('applicationId') applicationId: string,
+    @TenantId() institutionId: string,
   ): Promise<ApplicationConfidenceDto> {
-    return this.service.getApplicationConfidence(requireInstitutionId(user), applicationId);
+    return this.service.getApplicationConfidence(institutionId, applicationId);
   }
 
   @Post('applications/:applicationId/send-to-company')
@@ -399,8 +499,9 @@ export class PlacementController {
   async sendToCompany(
     @CurrentUser() user: RequestUser,
     @Param('applicationId') applicationId: string,
+    @TenantId() institutionId: string,
   ): Promise<ApplicationDto> {
-    return this.service.sendToCompany(requireInstitutionId(user), applicationId);
+    return this.service.sendToCompany(institutionId, applicationId, user.sub);
   }
 
   @Post('outcomes')
@@ -409,13 +510,10 @@ export class PlacementController {
   @ApiBearerAuth()
   @ApiResponse({ status: 201, description: 'Placement outcome recorded.' })
   async recordOutcome(
-    @CurrentUser() user: RequestUser,
     @Body() body: unknown,
+    @TenantId() institutionId: string,
   ): Promise<PlacementRecordDto> {
-    return this.service.recordOutcome(
-      requireInstitutionId(user),
-      RecordOutcomeRequestSchema.parse(body),
-    );
+    return this.service.recordOutcome(institutionId, RecordOutcomeRequestSchema.parse(body));
   }
 
   @Get('outcomes')
@@ -424,10 +522,10 @@ export class PlacementController {
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Outcomes for the requested company.' })
   async listOutcomes(
-    @CurrentUser() user: RequestUser,
     @Query() query: Record<string, string | undefined>,
+    @TenantId() institutionId: string,
   ): Promise<ListPlacementOutcomesResponse> {
     const parsed = ListPlacementOutcomesQuerySchema.parse(query);
-    return this.service.listOutcomesForCompany(requireInstitutionId(user), parsed.companyName);
+    return this.service.listOutcomesForCompany(institutionId, parsed.companyName);
   }
 }

@@ -16,6 +16,9 @@ import {
 import { AssessmentResultSchema } from '../domain/evidence/assessment-result.js';
 import { SKILL_TAXONOMY_DOMAINS } from '../domain/skills.js';
 import { IsoDateSchema, IsoDateTimeSchema, ScoreSchema, UuidSchema } from './common.js';
+import { PublicCompetencyEvidenceSummarySchema } from './public-candidate-profile.dto.js';
+import { CandidateEducationSchema } from './candidate-profile.dto.js';
+import { EvidenceProvenanceItemDtoSchema } from './evidence.dto.js';
 import { SkillCategoryIdSchema, TaxonomySkillCodeSchema } from './catalog.dto.js';
 
 /**
@@ -153,6 +156,17 @@ export const POTENTIAL_FIT_BANDS = ['STRONG', 'MODERATE', 'STRETCH'] as const;
 export const PotentialFitSchema = z.enum(POTENTIAL_FIT_BANDS);
 export type PotentialFit = z.infer<typeof PotentialFitSchema>;
 
+export const TRANSFER_SKILL_REASONS = ['SAME_CATEGORY', 'CAPABILITY_OVERLAP'] as const;
+export const TransferSkillReasonSchema = z.enum(TRANSFER_SKILL_REASONS);
+export type TransferSkillReason = z.infer<typeof TransferSkillReasonSchema>;
+
+export const TransferSkillRowSchema = z.object({
+  skillCode: TaxonomySkillCodeSchema,
+  skillName: z.string(),
+  reason: TransferSkillReasonSchema,
+});
+export type TransferSkillRow = z.infer<typeof TransferSkillRowSchema>;
+
 /**
  * One matched candidate. `explanation` is required, not optional: a TPO must be
  * able to defend a shortlist to an employer, and an unexplained similarity
@@ -167,7 +181,10 @@ export const CandidateMatchDtoSchema = z.object({
   headlineTier: CertifiableTierSchema,
   /** Cosine similarity — optional V1; omit or 0 when method is RULES. */
   similarityScore: z.number().min(0).max(1),
-  /** Rank shown to the TPO. Rules are P0 (ADR 0012). */
+  /**
+   * Rank shown to the TPO. For `SKILL_CAPABILITY`, verified required-skill demand (0–1 display;
+   * may sort on uncapped raw when above bar). Not self-reported or blended capability score.
+   */
   matchScore: z.number().min(0).max(1),
   method: MatchMethodSchema.default('RULES'),
   explanation: z.object({
@@ -205,6 +222,10 @@ export const CandidateMatchDtoSchema = z.object({
       })
       .optional(),
     verifiedSkills: z.array(VerifiedSkillSummarySchema).optional(),
+    requiredSkillsHeld: z.number().int().min(0).optional(),
+    requiredSkillsMissing: z.number().int().min(0).optional(),
+    transferSkills: z.array(TransferSkillRowSchema).optional(),
+    competencyEvidenceSummaries: z.array(PublicCompetencyEvidenceSummarySchema).max(12).optional(),
   }),
 });
 export type CandidateMatchDto = z.infer<typeof CandidateMatchDtoSchema>;
@@ -219,6 +240,8 @@ export const ShortlistDtoSchema = z.object({
   totalCandidatesConsidered: z.number().int(),
   /** S6-VV-76 — pre-ranking eligible-pool size (post batch/CGPA/skill filters). */
   eligiblePoolCount: z.number().int(),
+  /** Students with at least one verified required skill before `limit` (S6-RM-23). */
+  candidatesScoredCount: z.number().int().min(0).optional(),
   matchMethod: MatchMethodSchema.optional(),
   minSkillCoverageApplied: z.number().min(0).max(1).optional(),
   jobRequirements: z
@@ -265,6 +288,7 @@ export const MatchRunDtoSchema = z.object({
   runId: UuidSchema,
   jdId: UuidSchema,
   status: MatchRunStatusSchema,
+  rankerVersion: z.string().optional(),
   eligiblePoolCount: z.number().int().nullable(),
   suggestedCount: z.number().int().nullable(),
   errorMessage: z.string().nullable(),
@@ -577,6 +601,11 @@ export const CandidateApplicationDtoSchema = ApplicationDtoSchema.extend({
   location: z.string().max(120),
   employmentType: EmploymentTypeSchema.nullable(),
   domain: SkillTaxonomyDomainSchema.nullable(),
+  /** Th6-354 — server-derived from the linked company's verification status; never inferred by the UI. */
+  /** Linked company tenant (for reviewing it); null for institution-only openings. */
+  companyId: UuidSchema.nullable().optional(),
+  companyVerified: z.boolean().optional(),
+  companyVerifiedAt: IsoDateTimeSchema.nullable().optional(),
 });
 export type CandidateApplicationDto = z.infer<typeof CandidateApplicationDtoSchema>;
 
@@ -689,6 +718,21 @@ export const SHORTLIST_EXPORT_FORMATS = ['CSV', 'PDF', 'XLSX'] as const;
 export const ShortlistExportFormatSchema = z.enum(SHORTLIST_EXPORT_FORMATS);
 export type ShortlistExportFormat = z.infer<typeof ShortlistExportFormatSchema>;
 
+export const ListTpoShortlistQuerySchema = z.object({
+  openingId: UuidSchema.optional(),
+  driveId: UuidSchema.optional(),
+  minScore: z.coerce.number().min(0).max(1).optional(),
+  trackCode: TrackCodeSchema.optional(),
+});
+export type ListTpoShortlistQuery = z.infer<typeof ListTpoShortlistQuerySchema>;
+
+export const ExportTpoShortlistQuerySchema = z.object({
+  openingId: UuidSchema.optional(),
+  driveId: UuidSchema.optional(),
+  format: ShortlistExportFormatSchema.default('CSV'),
+});
+export type ExportTpoShortlistQuery = z.infer<typeof ExportTpoShortlistQuerySchema>;
+
 export const CohortReadinessRowSchema = z.object({
   trackCode: TrackCodeSchema,
   trackName: z.string(),
@@ -701,3 +745,159 @@ export const CohortReadinessRowSchema = z.object({
   averageScore: ScoreSchema.nullable(),
 });
 export type CohortReadinessRow = z.infer<typeof CohortReadinessRowSchema>;
+
+/* -------------------- employer candidate views (T2/T3) -------------------- */
+
+export const PlacementCandidateEducationDtoSchema = CandidateEducationSchema.extend({
+  relatedEvidence: z.array(EvidenceProvenanceItemDtoSchema).default([]),
+});
+export type PlacementCandidateEducationDto = z.infer<typeof PlacementCandidateEducationDtoSchema>;
+
+export const CandidateEducationEvidenceResponseSchema = z.object({
+  studentId: UuidSchema,
+  total: z.number().int().min(0),
+  education: z.array(PlacementCandidateEducationDtoSchema),
+});
+export type CandidateEducationEvidenceResponse = z.infer<
+  typeof CandidateEducationEvidenceResponseSchema
+>;
+
+export const CandidateSkillClaimStatusDtoSchema = z.object({
+  claimId: UuidSchema,
+  studentId: UuidSchema,
+  skillCode: z.string().min(2).max(64),
+  skillName: z.string(),
+  category: z.string().optional(),
+  status: SkillClaimStatusSchema,
+  claimedProficiency: SkillProficiencySchema,
+  verifiedProficiency: SkillProficiencySchema.nullable().optional(),
+  createdAt: IsoDateTimeSchema,
+  updatedAt: IsoDateTimeSchema,
+});
+export type CandidateSkillClaimStatusDto = z.infer<typeof CandidateSkillClaimStatusDtoSchema>;
+
+export const CandidateSkillClaimsResponseSchema = z.object({
+  studentId: UuidSchema,
+  total: z.number().int().min(0),
+  claims: z.array(CandidateSkillClaimStatusDtoSchema),
+});
+export type CandidateSkillClaimsResponse = z.infer<typeof CandidateSkillClaimsResponseSchema>;
+
+export const PlacementCandidateDemonstratedSkillDtoSchema = z.object({
+  claimId: UuidSchema.optional(),
+  studentId: UuidSchema,
+  skillCode: z.string().min(2).max(64),
+  skillName: z.string(),
+  category: z.string().optional(),
+  status: SkillClaimStatusSchema,
+  claimedProficiency: SkillProficiencySchema,
+  verifiedProficiency: SkillProficiencySchema.nullable().optional(),
+  evidenceSummary: z.record(z.string(), z.unknown()).nullable().optional(),
+  createdAt: IsoDateTimeSchema,
+  updatedAt: IsoDateTimeSchema,
+});
+export type PlacementCandidateDemonstratedSkillDto = z.infer<
+  typeof PlacementCandidateDemonstratedSkillDtoSchema
+>;
+
+export const CandidateDemonstratedSkillsResponseSchema = z.object({
+  studentId: UuidSchema,
+  total: z.number().int().min(0),
+  skills: z.array(PlacementCandidateDemonstratedSkillDtoSchema),
+});
+export type CandidateDemonstratedSkillsResponse = z.infer<
+  typeof CandidateDemonstratedSkillsResponseSchema
+>;
+
+/* --------------------------- match quality feedback ------------------------- */
+
+export const MatchFeedbackTargetTypeSchema = z.enum(['STUDENT', 'EMPLOYER']);
+export type MatchFeedbackTargetType = z.infer<typeof MatchFeedbackTargetTypeSchema>;
+
+export const MatchFeedbackRatingSchema = z.enum([
+  'EXCELLENT',
+  'RELEVANT',
+  'PARTIALLY_RELEVANT',
+  'NOT_RELEVANT',
+  'POOR',
+]);
+export type MatchFeedbackRating = z.infer<typeof MatchFeedbackRatingSchema>;
+
+export const SubmitMatchFeedbackRequestSchema = z.object({
+  openingId: UuidSchema.optional(),
+  studentId: UuidSchema.optional(),
+  runId: UuidSchema.optional(),
+  rating: MatchFeedbackRatingSchema,
+  feedbackText: z.string().max(2000).optional(),
+  irrelevantReasons: z.array(z.string().max(100)).max(10).optional(),
+});
+export type SubmitMatchFeedbackRequest = z.infer<typeof SubmitMatchFeedbackRequestSchema>;
+
+export const MatchFeedbackResponseSchema = z.object({
+  feedbackId: UuidSchema,
+  submittedAt: IsoDateTimeSchema,
+  status: z.literal('RECORDED'),
+});
+export type MatchFeedbackResponse = z.infer<typeof MatchFeedbackResponseSchema>;
+
+export const MatchFeedbackSummaryDtoSchema = z.object({
+  totalFeedbacks: z.number().int().nonnegative(),
+  relevantCount: z.number().int().nonnegative(),
+  notRelevantCount: z.number().int().nonnegative(),
+  satisfactionRate: z.number().min(0).max(1),
+  ratingBreakdown: z.record(MatchFeedbackRatingSchema, z.number().int().nonnegative()),
+  commonIrrelevantReasons: z.array(
+    z.object({
+      reason: z.string(),
+      count: z.number().int().nonnegative(),
+    }),
+  ),
+});
+export type MatchFeedbackSummaryDto = z.infer<typeof MatchFeedbackSummaryDtoSchema>;
+
+/* --------------------------- saved candidates (I401) ------------------------- */
+
+export const SavedCandidateDtoSchema = z.object({
+  id: UuidSchema,
+  savedBy: UuidSchema,
+  studentId: UuidSchema,
+  openingId: UuidSchema.nullable().optional(),
+  note: z.string().max(2000).nullable().optional(),
+  savedAt: IsoDateTimeSchema,
+  student: z
+    .object({
+      id: UuidSchema,
+      fullName: z.string(),
+      email: z.string().optional(),
+      primaryTrackCode: TrackCodeSchema.optional(),
+      highestLevelCleared: LevelNumberSchema.optional(),
+      headlineTier: CertifiableTierSchema.optional(),
+    })
+    .optional(),
+});
+export type SavedCandidateDto = z.infer<typeof SavedCandidateDtoSchema>;
+
+export const SaveCandidateRequestSchema = z.object({
+  studentId: UuidSchema,
+  openingId: UuidSchema.optional(),
+  note: z.string().max(2000).optional(),
+});
+export type SaveCandidateRequest = z.infer<typeof SaveCandidateRequestSchema>;
+
+export const ListSavedCandidatesResponseSchema = z.object({
+  savedCandidates: z.array(SavedCandidateDtoSchema),
+  total: z.number().int(),
+});
+export type ListSavedCandidatesResponse = z.infer<typeof ListSavedCandidatesResponseSchema>;
+
+export const SearchStudentsQuerySchema = z.object({
+  q: z.string().max(200).optional(),
+  skillCode: z.string().max(50).optional(),
+  university: z.string().max(200).optional(),
+  gradYear: z.string().max(10).optional(),
+  availability: z.string().max(50).optional(),
+  minLevel: z.string().max(50).optional(),
+  verificationType: z.string().max(50).optional(),
+  scopedJobId: z.string().max(50).optional(),
+});
+export type SearchStudentsQuery = z.infer<typeof SearchStudentsQuerySchema>;

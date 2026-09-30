@@ -1,11 +1,12 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
-import type {
-  AiCompletionRequest,
-  AiCompletionResponse,
-  AiHealthDto,
-  AiProvider,
+import {
+  ToggleModelVersionRequestSchema,
+  type AiCompletionRequest,
+  type AiCompletionResponse,
+  type AiHealthDto,
+  type AiProvider,
 } from '@smart/contracts';
-import { renderPromptRef } from '@smart/prompts';
+import { listPrompts, renderPromptRef } from '@smart/prompts';
 import { LOG_EVENTS, logEvent } from '@smart/observability';
 import { env } from '../../platform/config/env.js';
 import { AnthropicAdapter } from './adapters/anthropic.adapter.js';
@@ -174,6 +175,31 @@ export class AiGatewayService {
     for (const { provider, adapter } of chain) {
       if (!adapter.isConfigured) continue;
 
+      const targetModel =
+        provider === 'ANTHROPIC'
+          ? request.modelRole === 'FAST_EXTRACTION' ||
+            request.modelRole === 'FALLBACK_FAST' ||
+            request.modelRole === 'EMBEDDING'
+            ? 'claude-3-5-haiku-latest'
+            : 'claude-3-5-sonnet-latest'
+          : provider === 'GOOGLE'
+            ? request.modelRole === 'EMBEDDING'
+              ? 'text-embedding-004'
+              : 'gemini-3.5-flash-lite'
+            : env.OPENROUTER_MODEL || 'anthropic/claude-3.5-sonnet';
+
+      if (this.circuitBreaker.isModelDisabled(provider, targetModel)) {
+        this.logger.warn(
+          `Model ${targetModel} on provider ${provider} is disabled. Trying next provider.`,
+        );
+        attemptedErrors.push({
+          provider,
+          message: `Model ${targetModel} on ${provider} is administratively disabled`,
+          circuitState: this.circuitBreaker.getState(provider),
+        });
+        continue;
+      }
+
       if (!this.circuitBreaker.isCallAllowed(provider)) {
         const state = this.circuitBreaker.getState(provider);
         attemptedErrors.push({
@@ -249,6 +275,45 @@ export class AiGatewayService {
       latencyMs: result.latencyMs,
       estimatedCostUsd: recorded.estimatedCostUsd ?? 0,
       auditId: recorded.auditId,
+    };
+  }
+
+  async listRegisteredPrompts() {
+    const prompts = listPrompts().map((p) => ({
+      promptRef: p.promptRef,
+      purpose: p.purpose,
+      modelRole: p.modelRole,
+      temperature: p.temperature,
+      status: 'ACTIVE' as const,
+    }));
+    return { prompts, total: prompts.length };
+  }
+
+  async listAuditLogs() {
+    if (this.usage) {
+      return this.usage.listAuditLogs();
+    }
+    return { logs: [], total: 0 };
+  }
+
+  async toggleModelVersion(body: unknown) {
+    const payload = ToggleModelVersionRequestSchema.parse(body);
+    if (!payload.active) {
+      this.circuitBreaker.disableModel(payload.provider, payload.model);
+      this.logger.warn(
+        `Targeted model version disable: ${payload.model} on ${payload.provider} disabled. Reason: ${payload.reason}`,
+      );
+    } else {
+      this.circuitBreaker.enableModel(payload.provider, payload.model);
+      this.logger.log(
+        `Targeted model version enable: ${payload.model} on ${payload.provider} enabled.`,
+      );
+    }
+    return {
+      model: payload.model,
+      provider: payload.provider,
+      active: payload.active,
+      updatedAt: new Date().toISOString(),
     };
   }
 }

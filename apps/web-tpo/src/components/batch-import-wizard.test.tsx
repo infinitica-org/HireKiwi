@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { api, apiClient } from '../lib/api';
 import {
@@ -160,7 +160,7 @@ describe('BatchImportWizard', () => {
     vi.mocked(api.onboarding.sendBatchInvites).mockResolvedValueOnce({ enqueued: 7 });
     fireEvent.click(send);
     expect(await screen.findByText('7 invitations queued successfully')).toBeDefined();
-    expect(api.onboarding.sendBatchInvites).toHaveBeenCalledWith('batch-1');
+    expect(api.onboarding.sendBatchInvites).toHaveBeenCalledWith('batch-1', expect.any(String));
   });
 
   it('handles empty results, keeps send disabled, and shows a safe import failure', async () => {
@@ -189,6 +189,19 @@ describe('BatchImportWizard', () => {
     expect(await screen.findByText('Import is temporarily unavailable.')).toBeDefined();
     expect(screen.getByText('Map uploaded columns')).toBeDefined();
     expect(screen.queryByText('Data preview')).toBeNull();
+  });
+
+  it('auto-queues invitations after import when autoSendInvites is true', async () => {
+    vi.mocked(apiClient.postForm).mockResolvedValueOnce(probe).mockResolvedValueOnce(imported);
+    vi.mocked(api.onboarding.sendBatchInvites).mockResolvedValueOnce({ enqueued: 7 });
+    render(<BatchImportWizard batchId="batch-1" autoSendInvites />);
+    upload();
+    await screen.findByText('Map uploaded columns');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm mapping' }));
+    await waitFor(() => {
+      expect(api.onboarding.sendBatchInvites).toHaveBeenCalledWith('batch-1');
+    });
+    expect(await screen.findByText('7 invitations queued successfully')).toBeDefined();
   });
 
   it('shows a safe accessible error when invitation sending fails', async () => {

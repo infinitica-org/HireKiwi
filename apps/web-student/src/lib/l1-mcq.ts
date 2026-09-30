@@ -128,10 +128,13 @@ export function timerPropsFromSession(session: AttemptSessionDto): {
   startedAt: string;
   serverNow: string;
 } {
-  const expiresAtMs = new Date(session.expiresAt).getTime();
+  const expiresAtIso = session.expires_at || session.expiresAt;
+  const expiresAtMs = new Date(expiresAtIso).getTime();
   const startedAtMs = new Date(session.startedAt).getTime();
   const duration = Math.max(0, Math.floor((expiresAtMs - startedAtMs) / 1000));
-  const serverNow = new Date(expiresAtMs - session.serverRemainingSeconds * 1000).toISOString();
+  const serverNow =
+    session.serverNow ||
+    new Date(expiresAtMs - session.serverRemainingSeconds * 1000).toISOString();
   return { duration, startedAt: session.startedAt, serverNow };
 }
 

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   AuthProviderSchema,
   SessionHoldCodeSchema,
+  TenantVerificationStatusSchema,
   TrackCodeSchema,
   UserRoleSchema,
 } from '../domain/enums.js';
@@ -20,6 +21,61 @@ export const PasswordLoginRequestSchema = z.object({
   password: z.string().min(8).max(200),
 });
 export type PasswordLoginRequest = z.infer<typeof PasswordLoginRequestSchema>;
+
+/* ---------------------------- self-serve register -------------------------- */
+
+export const RegisterStudentRequestSchema = z.object({
+  fullName: z.string().trim().min(2).max(100),
+  email: EmailSchema,
+  password: z.string().min(8).max(200),
+});
+export type RegisterStudentRequest = z.infer<typeof RegisterStudentRequestSchema>;
+
+export const RegisterRequestSchema = z.object({
+  email: EmailSchema,
+  password: z.string().min(8).max(200),
+  fullName: z.string().trim().min(1).max(200),
+  /** Selected from GET /auth/institutions — self-serve registration always joins an existing institution. */
+  institutionId: UuidSchema,
+});
+export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
+
+/**
+ * Registration no longer signs the student in: a STUDENT can't sign in until the emailed link
+ * is confirmed, so the response only says where the link went.
+ */
+export const RegisterResponseSchema = z.object({
+  email: EmailSchema,
+  verificationRequired: z.literal(true),
+});
+export type RegisterResponse = z.infer<typeof RegisterResponseSchema>;
+
+/** Error code for a correct-password sign-in by a STUDENT whose email isn't verified yet. */
+export const EMAIL_NOT_VERIFIED_ERROR = 'email_not_verified';
+
+/** Public, because an unverified student can't sign in to ask. Always 204. */
+export const ResendEmailVerificationRequestSchema = z.object({
+  email: EmailSchema,
+});
+export type ResendEmailVerificationRequest = z.infer<typeof ResendEmailVerificationRequestSchema>;
+
+export const SelectableInstitutionDtoSchema = z.object({
+  id: UuidSchema,
+  name: z.string(),
+});
+export type SelectableInstitutionDto = z.infer<typeof SelectableInstitutionDtoSchema>;
+
+/* ---------------------------- password reset -------------------------- */
+
+export const PasswordResetRequestSchema = z.object({
+  email: EmailSchema,
+});
+export type PasswordResetRequest = z.infer<typeof PasswordResetRequestSchema>;
+
+export const PasswordResetConfirmRequestSchema = z.object({
+  newPassword: z.string().min(8).max(200),
+});
+export type PasswordResetConfirmRequest = z.infer<typeof PasswordResetConfirmRequestSchema>;
 
 export const SsoStartRequestSchema = z.object({
   provider: AuthProviderSchema,
@@ -55,6 +111,9 @@ export const AuthenticatedUserSchema = z.object({
   role: UserRoleSchema,
   institutionId: UuidSchema.nullable(),
   institutionName: z.string().nullable(),
+  /** B2B company tenant; null for students, TPO, and platform admins. */
+  companyId: UuidSchema.nullable().optional(),
+  companyName: z.string().nullable().optional(),
   primaryTrack: TrackCodeSchema.nullable(),
   secondaryTrack: TrackCodeSchema.nullable(),
   provider: AuthProviderSchema,
@@ -81,6 +140,15 @@ export const AuthenticatedUserSchema = z.object({
 });
 export type AuthenticatedUser = z.infer<typeof AuthenticatedUserSchema>;
 
+/** Tenant-safe company portal account (GET /auth/company/account). */
+export const CompanyPortalAccountSchema = AuthenticatedUserSchema.extend({
+  companyVerificationStatus: TenantVerificationStatusSchema,
+  companyWebsite: z.string().nullable().optional(),
+  companyIndustry: z.string().nullable().optional(),
+  companyLocation: z.string().nullable().optional(),
+});
+export type CompanyPortalAccount = z.infer<typeof CompanyPortalAccountSchema>;
+
 /* -------------------------------- JWT claims ------------------------------ */
 
 /**
@@ -91,6 +159,8 @@ export const AccessTokenClaimsSchema = z.object({
   sub: UuidSchema,
   role: UserRoleSchema,
   inst: UuidSchema.nullable(),
+  /** Company tenant id when the user belongs to a B2B company (future auth phase). */
+  cmp: UuidSchema.nullable().optional(),
   /** Track codes the user is enrolled on. */
   trk: z.array(TrackCodeSchema),
   /** Refresh-token family id, used for reuse detection on rotation. */
@@ -145,3 +215,52 @@ export const CreateApiKeyResponseSchema = z.object({
 export type CreateApiKeyResponse = z.infer<typeof CreateApiKeyResponseSchema>;
 
 export const API_KEY_HEADER = 'x-smart-api-key' as const;
+
+/* ------------------------------- role assignment -------------------------- */
+
+export const AssignRoleRequestSchema = z.object({
+  role: UserRoleSchema,
+  /** #172: every role change is audited with the reason the admin gave. */
+  reason: z.string().trim().min(8).max(500),
+});
+export type AssignRoleRequest = z.infer<typeof AssignRoleRequestSchema>;
+
+/** Roles an admin can move an institution staff member between (#169). */
+export const INSTITUTION_STAFF_ROLES = ['INSTITUTION_ADMIN', 'PLACEMENT_STAFF'] as const;
+export type InstitutionStaffRole = (typeof INSTITUTION_STAFF_ROLES)[number];
+
+export const AssignRoleResponseSchema = z.object({
+  userId: UuidSchema,
+  role: UserRoleSchema,
+});
+export type AssignRoleResponse = z.infer<typeof AssignRoleResponseSchema>;
+
+export const UserHoldResponseSchema = z.object({
+  userId: UuidSchema,
+  heldAt: IsoDateTimeSchema.nullable(),
+});
+export type UserHoldResponse = z.infer<typeof UserHoldResponseSchema>;
+
+/* ------------------------------ admin: sessions ---------------------------- */
+
+/** S6-VV-93 — one row per live login (a RefreshToken family with an unrevoked, unexpired token). */
+export const ActiveSessionDtoSchema = z.object({
+  id: UuidSchema,
+  userId: UuidSchema,
+  userEmail: EmailSchema,
+  userFullName: z.string(),
+  userRole: UserRoleSchema,
+  familyId: UuidSchema,
+  createdAt: IsoDateTimeSchema,
+  expiresAt: IsoDateTimeSchema,
+});
+export type ActiveSessionDto = z.infer<typeof ActiveSessionDtoSchema>;
+
+export const ListActiveSessionsQuerySchema = z.object({
+  email: EmailSchema.optional(),
+  userId: UuidSchema.optional(),
+});
+export type ListActiveSessionsQuery = z.infer<typeof ListActiveSessionsQuerySchema>;
+
+export const ListActiveSessionsResponseSchema = z.array(ActiveSessionDtoSchema);
+export type ListActiveSessionsResponse = z.infer<typeof ListActiveSessionsResponseSchema>;

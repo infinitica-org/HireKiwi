@@ -1,0 +1,157 @@
+import { randomUUID } from 'node:crypto';
+import { describe, expect, it, vi } from 'vitest';
+import { UserAdminService } from './user-admin.service.js';
+
+describe('UserAdminService.assignRole', () => {
+  function serviceFor(currentRole: string) {
+    const userId = randomUUID();
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({ id: userId, role: currentRole })),
+        update: vi.fn(async ({ data }: { data: { role: string } }) => ({
+          id: userId,
+          role: data.role,
+        })),
+      },
+    };
+    const auth = { revokeAllForUser: vi.fn().mockResolvedValue(undefined) };
+    const auditPublisher = { record: vi.fn().mockResolvedValue(undefined) };
+    return {
+      userId,
+      prisma,
+      auth,
+      auditPublisher,
+      service: new UserAdminService(prisma as never, auth as never, auditPublisher as never),
+    };
+  }
+  const actorId = randomUUID();
+  const reason = 'Moved to the placement desk';
+
+  it('moves a staff member between TPO admin and placement staff and ends their sessions', async () => {
+    const { userId, prisma, auth, service } = serviceFor('INSTITUTION_ADMIN');
+
+    const result = await service.assignRole(userId, 'PLACEMENT_STAFF', reason, actorId);
+
+    expect(result).toEqual({ userId, role: 'PLACEMENT_STAFF' });
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: userId },
+      data: { role: 'PLACEMENT_STAFF' },
+    });
+    // The old role is baked into live access tokens.
+    expect(auth.revokeAllForUser).toHaveBeenCalledWith(userId);
+  });
+
+  it('audits the change with the actor, the before and after role, and the reason (#172)', async () => {
+    const { userId, service, auditPublisher } = serviceFor('PLACEMENT_STAFF');
+
+    await service.assignRole(userId, 'INSTITUTION_ADMIN', reason, actorId);
+
+    expect(auditPublisher.record).toHaveBeenCalledWith({
+      actorId,
+      action: 'user.role_changed',
+      resourceType: 'user',
+      resourceId: userId,
+      reasonCode: reason,
+      metadata: { prior: { role: 'PLACEMENT_STAFF' }, next: { role: 'INSTITUTION_ADMIN' } },
+    });
+  });
+
+  it('refuses to let an admin change their own role', async () => {
+    const { userId, prisma, auditPublisher, service } = serviceFor('INSTITUTION_ADMIN');
+
+    await expect(
+      service.assignRole(userId, 'PLACEMENT_STAFF', reason, userId),
+    ).rejects.toMatchObject({ response: { error: 'cannot_change_own_role', statusCode: 422 } });
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(auditPublisher.record).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['promote a student to staff', 'STUDENT', 'PLACEMENT_STAFF'],
+    ['make staff a platform admin', 'INSTITUTION_ADMIN', 'SUPER_ADMIN'],
+    ['turn staff into a company user', 'PLACEMENT_STAFF', 'COMPANY'],
+    ['demote a platform admin', 'SUPER_ADMIN', 'INSTITUTION_ADMIN'],
+  ] as const)('refuses to %s', async (_label, from, to) => {
+    const { userId, prisma, auth, auditPublisher, service } = serviceFor(from);
+
+    await expect(service.assignRole(userId, to, reason, actorId)).rejects.toMatchObject({
+      response: { error: 'role_not_assignable', statusCode: 422 },
+    });
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(auth.revokeAllForUser).not.toHaveBeenCalled();
+    expect(auditPublisher.record).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unknown user with 404', async () => {
+    const prisma = { user: { findUnique: vi.fn(async () => null) } };
+    const service = new UserAdminService(prisma as never, {} as never, {} as never);
+
+    await expect(
+      service.assignRole(randomUUID(), 'STUDENT', reason, actorId),
+    ).rejects.toMatchObject({
+      response: { statusCode: 404 },
+    });
+  });
+});
+
+describe('UserAdminService.holdUser', () => {
+  it('holds the user, audits it, and revokes all sessions immediately', async () => {
+    const userId = randomUUID();
+    const actorId = randomUUID();
+    const heldAt = new Date();
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({ id: userId, role: 'STUDENT' })),
+        update: vi.fn(async () => ({ id: userId, heldAt })),
+      },
+    };
+    const auth = { revokeAllForUser: vi.fn() };
+    const auditPublisher = { record: vi.fn() };
+    const service = new UserAdminService(prisma as never, auth as never, auditPublisher as never);
+
+    const result = await service.holdUser(userId, 'policy violation', actorId);
+
+    expect(result).toEqual({ userId, heldAt: heldAt.toISOString() });
+    expect(auditPublisher.record).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId, action: 'user.held', resourceId: userId }),
+    );
+    expect(auth.revokeAllForUser).toHaveBeenCalledWith(userId);
+  });
+
+  it('rejects an unknown user with 404', async () => {
+    const prisma = { user: { findUnique: vi.fn(async () => null) } };
+    const service = new UserAdminService(
+      prisma as never,
+      { revokeAllForUser: vi.fn() } as never,
+      { record: vi.fn() } as never,
+    );
+
+    await expect(service.holdUser(randomUUID(), 'reason', randomUUID())).rejects.toMatchObject({
+      response: { statusCode: 404 },
+    });
+  });
+});
+
+describe('UserAdminService.releaseUser', () => {
+  it('releases the hold, audits it, and does not revoke sessions', async () => {
+    const userId = randomUUID();
+    const actorId = randomUUID();
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({ id: userId, role: 'STUDENT' })),
+        update: vi.fn(async () => ({ id: userId, heldAt: null })),
+      },
+    };
+    const auth = { revokeAllForUser: vi.fn() };
+    const auditPublisher = { record: vi.fn() };
+    const service = new UserAdminService(prisma as never, auth as never, auditPublisher as never);
+
+    const result = await service.releaseUser(userId, 'resolved', actorId);
+
+    expect(result).toEqual({ userId, heldAt: null });
+    expect(auditPublisher.record).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId, action: 'user.hold_released', resourceId: userId }),
+    );
+    expect(auth.revokeAllForUser).not.toHaveBeenCalled();
+  });
+});

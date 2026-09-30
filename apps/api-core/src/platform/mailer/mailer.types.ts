@@ -10,13 +10,42 @@ export type EmailTemplateName =
   | 'verification-passed'
   | 'verification-failed'
   | 'verification-locked'
+  | 'email-verification'
+  | 'password-reset'
   | 'work-experience-verifier-invite'
   | 'work-experience-verifier-reminder'
   | 'certificate-endorsement-request'
   /** WE-T03: manager endorsement invite (domain-validated corporate email, 5-day TTL) */
   | 'work-experience-manager-invite'
   /** WE-T03: manager endorsement reminder at day 3 (72h) */
-  | 'work-experience-manager-reminder';
+  | 'work-experience-manager-reminder'
+  /** CO self-onboarding: corporate email OTP (session holder, not JWT). */
+  | 'company-onboarding-email-verify'
+  /** Phase 6: company representative password setup after SA approval. */
+  | 'company-portal-invite'
+  /** EMP-01 #348: reviewer rejected / requested changes; link back into the application. */
+  | 'company-verification-resubmit'
+  /** APP-01: confirmation to the student right after they apply. */
+  | 'application-submitted'
+  /** APP-01: a company member is told a student applied to their job. */
+  | 'application-received'
+  /** APP-01: a company member is told an applicant withdrew. */
+  | 'application-withdrawn';
+
+export interface CompanyOnboardingEmailVerifyData {
+  readonly fullName: string;
+  readonly verificationCode: string;
+  readonly expiresAtFormatted: string;
+}
+
+export interface CompanyVerificationResubmitEmailData {
+  readonly fullName: string;
+  readonly companyName: string;
+  readonly reason: string;
+  readonly rejectedDocuments: readonly { readonly label: string; readonly reason: string | null }[];
+  readonly resumeUrl: string;
+  readonly expiresAtFormatted: string;
+}
 
 export interface InviteEmailData {
   readonly fullName: string;
@@ -32,6 +61,21 @@ export interface OpportunityEmailData {
   readonly applicationsUrl: string;
 }
 
+export interface ApplicationSubmittedEmailData {
+  readonly fullName: string;
+  readonly companyName: string;
+  readonly roleTitle: string;
+  readonly referenceNumber: string;
+  readonly applicationsUrl: string;
+}
+
+export interface EmployerApplicantEmailData {
+  readonly recipientName: string;
+  readonly candidateName: string;
+  readonly roleTitle: string;
+  readonly applicantsUrl: string;
+}
+
 export interface StageChangeEmailData {
   readonly fullName: string;
   readonly companyName: string;
@@ -39,6 +83,18 @@ export interface StageChangeEmailData {
   readonly fromStage: string | null;
   readonly toStage: string;
   readonly applicationsUrl: string;
+}
+
+export interface EmailVerificationEmailData {
+  readonly fullName: string;
+  readonly verifyUrl: string;
+  readonly expiresAtFormatted: string;
+}
+
+export interface PasswordResetEmailData {
+  readonly fullName: string;
+  readonly resetUrl: string;
+  readonly expiresAtFormatted: string;
 }
 
 export interface VerificationEmailData {
@@ -80,13 +136,19 @@ export interface CertificateEndorsementRequestEmailData {
 
 export type EmailTemplateData =
   | InviteEmailData
+  | EmailVerificationEmailData
+  | PasswordResetEmailData
   | OpportunityEmailData
   | StageChangeEmailData
+  | ApplicationSubmittedEmailData
+  | EmployerApplicantEmailData
   | VerificationEmailData
   | WorkExperienceVerifierInviteEmailData
   | WorkExperienceVerifierReminderEmailData
   | CertificateEndorsementRequestEmailData
-  | WorkExperienceManagerEndorsementEmailData;
+  | WorkExperienceManagerEndorsementEmailData
+  | CompanyOnboardingEmailVerifyData
+  | CompanyVerificationResubmitEmailData;
 
 export interface EmailJobPayload {
   readonly to: string;

@@ -3,6 +3,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Headers,
   Inject,
   Param,
   Post,
@@ -34,12 +35,14 @@ import {
   type SkillClaimDto,
   type SkillVerifyPrepareDto,
   type SkillVerifySessionDto,
+  SKILL_PROFICIENCIES,
 } from '@smart/contracts';
 import type { FastifyRequest } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { NextFormRequestDto } from './dto/next-form-request.dto.js';
+import { IdempotencyService } from '../company-profile/idempotency.service.js';
 import { AssessmentService } from './assessment.service.js';
 import { ItemRotationService } from './item-rotation.service.js';
 import { CertVerificationAssessmentService } from './cert-verification-assessment.service.js';
@@ -54,6 +57,7 @@ export class AssessmentController {
     @Inject(SkillVerificationService) private readonly skillVerify: SkillVerificationService,
     @Inject(CertVerificationAssessmentService)
     private readonly certVerify: CertVerificationAssessmentService,
+    @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
   ) {}
 
   @Get('_meta')
@@ -90,7 +94,7 @@ export class AssessmentController {
         skillCode: { type: 'string' },
         proficiency: {
           type: 'string',
-          enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'PROFESSIONAL'],
+          enum: [...SKILL_PROFICIENCIES],
         },
       },
     },
@@ -349,6 +353,7 @@ export class AssessmentController {
   async completeAttempt(
     @Req() req: FastifyRequest & { user?: RequestUser },
     @Body() body: unknown,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
   ): Promise<CompleteAttemptResponse> {
     const user = req.user;
     if (!user || user.role !== 'STUDENT') {
@@ -359,7 +364,15 @@ export class AssessmentController {
       });
     }
     const dto = CompleteAttemptRequestSchema.parse(body);
-    return this.service.completeAttempt(user, dto);
+    // S6-VV-124: a double-clicked submit replays the first result instead of a 409 "already
+    // finalised" that looks like the submission failed.
+    return this.idempotency.once({
+      userId: user.sub,
+      scope: 'assessment.complete',
+      key: idempotencyKey,
+      request: dto,
+      execute: () => this.service.completeAttempt(user, dto),
+    });
   }
 
   /**

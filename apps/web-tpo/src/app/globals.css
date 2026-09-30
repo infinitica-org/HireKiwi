@@ -20,7 +20,7 @@ body {
 :root {
   color-scheme: light;
 
-  --ds-canvas: #f8fafc;
+  --ds-canvas: #ffffff;
   --ds-surface: #ffffff;
   --ds-surface-muted: #f5f7fa;
   --ds-surface-hover: #f8fafc;
@@ -57,11 +57,10 @@ body {
   --tpo-accent-border: #99f6e4;
 
   /*
-   * Apple SF Pro via system stack (licensed fonts are not bundled). On macOS/iOS
-   * this resolves to SF Pro Text/Display; elsewhere falls back to system UI sans.
+   * Manrope via @smart/ui/styles.css as primary UI/table font.
    */
   --tpo-font-sans:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue',
+    'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue',
     system-ui, sans-serif;
 }
 
@@ -138,7 +137,7 @@ body {
  * Home dashboard refinements live under `.tpo-dashboard` only.
  */
 .tpo-bento-theme {
-  --ds-canvas: #f7f8fa;
+  --ds-canvas: #ffffff;
   --ds-surface: #ffffff;
   --ds-surface-muted: #f7f8fa;
   --ds-text: #0f172a;
@@ -177,7 +176,7 @@ body {
  * TPO home dashboard — premium SaaS palette (color-only). No neon cyan.
  */
 .tpo-dashboard {
-  --ds-canvas: #f6f8fb;
+  --ds-canvas: #ffffff;
   --ds-surface: #ffffff;
   --ds-surface-muted: #f8fafc;
   --ds-text: #0f172a;
@@ -242,6 +241,11 @@ body {
   --tpo-dash-empty-border: #e2e8f0;
   --tpo-dash-empty-icon-bg: #f1f5f9;
   --tpo-dash-empty-icon: #64748b;
+}
+
+.tpo-dashboard {
+  background-image: radial-gradient(ellipse 90% 45% at 50% -5%, rgba(204, 251, 241, 0.45) 0%, rgba(240, 253, 250, 0.2) 50%, transparent 80%);
+  background-repeat: no-repeat;
 }
 
 .tpo-dashboard .dashboard-hero-card {

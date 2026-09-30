@@ -525,7 +525,7 @@ describe('assessmentApi contracts', () => {
   });
 
   it('parses POST /assessment/complete as CompleteAttemptResponse', async () => {
-    const { fetchImpl } = stubFetch([
+    const { fetchImpl, calls } = stubFetch([
       {
         body: {
           attemptId: sessionBody.attemptId,
@@ -547,6 +547,10 @@ describe('assessmentApi contracts', () => {
       }),
     );
     const result = await api.assessment.complete({ attemptId: sessionBody.attemptId });
+    // S6-VV-124: keyed on the attempt, so a double submit replays instead of a 409.
+    expect(new Headers(calls[0]?.init.headers).get('idempotency-key')).toBe(
+      `attempt-complete-${sessionBody.attemptId}`,
+    );
     expect(result.status).toBe('EVALUATED');
     expect(result.evaluationJobId).toBeNull();
     expect(result.scorePercent).toBe(1);
@@ -705,5 +709,77 @@ describe('onboardingApi education verification contracts', () => {
     expect(calls[0]?.init.body).toBe(JSON.stringify({ reason: 'Invalid degree' }));
     expect(result.status).toBe('rejected');
     expect(result.rejectionReason).toBe('Invalid degree');
+  });
+});
+
+describe('admin user role and access bindings (#169 / #171)', () => {
+  const userId = '11111111-1111-4111-8111-111111111111';
+
+  function apiWith(body: unknown) {
+    const { fetchImpl, calls } = stubFetch([{ status: 200, body }]);
+    const api = createSmartApi(
+      new SmartApiClient({
+        baseUrl: 'https://api.smart.test/',
+        getAccessToken: () => 'token',
+        fetchImpl,
+      }),
+    );
+    return { api, calls };
+  }
+
+  it('posts /admin/users/:id/role', async () => {
+    const { api, calls } = apiWith({ userId, role: 'PLACEMENT_STAFF' });
+    const result = await api.onboarding.assignUserRole(userId, {
+      role: 'PLACEMENT_STAFF',
+      reason: 'Moved to the placement desk',
+    });
+    expect(calls[0]?.url).toBe(`https://api.smart.test/api/v1/admin/users/${userId}/role`);
+    expect(calls[0]?.init.body).toBe(
+      JSON.stringify({ role: 'PLACEMENT_STAFF', reason: 'Moved to the placement desk' }),
+    );
+    expect(result.role).toBe('PLACEMENT_STAFF');
+  });
+
+  it('posts /admin/users/:id/hold and /release-hold with the reason', async () => {
+    const held = apiWith({ userId, heldAt: '2026-09-25T10:00:00.000Z' });
+    await held.api.onboarding.holdUser(userId, { reason: 'Left the placement cell' });
+    expect(held.calls[0]?.url).toBe(`https://api.smart.test/api/v1/admin/users/${userId}/hold`);
+    expect(held.calls[0]?.init.body).toBe(JSON.stringify({ reason: 'Left the placement cell' }));
+
+    const released = apiWith({ userId, heldAt: null });
+    const result = await released.api.onboarding.releaseUserHold(userId, {
+      reason: 'Back on the team',
+    });
+    expect(released.calls[0]?.url).toBe(
+      `https://api.smart.test/api/v1/admin/users/${userId}/release-hold`,
+    );
+    expect(result.heldAt).toBeNull();
+  });
+});
+
+describe('public company onboarding', () => {
+  it('starts a session without Authorization header', async () => {
+    const body = {
+      sessionToken: 'a'.repeat(43),
+      expiresAt: '2026-12-31T00:00:00.000Z',
+      onboardingStatus: 'EMAIL_VERIFICATION_PENDING',
+    };
+    const { fetchImpl, calls } = stubFetch([{ status: 201, body }]);
+    const api = createSmartApi(
+      new SmartApiClient({
+        baseUrl: 'https://api.smart.test',
+        getAccessToken: () => 'token-123',
+        fetchImpl,
+      }),
+    );
+
+    const result = await api.public.startCompanyOnboarding({
+      representative: { fullName: 'Jane Doe', workEmail: 'jane@acme.example.com' },
+      website: 'https://acme.example.com',
+    });
+
+    expect(result.sessionToken).toBe(body.sessionToken);
+    expect(calls[0]?.url).toBe('https://api.smart.test/api/v1/public/company/onboarding/sessions');
+    expect((calls[0]?.init.headers as Record<string, string>).authorization).toBeUndefined();
   });
 });

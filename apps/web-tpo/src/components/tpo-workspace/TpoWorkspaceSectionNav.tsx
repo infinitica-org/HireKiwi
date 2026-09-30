@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { cn } from '@smart/ui';
 import type { TpoNavLink } from '../../lib/tpo-nav';
 import { isNavLinkActive } from '../../lib/tpo-nav';
 
@@ -13,7 +14,7 @@ export type TpoWorkspaceSectionNavProps = {
 };
 
 /**
- * Product-level subsection switcher: section label, text tabs, teal underline — no pills/cards.
+ * Product-level subsection switcher: section label, text tabs, bottom underline — matches CampusTabs.
  */
 export function TpoWorkspaceSectionNav({
   sectionTitle,
@@ -24,55 +25,53 @@ export function TpoWorkspaceSectionNav({
   const pathname = usePathname();
 
   return (
-    <div className="tpo-workspace-section mb-5 border-b border-[var(--tpo-section-nav-divider,#e2e8f0)] pb-0">
-      <p className="text-[13px] font-semibold tracking-tight text-[var(--ds-text)]">
-        {sectionTitle}
-      </p>
-      {sectionDescription ? (
-        <p className="mt-0.5 max-w-2xl text-[12px] leading-relaxed text-[var(--tpo-section-nav-idle,#64748b)]">
-          {sectionDescription}
-        </p>
+    <div className="tpo-workspace-section mb-6">
+      {sectionTitle ? (
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">
+            {sectionTitle}
+          </h1>
+          {sectionDescription ? (
+            <p className="mt-1 text-xs sm:text-sm font-medium text-zinc-500">
+              {sectionDescription}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
-      <nav aria-label={navAriaLabel} className="mt-3">
-        <ul className="-mb-px flex gap-6 overflow-x-auto [scrollbar-width:none] sm:gap-8 [&::-webkit-scrollbar]:hidden">
-          {items.map((item) => {
-            const active = isNavLinkActive(pathname, item.href);
-            const Icon = item.icon;
+      <nav
+        aria-label={navAriaLabel}
+        className="flex gap-2 border-b border-zinc-200 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {items.map((item) => {
+          const active = isNavLinkActive(pathname, item.href);
+          const Icon = item.icon;
 
-            return (
-              <li key={item.href} className="shrink-0">
-                <Link
-                  href={item.href}
-                  aria-current={active ? 'page' : undefined}
-                  className={`group relative inline-flex items-center gap-1.5 pb-3 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ds-text)] ${
-                    active
-                      ? 'font-semibold text-[var(--tpo-section-nav-active,#172033)]'
-                      : 'font-medium text-[var(--tpo-section-nav-idle,#64748b)] hover:text-[var(--tpo-section-nav-hover,#334155)]'
-                  }`}
-                >
-                  {Icon ? (
-                    <Icon
-                      className={`size-3.5 shrink-0 stroke-[1.5] ${
-                        active
-                          ? 'text-[var(--tpo-section-nav-underline,#0f9f8f)]'
-                          : 'text-[var(--ds-text-subtle)] opacity-70 group-hover:opacity-100'
-                      }`}
-                      aria-hidden
-                    />
-                  ) : null}
-                  {item.name}
-                  {active ? (
-                    <span
-                      aria-hidden
-                      className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[var(--tpo-section-nav-underline,#0f9f8f)]"
-                    />
-                  ) : null}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              className={cn(
+                '-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors shrink-0',
+                active
+                  ? 'border-zinc-900 font-semibold text-zinc-900'
+                  : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-800',
+              )}
+            >
+              {Icon ? (
+                <Icon
+                  className={cn(
+                    'size-4 shrink-0 stroke-[1.75]',
+                    active ? 'text-zinc-900' : 'text-zinc-400 group-hover:text-zinc-600',
+                  )}
+                  aria-hidden
+                />
+              ) : null}
+              <span>{item.name}</span>
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );

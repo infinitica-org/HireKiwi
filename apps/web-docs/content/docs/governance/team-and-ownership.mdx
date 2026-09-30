@@ -1,0 +1,40 @@
+---
+title: Team Charter & Module Ownership
+description: Engineering roles, bounded module ownership, and definition of done.
+---
+
+# Team Charter & Module Ownership
+
+Ownership across the SMART monorepo is enforced mechanically via `.github/CODEOWNERS` and authoritative team guidelines ([`TEAM.md`](file:///d:/Work's/Infinitica/smart/TEAM.md)).
+
+Direct merges into another engineer's owned module are blocked; changes must be submitted via pull request and approved by the designated code owner.
+
+---
+
+## Engineering Team & Ownership Matrix
+
+| Engineer             | Handle            | Role Mandate                    | Sole Owned Paths                                                                                                                                    |
+| :------------------- | :---------------- | :------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Tino**             | `@brittytino`     | **System Architect & Reviewer** | `ARCHITECTURE.md`, `packages/contracts/**`, `docs/adr/**`, `.github/workflows/**`, `turbo.json`, `docs/delivery/**`. _Does not write feature code._ |
+| **Vishal V**         | `@vis465`         | **Senior Backend Engineer**     | Platform core, identity & auth, rate limiting, event bus, Prisma migrations, Docker sandbox, runtime infrastructure.                                |
+| **Satheswaran V**    | `@Satheshwaran26` | **Frontend Lead**               | Design system (`@smart/ui`), `web-student`, `web-tpo`, typed API client, accessibility, and client-side assessment UX.                              |
+| **Vishal Bharath R** | `@vishalbharath`  | **Trust & Assessment Engineer** | Assessment session player, HMAC certificates, public verification (`web-verify`), admin console, outbound webhooks.                                 |
+| **Ramansh**          | `@Ram9012`        | **AI Engineer**                 | `ai-gateway`, Claude/Gemini failover, BARS evaluation engine, interactive L4 defense simulation, RAG & vector embeddings.                           |
+| **Vedika G**         | `@11vedikaa`      | **Data & Content Engineer**     | Item banks for all 10 tracks, Angoff cut-score calibrations, seed pipelines, campus placement records, analytics.                                   |
+
+---
+
+## Contract-First Development Protocol
+
+1. **Schema Authority:** Shared domain models and API contracts live exclusively in `packages/contracts`.
+2. **Consumer Proposal:** Feature developers propose new endpoint contracts via PR to `packages/contracts`.
+3. **Architectural Review:** Only the System Architect (`@brittytino`) may merge contract changes.
+4. **Parallel Implementation:** Frontend and backend engineers develop against the merged Zod contracts without blocking each other.
+5. **Quality Gates:** Every PR must satisfy:
+   ```bash
+   pnpm lint
+   pnpm typecheck
+   pnpm test
+   pnpm format:check
+   ```
+   PR diffs are capped at **400 hand-written lines of code** to preserve review throughput and code quality.

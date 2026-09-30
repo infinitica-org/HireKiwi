@@ -7,6 +7,7 @@ import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { ROLES_KEY } from '../../common/guards/roles.decorator.js';
 import { MatchingService } from './matching.service.js';
 import { PlacementMatchController } from './placement-match.controller.js';
+import { resolveTenantId } from '../../common/decorators/tenant-id.decorator.js';
 
 const institutionId = randomUUID();
 const otherInstitutionId = randomUUID();
@@ -66,9 +67,17 @@ function setup(
     students?: unknown[];
     matchRun?: unknown;
     useRulesRanker?: boolean;
+    /** Students that are now deactivated or held (S6-VV-148). */
+    hiddenStudentIds?: string[];
   } = {},
 ) {
+  const hidden = new Set(options.hiddenStudentIds ?? []);
   const prisma = {
+    user: {
+      findMany: vi.fn(({ where }: { where: { id: { in: string[] } } }) =>
+        Promise.resolve(where.id.in.filter((id) => !hidden.has(id)).map((id) => ({ id }))),
+      ),
+    },
     jobOpening: {
       findFirst: vi
         .fn()
@@ -105,6 +114,16 @@ function setup(
     },
     application: {
       findFirst: vi.fn().mockResolvedValue(null),
+    },
+    matchFeedback: {
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn().mockImplementation(({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({
+          id: randomUUID(),
+          createdAt: new Date(),
+          ...data,
+        }),
+      ),
     },
   };
   const outbox = { enqueueEnvelope: vi.fn().mockResolvedValue(undefined) };
@@ -164,7 +183,7 @@ describe('SE-T05 match authorization', () => {
     ]);
   });
 
-  it.each(['B2B_PARTNER', 'STUDENT', 'SUPER_ADMIN'])(
+  it.each(['B2B_PARTNER', 'COMPANY', 'STUDENT', 'SUPER_ADMIN'])(
     'rejects %s on POST /placement/match',
     (role) => {
       const guard = new RolesGuard({
@@ -180,7 +199,11 @@ describe('SE-T05 match authorization', () => {
   it('refuses a TPO token that carries no institution claim', async () => {
     const { controller, prisma } = setup();
     await expect(
-      controller.match({ ...tpoAdmin, inst: null } as never, { jdId: openingId }),
+      (async () =>
+        controller.match(
+          { jdId: openingId },
+          resolveTenantId({ ...tpoAdmin, inst: null } as never),
+        ))(),
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(prisma.jobOpening.findFirst).not.toHaveBeenCalled();
   });
@@ -190,7 +213,7 @@ describe('SE-T05 POST /placement/match', () => {
   it('returns a contract ShortlistDto ranked from verified claims', async () => {
     const { controller, prisma } = setup();
 
-    const dto = await controller.match(tpoAdmin as never, { jdId: openingId });
+    const dto = await controller.match({ jdId: openingId }, resolveTenantId(tpoAdmin as never));
 
     expect(ShortlistDtoSchema.parse(dto).candidates).toHaveLength(1);
     expect(dto.jdId).toBe(openingId);
@@ -218,13 +241,17 @@ describe('SE-T05 POST /placement/match', () => {
     expect(sqlArg.values).toContain(institutionId);
     expect(sqlArg.sql).toContain("u.role = 'STUDENT'");
     expect(sqlArg.sql).toContain("status = 'VERIFIED'");
+    expect(sqlArg.sql).toContain('verified_until');
   });
 
   it('hides an opening owned by another institution behind not-found', async () => {
     const { controller, prisma } = setup({ opening: null, jd: null });
 
     await expect(
-      controller.match({ ...tpoAdmin, inst: otherInstitutionId } as never, { jdId: openingId }),
+      controller.match(
+        { jdId: openingId },
+        resolveTenantId({ ...tpoAdmin, inst: otherInstitutionId } as never),
+      ),
     ).rejects.toBeInstanceOf(NotFoundException);
     expect(prisma.jobOpening.findFirst.mock.calls[0][0].where.institutionId).toBe(
       otherInstitutionId,
@@ -234,14 +261,14 @@ describe('SE-T05 POST /placement/match', () => {
   it('does not return declared-only students because the pool requires VERIFIED', async () => {
     const { controller, prisma } = setup({ students: [] });
 
-    const dto = await controller.match(tpoAdmin as never, { jdId: openingId });
+    const dto = await controller.match({ jdId: openingId }, resolveTenantId(tpoAdmin as never));
 
     expect(dto.candidates).toEqual([]);
     expect(dto.totalCandidatesConsidered).toBe(0);
     expect(prisma.$queryRaw.mock.calls[0][0].sql).toContain("status = 'VERIFIED'");
   });
 
-  it('keeps a verified-but-partial student on the list when coverage meets the gate', async () => {
+  it('keeps a verified partial match without a coverage cutoff', async () => {
     const { controller } = setup({
       students: [
         verifiedStudent({
@@ -261,12 +288,16 @@ describe('SE-T05 POST /placement/match', () => {
       ],
     });
 
-    const dto = await controller.match(tpoAdmin as never, {
-      jdId: openingId,
-      minSkillCoverage: 0.5,
-    });
+    const dto = await controller.match(
+      {
+        jdId: openingId,
+        minSkillCoverage: 0.6,
+      },
+      resolveTenantId(tpoAdmin as never),
+    );
 
     expect(dto.candidates).toHaveLength(1);
+    expect(dto.candidatesScoredCount).toBe(1);
     expect(dto.candidates[0]?.matchScore).toBeLessThan(1);
     expect(dto.candidates[0]?.explanation.skillFit?.some((row) => row.status === 'PARTIAL')).toBe(
       true,
@@ -305,6 +336,8 @@ describe('SE-T05 POST /placement/match', () => {
         skillCode: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
         assessmentVerified: true,
         confidenceScore: 0.82,
+        proficiency: 'INTERMEDIATE',
+        evidenceRefs: ['Defense transcript excerpt'],
       },
     ]);
     prisma.project.findMany.mockResolvedValue([
@@ -321,7 +354,7 @@ describe('SE-T05 POST /placement/match', () => {
       },
     ]);
 
-    const dto = await controller.match(tpoAdmin as never, { jdId: openingId });
+    const dto = await controller.match({ jdId: openingId }, resolveTenantId(tpoAdmin as never));
 
     expect(dto.candidates[0]?.explanation.gapCompetencies).toContain('Missing Dockerfile');
     expect(dto.candidates[0]?.explanation.strongCompetencies).toContain(
@@ -334,7 +367,7 @@ describe('SE-T05 POST /placement/match', () => {
     const { controller, prisma } = setup();
 
     await expect(
-      controller.match(tpoAdmin as never, { jdId: 'not-a-uuid' }),
+      controller.match({ jdId: 'not-a-uuid' }, resolveTenantId(tpoAdmin as never)),
     ).rejects.toBeInstanceOf(ZodError);
     expect(prisma.jobOpening.findFirst).not.toHaveBeenCalled();
   });
@@ -342,7 +375,7 @@ describe('SE-T05 POST /placement/match', () => {
   it('reports the pre-ranking eligible pool size alongside the ranked candidates', async () => {
     const { controller } = setup();
 
-    const dto = await controller.match(tpoAdmin as never, { jdId: openingId });
+    const dto = await controller.match({ jdId: openingId }, resolveTenantId(tpoAdmin as never));
 
     expect(dto.eligiblePoolCount).toBe(1);
   });
@@ -457,11 +490,14 @@ describe('S6-VV-76 async match runs', () => {
   });
 
   it('returns a run scoped to its own institution', async () => {
-    const { service, prisma } = setup({ matchRun: matchRunRow({ status: 'SUCCEEDED' }) });
+    const { service, prisma } = setup({
+      matchRun: matchRunRow({ status: 'SUCCEEDED', rankerVersion: 'v1.2.0' }),
+    });
 
     const dto = await service.getMatchRun(institutionId, 'run-1');
 
     expect(dto.status).toBe('SUCCEEDED');
+    expect(dto.rankerVersion).toBe('v1.2.0');
     expect(prisma.matchRun.findFirst).toHaveBeenCalledWith({
       where: { id: 'run-1', institutionId },
     });
@@ -474,6 +510,44 @@ describe('S6-VV-76 async match runs', () => {
       NotFoundException,
     );
   });
+
+  describe('getMatchFeedbackSummary (I376)', () => {
+    it('aggregates ratings, reasons, and computes satisfaction percentage', async () => {
+      const { service, prisma } = setup();
+      prisma.matchFeedback.findMany.mockResolvedValueOnce([
+        { rating: 'EXCELLENT', irrelevantReasons: [] },
+        { rating: 'RELEVANT', irrelevantReasons: [] },
+        { rating: 'PARTIALLY_RELEVANT', irrelevantReasons: ['Skill mismatch'] },
+        { rating: 'NOT_RELEVANT', irrelevantReasons: ['Skill mismatch', 'Overqualified'] },
+      ]);
+
+      const summary = await service.getMatchFeedbackSummary();
+
+      expect(summary.totalFeedbacks).toBe(4);
+      expect(summary.relevantCount).toBe(2);
+      expect(summary.notRelevantCount).toBe(1);
+      expect(summary.satisfactionRate).toBe(0.63); // (2 + 0.5) / 4 = 2.5 / 4 = 0.625 -> 0.63
+      expect(summary.ratingBreakdown.EXCELLENT).toBe(1);
+      expect(summary.ratingBreakdown.RELEVANT).toBe(1);
+      expect(summary.ratingBreakdown.PARTIALLY_RELEVANT).toBe(1);
+      expect(summary.ratingBreakdown.NOT_RELEVANT).toBe(1);
+      expect(summary.commonIrrelevantReasons).toEqual([
+        { reason: 'Skill mismatch', count: 2 },
+        { reason: 'Overqualified', count: 1 },
+      ]);
+    });
+
+    it('returns default 1.0 satisfaction when no feedbacks exist', async () => {
+      const { service, prisma } = setup();
+      prisma.matchFeedback.findMany.mockResolvedValueOnce([]);
+
+      const summary = await service.getMatchFeedbackSummary();
+
+      expect(summary.totalFeedbacks).toBe(0);
+      expect(summary.satisfactionRate).toBe(1.0);
+      expect(summary.commonIrrelevantReasons).toEqual([]);
+    });
+  });
 });
 
 function contextWithUser(user: { role: string } | undefined): ExecutionContext {
@@ -483,3 +557,162 @@ function contextWithUser(user: { role: string } | undefined): ExecutionContext {
     switchToHttp: () => ({ getRequest: () => ({ user }) }),
   } as ExecutionContext;
 }
+
+describe('S6-VV-148 employer visibility', () => {
+  const hiddenStudentId = randomUUID();
+
+  async function storedShortlist() {
+    const { controller } = setup({
+      students: [verifiedStudent(), verifiedStudent({ id: hiddenStudentId, fullName: 'Gone' })],
+    });
+    return controller.match({ jdId: openingId }, resolveTenantId(tpoAdmin as never));
+  }
+
+  it('keeps deactivated and held students out of the eligible pool', async () => {
+    const { controller, prisma } = setup();
+
+    await controller.match({ jdId: openingId }, resolveTenantId(tpoAdmin as never));
+
+    const sqlArg = prisma.$queryRaw.mock.calls[0][0];
+    expect(sqlArg.sql).toContain('u.deactivated_at IS NULL AND u.held_at IS NULL');
+    // S6-VV-113 — a student who opted out of employer discovery is not matched either.
+    expect(sqlArg.sql).toContain('u.discoverable_to_employers');
+  });
+
+  it('re-checks discoverability when serving a stored run (S6-VV-113)', async () => {
+    const shortlist = await storedShortlist();
+    const { service, prisma } = setup({
+      matchRun: matchRunRow({ status: 'SUCCEEDED', resultSnapshot: shortlist }),
+    });
+
+    await service.getMatchRun(institutionId, 'run-1');
+
+    expect(prisma.user.findMany.mock.calls[0]?.[0].where).toMatchObject({
+      deactivatedAt: null,
+      heldAt: null,
+      discoverableToEmployers: true,
+    });
+  });
+
+  it('drops a candidate from a stored run once they become hidden', async () => {
+    const shortlist = await storedShortlist();
+    expect(shortlist.candidates.map((row) => row.studentId)).toContain(hiddenStudentId);
+    const { service } = setup({
+      matchRun: matchRunRow({ status: 'SUCCEEDED', resultSnapshot: shortlist }),
+      hiddenStudentIds: [hiddenStudentId],
+    });
+
+    const dto = await service.getMatchRun(institutionId, 'run-1');
+
+    expect(dto.shortlist?.candidates.map((row) => row.studentId)).toEqual([studentId]);
+  });
+
+  it('404s the fit view for a hidden candidate still present in a stored run', async () => {
+    const shortlist = await storedShortlist();
+    const { service } = setup({
+      matchRun: matchRunRow({ status: 'SUCCEEDED', resultSnapshot: shortlist }),
+      hiddenStudentIds: [hiddenStudentId],
+    });
+
+    const runId = randomUUID();
+
+    await expect(
+      service.getCandidateFit(institutionId, runId, hiddenStudentId),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.getCandidateFit(institutionId, runId, studentId)).resolves.toMatchObject({
+      studentId,
+    });
+  });
+
+  it('MAT-01 / I374: never queries or includes protected demographic attributes in matching query', async () => {
+    const { controller, prisma } = setup();
+
+    await controller.match({ jdId: openingId }, resolveTenantId(tpoAdmin as never));
+
+    const sqlArg = prisma.$queryRaw.mock.calls[0][0];
+    const sqlText = sqlArg.sql.toLowerCase();
+
+    // Explicitly verify prohibited protected attributes are not part of query or select fields
+    expect(sqlText).not.toContain('gender');
+    expect(sqlText).not.toContain('caste');
+    expect(sqlText).not.toContain('religion');
+    expect(sqlText).not.toContain('race');
+    expect(sqlText).not.toContain('date_of_birth');
+    expect(sqlText).not.toContain('disability');
+    expect(sqlText).not.toContain('photo');
+  });
+
+  describe('MAT-01 / I369: Distinguish mandatory requirements from preferences', () => {
+    it('enforces mandatory skill requirements in pool query while scoring preference skills conditionally', async () => {
+      const { controller, prisma } = setup();
+
+      await controller.match(
+        {
+          jdId: openingId,
+          requiredSkillCodes: ['ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION'],
+        },
+        resolveTenantId(tpoAdmin as never),
+      );
+
+      const sqlArg = prisma.$queryRaw.mock.calls[0][0];
+      const sqlText = sqlArg.sql;
+
+      // Mandatory required skill codes must be enforced via EXISTS with status = 'VERIFIED'
+      expect(sqlText).toContain("sc_req.status = 'VERIFIED'");
+      expect(sqlText).toContain('sk_req.code =');
+    });
+  });
+
+  describe('SRC-01 searchStudents filters (I399, I402, I404)', () => {
+    it('I399 & I402: filters by immediate availability and excludes deactivated / held students', async () => {
+      const { service, prisma } = setup();
+      prisma.$queryRaw.mockResolvedValueOnce([]);
+
+      await service.searchStudents({ sub: actorId, role: 'COMPANY', inst: undefined } as never, {
+        availability: 'Immediate',
+        verificationType: 'ai_defense',
+      });
+
+      const sqlArg = prisma.$queryRaw.mock.calls[0][0];
+      const sqlText = sqlArg.sql;
+      expect(sqlText).toContain('u.deactivated_at IS NULL');
+      expect(sqlText).toContain('u.held_at IS NULL');
+      expect(sqlText).toContain('u.discoverable_to_employers');
+      expect(sqlText).toContain('u.profile_visible = TRUE');
+      expect(sqlText).toContain("ILIKE '%immediate%'");
+      expect(sqlText).toContain('projects p_def');
+    });
+
+    it('Th6-I611: returns candidates with similarityScore and radar competency breakdown', async () => {
+      const { service, prisma } = setup();
+      prisma.$queryRaw.mockResolvedValueOnce([
+        {
+          id: studentId,
+          fullName: 'Alice Developer',
+          primaryTrackCode: 'TECH_FULLSTACK',
+          certificateId: 'cert-1',
+          highestLevelCleared: 3,
+          headlineTier: 'GOLD',
+          skills: [
+            {
+              code: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT',
+              domain: 'SOFTWARE_IT',
+              proficiency: 'PROFESSIONAL',
+            },
+          ],
+        },
+      ]);
+
+      const candidates = await service.searchStudents(
+        { sub: actorId, role: 'COMPANY', inst: undefined } as never,
+        { q: 'developer' },
+      );
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]?.studentId).toBe(studentId);
+      expect(candidates[0]?.similarityScore).toBeGreaterThan(0);
+      expect(candidates[0]?.method).toBe('HYBRID');
+      expect(candidates[0]?.explanation.verifiedSkills).toBeDefined();
+    });
+  });
+});

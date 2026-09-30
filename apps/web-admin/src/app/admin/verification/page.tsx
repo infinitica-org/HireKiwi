@@ -1,51 +1,281 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { VerificationQueueItemDto } from '@smart/contracts';
+import type {
+  CompanyDuplicateSignal,
+  CompanyVerificationReviewDetailDto,
+  IntegrityQueueItemDto,
+  VerificationQueueItemDto,
+} from '@smart/contracts';
 import { isSmartApiError } from '@smart/api-client';
-import { BadgeCheck, CircleCheck, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  BadgeCheck,
+  CheckCircle2,
+  Clock,
+  Eye,
+  FileText,
+  ShieldCheck,
+  TrendingUp,
+  X,
+  XCircle,
+} from 'lucide-react';
 import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { Card, CardContent } from '@smart/ui/card';
+import { ConfirmDialog } from '@smart/ui';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,
   DataTable,
-  EmptyState,
   Field,
   InlineAlert,
   PageStack,
+  SeverityBadge,
   TableCell,
   TableRow,
 } from '@/components/admin-ui';
 import { api } from '@/lib/api';
 
+const DUPLICATE_SIGNAL_LABELS: Record<CompanyDuplicateSignal['kind'], string> = {
+  NAME_MATCH: 'Same name as',
+  DOMAIN_ROOT_MATCH: 'Same website brand as',
+  PLACEMENT_EMPLOYER_MATCH: 'Listed by a TPO as',
+};
+
+function formatApiError(error: unknown, fallback: string): string {
+  if (isSmartApiError(error) && error.details.length > 0) {
+    return error.details.map((detail) => `${detail.path}: ${detail.message}`).join(' ');
+  }
+  if (isSmartApiError(error)) return error.message;
+  return fallback;
+}
+
 export default function VerificationPage() {
   const [items, setItems] = useState<VerificationQueueItemDto[]>([]);
-  const [reason, setReason] = useState('');
+  const [escalations, setEscalations] = useState<IntegrityQueueItemDto[]>([]);
+  const [selectedEscalation, setSelectedEscalation] = useState<IntegrityQueueItemDto | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<VerificationQueueItemDto | null>(null);
+  const [companyDetail, setCompanyDetail] = useState<CompanyVerificationReviewDetailDto | null>(
+    null,
+  );
+  const [reviewReason, setReviewReason] = useState('');
+  const [tenantReason, setTenantReason] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [selectedTenantIds, setSelectedTenantIds] = useState<string[]>([]);
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    description: React.ReactNode;
+    confirmText?: string;
+    variant?: 'danger' | 'warning' | 'primary';
+    onConfirm: () => Promise<void>;
+  } | null>(null);
 
-  async function load() {
-    setItems(await api.onboarding.verificationQueue());
+  function promptConfirm(
+    title: string,
+    description: React.ReactNode,
+    onConfirm: () => Promise<void>,
+    variant: 'danger' | 'warning' | 'primary' = 'danger',
+    confirmText?: string,
+  ) {
+    setConfirmModal({
+      open: true,
+      title,
+      description,
+      onConfirm,
+      variant,
+      confirmText,
+    });
+  }
+
+  async function loadData() {
+    try {
+      const [queueItems, escalatedItems] = await Promise.all([
+        api.onboarding.verificationQueue(),
+        api.onboarding.integrityQueue('ESCALATED'),
+      ]);
+      setItems(queueItems);
+      setEscalations(escalatedItems);
+    } catch (err) {
+      setError(formatApiError(err, 'Failed to load verification data from database.'));
+    }
   }
 
   useEffect(() => {
-    load().catch(() => setError('Failed to load verification queue.'));
+    loadData().catch(() => {});
   }, []);
 
-  async function resolve(item: VerificationQueueItemDto, decision: 'APPROVED' | 'REJECTED') {
-    if (reason.trim().length < 8) {
-      setError('Enter a reason of at least 8 characters.');
+  async function openCompanyReview(item: VerificationQueueItemDto) {
+    if (item.tenantType !== 'company') {
+      setSelectedCompany(item);
+      setCompanyDetail(null);
       return;
     }
+    setSelectedCompany(item);
+    setError(null);
+    try {
+      setCompanyDetail(await api.onboarding.companyVerificationReview(item.tenantId));
+    } catch (err) {
+      setCompanyDetail(null);
+      setError(isSmartApiError(err) ? err.message : 'Could not load company review details.');
+    }
+  }
+
+  async function resolveTenant(item: VerificationQueueItemDto, decision: 'APPROVED' | 'REJECTED') {
+    // A company rejection is emailed to the applicant, so it needs a note they can act on.
+    if (
+      decision === 'REJECTED' &&
+      item.tenantType === 'company' &&
+      tenantReason.trim().length < 8
+    ) {
+      setError(
+        'Tell the company what to change (at least 8 characters). This note is emailed to them.',
+      );
+      return;
+    }
+    setError(null);
     try {
       await api.onboarding.resolveVerification(item.tenantId, {
         tenantType: item.tenantType,
         decision,
-        reason: reason.trim(),
+        reason: tenantReason.trim() || `${decision} via Verification Pipeline Monitor`,
+        submissionId: item.submissionId,
       });
-      await load();
+      setTenantReason('');
+      setSelectedCompany(null);
+      setCompanyDetail(null);
+      setActionNotice(`Resolved ${item.name} with decision: ${decision}.`);
+      await loadData();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not resolve.');
+      setError(formatApiError(err, 'Could not resolve verification.'));
+    }
+  }
+
+  async function resolveCandidateEscalation(resolution: 'CLEAR' | 'VOID' | 'ESCALATE') {
+    if (!selectedEscalation) return;
+    if (reviewReason.trim().length < 8) {
+      setError('Enter an audit review note of at least 8 characters.');
+      return;
+    }
+    setError(null);
+    try {
+      await api.onboarding.resolveIntegrity(selectedEscalation.attemptId, {
+        resolution,
+        reason: reviewReason.trim(),
+      });
+      setActionNotice(`Candidate assessment status updated with resolution: ${resolution}.`);
+      setSelectedEscalation(null);
+      setReviewReason('');
+      await loadData();
+    } catch (err) {
+      setError(formatApiError(err, 'Could not resolve candidate escalation.'));
+    }
+  }
+
+  async function handleBulkResolve(decision: 'APPROVED' | 'REJECTED') {
+    if (selectedTenantIds.length === 0) return;
+    const targets = items.filter(
+      (i) => i.tenantType === 'company' && selectedTenantIds.includes(i.tenantId),
+    );
+    if (targets.length === 0) return;
+
+    setError(null);
+    try {
+      const result = await api.onboarding.bulkResolveVerification({
+        tenantType: 'company',
+        decision,
+        reason: tenantReason.trim() || `Bulk ${decision} via Verification Pipeline Monitor`,
+        items: targets.map((t) => ({ tenantId: t.tenantId, submissionId: t.submissionId })),
+      });
+      setSelectedTenantIds([]);
+      setTenantReason('');
+      setActionNotice(
+        `Bulk operation complete: ${result.succeeded} succeeded, ${result.failed} failed out of ${result.total} companies.`,
+      );
+      await loadData();
+    } catch (err) {
+      setError(formatApiError(err, 'Bulk resolve failed.'));
+    }
+  }
+
+  function confirmResolveTenant(item: VerificationQueueItemDto, decision: 'APPROVED' | 'REJECTED') {
+    if (decision === 'REJECTED') {
+      promptConfirm(
+        `Reject ${item.name}?`,
+        `Are you sure you want to reject the company verification request for ${item.name}? This will update the company status to REJECTED.`,
+        async () => {
+          await resolveTenant(item, decision);
+          setConfirmModal(null);
+        },
+        'danger',
+        'Reject Company',
+      );
+    } else {
+      resolveTenant(item, decision).catch(() => {});
+    }
+  }
+
+  function confirmResolveCandidateEscalation(resolution: 'CLEAR' | 'VOID' | 'ESCALATE') {
+    if (!selectedEscalation) return;
+    if (reviewReason.trim().length < 8) {
+      setError('Enter an audit review note of at least 8 characters.');
+      return;
+    }
+
+    if (resolution === 'VOID') {
+      promptConfirm(
+        `Void Attempt for ${selectedEscalation.studentName}?`,
+        `Voiding this assessment attempt will permanently invalidate score outputs for attempt ${selectedEscalation.attemptId}. This action is audited.`,
+        async () => {
+          await resolveCandidateEscalation(resolution);
+          setConfirmModal(null);
+        },
+        'danger',
+        'Void Attempt',
+      );
+    } else if (resolution === 'ESCALATE') {
+      promptConfirm(
+        `Escalate Attempt for ${selectedEscalation.studentName}?`,
+        `Escalating this attempt will mark it for senior committee escalation.`,
+        async () => {
+          await resolveCandidateEscalation(resolution);
+          setConfirmModal(null);
+        },
+        'warning',
+        'Escalate',
+      );
+    } else {
+      resolveCandidateEscalation(resolution).catch(() => {});
+    }
+  }
+
+  function confirmBulkResolve(decision: 'APPROVED' | 'REJECTED') {
+    const count = selectedTenantIds.length;
+    if (count === 0) return;
+
+    if (decision === 'REJECTED') {
+      promptConfirm(
+        `Bulk Reject ${count} Companies?`,
+        `Are you sure you want to REJECT verification for ${count} selected companies? This high-risk action affects multiple organization accounts.`,
+        async () => {
+          await handleBulkResolve(decision);
+          setConfirmModal(null);
+        },
+        'danger',
+        `Bulk Reject (${count})`,
+      );
+    } else {
+      promptConfirm(
+        `Bulk Approve ${count} Companies?`,
+        `Are you sure you want to APPROVE verification for ${count} selected companies?`,
+        async () => {
+          await handleBulkResolve(decision);
+          setConfirmModal(null);
+        },
+        'primary',
+        `Bulk Approve (${count})`,
+      );
     }
   }
 
@@ -53,57 +283,634 @@ export default function VerificationPage() {
     <PageStack>
       <PageHeader
         icon={BadgeCheck}
-        tone="teal"
-        title="Verification queue"
-        description="Approve or reject self-onboarded institutions and companies. Approval can unlock Pro."
+        tone="muted"
+        title="Verification Pipeline Monitor"
+        description="Monitor verification pipeline health, review live escalated assessment attempts, and resolve tenant verification requests."
       />
+
       {error ? <InlineAlert tone="danger" title={error} /> : null}
-      <Card>
-        <CardHeader>
-          <CardTitle>Decision reason</CardTitle>
-          <CardDescription>Required for approve and reject. Minimum 8 characters.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Field label="Reason">
-            <AdminInput
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="At least 8 characters"
-            />
-          </Field>
-        </CardContent>
-      </Card>
-      {items.length === 0 ? (
-        <EmptyState icon={BadgeCheck}>Queue is empty.</EmptyState>
-      ) : (
-        <DataTable headers={['Tenant', 'Type', 'Status', 'Actions']}>
-          {items.map((item) => (
-            <TableRow key={`${item.tenantType}-${item.tenantId}`}>
-              <TableCell>
-                <div className="font-medium">{item.name}</div>
-                <div className="text-card-foreground/70">{item.domain}</div>
-              </TableCell>
-              <TableCell>{item.tenantType}</TableCell>
-              <TableCell>{item.verificationStatus}</TableCell>
-              <TableCell className="space-x-2">
-                <Button type="button" size="sm" onClick={() => void resolve(item, 'APPROVED')}>
-                  <CircleCheck data-icon="inline-start" />
-                  Approve
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => void resolve(item, 'REJECTED')}
-                >
-                  <X data-icon="inline-start" />
-                  Reject
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
+
+      {actionNotice ? (
+        <div className="flex items-center justify-between rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-900 dark:text-emerald-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+            <span>{actionNotice}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionNotice(null)}
+            className="text-xs font-semibold hover:underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+
+      {/* Verification Pipeline Monitor Metrics */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex items-start justify-between gap-3 rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              Pending Tenant Verifications
+            </p>
+            <p className="mt-1 font-heading text-2xl font-bold tracking-tight text-zinc-900">
+              {items.length}
+            </p>
+            <p className="mt-0.5 text-xs text-zinc-500">Tenants awaiting approval in DB</p>
+          </div>
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-zinc-200/80 bg-zinc-50 text-zinc-700 shadow-2xs">
+            <Clock className="size-4" />
+          </div>
+        </div>
+
+        <div className="flex items-start justify-between gap-3 rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              Escalated Attempts
+            </p>
+            <p className="mt-1 font-heading text-2xl font-bold tracking-tight text-zinc-900">
+              {escalations.length}
+            </p>
+            <p className="mt-0.5 text-xs text-zinc-500">Requiring committee review in DB</p>
+          </div>
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-zinc-200/80 bg-zinc-50 text-zinc-700 shadow-2xs">
+            <TrendingUp className="size-4" />
+          </div>
+        </div>
+
+        <div className="flex items-start justify-between gap-3 rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              Pipeline State
+            </p>
+            <p className="mt-1 font-heading text-2xl font-bold tracking-tight text-zinc-900">
+              {items.length === 0 && escalations.length === 0 ? 'Clear' : 'Active Queue'}
+            </p>
+            <p className="mt-0.5 text-xs text-zinc-500">Live PostgreSQL monitoring</p>
+          </div>
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-zinc-200/80 bg-zinc-50 text-zinc-700 shadow-2xs">
+            <ShieldCheck className="size-4" />
+          </div>
+        </div>
+      </div>
+
+      {/* Escalations List + Review */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-0.5">
+          <div>
+            <h3 className="font-heading text-sm font-bold tracking-tight text-zinc-900">
+              Assessment & AI Defense Escalations
+            </h3>
+            <p className="text-xs text-zinc-500">
+              Live escalated candidate attempts requiring Super Admin verification review.
+            </p>
+          </div>
+          <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] font-semibold text-zinc-700">
+            {escalations.length} {escalations.length === 1 ? 'escalation' : 'escalations'}
+          </span>
+        </div>
+
+        <DataTable
+          headers={[
+            'Candidate',
+            'Integrity Flag',
+            'Risk Severity',
+            'Flag Reason',
+            'Status',
+            'Actions',
+          ]}
+          empty={escalations.length === 0}
+          emptyIcon={ShieldCheck}
+        >
+          {escalations.map((esc) => {
+            const initials =
+              esc.studentName
+                .split(' ')
+                .map((n) => n[0])
+                .filter(Boolean)
+                .slice(0, 2)
+                .join('')
+                .toUpperCase() || 'ST';
+
+            return (
+              <TableRow key={esc.attemptId}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-zinc-200/80 bg-zinc-900 text-xs font-bold text-white shadow-2xs">
+                      {initials}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-bold text-zinc-900 text-xs">{esc.studentName}</div>
+                      <div className="truncate text-[11px] text-zinc-500">{esc.studentEmail}</div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-mono text-[11px] font-bold text-zinc-900">
+                    {esc.integrityFlag}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <SeverityBadge severity={esc.severity} />
+                </TableCell>
+                <TableCell className="max-w-sm text-xs text-zinc-600 truncate">
+                  {esc.flagReason ?? 'Automated proctoring trigger'}
+                </TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 shadow-2xs">
+                    <span className="size-1.5 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)] animate-pulse" />
+                    {esc.status}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1 text-[11px] font-semibold rounded-md border-zinc-200 bg-white px-2.5 text-zinc-900 hover:bg-zinc-50 hover:border-zinc-300 shadow-2xs"
+                    onClick={() => setSelectedEscalation(esc)}
+                  >
+                    <Eye className="h-3 w-3" />
+                    Review
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </DataTable>
-      )}
+      </div>
+
+      {/* Escalation Review Modal */}
+      {selectedEscalation ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-xl rounded-md border border-zinc-200/90 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex items-start justify-between border-b border-zinc-200/80 pb-4 dark:border-zinc-800">
+              <div>
+                <h3 className="font-heading text-lg font-bold text-zinc-950 dark:text-zinc-100">
+                  Review Candidate Attempt: {selectedEscalation.studentName}
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {selectedEscalation.studentEmail} · Attempt: {selectedEscalation.attemptId}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedEscalation(null)}
+                className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div className="rounded-md border border-zinc-200/80 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-800/60">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-rose-700 dark:text-rose-300">
+                    {selectedEscalation.integrityFlag}
+                  </span>
+                  <SeverityBadge severity={selectedEscalation.severity} />
+                </div>
+                <p className="mt-2 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                  {selectedEscalation.flagReason ||
+                    'Triggered for manual review during assessment run.'}
+                </p>
+              </div>
+
+              <div>
+                <Field label="Admin Resolution Rationale (Logged to Audit Trail)">
+                  <AdminInput
+                    value={reviewReason}
+                    onChange={(e) => setReviewReason(e.target.value)}
+                    placeholder="Enter audit rationale (at least 8 characters)..."
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2 border-t border-zinc-200/80 pt-4 dark:border-zinc-800">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-md border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 text-xs"
+                onClick={() => setSelectedEscalation(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-md border-rose-300 text-rose-700 hover:bg-rose-50 text-xs gap-1"
+                onClick={() => confirmResolveCandidateEscalation('VOID')}
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                Confirm Void
+              </Button>
+
+              <Button
+                size="sm"
+                className="rounded-md bg-zinc-900 hover:bg-black text-white font-semibold text-xs gap-1 shadow-2xs dark:bg-zinc-100 dark:text-zinc-950"
+                onClick={() => confirmResolveCandidateEscalation('CLEAR')}
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Clear & Approve
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Tenant Verification Queue */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-0.5">
+          <div>
+            <h3 className="font-heading text-sm font-bold tracking-tight text-zinc-900">
+              Tenant Verification Queue
+            </h3>
+            <p className="text-xs text-zinc-500">
+              Live pending tenant applications in PostgreSQL awaiting platform verification.
+            </p>
+          </div>
+          <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] font-semibold text-zinc-700">
+            {items.length} pending
+          </span>
+        </div>
+
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <Field label="Decision Reason / Verification Notes">
+              <AdminInput
+                value={tenantReason}
+                onChange={(e) => setTenantReason(e.target.value)}
+                placeholder="e.g. Verified official registrar domain. For a company rejection, this note is emailed to the applicant."
+              />
+            </Field>
+
+            {/* T22: Bulk Resolution Action Bar */}
+            {selectedTenantIds.length > 0 ? (
+              <div className="flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
+                <div className="flex items-center gap-2 font-semibold">
+                  <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-bold text-amber-900">
+                    {selectedTenantIds.length} selected
+                  </span>
+                  <span>Authorized Bulk Verification Decision</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 border-amber-300 bg-white text-xs font-semibold text-amber-900 hover:bg-amber-100"
+                    onClick={() => setSelectedTenantIds([])}
+                  >
+                    Clear Selection
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 border-rose-300 bg-white text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                    onClick={() => confirmBulkResolve('REJECTED')}
+                  >
+                    Bulk Reject ({selectedTenantIds.length})
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-7 bg-zinc-900 text-white text-xs font-semibold hover:bg-black"
+                    onClick={() => confirmBulkResolve('APPROVED')}
+                  >
+                    Bulk Approve ({selectedTenantIds.length})
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            <DataTable
+              headers={[
+                <input
+                  key="select-all"
+                  type="checkbox"
+                  className="rounded border-zinc-300"
+                  checked={
+                    items.length > 0 &&
+                    items.every(
+                      (i) => i.tenantType !== 'company' || selectedTenantIds.includes(i.tenantId),
+                    )
+                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedTenantIds(
+                        items.filter((i) => i.tenantType === 'company').map((i) => i.tenantId),
+                      );
+                    } else {
+                      setSelectedTenantIds([]);
+                    }
+                  }}
+                />,
+                'Tenant & Domain',
+                'Type',
+                'Domain',
+                'Status',
+                'Submission Details',
+                'Actions',
+              ]}
+              empty={items.length === 0}
+              emptyIcon={BadgeCheck}
+            >
+              {items.map((item) => {
+                const initials =
+                  item.name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .join('')
+                    .toUpperCase() || 'TN';
+
+                const isSelected = selectedTenantIds.includes(item.tenantId);
+
+                return (
+                  <TableRow key={`${item.tenantType}-${item.tenantId}`}>
+                    <TableCell>
+                      {item.tenantType === 'company' ? (
+                        <input
+                          type="checkbox"
+                          className="rounded border-zinc-300"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTenantIds((prev) => [...prev, item.tenantId]);
+                            } else {
+                              setSelectedTenantIds((prev) =>
+                                prev.filter((id) => id !== item.tenantId),
+                              );
+                            }
+                          }}
+                        />
+                      ) : null}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-zinc-200/80 bg-zinc-900 text-xs font-bold text-white shadow-2xs">
+                          {initials}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="font-bold text-zinc-900 text-xs">{item.name}</div>
+                          <div className="font-mono text-[11px] text-zinc-500">
+                            {item.domain ?? '—'}
+                          </div>
+                          {item.representativeEmail ? (
+                            <div className="text-[11px] text-zinc-400">
+                              {item.representativeEmail}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-mono text-[11px] font-bold text-zinc-700">
+                        {item.tenantType.toUpperCase()}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-zinc-500">
+                      {item.domain ?? '—'}
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 shadow-2xs">
+                        <span className="size-1.5 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)] animate-pulse" />
+                        {item.verificationStatus}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {item.tenantType === 'company' ? (
+                        <div className="text-xs text-zinc-600">
+                          <span>{item.documentCount ?? 0} docs</span>
+                          {item.submittedAt ? (
+                            <div className="text-[10px] text-zinc-400">
+                              {new Date(item.submittedAt).toLocaleDateString()}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        '—'
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {item.tenantType === 'company' ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 border-zinc-200 bg-white px-2.5 text-[11px] font-semibold text-zinc-900 hover:bg-zinc-50 shadow-2xs gap-1"
+                            onClick={() => void openCompanyReview(item)}
+                          >
+                            <FileText className="h-3.5 w-3.5 text-zinc-600" />
+                            Docs
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 border-zinc-200 bg-white px-2.5 text-[11px] font-semibold text-zinc-900 hover:bg-zinc-50 hover:border-zinc-300 shadow-2xs gap-1"
+                          onClick={() => confirmResolveTenant(item, 'REJECTED')}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          {item.tenantType === 'company' ? 'Request changes' : 'Reject'}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-7 bg-zinc-900 text-white hover:bg-black px-2.5 text-[11px] font-semibold gap-1 shadow-2xs"
+                          onClick={() => confirmResolveTenant(item, 'APPROVED')}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Approve
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </DataTable>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Company Verification Detail Drawer/Modal */}
+      {selectedCompany && companyDetail ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-2xl rounded-md border border-zinc-200/90 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-start justify-between border-b border-zinc-200/80 pb-4 dark:border-zinc-800">
+              <div>
+                <h3 className="font-heading text-lg font-bold text-zinc-950 dark:text-zinc-100">
+                  {companyDetail.legalName}
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Submission ID: {companyDetail.submissionId} · Country:{' '}
+                  {companyDetail.registrationCountry ?? '—'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCompany(null);
+                  setCompanyDetail(null);
+                }}
+                className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div className="rounded-md border border-zinc-200/80 bg-zinc-50 p-4 text-xs space-y-2 dark:border-zinc-800 dark:bg-zinc-800/60">
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Representative Email:</span>
+                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                    {companyDetail.representativeEmail ?? '—'}
+                  </span>
+                </div>
+                {companyDetail.representativeEmailMatchesWebsite === false ? (
+                  <p className="flex items-start gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <span>
+                      The email domain doesn&apos;t match the company website (
+                      {companyDetail.website ?? 'no website'}). Check that the representative really
+                      works there; a parent-company domain can be legitimate.
+                    </span>
+                  </p>
+                ) : null}
+                {companyDetail.duplicateSignals.length > 0 ? (
+                  <div className="flex items-start gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <div>
+                      <p>
+                        Possible duplicate. Check that this isn&apos;t a company that already has an
+                        account before approving:
+                      </p>
+                      <ul className="mt-1 list-disc pl-4">
+                        {companyDetail.duplicateSignals.map((signal) => (
+                          <li
+                            key={`${signal.kind}:${signal.matchedCompanyId ?? signal.matchedName}`}
+                          >
+                            {DUPLICATE_SIGNAL_LABELS[signal.kind]}:{' '}
+                            {signal.matchedCompanyId ? (
+                              <a
+                                className="font-medium underline"
+                                href={`/admin/companies/${signal.matchedCompanyId}`}
+                              >
+                                {signal.matchedName}
+                              </a>
+                            ) : (
+                              <span className="font-medium">{signal.matchedName}</span>
+                            )}
+                            {signal.matchedStatus ? ` (${signal.matchedStatus.toLowerCase()})` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ) : null}
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Business Reg Number:</span>
+                  <span className="font-mono text-zinc-900 dark:text-zinc-100">
+                    {companyDetail.businessRegistrationNumber ?? '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Tax ID:</span>
+                  <span className="font-mono text-zinc-900 dark:text-zinc-100">
+                    {companyDetail.taxId ?? '—'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider mb-2">
+                  Uploaded Verification Documents ({companyDetail.documents.length})
+                </h4>
+                {companyDetail.documents.length === 0 ? (
+                  <p className="text-xs text-zinc-500">
+                    No documents uploaded with this submission.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-zinc-200/80 rounded-md border border-zinc-200/80">
+                    {companyDetail.documents.map((doc) => (
+                      <div
+                        key={doc.documentId}
+                        className="flex items-center justify-between p-3 text-xs bg-white dark:bg-zinc-900"
+                      >
+                        <div>
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-100">
+                            {doc.fileName}
+                          </div>
+                          <div className="text-[11px] text-zinc-500 font-mono">
+                            {doc.documentType} · Status: {doc.reviewStatus}
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" className="h-7 text-xs" asChild>
+                          <a href={doc.downloadUrl} target="_blank" rel="noreferrer">
+                            Download / View
+                          </a>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2 border-t border-zinc-200/80 pt-4 dark:border-zinc-800">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-md border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 text-xs"
+                onClick={() => {
+                  setSelectedCompany(null);
+                  setCompanyDetail(null);
+                }}
+              >
+                Close
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-md border-rose-300 text-rose-700 hover:bg-rose-50 text-xs gap-1"
+                onClick={() => {
+                  if (selectedCompany) confirmResolveTenant(selectedCompany, 'REJECTED');
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+                Reject / request changes
+              </Button>
+              <Button
+                size="sm"
+                className="rounded-md bg-zinc-900 hover:bg-black text-white font-semibold text-xs gap-1 shadow-2xs dark:bg-zinc-100 dark:text-zinc-950"
+                onClick={() => {
+                  if (selectedCompany) confirmResolveTenant(selectedCompany, 'APPROVED');
+                }}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Approve Company
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* High-Risk Action Confirmation Dialog (T24) */}
+      {confirmModal ? (
+        <ConfirmDialog
+          open={confirmModal.open}
+          onClose={() => setConfirmModal(null)}
+          onConfirm={confirmModal.onConfirm}
+          title={confirmModal.title}
+          description={confirmModal.description}
+          confirmText={confirmModal.confirmText}
+          variant={confirmModal.variant}
+        />
+      ) : null}
     </PageStack>
   );
 }

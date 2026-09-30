@@ -21,6 +21,8 @@ import {
   controlButtonClassName,
 } from '@/components/admin-ui';
 import { api } from '@/lib/api';
+import { formatRecordActors } from '@/lib/record-actors';
+import { CompanyTeamCard } from './team-card';
 
 export default function CompanyDetailPage() {
   const params = useParams<{ companyId: string }>();
@@ -61,9 +63,14 @@ export default function CompanyDetailPage() {
       <PageHeader
         icon={Building2}
         title={company.name}
-        description={`${company.planCode} · ${company.verificationStatus}`}
+        description={[
+          `${company.planCode} · ${company.verificationStatus}`,
+          formatRecordActors(company),
+        ]
+          .filter(Boolean)
+          .join(' · ')}
       >
-        <Button variant="outline" asChild>
+        <Button variant="outline" className="rounded-md" asChild>
           <Link href="/admin/companies">
             <ArrowLeft data-icon="inline-start" />
             Back to companies
@@ -142,6 +149,7 @@ export default function CompanyDetailPage() {
             <Button
               type="button"
               variant="outline"
+              className="rounded-md"
               onClick={() => {
                 void (async () => {
                   if (reason.trim().length < 8) {
@@ -166,6 +174,7 @@ export default function CompanyDetailPage() {
             <Button
               type="button"
               variant="destructive"
+              className="rounded-md"
               onClick={() => {
                 void (async () => {
                   if (reason.trim().length < 8) {
@@ -190,6 +199,7 @@ export default function CompanyDetailPage() {
           </div>
         </CardContent>
       </Card>
+      <CompanyTeamCard companyId={companyId} />
     </PageStack>
   );
 }

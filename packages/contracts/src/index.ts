@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @smart/contracts â€” the SMART integration boundary.
  *
  * Every cross-module type, every HTTP DTO and every Kafka payload lives here.
@@ -16,6 +16,9 @@
 
 /* ------------------------------- domain ---------------------------------- */
 export * from './domain/enums.js';
+export * from './domain/company-permissions.js';
+export * from './domain/application-status.js';
+export * from './domain/pipeline.js';
 export * from './domain/disallowed-email-domains.js';
 export * from './domain/levels.js';
 export * from './domain/tracks.js';
@@ -23,6 +26,7 @@ export * from './domain/rate-limits.js';
 export * from './domain/skill-levels.js';
 export * from './domain/skill-verification.js';
 export * from './domain/skill-taxonomy.js';
+export * from './domain/skill-taxonomy-management.js';
 export * from './domain/skills.js';
 export * from './domain/skill-dimensions.js';
 export * from './domain/se-skills.js';
@@ -41,6 +45,12 @@ export * from './placement/job-opening-eligibility.js';
 /* --------------------------------- dto ------------------------------------ */
 export * from './dto/common.js';
 export * from './dto/auth.dto.js';
+export * from './dto/company-team.dto.js';
+export * from './dto/company-review.dto.js';
+export * from './dto/student-jobs.dto.js';
+export * from './dto/messaging.dto.js';
+export * from './dto/applications.dto.js';
+export * from './dto/candidate-workflow.dto.js';
 export * from './dto/catalog.dto.js';
 export * from './dto/assessment.dto.js';
 export * from './dto/proctoring.dto.js';
@@ -50,12 +60,18 @@ export * from './dto/candidate-certificate.dto.js';
 export * from './dto/cert-verify.dto.js';
 export * from './dto/cognitive-profile.dto.js';
 export * from './dto/calibration.dto.js';
+export * from './dto/rate-limit.dto.js';
 export * from './dto/certificate.dto.js';
 export * from './dto/placement.dto.js';
 export * from './dto/analytics.dto.js';
 export * from './dto/onboarding.dto.js';
+export * from './dto/company-onboarding.dto.js';
+export * from './dto/partnership.dto.js';
 export * from './dto/candidate-onboarding.dto.js';
 export * from './dto/candidate-social.dto.js';
+export * from './dto/company-onboarding.dto.js';
+export * from './dto/evidence-review.dto.js';
+export * from './dto/evidence-version.dto.js';
 export * from './dto/public-candidate-profile.dto.js';
 export * from './dto/resume-parse.dto.js';
 export * from './dto/notification.dto.js';
@@ -66,6 +82,11 @@ export * from './dto/work-experience-proof.dto.js';
 export * from './dto/work-experience-letter-authenticity.dto.js';
 export * from './dto/organization.dto.js';
 export * from './dto/username.dto.js';
+export * from './dto/account.dto.js';
+export * from './dto/student-dashboard.dto.js';
+export * from './dto/student-readiness.dto.js';
+export * from './dto/university-roster.dto.js';
+export * from './dto/campus-events.dto.js';
 export * from './dto/void.dto.js';
 export * from './dto/candidate-degree-details.dto.js';
 export * from './dto/candidate-profile.dto.js';
@@ -74,6 +95,14 @@ export * from './dto/raw-signals.dto.js';
 export * from './dto/signal-connections.dto.js';
 export * from './dto/corroboration.dto.js';
 export * from './dto/evidence.dto.js';
+export * from './dto/evidence-review.dto.js';
+export * from './dto/evidence-version.dto.js';
+export * from './dto/capability-inference-review.dto.js';
+export * from './dto/trust.dto.js';
+export * from './dto/support.dto.js';
+export * from './dto/billing.dto.js';
+export * from './dto/interview.dto.js';
+export * from './dto/placement-calendar.dto.js';
 
 /* -------------------------------- events ---------------------------------- */
 export * from './events/topics.js';

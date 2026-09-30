@@ -7,13 +7,18 @@ x-app-env: &app-env
   REDIS_URL: redis://redis:6379
   KAFKA_BROKERS: redpanda:9092
   JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret-change-me-now!!}
-  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:3006,http://localhost:3007,http://localhost}
   S3_ENDPOINT: http://minio:9000
   S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://127.0.0.1:9000}
   S3_REGION: ${S3_REGION:-us-east-1}
   S3_ACCESS_KEY: ${MINIO_ROOT_USER:-smart}
   S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-smartsecret}
   S3_BUCKET: smart
+  # S6-VV-119: `required` only after MinIO has a KMS key and the bucket encrypts by default.
+  S3_ENCRYPTION: ${S3_ENCRYPTION:-off}
+  # S6-VV-120: `required` once the clamav service (profile `scan`) runs next to the API.
+  FILE_SCAN: ${FILE_SCAN:-off}
+  CLAMD_HOST: clamav
   LOG_PRETTY: "false"
   LOG_LEVEL: ${LOG_LEVEL:-info}
   SMTP_HOST: mailpit
@@ -23,6 +28,7 @@ x-app-env: &app-env
   STUDENT_APP_URL: ${STUDENT_APP_URL:-http://localhost:3001}
   TPO_APP_URL: ${TPO_APP_URL:-http://localhost:3002}
   ADMIN_APP_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+  COMPANY_APP_URL: ${COMPANY_APP_URL:-http://localhost:3006}
   METRICS_SCRAPE_TOKEN: ${METRICS_SCRAPE_TOKEN:-}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
@@ -162,6 +168,9 @@ services:
       # Metrics scraped in-network only (127.0.0.1-bound Prometheus) — public
       # auth mode is acceptable here, but do not expose this port beyond that.
       MINIO_PROMETHEUS_AUTH_TYPE: public
+      # S6-VV-119: `<key-name>:<base64 32 bytes>` turns on SSE-S3. Empty = no KMS (today's behavior).
+      # LOSING THIS KEY MAKES EVERY ENCRYPTED OBJECT UNREADABLE. See docs/delivery/STORAGE_ENCRYPTION.md.
+      MINIO_KMS_SECRET_KEY: ${MINIO_KMS_SECRET_KEY:-}
     ports:
       - "127.0.0.1:${MINIO_PORT:-9000}:9000"
       - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
@@ -184,11 +193,30 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+    environment:
+      # S6-VV-119: only a flag, never the key itself.
+      KMS_ENABLED: ${MINIO_KMS_SECRET_KEY:+true}
     entrypoint: >
       /bin/sh -c "
       mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-smart} ${MINIO_ROOT_PASSWORD:-smartsecret} &&
-      mc mb --ignore-existing local/smart
+      mc mb --ignore-existing local/smart &&
+      if [ \"$$KMS_ENABLED\" = true ]; then mc encrypt set sse-s3 local/smart; fi
       "
+
+  # S6-VV-120: malware scanning for uploads (FILE_SCAN=required). Needs ~1.2 GB RAM, so it only
+  # starts with `--profile scan`. freshclam keeps signatures current in the volume.
+  clamav:
+    image: clamav/clamav:stable
+    restart: unless-stopped
+    profiles: ["scan"]
+    volumes:
+      - clamav_data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
 
   mailpit:
     image: axllent/mailpit:v1.27
@@ -320,6 +348,7 @@ services:
         NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
         NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
         NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+        NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
@@ -327,6 +356,7 @@ services:
       NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
       NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
       NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+      NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
     depends_on:
       - api
     ports:
@@ -344,6 +374,7 @@ services:
         NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
         NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
         NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+        NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
@@ -351,6 +382,7 @@ services:
       NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
       NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
       NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+      NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
     depends_on:
       - api
     ports:
@@ -368,6 +400,7 @@ services:
         NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
         NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
         NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+        NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
@@ -375,6 +408,7 @@ services:
       NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
       NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
       NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+      NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
     depends_on:
       - api
     ports:
@@ -408,6 +442,7 @@ services:
         NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
         NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
         NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+        NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
@@ -415,11 +450,82 @@ services:
       NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
       NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
       NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+      NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
     depends_on:
       - api
     ports:
       - "127.0.0.1:${AUTH_PORT:-3005}:3000"
     profiles: ["apps"]
+
+  # S6-VV-147 — employer portal (was built by CI but never deployed).
+  web-company:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.web
+      args:
+        APP: web-company
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
+        NEXT_PUBLIC_AUTH_URL: ${AUTH_APP_URL:-http://localhost:3005}
+        NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
+        NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
+        NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+        NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
+      NEXT_PUBLIC_AUTH_URL: ${AUTH_APP_URL:-http://localhost:3005}
+      NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
+      NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
+      NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+      NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:${COMPANY_PORT:-3006}:3000"
+    profiles: ["apps"]
+
+  # S6-VV-97 — nightly encrypted, off-box backup of Postgres + MinIO objects.
+  # Idles (smart_backup_enabled 0) until BACKUP_ENABLED=true and the BACKUP_*
+  # vars are set; see docs/delivery/BACKUP_RESTORE.md. On demand:
+  #   docker compose ... --profile vps run --rm backup backup.sh
+  backup:
+    build:
+      context: ../backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      BACKUP_ENABLED: ${BACKUP_ENABLED:-false}
+      BACKUP_ENV_NAME: ${BACKUP_ENV_NAME:-local}
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-30 20 * * *}
+      BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:-}
+      BACKUP_DEST: ${BACKUP_DEST:-offsite:smart-backups}
+      BACKUP_INCLUDE_OBJECTS: ${BACKUP_INCLUDE_OBJECTS:-true}
+      PGHOST: postgres
+      PGUSER: smart
+      PGDATABASE: smart
+      PGPASSWORD: ${POSTGRES_PASSWORD:-smart}
+      MINIO_BUCKET: smart
+      RCLONE_CONFIG_MINIO_TYPE: s3
+      RCLONE_CONFIG_MINIO_PROVIDER: Minio
+      RCLONE_CONFIG_MINIO_ENDPOINT: http://minio:9000
+      RCLONE_CONFIG_MINIO_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-smart}
+      RCLONE_CONFIG_MINIO_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-smartsecret}
+      RCLONE_CONFIG_OFFSITE_TYPE: s3
+      RCLONE_CONFIG_OFFSITE_PROVIDER: ${BACKUP_S3_PROVIDER:-Other}
+      RCLONE_CONFIG_OFFSITE_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+      RCLONE_CONFIG_OFFSITE_REGION: ${BACKUP_S3_REGION:-}
+      RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+      # Upload without needing bucket-create/list-buckets permission.
+      RCLONE_CONFIG_OFFSITE_NO_CHECK_BUCKET: "true"
+    volumes:
+      - backup_work:/work
+      - backup_metrics:/metrics
+    profiles: ["vps"]
 
   caddy:
     image: caddy:2.10-alpine
@@ -433,6 +539,7 @@ services:
       ADMIN_HOST: ${ADMIN_HOST:-admin.localhost}
       VERIFY_HOST: ${VERIFY_HOST:-verify.localhost}
       AUTH_HOST: ${AUTH_HOST:-auth.localhost}
+      COMPANY_HOST: ${COMPANY_HOST:-company.localhost}
       API_HOST: ${API_HOST:-api.localhost}
       STUDIO_HOST: ${STUDIO_HOST:-studio.localhost}
       DB_HOST: ${DB_HOST:-db.localhost}
@@ -449,6 +556,7 @@ services:
       - web-admin
       - web-verify
       - web-auth
+      - web-company
       - prisma-studio
       - adminer
     # Only one stack per host should enable profile `vps` (binds :80/:443).
@@ -582,11 +690,14 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+      - backup_metrics:/textfile:ro
     command:
       - --path.procfs=/host/proc
       - --path.sysfs=/host/sys
       - --path.rootfs=/rootfs
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+      # S6-VV-97: exposes smart_backup_* written by the backup service.
+      - --collector.textfile.directory=/textfile
     ports:
       - "127.0.0.1:${NODE_EXPORTER_PORT:-9101}:9100"
     profiles: ["obs"]
@@ -616,6 +727,7 @@ services:
     profiles: ["obs"]
 
 volumes:
+  clamav_data:
   postgres_data:
   redis_data:
   redpanda_data:
@@ -627,3 +739,5 @@ volumes:
   loki_data:
   alloy_data:
   tempo_data:
+  backup_work:
+  backup_metrics:

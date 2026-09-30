@@ -36,13 +36,17 @@ export class InvitationSentConsumer implements OnModuleInit {
             const event = parsed.data.data;
             const template = event.template as EmailTemplateName;
             const title =
-              template === 'institution-admin-invite'
-                ? `Invitation to manage ${event.institutionName}`
-                : `Invitation to join ${event.institutionName}`;
+              template === 'company-portal-invite'
+                ? `Set up your ${event.institutionName} account on SMART`
+                : template === 'institution-admin-invite'
+                  ? `Invitation to manage ${event.institutionName}`
+                  : `Invitation to join ${event.institutionName}`;
             const body =
-              template === 'institution-admin-invite'
-                ? `You have been invited as an institution admin for ${event.institutionName}.`
-                : `You have been invited to join ${event.institutionName} on SMART.`;
+              template === 'company-portal-invite'
+                ? `${event.institutionName} has been approved on SMART. Set a password to access your company portal.`
+                : template === 'institution-admin-invite'
+                  ? `You have been invited as an institution admin for ${event.institutionName}.`
+                  : `You have been invited to join ${event.institutionName} on SMART.`;
 
             await this.notifications.notify({
               userId: event.userId,
@@ -51,6 +55,8 @@ export class InvitationSentConsumer implements OnModuleInit {
               title,
               body,
               linkUrl: event.inviteUrl,
+              // A resend is a new event (new id) and should email again; a redelivery is not.
+              dedupeKey: `invitation-sent:${parsed.data.meta.eventId}`,
               emailTemplate: template,
               emailData: {
                 fullName: event.fullName,

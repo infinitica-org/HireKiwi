@@ -75,6 +75,9 @@ export async function createWorkExperience(
       companyLinkedinUrl: payload.companyLinkedinUrl,
       startDate: '2022-01-01T00:00:00.000Z',
       isCurrent: true,
+      domain: 'Software Engineering',
+      responsibilities: 'Built and maintained backend services and APIs for the core platform.',
+      skillsClaimed: ['PYTHON_APPLICATION_BACKEND_DEVELOPMENT'],
       verifierEmail: payload.verifierEmail,
       verifierName: payload.verifierName ?? 'E2E Manager',
       documents: [
@@ -146,5 +149,47 @@ export async function getVerificationByToken(
   rawToken: string,
 ): Promise<{ status: string; isExpired: boolean; companyName: string }> {
   const response = await request.get(`${apiV1}/users/work-experiences/verify-token/${rawToken}`);
+  return parseJson(response);
+}
+
+export async function restartVerification(
+  request: APIRequestContext,
+  token: string,
+  experienceId: string,
+): Promise<{ status: string; message: string }> {
+  const response = await request.post(
+    `${apiV1}/users/me/work-experiences/${experienceId}/restart-verification`,
+    {
+      headers: authHeaders(token),
+      data: {},
+    },
+  );
+  return parseJson(response);
+}
+
+export async function sendManagerEndorsement(
+  request: APIRequestContext,
+  token: string,
+  experienceId: string,
+  payload: {
+    managerEmail: string;
+    managerName: string;
+    managerDesignation?: string;
+    skillsToRate?: string[];
+  },
+): Promise<{
+  success: boolean;
+  endorsementId: string;
+  managerEmail: string;
+  message: string;
+  expiresAt: string;
+}> {
+  const response = await request.post(
+    `${apiV1}/users/me/work-experiences/${experienceId}/send-manager-endorsement`,
+    {
+      headers: authHeaders(token),
+      data: payload,
+    },
+  );
   return parseJson(response);
 }

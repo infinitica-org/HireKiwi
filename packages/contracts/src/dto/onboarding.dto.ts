@@ -2,6 +2,9 @@ import { z } from 'zod';
 import {
   CandidateViewReasonCodeSchema,
   CompanyModeSchema,
+  CompanyOnboardingStatusSchema,
+  CompanyVerificationDocumentReviewStatusSchema,
+  CompanyVerificationDocumentTypeSchema,
   InstitutionListStatusSchema,
   PlanCodeSchema,
   SkillClaimStatusSchema,
@@ -11,6 +14,10 @@ import {
   UserRoleSchema,
 } from '../domain/enums.js';
 import { EmailSchema, IsoDateTimeSchema, UuidSchema } from './common.js';
+import {
+  CompanyAddressSchema,
+  CompanyVerificationReviewDocumentSchema,
+} from './company-onboarding.dto.js';
 import { IntegrityScoreBandSchema } from './proctoring.dto.js';
 
 /**
@@ -52,7 +59,56 @@ export const CreateInstitutionRequestSchema = z.object({
   name: z.string().trim().min(2).max(200),
   domain: InstitutionDomainSchema,
 });
+
 export type CreateInstitutionRequest = z.infer<typeof CreateInstitutionRequestSchema>;
+
+export const ConnectPartnerUniversityRequestSchema = z.object({
+  institutionId: UuidSchema,
+});
+export type ConnectPartnerUniversityRequest = z.infer<typeof ConnectPartnerUniversityRequestSchema>;
+
+export const PartnerUniversityOptionDtoSchema = z.object({
+  institutionId: UuidSchema,
+  name: z.string(),
+  domain: z.string(),
+});
+export type PartnerUniversityOptionDto = z.infer<typeof PartnerUniversityOptionDtoSchema>;
+
+export const StudentInstitutionPartnershipStatusDtoSchema = z.object({
+  institutionId: UuidSchema.nullable(),
+  institutionName: z.string().nullable(),
+  isPartnered: z.boolean(),
+});
+export type StudentInstitutionPartnershipStatusDto = z.infer<
+  typeof StudentInstitutionPartnershipStatusDtoSchema
+>;
+
+export const UniversityContactRequestStatusSchema = z.enum(['PENDING']);
+export type UniversityContactRequestStatus = z.infer<typeof UniversityContactRequestStatusSchema>;
+
+export const RequestUniversityContactRequestSchema = z.object({
+  universityName: z.string().trim().min(2, 'Enter the university name.').max(200),
+});
+export type RequestUniversityContactRequest = z.infer<typeof RequestUniversityContactRequestSchema>;
+
+export const UniversityContactRequestDtoSchema = z.object({
+  id: UuidSchema,
+  universityName: z.string(),
+  status: UniversityContactRequestStatusSchema,
+  createdAt: IsoDateTimeSchema,
+});
+export type UniversityContactRequestDto = z.infer<typeof UniversityContactRequestDtoSchema>;
+
+export const ConfigureInstitutionSettingsSchema = z.object({
+  name: z.string().trim().min(2).max(200).optional(),
+  domains: z.array(InstitutionDomainSchema).min(1).optional(),
+  campuses: z.array(z.string().trim().min(2).max(100)).optional(),
+});
+export type ConfigureInstitutionSettings = z.infer<typeof ConfigureInstitutionSettingsSchema>;
+
+/** S6-VV-105 — the user behind a create / last change; null for rows that predate tracking. */
+export const RecordActorDtoSchema = z.object({ userId: UuidSchema, email: z.string() }).nullable();
+export type RecordActorDto = z.infer<typeof RecordActorDtoSchema>;
 
 export const InstitutionDtoSchema = z.object({
   institutionId: UuidSchema,
@@ -75,6 +131,9 @@ export const InstitutionDtoSchema = z.object({
    */
   activeStudents30d: z.number().int().nonnegative().optional(),
   createdAt: IsoDateTimeSchema,
+  /** Detail response only (like activeStudents30d). */
+  createdBy: RecordActorDtoSchema.optional(),
+  updatedBy: RecordActorDtoSchema.optional(),
 });
 export type InstitutionDto = z.infer<typeof InstitutionDtoSchema>;
 
@@ -90,6 +149,13 @@ export const TenantActionReasonSchema = z.object({
 });
 export type TenantActionReason = z.infer<typeof TenantActionReasonSchema>;
 
+/** Persistable roles only — PUBLIC is traffic-only and never stored on a User row. */
+export const ASSIGNABLE_USER_ROLES = [
+  'SUPER_ADMIN',
+  'INSTITUTION_ADMIN',
+  'PLACEMENT_STAFF',
+] as const;
+
 export const ListInstitutionsQuerySchema = z.object({
   q: z.string().trim().max(200).optional(),
   planCode: PlanCodeSchema.optional(),
@@ -101,6 +167,8 @@ export const ListInstitutionStudentsQuerySchema = z.object({
   q: z.string().trim().max(200).optional(),
   inviteStatus: StudentInviteFilterSchema.optional(),
   batchId: UuidSchema.optional(),
+  /** S6-VV-112 — students whose batch belongs to this campus. */
+  campusId: UuidSchema.optional(),
 });
 export type ListInstitutionStudentsQuery = z.infer<typeof ListInstitutionStudentsQuerySchema>;
 
@@ -176,6 +244,10 @@ export const SubscriptionPlanDtoSchema = z.object({
   code: PlanCodeSchema,
   name: z.string(),
   candidateCapacity: z.number().int().positive().nullable(),
+  /** Price in Indian Rupees (full rupees, not paise). NULL = not yet configured. */
+  priceInr: z.number().int().nonnegative().nullable(),
+  /** True for the Talent Intelligence Suite tier which has custom / negotiated pricing. */
+  isCustomPrice: z.boolean(),
   entitlements: z.array(PlanEntitlementDtoSchema),
   institutionCount: z.number().int().nonnegative(),
 });
@@ -215,6 +287,50 @@ export const InviteUserRequestSchema = z.object({
 });
 export type InviteUserRequest = z.infer<typeof InviteUserRequestSchema>;
 
+export const StaffRoleSchema = z.enum([
+  'PLACEMENT_STAFF',
+  'INSTITUTION_ADMIN',
+  'DEPARTMENTAL_ADVISOR',
+]);
+export type StaffRole = z.infer<typeof StaffRoleSchema>;
+
+export const InviteStaffRequestSchema = z.object({
+  firstName: z.string().trim().min(1, 'First name is required').max(100),
+  lastName: z.string().trim().min(1, 'Last name is required').max(100),
+  email: EmailSchema,
+  role: StaffRoleSchema.default('PLACEMENT_STAFF'),
+  department: z.string().trim().max(200).optional().nullable(),
+  campusId: UuidSchema.optional().nullable(),
+});
+export type InviteStaffRequest = z.infer<typeof InviteStaffRequestSchema>;
+
+export const UpdateStaffRoleRequestSchema = z.object({
+  role: StaffRoleSchema,
+});
+export type UpdateStaffRoleRequest = z.infer<typeof UpdateStaffRoleRequestSchema>;
+
+export const UpdateStaffCampusRequestSchema = z.object({
+  campus: z.string().trim().max(200).nullable().optional(),
+  campusId: UuidSchema.nullable().optional(),
+});
+export type UpdateStaffCampusRequest = z.infer<typeof UpdateStaffCampusRequestSchema>;
+
+export const StaffMemberDtoSchema = z.object({
+  userId: UuidSchema,
+  email: EmailSchema,
+  fullName: z.string(),
+  role: StaffRoleSchema,
+  groupLabel: z.string().nullable(),
+  campusId: UuidSchema.nullable().optional(),
+  campusName: z.string().nullable().optional(),
+  inviteStatus: InvitationStatusSchema.nullable(),
+  lastSentAt: IsoDateTimeSchema.nullable(),
+  acceptedAt: IsoDateTimeSchema.nullable(),
+  heldAt: IsoDateTimeSchema.nullable().optional(),
+  createdAt: IsoDateTimeSchema,
+});
+export type StaffMemberDto = z.infer<typeof StaffMemberDtoSchema>;
+
 export const InvitationPreviewDtoSchema = z.object({
   fullName: z.string(),
   email: EmailSchema,
@@ -252,6 +368,10 @@ export const InstitutionAdminDtoSchema = z.object({
   fullName: z.string(),
   emailVerified: z.boolean(),
   invitation: InvitationDtoSchema.nullable(),
+  /** INSTITUTION_ADMIN or PLACEMENT_STAFF: the list covers all institution staff. */
+  role: UserRoleSchema.optional(),
+  heldAt: IsoDateTimeSchema.nullable().optional(),
+  heldReason: z.string().nullable().optional(),
 });
 export type InstitutionAdminDto = z.infer<typeof InstitutionAdminDtoSchema>;
 
@@ -273,25 +393,77 @@ export const InvitePlatformAdminRequestSchema = z.object({
 });
 export type InvitePlatformAdminRequest = z.infer<typeof InvitePlatformAdminRequestSchema>;
 
+/* -------------------------------- campuses -------------------------------- */
+
+/** S6-VV-112 (#163) — a campus of the caller's institution. Archived campuses keep their batches. */
+export const CampusDtoSchema = z.object({
+  campusId: UuidSchema,
+  name: z.string(),
+  code: z.string().nullable(),
+  city: z.string().nullable(),
+  isPrimary: z.boolean(),
+  archivedAt: IsoDateTimeSchema.nullable(),
+  batchCount: z.number().int().nonnegative(),
+  createdAt: IsoDateTimeSchema,
+});
+export type CampusDto = z.infer<typeof CampusDtoSchema>;
+
+export const CreateCampusRequestSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  code: z.string().trim().min(1).max(40).optional(),
+  city: z.string().trim().min(2).max(120).optional(),
+});
+export type CreateCampusRequest = z.infer<typeof CreateCampusRequestSchema>;
+
+/** `isPrimary: true` moves the primary flag here; `archived` hides the campus from pickers. */
+export const UpdateCampusRequestSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120).optional(),
+    code: z.string().trim().min(1).max(40).nullable().optional(),
+    city: z.string().trim().min(2).max(120).nullable().optional(),
+    isPrimary: z.literal(true).optional(),
+    archived: z.boolean().optional(),
+  })
+  .refine((body) => Object.values(body).some((value) => value !== undefined), {
+    message: 'Nothing to update.',
+  });
+export type UpdateCampusRequest = z.infer<typeof UpdateCampusRequestSchema>;
+
+export const ListCampusesQuerySchema = z.object({
+  includeArchived: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional(),
+});
+export type ListCampusesQuery = z.infer<typeof ListCampusesQuerySchema>;
+
 /* -------------------------------- batches --------------------------------- */
 
 export const CreateBatchRequestSchema = z.object({
   name: z.string().min(2).max(120),
   code: z.string().min(1).max(40).optional(),
+  /** S6-VV-112 — defaults to the institution's primary campus. */
+  campusId: UuidSchema.optional(),
 });
 export type CreateBatchRequest = z.infer<typeof CreateBatchRequestSchema>;
 
 export const UpdateBatchRequestSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   code: z.string().min(1).max(40).nullable().optional(),
+  campusId: UuidSchema.optional(),
 });
 export type UpdateBatchRequest = z.infer<typeof UpdateBatchRequestSchema>;
+
+export const ListBatchesQuerySchema = z.object({ campusId: UuidSchema.optional() });
+export type ListBatchesQuery = z.infer<typeof ListBatchesQuerySchema>;
 
 export const BatchDtoSchema = z.object({
   batchId: UuidSchema,
   institutionId: UuidSchema,
   name: z.string(),
   code: z.string().nullable(),
+  campusId: UuidSchema.nullable(),
+  campusName: z.string().nullable(),
   memberCount: z.number().int().nonnegative(),
   pendingInviteCount: z.number().int().nonnegative(),
   createdAt: IsoDateTimeSchema,
@@ -375,6 +547,37 @@ export const SendBatchInvitesResultDtoSchema = z.object({
 });
 export type SendBatchInvitesResultDto = z.infer<typeof SendBatchInvitesResultDtoSchema>;
 
+/* ------------------- bulk whitelist import (Th6-I606) ------------------- */
+
+export const BulkWhitelistUploadRequestSchema = z.object({
+  batchId: UuidSchema,
+  mapping: BatchImportMappingSchema.optional(),
+});
+export type BulkWhitelistUploadRequest = z.infer<typeof BulkWhitelistUploadRequestSchema>;
+
+export const BulkWhitelistJobStatusSchema = z.enum(['QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED']);
+export type BulkWhitelistJobStatus = z.infer<typeof BulkWhitelistJobStatusSchema>;
+
+export const BulkWhitelistProgressDtoSchema = z.object({
+  jobId: UuidSchema,
+  status: BulkWhitelistJobStatusSchema,
+  totalRows: z.number().int().nonnegative(),
+  processedRows: z.number().int().nonnegative(),
+  validRows: z.number().int().nonnegative(),
+  invalidRows: z.number().int().nonnegative(),
+  importedRows: z.number().int().nonnegative(),
+  errorReportUrl: z.string().nullable(),
+  createdAt: IsoDateTimeSchema,
+  updatedAt: IsoDateTimeSchema,
+});
+export type BulkWhitelistProgressDto = z.infer<typeof BulkWhitelistProgressDtoSchema>;
+
+export const BulkWhitelistErrorResponseSchema = z.object({
+  jobId: UuidSchema,
+  message: z.string(),
+});
+export type BulkWhitelistErrorResponse = z.infer<typeof BulkWhitelistErrorResponseSchema>;
+
 export const AuditLogDtoSchema = z.object({
   auditLogId: UuidSchema,
   actorId: UuidSchema.nullable(),
@@ -407,6 +610,45 @@ export const ListAuditLogsQuerySchema = z.object({
 });
 export type ListAuditLogsQuery = z.infer<typeof ListAuditLogsQuerySchema>;
 
+export const GetAdminDashboardQuerySchema = z
+  .object({
+    from: IsoDateTimeSchema.optional(),
+    to: IsoDateTimeSchema.optional(),
+    institutionId: UuidSchema.optional(),
+    companyId: UuidSchema.optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.from && data.to && new Date(data.from) > new Date(data.to)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'from date must be prior to or equal to to date',
+        path: ['from'],
+      });
+    }
+  });
+export type GetAdminDashboardQuery = z.infer<typeof GetAdminDashboardQuerySchema>;
+
+export const QueuePerformanceMetricsSchema = z.object({
+  companyVerification: z.object({
+    pending: z.number().int().nonnegative(),
+    completed: z.number().int().nonnegative(),
+    oldestPendingSeconds: z.number().int().nonnegative().nullable(),
+    avgProcessingTimeMs: z.number().int().nonnegative().nullable(),
+  }),
+  kafkaOutbox: z.object({
+    pending: z.number().int().nonnegative(),
+    completed: z.number().int().nonnegative(),
+    avgProcessingTimeMs: z.number().int().nonnegative().nullable(),
+  }),
+});
+export type QueuePerformanceMetrics = z.infer<typeof QueuePerformanceMetricsSchema>;
+
+/** S6-VV-101 — same filters as the list, plus the file format. */
+export const ExportAuditLogsQuerySchema = ListAuditLogsQuerySchema.extend({
+  format: z.enum(['csv', 'jsonl']).default('csv'),
+});
+export type ExportAuditLogsQuery = z.infer<typeof ExportAuditLogsQuerySchema>;
+
 export const AdminDashboardDtoSchema = z.object({
   institutions: z.object({
     total: z.number().int().nonnegative(),
@@ -431,8 +673,46 @@ export const AdminDashboardDtoSchema = z.object({
   pendingVerifications: z.number().int().nonnegative(),
   flaggedAttempts: z.number().int().nonnegative(),
   recentAudit: z.array(AuditLogDtoSchema),
+  queuePerformance: QueuePerformanceMetricsSchema.optional(),
 });
 export type AdminDashboardDto = z.infer<typeof AdminDashboardDtoSchema>;
+
+export const FlaggedOrganizationCategorySchema = z.enum([
+  'EMPLOYER_HELD',
+  'EMPLOYER_VERIFICATION_REJECTED',
+  'UNIVERSITY_HELD',
+  'UNIVERSITY_DEACTIVATED',
+]);
+export type FlaggedOrganizationCategory = z.infer<typeof FlaggedOrganizationCategorySchema>;
+
+export const FlaggedOrganizationDtoSchema = z.object({
+  organizationId: UuidSchema,
+  name: z.string(),
+  domain: z.string().nullable(),
+  tenantType: z.enum(['institution', 'company']),
+  status: z.string(),
+  category: FlaggedOrganizationCategorySchema,
+  reason: z.string().nullable(),
+  createdAt: IsoDateTimeSchema,
+  flaggedAt: IsoDateTimeSchema,
+});
+export type FlaggedOrganizationDto = z.infer<typeof FlaggedOrganizationDtoSchema>;
+
+export const VerificationEventStatusSchema = z.enum(['PENDING', 'FAILED', 'PUBLISHED']);
+export type VerificationEventStatus = z.infer<typeof VerificationEventStatusSchema>;
+
+export const VerificationEventDtoSchema = z.object({
+  id: UuidSchema,
+  topic: z.string(),
+  partitionKey: z.string(),
+  source: z.string(),
+  status: VerificationEventStatusSchema,
+  attempts: z.number().int().nonnegative(),
+  lastError: z.string().nullable(),
+  publishedAt: IsoDateTimeSchema.nullable(),
+  createdAt: IsoDateTimeSchema,
+});
+export type VerificationEventDto = z.infer<typeof VerificationEventDtoSchema>;
 
 export const ViewCandidateRequestSchema = z.object({
   reasonCode: CandidateViewReasonCodeSchema,
@@ -470,6 +750,22 @@ export const UpdatePlanCapacityRequestSchema = z.object({
   candidateCapacity: z.number().int().positive().nullable(),
 });
 export type UpdatePlanCapacityRequest = z.infer<typeof UpdatePlanCapacityRequestSchema>;
+
+export const UpdatePlanPriceRequestSchema = z
+  .object({
+    /**
+     * Base price in full Indian Rupees (e.g. 7500 for ₹7,500).
+     * Must be a non-negative integer; null clears the configured price.
+     * Not applicable when isCustomPrice is true.
+     */
+    priceInr: z.number().int().nonnegative().nullable().optional(),
+    /** Set true to mark a plan as using custom / negotiated pricing (Talent Intelligence Suite). */
+    isCustomPrice: z.boolean().optional(),
+  })
+  .refine((v) => v.priceInr !== undefined || v.isCustomPrice !== undefined, {
+    message: 'Provide at least one of priceInr or isCustomPrice.',
+  });
+export type UpdatePlanPriceRequest = z.infer<typeof UpdatePlanPriceRequestSchema>;
 
 export const SetFeatureFlagOverrideRequestSchema = z.object({
   key: z.string().min(2).max(80),
@@ -530,6 +826,9 @@ export const CompanyDtoSchema = z.object({
   deactivatedAt: IsoDateTimeSchema.nullable(),
   userCount: z.number().int().nonnegative(),
   createdAt: IsoDateTimeSchema,
+  /** Detail response only. */
+  createdBy: RecordActorDtoSchema.optional(),
+  updatedBy: RecordActorDtoSchema.optional(),
 });
 export type CompanyDto = z.infer<typeof CompanyDtoSchema>;
 
@@ -549,13 +848,92 @@ export const VerificationQueueItemDtoSchema = z.object({
   verificationStatus: TenantVerificationStatusSchema,
   verificationReason: z.string().nullable(),
   createdAt: IsoDateTimeSchema,
+  /** Present for company tenants in self-onboarding review. */
+  onboardingStatus: CompanyOnboardingStatusSchema.optional(),
+  submissionId: UuidSchema.optional(),
+  representativeEmail: EmailSchema.optional(),
+  registrationCountry: z
+    .string()
+    .trim()
+    .length(2)
+    .regex(/^[A-Z]{2}$/)
+    .optional(),
+  documentCount: z.number().int().nonnegative().optional(),
+  submittedAt: IsoDateTimeSchema.optional(),
 });
 export type VerificationQueueItemDto = z.infer<typeof VerificationQueueItemDtoSchema>;
+
+/** SA review panel for a pending company verification submission. */
+export const CompanyVerificationReviewDocumentDtoSchema = z.object({
+  documentId: UuidSchema,
+  documentType: CompanyVerificationDocumentTypeSchema,
+  fileName: z.string(),
+  mimeType: z.string(),
+  fileSizeBytes: z.number().int().nonnegative(),
+  uploadedAt: IsoDateTimeSchema,
+  reviewStatus: CompanyVerificationDocumentReviewStatusSchema,
+  reviewReason: z.string().nullable(),
+  downloadUrl: z.string().url(),
+});
+export type CompanyVerificationReviewDocumentDto = z.infer<
+  typeof CompanyVerificationReviewDocumentDtoSchema
+>;
+
+/**
+ * S6-VV-110 (#347): a near-duplicate found when the company registered. Shown to the reviewer as a
+ * warning; the registration was not blocked. `matchedCompanyId` is null for a placement-employer
+ * record (a TPO's list entry, not an account).
+ */
+export const CompanyDuplicateSignalSchema = z.object({
+  kind: z.enum(['NAME_MATCH', 'DOMAIN_ROOT_MATCH', 'PLACEMENT_EMPLOYER_MATCH']),
+  matchedCompanyId: UuidSchema.nullable(),
+  matchedName: z.string(),
+  matchedStatus: TenantVerificationStatusSchema.nullable(),
+});
+export type CompanyDuplicateSignal = z.infer<typeof CompanyDuplicateSignalSchema>;
+
+export const CompanyVerificationReviewDetailDtoSchema = z.object({
+  tenantType: z.literal('company'),
+  tenantId: UuidSchema,
+  submissionId: UuidSchema,
+  name: z.string(),
+  website: z.string().nullable(),
+  verificationStatus: TenantVerificationStatusSchema,
+  onboardingStatus: CompanyOnboardingStatusSchema.nullable(),
+  representativeEmail: EmailSchema.optional(),
+  /**
+   * Whether the representative's email domain matches the company website (subdomains count).
+   * `false` is a signal for the reviewer, not a block: subsidiaries often use a parent domain.
+   * `null` when either side is missing.
+   */
+  representativeEmailMatchesWebsite: z.boolean().nullable().optional(),
+  duplicateSignals: z.array(CompanyDuplicateSignalSchema).default([]),
+  registrationCountry: z.string().trim().length(2).optional(),
+  legalName: z.string(),
+  submittedAt: IsoDateTimeSchema,
+  registeredAddress: CompanyAddressSchema.optional(),
+  businessRegistrationNumber: z.string().nullable().optional(),
+  taxId: z.string().nullable().optional(),
+  documents: z.array(CompanyVerificationReviewDocumentDtoSchema),
+});
+export type CompanyVerificationReviewDetailDto = z.infer<
+  typeof CompanyVerificationReviewDetailDtoSchema
+>;
+
+export const GetVerificationReviewQuerySchema = z.object({
+  tenantType: z.enum(['company']),
+});
+export type GetVerificationReviewQuery = z.infer<typeof GetVerificationReviewQuerySchema>;
 
 export const ResolveVerificationRequestSchema = z.object({
   tenantType: z.enum(['institution', 'company']),
   decision: z.enum(['APPROVED', 'REJECTED']),
   reason: z.string().trim().min(8).max(500),
+  /** Targets the open submission; rejects stale resolves when queue carried a newer submissionId. */
+  submissionId: UuidSchema.optional(),
+  /** Optional per-document SA review when tenantType is company. */
+  documentReviews: z.array(CompanyVerificationReviewDocumentSchema).optional(),
+  internalNotes: z.string().trim().max(2000).optional(),
 });
 export type ResolveVerificationRequest = z.infer<typeof ResolveVerificationRequestSchema>;
 
@@ -572,6 +950,10 @@ export const IntegrityQueueItemDtoSchema = z.object({
   severity: IntegrityScoreBandSchema,
   /** Most recent violation kind on record for this attempt, if any (cheap evidence hint). */
   flagReason: z.string().nullable(),
+  /** Numeric integrity score computed from recorded violations (0..100). */
+  integrityScore: z.number().int().nonnegative().optional(),
+  /** Timestamp of the most recent classified integrity violation event, if any. */
+  latestViolationAt: IsoDateTimeSchema.nullable().optional(),
 });
 export type IntegrityQueueItemDto = z.infer<typeof IntegrityQueueItemDtoSchema>;
 
@@ -590,3 +972,49 @@ export const ResolveIntegrityRequestSchema = z.object({
   reason: z.string().trim().min(8).max(500),
 });
 export type ResolveIntegrityRequest = z.infer<typeof ResolveIntegrityRequestSchema>;
+
+export const BulkResolveCompanyVerificationsRequestSchema = z.object({
+  tenantType: z.literal('company'),
+  decision: z.enum(['APPROVED', 'REJECTED']),
+  reason: z.string().trim().min(3).max(500),
+  items: z
+    .array(
+      z.object({
+        tenantId: UuidSchema,
+        submissionId: UuidSchema.optional(),
+      }),
+    )
+    .min(1)
+    .max(50),
+});
+export type BulkResolveCompanyVerificationsRequest = z.infer<
+  typeof BulkResolveCompanyVerificationsRequestSchema
+>;
+
+export const BulkResolveIntegrityRequestSchema = z.object({
+  resolution: z.enum(['CLEAR', 'VOID', 'ESCALATE']),
+  reason: z.string().trim().min(8).max(500),
+  attemptIds: z.array(UuidSchema).min(1).max(50),
+});
+export type BulkResolveIntegrityRequest = z.infer<typeof BulkResolveIntegrityRequestSchema>;
+
+export const BulkOperationResultItemSchema = z.object({
+  id: z.string(),
+  success: z.boolean(),
+  data: z.unknown().optional(),
+  error: z
+    .object({
+      code: z.string(),
+      message: z.string(),
+      statusCode: z.number().int(),
+    })
+    .optional(),
+});
+
+export const BulkOperationResultSchema = z.object({
+  total: z.number().int().nonnegative(),
+  succeeded: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+  results: z.array(BulkOperationResultItemSchema),
+});
+export type BulkOperationResult = z.infer<typeof BulkOperationResultSchema>;

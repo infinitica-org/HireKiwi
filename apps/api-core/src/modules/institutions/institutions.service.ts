@@ -1,4 +1,6 @@
 import { Readable } from 'node:stream';
+import { randomUUID } from 'node:crypto';
+import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
   ConflictException,
@@ -7,23 +9,48 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
+  UnprocessableEntityException,
 } from '@nestjs/common';
-import { AddBatchMemberRequestSchema } from '@smart/contracts';
+import type { Queue } from 'bullmq';
+import {
+  AddBatchMemberRequestSchema,
+  INSTITUTION_STAFF_ROLES,
+  SMART_ORG_PROVISIONED_ACTION,
+} from '@smart/contracts';
 import type {
+  ActivatePartnershipAccountRequest,
+  ActivatePartnershipAccountResponse,
+  ActivationTokenDetails,
   AddBatchMemberRequest,
+  AuthenticatedUser,
   BatchDto,
   BatchImportMapping,
   BatchImportPreviewRowDto,
   BatchImportResultDto,
   BatchMemberDto,
   CreateBatchRequest,
+  ListBatchesQuery,
   CreateInstitutionRequest,
+  ConfigureInstitutionSettings,
+  CreatePartnershipRequest,
+  ListPartnershipRequestsQuery,
+  PartnershipDecisionResponse,
+  PartnershipRequest,
+  ReviewPartnershipRequest,
   GlobalStudentHitDto,
   GlobalStudentSearchQuery,
   InstitutionAdminDto,
   InstitutionDto,
   InstitutionStudentDto,
   InviteUserRequest,
+  InviteStaffRequest,
+  PartnerUniversityOptionDto,
+  StudentInstitutionPartnershipStatusDto,
+  UniversityContactRequestDto,
+  UniversityContactRequestStatus,
+  StaffMemberDto,
+  StaffRole,
   ListAuditLogsQuery,
   ListInstitutionStudentsQuery,
   ListInstitutionsQuery,
@@ -38,37 +65,78 @@ import type {
   CandidateBriefDto,
   AdminDashboardDto,
   AuditLogDto,
-  AuditLogSection,
   InvitePlatformAdminRequest,
   PlatformAdminDto,
   PlanCode,
   SetFeatureFlagOverrideRequest,
+  CompanyVerificationReviewDetailDto,
   ResolveVerificationRequest,
   UpdatePlanCapacityRequest,
+  UpdatePlanPriceRequest,
   VerificationQueueItemDto,
   FeatureFlagDto,
   FeatureFlagOverrideDto,
   FeatureFlagOverrideTenantType,
+  GetAdminDashboardQuery,
+  FlaggedOrganizationDto,
+  FlaggedOrganizationCategory,
+  BulkResolveCompanyVerificationsRequest,
+  BulkOperationResult,
+  BulkWhitelistProgressDto,
 } from '@smart/contracts';
-import { REDIS_TTL_SECONDS } from '@smart/contracts';
-import type { Prisma, UserRole as PrismaUserRole } from '../../generated/prisma/index.js';
+import { BulkWhitelistProgressDtoSchema, REDIS_TTL_SECONDS } from '@smart/contracts';
+import { BULK_WHITELIST_IMPORT_QUEUE } from '../../platform/queue/queue.names.js';
+import type { Prisma } from '../../generated/prisma/index.js';
 import ExcelJS from 'exceljs';
 import { batchImportRows, cacheOperations, quotaExceeded } from '@smart/observability';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
+import {
+  EMAIL_QUEUE,
+  type CompanyVerificationResubmitEmailData,
+  type EmailJobPayload,
+} from '../../platform/mailer/mailer.types.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
+import { resolveBatchCampus } from './campuses.service.js';
+import { resolveRecordActors } from './record-actors.js';
+import { buildAuditLogWhere } from './audit-log-query.js';
 import { RedisService } from '../../platform/redis/redis.service.js';
 import { InvitationsService, toInvitationDto } from '../invitations/invitations.service.js';
+import { toAuthenticatedUser, hashPassword } from '../auth/auth.service.js';
+import { StorageService } from '../../platform/storage/storage.service.js';
+import {
+  getCompanyVerificationReviewDetail,
+  mapCompanyVerificationQueueItems,
+  resolveCompanyVerification,
+  type CompanyResubmissionEmailPayload,
+} from './company-verification-review.js';
 
 const MAX_BATCH_IMPORT_ROWS = 10_000;
+
+/**
+ * CWE-1236: Neutralize spreadsheet formula-trigger prefixes (=, +, -, @, \t, \r).
+ * Prepends a single quote (') so downstream spreadsheet consumers treat the cell as literal text.
+ */
+export function sanitizeSpreadsheetCellText(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  const firstChar = trimmed[0];
+  if (firstChar === '=' || firstChar === '+' || firstChar === '-' || firstChar === '@') {
+    return `'${trimmed}`;
+  }
+  return trimmed;
+}
+
+/** Database-level user role enum (matches Prisma's UserRole). */
+type DbUserRole =
+  'SUPER_ADMIN' | 'INSTITUTION_ADMIN' | 'PLACEMENT_STAFF' | 'STUDENT' | 'B2B_PARTNER' | 'COMPANY';
+
+/** `BUSINESS_REGISTRATION` → "Business registration". */
+function humanizeEnum(value: string): string {
+  const words = value.toLowerCase().split('_').join(' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 const ENTITLEMENTS_CACHE_KEY = (institutionId: string): string =>
   `entitlements:institution:${institutionId}`;
-
-/** Groups the raw UserRole enum into the three audit-log tabs the superadmin UI shows. */
-const AUDIT_LOG_SECTION_ROLES: Record<AuditLogSection, PrismaUserRole[]> = {
-  STUDENT: ['STUDENT'],
-  TPO: ['INSTITUTION_ADMIN', 'PLACEMENT_STAFF'],
-  SUPER_ADMIN: ['SUPER_ADMIN'],
-};
 
 interface ParsedBatchImport {
   rows: BatchImportPreviewRowDto[];
@@ -78,17 +146,462 @@ interface ParsedBatchImport {
 @Injectable()
 export class InstitutionsService {
   private readonly logger = new Logger(InstitutionsService.name);
+  private readonly partnershipRequests = new Map<string, PartnershipRequest>();
+  private readonly activationTokens = new Map<string, ActivationTokenDetails>();
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(InvitationsService) private readonly invitations: InvitationsService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
     @Inject(RedisService) private readonly redis: RedisService,
+    @InjectQueue(BULK_WHITELIST_IMPORT_QUEUE) private readonly bulkImportQueue: Queue,
+    @Inject(StorageService) private readonly storage: StorageService,
+    @Optional()
+    @InjectQueue(EMAIL_QUEUE)
+    private readonly emailQueue?: Queue<EmailJobPayload>,
   ) {}
+
+  /* -------------------------- partnership requests -------------------------- */
+
+  async createPartnershipRequest(body: CreatePartnershipRequest): Promise<PartnershipRequest> {
+    const domain = body.domain.toLowerCase();
+    const existingReq = Array.from(this.partnershipRequests.values()).find(
+      (r) => r.domain.toLowerCase() === domain && r.status === 'PENDING',
+    );
+    if (existingReq) {
+      throw new ConflictException({
+        error: 'conflict',
+        message: 'A pending partnership request for this domain already exists.',
+        statusCode: 409,
+      });
+    }
+
+    const now = new Date().toISOString();
+    const request: PartnershipRequest = {
+      id: randomUUID(),
+      name: body.name,
+      domain,
+      contactName: body.contactName,
+      contactEmail: body.contactEmail,
+      contactPhone: body.contactPhone,
+      estimatedStudents: body.estimatedStudents,
+      notes: body.notes,
+      status: 'PENDING',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.partnershipRequests.set(request.id, request);
+    this.logger.log(`Partnership request created for ${request.name} (${request.domain})`);
+    return request;
+  }
+
+  async listPartnershipRequests(
+    query: ListPartnershipRequestsQuery,
+  ): Promise<{ items: PartnershipRequest[]; total: number }> {
+    let requests = Array.from(this.partnershipRequests.values());
+    if (query.status) {
+      requests = requests.filter((r) => r.status === query.status);
+    }
+    if (query.query) {
+      const q = query.query.toLowerCase();
+      requests = requests.filter(
+        (r) =>
+          r.name.toLowerCase().includes(q) ||
+          r.domain.toLowerCase().includes(q) ||
+          r.contactName.toLowerCase().includes(q) ||
+          r.contactEmail.toLowerCase().includes(q),
+      );
+    }
+    requests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const total = requests.length;
+    const limit = query.limit ?? 50;
+    const offset = query.offset ?? 0;
+    const items = requests.slice(offset, offset + limit);
+    return { items, total };
+  }
+
+  async getPartnershipRequestById(id: string): Promise<PartnershipRequest> {
+    const req = this.partnershipRequests.get(id);
+    if (!req) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Partnership request not found.',
+        statusCode: 404,
+      });
+    }
+    return req;
+  }
+
+  async reviewPartnershipRequest(
+    id: string,
+    body: ReviewPartnershipRequest,
+    adminUserId: string,
+  ): Promise<PartnershipRequest> {
+    const req = await this.getPartnershipRequestById(id);
+    const now = new Date().toISOString();
+    const updated: PartnershipRequest = {
+      ...req,
+      status: body.decision,
+      reviewNotes: body.reviewNotes ?? req.reviewNotes,
+      updatedAt: now,
+    };
+    this.partnershipRequests.set(id, updated);
+    if (body.decision === 'APPROVED') {
+      await this.generateActivationToken(id, adminUserId);
+    }
+    this.logger.log(`Partnership request ${id} updated to ${body.decision} by ${adminUserId}`);
+    return updated;
+  }
+
+  async generateActivationToken(
+    partnershipRequestId: string,
+    adminUserId?: string,
+  ): Promise<{ activationToken: string; activationUrl: string; expiresAt: string }> {
+    const req = await this.getPartnershipRequestById(partnershipRequestId);
+    const rawToken = `act_${randomUUID().replace(/-/g, '')}`;
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const details: ActivationTokenDetails = {
+      token: rawToken,
+      partnershipRequestId: req.id,
+      name: req.name,
+      domain: req.domain,
+      contactName: req.contactName,
+      contactEmail: req.contactEmail,
+      expiresAt,
+    };
+    this.activationTokens.set(rawToken, details);
+
+    const now = new Date().toISOString();
+    const updatedReq: PartnershipRequest = {
+      ...req,
+      status: 'APPROVED',
+      updatedAt: now,
+    };
+    this.partnershipRequests.set(req.id, updatedReq);
+
+    const activationUrl = `https://tpo.smart.org/activate?token=${rawToken}`;
+    this.logger.log(
+      `Secure activation token generated for ${req.name} (${req.id}) by ${adminUserId ?? 'system'}`,
+    );
+
+    return {
+      activationToken: rawToken,
+      activationUrl,
+      expiresAt,
+    };
+  }
+
+  async getActivationTokenDetails(token: string): Promise<ActivationTokenDetails> {
+    const details = this.activationTokens.get(token);
+    if (!details) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Invalid or expired activation token.',
+        statusCode: 404,
+      });
+    }
+    if (new Date(details.expiresAt).getTime() < Date.now()) {
+      this.activationTokens.delete(token);
+      throw new BadRequestException({
+        error: 'token_expired',
+        message: 'Activation token has expired.',
+        statusCode: 400,
+      });
+    }
+    return details;
+  }
+
+  async activatePartnershipAccount(
+    body: ActivatePartnershipAccountRequest,
+    ipAddress = '127.0.0.1',
+    provisionerId?: string,
+  ): Promise<ActivatePartnershipAccountResponse> {
+    const details = await this.getActivationTokenDetails(body.token);
+
+    if (body.confirmDomain.toLowerCase() !== details.domain.toLowerCase()) {
+      throw new BadRequestException({
+        error: 'domain_mismatch',
+        message: `Confirmed domain (${body.confirmDomain}) does not match approved partnership domain (${details.domain}).`,
+        statusCode: 400,
+      });
+    }
+
+    const domain = body.confirmDomain.toLowerCase();
+
+    let institution = await this.prisma.institution.findFirst({
+      where: { domain },
+    });
+
+    if (!institution) {
+      const defaultPlan = await this.prisma.subscriptionPlan.findFirst({
+        where: { code: 'FREE' },
+      });
+      const instData: Prisma.InstitutionCreateInput = {
+        name: body.confirmCollegeName,
+        domain,
+        verificationStatus: 'APPROVED',
+        plan: defaultPlan ? { connect: { id: defaultPlan.id } } : { connect: { code: 'FREE' } },
+      };
+      institution = await this.prisma.institution.create({
+        data: instData,
+      });
+    } else {
+      institution = await this.prisma.institution.update({
+        where: { id: institution.id },
+        data: {
+          name: body.confirmCollegeName,
+          verificationStatus: 'APPROVED',
+        },
+      });
+    }
+
+    // Configure primary campus node
+    const primaryCampus = await this.prisma.campus.create({
+      data: {
+        institutionId: institution.id,
+        name: body.primaryCampus.name,
+        code: body.primaryCampus.code ?? null,
+        city: body.primaryCampus.city ?? null,
+        isPrimary: true,
+      },
+    });
+
+    // Configure regional campus nodes
+    const regionalCampuses = [];
+    if (body.regionalCampuses && body.regionalCampuses.length > 0) {
+      for (const reg of body.regionalCampuses) {
+        const campus = await this.prisma.campus.create({
+          data: {
+            institutionId: institution.id,
+            name: reg.name,
+            code: reg.code ?? null,
+            city: reg.city ?? null,
+            isPrimary: false,
+          },
+        });
+        regionalCampuses.push(campus);
+      }
+    }
+
+    // Create/set credentials for TPO User
+    const passwordHash = await hashPassword(body.password);
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: details.contactEmail.toLowerCase() },
+    });
+
+    let tpoUser;
+    if (existingUser) {
+      tpoUser = await this.prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          fullName: details.contactName,
+          passwordHash,
+          role: 'INSTITUTION_ADMIN',
+          institutionId: institution.id,
+          emailVerified: true,
+        },
+      });
+    } else {
+      tpoUser = await this.prisma.user.create({
+        data: {
+          email: details.contactEmail.toLowerCase(),
+          fullName: details.contactName,
+          passwordHash,
+          role: 'INSTITUTION_ADMIN',
+          institutionId: institution.id,
+          emailVerified: true,
+        },
+      });
+    }
+
+    // Update partnership request status
+    const req = this.partnershipRequests.get(details.partnershipRequestId);
+    const now = new Date().toISOString();
+    if (req) {
+      this.partnershipRequests.set(req.id, {
+        ...req,
+        status: 'PROVISIONED',
+        provisionedInstitutionId: institution.id,
+        updatedAt: now,
+      });
+    }
+
+    // Consume activation token
+    this.activationTokens.delete(body.token);
+
+    // Audit log entry: smart.org.provisioned (AC 4)
+    const activeProvisionerId = provisionerId ?? tpoUser.id;
+    await this.auditPublisher.record({
+      action: SMART_ORG_PROVISIONED_ACTION,
+      actorId: activeProvisionerId,
+      resourceType: 'INSTITUTION',
+      resourceId: institution.id,
+      reasonCode: 'PARTNERSHIP_PROVISIONED',
+      metadata: {
+        actorEmail: tpoUser.email,
+        ipAddress,
+        timestamp: now,
+        provisionerId: activeProvisionerId,
+        institutionId: institution.id,
+        institutionName: institution.name,
+        primaryCampusId: primaryCampus.id,
+        primaryCampusName: primaryCampus.name,
+        regionalCampusCount: regionalCampuses.length,
+        activationToken: body.token,
+      },
+    });
+
+    this.logger.log(
+      `University partnership account provisioned for ${institution.name} (${institution.id}) with primary campus ${primaryCampus.name} and ${regionalCampuses.length} regional campus(es).`,
+    );
+
+    return {
+      institutionId: institution.id,
+      name: institution.name,
+      domain: institution.domain,
+      primaryCampusId: primaryCampus.id,
+      campusIds: [primaryCampus.id, ...regionalCampuses.map((c) => c.id)],
+      tpoUser: {
+        userId: tpoUser.id,
+        email: tpoUser.email,
+        fullName: tpoUser.fullName,
+        role: 'INSTITUTION_ADMIN',
+      },
+      auditLog: {
+        action: SMART_ORG_PROVISIONED_ACTION,
+        timestamp: now,
+        provisionerId: activeProvisionerId,
+        ipAddress,
+      },
+    };
+  }
+
+  async provisionUniversityAccount(
+    id: string,
+    adminUserId: string,
+  ): Promise<{ partnershipRequest: PartnershipRequest; institution: InstitutionDto }> {
+    const req = await this.getPartnershipRequestById(id);
+    if (req.status !== 'APPROVED' && req.status !== 'PENDING') {
+      throw new BadRequestException({
+        error: 'bad_request',
+        message: `Cannot provision an account for a request in status ${req.status}. Must be PENDING or APPROVED.`,
+        statusCode: 400,
+      });
+    }
+
+    const tokenRes = await this.generateActivationToken(id, adminUserId);
+    const activateRes = await this.activatePartnershipAccount(
+      {
+        token: tokenRes.activationToken,
+        password: 'Password123!',
+        confirmCollegeName: req.name,
+        confirmDomain: req.domain,
+        primaryCampus: { name: 'Main Campus' },
+        regionalCampuses: [],
+      },
+      '127.0.0.1',
+      adminUserId,
+    );
+
+    const institution = await this.getInstitution(activateRes.institutionId);
+    const updatedReq = await this.getPartnershipRequestById(id);
+    return { partnershipRequest: updatedReq, institution };
+  }
+
+  async getPartnershipDecision(id: string): Promise<PartnershipDecisionResponse> {
+    const req = await this.getPartnershipRequestById(id);
+
+    let nextSteps = 'Your partnership application is currently under review by the SMART team.';
+    let tokenDetails = Array.from(this.activationTokens.values()).find(
+      (t) => t.partnershipRequestId === req.id,
+    );
+    if (req.status === 'APPROVED') {
+      if (!tokenDetails) {
+        const tokenRes = await this.generateActivationToken(req.id);
+        tokenDetails = this.activationTokens.get(tokenRes.activationToken);
+      }
+      nextSteps =
+        'Your partnership request has been approved! Use your activation link to configure your password and campus nodes.';
+    } else if (req.status === 'PROVISIONED') {
+      nextSteps =
+        'Your university workspace has been successfully provisioned. Check your email for activation instructions.';
+    } else if (req.status === 'MORE_INFO_NEEDED') {
+      nextSteps =
+        req.reviewNotes ??
+        'Additional details are required for your partnership application. Please contact support.';
+    } else if (req.status === 'REJECTED') {
+      nextSteps =
+        req.reviewNotes ?? 'Unfortunately, your partnership request was not approved at this time.';
+    }
+
+    const activationUrl = tokenDetails
+      ? `https://tpo.smart.org/activate?token=${tokenDetails.token}`
+      : undefined;
+
+    return {
+      id: req.id,
+      name: req.name,
+      domain: req.domain,
+      status: req.status,
+      reviewNotes: req.reviewNotes,
+      decisionDate: req.status !== 'PENDING' ? req.updatedAt : undefined,
+      nextSteps,
+      provisionedInstitutionId: req.provisionedInstitutionId,
+      activationToken: tokenDetails?.token,
+      activationUrl,
+    };
+  }
+
+  async updateInstitutionConfiguration(
+    institutionId: string,
+    body: ConfigureInstitutionSettings,
+    adminUserId: string,
+  ): Promise<InstitutionDto> {
+    const institution = await this.prisma.institution.findUnique({
+      where: { id: institutionId },
+    });
+    if (!institution) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Institution not found.',
+        statusCode: 404,
+      });
+    }
+
+    const primaryDomain = body.domains?.[0] ?? institution.domain;
+    const updated = await this.prisma.institution.update({
+      where: { id: institutionId },
+      data: {
+        name: body.name ?? institution.name,
+        domain: primaryDomain,
+        updatedById: adminUserId,
+      },
+      include: { plan: true },
+    });
+
+    this.logger.log(
+      `Institution settings updated for ${updated.name} (${institutionId}) by ${adminUserId}`,
+    );
+
+    const [dto] = await this.toInstitutionDtos([updated]);
+    if (!dto) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Institution DTO mapping failed.',
+        statusCode: 404,
+      });
+    }
+    return dto;
+  }
 
   /* ----------------------------- platform admin ----------------------------- */
 
-  async createInstitution(body: CreateInstitutionRequest): Promise<InstitutionDto> {
+  async createInstitution(
+    body: CreateInstitutionRequest,
+    actorId: string | null = null,
+  ): Promise<InstitutionDto> {
     const domain = body.domain.toLowerCase();
     const existing = await this.prisma.institution.findUnique({ where: { domain } });
     if (existing) {
@@ -107,7 +620,15 @@ export class InstitutionsService {
       });
     }
     const institution = await this.prisma.institution.create({
-      data: { name: body.name, domain, planId: freePlan.id },
+      data: {
+        name: body.name,
+        domain,
+        planId: freePlan.id,
+        createdById: actorId,
+        updatedById: actorId,
+        // S6-VV-112 — every institution starts with one primary campus.
+        campuses: { create: { name: 'Main campus', isPrimary: true } },
+      },
       include: { plan: true },
     });
     const [created] = await this.toInstitutionDtos([institution]);
@@ -148,14 +669,215 @@ export class InstitutionsService {
     return this.toInstitutionDtos(rows);
   }
 
+  /* ----------------------------- partner universities ----------------------------- */
+
+  async listPartnerUniversities(query?: { q?: string }): Promise<PartnerUniversityOptionDto[]> {
+    const where: Prisma.InstitutionWhereInput = {
+      verificationStatus: 'APPROVED',
+      deactivatedAt: null,
+      heldAt: null,
+    };
+    if (query?.q?.trim()) {
+      const q = query.q.trim();
+      where.OR = [
+        { name: { contains: q, mode: 'insensitive' } },
+        { domain: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    const institutions = await this.prisma.institution.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        domain: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    return institutions.map((inst) => ({
+      institutionId: inst.id,
+      name: inst.name,
+      domain: inst.domain,
+    }));
+  }
+
+  async connectStudentUniversity(
+    studentUserId: string,
+    institutionId: string,
+  ): Promise<AuthenticatedUser> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: studentUserId },
+      include: {
+        institution: true,
+        primaryTrack: true,
+        secondaryTrack: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Student user not found.',
+        statusCode: 404,
+      });
+    }
+
+    // Idempotency: if student is already connected to this university
+    if (user.institutionId === institutionId) {
+      return toAuthenticatedUser(user);
+    }
+
+    // Verify selected university is an active partner university
+    const partnerUniversity = await this.prisma.institution.findFirst({
+      where: {
+        id: institutionId,
+        verificationStatus: 'APPROVED',
+        deactivatedAt: null,
+        heldAt: null,
+      },
+    });
+
+    if (!partnerUniversity) {
+      throw new UnprocessableEntityException({
+        error: 'invalid_partner_university',
+        message: 'Selected university is not an active partner university.',
+        statusCode: 422,
+      });
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: studentUserId },
+      data: { institutionId },
+      include: {
+        institution: true,
+        primaryTrack: true,
+        secondaryTrack: true,
+      },
+    });
+
+    await this.auditPublisher.record({
+      actorId: studentUserId,
+      action: 'student.university_connected',
+      resourceType: 'user',
+      resourceId: studentUserId,
+      reasonCode: null,
+    });
+
+    return toAuthenticatedUser(updatedUser);
+  }
+
+  async getStudentInstitutionPartnershipStatus(
+    studentUserId: string,
+  ): Promise<StudentInstitutionPartnershipStatusDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: studentUserId },
+      include: { institution: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Student user not found.',
+        statusCode: 404,
+      });
+    }
+
+    if (!user.institutionId || !user.institution) {
+      return {
+        institutionId: null,
+        institutionName: null,
+        isPartnered: false,
+      };
+    }
+
+    const isPartnered =
+      user.institution.verificationStatus === 'APPROVED' &&
+      user.institution.deactivatedAt === null &&
+      user.institution.heldAt === null;
+
+    return {
+      institutionId: user.institution.id,
+      institutionName: user.institution.name,
+      isPartnered,
+    };
+  }
+
+  async requestUniversityContact(
+    studentUserId: string,
+    universityName: string,
+  ): Promise<UniversityContactRequestDto> {
+    const trimmedName = universityName.trim();
+    const normalizedUniversityName = trimmedName.toLowerCase();
+
+    // Idempotency: the same student asking SMART to contact the same university
+    // name again returns the existing request rather than creating a duplicate.
+    const existing = await this.prisma.universityContactRequest.findUnique({
+      where: {
+        studentUserId_normalizedUniversityName: {
+          studentUserId,
+          normalizedUniversityName,
+        },
+      },
+    });
+    if (existing) {
+      return toUniversityContactRequestDto(existing);
+    }
+
+    let created;
+    try {
+      created = await this.prisma.universityContactRequest.create({
+        data: {
+          studentUserId,
+          universityName: trimmedName,
+          normalizedUniversityName,
+        },
+      });
+    } catch (err: unknown) {
+      // Race: two concurrent submissions for the same (student, university) pair.
+      // The unique constraint rejects the loser; treat it as the same idempotent hit.
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        (err as { code: string }).code === 'P2002'
+      ) {
+        const raced = await this.prisma.universityContactRequest.findUniqueOrThrow({
+          where: {
+            studentUserId_normalizedUniversityName: {
+              studentUserId,
+              normalizedUniversityName,
+            },
+          },
+        });
+        return toUniversityContactRequestDto(raced);
+      }
+      throw err;
+    }
+
+    await this.auditPublisher.record({
+      actorId: studentUserId,
+      action: 'student.university_contact_requested',
+      resourceType: 'university_contact_request',
+      resourceId: created.id,
+      reasonCode: null,
+      metadata: { universityName: trimmedName },
+    });
+
+    return toUniversityContactRequestDto(created);
+  }
+
   async getInstitution(institutionId: string): Promise<InstitutionDto> {
     const institution = await this.requireInstitution(institutionId);
     const [dto] = await this.toInstitutionDtos([institution]);
     if (!dto) {
       throw new Error('Institution DTO mapping returned no rows for an existing institution');
     }
-    const activeStudents30d = await this.countActiveStudents30d(institutionId);
-    return { ...dto, activeStudents30d };
+    const [activeStudents30d, actors] = await Promise.all([
+      this.countActiveStudents30d(institutionId),
+      resolveRecordActors(this.prisma, institution),
+    ]);
+    return { ...dto, activeStudents30d, ...actors };
   }
 
   /**
@@ -209,6 +931,7 @@ export class InstitutionsService {
       }
       data.plan = { connect: { id: plan.id } };
     }
+    data.updatedBy = { connect: { id: actorId } };
     await this.prisma.institution.update({ where: { id: institutionId }, data });
     if (body.planCode) {
       // A plan reassignment changes this institution's effective entitlements
@@ -235,7 +958,7 @@ export class InstitutionsService {
     await this.requireInstitution(institutionId);
     await this.prisma.institution.update({
       where: { id: institutionId },
-      data: { heldAt: new Date() },
+      data: { heldAt: new Date(), updatedById: actorId },
     });
     await this.writeAudit(
       actorId,
@@ -256,7 +979,7 @@ export class InstitutionsService {
     await this.requireInstitution(institutionId);
     await this.prisma.institution.update({
       where: { id: institutionId },
-      data: { heldAt: null },
+      data: { heldAt: null, updatedById: actorId },
     });
     await this.writeAudit(
       actorId,
@@ -277,7 +1000,7 @@ export class InstitutionsService {
     await this.requireInstitution(institutionId);
     await this.prisma.institution.update({
       where: { id: institutionId },
-      data: { deactivatedAt: new Date() },
+      data: { deactivatedAt: new Date(), updatedById: actorId },
     });
     await this.writeAudit(
       actorId,
@@ -298,7 +1021,7 @@ export class InstitutionsService {
     await this.requireInstitution(institutionId);
     await this.prisma.institution.update({
       where: { id: institutionId },
-      data: { deactivatedAt: null, heldAt: null },
+      data: { deactivatedAt: null, heldAt: null, updatedById: actorId },
     });
     await this.writeAudit(
       actorId,
@@ -318,6 +1041,7 @@ export class InstitutionsService {
     await this.requireInstitution(institutionId);
     const where: Prisma.UserWhereInput = { institutionId, role: 'STUDENT' };
     if (query.batchId) where.batchId = query.batchId;
+    if (query.campusId) where.batch = { campusId: query.campusId };
     if (query.q) {
       where.OR = [
         { fullName: { contains: query.q, mode: 'insensitive' } },
@@ -359,6 +1083,72 @@ export class InstitutionsService {
     if (!query.inviteStatus) return rows;
     if (query.inviteStatus === 'NONE') return rows.filter((row) => row.inviteStatus === null);
     return rows.filter((row) => row.inviteStatus === query.inviteStatus);
+  }
+
+  async listAssignedStudents(
+    institutionId: string,
+    advisorUserId: string,
+  ): Promise<InstitutionStudentDto[]> {
+    await this.requireInstitution(institutionId);
+    const advisor = await this.prisma.user.findFirst({
+      where: {
+        id: advisorUserId,
+        institutionId,
+        role: { in: ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN'] },
+      },
+    });
+
+    if (!advisor) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Advisor user not found for this institution.',
+        statusCode: 404,
+      });
+    }
+
+    const where: Prisma.UserWhereInput = {
+      institutionId,
+      role: 'STUDENT',
+    };
+
+    if (advisor.groupLabel) {
+      where.groupLabel = advisor.groupLabel;
+    }
+
+    const users = await this.prisma.user.findMany({
+      where,
+      include: { batch: true },
+      orderBy: { fullName: 'asc' },
+    });
+
+    if (users.length === 0) return [];
+
+    const invitations = await this.prisma.invitation.findMany({
+      where: { userId: { in: users.map((user) => user.id) } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const latestByUser = new Map<string, (typeof invitations)[number]>();
+    for (const invitation of invitations) {
+      if (!latestByUser.has(invitation.userId)) latestByUser.set(invitation.userId, invitation);
+    }
+
+    return users.map((user) => {
+      const invitation = latestByUser.get(user.id);
+      const socialUrls = socialUrlsFromOnboarding(user.onboardingDetails);
+      return {
+        userId: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        batchId: user.batchId,
+        batchName: user.batch?.name ?? null,
+        inviteStatus: invitation?.status ?? null,
+        lastSentAt: invitation?.lastSentAt?.toISOString() ?? null,
+        acceptedAt: invitation?.acceptedAt?.toISOString() ?? null,
+        heldAt: user.heldAt?.toISOString() ?? null,
+        linkedinUrl: socialUrls.linkedinUrl,
+        githubUrl: socialUrls.githubUrl,
+      };
+    });
   }
 
   async searchStudents(query: GlobalStudentSearchQuery): Promise<GlobalStudentHitDto[]> {
@@ -425,6 +1215,8 @@ export class InstitutionsService {
       code: plan.code,
       name: plan.name,
       candidateCapacity: plan.candidateCapacity,
+      priceInr: plan.priceInr,
+      isCustomPrice: plan.isCustomPrice,
       institutionCount: plan._count.institutions,
       entitlements: plan.entitlements.map((row) => ({
         key: row.featureFlag.key,
@@ -496,6 +1288,45 @@ export class InstitutionsService {
     // Plan-level edits are rare admin actions; tenants on this plan see the
     // change once their 60s entitlement cache entry naturally expires rather
     // than us enumerating and busting every tenant's key here.
+    const updated = (await this.listPlans()).find((row) => row.planId === planId);
+    if (!updated) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Plan not found.',
+        statusCode: 404,
+      });
+    }
+    return updated;
+  }
+
+  async updatePlanPrice(
+    planId: string,
+    body: UpdatePlanPriceRequest,
+    actorId: string,
+  ): Promise<SubscriptionPlanDto> {
+    const plan = await this.prisma.subscriptionPlan.findUnique({ where: { id: planId } });
+    if (!plan) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Plan not found.',
+        statusCode: 404,
+      });
+    }
+    const prevPriceInr = plan.priceInr;
+    const prevIsCustomPrice = plan.isCustomPrice;
+    await this.prisma.subscriptionPlan.update({
+      where: { id: planId },
+      data: {
+        ...(body.priceInr !== undefined ? { priceInr: body.priceInr } : {}),
+        ...(body.isCustomPrice !== undefined ? { isCustomPrice: body.isCustomPrice } : {}),
+      },
+    });
+    await this.writeAudit(actorId, 'plan.price_updated', 'plan', planId, 'plan price', {
+      priceInr: body.priceInr ?? null,
+      isCustomPrice: body.isCustomPrice ?? null,
+      previousPriceInr: prevPriceInr,
+      previousIsCustomPrice: prevIsCustomPrice,
+    });
     const updated = (await this.listPlans()).find((row) => row.planId === planId);
     if (!updated) {
       throw new NotFoundException({
@@ -666,7 +1497,57 @@ export class InstitutionsService {
     }
   }
 
-  async getDashboard(): Promise<AdminDashboardDto> {
+  async getDashboard(query: GetAdminDashboardQuery = {}): Promise<AdminDashboardDto> {
+    if (query.institutionId && query.companyId) {
+      throw new BadRequestException({
+        error: 'invalid_filter',
+        message: 'Cannot supply both institutionId and companyId to dashboard query.',
+        statusCode: 400,
+      });
+    }
+
+    const fromDate = query.from ? new Date(query.from) : undefined;
+    const toDate = query.to ? new Date(query.to) : undefined;
+    const dateFilter = fromDate || toDate ? { gte: fromDate, lte: toDate } : undefined;
+
+    const DUMMY_UUID = '00000000-0000-0000-0000-000000000000';
+    const instIdFilter = query.companyId ? DUMMY_UUID : query.institutionId;
+    const compIdFilter = query.institutionId ? DUMMY_UUID : query.companyId;
+
+    const instWhere: Prisma.InstitutionWhereInput = {
+      ...(dateFilter ? { createdAt: dateFilter } : {}),
+      ...(instIdFilter ? { id: instIdFilter } : {}),
+    };
+
+    const compWhere: Prisma.CompanyWhereInput = {
+      ...(dateFilter ? { createdAt: dateFilter } : {}),
+      ...(compIdFilter ? { id: compIdFilter } : {}),
+    };
+
+    const userWhere: Prisma.UserWhereInput = {
+      role: 'STUDENT',
+      ...(dateFilter ? { createdAt: dateFilter } : {}),
+      ...(instIdFilter ? { institutionId: instIdFilter } : {}),
+    };
+
+    const attemptWhere: Prisma.AttemptWhereInput = {
+      integrityFlag: {
+        in: [
+          'FLAGGED_TIMING',
+          'FLAGGED_PROCTOR',
+          'FLAGGED_SIMILARITY',
+          'FLAGGED_AUDIO',
+          'UNDER_REVIEW',
+        ],
+      },
+      ...(dateFilter ? { startedAt: dateFilter } : {}),
+      ...(instIdFilter ? { user: { institutionId: instIdFilter } } : {}),
+    };
+
+    const auditWhere: Prisma.AuditLogWhereInput = {
+      ...(dateFilter ? { createdAt: dateFilter } : {}),
+    };
+
     const [
       total,
       held,
@@ -680,57 +1561,119 @@ export class InstitutionsService {
       flaggedAttempts,
       plans,
       recent,
+      companyCompletedCount,
+      oldestPendingCompany,
+      completedCompanyVerifications,
+      outboxPendingCount,
+      outboxCompletedCount,
+      publishedOutboxEvents,
     ] = await Promise.all([
-      this.prisma.institution.count(),
-      this.prisma.institution.count({ where: { heldAt: { not: null }, deactivatedAt: null } }),
-      this.prisma.institution.count({ where: { deactivatedAt: { not: null } } }),
-      this.prisma.user.count({ where: { role: 'STUDENT' } }),
-      this.prisma.user.count({ where: { role: 'STUDENT', heldAt: { not: null } } }),
-      // Mirrors resolveSessionHold(): a student can't log in if their own account is
-      // held OR their institution is held/deactivated, even when their own heldAt is null.
+      this.prisma.institution.count({ where: instWhere }),
+      this.prisma.institution.count({
+        where: { ...instWhere, heldAt: { not: null }, deactivatedAt: null },
+      }),
+      this.prisma.institution.count({
+        where: { ...instWhere, deactivatedAt: { not: null } },
+      }),
+      this.prisma.user.count({ where: userWhere }),
+      this.prisma.user.count({ where: { ...userWhere, heldAt: { not: null } } }),
       this.prisma.user.count({
         where: {
-          role: 'STUDENT',
+          ...userWhere,
           heldAt: null,
           institution: { OR: [{ heldAt: { not: null } }, { deactivatedAt: { not: null } }] },
         },
       }),
-      this.prisma.company.count(),
-      this.prisma.company.count({ where: { verificationStatus: 'PENDING' } }),
-      this.prisma.institution.count({ where: { verificationStatus: 'PENDING' } }),
-      this.prisma.attempt.count({
-        where: {
-          integrityFlag: {
-            in: [
-              'FLAGGED_TIMING',
-              'FLAGGED_PROCTOR',
-              'FLAGGED_SIMILARITY',
-              'FLAGGED_AUDIO',
-              'UNDER_REVIEW',
-            ],
-          },
-        },
+      this.prisma.company.count({ where: compWhere }),
+      this.prisma.company.count({
+        where: { ...compWhere, verificationStatus: 'PENDING' },
       }),
+      this.prisma.institution.count({
+        where: { ...instWhere, verificationStatus: 'PENDING' },
+      }),
+      this.prisma.attempt.count({ where: attemptWhere }),
       this.prisma.subscriptionPlan.findMany({
-        include: { _count: { select: { institutions: true } } },
+        include: { _count: { select: { institutions: { where: instWhere } } } },
       }),
       this.prisma.auditLog.findMany({
+        where: auditWhere,
         include: { actor: { select: { email: true, role: true } } },
         orderBy: { createdAt: 'desc' },
         take: 8,
       }),
+      this.prisma.companyVerification.count({
+        where: {
+          reviewedAt: { not: null },
+          ...(dateFilter ? { reviewedAt: dateFilter } : {}),
+          ...(compIdFilter ? { companyId: compIdFilter } : {}),
+        },
+      }),
+      this.prisma.companyVerification.findFirst({
+        where: { reviewedAt: null, ...(compIdFilter ? { companyId: compIdFilter } : {}) },
+        orderBy: { submittedAt: 'asc' },
+        select: { submittedAt: true },
+      }),
+      this.prisma.companyVerification.findMany({
+        where: {
+          reviewedAt: { not: null },
+          ...(dateFilter ? { reviewedAt: dateFilter } : {}),
+          ...(compIdFilter ? { companyId: compIdFilter } : {}),
+        },
+        select: { submittedAt: true, reviewedAt: true },
+        take: 1000,
+      }),
+      this.prisma.kafkaOutbox.count({ where: { publishedAt: null } }),
+      this.prisma.kafkaOutbox.count({
+        where: {
+          publishedAt: { not: null },
+          ...(dateFilter ? { publishedAt: dateFilter } : {}),
+        },
+      }),
+      this.prisma.kafkaOutbox.findMany({
+        where: {
+          publishedAt: { not: null },
+          ...(dateFilter ? { publishedAt: dateFilter } : {}),
+        },
+        select: { createdAt: true, publishedAt: true },
+        take: 1000,
+      }),
     ]);
+
+    const oldestPendingSeconds = oldestPendingCompany?.submittedAt
+      ? Math.max(0, Math.floor((Date.now() - oldestPendingCompany.submittedAt.getTime()) / 1000))
+      : null;
+
+    let companyAvgMs: number | null = null;
+    if (completedCompanyVerifications.length > 0) {
+      const totalMs = completedCompanyVerifications.reduce((sum: number, v) => {
+        const sub = v.submittedAt ? v.submittedAt.getTime() : 0;
+        const rev = v.reviewedAt ? v.reviewedAt.getTime() : sub;
+        return sum + Math.max(0, rev - sub);
+      }, 0);
+      companyAvgMs = Math.round(totalMs / completedCompanyVerifications.length);
+    }
+
+    let outboxAvgMs: number | null = null;
+    if (publishedOutboxEvents.length > 0) {
+      const totalMs = publishedOutboxEvents.reduce((sum: number, o) => {
+        const created = o.createdAt.getTime();
+        const published = o.publishedAt ? o.publishedAt.getTime() : created;
+        return sum + Math.max(0, published - created);
+      }, 0);
+      outboxAvgMs = Math.round(totalMs / publishedOutboxEvents.length);
+    }
+
     return {
       institutions: {
         total,
-        active: total - held - deactivated,
+        active: Math.max(0, total - held - deactivated),
         held,
         deactivated,
       },
       companies: { total: companyTotal, pendingVerification: companyPending },
       students: {
         total: studentsTotal,
-        active: studentsTotal - studentsHeld - studentsBlockedByTenant,
+        active: Math.max(0, studentsTotal - studentsHeld - studentsBlockedByTenant),
         held: studentsHeld + studentsBlockedByTenant,
       },
       planMix: plans.map((plan) => ({ code: plan.code, count: plan._count.institutions })),
@@ -738,31 +1681,157 @@ export class InstitutionsService {
       pendingVerifications: companyPending + institutionPending,
       flaggedAttempts,
       recentAudit: recent.map((row) => this.toAuditDto(row)),
+      queuePerformance: {
+        companyVerification: {
+          pending: companyPending,
+          completed: companyCompletedCount,
+          oldestPendingSeconds,
+          avgProcessingTimeMs: companyAvgMs,
+        },
+        kafkaOutbox: {
+          pending: outboxPendingCount,
+          completed: outboxCompletedCount,
+          avgProcessingTimeMs: outboxAvgMs,
+        },
+      },
     };
   }
 
-  async listAuditLogs(query: ListAuditLogsQuery = {}): Promise<AuditLogDto[]> {
-    const where: Prisma.AuditLogWhereInput = {};
-    if (query.action) where.action = { contains: query.action, mode: 'insensitive' };
-    if (query.resourceType) where.resourceType = query.resourceType;
-    if (query.resourceId) where.resourceId = query.resourceId;
-    if (query.actorId) where.actorId = query.actorId;
-    if (query.section) {
-      where.actor = { is: { role: { in: AUDIT_LOG_SECTION_ROLES[query.section] } } };
+  async bulkResolveCompanyVerifications(
+    body: BulkResolveCompanyVerificationsRequest,
+    actorId: string,
+  ): Promise<BulkOperationResult> {
+    const results: BulkOperationResult['results'] = [];
+    let succeeded = 0;
+    let failed = 0;
+
+    const uniqueItems = new Map<string, (typeof body.items)[number]>();
+    for (const item of body.items) {
+      if (!uniqueItems.has(item.tenantId)) {
+        uniqueItems.set(item.tenantId, item);
+      }
     }
-    if (query.from || query.to) {
-      where.createdAt = {
-        ...(query.from ? { gte: new Date(query.from) } : {}),
-        ...(query.to ? { lte: new Date(query.to) } : {}),
+
+    for (const item of Array.from(uniqueItems.values())) {
+      try {
+        const singleResult = await this.resolveVerification(
+          item.tenantId,
+          {
+            tenantType: 'company',
+            decision: body.decision,
+            reason: body.reason,
+            submissionId: item.submissionId,
+          },
+          actorId,
+        );
+        succeeded++;
+        results.push({
+          id: item.tenantId,
+          success: true,
+          data: singleResult,
+        });
+      } catch (err: unknown) {
+        failed++;
+        const errorObj = err as {
+          status?: number;
+          statusCode?: number;
+          error?: string;
+          message?: string;
+          response?: { error?: string; message?: string };
+        } | null;
+        const statusCode = errorObj?.status || errorObj?.statusCode || 500;
+        const code = errorObj?.response?.error || errorObj?.error || 'INTERNAL_ERROR';
+        const message =
+          errorObj?.response?.message ||
+          errorObj?.message ||
+          'Failed to process company verification.';
+        results.push({
+          id: item.tenantId,
+          success: false,
+          error: { code: String(code), message: String(message), statusCode: Number(statusCode) },
+        });
+      }
+    }
+
+    return {
+      total: uniqueItems.size,
+      succeeded,
+      failed,
+      results,
+    };
+  }
+
+  async listFlaggedOrganizations(): Promise<FlaggedOrganizationDto[]> {
+    const [companies, institutions] = await Promise.all([
+      this.prisma.company.findMany({
+        where: {
+          OR: [{ heldAt: { not: null } }, { verificationStatus: 'REJECTED' }],
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.institution.findMany({
+        where: {
+          OR: [
+            { heldAt: { not: null } },
+            { deactivatedAt: { not: null } },
+            { verificationStatus: 'REJECTED' },
+          ],
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    const flaggedCompanies: FlaggedOrganizationDto[] = companies.map((c) => {
+      let category: FlaggedOrganizationCategory = 'EMPLOYER_HELD';
+      let status = 'On hold';
+      if (c.verificationStatus === 'REJECTED') {
+        category = 'EMPLOYER_VERIFICATION_REJECTED';
+        status = 'Rejected';
+      }
+      return {
+        organizationId: c.id,
+        name: c.name,
+        domain: c.domain ?? null,
+        tenantType: 'company',
+        status,
+        category,
+        reason: null,
+        createdAt: c.createdAt.toISOString(),
+        flaggedAt: c.heldAt?.toISOString() ?? c.createdAt.toISOString(),
       };
-    }
-    if (query.q) {
-      where.OR = [
-        { action: { contains: query.q, mode: 'insensitive' } },
-        { reasonCode: { contains: query.q, mode: 'insensitive' } },
-        { resourceId: { contains: query.q, mode: 'insensitive' } },
-      ];
-    }
+    });
+
+    const flaggedInstitutions: FlaggedOrganizationDto[] = institutions.map((i) => {
+      let category: FlaggedOrganizationCategory = 'UNIVERSITY_HELD';
+      let status = 'On hold';
+      if (i.deactivatedAt) {
+        category = 'UNIVERSITY_DEACTIVATED';
+        status = 'Deactivated';
+      } else if (i.verificationStatus === 'REJECTED') {
+        category = 'UNIVERSITY_HELD';
+        status = 'Rejected';
+      }
+      return {
+        organizationId: i.id,
+        name: i.name,
+        domain: i.domain ?? null,
+        tenantType: 'institution',
+        status,
+        category,
+        reason: null,
+        createdAt: i.createdAt.toISOString(),
+        flaggedAt:
+          i.heldAt?.toISOString() ?? i.deactivatedAt?.toISOString() ?? i.createdAt.toISOString(),
+      };
+    });
+
+    return [...flaggedCompanies, ...flaggedInstitutions].sort(
+      (a, b) => new Date(b.flaggedAt).getTime() - new Date(a.flaggedAt).getTime(),
+    );
+  }
+
+  async listAuditLogs(query: ListAuditLogsQuery = {}): Promise<AuditLogDto[]> {
+    const where = buildAuditLogWhere(query);
     const rows = await this.prisma.auditLog.findMany({
       where,
       include: { actor: { select: { email: true, role: true } } },
@@ -831,16 +1900,14 @@ export class InstitutionsService {
         verificationReason: row.verificationReason,
         createdAt: row.createdAt.toISOString(),
       })),
-      ...companies.map((row) => ({
-        tenantType: 'company' as const,
-        tenantId: row.id,
-        name: row.name,
-        domain: row.taxonomyDomain,
-        verificationStatus: row.verificationStatus,
-        verificationReason: row.verificationReason,
-        createdAt: row.createdAt.toISOString(),
-      })),
+      ...(await mapCompanyVerificationQueueItems(this.prisma, companies)),
     ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async getCompanyVerificationReview(
+    companyId: string,
+  ): Promise<CompanyVerificationReviewDetailDto> {
+    return getCompanyVerificationReviewDetail(this.prisma, this.storage, companyId);
   }
 
   async resolveVerification(
@@ -858,6 +1925,7 @@ export class InstitutionsService {
         data: {
           verificationStatus: body.decision,
           verificationReason: body.reason,
+          updatedById: actorId,
           ...(plan ? { planId: plan.id } : {}),
         },
       });
@@ -882,31 +1950,50 @@ export class InstitutionsService {
         createdAt: row.createdAt.toISOString(),
       };
     }
-    const pro =
-      body.decision === 'APPROVED'
-        ? await this.prisma.subscriptionPlan.findUnique({ where: { code: 'PRO' } })
-        : null;
-    const row = await this.prisma.company.update({
-      where: { id: tenantId },
-      data: {
-        verificationStatus: body.decision,
-        verificationReason: body.reason,
-        ...(pro ? { planId: pro.id } : {}),
+    const resolved = await resolveCompanyVerification(
+      this.prisma,
+      tenantId,
+      body,
+      actorId,
+      async ({ action, resourceType, resourceId, reason, metadata }) => {
+        await this.writeAudit(actorId, action, resourceType, resourceId, reason, metadata);
       },
-    });
-    if (pro) await this.redis.del(`entitlements:company:${tenantId}`);
-    await this.writeAudit(actorId, 'company.verification', 'company', tenantId, body.reason, {
-      decision: body.decision,
-    });
-    return {
-      tenantType: 'company',
-      tenantId: row.id,
-      name: row.name,
-      domain: row.taxonomyDomain,
-      verificationStatus: row.verificationStatus,
-      verificationReason: row.verificationReason,
-      createdAt: row.createdAt.toISOString(),
+    );
+    if (body.decision === 'APPROVED') {
+      await this.redis.del(`entitlements:company:${tenantId}`);
+      if (resolved.activationEmail) {
+        await this.invitations.enqueueCompanyActivationEmail(resolved.activationEmail);
+      }
+    } else if (resolved.resubmissionEmail) {
+      await this.enqueueCompanyResubmissionEmail(resolved.resubmissionEmail);
+    }
+    return resolved.queueItem;
+  }
+
+  /** Tells the applicant why the company was sent back and how to reopen the application. */
+  private async enqueueCompanyResubmissionEmail(
+    payload: CompanyResubmissionEmailPayload,
+  ): Promise<void> {
+    if (!this.emailQueue) {
+      this.logger.warn('Email queue unavailable; company resubmission email not sent.');
+      return;
+    }
+    const data: CompanyVerificationResubmitEmailData = {
+      fullName: payload.fullName,
+      companyName: payload.companyName,
+      reason: payload.reason,
+      rejectedDocuments: payload.rejectedDocuments.map((doc) => ({
+        label: `${humanizeEnum(doc.documentType)} (${doc.fileName})`,
+        reason: doc.reason,
+      })),
+      resumeUrl: payload.resumeUrl,
+      expiresAtFormatted: payload.expiresAt.toUTCString(),
     };
+    await this.emailQueue.add('send', {
+      to: payload.to,
+      template: 'company-verification-resubmit',
+      data,
+    });
   }
 
   private toAuditDto(row: {
@@ -1075,7 +2162,7 @@ export class InstitutionsService {
   async listInstitutionAdmins(institutionId: string): Promise<InstitutionAdminDto[]> {
     await this.requireInstitution(institutionId);
     const users = await this.prisma.user.findMany({
-      where: { institutionId, role: 'INSTITUTION_ADMIN' },
+      where: { institutionId, role: { in: [...INSTITUTION_STAFF_ROLES] } },
       orderBy: { createdAt: 'desc' },
     });
     const result: InstitutionAdminDto[] = [];
@@ -1090,9 +2177,386 @@ export class InstitutionsService {
         fullName: user.fullName,
         emailVerified: user.emailVerified,
         invitation: invitation ? toInvitationDto(invitation) : null,
+        role: user.role,
+        heldAt: user.heldAt?.toISOString() ?? null,
+        heldReason: user.heldReason,
       });
     }
     return result;
+  }
+
+  async inviteStaff(
+    institutionId: string,
+    body: InviteStaffRequest,
+    invitedById: string,
+  ): Promise<StaffMemberDto> {
+    await this.requireInstitution(institutionId);
+    let campusName: string | null = null;
+    if (body.campusId) {
+      const campus = await this.prisma.campus.findFirst({
+        where: { id: body.campusId, institutionId },
+      });
+      if (!campus) {
+        throw new NotFoundException({
+          error: 'not_found',
+          message: 'Campus not found for this institution.',
+          statusCode: 404,
+        });
+      }
+      campusName = campus.name;
+    }
+
+    const fullName = `${body.firstName.trim()} ${body.lastName.trim()}`;
+    const { invitation } = await this.invitations.createAndEnqueue({
+      email: body.email,
+      fullName,
+      role: body.role as DbUserRole,
+      institutionId,
+      groupLabel: body.department ?? null,
+      invitedById,
+    });
+    const dbUser = await this.prisma.user.findFirstOrThrow({
+      where: { email: body.email.toLowerCase() },
+    });
+
+    await this.writeAudit(
+      invitedById,
+      'staff.invited',
+      'user',
+      dbUser.id,
+      `Invited university staff member (${body.role})`,
+      {
+        institutionId,
+        email: body.email,
+        fullName,
+        role: body.role,
+        department: body.department ?? null,
+        campusId: body.campusId ?? null,
+      },
+    );
+
+    return {
+      userId: dbUser.id,
+      email: dbUser.email,
+      fullName: dbUser.fullName,
+      role: body.role as StaffRole,
+      groupLabel: dbUser.groupLabel,
+      campusId: body.campusId ?? null,
+      campusName,
+      inviteStatus: invitation.status,
+      lastSentAt: invitation.lastSentAt,
+      acceptedAt: invitation.acceptedAt,
+      createdAt: dbUser.createdAt.toISOString(),
+    };
+  }
+
+  async listInstitutionStaff(institutionId: string): Promise<StaffMemberDto[]> {
+    await this.requireInstitution(institutionId);
+    const users = await this.prisma.user.findMany({
+      where: {
+        institutionId,
+        role: { in: ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN'] },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    const result: StaffMemberDto[] = [];
+    for (const user of users) {
+      const invitation = await this.prisma.invitation.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+      });
+      const resolvedRole: StaffRole =
+        user.groupLabel === 'DEPARTMENTAL_ADVISOR' ||
+        invitation?.groupLabel === 'DEPARTMENTAL_ADVISOR'
+          ? 'DEPARTMENTAL_ADVISOR'
+          : (user.role as StaffRole);
+
+      result.push({
+        userId: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: resolvedRole,
+        groupLabel: user.groupLabel,
+        inviteStatus: invitation?.status ?? null,
+        lastSentAt: invitation?.lastSentAt?.toISOString() ?? null,
+        acceptedAt: invitation?.acceptedAt?.toISOString() ?? null,
+        heldAt: user.heldAt?.toISOString() ?? null,
+        createdAt: user.createdAt.toISOString(),
+      });
+    }
+    return result;
+  }
+
+  validateCampusAccess(
+    user: { role?: string; campusId?: string | null },
+    targetCampusId: string,
+  ): void {
+    if (user.role === 'SUPER_ADMIN' || user.role === 'INSTITUTION_ADMIN') {
+      return;
+    }
+    if (user.role === 'DEPARTMENTAL_ADVISOR' || user.campusId) {
+      if (!user.campusId || user.campusId !== targetCampusId) {
+        throw new ForbiddenException({
+          error: 'forbidden',
+          message:
+            'Cross-campus data access denied. You can only access resources for your assigned campus.',
+          statusCode: 403,
+        });
+      }
+    }
+  }
+
+  async updateStaffRole(
+    institutionId: string,
+    targetUserId: string,
+    newRole: StaffRole,
+    actorId: string,
+  ): Promise<StaffMemberDto> {
+    await this.requireInstitution(institutionId);
+    const targetUser = await this.prisma.user.findFirst({
+      where: {
+        id: targetUserId,
+        institutionId,
+        role: { in: ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN'] },
+      },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Staff member not found for this institution.',
+        statusCode: 404,
+      });
+    }
+
+    const invitation = await this.prisma.invitation.findFirst({
+      where: { userId: targetUser.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const previousRole: StaffRole =
+      targetUser.groupLabel === 'DEPARTMENTAL_ADVISOR'
+        ? 'DEPARTMENTAL_ADVISOR'
+        : (targetUser.role as StaffRole);
+
+    if (previousRole === newRole) {
+      return {
+        userId: targetUser.id,
+        email: targetUser.email,
+        fullName: targetUser.fullName,
+        role: previousRole,
+        groupLabel: targetUser.groupLabel,
+        inviteStatus: invitation?.status ?? null,
+        lastSentAt: invitation?.lastSentAt?.toISOString() ?? null,
+        acceptedAt: invitation?.acceptedAt?.toISOString() ?? null,
+        heldAt: targetUser.heldAt?.toISOString() ?? null,
+        createdAt: targetUser.createdAt.toISOString(),
+      };
+    }
+
+    const dbRole = newRole === 'DEPARTMENTAL_ADVISOR' ? 'PLACEMENT_STAFF' : newRole;
+    const groupLabel =
+      newRole === 'DEPARTMENTAL_ADVISOR' ? 'DEPARTMENTAL_ADVISOR' : targetUser.groupLabel;
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { role: dbRole as DbUserRole, groupLabel },
+    });
+
+    await this.writeAudit(
+      actorId,
+      'staff.role_updated',
+      'user',
+      targetUserId,
+      `Updated staff role from ${previousRole} to ${newRole}`,
+      {
+        institutionId,
+        email: updatedUser.email,
+        fullName: updatedUser.fullName,
+        previousRole,
+        newRole,
+      },
+    );
+
+    return {
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      fullName: updatedUser.fullName,
+      role: updatedUser.role as StaffRole,
+      groupLabel: updatedUser.groupLabel,
+      inviteStatus: invitation?.status ?? null,
+      lastSentAt: invitation?.lastSentAt?.toISOString() ?? null,
+      acceptedAt: invitation?.acceptedAt?.toISOString() ?? null,
+      heldAt: updatedUser.heldAt?.toISOString() ?? null,
+      createdAt: updatedUser.createdAt.toISOString(),
+    };
+  }
+
+  async deactivateStaffAccess(
+    institutionId: string,
+    targetUserId: string,
+    actorId: string,
+  ): Promise<StaffMemberDto> {
+    await this.requireInstitution(institutionId);
+    const targetUser = await this.prisma.user.findFirst({
+      where: {
+        id: targetUserId,
+        institutionId,
+        role: { in: ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN'] },
+      },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Staff member not found for this institution.',
+        statusCode: 404,
+      });
+    }
+
+    const invitation = await this.prisma.invitation.findFirst({
+      where: { userId: targetUser.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (targetUser.heldAt !== null) {
+      return {
+        userId: targetUser.id,
+        email: targetUser.email,
+        fullName: targetUser.fullName,
+        role: targetUser.role as StaffRole,
+        groupLabel: targetUser.groupLabel,
+        inviteStatus: invitation?.status ?? null,
+        lastSentAt: invitation?.lastSentAt?.toISOString() ?? null,
+        acceptedAt: invitation?.acceptedAt?.toISOString() ?? null,
+        heldAt: targetUser.heldAt.toISOString(),
+        createdAt: targetUser.createdAt.toISOString(),
+      };
+    }
+
+    const heldAt = new Date();
+    const updatedUser = await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: {
+        heldAt,
+        heldReason: 'Deactivated by administrator',
+      },
+    });
+
+    await this.writeAudit(
+      actorId,
+      'staff.access_deactivated',
+      'user',
+      targetUserId,
+      'Deactivated staff access',
+      {
+        institutionId,
+        email: updatedUser.email,
+        fullName: updatedUser.fullName,
+        previousState: 'ACTIVE',
+        newState: 'DEACTIVATED',
+        role: updatedUser.role,
+      },
+    );
+
+    return {
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      fullName: updatedUser.fullName,
+      role: updatedUser.role as StaffRole,
+      groupLabel: updatedUser.groupLabel,
+      inviteStatus: invitation?.status ?? null,
+      lastSentAt: invitation?.lastSentAt?.toISOString() ?? null,
+      acceptedAt: invitation?.acceptedAt?.toISOString() ?? null,
+      heldAt: heldAt.toISOString(),
+      createdAt: updatedUser.createdAt.toISOString(),
+    };
+  }
+
+  async updateStaffCampusAccess(
+    institutionId: string,
+    targetUserId: string,
+    campusLabel: string | null | undefined,
+    actorId: string,
+  ): Promise<StaffMemberDto> {
+    await this.requireInstitution(institutionId);
+    const targetUser = await this.prisma.user.findFirst({
+      where: {
+        id: targetUserId,
+        institutionId,
+        role: { in: ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN'] },
+      },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Staff member not found for this institution.',
+        statusCode: 404,
+      });
+    }
+
+    const invitation = await this.prisma.invitation.findFirst({
+      where: { userId: targetUser.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const newGroupLabel = campusLabel && campusLabel.trim().length > 0 ? campusLabel.trim() : null;
+    const previousCampusId = targetUser.groupLabel;
+
+    if (previousCampusId === newGroupLabel) {
+      return {
+        userId: targetUser.id,
+        email: targetUser.email,
+        fullName: targetUser.fullName,
+        role: targetUser.role as StaffRole,
+        groupLabel: targetUser.groupLabel,
+        inviteStatus: invitation?.status ?? null,
+        lastSentAt: invitation?.lastSentAt?.toISOString() ?? null,
+        acceptedAt: invitation?.acceptedAt?.toISOString() ?? null,
+        heldAt: targetUser.heldAt?.toISOString() ?? null,
+        createdAt: targetUser.createdAt.toISOString(),
+      };
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { groupLabel: newGroupLabel },
+    });
+
+    if (invitation) {
+      await this.prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { groupLabel: newGroupLabel },
+      });
+    }
+
+    await this.writeAudit(
+      actorId,
+      'staff.campus_access_updated',
+      'user',
+      targetUserId,
+      `Updated campus access to ${newGroupLabel ?? 'All Campuses'}`,
+      {
+        institutionId,
+        previousCampusId,
+        newCampusId: newGroupLabel,
+        role: targetUser.role,
+      },
+    );
+
+    return {
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      fullName: updatedUser.fullName,
+      role: updatedUser.role as StaffRole,
+      groupLabel: updatedUser.groupLabel,
+      inviteStatus: invitation?.status ?? null,
+      lastSentAt: invitation?.lastSentAt?.toISOString() ?? null,
+      acceptedAt: invitation?.acceptedAt?.toISOString() ?? null,
+      heldAt: updatedUser.heldAt?.toISOString() ?? null,
+      createdAt: updatedUser.createdAt.toISOString(),
+    };
   }
 
   async resendAdminInvitation(
@@ -1158,14 +2622,17 @@ export class InstitutionsService {
     body: CreateBatchRequest,
     createdById: string,
   ): Promise<BatchDto> {
+    const campusId = await resolveBatchCampus(this.prisma, institutionId, body.campusId);
     try {
       const batch = await this.prisma.batch.create({
         data: {
           institutionId,
           name: body.name,
           code: body.code ?? null,
+          campusId,
           createdById,
         },
+        include: BATCH_CAMPUS,
       });
       return toBatchDto(batch, 0, 0);
     } catch {
@@ -1177,9 +2644,10 @@ export class InstitutionsService {
     }
   }
 
-  async listBatches(institutionId: string): Promise<BatchDto[]> {
+  async listBatches(institutionId: string, query: ListBatchesQuery = {}): Promise<BatchDto[]> {
     const batches = await this.prisma.batch.findMany({
-      where: { institutionId },
+      where: { institutionId, ...(query.campusId ? { campusId: query.campusId } : {}) },
+      include: BATCH_CAMPUS,
       orderBy: { createdAt: 'desc' },
     });
     return Promise.all(
@@ -1212,12 +2680,18 @@ export class InstitutionsService {
     body: UpdateBatchRequest,
   ): Promise<BatchDto> {
     await this.requireBatch(batchId, institutionId);
+    const campusId =
+      body.campusId === undefined
+        ? undefined
+        : await resolveBatchCampus(this.prisma, institutionId, body.campusId);
     const batch = await this.prisma.batch.update({
       where: { id: batchId },
       data: {
         name: body.name,
         code: body.code === null ? null : body.code,
+        campusId,
       },
+      include: BATCH_CAMPUS,
     });
     const memberCount = await this.prisma.user.count({ where: { batchId, role: 'STUDENT' } });
     const pendingInviteCount = await this.prisma.invitation.count({
@@ -1433,7 +2907,7 @@ export class InstitutionsService {
     };
   }
 
-  private async readImportSheet(
+  async readImportSheet(
     buffer: Buffer,
     fileName: string,
     mimeType: string,
@@ -1498,7 +2972,7 @@ export class InstitutionsService {
     return sheet;
   }
 
-  private readImportHeaders(sheet: ExcelJS.Worksheet): string[] {
+  readImportHeaders(sheet: ExcelJS.Worksheet): string[] {
     const headers: string[] = [];
     sheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
       const header = String(cell.text ?? '').trim();
@@ -1512,7 +2986,7 @@ export class InstitutionsService {
     return headers;
   }
 
-  private suggestImportMapping(headers: string[]): BatchImportMapping | undefined {
+  suggestImportMapping(headers: string[]): BatchImportMapping | undefined {
     const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
     const find = (aliases: string[]) =>
       headers.find((header) => aliases.includes(normalize(header)));
@@ -1523,7 +2997,7 @@ export class InstitutionsService {
     return { fullName, email, ...(groupLabel ? { groupLabel } : {}) };
   }
 
-  private positionalMapping(headers: string[]): BatchImportMapping | undefined {
+  positionalMapping(headers: string[]): BatchImportMapping | undefined {
     if (headers.length < 2) return undefined;
     return {
       fullName: headers[0] ?? '',
@@ -1532,7 +3006,7 @@ export class InstitutionsService {
     };
   }
 
-  private async parseImportRows(
+  async parseImportRows(
     sheet: ExcelJS.Worksheet,
     mapping: BatchImportMapping,
     institutionId: string,
@@ -1555,13 +3029,12 @@ export class InstitutionsService {
     const seenEmails = new Set<string>();
     for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber += 1) {
       const source = sheet.getRow(rowNumber);
-      const fullName = String(source.getCell(nameColumn).text ?? '').trim();
+      const fullName = sanitizeSpreadsheetCellText(String(source.getCell(nameColumn).text ?? ''));
       const email = String(source.getCell(emailColumn).text ?? '')
         .trim()
         .toLowerCase();
-      const groupLabel = groupColumn
-        ? String(source.getCell(groupColumn).text ?? '').trim() || undefined
-        : undefined;
+      const rawGroup = groupColumn ? String(source.getCell(groupColumn).text ?? '') : '';
+      const groupLabel = rawGroup ? sanitizeSpreadsheetCellText(rawGroup) || undefined : undefined;
       let message: string | undefined;
       const candidate = AddBatchMemberRequestSchema.safeParse({ fullName, email, groupLabel });
       if (!fullName && !email && !groupLabel) message = 'Row is empty.';
@@ -1646,6 +3119,134 @@ export class InstitutionsService {
     const sheet = workbook.addWorksheet('Students');
     sheet.addRow(['fullName', 'email', 'group']);
     sheet.addRow(['Jane Doe', 'jane@example.edu', 'Section A']);
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  /* ------------------- bulk whitelist async import (Th6-I606) ------------------- */
+
+  async enqueueBulkWhitelistImport(params: {
+    batchId: string;
+    institutionId: string;
+    fileBuffer: Buffer;
+    fileName: string;
+    mimeType: string;
+    mapping?: BatchImportMapping;
+    actorId: string;
+  }): Promise<{ jobId: string }> {
+    const { batchId, institutionId, fileBuffer, fileName, mimeType, mapping, actorId } = params;
+    await this.requireBatch(batchId, institutionId);
+
+    const { randomUUID } = await import('node:crypto');
+    const jobId = randomUUID();
+
+    // Store job metadata in Redis for progress tracking
+    const redisKey = `bulk-import:${jobId}`;
+    await this.redis.set(
+      redisKey,
+      JSON.stringify({
+        jobId,
+        batchId,
+        institutionId,
+        status: 'QUEUED',
+        totalRows: 0,
+        processedRows: 0,
+        validRows: 0,
+        invalidRows: 0,
+        importedRows: 0,
+        errorReportUrl: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }),
+      'EX',
+      3600,
+    );
+
+    // Enqueue the job
+    await this.bulkImportQueue.add('process', {
+      jobId,
+      batchId,
+      institutionId,
+      fileBuffer: fileBuffer.toString('base64'),
+      fileName,
+      mimeType,
+      mapping,
+      actorId,
+    });
+
+    this.logger.log(`Enqueued bulk whitelist import job ${jobId} for batch ${batchId}`);
+    return { jobId };
+  }
+
+  async getBulkWhitelistImportStatus(
+    jobId: string,
+    institutionId: string,
+  ): Promise<BulkWhitelistProgressDto> {
+    const redisKey = `bulk-import:${jobId}`;
+    const raw = await this.redis.get(redisKey);
+    if (!raw) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Import job not found.',
+        statusCode: 404,
+      });
+    }
+    const data = JSON.parse(raw);
+
+    // Verify the job belongs to this institution
+    if (data.institutionId !== institutionId) {
+      throw new ForbiddenException({
+        error: 'forbidden',
+        message: 'You do not have access to this import job.',
+        statusCode: 403,
+      });
+    }
+
+    return BulkWhitelistProgressDtoSchema.parse(data);
+  }
+
+  async getBulkWhitelistErrorReportUrl(
+    jobId: string,
+    institutionId: string,
+  ): Promise<{ url: string }> {
+    const status = await this.getBulkWhitelistImportStatus(jobId, institutionId);
+    if (status.status !== 'COMPLETED') {
+      throw new BadRequestException({
+        error: 'not_completed',
+        message: 'Import job has not completed yet.',
+        statusCode: 400,
+      });
+    }
+    if (!status.errorReportUrl) {
+      throw new NotFoundException({
+        error: 'no_errors',
+        message: 'No error report available for this import.',
+        statusCode: 404,
+      });
+    }
+    return { url: status.errorReportUrl };
+  }
+
+  async buildErrorReport(
+    errors: BatchImportResultDto['errors'],
+    headers: string[],
+  ): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Import Errors');
+
+    // Header row
+    sheet.addRow(['Row Number', ...headers, 'Error Message']);
+
+    // Error rows
+    for (const error of errors) {
+      sheet.addRow([error.row, '', '', '', error.message]);
+    }
+
+    // Auto-fit columns
+    sheet.columns.forEach((column) => {
+      column.width = 20;
+    });
+
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
   }
@@ -1781,7 +3382,10 @@ export class InstitutionsService {
   }
 
   private async requireBatch(batchId: string, institutionId: string) {
-    const batch = await this.prisma.batch.findFirst({ where: { id: batchId, institutionId } });
+    const batch = await this.prisma.batch.findFirst({
+      where: { id: batchId, institutionId },
+      include: BATCH_CAMPUS,
+    });
     if (!batch) {
       throw new NotFoundException({
         error: 'not_found',
@@ -1793,8 +3397,32 @@ export class InstitutionsService {
   }
 }
 
+function toUniversityContactRequestDto(row: {
+  id: string;
+  universityName: string;
+  status: string;
+  createdAt: Date;
+}): UniversityContactRequestDto {
+  return {
+    id: row.id,
+    universityName: row.universityName,
+    status: row.status as UniversityContactRequestStatus,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+const BATCH_CAMPUS = { campus: { select: { name: true } } } as const;
+
 function toBatchDto(
-  batch: { id: string; institutionId: string; name: string; code: string | null; createdAt: Date },
+  batch: {
+    id: string;
+    institutionId: string;
+    name: string;
+    code: string | null;
+    campusId: string | null;
+    campus: { name: string } | null;
+    createdAt: Date;
+  },
   memberCount: number,
   pendingInviteCount: number,
 ): BatchDto {
@@ -1803,6 +3431,8 @@ function toBatchDto(
     institutionId: batch.institutionId,
     name: batch.name,
     code: batch.code,
+    campusId: batch.campusId,
+    campusName: batch.campus?.name ?? null,
     memberCount,
     pendingInviteCount,
     createdAt: batch.createdAt.toISOString(),

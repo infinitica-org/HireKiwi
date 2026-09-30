@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Deploy SMART on a VPS from a named environment file.
+# Deploy SMART on a single High-End Linux VPS from a named environment file.
 #
-#   bash scripts/deploy-vps.sh dev    # kvm2 — apps + Caddy (owns :80/:443 on kvm2)
-#   bash scripts/deploy-vps.sh qa     # kvm2 — apps + Caddy + obs (not currently deployed)
-#   bash scripts/deploy-vps.sh prod   # kvm4 — apps + Caddy + obs
+#   bash scripts/deploy-vps.sh dev    # Single VPS — dev stack (dev.becomesmart.online)
+#   bash scripts/deploy-vps.sh qa     # Single VPS — qa stack (smart-qa)
+#   bash scripts/deploy-vps.sh prod   # Single VPS — calls scripts/blue-green-deploy.sh prod
 #
 # On the server: copy .env.<name>.example → .env.<name>, fill secrets, then run.
 # Applies already-committed Prisma migrations automatically (migrate deploy only —
@@ -14,8 +14,15 @@ cd "$(dirname "$0")/.."
 ENV_NAME="${1:-}"
 if [[ -z "$ENV_NAME" || ! "$ENV_NAME" =~ ^(dev|qa|prod)$ ]]; then
   echo "Usage: bash scripts/deploy-vps.sh <dev|qa|prod>"
-  echo "  kvm2 → dev (Caddy owner) and qa (inactive)   |   kvm4 → prod"
+  echo "  dev  → Single VPS dev stack (dev.becomesmart.online)"
+  echo "  qa   → Single VPS qa stack"
+  echo "  prod → Automated Blue-Green deployment (becomesmart.online)"
   exit 1
+fi
+
+if [[ "$ENV_NAME" == "prod" ]]; then
+  echo "==> Production deployment selected. Invoking Blue-Green Zero-Downtime Deployment..."
+  exec bash "$(dirname "$0")/blue-green-deploy.sh" prod
 fi
 
 ENV_FILE=".env.${ENV_NAME}"
@@ -27,14 +34,13 @@ test -f "$ENV_FILE" || {
 # `docker compose build` hands the whole service graph to a single BuildKit
 # "bake" call, which parallelizes across services on its own — `--parallel`
 # only throttles non-build lifecycle ops, it does NOT limit bake concurrency.
-# Building 5 Next.js apps + the API at once pinned a small VPS (kvm2) hard
-# enough that even sshd stopped completing handshakes for 20+ minutes. Build
-# every service strictly one at a time instead.
+# Building 5 Next.js apps + the API at once can cause memory spikes. Build
+# every service strictly one at a time for deterministic memory boundaries.
 COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml)
 
 case "$ENV_NAME" in
   dev) PROFILES=(--profile apps --profile vps) ;;
-  qa | prod) PROFILES=(--profile apps --profile vps --profile obs) ;;
+  qa) PROFILES=(--profile apps --profile vps --profile obs) ;;
 esac
 
 echo "==> ${ENV_NAME}: validate compose (${ENV_FILE})"

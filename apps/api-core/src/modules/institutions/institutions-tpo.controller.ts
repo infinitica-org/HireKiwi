@@ -2,8 +2,8 @@ import {
   BadRequestException,
   Body,
   Controller,
-  ForbiddenException,
   Get,
+  Headers,
   Inject,
   Param,
   Patch,
@@ -11,12 +11,18 @@ import {
   Query,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import {
   API_PREFIX,
   AddBatchMemberRequestSchema,
   BatchImportMappingSchema,
+  ConfigureInstitutionSettingsSchema,
   CreateBatchRequestSchema,
+  InviteStaffRequestSchema,
+  ListBatchesQuerySchema,
+  UpdateStaffRoleRequestSchema,
+  UpdateStaffCampusRequestSchema,
   ListInstitutionStudentsQuerySchema,
   TenantActionReasonSchema,
   UpdateBatchRequestSchema,
@@ -27,40 +33,56 @@ import { RequireFlag } from '../../common/guards/feature-flag.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
+import { AuditAccess } from '../../common/decorators/audit-access.decorator.js';
+import { IdempotencyService } from '../company-profile/idempotency.service.js';
 import { InstitutionsService } from './institutions.service.js';
-
-function requireInstitutionId(user: RequestUser): string {
-  if (!user.inst) {
-    throw new ForbiddenException({
-      error: 'forbidden',
-      message: 'Institution admin must belong to an institution.',
-      statusCode: 403,
-    });
-  }
-  return user.inst;
-}
+import { TenantId } from '../../common/decorators/tenant-id.decorator.js';
+import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard.js';
 
 @Controller(`${API_PREFIX}/tpo`)
+@UseGuards(TenantScopeGuard)
 @Roles('INSTITUTION_ADMIN')
 export class InstitutionsTpoController {
-  constructor(@Inject(InstitutionsService) private readonly institutions: InstitutionsService) {}
+  constructor(
+    @Inject(InstitutionsService) private readonly institutions: InstitutionsService,
+    @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
+  ) {}
 
   @Get('entitlements')
-  entitlements(@CurrentUser() user: RequestUser) {
-    return this.institutions.resolveInstitutionEntitlements(requireInstitutionId(user));
+  entitlements(@TenantId() institutionId: string) {
+    return this.institutions.resolveInstitutionEntitlements(institutionId);
+  }
+
+  @Patch('institution/settings')
+  updateInstitutionSettings(
+    @Body() body: unknown,
+    @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
+  ) {
+    return this.institutions.updateInstitutionConfiguration(
+      institutionId,
+      ConfigureInstitutionSettingsSchema.parse(body),
+      user.sub,
+    );
   }
 
   @Get('students')
   listStudents(
-    @CurrentUser() user: RequestUser,
     @Query() query: Record<string, string | undefined>,
+    @TenantId() institutionId: string,
   ) {
     return this.institutions.listInstitutionStudents(
-      requireInstitutionId(user),
+      institutionId,
       ListInstitutionStudentsQuerySchema.parse(
         Object.fromEntries(Object.entries(query).filter(([, value]) => value)),
       ),
     );
+  }
+
+  @Get('students/assigned-to-me')
+  @Roles('PLACEMENT_STAFF', 'INSTITUTION_ADMIN')
+  listAssignedStudents(@CurrentUser() user: RequestUser, @TenantId() institutionId: string) {
+    return this.institutions.listAssignedStudents(institutionId, user.sub);
   }
 
   @Post('students/:userId/hold')
@@ -68,12 +90,13 @@ export class InstitutionsTpoController {
     @Param('userId') userId: string,
     @Body() body: unknown,
     @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
   ) {
     return this.institutions.holdStudent(
       userId,
       TenantActionReasonSchema.parse(body),
       user.sub,
-      requireInstitutionId(user),
+      institutionId,
     );
   }
 
@@ -82,23 +105,27 @@ export class InstitutionsTpoController {
     @Param('userId') userId: string,
     @Body() body: unknown,
     @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
   ) {
     return this.institutions.releaseStudent(
       userId,
       TenantActionReasonSchema.parse(body),
       user.sub,
-      requireInstitutionId(user),
+      institutionId,
     );
   }
 
   @Post('students/:userId/invite-link')
-  getStudentInviteLink(@Param('userId') userId: string, @CurrentUser() user: RequestUser) {
-    return this.institutions.getStudentInviteLink(userId, requireInstitutionId(user));
+  getStudentInviteLink(@Param('userId') userId: string, @TenantId() institutionId: string) {
+    return this.institutions.getStudentInviteLink(userId, institutionId);
   }
 
   @Post('batches')
-  createBatch(@Body() body: unknown, @CurrentUser() user: RequestUser) {
-    const institutionId = requireInstitutionId(user);
+  createBatch(
+    @Body() body: unknown,
+    @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
+  ) {
     return this.institutions.createBatch(
       institutionId,
       CreateBatchRequestSchema.parse(body),
@@ -107,24 +134,27 @@ export class InstitutionsTpoController {
   }
 
   @Get('batches')
-  listBatches(@CurrentUser() user: RequestUser) {
-    return this.institutions.listBatches(requireInstitutionId(user));
+  listBatches(
+    @Query() query: Record<string, string | undefined>,
+    @TenantId() institutionId: string,
+  ) {
+    return this.institutions.listBatches(institutionId, ListBatchesQuerySchema.parse(query));
   }
 
   @Get('batches/:batchId')
-  getBatch(@Param('batchId') batchId: string, @CurrentUser() user: RequestUser) {
-    return this.institutions.getBatch(batchId, requireInstitutionId(user));
+  getBatch(@Param('batchId') batchId: string, @TenantId() institutionId: string) {
+    return this.institutions.getBatch(batchId, institutionId);
   }
 
   @Patch('batches/:batchId')
   updateBatch(
     @Param('batchId') batchId: string,
     @Body() body: unknown,
-    @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
   ) {
     return this.institutions.updateBatch(
       batchId,
-      requireInstitutionId(user),
+      institutionId,
       UpdateBatchRequestSchema.parse(body),
     );
   }
@@ -134,18 +164,20 @@ export class InstitutionsTpoController {
     @Param('batchId') batchId: string,
     @Body() body: unknown,
     @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
   ) {
     return this.institutions.addBatchMember(
       batchId,
-      requireInstitutionId(user),
+      institutionId,
       AddBatchMemberRequestSchema.parse(body),
       user.sub,
     );
   }
 
   @Get('batches/:batchId/members')
-  listMembers(@Param('batchId') batchId: string, @CurrentUser() user: RequestUser) {
-    return this.institutions.listBatchMembers(batchId, requireInstitutionId(user));
+  @AuditAccess('batch_members', 'batchId')
+  listMembers(@Param('batchId') batchId: string, @TenantId() institutionId: string) {
+    return this.institutions.listBatchMembers(batchId, institutionId);
   }
 
   @Post('batches/:batchId/members/import')
@@ -155,9 +187,8 @@ export class InstitutionsTpoController {
     @Query('dryRun') dryRun: string | undefined,
     @Req() request: FastifyRequest,
     @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
   ) {
-    const institutionId = requireInstitutionId(user);
-
     const partsIter = (
       request as FastifyRequest & {
         parts: () => AsyncIterableIterator<Multipart>;
@@ -224,13 +255,91 @@ export class InstitutionsTpoController {
     );
   }
 
+  @Post('batches/:batchId/members/import-async')
+  @RequireFlag('bulk_batch_import')
+  async importMembersAsync(
+    @Param('batchId') batchId: string,
+    @Req() request: FastifyRequest,
+    @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
+  ) {
+    const partsIter = (
+      request as FastifyRequest & {
+        parts: () => AsyncIterableIterator<Multipart>;
+      }
+    ).parts();
+
+    let fileBuffer: Buffer | null = null;
+    let fileName = '';
+    let mimeType = 'application/octet-stream';
+    let rawMapping: unknown;
+
+    try {
+      for await (const part of partsIter) {
+        if (part.type === 'file') {
+          const file = part as MultipartFile;
+          mimeType = file.mimetype;
+          fileName = file.filename;
+          fileBuffer = await file.toBuffer();
+        } else if (part.type === 'field' && part.fieldname === 'mapping') {
+          try {
+            rawMapping = JSON.parse(String(part.value)) as unknown;
+          } catch {
+            throw new BadRequestException('Column mapping must be valid JSON.');
+          }
+        }
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException(
+        'The uploaded file exceeds the 5 MB limit or could not be read.',
+      );
+    }
+
+    if (!fileBuffer) {
+      throw new BadRequestException('Choose a CSV or XLSX file to upload.');
+    }
+
+    const parsedMapping = rawMapping ? BatchImportMappingSchema.safeParse(rawMapping) : undefined;
+    if (parsedMapping && !parsedMapping.success) {
+      throw new BadRequestException(
+        parsedMapping.error.issues[0]?.message ?? 'Column mapping is invalid.',
+      );
+    }
+
+    return this.institutions.enqueueBulkWhitelistImport({
+      batchId,
+      institutionId,
+      fileBuffer,
+      fileName,
+      mimeType,
+      mapping: parsedMapping?.data,
+      actorId: user.sub,
+    });
+  }
+
+  @Get('batches/:batchId/members/import-status/:jobId')
+  async getImportStatus(@Param('jobId') jobId: string, @TenantId() institutionId: string) {
+    return this.institutions.getBulkWhitelistImportStatus(jobId, institutionId);
+  }
+
+  @Get('batches/:batchId/members/import-errors/:jobId')
+  async getImportErrorReport(
+    @Param('jobId') jobId: string,
+    @Res() reply: FastifyReply,
+    @TenantId() institutionId: string,
+  ) {
+    const { url } = await this.institutions.getBulkWhitelistErrorReportUrl(jobId, institutionId);
+    reply.redirect(url);
+  }
+
   @Get('batches/:batchId/import-template')
   async importTemplate(
     @Param('batchId') batchId: string,
-    @CurrentUser() user: RequestUser,
     @Res() reply: FastifyReply,
+    @TenantId() institutionId: string,
   ) {
-    await this.institutions.getBatch(batchId, requireInstitutionId(user));
+    await this.institutions.getBatch(batchId, institutionId);
     const buffer = await this.institutions.buildImportTemplate();
     reply
       .header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -239,17 +348,80 @@ export class InstitutionsTpoController {
   }
 
   @Post('batches/:batchId/invites/send')
-  sendInvites(@Param('batchId') batchId: string, @CurrentUser() user: RequestUser) {
-    return this.institutions.sendBatchInvites(batchId, requireInstitutionId(user));
+  sendInvites(
+    @Param('batchId') batchId: string,
+    @TenantId() institutionId: string,
+    @CurrentUser() user: RequestUser,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+  ) {
+    // S6-VV-124: a double click must not email a whole batch twice.
+    return this.idempotency.once({
+      userId: user.sub,
+      scope: `tpo.batch-invites.send:${batchId}`,
+      key: idempotencyKey,
+      request: { batchId },
+      execute: () => this.institutions.sendBatchInvites(batchId, institutionId),
+    });
   }
 
   @Post('invitations/:invitationId/resend')
-  resendInvitation(@Param('invitationId') invitationId: string, @CurrentUser() user: RequestUser) {
-    return this.institutions.resendStudentInvitation(invitationId, requireInstitutionId(user));
+  resendInvitation(@Param('invitationId') invitationId: string, @TenantId() institutionId: string) {
+    return this.institutions.resendStudentInvitation(invitationId, institutionId);
   }
 
   @Post('invitations/:invitationId/revoke')
-  revokeInvitation(@Param('invitationId') invitationId: string, @CurrentUser() user: RequestUser) {
-    return this.institutions.revokeStudentInvitation(invitationId, requireInstitutionId(user));
+  revokeInvitation(@Param('invitationId') invitationId: string, @TenantId() institutionId: string) {
+    return this.institutions.revokeStudentInvitation(invitationId, institutionId);
+  }
+
+  @Get('staff')
+  listStaff(@TenantId() institutionId: string) {
+    return this.institutions.listInstitutionStaff(institutionId);
+  }
+
+  @Post('staff/invitations')
+  inviteStaff(
+    @Body() body: unknown,
+    @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
+  ) {
+    const parsed = InviteStaffRequestSchema.parse(body);
+    return this.institutions.inviteStaff(institutionId, parsed, user.sub);
+  }
+
+  @Patch('staff/:userId/role')
+  updateStaffRole(
+    @Param('userId') targetUserId: string,
+    @Body() body: unknown,
+    @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
+  ) {
+    const parsed = UpdateStaffRoleRequestSchema.parse(body);
+    return this.institutions.updateStaffRole(institutionId, targetUserId, parsed.role, user.sub);
+  }
+
+  @Post('staff/:userId/deactivate')
+  deactivateStaffAccess(
+    @Param('userId') targetUserId: string,
+    @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
+  ) {
+    return this.institutions.deactivateStaffAccess(institutionId, targetUserId, user.sub);
+  }
+
+  @Patch('staff/:userId/campus')
+  updateStaffCampusAccess(
+    @Param('userId') targetUserId: string,
+    @Body() body: unknown,
+    @CurrentUser() user: RequestUser,
+    @TenantId() institutionId: string,
+  ) {
+    const parsed = UpdateStaffCampusRequestSchema.parse(body);
+    return this.institutions.updateStaffCampusAccess(
+      institutionId,
+      targetUserId,
+      parsed.campus,
+      user.sub,
+    );
   }
 }

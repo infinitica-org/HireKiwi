@@ -1,13 +1,16 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { isSmartApiError } from '@smart/api-client';
 import {
   API_PREFIX,
   BatchImportMappingSchema,
   BatchImportResultDtoSchema,
+  BulkWhitelistProgressDtoSchema,
+  z,
   type BatchImportMapping,
   type BatchImportResultDto,
+  type BulkWhitelistProgressDto,
 } from '@smart/contracts';
 import { Alert, Button } from '@smart/ui';
 import { api, apiClient } from '../lib/api';
@@ -62,23 +65,34 @@ function safeMessage(caught: unknown, fallback: string) {
 export function BatchImportWizard({
   batchId,
   onComplete,
+  heading = 'Bulk candidate provisioning',
+  autoSendInvites = false,
 }: {
   batchId: string;
   onComplete?: () => void;
+  heading?: string;
+  /** When true, queue batch invitations immediately after a successful import. */
+  autoSendInvites?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<MappingState>(EMPTY);
   const [busy, setBusy] = useState(false);
+  // One key per "send" the TPO means: a double click emails the batch once (S6-VV-124).
+  const sendKey = useRef(crypto.randomUUID());
   const [dragging, setDragging] = useState(false);
   const [confirmed, setConfirmed] = useState<BatchImportMapping | null>(null);
   const [result, setResult] = useState<BatchImportResultDto | null>(null);
   const [inviteOk, setInviteOk] = useState(false);
   const [enqueued, setEnqueued] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [asyncJobId, setAsyncJobId] = useState<string | null>(null);
+  const [asyncProgress, setAsyncProgress] = useState<BulkWhitelistProgressDto | null>(null);
+  const [, setAsyncPolling] = useState(false);
 
   const importPath = `${API_PREFIX}/tpo/batches/${batchId}/members/import`;
+  const asyncImportPath = `${API_PREFIX}/tpo/batches/${batchId}/members/import-async`;
 
   function reset() {
     setFile(null);
@@ -150,10 +164,23 @@ export function BatchImportWizard({
       const body = new FormData();
       body.append('file', file);
       body.append('mapping', JSON.stringify(payload));
-      setResult(await apiClient.postForm(importPath, body, { schema: BatchImportResultDtoSchema }));
+      const imported = await apiClient.postForm(importPath, body, {
+        schema: BatchImportResultDtoSchema,
+      });
+      setResult(imported);
       setInviteOk(false);
       setEnqueued(null);
       onComplete?.();
+      const pendingAfterImport = imported.pendingInvitations ?? 0;
+      if (autoSendInvites && pendingAfterImport > 0) {
+        try {
+          setEnqueued((await api.onboarding.sendBatchInvites(batchId)).enqueued);
+          setInviteOk(true);
+          onComplete?.();
+        } catch {
+          setError('Import succeeded but invitation emails could not be queued.');
+        }
+      }
     } catch (caught) {
       setError(safeMessage(caught, 'Import could not be completed. Please try again.'));
     } finally {
@@ -167,7 +194,8 @@ export function BatchImportWizard({
     setBusy(true);
     setError(null);
     try {
-      setEnqueued((await api.onboarding.sendBatchInvites(batchId)).enqueued);
+      setEnqueued((await api.onboarding.sendBatchInvites(batchId, sendKey.current)).enqueued);
+      sendKey.current = crypto.randomUUID();
       onComplete?.();
     } catch {
       setError('Invitations could not be queued. Please try again.');
@@ -176,31 +204,108 @@ export function BatchImportWizard({
     }
   }
 
+  const pollAsyncStatus = useCallback(
+    async (jobId: string) => {
+      setAsyncPolling(true);
+      const poll = async () => {
+        try {
+          const status = await apiClient.get(
+            `${API_PREFIX}/tpo/batches/${batchId}/members/import-status/${jobId}`,
+            { schema: BulkWhitelistProgressDtoSchema },
+          );
+          setAsyncProgress(status);
+          if (status.status === 'COMPLETED' || status.status === 'FAILED') {
+            setAsyncPolling(false);
+            if (status.status === 'COMPLETED') {
+              onComplete?.();
+            } else {
+              setError('Import failed. Please try again.');
+            }
+            return;
+          }
+          setTimeout(poll, 2000);
+        } catch {
+          setAsyncPolling(false);
+          setError('Could not check import status. Please refresh the page.');
+        }
+      };
+      await poll();
+    },
+    [batchId, onComplete],
+  );
+
+  async function confirmAndImportAsync() {
+    if (!file || !mappingReady) return;
+    const payload = toBatchImportMapping(mapping);
+    setConfirmed(payload);
+    setBusy(true);
+    setError(null);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      body.append('mapping', JSON.stringify(payload));
+      const { jobId } = (await apiClient.postForm(asyncImportPath, body, {
+        schema: z.object({ jobId: z.string() }),
+      })) as { jobId: string };
+      setAsyncJobId(jobId);
+      await pollAsyncStatus(jobId);
+    } catch (caught) {
+      setError(safeMessage(caught, 'Async import could not be started. Please try again.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function downloadErrorReport() {
+    if (!asyncJobId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { url } = (await apiClient.get(
+        `${API_PREFIX}/tpo/batches/${batchId}/members/import-errors/${asyncJobId}`,
+        { schema: z.object({ url: z.string() }) },
+      )) as { url: string };
+      window.open(url, '_blank');
+    } catch (caught) {
+      setError(safeMessage(caught, 'Could not download error report.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      setAsyncPolling(false);
+    };
+  }, []);
+
   const selected = Object.values(mapping).filter(Boolean);
   const duplicate = new Set(selected).size !== selected.length;
   const mappingReady = Boolean(mapping.fullName && mapping.email && !duplicate);
   const zone = dragging
-    ? 'border-accent bg-accent-deep/20'
-    : 'border-[var(--surface-border)] bg-[var(--surface-muted)]';
+    ? 'border-zinc-950 bg-zinc-100/90'
+    : 'border-zinc-200/90 bg-zinc-50/50 hover:bg-zinc-100/80 hover:border-zinc-400';
   const pending = result?.pendingInvitations ?? 0;
   const step = !file ? 0 : result ? 2 : 1;
 
   return (
     <section className="space-y-5" aria-labelledby="bulk-provisioning-title">
-      <h2 id="bulk-provisioning-title" className="text-xl font-semibold text-ink">
-        Bulk candidate provisioning
+      <h2 id="bulk-provisioning-title" className="text-xl font-bold text-zinc-950">
+        {heading}
       </h2>
-      <ol className="grid grid-cols-3 gap-1" aria-label="Provisioning progress">
+      <ol className="grid grid-cols-3 gap-1.5" aria-label="Provisioning progress">
         {['Upload', 'Map columns', 'Preview'].map((label, index) => (
           <li key={label} aria-current={step === index ? 'step' : undefined}>
             <div
-              className={`h-1.5 rounded-full ${step >= index ? 'bg-accent' : 'bg-[var(--surface-border)]'}`}
+              className={`h-1.5 rounded-full transition-all ${
+                step >= index ? 'bg-black' : 'bg-zinc-200'
+              }`}
             />
           </li>
         ))}
       </ol>
       <div aria-live="polite" aria-atomic="true">
-        {busy ? <p className="text-sm text-ink-muted">Processing securely…</p> : null}
+        {busy ? <p className="text-xs font-semibold text-zinc-500">Processing securely…</p> : null}
         {error ? <Alert tone="danger" title={error} role="alert" /> : null}
       </div>
       {file || result ? null : (
@@ -232,23 +337,28 @@ export function BatchImportWizard({
               const next = event.dataTransfer.files[0];
               if (next && !busy) void chooseFile(next);
             }}
-            className={`group relative min-h-56 w-full overflow-hidden rounded-2xl border-2 border-dashed p-8 text-center outline-none transition focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60 ${zone}`}
+            className={`group relative min-h-48 w-full overflow-hidden rounded-2xl border-2 border-dashed p-8 text-center outline-none transition focus-visible:ring-2 focus-visible:ring-black disabled:cursor-not-allowed disabled:opacity-60 ${zone}`}
           >
             <span
               aria-hidden="true"
-              className="motion-safe:animate-pulse absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent to-transparent"
+              className="motion-safe:animate-pulse absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-zinc-950 to-transparent"
             />
-            <span className="block text-base font-semibold text-ink">
+            <span className="block text-base font-bold text-zinc-950">
               {dragging ? 'Drop the file to continue' : 'Drop a roster here or browse'}
             </span>
-            <span className="mt-2 block text-sm text-ink-muted">
+            <span className="mt-1.5 block text-xs font-medium text-zinc-500">
               CSV or XLSX · maximum 5 MB · row 1 must contain headers
             </span>
           </button>
-          <div className="flex justify-center">
-            <Button variant="ghost" disabled={busy} onClick={() => void downloadTemplate()}>
+          <div className="flex justify-center pt-1">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void downloadTemplate()}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-800 hover:text-black hover:underline"
+            >
               Download XLSX template
-            </Button>
+            </button>
           </div>
         </div>
       )}
@@ -284,7 +394,7 @@ export function BatchImportWizard({
                     setConfirmed(null);
                     setMapping((current) => ({ ...current, [field.key]: event.target.value }));
                   }}
-                  className="min-h-10 rounded-lg border border-[var(--surface-border)] bg-[var(--surface-bg)] px-3 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="h-10 rounded-md border border-zinc-200 bg-white px-3.5 text-xs sm:text-sm font-medium text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
                 >
                   <option value="">Do not import</option>
                   {headers.map((header) => (
@@ -303,24 +413,44 @@ export function BatchImportWizard({
               />
             ) : null}
             {!mapping.fullName || !mapping.email ? (
-              <p className="text-sm text-ink-muted" role="status">
+              <p className="text-xs font-medium text-zinc-500" role="status">
                 Map both Full Name and Email to continue.
               </p>
             ) : null}
             {confirmed && !result ? (
-              <p className="text-sm text-ink" role="status">
+              <p className="text-xs font-medium text-zinc-800" role="status">
                 {`Mapping payload ready: fullName=${confirmed.fullName}; email=${confirmed.email}${
                   confirmed.groupLabel ? `; groupLabel=${confirmed.groupLabel}` : ''
                 }`}
               </p>
             ) : null}
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-              <Button variant="ghost" onClick={reset} disabled={busy}>
+            <div className="flex items-center justify-between pt-3 border-t border-zinc-100">
+              <button
+                type="button"
+                onClick={reset}
+                disabled={busy}
+                className="h-9 rounded-md border border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-all"
+              >
                 Replace file
-              </Button>
-              <Button disabled={!mappingReady || busy} onClick={() => void confirmAndImport()}>
-                Confirm mapping
-              </Button>
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={!mappingReady || busy}
+                  onClick={() => void confirmAndImportAsync()}
+                  className="h-9 inline-flex items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 text-xs font-semibold text-zinc-700 shadow-2xs transition hover:bg-zinc-50 disabled:opacity-50"
+                >
+                  Background import
+                </button>
+                <button
+                  type="button"
+                  disabled={!mappingReady || busy}
+                  onClick={() => void confirmAndImport()}
+                  className="h-9 inline-flex items-center justify-center gap-2 rounded-md bg-black px-5 text-xs font-semibold text-white shadow-2xs transition hover:bg-zinc-800 disabled:opacity-50"
+                >
+                  Confirm mapping
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -336,6 +466,71 @@ export function BatchImportWizard({
           onSend={() => void sendInvites()}
           onReset={reset}
         />
+      ) : null}
+      {asyncProgress ? (
+        <div className="space-y-4">
+          <h3 className="font-heading text-lg font-semibold tracking-tight text-ink">
+            Import progress
+          </h3>
+          <div className="rounded-[var(--radius-card)] border border-[var(--surface-border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-ink">
+                {asyncProgress.status === 'COMPLETED'
+                  ? 'Import completed'
+                  : asyncProgress.status === 'FAILED'
+                    ? 'Import failed'
+                    : 'Processing…'}
+              </span>
+              <span className="text-ink-muted">
+                {asyncProgress.processedRows}/{asyncProgress.totalRows} rows
+              </span>
+            </div>
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-200">
+              <div
+                className="h-full rounded-full bg-black transition-all"
+                style={{
+                  width: `${asyncProgress.totalRows > 0 ? Math.round((asyncProgress.processedRows / asyncProgress.totalRows) * 100) : 0}%`,
+                }}
+              />
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="rounded-lg bg-zinc-50 p-3">
+                <p className="text-lg font-semibold text-emerald-700">{asyncProgress.validRows}</p>
+                <p className="text-xs text-zinc-500">Valid</p>
+              </div>
+              <div className="rounded-lg bg-zinc-50 p-3">
+                <p className="text-lg font-semibold text-rose-700">{asyncProgress.invalidRows}</p>
+                <p className="text-xs text-zinc-500">Invalid</p>
+              </div>
+              <div className="rounded-lg bg-zinc-50 p-3">
+                <p className="text-lg font-semibold text-blue-700">{asyncProgress.importedRows}</p>
+                <p className="text-xs text-zinc-500">Imported</p>
+              </div>
+              <div className="rounded-lg bg-zinc-50 p-3">
+                <p className="text-lg font-semibold text-zinc-700">{asyncProgress.totalRows}</p>
+                <p className="text-xs text-zinc-500">Total</p>
+              </div>
+            </div>
+            {asyncProgress.status === 'COMPLETED' && asyncProgress.invalidRows > 0 ? (
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => void downloadErrorReport()}
+                  disabled={busy}
+                >
+                  Download Import-Errors-Report.xlsx
+                </Button>
+              </div>
+            ) : null}
+            {asyncProgress.status === 'COMPLETED' ? (
+              <div className="mt-4">
+                <Button variant="ghost" onClick={reset} disabled={busy}>
+                  Import another file
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </div>
       ) : null}
     </section>
   );

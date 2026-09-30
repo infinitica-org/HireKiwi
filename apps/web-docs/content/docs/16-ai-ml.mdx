@@ -1,0 +1,57 @@
+---
+title: 16. AI & Machine Learning
+description: Multi-model AI proxy architecture, prompt engineering, rubric evaluation pipelines, and calibration standards.
+---
+
+## 16.1 AI Architecture & Multi-Model Proxy
+
+SmartZen routes all generative AI evaluations through an enterprise proxy layer enforcing cost caps, retry backoffs, and deterministic JSON schemas.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        API-CORE EVALUATION CLIENT                      │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                       OPENROUTER RESILIENCE PROXY                      │
+│ ┌───────────────────────────────────┐ ┌──────────────────────────────┐ │
+│ │ Primary: Claude 3.5 Sonnet / GPT-4o│ │ Secondary: Mistral Large     │ │
+│ └───────────────────────────────────┘ └──────────────────────────────┘ │
+│ ┌───────────────────────────────────┐ ┌──────────────────────────────┐ │
+│ │ 12s Timeout & Circuit Breaking    │ │ Structured JSON Schema Lock  │ │
+│ └───────────────────────────────────┘ └──────────────────────────────┘ │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                    ZOD CONTRACT SCHEMA ENFORCEMENT                     │
+│ Validates criteria, evidence citations, score bounds before persistence│
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 16.2 Prompt Architecture & Schema Validation
+
+Prompts are stored as versioned templates in `apps/api-core/src/modules/evaluation/prompts/`:
+
+- **System Persona:** Strict psychometric engineering evaluator.
+- **Input Injection:** Sanitized repository code snippets, commit messages, and candidate response transcript.
+- **Output Constraint:** Structured JSON adhering to Zod contract DTOs (`packages/contracts/src/dto/evaluation.dto.ts`). Unparseable or malformed responses are mechanically rejected before database write.
+
+---
+
+## 16.3 Confidence Calibration & Uncertainty Quantification
+
+The evaluation engine calculates a confidence score $C \in [0, 1]$ based on:
+
+1. **Token Logprob Entropy:** Low entropy in generated BARS tier assignments indicates high model certainty.
+2. **Citation Groundedness:** Evaluation must quote verbatim code snippets from the candidate repository.
+3. **Response Length & Completeness:** Truncated responses trigger immediate fallback to secondary human evaluator queues.
+
+---
+
+## 16.4 Model Versioning & Monitoring
+
+- Prompts are tagged with semantic versions (e.g., `prompt-code-defense-v2.1.4`).
+- All inference calls record prompt token usage, completion token usage, latency (ms), and cost ($USD) to Prometheus metrics.
+- Nightly automated jobs benchmark model outputs against the **500-Sample Golden Dataset** to detect subtle model degradation or prompt drift.

@@ -16,7 +16,6 @@ import type { Queue } from 'bullmq';
 import {
   ApplicationConfidenceDtoSchema,
   ApplicationDtoSchema,
-  ApplicationStageChangedDataSchema,
   CandidateApplicationDtoSchema,
   EmploymentTypeSchema,
   JobOpeningAttachedDocumentSchema,
@@ -25,7 +24,6 @@ import {
   ParseOpeningJdResponseSchema,
   PlacementRecordDtoSchema,
   SEND_TO_COMPANY_STAGE,
-  SMART_TOPICS,
   AssessmentResultSchema,
   SkillTaxonomyDomainSchema,
   UploadJobOpeningDocumentResponseSchema,
@@ -57,10 +55,15 @@ import type {
 import { z } from 'zod';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
+import { ApplicationService } from '../applications/application.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
 import { JD_PARSE_QUEUE } from '../../platform/queue/queue.names.js';
 import { PlacementEmployersService } from './placement-employers.service.js';
+import {
+  EMPLOYER_VISIBILITY_SELECT,
+  isEmployerVisibleStudent,
+} from '../../common/employer-visibility.js';
 
 const JOB_OPENING_DOC_MAX_BYTES = 10 * 1024 * 1024;
 const JOB_OPENING_LOGO_MAX_BYTES = 2 * 1024 * 1024;
@@ -121,6 +124,8 @@ function parseAttachedDocuments(raw: unknown): JobOpeningAttachedDocument[] | nu
   if (!parsed.success) return null;
   return parsed.data;
 }
+
+import { BillingService } from '../billing/billing.service.js';
 
 /** Coerce legacy rows so list/get does not 500 the whole institution when one field is null. */
 function normalizeOpeningRow(row: OpeningRow): OpeningRow {
@@ -212,16 +217,21 @@ interface ApplicationRow {
 
 interface CandidateApplicationRow extends ApplicationRow {
   opening: {
+    companyId?: string | null;
     companyName: string;
     roleTitle: string;
     location: string | null;
     employmentType: string | null;
     domainCode: string | null;
+    /** Linked company tenant, when the opening was posted by a verified-onboarding company. */
+    company?: {
+      verificationStatus: string;
+      deactivatedAt: Date | null;
+      heldAt: Date | null;
+      verifications: { reviewedAt: Date | null }[];
+    } | null;
   };
 }
-
-/** AC-T05 shortlisting is TPO-mediated, so the created row is never `APPLIED`. */
-const SHORTLIST_STAGE = 'SHORTLISTED' as const;
 
 /**
  * CO-T01 structured job openings (Th6-I116), AC-T05 shortlist, and CO-T02 ATS
@@ -239,7 +249,14 @@ export class PlacementService {
     @Inject(PlacementEmployersService) private readonly employers: PlacementEmployersService,
     @InjectQueue(JD_PARSE_QUEUE) private readonly jdParseQueue: Queue<{ openingId: string }>,
     @Optional() @Inject(StorageService) private readonly storageService?: StorageService,
+    @Optional() @Inject(ApplicationService) private readonly applications?: ApplicationService,
+    @Optional() @Inject(BillingService) private readonly billingService?: BillingService,
   ) {}
+
+  private requireApplications(): ApplicationService {
+    if (!this.applications) throw new Error('ApplicationService is not available');
+    return this.applications;
+  }
 
   async uploadOpeningDocument(
     institutionId: string,
@@ -364,6 +381,11 @@ export class PlacementService {
     createdById: string,
     body: CreateJobOpeningRequest,
   ): Promise<JobOpeningDto> {
+    const companyId = (body as unknown as { companyId?: string }).companyId;
+    if (companyId) {
+      await this.billingService?.assertQuotaAvailable(companyId, 'ACTIVE_JOBS');
+    }
+
     const requestedCodes = body.requiredSkills.map((requirement) => requirement.skillCode);
 
     let companyName = body.companyName?.trim() ?? '';
@@ -589,23 +611,12 @@ export class PlacementService {
 
     let row: ApplicationRow;
     try {
-      row = await this.prisma.$transaction(async (tx) => {
-        const created = await tx.application.create({
-          data: {
-            openingId: body.openingId,
-            studentId: body.studentId,
-            stage: SHORTLIST_STAGE,
-            matchScore: body.matchScore ?? null,
-          },
-        });
-        await tx.applicationStageEvent.create({
-          data: {
-            applicationId: created.id,
-            fromStage: null,
-            toStage: SHORTLIST_STAGE,
-          },
-        });
-        return created;
+      // APP-01: ApplicationService is the only place that creates an application.
+      row = await this.requireApplications().createShortlisted({
+        openingId: body.openingId,
+        studentId: body.studentId,
+        matchScore: body.matchScore ?? null,
+        actorId: null,
       });
     } catch (error) {
       if (!isUniqueViolation(error)) throw error;
@@ -617,15 +628,6 @@ export class PlacementService {
     }
 
     const dto = toApplicationDto(row);
-    await this.enqueueStageChanged({
-      applicationId: dto.applicationId,
-      openingId: dto.openingId,
-      studentId: dto.studentId,
-      fromStage: null,
-      toStage: SHORTLIST_STAGE,
-      changedAt: dto.createdAt,
-    });
-
     return dto;
   }
 
@@ -679,11 +681,25 @@ export class PlacementService {
       include: {
         opening: {
           select: {
+            companyId: true,
             companyName: true,
             roleTitle: true,
             location: true,
             employmentType: true,
             domainCode: true,
+            company: {
+              select: {
+                verificationStatus: true,
+                deactivatedAt: true,
+                heldAt: true,
+                verifications: {
+                  where: { reviewedAt: { not: null } },
+                  orderBy: { reviewedAt: 'desc' },
+                  take: 1,
+                  select: { reviewedAt: true },
+                },
+              },
+            },
           },
         },
         student: {
@@ -704,72 +720,16 @@ export class PlacementService {
     institutionId: string,
     applicationId: string,
     newStage: AtsStage,
+    actorId?: string,
   ): Promise<ApplicationDto> {
-    const application = await this.prisma.application.findUnique({
-      where: { id: applicationId },
-      include: {
-        opening: { select: { institutionId: true } },
-        student: {
-          select: {
-            fullName: true,
-            email: true,
-            primaryTrack: { select: { code: true } },
-          },
-        },
-      },
-    });
-
-    if (!application || application.opening.institutionId !== institutionId) {
-      throw new NotFoundException({
-        error: 'not_found',
-        message: 'Application not found.',
-        statusCode: 404,
-      });
-    }
-
-    if (application.stage === newStage) {
-      return toApplicationDto(application);
-    }
-
-    const fromStage = application.stage as AtsStage;
-
-    const updatedRow = await this.prisma.$transaction(async (tx) => {
-      const updated = await tx.application.update({
-        where: { id: applicationId },
-        data: { stage: newStage },
-        include: {
-          student: {
-            select: {
-              fullName: true,
-              email: true,
-              primaryTrack: { select: { code: true } },
-            },
-          },
-        },
-      });
-
-      await tx.applicationStageEvent.create({
-        data: {
-          applicationId,
-          fromStage,
-          toStage: newStage,
-        },
-      });
-
-      return updated;
-    });
-
-    const dto = toApplicationDto(updatedRow);
-    await this.enqueueStageChanged({
-      applicationId: dto.applicationId,
-      openingId: dto.openingId,
-      studentId: dto.studentId,
-      fromStage,
+    // APP-01: ApplicationService is the only place that changes a status (history, audit, event).
+    const { row } = await this.requireApplications().moveStage({
+      applicationId,
       toStage: newStage,
-      changedAt: dto.updatedAt,
+      institutionId,
+      actorId: actorId ?? null,
     });
-
-    return dto;
+    return toApplicationDto(row);
   }
 
   /**
@@ -785,8 +745,24 @@ export class PlacementService {
     return this.toConfidenceDto(application.id, application.studentId, requiredSkillCodes);
   }
 
-  async sendToCompany(institutionId: string, applicationId: string): Promise<ApplicationDto> {
+  async sendToCompany(
+    institutionId: string,
+    applicationId: string,
+    actorId?: string,
+  ): Promise<ApplicationDto> {
     const application = await this.requireApplication(institutionId, applicationId);
+    const student = await this.prisma.user.findUnique({
+      where: { id: application.studentId },
+      select: EMPLOYER_VISIBILITY_SELECT,
+    });
+    if (!isEmployerVisibleStudent(student)) {
+      // S6-VV-148 — a deactivated or held student must never reach a company.
+      throw new ConflictException({
+        error: 'conflict',
+        message: 'This student is deactivated or on hold and cannot be sent to a company.',
+        statusCode: 409,
+      });
+    }
     const requiredSkillCodes = await this.openingRequiredSkillCodes(application.openingId);
     const confidence = await this.toConfidenceDto(
       application.id,
@@ -815,7 +791,7 @@ export class PlacementService {
       });
     }
 
-    return this.patchApplicationStage(institutionId, applicationId, SEND_TO_COMPANY_STAGE);
+    return this.patchApplicationStage(institutionId, applicationId, SEND_TO_COMPANY_STAGE, actorId);
   }
 
   private async requireApplication(
@@ -1019,23 +995,6 @@ export class PlacementService {
       ),
     };
   }
-
-  private async enqueueStageChanged(data: {
-    applicationId: string;
-    openingId: string;
-    studentId: string;
-    fromStage: AtsStage | null;
-    toStage: AtsStage;
-    changedAt: string;
-  }): Promise<void> {
-    await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.applicationStageChanged,
-      partitionKey: data.applicationId,
-      eventType: SMART_TOPICS.applicationStageChanged,
-      source: 'placement',
-      data: ApplicationStageChangedDataSchema.parse(data),
-    });
-  }
 }
 
 function seT02GraderPromptRef(assessmentResultJson: unknown): string | null {
@@ -1056,8 +1015,17 @@ export function toCandidateApplicationDto(row: CandidateApplicationRow): Candida
   const employmentType = EmploymentTypeSchema.safeParse(row.opening.employmentType);
   const domain = SkillTaxonomyDomainSchema.safeParse(row.opening.domainCode);
 
+  const company = row.opening.company;
+  const companyVerified =
+    company?.verificationStatus === 'APPROVED' && !company.deactivatedAt && !company.heldAt;
+
   return CandidateApplicationDtoSchema.parse({
     ...toApplicationDto(row),
+    companyId: row.opening.companyId ?? null,
+    companyVerified,
+    companyVerifiedAt: companyVerified
+      ? (company?.verifications[0]?.reviewedAt?.toISOString() ?? null)
+      : null,
     companyName: row.opening.companyName,
     roleTitle: row.opening.roleTitle,
     location: row.opening.location ?? '',

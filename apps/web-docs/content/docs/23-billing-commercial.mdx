@@ -1,0 +1,39 @@
+---
+title: 23. Billing & Commercial Model
+description: Commercial tier structures, employer subscription tiers, usage entitlements, and billing state machines.
+---
+
+## 23.1 Monetization & Value Architecture
+
+SmartZen operates on a B2B SaaS and enterprise success model:
+
+```
+[Universities] ──► Free Baseline Campus Tier / Annual Enterprise SLA
+[Employers]    ──► Tiered Subscription (Seats + Search) + Placement Success Fees
+[Candidates]   ──► 100% Free Lifetime Portfolio & Verification Access
+```
+
+---
+
+## 23.2 Employer Subscription Tiers
+
+| Feature / Entitlement        | Starter Plan          | Growth Plan            | Enterprise Talent Cloud              |
+| :--------------------------- | :-------------------- | :--------------------- | :----------------------------------- |
+| **Active Job Postings**      | 3 active openings     | 15 active openings     | Unlimited                            |
+| **Verified Talent Searches** | 50 candidate views/mo | 300 candidate views/mo | Unlimited Talent Graph Access        |
+| **Project Defense Replays**  | 10 replays/mo         | 75 replays/mo          | Full Unlimited Replay Access         |
+| **Recruiter Seats**          | 2 seats               | 10 seats               | Unlimited (SSO & Custom RBAC)        |
+| **Dedicated Campus Drives**  | Add-on purchase       | 2 campus drives/yr     | Unlimited Multi-Campus Drives        |
+| **Custom ATS Integrations**  | CSV export only       | Greenhouse / Lever     | Custom Webhook & Bi-directional Sync |
+
+---
+
+## 23.3 Billing State Machine & Entitlement Enforcement
+
+```
+[TRIAL] ──► [ACTIVE] ──► [PAST_DUE] ──► [DELINQUENT] ──► [CANCELED]
+```
+
+- **Grace Period:** 7 calendar days on `PAST_DUE` before search functionality is gated.
+- **Payment Gateways:** Stripe for global enterprise payments; Razorpay for domestic INR invoicing and GST compliance.
+- **Usage Quotas:** Enforced atomically via Redis token buckets to prevent concurrent search limit breaches.

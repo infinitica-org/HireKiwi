@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AiGatewayModule } from '../ai-gateway/ai-gateway.module.js';
+import { BillingModule } from '../billing/billing.module.js';
+import { EvidenceModule } from '../evidence/evidence.module.js';
 import { InstitutionsModule } from '../institutions/institutions.module.js';
 import { JdParseProcessor } from './jd-parse.processor.js';
 import { MatchNarrativeService } from './match-narrative.service.js';
@@ -10,7 +12,7 @@ import { OpeningJdParseService } from './opening-jd-parse.service.js';
 import { PlacementMatchController } from './placement-match.controller.js';
 
 @Module({
-  imports: [AiGatewayModule, InstitutionsModule],
+  imports: [AiGatewayModule, InstitutionsModule, EvidenceModule, BillingModule],
   controllers: [MatchingController, PlacementMatchController],
   providers: [
     MatchingService,
@@ -22,3 +24,5 @@ import { PlacementMatchController } from './placement-match.controller.js';
   exports: [MatchingService, OpeningJdParseService],
 })
 export class MatchingModule {}
+export * from './jd-fallback-extractor.js';
+export * from './vector-candidate-matcher.js';

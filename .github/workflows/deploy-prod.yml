@@ -1,4 +1,4 @@
-name: Deploy prod (kvm4)
+name: Deploy prod (Single VPS Blue-Green)
 
 on:
   workflow_run:
@@ -40,7 +40,7 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.PROD_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Sync repository to kvm4
+      - name: Sync repository to Single VPS
         run: |
           rsync -az --delete \
             --exclude='.git' \
@@ -59,18 +59,18 @@ jobs:
         run: |
           set -euo pipefail
           test -n "${PROD_ENV_FILE}" || {
-            echo "PROD_ENV_FILE secret is empty — kvm4 needs ~/smart/.env.prod"
+            echo "PROD_ENV_FILE secret is empty — Production needs ~/smart/.env.prod"
             exit 1
           }
           printf '%s\n' "${PROD_ENV_FILE}" | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
             "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}" \
             'umask 077; mkdir -p ~/smart; cat > ~/smart/.env.prod; chmod 600 ~/smart/.env.prod'
 
-      - name: Deploy + migrate + health check
+      - name: Blue-Green Zero-Downtime Deploy + migrate + health check
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
             "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}" \
-            'cd ~/smart && bash scripts/deploy-vps.sh prod'
+            'cd ~/smart && bash scripts/blue-green-deploy.sh prod'
 
       - name: Seed production accounts
         if: github.event_name == 'workflow_dispatch' && inputs.seed

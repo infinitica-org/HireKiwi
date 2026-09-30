@@ -13,6 +13,19 @@
  */
 
 export { cn, getInitials } from './lib/cn';
+export {
+  DEFAULT_EVENT_TIMEZONE,
+  detectTimeZone,
+  formatEventRange,
+  formatEventTime,
+  listTimeZones,
+  utcToZonedLocal,
+  zonedLocalToUtcIso,
+} from './lib/event-time';
+export {
+  BrandLoadingScreen,
+  type BrandLoadingScreenProps,
+} from './components/brand-loading-screen';
 /** Apply on `<html>` in every portal so class-based `dark:` utilities match the product theme. */
 export const SMART_HTML_CLASS = 'dark';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './components/button';
@@ -23,12 +36,67 @@ export {
   type BadgeProps,
   type BadgeVariant,
 } from './components/badge';
-export { Card, CardDescription, CardHeader, CardTitle } from './components/card';
+export {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  type CardVariant,
+  type CardProps,
+} from './components/card';
+export { AppliedBadge, type AppliedBadgeProps } from './components/applied-badge';
+export {
+  VerifiedBadge,
+  verifiedTooltip,
+  type VerifiedBadgeProps,
+} from './components/verified-badge';
+export { StatusBadge, type WorkflowStatus, type StatusBadgeProps } from './components/status-badge';
+export { Modal, type ModalSize, type ModalProps } from './components/modal';
+export {
+  ConfirmDialog,
+  type ConfirmDialogVariant,
+  type ConfirmDialogProps,
+} from './components/confirm-dialog';
+export {
+  FormItem,
+  FormLabel,
+  FormDescription,
+  FormMessage,
+  FormSection,
+  FormErrorSummary,
+  formatFieldValidationError,
+  type FormItemProps,
+  type FormLabelProps,
+  type FormDescriptionProps,
+  type FormMessageProps,
+  type FormSectionProps,
+  type FormErrorSummaryProps,
+  type ValidationRule,
+} from './components/form-controls';
 export { Input, type InputProps } from './components/input';
 export { Alert, type AlertProps, type AlertTone } from './components/alert';
 export { LevelStepper, type LevelState, type LevelStepperProps } from './components/level-stepper';
 export { ProficiencyLevelHint } from './components/proficiency-level-hint';
 export { AppShell, type AppShellProps } from './components/app-shell';
+export { Breadcrumbs, type BreadcrumbItem, type BreadcrumbsProps } from './components/breadcrumbs';
+export { UserMenu, type UserMenuProps } from './components/user-menu';
+export {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+  SuccessState,
+  UnauthorizedState,
+  AsyncStateContainer,
+  type LoadingStateProps,
+  type EmptyStateProps,
+  type ErrorStateProps,
+  type SuccessStateProps,
+  type UnauthorizedStateProps,
+  type AsyncStateContainerProps,
+} from './components/common-states';
+export * from './navigation/role-nav-config';
 export {
   SmartLogo,
   type SmartLogoKind,
@@ -125,4 +193,40 @@ export {
   AvatarBadge,
 } from './components/ui/avatar';
 
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+} from './components/ui/table';
+
 export const UI_VERSION = '0.1.0';
+
+/* COM-01 — direct messaging (Th6-422 to Th6-430). */
+export { MessagesWorkspace, type MessagesWorkspaceProps } from './messaging/messages-workspace';
+export {
+  StartConversationDialog,
+  type StartConversationDialogProps,
+} from './messaging/start-conversation-dialog';
+export { ReportMessageDialog } from './messaging/report-message-dialog';
+export { ReportedConversationView } from './messaging/reported-conversation-view';
+export { useUnreadMessageCount, MessageText, SnippetText } from './messaging/messaging-utils';
+export {
+  ParticipantAvatar,
+  initialsOf,
+  type ParticipantAvatarProps,
+} from './messaging/participant-avatar';
+export { BlockedUsersList } from './messaging/blocked-users-list';
+export { AdminReportsList, type AdminReportsListProps } from './messaging/admin-reports-list';
+export {
+  ConversionMetricsCard,
+  CONVERSION_RANGES,
+  NOT_ENOUGH_CANDIDATES,
+  conversionRangeQuery,
+  type ConversionMetricsCardProps,
+  type ConversionRange,
+} from './components/conversion-metrics-card';

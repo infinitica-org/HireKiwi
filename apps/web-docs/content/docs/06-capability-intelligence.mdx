@@ -1,0 +1,90 @@
+---
+title: 06. Core Domain — Capability Intelligence
+description: Taxonomy hierarchy, skill vs competency definitions, BARS proficiency rubrics, and the Capability Graph.
+---
+
+## 6.1 Capability Model
+
+Capability in SmartZen is structured hierarchically. Rather than treating technical skills as a flat list of keywords, SmartZen models capability across three distinct abstraction tiers:
+
+```
+┌────────────────────────────────────────────────────────┐
+│                   ROLE READINESS                       │
+│ (e.g., Junior Cloud & DevOps Engineer - Tier: Gold)    │
+└───────────────────────────┬────────────────────────────┘
+                            │ requires
+┌───────────────────────────▼────────────────────────────┐
+│                    COMPETENCIES                        │
+│ (e.g., Container Orchestration & CI/CD Delivery Pipelines)│
+└───────────────────────────┬────────────────────────────┘
+                            │ composed of
+┌───────────────────────────▼────────────────────────────┐
+│                 SKILLS & SUB-SKILLS                    │
+│ (e.g., Docker, Kubernetes Manifests, GitHub Actions)   │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6.2 Skill vs Competency
+
+| Attribute        | Skill                                                      | Competency                                                                         |
+| :--------------- | :--------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| **Definition**   | A specific, granular technical tool, language, or concept. | An applied combination of skills, architecture decisions, and behavioral outcomes. |
+| **Examples**     | `TypeScript`, `Redis`, `Git`, `PostgreSQL`                 | `Distributed Caching Strategy`, `Relational Data Modeling`, `API Reliability`      |
+| **Measurement**  | Syntax execution, syntax accuracy, tool usage.             | Architectural trade-off analysis, system design defense, debugging under pressure. |
+| **Verification** | Code linting, unit test completion.                        | Interactive project defense, end-to-end system build.                              |
+
+---
+
+## 6.3 The BARS Proficiency Model (Gold, Silver, Bronze)
+
+SmartZen rejects subjective percentage scores in favor of psychometrically validated **Behaviorally Anchored Rating Scales (BARS)**:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ 🥉 BRONZE (Foundational / Syntax Level)                                │
+│ • Understands syntax, language primitives, and standard library APIs.   │
+│ • Can implement single-file algorithmic functions.                     │
+│ • Requires structured supervision for architectural decisions.        │
+├────────────────────────────────────────────────────────────────────────┤
+│ 🥈 SILVER (Applied / Independent Production Level)                     │
+│ • Builds full multi-tier services with database and caching layers.    │
+│ • Implements authentication, migrations, and error handling.           │
+│ • Ships production code independently without direct supervision.      │
+├────────────────────────────────────────────────────────────────────────┤
+│ 🥇 GOLD (Architectural / Optimization Level)                           │
+│ • Designs high-concurrency systems with connection pooling & queues.   │
+│ • Defends database indexing, telemetry instrumentation, and security.  │
+│ • Can refactor legacy architectures and mentor junior engineers.       │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6.4 Evidence-to-Skill Inference Engine
+
+When evidence is ingested, the inference engine parses the artifact AST, maps semantic tokens to taxonomy nodes, and assigns initial competency vectors:
+
+1. **AST Extraction:** Code files parsed into syntax trees extracting imports, class declarations, and function signatures.
+2. **Taxonomy Mapping:** Extracted tokens compared against the `SkillTaxonomy` graph ($1,800+$ verified engineering nodes).
+3. **Weight Assignment:** Frequency, cyclomatic complexity, and test coverage dictate evidentiary weight.
+4. **Defense Calibration:** Active project defense verifies whether the candidate authored the mapped logic or used generative scaffolding without comprehension.
+
+---
+
+## 6.5 The Capability Graph
+
+The capability graph represents relationships between adjacent competencies:
+
+```
+[PostgreSQL] ──(relational_with)──► [Connection Pooling (PgBouncer)]
+     │                                      │
+(optimized_by)                         (enables)
+     ▼                                      ▼
+[HNSW pgvector Embeddings] ──► [High-Concurrency API Performance]
+```
+
+- **Prerequisite Edges:** e.g., `TypeScript` requires mastery of `JavaScript ES6+`.
+- **Co-occurrence Edges:** e.g., Candidates demonstrating `Redis` often exhibit high capability in `Session Management`.
+- **Substitutability Edges:** e.g., Mastery of `FastAPI` provides a $0.75$ baseline prior for learning `NestJS`.

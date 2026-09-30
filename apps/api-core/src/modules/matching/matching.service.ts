@@ -1,7 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { InjectQueue } from '@nestjs/bullmq';
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import type { Queue } from 'bullmq';
+import { BillingService } from '../billing/billing.service.js';
 import {
   AssessmentResultSchema,
   CandidateMatchDtoSchema,
@@ -15,22 +22,38 @@ import {
   SMART_TOPICS,
   TIER_RANK,
   TrackCodeSchema,
+  type CandidateMatchDto,
   type CertifiableTier,
   type CreateMatchRunResponse,
   type LevelNumber,
+  type ListSavedCandidatesResponse,
+  type MatchFeedbackResponse,
   type MatchFitDto,
   type MatchMethod,
   type JobOpeningEligibilityCriteria,
   type MatchRequest,
   type MatchRunDto,
+  type SaveCandidateRequest,
+  type SavedCandidateDto,
+  type SearchStudentsQuery,
   type ShortlistDto,
+  type SubmitMatchFeedbackRequest,
+  type MatchFeedbackSummaryDto,
   type TrackCode,
 } from '@smart/contracts';
+import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { Prisma } from '../../generated/prisma/index.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { MATCH_RUN_QUEUE } from '../../platform/queue/queue.names.js';
 import { InstitutionsService } from '../institutions/institutions.service.js';
+import type { CompetencyStatus } from '@smart/contracts';
+import { mapStudentCapabilitiesToSummaries } from '../../common/competency-evidence-summary.js';
+import {
+  EMPLOYER_DISCOVERABLE_STUDENT_SQL,
+  filterEmployerDiscoverableStudentIds,
+  studentUnavailableToEmployers,
+} from '../../common/employer-visibility.js';
 import { QlixSmartAssessmentSchema } from '../evaluation/qlix-client.js';
 import { buildSkillCapabilityJob } from './job-profile.js';
 import {
@@ -52,12 +75,17 @@ import {
 } from './rules-ranker.js';
 import {
   PROFICIENCY_RANK,
+  SKILL_CAPABILITY_RANKER_VERSION,
   rankSkillCapabilityCandidates,
   type InferredCapabilityRow,
   type QlixCompetencyObservation,
   type SkillCapabilityCandidate,
   type SkillCapabilityJob,
 } from './skill-capability-ranker.js';
+import {
+  matchCandidatesWithVectorSimilarity,
+  type CandidateVectorProfile,
+} from './vector-candidate-matcher.js';
 
 const FALLBACK_TRACK: TrackCode = 'TECH_FULLSTACK';
 
@@ -149,9 +177,16 @@ function buildEligibleStudentsQuery(
     'batchIds' | 'minCgpa' | 'requiredSkillCodes' | 'filters' | 'openingEligibility'
   >,
 ): Prisma.Sql {
+  /**
+   * MAT-01 / I374: Exclusion of protected attributes from matching pipeline.
+   * Demographic fields (gender, caste, religion, age, disability, photo) are explicitly excluded
+   * from query conditions, ranking inputs, and scoring weights. Matching relies exclusively on
+   * verified competencies, proctored evaluation scores, and academic batch criteria.
+   */
   const conditions: Prisma.Sql[] = [
     Prisma.sql`u.institution_id = ${institutionId}::uuid`,
     Prisma.sql`u.role = 'STUDENT'`,
+    EMPLOYER_DISCOVERABLE_STUDENT_SQL,
     Prisma.sql`EXISTS (SELECT 1 FROM skill_claims sc_any WHERE sc_any.student_id = u.id AND sc_any.status = 'VERIFIED')`,
   ];
   if (request.batchIds.length) {
@@ -190,6 +225,15 @@ function buildEligibleStudentsQuery(
   if (request.filters?.trackCodes?.length) {
     conditions.push(Prisma.sql`t.code = ANY(${request.filters.trackCodes}::text[])`);
   }
+  if (request.filters?.graduationYear !== undefined) {
+    conditions.push(Prisma.sql`u.graduation_year = ${request.filters.graduationYear}`);
+  }
+  if (request.filters?.minHeadlineTier !== undefined) {
+    conditions.push(Prisma.sql`c.headline_tier = ${request.filters.minHeadlineTier}`);
+  }
+  if (request.filters?.minLevelCleared !== undefined) {
+    conditions.push(Prisma.sql`c.highest_level_cleared >= ${request.filters.minLevelCleared}`);
+  }
 
   return Prisma.sql`
     SELECT
@@ -210,10 +254,16 @@ function buildEligibleStudentsQuery(
       LIMIT 1
     ) c ON true
     LEFT JOIN LATERAL (
-      SELECT json_agg(json_build_object('code', sk.code, 'domain', sk.domain, 'proficiency', sc.proficiency)) AS skills
+      SELECT json_agg(json_build_object(
+        'code', sk.code,
+        'domain', sk.domain,
+        'proficiency', COALESCE(sc.final_proficiency::text, sc.proficiency::text)
+      )) AS skills
       FROM skill_claims sc
       JOIN skills sk ON sk.id = sc.skill_id
-      WHERE sc.student_id = u.id AND sc.status = 'VERIFIED'
+      WHERE sc.student_id = u.id
+        AND sc.status = 'VERIFIED'
+        AND (sc.verified_until IS NULL OR sc.verified_until > NOW())
     ) sc_agg ON true
     WHERE ${Prisma.join(conditions, ' AND ')}
   `;
@@ -230,6 +280,7 @@ export class MatchingService {
     @Inject(InstitutionsService) private readonly institutions: InstitutionsService,
     @Inject(MatchNarrativeService) private readonly narratives: MatchNarrativeService,
     @InjectQueue(MATCH_RUN_QUEUE) private readonly matchRunQueue: Queue<{ matchRunId: string }>,
+    @Optional() @Inject(BillingService) private readonly billingService?: BillingService,
   ) {}
 
   /** @deprecated use `createMatchRun` + polling — kept for one release for backward compat. */
@@ -264,6 +315,7 @@ export class MatchingService {
         requiredSkillCodes: request.requiredSkillCodes ?? [],
         limit: request.limit,
         minSkillCoverage: request.minSkillCoverage ?? 0.6,
+        rankerVersion: SKILL_CAPABILITY_RANKER_VERSION,
       },
     });
 
@@ -328,13 +380,32 @@ export class MatchingService {
       runId: run.id,
       jdId: run.jdId,
       status: run.status,
+      rankerVersion: run.rankerVersion ?? SKILL_CAPABILITY_RANKER_VERSION,
       eligiblePoolCount: run.eligiblePoolCount,
       suggestedCount: run.suggestedCount,
       errorMessage: run.errorMessage,
       createdAt: run.createdAt.toISOString(),
       completedAt: run.completedAt?.toISOString() ?? null,
-      shortlist: run.resultSnapshot as ShortlistDto | null,
+      shortlist: await this.withoutHiddenCandidates(run.resultSnapshot as ShortlistDto | null),
     });
+  }
+
+  /**
+   * S6-VV-148 — a stored shortlist was computed before any later deactivation
+   * or hold, so re-check visibility every time it is served.
+   */
+  private async withoutHiddenCandidates(
+    shortlist: ShortlistDto | null,
+  ): Promise<ShortlistDto | null> {
+    if (!shortlist) return null;
+    const visible = await filterEmployerDiscoverableStudentIds(
+      this.prisma,
+      shortlist.candidates.map((row) => row.studentId),
+    );
+    return {
+      ...shortlist,
+      candidates: shortlist.candidates.filter((row) => visible.has(row.studentId)),
+    };
   }
 
   async getCandidateFit(
@@ -354,6 +425,10 @@ export class MatchingService {
     }
     const shortlist = ShortlistDtoSchema.parse(run.resultSnapshot);
     const candidate = shortlist.candidates.find((row) => row.studentId === studentId);
+    if (candidate) {
+      const visible = await filterEmployerDiscoverableStudentIds(this.prisma, [studentId]);
+      if (!visible.has(studentId)) throw studentUnavailableToEmployers();
+    }
     if (!candidate) {
       throw new NotFoundException({
         error: 'not_found',
@@ -512,11 +587,10 @@ export class MatchingService {
       qlixObservations: evidence.qlixByStudent.get(student.id) ?? [],
     }));
 
-    const ranked = rankSkillCapabilityCandidates(
+    const { ranked, candidatesScoredCount } = rankSkillCapabilityCandidates(
       job,
       pool,
       request.limit,
-      request.minSkillCoverage,
     );
     const byId = new Map(filtered.map((student) => [student.id, student]));
     const generatedAt = new Date().toISOString();
@@ -529,6 +603,9 @@ export class MatchingService {
       })),
       requiredCapabilities: job.requiredCapabilities,
     });
+
+    const rankedStudentIds = ranked.map((score) => score.studentId);
+    const explainability = await this.loadExplainabilityContext(rankedStudentIds);
 
     const candidates = [];
     for (const [index, score] of ranked.entries()) {
@@ -566,6 +643,9 @@ export class MatchingService {
           method,
           recruiterSummary,
           studentSummary,
+          competencyEvidenceSummaries: mapStudentCapabilitiesToSummaries(
+            explainability.capabilitiesByStudent.get(student.id) ?? [],
+          ),
         }),
       );
     }
@@ -591,6 +671,7 @@ export class MatchingService {
       candidates,
       totalCandidatesConsidered: pool.length,
       eligiblePoolCount: filtered.length,
+      candidatesScoredCount,
       matchMethod: method,
       minSkillCoverageApplied: request.minSkillCoverage,
       jobRequirements,
@@ -674,6 +755,9 @@ export class MatchingService {
           gapCompetencies: mergedExplanation.gapCompetencies,
           why: mergedExplanation.why,
           verifiedSkills: mapVerifiedSkillsSummary(student.verifiedSkills),
+          competencyEvidenceSummaries: mapStudentCapabilitiesToSummaries(
+            explainability.capabilitiesByStudent.get(student.id) ?? [],
+          ),
           rules: {
             skill: score.s / 1000,
             proficiency: score.p / 1000,
@@ -744,7 +828,10 @@ export class MatchingService {
         },
       }),
       this.prisma.studentCapability.findMany({
-        where: { studentId: { in: [...studentIds] } },
+        where: {
+          studentId: { in: [...studentIds] },
+          OR: [{ projectId: null }, { project: { isActive: true } }],
+        },
         select: {
           studentId: true,
           capabilityLabel: true,
@@ -754,25 +841,54 @@ export class MatchingService {
         },
       }),
       this.prisma.project.findMany({
-        where: { studentId: { in: [...studentIds] }, qlixCheckResult: { isNot: null } },
+        where: {
+          studentId: { in: [...studentIds] },
+          isActive: true,
+          qlixCheckResult: { isNot: null },
+        },
         include: { qlixCheckResult: { select: { smartAssessmentJson: true } } },
       }),
     ]);
 
-    const seenAttemptByStudent = new Set<string>();
+    const competencyStatusRank = (status: CompetencyStatus): number => {
+      switch (status) {
+        case 'DEMONSTRATED':
+          return 4;
+        case 'PARTIALLY_DEMONSTRATED':
+          return 3;
+        case 'UNCERTAIN':
+          return 2;
+        case 'NOT_DEMONSTRATED':
+          return 1;
+        default:
+          return 0;
+      }
+    };
+
+    const mergedByStudent = new Map<
+      string,
+      Map<string, { competencyId: string; status: CompetencyStatus }>
+    >();
+
     for (const attempt of attempts) {
       const studentId = attempt.claim.studentId;
-      if (seenAttemptByStudent.has(studentId)) continue;
       const parsed = AssessmentResultSchema.safeParse(attempt.assessmentResultJson);
       if (!parsed.success) continue;
-      seenAttemptByStudent.add(studentId);
-      competencyResultsByStudent.set(
-        studentId,
-        parsed.data.competencyResults.map((row) => ({
-          competencyId: row.competencyId,
-          status: row.status,
-        })),
-      );
+      const byCompetency = mergedByStudent.get(studentId) ?? new Map();
+      for (const row of parsed.data.competencyResults) {
+        const existing = byCompetency.get(row.competencyId);
+        if (!existing || competencyStatusRank(row.status) > competencyStatusRank(existing.status)) {
+          byCompetency.set(row.competencyId, {
+            competencyId: row.competencyId,
+            status: row.status,
+          });
+        }
+      }
+      mergedByStudent.set(studentId, byCompetency);
+    }
+
+    for (const [studentId, byCompetency] of mergedByStudent) {
+      competencyResultsByStudent.set(studentId, [...byCompetency.values()]);
     }
 
     for (const row of inferred) {
@@ -844,6 +960,8 @@ export class MatchingService {
         skillCode: string | null;
         assessmentVerified: boolean;
         confidenceScore: number;
+        proficiency: string;
+        evidenceRefs: string[];
       }>
     >;
     qlixProjectsByStudent: Map<string, QlixProjectExplainability[]>;
@@ -855,6 +973,8 @@ export class MatchingService {
         skillCode: string | null;
         assessmentVerified: boolean;
         confidenceScore: number;
+        proficiency: string;
+        evidenceRefs: string[];
       }>
     >();
     const qlixProjectsByStudent = new Map<string, QlixProjectExplainability[]>();
@@ -865,18 +985,24 @@ export class MatchingService {
 
     const [capabilities, projects] = await Promise.all([
       this.prisma.studentCapability.findMany({
-        where: { studentId: { in: [...studentIds] } },
+        where: {
+          studentId: { in: [...studentIds] },
+          OR: [{ projectId: null }, { project: { isActive: true } }],
+        },
         select: {
           studentId: true,
           capabilityLabel: true,
           skillCode: true,
           assessmentVerified: true,
           confidenceScore: true,
+          proficiency: true,
+          evidenceRefs: true,
         },
       }),
       this.prisma.project.findMany({
         where: {
           studentId: { in: [...studentIds] },
+          isActive: true,
           qlixCheckResult: { isNot: null },
         },
         include: {
@@ -898,6 +1024,8 @@ export class MatchingService {
         skillCode: row.skillCode,
         assessmentVerified: row.assessmentVerified,
         confidenceScore: row.confidenceScore,
+        proficiency: row.proficiency,
+        evidenceRefs: row.evidenceRefs,
       });
       capabilitiesByStudent.set(row.studentId, bucket);
     }
@@ -1002,6 +1130,464 @@ export class MatchingService {
         location: null,
       },
     };
+  }
+
+  async recordMatchFeedback(
+    userId: string,
+    targetType: 'STUDENT' | 'EMPLOYER',
+    body: SubmitMatchFeedbackRequest,
+  ): Promise<MatchFeedbackResponse> {
+    const feedback = await this.prisma.matchFeedback.create({
+      data: {
+        userId,
+        targetType,
+        openingId: body.openingId,
+        studentId: body.studentId,
+        runId: body.runId,
+        rating: body.rating,
+        feedbackText: body.feedbackText,
+        irrelevantReasons: body.irrelevantReasons ?? [],
+      },
+    });
+
+    return {
+      feedbackId: feedback.id,
+      submittedAt: feedback.createdAt.toISOString(),
+      status: 'RECORDED',
+    };
+  }
+
+  async getMatchFeedbackSummary(filters?: {
+    openingId?: string;
+    targetType?: 'STUDENT' | 'EMPLOYER';
+  }): Promise<MatchFeedbackSummaryDto> {
+    const where: Prisma.MatchFeedbackWhereInput = {};
+    if (filters?.openingId) {
+      where.openingId = filters.openingId;
+    }
+    if (filters?.targetType) {
+      where.targetType = filters.targetType;
+    }
+
+    const feedbacks = await this.prisma.matchFeedback.findMany({
+      where,
+      select: {
+        rating: true,
+        irrelevantReasons: true,
+      },
+    });
+
+    const ratingBreakdown = {
+      EXCELLENT: 0,
+      RELEVANT: 0,
+      PARTIALLY_RELEVANT: 0,
+      NOT_RELEVANT: 0,
+      POOR: 0,
+    };
+
+    const reasonCountMap: Record<string, number> = {};
+
+    let relevantCount = 0;
+    let notRelevantCount = 0;
+
+    for (const fb of feedbacks) {
+      const rating = fb.rating as keyof typeof ratingBreakdown;
+      if (ratingBreakdown[rating] !== undefined) {
+        ratingBreakdown[rating]++;
+      }
+      if (rating === 'EXCELLENT' || rating === 'RELEVANT') {
+        relevantCount++;
+      } else if (rating === 'NOT_RELEVANT' || rating === 'POOR') {
+        notRelevantCount++;
+      }
+
+      if (Array.isArray(fb.irrelevantReasons)) {
+        for (const reason of fb.irrelevantReasons) {
+          const reasonStr = String(reason).trim();
+          if (reasonStr) {
+            reasonCountMap[reasonStr] = (reasonCountMap[reasonStr] ?? 0) + 1;
+          }
+        }
+      }
+    }
+
+    const totalFeedbacks = feedbacks.length;
+    const satisfactionRate =
+      totalFeedbacks > 0
+        ? Math.round(
+            ((relevantCount + ratingBreakdown.PARTIALLY_RELEVANT * 0.5) / totalFeedbacks) * 100,
+          ) / 100
+        : 1.0;
+
+    const commonIrrelevantReasons = Object.entries(reasonCountMap)
+      .map(([reason, count]) => ({ reason, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    return {
+      totalFeedbacks,
+      relevantCount,
+      notRelevantCount,
+      satisfactionRate,
+      ratingBreakdown,
+      commonIrrelevantReasons,
+    };
+  }
+
+  async listSavedCandidates(userId: string): Promise<ListSavedCandidatesResponse> {
+    const saved = await this.prisma.savedCandidate.findMany({
+      where: { savedBy: userId },
+      orderBy: { savedAt: 'desc' },
+      include: {
+        student: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            primaryTrack: { select: { code: true } },
+            certificates: {
+              where: { status: 'ISSUED' },
+              orderBy: { issuedAt: 'desc' },
+              take: 1,
+              select: { highestLevelCleared: true, headlineTier: true },
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      savedCandidates: saved.map((row) => ({
+        id: row.id,
+        savedBy: row.savedBy,
+        studentId: row.studentId,
+        openingId: row.openingId,
+        note: row.note,
+        savedAt: row.savedAt.toISOString(),
+        student: row.student
+          ? {
+              id: row.student.id,
+              fullName: row.student.fullName,
+              email: row.student.email,
+              primaryTrackCode: row.student.primaryTrack?.code
+                ? parseTrackCode(row.student.primaryTrack.code)
+                : undefined,
+              highestLevelCleared: parseLevel(row.student.certificates[0]?.highestLevelCleared),
+              headlineTier: parseHeadline(row.student.certificates[0]?.headlineTier),
+            }
+          : undefined,
+      })),
+      total: saved.length,
+    };
+  }
+
+  async saveCandidate(userId: string, body: SaveCandidateRequest): Promise<SavedCandidateDto> {
+    const include = {
+      student: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+        },
+      },
+    } as const;
+
+    let record;
+    if (body.openingId) {
+      record = await this.prisma.savedCandidate.upsert({
+        where: {
+          savedBy_studentId_openingId: {
+            savedBy: userId,
+            studentId: body.studentId,
+            openingId: body.openingId,
+          },
+        },
+        update: { note: body.note },
+        create: {
+          savedBy: userId,
+          studentId: body.studentId,
+          openingId: body.openingId,
+          note: body.note,
+        },
+        include,
+      });
+    } else {
+      const existing = await this.prisma.savedCandidate.findFirst({
+        where: { savedBy: userId, studentId: body.studentId, openingId: null },
+      });
+      record = existing
+        ? await this.prisma.savedCandidate.update({
+            where: { id: existing.id },
+            data: { note: body.note },
+            include,
+          })
+        : await this.prisma.savedCandidate.create({
+            data: {
+              savedBy: userId,
+              studentId: body.studentId,
+              openingId: null,
+              note: body.note,
+            },
+            include,
+          });
+    }
+
+    return {
+      id: record.id,
+      savedBy: record.savedBy,
+      studentId: record.studentId,
+      openingId: record.openingId,
+      note: record.note,
+      savedAt: record.savedAt.toISOString(),
+      student: record.student
+        ? {
+            id: record.student.id,
+            fullName: record.student.fullName,
+            email: record.student.email,
+          }
+        : undefined,
+    };
+  }
+
+  async removeSavedCandidate(userId: string, studentId: string): Promise<{ success: boolean }> {
+    await this.prisma.savedCandidate.deleteMany({
+      where: {
+        savedBy: userId,
+        studentId,
+      },
+    });
+    return { success: true };
+  }
+
+  async searchStudents(
+    user: RequestUser,
+    query: SearchStudentsQuery,
+  ): Promise<CandidateMatchDto[]> {
+    if (user.companyId) {
+      await this.billingService?.assertQuotaAvailable(user.companyId, 'CANDIDATE_SEARCHES');
+      await this.billingService?.incrementUsage(user.companyId, 'CANDIDATE_SEARCHES', 1);
+    }
+
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`u.role = 'STUDENT'`,
+      Prisma.sql`u.profile_visible = TRUE`,
+      // I402 / S6-VV-113 — deactivated, held or opted-out students never appear in employer search.
+      EMPLOYER_DISCOVERABLE_STUDENT_SQL,
+    ];
+
+    if (user.inst) {
+      conditions.push(Prisma.sql`u.institution_id = ${user.inst}::uuid`);
+    }
+
+    if (query.university?.trim()) {
+      const uPattern = `%${query.university.trim()}%`;
+      conditions.push(
+        Prisma.sql`EXISTS (
+          SELECT 1 FROM institutions inst
+          WHERE inst.id = u.institution_id
+            AND (inst.name ILIKE ${uPattern} OR inst.domain ILIKE ${uPattern})
+        )`,
+      );
+    }
+
+    if (query.gradYear && query.gradYear !== 'Any Year') {
+      const year = parseInt(query.gradYear, 10);
+      if (!Number.isNaN(year)) {
+        conditions.push(Prisma.sql`u.graduation_year = ${year}`);
+      }
+    }
+
+    if (query.availability && query.availability !== 'Any Availability') {
+      const avail = query.availability.trim().toLowerCase();
+      if (avail.includes('immediate')) {
+        const currentYear = new Date().getFullYear();
+        conditions.push(
+          Prisma.sql`(u.graduation_year <= ${currentYear} OR u.onboarding_details->'jobPreferences'->>'availability' ILIKE '%immediate%')`,
+        );
+      } else if (avail.includes('1 month')) {
+        conditions.push(
+          Prisma.sql`(u.onboarding_details->'jobPreferences'->>'availability' ILIKE '%1 month%' OR u.onboarding_details->'jobPreferences'->>'availability' ILIKE '%immediate%')`,
+        );
+      } else {
+        const aPattern = `%${query.availability.trim()}%`;
+        conditions.push(
+          Prisma.sql`(u.onboarding_details->'jobPreferences'->>'availability' ILIKE ${aPattern})`,
+        );
+      }
+    }
+
+    if (query.minLevel && query.minLevel !== 'Any Level') {
+      const levelMatch = query.minLevel.match(/\d+/);
+      if (levelMatch) {
+        const minLvl = parseInt(levelMatch[0], 10);
+        conditions.push(Prisma.sql`c.highest_level_cleared >= ${minLvl}`);
+      }
+    }
+
+    if (query.skillCode?.trim()) {
+      const sPattern = `%${query.skillCode.trim()}%`;
+      conditions.push(Prisma.sql`EXISTS (
+        SELECT 1 FROM skill_claims sc_req
+        JOIN skills sk_req ON sk_req.id = sc_req.skill_id
+        WHERE sc_req.student_id = u.id AND sc_req.status = 'VERIFIED'
+          AND (sk_req.code ILIKE ${sPattern} OR sk_req.name ILIKE ${sPattern})
+      )`);
+    }
+
+    if (query.verificationType && query.verificationType !== 'all') {
+      const vType = query.verificationType.toLowerCase().replace(/\s+/g, '_');
+      if (vType.includes('project') || vType.includes('defense') || vType === 'ai_defense') {
+        // A defended project is one whose verification settled as VERIFIED.
+        conditions.push(Prisma.sql`EXISTS (
+          SELECT 1 FROM projects p_def
+          WHERE p_def.student_id = u.id AND p_def.status = 'VERIFIED'
+        )`);
+      } else if (vType.includes('endors') || vType.includes('experience')) {
+        conditions.push(Prisma.sql`EXISTS (
+          SELECT 1 FROM work_experience_manager_endorsements weme
+          JOIN work_experiences we ON we.id = weme.experience_id
+          WHERE we.student_id = u.id AND weme.status = 'CONFIRMED'
+        )`);
+      } else if (vType.includes('cert')) {
+        conditions.push(Prisma.sql`EXISTS (
+          SELECT 1 FROM candidate_certificates cc
+          WHERE cc.candidate_id = u.id AND cc.status = 'VERIFIED'
+        )`);
+      } else if (vType === 'diagnostic' || vType === 'direct') {
+        conditions.push(Prisma.sql`EXISTS (
+          SELECT 1 FROM skill_verification_attempts sva
+          WHERE sva.student_id = u.id AND sva.passed = TRUE
+        )`);
+      }
+    }
+
+    if (query.scopedJobId?.trim()) {
+      const scopedOpeningId = query.scopedJobId.trim();
+      // Never resurface a candidate who already rejected the scoped opening.
+      conditions.push(Prisma.sql`NOT EXISTS (
+        SELECT 1 FROM applications a_scoped
+        WHERE a_scoped.student_id = u.id
+          AND a_scoped.opening_id = ${scopedOpeningId}::uuid
+          AND a_scoped.stage IN ('REJECTED', 'OFFER_DECLINED')
+      )`);
+      // I404 — job-relevant scoping: keep candidates with at least one verified skill
+      // the opening requires (openings with no declared skills match everyone).
+      conditions.push(Prisma.sql`(
+        NOT EXISTS (
+          SELECT 1 FROM job_opening_skills jos_req
+          WHERE jos_req.opening_id = ${scopedOpeningId}::uuid
+        )
+        OR EXISTS (
+          SELECT 1 FROM job_opening_skills jos_req
+          JOIN skill_claims sc_scoped ON sc_scoped.skill_id = jos_req.skill_id
+            AND sc_scoped.student_id = u.id AND sc_scoped.status = 'VERIFIED'
+          WHERE jos_req.opening_id = ${scopedOpeningId}::uuid
+        )
+      )`);
+    }
+
+    if (query.q?.trim()) {
+      const qPattern = `%${query.q.trim()}%`;
+      conditions.push(
+        Prisma.sql`(u.full_name ILIKE ${qPattern} OR t.code ILIKE ${qPattern} OR t.name ILIKE ${qPattern})`,
+      );
+    }
+
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        fullName: string;
+        primaryTrackCode: string | null;
+        certificateId: string | null;
+        highestLevelCleared: number | null;
+        headlineTier: string | null;
+        skills: Array<{ code: string; domain?: string; proficiency?: string }> | null;
+      }>
+    >(Prisma.sql`
+      SELECT
+        u.id,
+        u.full_name AS "fullName",
+        t.code AS "primaryTrackCode",
+        c.id AS "certificateId",
+        c.highest_level_cleared AS "highestLevelCleared",
+        c.headline_tier AS "headlineTier",
+        COALESCE(sc_agg.skills, '[]'::json) AS skills
+      FROM users u
+      LEFT JOIN tracks t ON t.id = u.primary_track_id
+      LEFT JOIN LATERAL (
+        SELECT id, highest_level_cleared, headline_tier
+        FROM certificates
+        WHERE user_id = u.id AND status = 'ISSUED'
+        ORDER BY issued_at DESC
+        LIMIT 1
+      ) c ON true
+      LEFT JOIN LATERAL (
+        SELECT json_agg(json_build_object(
+          'code', sk.code,
+          'domain', sk.domain,
+          'proficiency', COALESCE(sc.final_proficiency::text, sc.proficiency::text)
+        )) AS skills
+        FROM skill_claims sc
+        JOIN skills sk ON sk.id = sc.skill_id
+        WHERE sc.student_id = u.id
+          AND sc.status = 'VERIFIED'
+          AND (sc.verified_until IS NULL OR sc.verified_until > NOW())
+      ) sc_agg ON true
+      WHERE ${Prisma.join(conditions, ' AND ')}
+      LIMIT 100
+    `);
+
+    const candidateProfiles: CandidateVectorProfile[] = rows.map((r) => {
+      const highestLevel = (r.highestLevelCleared ?? 1) as LevelNumber;
+      const tier = (r.headlineTier as CertifiableTier) || 'BRONZE';
+      const verified = (r.skills ?? []).map((s) => ({
+        code: s.code,
+        domain: s.domain ?? 'SOFTWARE_IT',
+        proficiency: s.proficiency ?? 'INTERMEDIATE',
+      }));
+
+      return {
+        studentId: r.id,
+        studentName: r.fullName,
+        trackCode: (r.primaryTrackCode as TrackCode) || 'TECH_FULLSTACK',
+        certificateId: r.certificateId,
+        highestLevelCleared: highestLevel,
+        headlineTier: tier,
+        discoverableToEmployers: true, // SQL already filtered discoverable students
+        isDeactivated: false,
+        isHeld: false,
+        verifiedSkills: verified,
+        domainCompetencies: {},
+      };
+    });
+
+    const targetVector = [0.7, 0.7, 0.6, 0.5, 0.5, 0.67]; // Standard threshold baseline
+    const vectorMatches = matchCandidatesWithVectorSimilarity(candidateProfiles, targetVector);
+
+    return vectorMatches.ranked.map((match) => {
+      const verified = (match.radarBreakdown ?? []).map((rb) => ({
+        skillCode: rb.axis,
+      }));
+      return CandidateMatchDtoSchema.parse({
+        studentId: match.studentId,
+        studentName: match.studentName,
+        trackCode: match.trackCode,
+        certificateId: match.certificateId,
+        highestLevelCleared: match.highestLevelCleared,
+        headlineTier: match.headlineTier,
+        similarityScore: Math.round(match.cosineSimilarity * 100) / 100,
+        matchScore: Math.min(1, Math.round(match.cosineSimilarity * 100) / 100),
+        method: 'HYBRID',
+        explanation: {
+          thresholdsMet: [],
+          thresholdsMissed: [],
+          strongCompetencies: [...match.strongCompetencies],
+          gapCompetencies: [...match.gapCompetencies],
+          why: match.why,
+          verifiedSkills: verified,
+        },
+      });
+    });
   }
 }
 

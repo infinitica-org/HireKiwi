@@ -1,6 +1,6 @@
 # SMART — Module Boundaries & Service Topology
 
-> **Version:** v3.0 — Modular Monolith Boundary & Interface Specification
+> **Version:** v4.0 — Sprint 6 Module Surface (29 Sep 2026)
 > **Maintainer:** System Architect
 > **Ownership:** Architectural content only. For current per-module and per-engineer ownership, see [`TEAM.md`](./TEAM.md).
 > **Purpose:** Authoritative reference for SMART's backend module boundaries, authentication strategy, synchronous/asynchronous execution SLAs, data contracts, Kafka event topics, and REST API surface.
@@ -73,16 +73,18 @@ The following module boundaries account for a representative subset of `api-core
 
 - **Path:** `apps/api-core/src/modules/assessment`
 - **Responsibilities:**
-  - L1–L5 test player execution, active timer enforcement, and question-item delivery.
+  - L1–L5 test player execution, **server-authoritative** timer enforcement, and question-item delivery.
   - Candidate answer drafting and Redis session-state management (`session:assessment:{attempt_id}`).
   - Dynamic L1 form selection from active item banks, and anti-cheat telemetry event logging.
+  - **Sprint 6 — `AssessmentForceSubmitProcessor`:** BullMQ delayed-job auto-submits any in-flight attempt whose server-side deadline has passed, regardless of client state. Duplicate force-submit protection via attempt-state guard before DB write.
 - **Primary REST Endpoints:**
   - `POST /api/v1/assessment/start` `[SYNC <150ms]` — Initialize an assessment attempt session in Redis.
   - `GET /api/v1/assessment/next-item` `[SYNC <50ms]` — Fetch the next question item for the current attempt from warm cache.
   - `POST /api/v1/assessment/submit-l1` `[SYNC <30ms]` — Submit an answer draft (throttled at 10 req/min).
   - `POST /api/v1/assessment/complete` `[ASYNC BullMQ]` — Finalize the assessment attempt and enqueue it for evaluation.
+- **Queue:** BullMQ `bull:queue:assessment_force_submit` (delayed job, fires at attempt deadline)
 - **Kafka Topics Published:** `smart.assessment.started`, `smart.assessment.submitted`
-- **Key Implementation Concerns:** Redis-backed session manager (`session:assessment:{id}`); server-authoritative timer with auto-submission on expiry; weighted L1 item-selection logic.
+- **Key Implementation Concerns:** Redis-backed session manager (`session:assessment:{id}`); server-authoritative timer with `AssessmentForceSubmitProcessor` auto-submission on expiry; weighted L1 item-selection logic.
 
 ---
 
@@ -107,11 +109,12 @@ The following module boundaries account for a representative subset of `api-core
   - Anthropic Claude 5 Sonnet and Claude 4.7 API integration with token-bucket rate limiting (200 RPM / 10,000 TPM).
   - Automatic failover to Google Gemini (2.5 Pro / Flash) during rate limiting or provider outages.
   - RAG context retrieval using PostgreSQL `pgvector` competency embeddings.
+  - **Sprint 6 — Adversarial test coverage:** `ai-gateway-adversarial.spec.ts` covers failover circuit-breaker edge cases and prompt-injection resistance.
 - **Primary REST Endpoints:**
   - `POST /api/v1/eval/claude` `[ASYNC, SLA 2–5s]` — Internal endpoint for structured JSON LLM completions.
 - **Kafka Topics Consumed:** `smart.eval.requested`
 - **Kafka Topics Published:** `smart.eval.completed`
-- **Key Implementation Concerns:** Redis token-bucket rate limiter; circuit breaker that fails over to Gemini on HTTP 429/5xx; `pgvector` context retrieval for domain rubrics.
+- **Key Implementation Concerns:** Redis token-bucket rate limiter; circuit breaker that fails over to Gemini on HTTP 429/5xx; `pgvector` context retrieval for domain rubrics; adversarial prompt-injection hardening.
 
 ---
 
@@ -131,21 +134,22 @@ The following module boundaries account for a representative subset of `api-core
 
 ---
 
-### Module: `placement` (Company Overlay & Vector Matching)
+### Module: `matching` (JD Parsing, Semantic Matching & Placement Overlay)
 
-- **Path:** `apps/api-core/src/modules/placement`
+- **Path:** `apps/api-core/src/modules/matching`
 - **Responsibilities:**
   - Job description (JD) NLP parsing via Claude 5 Sonnet into structured threshold vectors.
-  - Vector cosine-similarity candidate-to-company matching using PostgreSQL `pgvector`.
+  - **Sprint 6 — `JdFallbackExtractor`:** Heuristic offline skill extraction + 10-track threshold vector computation when AI gateway times out or fails (implements ADR-0005 ai-failover).
+  - **Sprint 6 — `VectorCandidateMatcher`:** Cosine-similarity vector matching with strict privacy opt-out triple-gate (`discoverableToEmployers`, `isDeactivated`, `isHeld`) applied **before** scoring. Generates 5-domain `RadarCompetencyAxis` breakdown for employer visualization.
   - TPO auto-shortlist generation, B2B API-key matching (`X-SMART-API-KEY`), and outbound webhooks (`smart.placement.matched`).
 - **Primary REST Endpoints:**
-  - `POST /api/v1/placement/ingest-jd` `[ASYNC, SLA 2–4s]` — Upload and parse a JD document into threshold vectors.
-  - `POST /api/v1/placement/match` `[ASYNC, SLA 1–3s]` — Generate matched candidate shortlists (throttled at 30 req/min).
+  - `POST /api/v1/placement/ingest-jd` `[ASYNC, SLA 2–4s]` — Upload and parse a JD document into threshold vectors (with offline fallback).
+  - `POST /api/v1/placement/match` `[ASYNC, SLA 1–3s]` — Generate vector-matched candidate shortlists (throttled at 30 req/min).
   - `GET /api/v1/tpo/shortlist` `[SYNC <150ms]` — Retrieve a filterable candidate shortlist for recruiters.
 - **Kafka Topics Consumed:** `smart.eval.completed`
 - **Kafka Topics Published:** `smart.placement.matched`
 - **Outbound Webhooks:** HMAC-SHA256-signed JSON payloads to employer endpoints on `smart.placement.matched`.
-- **Key Implementation Concerns:** JD NLP parser extracting competency vectors; `pgvector` cosine-similarity search; B2B API-key handling and webhook dispatch for employer integrations.
+- **Key Implementation Concerns:** JD NLP parser with deterministic offline fallback; cosine-similarity vector matching with privacy opt-out gate; B2B API-key handling and webhook dispatch.
 
 ---
 
@@ -154,16 +158,28 @@ The following module boundaries account for a representative subset of `api-core
 - **Path:** `apps/api-core/src/modules/certificate`
 - **Responsibilities:**
   - Tier Trail computation and headline tier issuance (Gold/Silver/Bronze).
-  - Public verification handling with confidence-note calculation.
-  - Cryptographically signed dynamic QR code generation, object-storage PDF upload, and webhook dispatch (`smart.certificate.issued`).
+  - **Sprint 6 — Cryptographic certificate issuance:** HMAC-SHA256 canonical payload construction (`certificate-crypto.util.ts`), QR code encoding of the public verification URL (`certificate-qr.util.ts`), async PDF generation via BullMQ (`certificate-pdf.generator.ts`).
+  - Public verification handling with confidence-note calculation, revocation and supersession state rendering.
+  - 14-day manager endorsement token lifecycle with BullMQ reminder/expiry scheduling.
 - **Primary REST Endpoints:**
   - `GET /api/v1/verify/:certificate_id` `[SYNC <80ms]` — Public certificate verification (throttled at 20 req/min per client).
   - `POST /api/v1/certificates/issue` `[ASYNC BullMQ, SLA 1–4s]` — Issue a certificate record and trigger PDF generation on level completion.
-  - `GET /api/v1/certificates/export-pdf` `[SYNC]` — Retrieve the PDF certificate artifact.
+  - `GET /api/v1/certificates/export-pdf` `[SYNC]` — Retrieve the PDF certificate artifact (pre-signed MinIO URL delivery).
+- **Queue:** BullMQ `bull:queue:certificate_pdf_generation`
+- **Schema:** `apps/api-core/prisma/migrations/20260929120000_certificate_cryptographic_fields/` — adds `signatureHash`, `canonicalPayload`, `qrUrl` fields.
 - **Kafka Topics Consumed:** `smart.eval.completed`
 - **Kafka Topics Published:** `smart.certificate.issued`
 - **Outbound Webhooks:** HMAC-SHA256-signed JSON payloads to institutional systems on `smart.certificate.issued`.
-- **Key Implementation Concerns:** Public verification view rendering Tier Trail and confidence note; SHA-256-signed dynamic QR generation; object-storage upload and webhook dispatch for institutional verification.
+- **Key Implementation Concerns:** HMAC-SHA256 canonical payload and signature; deterministic QR encoding; async PDF via BullMQ; public verification view with tamper detection and tier trail; `CERTIFICATE_HMAC_SECRET` env var required.
+
+#### Public Verification App (`apps/web-verify`)
+
+- **Sprint 6 additions:**
+  - Full credential verification view with Tier Trail, Level Stepper, calibration employer panel, and Confidence Note.
+  - Cryptographic tamper warning on `signatureValid: false` (server-side HMAC) or invalid `?hash=` param (client-side UUID + HMAC check via `cert-signature.ts`).
+  - 404 wall for non-existent or malformed UUIDs — no stack trace leakage.
+  - `@media print` single-page alignment CSS (`globals.css`).
+  - `PrintButton` component for client-side print trigger.
 
 ---
 
@@ -180,6 +196,27 @@ The following module boundaries account for a representative subset of `api-core
 
 ---
 
+### Module: `institutions` (Institution & Partnership Lifecycle)
+
+- **Path:** `apps/api-core/src/modules/institutions`
+- **Responsibilities:**
+  - University and company institution account management, campus multi-tenancy.
+  - Student whitelist batch management (create, invite, import).
+  - **Sprint 6 — TPO Partnership Onboarding (`S6-VG-605`):** Partnership request lifecycle (create → review → provision), 7-day activation token, university account provisioning with primary + regional campuses, audit logging for all provisioning actions.
+  - **Sprint 6 — Bulk Whitelist Importer (`S6-VG-605`):** Async 10 000-row CSV/XLSX upload streamed to BullMQ (`bulk_whitelist_import` queue). Validates email formats, graduation years, department codes, flags duplicates. Atomic batch insertions — valid rows whitelisted, invalid rows quarantined. Error report delivered as pre-signed MinIO URL. Redis-backed progress tracking with 1-hour TTL.
+  - **Sprint 6 — Formula injection protection (CWE-1236):** `sanitizeSpreadsheetCellText` neutralizes `=`, `+`, `-`, `@` prefixes in all imported cell data.
+- **Primary REST Endpoints:**
+  - `POST /tpo/batches/:batchId/members/import-async` `[ASYNC BullMQ]` — Multipart upload to async import queue.
+  - `GET /tpo/batches/:batchId/members/import-status/:jobId` `[SYNC <50ms]` — Redis-backed progress polling.
+  - `GET /tpo/batches/:batchId/members/import-errors/:jobId` `[SYNC <100ms]` — Pre-signed error report download.
+  - `POST /institutions/partnerships` `[SYNC <200ms]` — Initiate a TPO partnership request.
+  - `POST /institutions/partnerships/:id/review` `[SYNC <200ms]` — Admin review decision.
+  - `POST /institutions/partnerships/:id/provision` `[SYNC <500ms]` — Provision university account.
+- **Queue:** BullMQ `bull:queue:bulk_whitelist_import` (DLQ after 5 retries)
+- **Key Implementation Concerns:** `BulkWhitelistImportProcessor` streaming import; atomic batch insert with error quarantine; `IdempotencyService` for invite idempotency; `ImpotencyService` is registered alongside `BulkWhitelistImportProcessor` in `InstitutionsModule`.
+
+---
+
 ## 3. Module Ownership
 
 Per-module and per-engineer ownership, review responsibilities, delivery-schedule assignments, and the Kafka topic producer/consumer matrix are maintained exclusively in [`TEAM.md`](./TEAM.md), which is this repository's designated and current source of truth for named ownership. This document intentionally carries no per-individual work-item assignments; it defines module boundaries and interfaces independent of who currently implements them.
@@ -187,3 +224,4 @@ Per-module and per-engineer ownership, review responsibilities, delivery-schedul
 ---
 
 _This document defines the module boundaries, authentication and SLA model, Kafka interfaces, and REST surface of the SMART `api-core` application, together with the one genuinely separate service in the backend topology, `proctoring-cv`. It carries no engineer- or sprint-level assignment information; see `TEAM.md` and `docs/delivery/AGILE_PLAN.md` for those._
+_Last updated: 2026-09-29, Sprint 6 (PRs #377, #378, #379, #380 merged into `dev`)._

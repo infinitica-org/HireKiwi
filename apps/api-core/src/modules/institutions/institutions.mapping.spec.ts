@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import { InstitutionsService } from './institutions.service.js';
+import { InstitutionsService, sanitizeSpreadsheetCellText } from './institutions.service.js';
 
 const noopRedis = { get: vi.fn(), setex: vi.fn(), del: vi.fn() };
 
@@ -66,6 +66,7 @@ function setup(existingUsers: ExistingUser[] = []) {
       invitations as never,
       auditPublisher as never,
       noopRedis as never,
+      {} as never,
     ),
   };
 }
@@ -213,5 +214,62 @@ describe('InstitutionsService mapped row validation', () => {
       mapping,
     );
     expect(result.errors[0]?.message).toBe('Candidate could not be imported.');
+  });
+
+  it('neutralizes formula injection characters (=, +, -, @) in fullName and groupLabel (CWE-1236)', async () => {
+    const { service } = setup();
+    const result = await service.previewBatchImport(
+      batchId,
+      institutionId,
+      csv(
+        "=cmd|' /C calc'!A0,calc@example.test,@ExecutiveGroup",
+        '+SUM(A1:A2),sum@example.test,+MathGroup',
+        '-MIN(B1:B2),min@example.test,-ScienceGroup',
+        'Vishal Bharath,vishal@example.test,Engineering',
+        'Jean-Luc Picard,picard@example.test,Starfleet Academy',
+      ),
+      'candidates.csv',
+      'text/csv',
+      mapping,
+    );
+
+    expect(result.validRows).toBe(5);
+    expect(result.invalidRows).toBe(0);
+
+    const previews = result.preview ?? [];
+    // Dangerous formulas are neutralized with a leading single quote (')
+    expect(previews[0]?.fullName).toBe("'=cmd|' /C calc'!A0");
+    expect(previews[0]?.groupLabel).toBe("'@ExecutiveGroup");
+
+    expect(previews[1]?.fullName).toBe("'+SUM(A1:A2)");
+    expect(previews[1]?.groupLabel).toBe("'+MathGroup");
+
+    expect(previews[2]?.fullName).toBe("'-MIN(B1:B2)");
+    expect(previews[2]?.groupLabel).toBe("'-ScienceGroup");
+
+    // Normal values remain unaltered
+    expect(previews[3]?.fullName).toBe('Vishal Bharath');
+    expect(previews[3]?.groupLabel).toBe('Engineering');
+
+    expect(previews[4]?.fullName).toBe('Jean-Luc Picard');
+    expect(previews[4]?.groupLabel).toBe('Starfleet Academy');
+  });
+
+  describe('sanitizeSpreadsheetCellText', () => {
+    it('neutralizes formula-trigger prefixes while preserving normal names', () => {
+      expect(sanitizeSpreadsheetCellText("=cmd|' /C calc'!A0")).toBe("'=cmd|' /C calc'!A0");
+      expect(sanitizeSpreadsheetCellText('+12345')).toBe("'+12345");
+      expect(sanitizeSpreadsheetCellText('-12345')).toBe("'-12345");
+      expect(sanitizeSpreadsheetCellText('@SUM(A1:A2)')).toBe("'@SUM(A1:A2)");
+      expect(sanitizeSpreadsheetCellText("\t=cmd|' /C calc'!A0")).toBe("'=cmd|' /C calc'!A0");
+      expect(sanitizeSpreadsheetCellText('\r\n+441234567')).toBe("'+441234567");
+
+      // Normal names & hyphenated words remain untouched
+      expect(sanitizeSpreadsheetCellText('Vishal Bharath')).toBe('Vishal Bharath');
+      expect(sanitizeSpreadsheetCellText('Mary-Jane Watson')).toBe('Mary-Jane Watson');
+      expect(sanitizeSpreadsheetCellText('Computer Science')).toBe('Computer Science');
+      expect(sanitizeSpreadsheetCellText('  Trimmed Name  ')).toBe('Trimmed Name');
+      expect(sanitizeSpreadsheetCellText('')).toBe('');
+    });
   });
 });

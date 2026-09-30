@@ -1,25 +1,39 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Patch, Post, Put, Query, Res } from '@nestjs/common';
+import { Readable } from 'node:stream';
+import type { FastifyReply } from 'fastify';
 import {
   API_PREFIX,
   CreateInstitutionRequestSchema,
+  ExportAuditLogsQuerySchema,
+  GetVerificationReviewQuerySchema,
   GlobalStudentSearchQuerySchema,
   InvitePlatformAdminRequestSchema,
   InviteUserRequestSchema,
   ListAuditLogsQuerySchema,
   ListInstitutionStudentsQuerySchema,
   ListInstitutionsQuerySchema,
+  ListPartnershipRequestsQuerySchema,
+  ReviewPartnershipRequestSchema,
   ResolveVerificationRequestSchema,
+  BulkResolveCompanyVerificationsRequestSchema,
   SetFeatureFlagOverrideRequestSchema,
   TenantActionReasonSchema,
   UpdateInstitutionRequestSchema,
   UpdatePlanCapacityRequestSchema,
   UpdatePlanEntitlementsRequestSchema,
+  UpdatePlanPriceRequestSchema,
   ViewCandidateRequestSchema,
+  GetAdminDashboardQuerySchema,
 } from '@smart/contracts';
 import { Roles } from '../../common/guards/roles.decorator.js';
+import { RequirePermission } from '../../common/guards/permissions.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
+import { AuditAccess } from '../../common/decorators/audit-access.decorator.js';
+import { AuditLogExportService } from './audit-log-export.service.js';
 import { InstitutionsService } from './institutions.service.js';
+import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
+import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 
 function compactQuery(
   query: Record<string, string | undefined>,
@@ -32,7 +46,43 @@ function compactQuery(
 @Controller(`${API_PREFIX}/admin`)
 @Roles('SUPER_ADMIN')
 export class InstitutionsAdminController {
-  constructor(@Inject(InstitutionsService) private readonly institutions: InstitutionsService) {}
+  constructor(
+    @Inject(InstitutionsService) private readonly institutions: InstitutionsService,
+    @Inject(KafkaOutboxService) private readonly kafkaOutbox: KafkaOutboxService,
+    @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
+    @Inject(AuditLogExportService) private readonly auditExport: AuditLogExportService,
+  ) {}
+
+  @Get('partnerships/requests')
+  listPartnershipRequests(@Query() query: Record<string, string | undefined>) {
+    return this.institutions.listPartnershipRequests(
+      ListPartnershipRequestsQuerySchema.parse(compactQuery(query)),
+    );
+  }
+
+  @Get('partnerships/requests/:id')
+  @AuditAccess('partnership_request', 'id')
+  getPartnershipRequest(@Param('id') id: string) {
+    return this.institutions.getPartnershipRequestById(id);
+  }
+
+  @Post('partnerships/requests/:id/decision')
+  reviewPartnershipRequest(
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.institutions.reviewPartnershipRequest(
+      id,
+      ReviewPartnershipRequestSchema.parse(body),
+      user.sub,
+    );
+  }
+
+  @Post('partnerships/requests/:id/provision')
+  provisionUniversityAccount(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.institutions.provisionUniversityAccount(id, user.sub);
+  }
 
   @Post('students/:userId/profile')
   viewProfile(
@@ -66,8 +116,11 @@ export class InstitutionsAdminController {
   }
 
   @Post('institutions')
-  createInstitution(@Body() body: unknown) {
-    return this.institutions.createInstitution(CreateInstitutionRequestSchema.parse(body));
+  createInstitution(@Body() body: unknown, @CurrentUser() user: RequestUser) {
+    return this.institutions.createInstitution(
+      CreateInstitutionRequestSchema.parse(body),
+      user.sub,
+    );
   }
 
   @Get('institutions')
@@ -118,19 +171,84 @@ export class InstitutionsAdminController {
     );
   }
 
+  @Patch('plans/:planId/price')
+  updatePlanPrice(
+    @Param('planId') planId: string,
+    @Body() body: unknown,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.institutions.updatePlanPrice(
+      planId,
+      UpdatePlanPriceRequestSchema.parse(body),
+      user.sub,
+    );
+  }
+
   @Get('dashboard')
-  dashboard() {
-    return this.institutions.getDashboard();
+  dashboard(@Query() query: Record<string, string | undefined>) {
+    return this.institutions.getDashboard(GetAdminDashboardQuerySchema.parse(compactQuery(query)));
+  }
+
+  @Get('flagged-organizations')
+  flaggedOrganizations() {
+    return this.institutions.listFlaggedOrganizations();
+  }
+
+  @Get('verification-events')
+  verificationEvents() {
+    return this.kafkaOutbox.listVerificationEvents();
+  }
+
+  @Post('verification-events/:id/retry')
+  async retryVerificationEvent(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    const result = await this.kafkaOutbox.retryEvent(id);
+    await this.auditPublisher.record({
+      actorId: user.sub,
+      action: 'admin.outbox_event.retried',
+      resourceType: 'kafka_outbox',
+      resourceId: id,
+      reasonCode: 'ADMIN_MANUAL_RETRY',
+    });
+    return result;
   }
 
   @Get('audit-logs')
+  @RequirePermission('audit.read')
   auditLogs(@Query() query: Record<string, string | undefined>) {
     return this.institutions.listAuditLogs(ListAuditLogsQuerySchema.parse(compactQuery(query)));
+  }
+
+  /** S6-VV-101 (#496) — streams the same filtered audit log as CSV or JSON Lines. */
+  @Get('audit-logs/export')
+  @RequirePermission('audit.export')
+  async exportAuditLogs(
+    @Query() query: Record<string, string | undefined>,
+    @CurrentUser() user: RequestUser,
+    @Res() reply: FastifyReply,
+  ) {
+    const { format, ...filter } = ExportAuditLogsQuerySchema.parse(compactQuery(query));
+    const { lines } = await this.auditExport.prepare(filter, format, user.sub);
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    return reply
+      .header('Content-Type', format === 'csv' ? 'text/csv; charset=utf-8' : 'application/x-ndjson')
+      .header('Content-Disposition', `attachment; filename="smart-audit-log-${stamp}.${format}"`)
+      .header('Cache-Control', 'no-store')
+      .send(Readable.from(lines));
   }
 
   @Get('verification-queue')
   verificationQueue() {
     return this.institutions.listVerificationQueue();
+  }
+
+  @Get('verification-queue/:tenantId/review')
+  @AuditAccess('tenant_verification', 'tenantId')
+  verificationReview(
+    @Param('tenantId') tenantId: string,
+    @Query() query: Record<string, string | undefined>,
+  ) {
+    GetVerificationReviewQuerySchema.parse(compactQuery(query));
+    return this.institutions.getCompanyVerificationReview(tenantId);
   }
 
   @Post('verification-queue/:tenantId/resolve')
@@ -142,6 +260,14 @@ export class InstitutionsAdminController {
     return this.institutions.resolveVerification(
       tenantId,
       ResolveVerificationRequestSchema.parse(body),
+      user.sub,
+    );
+  }
+
+  @Post('verification-queue/bulk-resolve')
+  bulkResolveVerification(@Body() body: unknown, @CurrentUser() user: RequestUser) {
+    return this.institutions.bulkResolveCompanyVerifications(
+      BulkResolveCompanyVerificationsRequestSchema.parse(body),
       user.sub,
     );
   }
@@ -223,6 +349,7 @@ export class InstitutionsAdminController {
   }
 
   @Get('institutions/:institutionId/students')
+  @AuditAccess('institution_students', 'institutionId')
   listStudents(
     @Param('institutionId') institutionId: string,
     @Query() query: Record<string, string | undefined>,
@@ -275,6 +402,7 @@ export class InstitutionsAdminController {
   }
 
   @Get('institutions/:institutionId/admins')
+  @AuditAccess('institution_admins', 'institutionId')
   listAdmins(@Param('institutionId') institutionId: string) {
     return this.institutions.listInstitutionAdmins(institutionId);
   }

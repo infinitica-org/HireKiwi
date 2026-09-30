@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { AuditLogDto, AuditLogSection } from '@smart/contracts';
-import { Filter, ScrollText } from 'lucide-react';
+import { Download, Filter, ScrollText } from 'lucide-react';
 import { Button } from '@smart/ui/button';
 import { Card, CardContent } from '@smart/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smart/ui/tabs';
@@ -73,17 +73,35 @@ function AuditTable({
     return <EmptyState icon={ScrollText}>No matching audit events.</EmptyState>;
   }
   return (
-    <DataTable headers={['When', 'Actor', 'Role', 'Action', 'Resource', 'Reason']}>
+    <DataTable
+      headers={['Timestamp', 'Actor & Email', 'Role', 'Action Event', 'Target Resource', 'Reason']}
+    >
       {rows.map((row) => (
         <TableRow key={row.auditLogId} className="cursor-pointer" onClick={() => onSelect(row)}>
-          <TableCell>{new Date(row.createdAt).toLocaleString()}</TableCell>
-          <TableCell>{row.actorEmail ?? '—'}</TableCell>
-          <TableCell>{row.actorRole ?? '—'}</TableCell>
-          <TableCell className="font-medium">{formatAuditAction(row.action)}</TableCell>
-          <TableCell>
-            {formatResourceType(row.resourceType)} {row.resourceId?.slice(0, 8)}
+          <TableCell className="font-mono text-[11px] text-zinc-500">
+            {new Date(row.createdAt).toLocaleString()}
           </TableCell>
-          <TableCell>{row.reasonCode}</TableCell>
+          <TableCell>
+            <span className="font-medium text-zinc-900 text-xs">
+              {row.actorEmail ?? 'System / Anonymous'}
+            </span>
+          </TableCell>
+          <TableCell>
+            <span className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-mono text-[11px] font-bold text-zinc-700">
+              {row.actorRole ?? 'SYSTEM'}
+            </span>
+          </TableCell>
+          <TableCell className="font-semibold text-zinc-900 text-xs">
+            {formatAuditAction(row.action)}
+          </TableCell>
+          <TableCell>
+            <span className="font-mono text-xs text-zinc-600">
+              {formatResourceType(row.resourceType)} {row.resourceId?.slice(0, 8)}
+            </span>
+          </TableCell>
+          <TableCell className="text-xs text-zinc-500 max-w-xs truncate">
+            {row.reasonCode ?? '—'}
+          </TableCell>
         </TableRow>
       ))}
     </DataTable>
@@ -207,27 +225,63 @@ export default function AuditPage() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<AuditLogDto | null>(null);
 
+  const [exporting, setExporting] = useState(false);
+
+  function toQuery(nextSection: AuditLogSection | 'ALL', nextFilters: AuditFilters) {
+    return {
+      q: nextFilters.q.trim() || undefined,
+      action: resolveActionFilterValue(nextFilters.action) || undefined,
+      resourceType: nextFilters.resourceType.trim() || undefined,
+      resourceId: nextFilters.resourceId.trim() || undefined,
+      actorId: nextFilters.actorId.trim() || undefined,
+      section: nextSection === 'ALL' ? undefined : nextSection,
+      from: toIsoBound(nextFilters.from, false),
+      to: toIsoBound(nextFilters.to, true),
+    };
+  }
+
   async function load(nextSection: AuditLogSection | 'ALL', nextFilters: AuditFilters) {
-    setRows(
-      await api.onboarding.listAuditLogs({
-        q: nextFilters.q.trim() || undefined,
-        action: resolveActionFilterValue(nextFilters.action) || undefined,
-        resourceType: nextFilters.resourceType.trim() || undefined,
-        resourceId: nextFilters.resourceId.trim() || undefined,
-        actorId: nextFilters.actorId.trim() || undefined,
-        section: nextSection === 'ALL' ? undefined : nextSection,
-        from: toIsoBound(nextFilters.from, false),
-        to: toIsoBound(nextFilters.to, true),
-      }),
-    );
+    try {
+      const data = await api.onboarding.listAuditLogs(toQuery(nextSection, nextFilters));
+      setRows(data ?? []);
+    } catch {
+      setError('Failed to load audit log from database.');
+      setRows([]);
+    }
   }
 
   // The last-submitted filters (as opposed to the live form state) so that
   // switching tabs re-applies them without retriggering on every keystroke.
   const appliedFiltersRef = useRef<AuditFilters>(EMPTY_FILTERS);
 
+  // S6-VV-101 — exports exactly what the table is showing (applied filters + tab).
+  async function exportCsv() {
+    setExporting(true);
+    setError(null);
+    try {
+      const blob = await api.onboarding.exportAuditLogs({
+        ...toQuery(section, appliedFiltersRef.current),
+        format: 'csv',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `smart-audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'The audit log could not be exported. Please try again.',
+      );
+    } finally {
+      setExporting(false);
+    }
+  }
+
   useEffect(() => {
-    load(section, appliedFiltersRef.current).catch(() => setError('Failed to load audit log.'));
+    load(section, appliedFiltersRef.current).catch(() => {});
   }, [section]);
 
   return (
@@ -299,6 +353,18 @@ export default function AuditPage() {
               <Button type="submit" variant="outline" className={controlButtonClassName}>
                 <Filter data-icon="inline-start" />
                 Filter
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className={controlButtonClassName}
+                disabled={exporting}
+                onClick={() => {
+                  void exportCsv();
+                }}
+              >
+                <Download data-icon="inline-start" />
+                {exporting ? 'Exporting…' : 'Export CSV'}
               </Button>
               {Object.values(filters).some((value) => value !== '') ? (
                 <Button
