@@ -1,43 +1,138 @@
 ---
-title: 26. QA & Quality Engineering
-description: Quality assurance pyramid, unit test standards, k6 performance load profiles, and Golden Dataset validation.
+title: 26. QA & Performance Testing
+description: Quality assurance pyramid, comprehensive k6 performance testing profiles, stress/spike/soak SLAs, and LLM Golden Dataset evaluation guardrails.
 ---
 
-## 26.1 Testing Pyramid & Strategy
+## 26.1 Enterprise Testing Pyramid
 
-SmartZen enforces a disciplined test pyramid across all monorepo packages:
+SmartZen enforces a disciplined quality assurance pyramid across all packages in the monorepo:
 
 ```
-        /   E2E Tests (Playwright)   \      5% Coverage  (Critical user journeys)
-       /------------------------------\
-      /  Integration Tests (Supertest) \    25% Coverage (API route contracts)
-     /----------------------------------\
-    /     Unit Tests (Vitest & Zod)      \  70% Coverage (Invariants & domain logic)
-   /--------------------------------------\
+                  /   E2E Tests (Playwright)   \      5% Coverage
+                 /------------------------------\     (Critical User Journeys)
+                /  Integration Tests (Supertest) \    25% Coverage
+               /----------------------------------\   (API Contracts & Tenancy)
+              /     Unit Tests (Vitest & Zod)      \  70% Coverage
+             /--------------------------------------\ (Domain Invariants & Math)
+```
+
+1. **Unit Testing (Vitest):** Validates deterministic domain logic, HMAC-SHA256 signature verification, BARS rubric calculations, and Zod contract parsing. Fast, memory-isolated, executing 550+ tests in under 4 seconds.
+2. **Integration Testing (Supertest & Testcontainers):** Spins up ephemeral PostgreSQL (with pgvector) and Redis containers to verify database transactions, RLS tenant isolation filters, and PgBouncer connection behaviors.
+3. **End-to-End Testing (Playwright):** Automates critical user journeys: candidate login, proctored code defense simulation, TPO shortlist generation, and public certificate verification.
+
+---
+
+## 26.2 Performance Load Testing Profiles (k6)
+
+Performance is benchmarked in `tools/load-tests/` across six rigorous execution profiles designed to simulate realistic academic and enterprise placement conditions:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      k6 LOAD TESTING EXECUTION MATRIX                       │
+├───────────┬───────────────┬──────────┬────────────────────────┬─────────────┤
+│ PROFILE   │ VIRTUAL USERS │ DURATION │ OPERATIONAL SCENARIO   │ TARGET SLA  │
+├───────────┼───────────────┼──────────┼────────────────────────┼─────────────┤
+│ Smoke     │ 15 VUs        │ 3 mins   │ Post-deploy sanity     │ p95 < 50ms  │
+│ Baseline  │ 100 VUs       │ 10 mins  │ Normal daily traffic   │ p95 < 80ms  │
+│ Load      │ 1,000 VUs     │ 30 mins  │ Placement drive rush   │ p95 < 120ms │
+│ Stress    │ 5,000 VUs     │ 45 mins  │ Platform capacity ceiling│ p95 < 250ms │
+│ Spike     │ 0 -> 3k -> 0  │ 5 mins   │ Simultaneous exam start│ 0% 502/504  │
+│ Soak      │ 500 VUs       │ 8 hours  │ Memory & connection leak│ 0 RAM leak  │
+└───────────┴───────────────┴──────────┴────────────────────────┴─────────────┘
+```
+
+### 1. Stress Profile (5,000 VUs): Capacity Limit Verification
+
+- **Objective:** Verifies that the single High-End VPS (16 vCPUs, 64GB RAM) sustains 5,000 active students simultaneously answering assessment questions without dropping connections.
+- **Success Criteria:**
+  - HTTP 200 success rate greater than 99.9%.
+  - p95 latency for answer submission under 250ms.
+  - PgBouncer active server connections never exceed 20 to PostgreSQL.
+  - System CPU utilization stays within under 75%.
+
+### 2. Spike Profile (3,000 VUs Burst): Campus Exam Bell Simulation
+
+- **Objective:** Simulates the instantaneous burst of 3,000 students clicking "Start Assessment" at exactly 10:00:00 AM across multiple university campuses.
+- **Success Criteria:**
+  - Caddy reverse proxy absorbs connection burst without dropping sockets.
+  - Zero HTTP 502 (Bad Gateway) or HTTP 504 (Gateway Timeout) errors.
+  - BullMQ delayed timer scheduling sustains 1,000 job registrations per second.
+
+### 3. Soak Profile (500 VUs for 8 Hours): Endurance & Memory Audit
+
+- **Objective:** Sustained medium-load test to identify slow memory leaks, Redis connection accumulation, or unclosed database handles.
+- **Success Criteria:**
+  - Heap memory slope is flat (RAM variation under 5% across 8 hours).
+  - PgBouncer client pool cleanly releases connections upon request termination.
+
+---
+
+## 26.3 Executable k6 Performance Test Script
+
+Below is the production k6 load test configuration utilized for validating the assessment submission pipeline:
+
+```javascript
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
+
+export const options = {
+  scenarios: {
+    stress_test: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '5m', target: 1000 },
+        { duration: '15m', target: 5000 },
+        { duration: '20m', target: 5000 },
+        { duration: '5m', target: 0 },
+      ],
+    },
+  },
+  thresholds: {
+    http_req_duration: ['p(95)<250', 'p(99)<400'],
+    http_req_failed: ['rate<0.001'], // < 0.1% failure
+  },
+};
+
+const BASE_URL = __ENV.API_URL || 'https://api.becomesmart.online/v1';
+
+export default function () {
+  const sessionId = 'sess_benchmark_' + (__VU % 500);
+  const idempotencyKey = uuidv4();
+
+  const payload = JSON.stringify({
+    sessionId: sessionId,
+    questionId: 'q_benchmark_' + Math.floor(Math.random() * 50),
+    selectedOption: 'C',
+    timeSpentSeconds: 15,
+  });
+
+  const params = {
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': idempotencyKey,
+      Authorization: 'Bearer test_token_benchmark',
+    },
+  };
+
+  const res = http.post(`${BASE_URL}/assessments/submit-answer`, payload, params);
+
+  check(res, {
+    'status is 200': (r) => r.status === 200,
+    'latency is acceptable': (r) => r.timings.duration < 250,
+  });
+
+  sleep(1);
+}
 ```
 
 ---
 
-## 26.2 Performance Testing Profiles (k6)
+## 26.4 Golden Dataset & LLM Evaluation Guardrails
 
-Performance is benchmarked in `tools/load-tests/` across six execution profiles:
+To prevent hallucination, score drift, or scoring bias in the AI code defense grading engine:
 
-| Profile | Virtual Users (VUs) | Duration | Objective | Target SLA |
-| :--- | :--- | :--- | :--- | :--- |
-| **Smoke** | 15 VUs | 3 minutes | Verify baseline route health post-deploy | p95 < 50ms, 0% errors |
-| **Baseline**| 100 VUs | 10 minutes | Measure standard day-to-day campus load | p95 < 80ms |
-| **Load** | 1,000 VUs | 30 minutes | Peak placement season application rush | p95 < 120ms |
-| **Stress** | 5,000 VUs | 45 minutes | Determine resource saturation point | Graceful queue throttling |
-| **Spike** | 0 -> 3,000 -> 0 | 5 minutes | Simulates instantaneous campus test start | Caddy buffer stability |
-| **Soak** | 500 VUs | 8 hours | Memory leak and Redis connection audit | Zero RAM growth / leak |
-
----
-
-## 26.3 Automated CI Quality Gates
-
-Every pull request into `dev` mechanically executes:
-1. `pnpm format:check`: Enforces Prettier code styling.
-2. `pnpm lint`: Zero ESLint warnings allowed (`--max-warnings=0`).
-3. `pnpm typecheck`: Strict TypeScript validation with zero `any` types.
-4. `pnpm test`: All 552+ Vitest tests must pass green.
-5. Contract DTO Invariant validation: Schema backwards-compatibility check.
+1. **Golden Dataset Anchor:** The engineering team maintains a curated test set of 200 student code defenses independently scored by a panel of three human senior engineering managers.
+2. **Automated Calibration Suite:** Every modification to the evaluation prompt or LLM model version runs against the Golden Dataset.
+3. **Statistical Agreement Threshold:** The automated evaluator must achieve a **Pearson Correlation r >= 0.92** and a **Cohen's Kappa >= 0.88** against human panel scores before deployment to production.

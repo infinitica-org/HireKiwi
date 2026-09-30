@@ -1,37 +1,110 @@
 ---
 title: 19. API & Integrations
-description: REST API conventions, versioning schemes, enterprise ATS webhooks, and institutional ERP synchronization.
+description: Exhaustive REST API specification, endpoint catalogue, request/response DTO contracts, ATS webhook engine, and ERP connectors.
 ---
 
-## 19.1 API Architecture Standards
+## 19.1 API Architecture Standards & Conventions
 
-SmartZen exposes a standardized RESTful API via `api.becomesmart.online`:
+SmartZen provides a secure, versioned RESTful API exposed through `api.becomesmart.online/v1`:
 
-* **URL Format:** `https://api.becomesmart.online/v1/{module}/{resource}`
-* **Content Negotiation:** `application/json` with UTF-8 encoding.
-* **Idempotency Keys:** Mutating `POST` requests require `Idempotency-Key: {UUIDv4}` to prevent duplicate financial or application submissions.
-* **Error Standards:** RFC 7807 Problem Details for HTTP APIs:
+- **Protocol & Encoding:** HTTPS with mandatory TLS 1.3; UTF-8 JSON payloads (`Content-Type: application/json`).
+- **Authentication:** Stateless JSON Web Tokens (JWT, 15-minute TTL) with HttpOnly refresh cookies; or Bearer API keys (`sk_live_*` for production enterprise access).
+- **Idempotency Invariant:** All mutating endpoints (`POST`, `PUT`, `PATCH`) support the `Idempotency-Key: {UUIDv4}` header. Replays within 24 hours return identical responses without re-executing business logic.
+- **Error Standards:** Conforms strictly to RFC 7807 (Problem Details for HTTP APIs):
 
 ```json
 {
-  "type": "https://docs.becomesmart.online/errors/COMPETENCY_THRESHOLD_NOT_MET",
+  "type": "https://docs.becomesmart.online/errors/COMPETENCY_FLOOR_NOT_MET",
   "title": "Unmet Competency Threshold",
   "status": 422,
-  "detail": "Application requires minimum Silver tier in Distributed Caching.",
-  "instance": "/v1/placement/applications/apply",
-  "code": "SMART_422_COMPETENCY_FLOOR"
+  "detail": "Application requires minimum Silver tier (BARS >= 3.5) in Distributed Caching.",
+  "instance": "/v1/tpo/drives/shortlist",
+  "code": "SMART_422_COMPETENCY_FLOOR",
+  "timestamp": "2026-09-30T16:00:00Z"
 }
 ```
 
 ---
 
-## 19.2 Authentication & API Keys
+## 19.2 Comprehensive REST Endpoint Catalogue
 
-* **Session Access:** Stateless short-lived JSON Web Tokens (JWT, 15-minute TTL) with HttpOnly secure refresh cookies.
-* **Machine-to-Machine Integration:** Enterprise API keys formatted with typed prefixes:
-  * `sk_live_smartzen_{32_chars}`: Production enterprise access.
-  * `sk_test_smartzen_{32_chars}`: Sandboxed testing access.
-* **Authentication Header:** `Authorization: Bearer <token>` or `X-SmartZen-Key: <api_key>`.
+### 1. Authentication & Tenancy Service (`/v1/auth`)
+
+| Method | Endpoint                | Description                                                      | Auth Scopes   |
+| :----- | :---------------------- | :--------------------------------------------------------------- | :------------ |
+| `POST` | `/v1/auth/login`        | Email/password session login with multi-tenant domain resolution | Public        |
+| `POST` | `/v1/auth/sso/callback` | Microsoft Entra ID / Google Workspace OIDC token callback        | Public        |
+| `POST` | `/v1/auth/refresh`      | Refreshes short-lived JWT using secure HttpOnly cookie           | Session       |
+| `POST` | `/v1/auth/logout`       | Revokes current session token and clears refresh cookie          | Authenticated |
+
+### 2. Candidate & Evidence Service (`/v1/candidates`)
+
+| Method | Endpoint                              | Description                                                       | Auth Scopes        |
+| :----- | :------------------------------------ | :---------------------------------------------------------------- | :----------------- |
+| `GET`  | `/v1/candidates/profile`              | Fetches authenticated candidate profile and verified competencies | `CANDIDATE`        |
+| `POST` | `/v1/candidates/evidence/github`      | Initiates GitHub OAuth repository linking and AST code scan       | `CANDIDATE`        |
+| `POST` | `/v1/candidates/evidence/voucher`     | Submits work-experience attestation claim (Rejects offer letters) | `CANDIDATE`        |
+| `GET`  | `/v1/candidates/evidence/voucher/:id` | Queries voucher status, reminder cadence, and corporate domain    | `CANDIDATE`, `TPO` |
+
+#### Sample Request: Submit Work Experience Voucher (`POST /v1/candidates/evidence/voucher`)
+
+```json
+{
+  "companyName": "Acme Technologies India Pvt Ltd",
+  "companyWebsite": "https://acme-tech.example.in",
+  "verifierEmail": "talent.verification@acme-tech.example.in",
+  "roleTitle": "Software Engineering Intern",
+  "startDate": "2025-05-01",
+  "endDate": "2025-07-31",
+  "documentUrl": "https://storage.becomesmart.online/proofs/completion_cert_99.pdf",
+  "documentType": "COMPLETION_CERTIFICATE"
+}
+```
+
+### 3. Assessment & Examination Service (`/v1/assessments`)
+
+| Method | Endpoint                        | Description                                                    | Auth Scopes |
+| :----- | :------------------------------ | :------------------------------------------------------------- | :---------- |
+| `POST` | `/v1/assessments/start`         | Initializes examination session; schedules BullMQ server timer | `CANDIDATE` |
+| `POST` | `/v1/assessments/heartbeat`     | Transmits 30s proctoring telemetry (MediaPipe gaze, tab focus) | `CANDIDATE` |
+| `POST` | `/v1/assessments/submit-answer` | Commits candidate question answer atomically with idempotency  | `CANDIDATE` |
+| `POST` | `/v1/assessments/finish`        | Concludes assessment; triggers BARS rubric grading worker      | `CANDIDATE` |
+
+#### Sample Request: Submit Answer (`POST /v1/assessments/submit-answer`)
+
+```json
+{
+  "sessionId": "sess_882f0c19-7bb3-4e4d-a2f0-1a2b3c4d5e6f",
+  "questionId": "q_node_concurrency_042",
+  "selectedOption": "B",
+  "codeSnippetAnswer": null,
+  "timeSpentSeconds": 48
+}
+```
+
+### 4. University Placement Service (`/v1/tpo`)
+
+| Method | Endpoint                      | Description                                                         | Auth Scopes         |
+| :----- | :---------------------------- | :------------------------------------------------------------------ | :------------------ |
+| `POST` | `/v1/tpo/roster/batch-upload` | Uploads CSV roster to auto-provision institutional student accounts | `INSTITUTION_ADMIN` |
+| `GET`  | `/v1/tpo/analytics/readiness` | Department-level readiness tier breakdown (Gold, Silver, Bronze)    | `INSTITUTION_ADMIN` |
+| `POST` | `/v1/tpo/drives/shortlist`    | Generates ranked candidate shortlist for incoming corporate JD      | `INSTITUTION_ADMIN` |
+| `POST` | `/v1/tpo/drives/dispatch`     | Dispatches approved shortlist to corporate recruiter pipeline       | `INSTITUTION_ADMIN` |
+
+### 5. Corporate Recruiter Pipeline Service (`/v1/company`)
+
+| Method  | Endpoint                                | Description                                                         | Auth Scopes     |
+| :------ | :-------------------------------------- | :------------------------------------------------------------------ | :-------------- |
+| `POST`  | `/v1/company/requisitions`              | Publishes job opening with BARS competency thresholds               | `COMPANY_ADMIN` |
+| `GET`   | `/v1/company/shortlists/:driveId`       | Reviews TPO-forwarded candidate dossiers (No bulk export)           | `RECRUITER`     |
+| `PATCH` | `/v1/company/applications/:id/stage`    | Advances applicant through pipeline (`INTERVIEW`, `OFFER`, `HIRED`) | `RECRUITER`     |
+| `POST`  | `/v1/company/applications/:id/feedback` | Submits post-interview BARS calibration feedback                    | `RECRUITER`     |
+
+### 6. Public Verification Surface (`/v1/verify`)
+
+| Method | Endpoint                          | Description                                                     | Auth Scopes      |
+| :----- | :-------------------------------- | :-------------------------------------------------------------- | :--------------- |
+| `GET`  | `/v1/verify/certificates/:certId` | Validates HMAC-SHA256 signature and returns verified badge info | Public (No Auth) |
 
 ---
 
@@ -39,18 +112,20 @@ SmartZen exposes a standardized RESTful API via `api.becomesmart.online`:
 
 Enterprise recruiters receive real-time webhook updates when candidate milestones occur:
 
-* **Supported Payload Events:** `candidate.verified`, `application.shortlisted`, `offer.accepted`.
-* **Cryptographic Verification:** Every webhook contains an `X-SmartZen-Signature` header computed as:
+- **Event Types:** `candidate.verified`, `application.shortlisted`, `interview.scheduled`, `offer.accepted`.
+- **Payload Verification:** Webhook payloads include an `X-SmartZen-Signature` computed via HMAC-SHA256 using the customer's webhook signing secret.
 
-```text
-Signature = HMAC-SHA256(timestamp + "." + payload, WEBHOOK_SECRET)
+```json
+{
+  "eventId": "evt_991823ab-4122-4819",
+  "eventType": "candidate.verified",
+  "timestamp": "2026-09-30T16:15:00Z",
+  "data": {
+    "candidateId": "cand_univ_55102",
+    "competency": "Node.js Distributed Concurrency",
+    "tier": "GOLD",
+    "barsScore": 4.65,
+    "certificateUrl": "https://becomesmart.online/verify/cert_h7x92j0"
+  }
+}
 ```
-
----
-
-## 19.4 Institutional SIS / ERP Sync
-
-SmartZen supports automated synchronization with campus information systems:
-* **Batch Ingestion:** SFTP CSV uploads scheduled nightly at `01:00 IST`.
-* **Real-time Synchronization:** Webhook connectors for Ellucian Banner, SAP Student Lifecycle Management, and Canvas LMS.
-* **Conflict Resolution:** Institutional identity (Roll Number + University Domain) serves as immutable anchor.
