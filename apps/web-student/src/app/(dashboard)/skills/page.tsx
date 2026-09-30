@@ -380,13 +380,12 @@ export default function SkillsProfilePage() {
                             {item.level}
                           </span>
                           <span
-                            title="How sure we are about this level"
                             className={cn(
                               'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
-                              cue.tone,
+                              'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
                             )}
                           >
-                            {cue.label}
+                            Verified
                           </span>
                         </>
                       ) : (
@@ -405,32 +404,34 @@ export default function SkillsProfilePage() {
                       {item.definition.categoryName}
                     </p>
 
-                    {/* 5-Segment Level Bar */}
-                    <div className="pt-1">
-                      <div className="flex items-center gap-1.5">
-                        {[1, 2, 3, 4, 5].map((segment) => {
-                          const filled = segment <= item.levelScore;
-                          return (
-                            <div
-                              key={segment}
-                              className={cn(
-                                'h-2 flex-1 rounded-sm transition-all',
-                                filled
-                                  ? 'bg-zinc-900 dark:bg-white'
-                                  : 'bg-zinc-100 dark:bg-zinc-800',
-                              )}
-                            />
-                          );
-                        })}
+                    {/* 5-Segment Level Bar - Only show for verified skills */}
+                    {isVerified && (
+                      <div className="pt-1">
+                        <div className="flex items-center gap-1.5">
+                          {[1, 2, 3, 4, 5].map((segment) => {
+                            const filled = segment <= item.levelScore;
+                            return (
+                              <div
+                                key={segment}
+                                className={cn(
+                                  'h-2 flex-1 rounded-sm transition-all',
+                                  filled
+                                    ? 'bg-zinc-900 dark:bg-white'
+                                    : 'bg-zinc-100 dark:bg-zinc-800',
+                                )}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between text-[10px] text-zinc-400 mt-1">
+                          <span>Beginner</span>
+                          <span>Intermediate</span>
+                          <span>Advanced</span>
+                          <span>Expert</span>
+                          <span>Pro</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between text-[10px] text-zinc-400 mt-1">
-                        <span>Beginner</span>
-                        <span>Intermediate</span>
-                        <span>Advanced</span>
-                        <span>Expert</span>
-                        <span>Pro</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Actions */}
