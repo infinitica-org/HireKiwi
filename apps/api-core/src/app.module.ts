@@ -19,6 +19,7 @@ import { CandidateCertificatesModule } from './modules/candidate-certificates/ca
 import { CatalogModule } from './modules/catalog/catalog.module.js';
 import { ApplicationsModule } from './modules/applications/applications.module.js';
 import { MessagingModule } from './modules/messaging/messaging.module.js';
+import { JobsModule } from './modules/jobs/jobs.module.js';
 import { StudentJobsModule } from './modules/student-jobs/student-jobs.module.js';
 import { CompanyProfileModule } from './modules/company-profile/company-profile.module.js';
 import { CertificateModule } from './modules/certificate/certificate.module.js';
@@ -83,6 +84,7 @@ import { StorageModule } from './platform/storage/storage.module.js';
     UsernameModule,
     AccountModule,
     CompanyProfileModule,
+    JobsModule,
     StudentJobsModule,
     ApplicationsModule,
     MessagingModule,
