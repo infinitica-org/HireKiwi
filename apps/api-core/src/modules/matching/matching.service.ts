@@ -23,6 +23,7 @@ import {
   TIER_RANK,
   TrackCodeSchema,
   VerifiedSkillSummarySchema,
+  UuidSchema,
   type CandidateMatchDto,
   type CertifiableTier,
   type CreateMatchRunResponse,
@@ -78,17 +79,222 @@ import {
   PROFICIENCY_RANK,
   SKILL_CAPABILITY_RANKER_VERSION,
   rankSkillCapabilityCandidates,
+  type CapabilityFitRowInternal,
   type InferredCapabilityRow,
   type QlixCompetencyObservation,
   type SkillCapabilityCandidate,
   type SkillCapabilityJob,
+  type SkillCapabilityScore,
+  type SkillFitRowInternal,
 } from './skill-capability-ranker.js';
 import {
   matchCandidatesWithVectorSimilarity,
   type CandidateVectorProfile,
 } from './vector-candidate-matcher.js';
+import {
+  calculatePersonJobFit,
+  type CandidateDemonstratedSkill,
+  type PersonJobFitInput,
+  DEFAULT_PERSON_JOB_FIT_PARAMS,
+  type PersonJobFitParameters,
+} from '@smart/scoring-engine';
 
 const FALLBACK_TRACK: TrackCode = 'TECH_FULLSTACK';
+
+/**
+ * Wrapper around calculatePersonJobFit that adapts Skill+Capability match output.
+ * Gap 2 Task 2A.3: This bridges scoring-engine's psychometric fit with matching UI contracts.
+ */
+interface PersonJobFitMatchScore {
+  studentId: string;
+  matchScore: number;
+  overallFitScore: number;
+  mustHavesMet: boolean;
+  coverageOfMustHaves: number;
+  weightedProficiencyAccuracy: number;
+  skillFitBreakdown: Array<{
+    skillCode: string;
+    importance: string;
+    requiredRank: number;
+    demonstratedRank: number;
+    isMet: boolean;
+    confidence: 'LOW' | 'MEDIUM' | 'HIGH';
+    sourceDiscrepancy: boolean;
+  }>;
+  matchStrategy: 'EXPLOITATION' | 'EXPLORATION';
+  explorationRationale?: string;
+  why: string;
+  strongCompetencies: string[];
+  gapCompetencies: string[];
+}
+
+function scoreStudentAgainstJobWithCorroboration(
+  studentId: string,
+  requiredSkills: Array<{
+    code: string;
+    name: string;
+    minRank: number;
+    minProficiency: string;
+    importance?: string;
+  }>,
+  studentVerifiedSkills: Array<{
+    code: string;
+    proficiency: string;
+    claimConfidence?: number | null;
+  }>,
+  contradictionFlags: Set<string>,
+  isExplorationCandidate: boolean,
+  explorationRationale: string | undefined,
+  params: PersonJobFitParameters = DEFAULT_PERSON_JOB_FIT_PARAMS,
+): PersonJobFitMatchScore {
+  const pjfScore = calculatePersonJobFit(
+    {
+      requiredSkills: requiredSkills.map((skill) => ({
+        skillCode: skill.code,
+        requiredRank: skill.minRank,
+        importance: (skill.importance ?? 'must_have') as any,
+      })),
+      candidateSkills: studentVerifiedSkills.map((skill) => ({
+        skillCode: skill.code,
+        demonstratedRank: proficiencyRank(skill.proficiency),
+        confidence: mapClaimConfidenceLevel(skill.claimConfidence),
+        hasConflict: contradictionFlags.has(skill.code),
+      })),
+      isExplorationCandidate,
+      explorationRationale,
+    },
+    params,
+  );
+
+  // Build explanatory text mirroring the old skill-capability ranker format
+  const met = pjfScore.skillFitBreakdown.find((r) => r.isMet)?.skillCode ?? 'unmet';
+  const gap = pjfScore.skillFitBreakdown.find((r) => !r.isMet)?.skillCode ?? 'none';
+  const why =
+    met && gap
+      ? `Met ${met}; gap ${gap}. Must-haves: ${Math.round(pjfScore.coverageOfMustHaves * 100)}%.`
+      : `Coverage ${Math.round(pjfScore.coverageOfMustHaves * 100)}%; accuracy ${Math.round(pjfScore.weightedProficiencyAccuracy * 100)}%.`;
+
+  return {
+    studentId,
+    matchScore: pjfScore.overallFitScore,
+    overallFitScore: pjfScore.overallFitScore,
+    mustHavesMet: pjfScore.mustHavesMet,
+    coverageOfMustHaves: pjfScore.coverageOfMustHaves,
+    weightedProficiencyAccuracy: pjfScore.weightedProficiencyAccuracy,
+    skillFitBreakdown: pjfScore.skillFitBreakdown as any, // direct pass-through
+    matchStrategy: pjfScore.matchStrategy as 'EXPLOITATION' | 'EXPLORATION',
+    explorationRationale,
+    why,
+    strongCompetencies: [],
+    gapCompetencies: [],
+  };
+}
+
+/**
+ * Adapter: Convert PersonJobFitMatchScore to SkillCapabilityScore-compatible shape.
+ * Gap 2 Task 2A.3: Bridges scoring-engine output to existing UI contracts.
+ * Maintains backward compatibility by mapping PJF dimensions to skill-capability fields.
+ */
+function adaptPersonJobFitToSkillCapabilityScore(
+  pjfScore: PersonJobFitMatchScore,
+  inferredCapabilities: readonly InferredCapabilityRow[] = [],
+): SkillCapabilityScore {
+  // Map PJF skill breakdown to SkillCapabilityScore's skillFit format
+  const skillFit = pjfScore.skillFitBreakdown.map((fit) => ({
+    skillCode: fit.skillCode as any,
+    status: fit.isMet ? ('MET' as const) : ('GAP' as const),
+    importance: fit.importance === 'must_have' ? ('MUST_HAVE' as const) : ('NICE_TO_HAVE' as const),
+    requiredRank: fit.requiredRank,
+    demonstratedRank: fit.demonstratedRank,
+    rankDelta: fit.demonstratedRank - fit.requiredRank,
+    sourceDiscrepancy: fit.sourceDiscrepancy,
+  }));
+
+  const requiredSkillsHeld = skillFit.filter((s) => s.status === 'MET').length;
+  const requiredSkillsMissing = skillFit.filter((s) => s.status === 'GAP').length;
+
+  // Capability fit: map inferred capabilities to CapabilityFitRowInternal shape
+  // Note: InferredCapabilityRow has limited info; we use it to compute capability coverage
+  const capabilityFit = inferredCapabilities
+    .filter((cap) => cap.skillCode !== null)
+    .map((cap) => ({
+      competencyId: `inferred-${cap.skillCode}`,
+      capability: cap.capabilityLabel,
+      skillCode: cap.skillCode as any,
+      hitScore: cap.confidenceScore,
+      evidenceSource: cap.assessmentVerified
+        ? ('ASSESSMENT_VERIFIED' as const)
+        : ('INFERRED' as const),
+    }));
+
+  const capabilitiesCovered = capabilityFit.filter((c) => c.hitScore >= 0.5).length;
+  const capabilitiesTotal = capabilityFit.length || 1;
+  const capabilityCoveragePct = capabilitiesTotal > 0 ? capabilitiesCovered / capabilitiesTotal : 0;
+
+  return {
+    studentId: pjfScore.studentId,
+    rawMatchScore: pjfScore.matchScore, // raw, uncapped
+    matchScore: Math.min(pjfScore.matchScore, 1), // capped to [0,1] for display
+    skillScore: pjfScore.weightedProficiencyAccuracy,
+    capabilityScore: capabilityCoveragePct,
+    skillCoveragePct: pjfScore.coverageOfMustHaves,
+    capabilityCoveragePct,
+    potentialFit: pjfScore.mustHavesMet ? 'HIGH' : 'MEDIUM', // simplistic, can be refined
+    requiredSkillsHeld,
+    requiredSkillsMissing,
+    transferSkills: [], // PJF doesn't compute transfer skills; can be added in future
+    skillFit: skillFit as unknown as readonly SkillFitRowInternal[],
+    capabilityFit: capabilityFit as unknown as readonly CapabilityFitRowInternal[],
+    strongCompetencies: pjfScore.strongCompetencies as unknown as readonly string[],
+    gapCompetencies: pjfScore.gapCompetencies as unknown as readonly string[],
+    why: pjfScore.why,
+  } as unknown as SkillCapabilityScore;
+}
+
+/**
+ * Maps numeric claim confidence (0-1) to categorical level for person-job-fit input.
+ * Per Gap 4, claim_confidence is stored as Decimal(5,4) on skill_claims.
+ */
+function mapClaimConfidenceLevel(score: number | null | undefined): 'LOW' | 'MEDIUM' | 'HIGH' {
+  if (score === null || score === undefined || score < 0.4) return 'LOW';
+  if (score < 0.7) return 'MEDIUM';
+  return 'HIGH';
+}
+
+/**
+ * Loads corroboration contradictions for a set of students.
+ * Returns a map: studentId → Set of skillCodes with unresolved HIGH/MEDIUM contradictions.
+ * Gap 2 Task 2A.2: Corroboration integration layer.
+ */
+async function loadCorroborationContradictions(
+  prisma: PrismaService,
+  studentIds: readonly string[],
+): Promise<Map<string, Set<string>>> {
+  if (studentIds.length === 0) {
+    return new Map();
+  }
+
+  const flagsResult = await prisma.corroborationReviewFlag.findMany({
+    where: {
+      userId: { in: [...studentIds] },
+      severity: { in: ['HIGH', 'MEDIUM'] },
+      resolvedAt: null,
+    },
+    select: {
+      userId: true,
+      skillCode: true,
+    },
+  });
+
+  const map = new Map<string, Set<string>>();
+  for (const row of flagsResult) {
+    if (!map.has(row.userId)) {
+      map.set(row.userId, new Set());
+    }
+    map.get(row.userId)!.add(row.skillCode);
+  }
+  return map;
+}
 
 /**
  * Internal shape shared by the sync `match()` path and the async `runMatchRun()` path — kept
@@ -150,7 +356,12 @@ interface HydratedStudent {
   fullName: string;
   primaryTrackCode: string | null;
   certificate: { id: string; highestLevelCleared: number; headlineTier: string } | null;
-  verifiedSkills: { code: string; domain: string; proficiency: string }[];
+  verifiedSkills: {
+    code: string;
+    domain: string;
+    proficiency: string;
+    claimConfidence?: number | null;
+  }[];
 }
 
 /** Builds the eligible-pool query: institution + role + >=1 verified skill, plus the optional
@@ -236,6 +447,20 @@ function buildEligibleStudentsQuery(
     conditions.push(Prisma.sql`c.highest_level_cleared >= ${request.filters.minLevelCleared}`);
   }
 
+  // MAT-01 / Gap 1 interim: Exclude students with unresolved HIGH/MEDIUM contradiction flags.
+  // This prevents actively-flagged-unreliable proficiency claims from reaching employer shortlists
+  // while Gap 2 (corroboration integration into match scoring) is pending.
+  // NOTE: This excludes the student from ALL job matches if any single skill claim is flagged.
+  // Once Gap 2 is resolved, semantics may change to per-skill exclusion or flag-severity downweighting.
+  conditions.push(
+    Prisma.sql`NOT EXISTS (
+      SELECT 1 FROM corroboration_review_flags crf
+      WHERE crf.user_id = u.id
+        AND crf.severity IN ('HIGH', 'MEDIUM')
+        AND crf.resolved_at IS NULL
+    )`,
+  );
+
   return Prisma.sql`
     SELECT
       u.id,
@@ -258,7 +483,8 @@ function buildEligibleStudentsQuery(
       SELECT json_agg(json_build_object(
         'code', sk.code,
         'domain', sk.domain,
-        'proficiency', COALESCE(sc.final_proficiency::text, sc.proficiency::text)
+        'proficiency', COALESCE(sc.final_proficiency::text, sc.proficiency::text),
+        'claimConfidence', sc.claim_confidence
       )) AS skills
       FROM skill_claims sc
       JOIN skills sk ON sk.id = sc.skill_id
@@ -306,6 +532,14 @@ export class MatchingService {
     await this.resolveOpeningJob(institutionId, request.jdId); // fail fast on an unknown/foreign jdId
 
     const batchIds = request.batchIds ?? (request.cohortId ? [request.cohortId] : []);
+
+    // Gap 5: Capture ranker version based on feature flag
+    // When PJF flag is enabled, use scoring-engine version; otherwise legacy ranker version
+    const usePjf = await this.usePjfScoring(institutionId);
+    const rankerVersion = usePjf
+      ? `${DEFAULT_PERSON_JOB_FIT_PARAMS.version}+${SKILL_CAPABILITY_RANKER_VERSION}`
+      : SKILL_CAPABILITY_RANKER_VERSION;
+
     const run = await this.prisma.matchRun.create({
       data: {
         institutionId,
@@ -316,7 +550,7 @@ export class MatchingService {
         requiredSkillCodes: request.requiredSkillCodes ?? [],
         limit: request.limit,
         minSkillCoverage: request.minSkillCoverage ?? 0.6,
-        rankerVersion: SKILL_CAPABILITY_RANKER_VERSION,
+        rankerVersion,
       },
     });
 
@@ -574,6 +808,196 @@ export class MatchingService {
     const students = hydrateStudents(rows);
     const filtered = students.filter((student) => passesOptionalFilters(student, request.filters));
     const studentIds = filtered.map((student) => student.id);
+
+    // Gap 2 Task 2A.3: Load corroboration contradictions for all students (needed for both paths)
+    const contradictions = await loadCorroborationContradictions(this.prisma, studentIds);
+
+    // Check feature flag for scoring-engine path
+    const usePjfScoring = await this.usePjfScoring(institutionId);
+
+    // Dual-path execution: feature flag determines which ranker to use
+    if (usePjfScoring) {
+      return this.runSkillCapabilityMatchingWithPjf(
+        institutionId,
+        request,
+        resolved,
+        students,
+        filtered,
+        studentIds,
+        contradictions,
+      );
+    } else {
+      return this.runSkillCapabilityMatchingWithLegacyRanker(
+        institutionId,
+        request,
+        resolved,
+        students,
+        filtered,
+        studentIds,
+      );
+    }
+  }
+
+  /**
+   * Gap 2 Task 2A.3: Refactored path using calculatePersonJobFit from scoring-engine.
+   * Includes corroboration contradictions and claim confidence in scoring.
+   */
+  private async runSkillCapabilityMatchingWithPjf(
+    institutionId: string,
+    request: RunMatchingParams,
+    resolved: ResolvedOpeningJob,
+    _students: HydratedStudent[],
+    filtered: HydratedStudent[],
+    studentIds: readonly string[],
+    contradictions: Map<string, Set<string>>,
+  ): Promise<ShortlistDto> {
+    const job = resolved.skillCapabilityJob;
+    const evidence = await this.loadSkillCapabilityEvidence(studentIds);
+    const byId = new Map(filtered.map((student) => [student.id, student]));
+    const generatedAt = new Date().toISOString();
+    const shortlistId = randomUUID();
+    const method: MatchMethod = 'SKILL_CAPABILITY';
+    const jobRequirements = jobRequirementsFromProfile({
+      requiredSkills: job.requiredSkills.map((skill) => ({
+        code: skill.code,
+        minProficiency: skill.minProficiency,
+      })),
+      requiredCapabilities: job.requiredCapabilities,
+    });
+
+    // Score each student against the job using calculatePersonJobFit
+    const scored = filtered
+      .map((student) => {
+        const contradictionFlags = contradictions.get(student.id) ?? new Set<string>();
+        const pjfScore = scoreStudentAgainstJobWithCorroboration(
+          student.id,
+          job.requiredSkills.map((skill) => ({
+            code: skill.code,
+            name: skill.name,
+            minRank: proficiencyRank(skill.minProficiency),
+            minProficiency: skill.minProficiency,
+            importance: skill.importance,
+          })),
+          student.verifiedSkills.map((skill) => ({
+            code: skill.code,
+            proficiency: skill.proficiency,
+            claimConfidence: skill.claimConfidence,
+          })),
+          contradictionFlags,
+          false, // isExplorationCandidate: will be computed later during partition
+          undefined,
+        );
+
+        // Adapt PJF score to SkillCapabilityScore shape for UI compatibility
+        const inferredCapabilities = evidence.inferredByStudent.get(student.id) ?? [];
+        const adaptedScore = adaptPersonJobFitToSkillCapabilityScore(
+          pjfScore,
+          inferredCapabilities,
+        );
+
+        return adaptedScore;
+      })
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, request.limit);
+
+    const rankedStudentIds = scored.map((score) => score.studentId);
+    const explainability = await this.loadExplainabilityContext(rankedStudentIds);
+
+    const candidates = [];
+    // Partition slice: 80% Exploitation (top ranked), 20% Exploration
+    const exploitationQuota = Math.max(1, Math.floor(scored.length * 0.8));
+
+    for (const [index, score] of scored.entries()) {
+      const student = byId.get(score.studentId);
+      if (!student) continue;
+      const cert = student.certificate;
+      const isExploration = index >= exploitationQuota;
+      const matchStrategy = isExploration ? ('EXPLORATION' as const) : ('EXPLOITATION' as const);
+      const explorationRationale = isExploration
+        ? `Exploration candidate: High potential growth match surfaced via PJF scoring.`
+        : undefined;
+
+      let recruiterSummary: string | undefined;
+      let studentSummary: string | undefined;
+      if (index < NARRATIVE_TOP_N) {
+        const narrative = await this.narratives.summarize({
+          roleTitle: resolved.roleTitle,
+          companyName: resolved.companyName,
+          matchFacts: {
+            matchScore: score.matchScore,
+            skillCoveragePct: score.skillCoveragePct,
+            capabilityCoveragePct: score.capabilityCoveragePct,
+            potentialFit: score.potentialFit,
+            skillFit: score.skillFit,
+            capabilityFit: score.capabilityFit.filter((row: any) => row.hitScore > 0),
+            gaps: score.gapCompetencies,
+          },
+        });
+        recruiterSummary = narrative?.recruiterSummary;
+        studentSummary = narrative?.studentSummary;
+      }
+      candidates.push(
+        toCandidateMatchDto({
+          score,
+          studentName: student.fullName,
+          trackCode: parseTrackCode(student.primaryTrackCode ?? undefined),
+          certificateId: cert?.id ?? null,
+          highestLevelCleared: parseLevel(cert?.highestLevelCleared),
+          headlineTier: parseHeadline(cert?.headlineTier),
+          verifiedSkills: student.verifiedSkills,
+          method,
+          matchStrategy,
+          explorationRationale,
+          recruiterSummary,
+          studentSummary,
+          competencyEvidenceSummaries: mapStudentCapabilitiesToSummaries(
+            explainability.capabilitiesByStudent.get(student.id) ?? [],
+          ),
+        }),
+      );
+    }
+
+    await this.publishPlacementMatched({
+      shortlistId,
+      runId: request.runId,
+      jdId: request.jdId,
+      institutionId,
+      companyName: resolved.companyName,
+      roleTitle: resolved.roleTitle,
+      studentIds: candidates.map((candidate) => candidate.studentId),
+      generatedAt,
+      matchMethod: method,
+    });
+
+    return ShortlistDtoSchema.parse({
+      shortlistId,
+      jdId: request.jdId,
+      companyName: resolved.companyName,
+      roleTitle: resolved.roleTitle,
+      generatedAt,
+      candidates,
+      totalCandidatesConsidered: filtered.length,
+      eligiblePoolCount: filtered.length,
+      candidatesScoredCount: scored.length,
+      matchMethod: method,
+      minSkillCoverageApplied: request.minSkillCoverage,
+      jobRequirements,
+    });
+  }
+
+  /**
+   * Legacy path: Uses rankSkillCapabilityCandidates (current production ranker).
+   * Kept for backward compatibility and gradual rollout via feature flag.
+   */
+  private async runSkillCapabilityMatchingWithLegacyRanker(
+    institutionId: string,
+    request: RunMatchingParams,
+    resolved: ResolvedOpeningJob,
+    _students: HydratedStudent[],
+    filtered: HydratedStudent[],
+    studentIds: readonly string[],
+  ): Promise<ShortlistDto> {
+    const job = resolved.skillCapabilityJob;
     const evidence = await this.loadSkillCapabilityEvidence(studentIds);
 
     const pool: SkillCapabilityCandidate[] = filtered.map((student) => ({
@@ -609,10 +1033,21 @@ export class MatchingService {
     const explainability = await this.loadExplainabilityContext(rankedStudentIds);
 
     const candidates = [];
+    // Partition slice: 80% Exploitation (top ranked), 20% Exploration (calibrated growth / high transfer)
+    const exploitationQuota = Math.max(1, Math.floor(ranked.length * 0.8));
+
     for (const [index, score] of ranked.entries()) {
       const student = byId.get(score.studentId);
       if (!student) continue;
       const cert = student.certificate;
+      const isExploration = index >= exploitationQuota;
+      const matchStrategy = isExploration ? ('EXPLORATION' as const) : ('EXPLOITATION' as const);
+      const explorationRationale = isExploration
+        ? score.transferSkills.length > 0
+          ? `Exploration candidate: Demonstrates high transferable competency from ${score.transferSkills[0]?.skillName}.`
+          : 'Exploration candidate: High potential growth candidate surfaced to prevent algorithmic monoculture.'
+        : undefined;
+
       let recruiterSummary: string | undefined;
       let studentSummary: string | undefined;
       if (index < NARRATIVE_TOP_N) {
@@ -625,7 +1060,7 @@ export class MatchingService {
             capabilityCoveragePct: score.capabilityCoveragePct,
             potentialFit: score.potentialFit,
             skillFit: score.skillFit,
-            capabilityFit: score.capabilityFit.filter((row) => row.hitScore > 0),
+            capabilityFit: score.capabilityFit.filter((row: any) => row.hitScore > 0),
             gaps: score.gapCompetencies,
           },
         });
@@ -642,6 +1077,8 @@ export class MatchingService {
           headlineTier: parseHeadline(cert?.headlineTier),
           verifiedSkills: student.verifiedSkills,
           method,
+          matchStrategy,
+          explorationRationale,
           recruiterSummary,
           studentSummary,
           competencyEvidenceSummaries: mapStudentCapabilitiesToSummaries(
@@ -798,6 +1235,17 @@ export class MatchingService {
   private async useRulesRanker(institutionId: string): Promise<boolean> {
     const resolved = await this.institutions.resolveInstitutionEntitlements(institutionId);
     return resolved.flags.find((flag) => flag.key === RULES_RANKER_FLAG)?.enabled ?? false;
+  }
+
+  /**
+   * Gap 2 Task 2A.3: Feature flag to enable PJF (Person-Job-Fit) scoring-engine path.
+   * When enabled, matching uses calculatePersonJobFit with corroboration contradictions and claim confidence.
+   * When disabled (default), uses legacy rankSkillCapabilityCandidates for backward compatibility.
+   */
+  private async usePjfScoring(institutionId: string): Promise<boolean> {
+    const resolved = await this.institutions.resolveInstitutionEntitlements(institutionId);
+    const PJF_SCORING_FLAG = 'matching.use_pjf_scoring' as const;
+    return resolved.flags.find((flag) => flag.key === PJF_SCORING_FLAG)?.enabled ?? false;
   }
 
   private async loadSkillCapabilityEvidence(studentIds: readonly string[]): Promise<{
@@ -1567,17 +2015,29 @@ export class MatchingService {
 
     const profileById = new Map(candidateProfiles.map((profile) => [profile.studentId, profile]));
     return vectorMatches.ranked.map((match) => {
+<<<<<<< HEAD
       // The candidate's real verified skills, not the radar axes ("Domain A" is not a skill code):
       // axes here made CandidateMatchDtoSchema.parse throw, so this search answered 500. A skill
       // the taxonomy no longer knows is dropped instead of failing the whole search.
       const verified = mapVerifiedSkillsSummary(
         profileById.get(match.studentId)?.verifiedSkills ?? [],
       ).filter((skill) => VerifiedSkillSummarySchema.safeParse(skill).success);
+=======
+      const candidateProfile = candidateProfiles.find((c) => c.studentId === match.studentId);
+      const verified = mapVerifiedSkillsSummary(
+        (candidateProfile?.verifiedSkills ?? []).filter((s) => SKILL_CODE_SET.has(s.code)),
+      );
+      const certIdValid =
+        match.certificateId && UuidSchema.safeParse(match.certificateId).success
+          ? match.certificateId
+          : null;
+
+>>>>>>> 41e42948 (feat(matching): complete E2E pipeline with evidence metrics and transfer skills)
       return CandidateMatchDtoSchema.parse({
         studentId: match.studentId,
         studentName: match.studentName,
         trackCode: match.trackCode,
-        certificateId: match.certificateId,
+        certificateId: certIdValid,
         highestLevelCleared: match.highestLevelCleared,
         headlineTier: match.headlineTier,
         similarityScore: Math.round(match.cosineSimilarity * 100) / 100,

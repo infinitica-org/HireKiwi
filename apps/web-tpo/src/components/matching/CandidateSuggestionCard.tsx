@@ -10,6 +10,8 @@ import {
 import { potentialFitLabel } from '../../lib/matching-display';
 import { cardClass, chipClass, mutedTextClass, sectionLabelClass } from '../../lib/tpo-ui';
 import { ProficiencyLevelCircles } from './proficiency-level-ui';
+import { TransferSkillsDisplay } from './TransferSkillsDisplay';
+import { EvidenceValidationIndicator } from './EvidenceValidationIndicator';
 
 const pillClass =
   'inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold';
@@ -242,6 +244,26 @@ export function CandidateSuggestionCard({
                   +{extraEvidenceCount} more capability signal{extraEvidenceCount === 1 ? '' : 's'}
                 </p>
               ) : null}
+            </div>
+          ) : null}
+
+          {candidate.explanation.transferSkills &&
+          candidate.explanation.transferSkills.length > 0 ? (
+            <div>
+              <TransferSkillsDisplay
+                transferSkills={candidate.explanation.transferSkills}
+                maxDisplay={3}
+              />
+            </div>
+          ) : null}
+
+          {candidate.explanation.evidenceQualityMetrics &&
+          candidate.explanation.evidenceQualityMetrics.length > 0 ? (
+            <div>
+              <EvidenceValidationIndicator
+                metrics={candidate.explanation.evidenceQualityMetrics}
+                compact={true}
+              />
             </div>
           ) : null}
 

@@ -27,6 +27,7 @@ function toRequiredSkill(requirement: SkillRequirement): SkillCapabilityRequired
     name: skillNameByCode.get(requirement.skillCode) ?? requirement.skillCode,
     minRank: proficiencyRank(requirement.minProficiency),
     minProficiency: requirement.minProficiency,
+    importance: requirement.importance,
   };
 }
 

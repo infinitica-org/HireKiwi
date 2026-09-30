@@ -236,7 +236,14 @@ export function matchCandidatesWithVectorSimilarity(
     };
   });
 
-  results.sort((a, b) => b.fitScore - a.fitScore);
+  // Multi-dimensional ranking: primary tier rank first, then match similarity
+  results.sort((a, b) => {
+    const tierDiff = (TIER_RANK[b.headlineTier] ?? 0) - (TIER_RANK[a.headlineTier] ?? 0);
+    if (tierDiff !== 0) {
+      return tierDiff;
+    }
+    return b.cosineSimilarity - a.cosineSimilarity;
+  });
 
   const durationMs = performance.now() - startTime;
 

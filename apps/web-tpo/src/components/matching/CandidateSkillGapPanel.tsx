@@ -91,18 +91,27 @@ function RequirementCompetencyRow({ row }: { row: CapabilityFitRow }) {
   const required = COMPETENCY_GAP_DEMONSTRATION_LEVEL;
   const met = row.hitScore >= 0.5;
 
+  const sourceLabel = row.evidenceSourceLabel || row.evidenceSource;
+  const sourceIcon =
+    row.evidenceSource === 'ASSESSMENT' ? '📋' : row.evidenceSource === 'INFERRED' ? '✨' : '📊';
+
   return (
     <li className="flex flex-col gap-2 rounded-xl border border-[var(--ds-border-subtle)] bg-[var(--ds-surface)] p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p className="text-sm font-medium text-[var(--ds-text)]">{row.capability}</p>
-        <span
-          className={[
-            'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-            met ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800',
-          ].join(' ')}
-        >
-          {met ? 'Demonstrated' : 'Gap'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-600">
+            {sourceIcon} {sourceLabel}
+          </span>
+          <span
+            className={[
+              'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+              met ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800',
+            ].join(' ')}
+          >
+            {met ? 'Demonstrated' : 'Gap'}
+          </span>
+        </div>
       </div>
       <p className={`text-xs ${mutedTextClass}`}>
         Opening expects demonstration through level {required} (from assessment / evidence signals)
