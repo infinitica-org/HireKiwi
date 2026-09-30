@@ -2769,7 +2769,7 @@ describe('WorkExperienceService', () => {
               expiresAtFormatted: '14 days',
             }),
           }),
-          { jobId: `manager-invite:${endorsementId}` },
+          { jobId: `manager-invite-${endorsementId}` },
         );
         expect(emailQueue.add).toHaveBeenNthCalledWith(
           2,
@@ -2777,7 +2777,7 @@ describe('WorkExperienceService', () => {
           expect.objectContaining({ endorsementId }),
           expect.objectContaining({
             delay: TTL_7D,
-            jobId: `manager-reminder:${endorsementId}`,
+            jobId: `manager-reminder-${endorsementId}`,
           }),
         );
         expect(emailQueue.add).toHaveBeenNthCalledWith(
@@ -2786,7 +2786,7 @@ describe('WorkExperienceService', () => {
           { endorsementId, experienceId },
           expect.objectContaining({
             delay: TTL_14D,
-            jobId: `manager-expire:${endorsementId}`,
+            jobId: `manager-expire-${endorsementId}`,
           }),
         );
         const auditMetadata = auditPublisher.record.mock.calls[0]?.[0]?.metadata;

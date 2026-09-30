@@ -2285,7 +2285,7 @@ export class WorkExperienceService {
           template: 'work-experience-manager-invite',
           data: emailData,
         },
-        { jobId: `manager-invite:${endorsement.id}` },
+        { jobId: `manager-invite-${endorsement.id}` },
       );
 
       // Day-7 (168h) reminder
@@ -2299,7 +2299,7 @@ export class WorkExperienceService {
         } as WorkExperienceManagerReminderJobPayload,
         {
           delay: 7 * 24 * 60 * 60 * 1000,
-          jobId: `manager-reminder:${endorsement.id}`,
+          jobId: `manager-reminder-${endorsement.id}`,
         },
       );
 
@@ -2309,7 +2309,7 @@ export class WorkExperienceService {
         { endorsementId: endorsement.id, experienceId },
         {
           delay: TTL_14D,
-          jobId: `manager-expire:${endorsement.id}`,
+          jobId: `manager-expire-${endorsement.id}`,
         },
       );
     }
