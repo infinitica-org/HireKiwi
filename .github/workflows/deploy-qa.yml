@@ -1,4 +1,4 @@
-name: Deploy qa (kvm2)
+name: Deploy qa (Single VPS)
 
 on:
   workflow_run:
@@ -31,7 +31,7 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.DEV_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Sync repository to kvm2
+      - name: Sync repository to Single VPS
         run: |
           rsync -az --delete \
             --exclude='.git' \

@@ -1,0 +1,43 @@
+---
+title: 26. QA & Quality Engineering
+description: Quality assurance pyramid, unit test standards, k6 performance load profiles, and Golden Dataset validation.
+---
+
+## 26.1 Testing Pyramid & Strategy
+
+SmartZen enforces a disciplined test pyramid across all monorepo packages:
+
+```
+        /   E2E Tests (Playwright)   \      5% Coverage  (Critical user journeys)
+       /------------------------------\
+      /  Integration Tests (Supertest) \    25% Coverage (API route contracts)
+     /----------------------------------\
+    /     Unit Tests (Vitest & Zod)      \  70% Coverage (Invariants & domain logic)
+   /--------------------------------------\
+```
+
+---
+
+## 26.2 Performance Testing Profiles (k6)
+
+Performance is benchmarked in `tools/load-tests/` across six execution profiles:
+
+| Profile | Virtual Users (VUs) | Duration | Objective | Target SLA |
+| :--- | :--- | :--- | :--- | :--- |
+| **Smoke** | 15 VUs | 3 minutes | Verify baseline route health post-deploy | p95 < 50ms, 0% errors |
+| **Baseline**| 100 VUs | 10 minutes | Measure standard day-to-day campus load | p95 < 80ms |
+| **Load** | 1,000 VUs | 30 minutes | Peak placement season application rush | p95 < 120ms |
+| **Stress** | 5,000 VUs | 45 minutes | Determine resource saturation point | Graceful queue throttling |
+| **Spike** | 0 -> 3,000 -> 0 | 5 minutes | Simulates instantaneous campus test start | Caddy buffer stability |
+| **Soak** | 500 VUs | 8 hours | Memory leak and Redis connection audit | Zero RAM growth / leak |
+
+---
+
+## 26.3 Automated CI Quality Gates
+
+Every pull request into `dev` mechanically executes:
+1. `pnpm format:check`: Enforces Prettier code styling.
+2. `pnpm lint`: Zero ESLint warnings allowed (`--max-warnings=0`).
+3. `pnpm typecheck`: Strict TypeScript validation with zero `any` types.
+4. `pnpm test`: All 552+ Vitest tests must pass green.
+5. Contract DTO Invariant validation: Schema backwards-compatibility check.

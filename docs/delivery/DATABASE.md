@@ -7,9 +7,9 @@
 
 SMART talks to **PostgreSQL 16+ with `pgvector`**, self-hosted via Docker on every environment. Application code always uses `DATABASE_URL`.
 
-| Host                            | When to use               | What you set                                            |
-| ------------------------------- | ------------------------- | ------------------------------------------------------- |
-| Docker `pgvector/pgvector:pg16` | Laptop, kvm2/kvm4 Compose | `DATABASE_URL=postgresql://smart:…@postgres:5432/smart` |
+| Host                            | When to use                         | What you set                                            |
+| ------------------------------- | ----------------------------------- | ------------------------------------------------------- |
+| Docker `pgvector/pgvector:pg16` | Laptop, Single High-End VPS Compose | `DATABASE_URL=postgresql://smart:…@postgres:5432/smart` |
 
 Prisma stays the only write path — no separate data-access SDK.
 
@@ -40,21 +40,21 @@ Add a second `api` replica only after confirming PgBouncer's
 
 Never point `dev`, `qa`, and `prod` at the same database.
 
-| Environment | Git branch | VPS                                          | Database     |
-| ----------- | ---------- | -------------------------------------------- | ------------ |
-| local       | feature    | laptop Docker                                | local volume |
-| **dev**     | `dev`      | **kvm2** (`COMPOSE_PROJECT_NAME=smart-dev`)  | kvm2 volume  |
-| **qa**      | `qa`       | **kvm2** (`COMPOSE_PROJECT_NAME=smart-qa`)   | kvm2 volume  |
-| **prod**    | `main`     | **kvm4** (`COMPOSE_PROJECT_NAME=smart-prod`) | kvm4 volume  |
+| Environment | Git branch | VPS Host / Topology                                     | Database Storage       |
+| ----------- | ---------- | ------------------------------------------------------- | ---------------------- |
+| local       | feature    | laptop Docker                                           | local volume           |
+| **dev**     | `dev`      | **Single VPS** (`COMPOSE_PROJECT_NAME=smart-dev`)       | isolated volume        |
+| **qa**      | `qa`       | **Single VPS** (`COMPOSE_PROJECT_NAME=smart-qa`)        | isolated volume        |
+| **prod**    | `main`     | **Single VPS** (`smart-prod-blue` / `smart-prod-green`) | persistent prod volume |
 
 ## Env files
 
 | File                                       | Committed? | Purpose                    |
 | ------------------------------------------ | ---------- | -------------------------- |
 | `.env.example`                             | yes        | Laptop defaults            |
-| `.env.dev.example`                         | yes        | kvm2 / `dev` template      |
-| `.env.qa.example`                          | yes        | kvm2 / `qa` template       |
-| `.env.prod.example`                        | yes        | kvm4 / `main` template     |
+| `.env.dev.example`                         | yes        | Single VPS `dev` template  |
+| `.env.qa.example`                          | yes        | Single VPS `qa` template   |
+| `.env.prod.example`                        | yes        | Single VPS `prod` template |
 | `.env`, `.env.dev`, `.env.qa`, `.env.prod` | **never**  | Real secrets on the server |
 
 Copy the matching example on the VPS, fill secrets, never commit.

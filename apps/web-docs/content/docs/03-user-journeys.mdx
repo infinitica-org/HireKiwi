@@ -1,0 +1,102 @@
+---
+title: 03. User & Customer Journeys
+description: End-to-end journey maps for candidates, universities, employers, and platform administrators.
+---
+
+## 3.1 High-Level User Journey Architecture
+
+SmartZen orchestrates multi-actor workflows where candidate capability progression directly feeds employer talent acquisition pipelines, governed by university placement oversight.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. ONBOARDING & PROFILE          2. EVIDENCE & VERIFICATION                 │
+│ Student claims campus account ──► Links GitHub, projects, past work         │
+│ Baseline profile established      Automated AST check & proctored defense   │
+└───────────────────────┬─────────────────────────────────────────────────────┘
+                        │
+┌───────────────────────▼─────────────────────────────────────────────────────┐
+│ 3. CAPABILITY INTELLIGENCE       4. DISCOVERY & APPLICATION                 │
+│ BARS rubric scoring calculated    Recruiter searches verified talent graph   │
+│ HMAC-SHA256 badge signed          Candidate receives high-confidence match  │
+└───────────────────────┬─────────────────────────────────────────────────────┘
+                        │
+┌───────────────────────▼─────────────────────────────────────────────────────┐
+│ 5. INTERVIEW & DEFENSE           6. HIRING & OUTCOME LOOP                   │
+│ Recruiter inspects code defense  Offer extended & accepted                  │
+│ Direct technical interview        Feedback calibrates recommendation weights │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3.2 Candidate (Student) Journey
+
+### Phase 1: Institutional Provisioning & Onboarding
+1. Candidate receives an institutional onboarding invitation linked to their university email domain.
+2. Candidate authenticates via campus SAML 2.0 / OIDC single sign-on.
+3. System provisions a sandboxed profile pre-populated with verified academic degree, branch, and graduation year.
+
+### Phase 2: Evidence Submission & Defense
+1. **Repository Linking:** Candidate connects their personal GitHub account via OAuth.
+2. **Project Selection:** Candidate designates top 3 production repositories for capability indexing.
+3. **Automated Static Code Analysis:** AST scanners verify commit authorship, detect boilerplate clones, and analyze complexity.
+4. **AI-Assisted Project Defense:** Candidate completes a 15-minute proctored interactive session defending architectural choices, refactoring snippets, and explaining pull requests.
+
+### Phase 3: Profile Verification & Job Discovery
+1. System assigns verified skill badges across Gold, Silver, and Bronze tiers with cryptographic HMAC signatures.
+2. Candidate explores role-specific readiness scores and receives algorithmic recommendations for openings matching their verified stack.
+3. Candidate submits one-click applications with full verified evidence dossiers attached.
+
+---
+
+## 3.3 University (TPO) Journey
+
+1. **Roster Synchronization:** TPO uploads CSV batch roster or connects campus ERP (SAP / Ellucian / Canvas).
+2. **Readiness Monitoring:** TPO reviews real-time department cohort analytics:
+   * Percentage of students achieving Gold tier in Backend Engineering.
+   * Identification of students needing remedial coding defense practice.
+3. **Recruiter Drive Management:** TPO creates on-campus placement drives, sets strict criteria (e.g., Minimum Silver tier in Systems Design + 7.5 CGPA), and publishes opening to qualified students.
+4. **Outcome Reporting:** Generates regulatory placement compliance reports (NAAC, NIRF, NBA) with verified employer offer letters attached.
+
+---
+
+## 3.4 Employer (Recruiter) Journey
+
+```
+[Define Job Req] ──► [Filter by Verified Tier] ──► [Inspect Defense Replay] ──► [1-Click Interview]
+```
+
+1. **Requisition Authoring:** Recruiter defines job requirements, specifying mandatory competencies (e.g., `PostgreSQL pgvector`, `NestJS`, `Distributed Systems`).
+2. **Talent Discovery:** Recruiter executes semantic natural language search or filters the global talent graph by minimum competency tiers.
+3. **Dossier Audit:** Recruiter reviews candidate dossiers—bypassing traditional resumes—to inspect:
+   * Verified code authorship breakdown.
+   * AI project defense video snippets and architectural explanation transcript.
+   * Cryptographic verification badge valid at `verify.becomesmart.online`.
+4. **Pipeline Advancement:** Recruiter moves candidate directly into final technical interview or extends an offer.
+
+---
+
+## 3.5 SmartZen Platform Administrator Journey
+
+1. **Trust & Safety Monitoring:** Review automated alerts flagged by the MediaPipe CV sidecar (e.g., multi-face detection, recurring tab-switches during assessments).
+2. **Human-in-the-Loop Arbitration:** Review borderline assessment disputes where candidate confidence intervals fall between scoring tiers.
+3. **Rubric Governance:** Benchmark AI evaluation prompt versions against the 500-sample human-verified Golden Dataset ($r > 0.85$ correlation requirement).
+4. **DPDP Compliance Auditing:** Verify automated 30-day purge runs for expired video snapshots and proctoring telemetry.
+
+---
+
+## 3.6 Step-by-Step Experience Flows
+
+### Flow A: The AI Project Defense Experience
+```
+[Pre-Flight Checks] ──► [Camera & Tab Lock] ──► [Dynamic Code Probe] ──► [Live Audio Defense]
+```
+* **Pre-flight:** Webcam and microphone permissions validated; MediaPipe facial landmark mesh initialized locally.
+* **Code Probe:** The LLM evaluator selects a complex function from the candidate's repository and generates an inquiry: *"In commit 4b2f1, why did you choose Redis sorted sets over Postgres B-Tree indexes for this ranking queue?"*
+* **Response:** Candidate provides vocal and written defense within an enforced 180-second window.
+* **Analysis:** System transcribes audio, evaluates depth against BARS rubrics, and calculates an authenticity confidence score.
+
+### Flow B: Outcome Feedback & Model Calibration
+1. Following an interview round, the employer submits binary feedback: `Accepted` or `Rejected for Technical Incompetence`.
+2. If rejected, employer selects specific deficient competencies (e.g., "Candidate struggled with Redis concurrency locks").
+3. The feedback event publishes to Redpanda (`telemetry.recruiter-feedback.v1`), triggering weight adjustments in future candidate match scoring models.

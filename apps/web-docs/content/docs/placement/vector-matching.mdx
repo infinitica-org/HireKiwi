@@ -1,0 +1,67 @@
+---
+title: Vector Matching & Placement Overlay
+description: Semantic pgvector cosine matching with deterministic fallback for campus placement drives.
+---
+
+# Vector Matching & Placement Overlay
+
+The ultimate metric for SMART is **Placement Conversion & Retention Rate**. Rather than matching candidates using simplistic string searches on unverified resumes, SMART projects certified candidate competency profiles directly into high-dimensional vector space.
+
+Governed by [ADR-0017](file:///d:/Work's/Infinitica/smart/docs/adr/0017-vector-matching-ai-failover.md), the matching engine bridges academic placement infrastructure and enterprise talent requirements.
+
+---
+
+## 1. Dual-Path Matching Pipeline
+
+```
+[ Incoming Employer Job Description (JD) ]
+                 │
+                 ▼
+       [ Parsing & Vectorization ]
+                 │
+   ┌─────────────┴─────────────┐
+   ▼ (Primary Path)            ▼ (Fallback Path)
+[ ai-gateway Embedding ]    [ Deterministic Regex Extractor ]
+1536-dim Embedding Vector   Keyword & Weighted Skill Dictionary
+   │                           │
+   ▼                           ▼
+[ PostgreSQL pgvector ]     [ Structured SQL Filter ]
+HNSW Cosine Distance Query   Exact Competency Match
+   │                           │
+   └─────────────┬─────────────┘
+                 ▼
+     [ Ranked Candidate Roster ]
+  Filtered by Minimum Tier (e.g. Gold Only)
+```
+
+---
+
+## 2. PostgreSQL `pgvector` Cosine Similarity
+
+When an employer submits a role requirement or JD text:
+1. The JD is tokenized and embedded into a 1536-dimensional vector via the `ai-gateway`.
+2. The query executes a cosine distance scan against candidates possessing active, certified credentials:
+
+```sql
+SELECT 
+    c.id AS candidate_id,
+    c.full_name,
+    cert.track_id,
+    cert.tier,
+    1 - (cb.embedding <=> $1::vector) AS cosine_similarity
+FROM candidates c
+JOIN certificates cert ON cert.candidate_id = c.id
+JOIN competency_blueprints cb ON cb.track_id = cert.track_id
+WHERE cert.revocation_status = 'ACTIVE'
+  AND cert.tier IN ('GOLD', 'SILVER')
+ORDER BY cosine_similarity DESC
+LIMIT 50;
+```
+
+---
+
+## 3. Deterministic Regex Fallback Extractor
+
+During campus placement drives, thousands of students apply to drives simultaneously. If external LLM embedding APIs encounter rate limits (HTTP 429), timeouts, or provider downtime, the system automatically falls back to `deterministic-fallback-extractor.ts`.
+
+This deterministic fallback parses requirement strings against our static competency taxonomy dictionaries, guaranteeing that campus placement matching never halts due to external AI provider outages.

@@ -1,0 +1,46 @@
+---
+title: 20. Security & Privacy (DPDP Compliance)
+description: Security defenses, data encryption standards, Indian DPDP Act 2023 compliance, and privacy guarantees.
+---
+
+## 20.1 Security Defense-in-Depth Architecture
+
+```
+[Cloudflare Edge DDoS Protection]
+              │
+[Caddy Reverse Proxy: TLS 1.3 Strict & Rate Limiting]
+              │
+[Redis Sliding Window Token Bucket (100 req/min/IP)]
+              │
+[NestJS Guard Pipeline: JWT Validation + Tenant Context RBAC]
+              │
+[PostgreSQL Database: Encrypted at Rest & Localhost-Bound]
+```
+
+---
+
+## 20.2 Indian DPDP Act 2023 Compliance Framework
+
+SmartZen enforces strict alignment with the **Digital Personal Data Protection Act (DPDP) 2023**:
+
+1. **Zero Government ID Storage:** No Aadhaar numbers, Permanent Account Numbers (PAN), or physical identity documents are collected, scanned, or stored in any database. Student identity is federated via educational institution SSO.
+2. **Explicit, Granular Consent:** Students explicitly authorize which specific employers can view their unmasked personal contact details.
+3. **Data Minimization in Video Telemetry:** Live video streams are processed ephemerally on the client via the MediaPipe WebAssembly model. Only low-resolution ($320\times 240$) grayscale event snapshots are transmitted when an anomaly occurs.
+4. **Mandatory 30-Day Purge:** All proctoring snapshots, audio transcripts, and telemetry event logs are scheduled with a 30-day TTL and irreversibly purged from MinIO object storage.
+5. **Right to Erasure:** Candidates can invoke "Delete My Account", triggering hard-deletions of all unverified artifacts and cryptographic anonymization of historical placement records within 48 hours.
+
+---
+
+## 20.3 Cryptographic Standards & Key Management
+
+* **Data in Transit:** Enforced TLS 1.3 using modern AEAD ciphers (`TLS_AES_256_GCM_SHA384`, `TLS_CHACHA20_POLY1305_SHA256`).
+* **Data at Rest:** Transparent Data Encryption (TDE) for PostgreSQL database tables; AES-256 server-side encryption for MinIO S3 objects.
+* **Credentials:** Passwords hashed using Argon2id with 64MB memory cost, 3 iterations, and 4 threads. JWTs signed using 256-bit HMAC secret tokens with mandatory 24-hour secret rotation capabilities.
+
+---
+
+## 20.4 Security Incident Response
+
+* Automated anomaly alerts route to `security@becomesmart.online`.
+* Suspected credential compromise triggers automatic token invalidation across all Redis cluster nodes in < 100ms.
+* Comprehensive forensic audit logging for all root database queries and administrative overrides.

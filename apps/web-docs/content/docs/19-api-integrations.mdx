@@ -1,0 +1,56 @@
+---
+title: 19. API & Integrations
+description: REST API conventions, versioning schemes, enterprise ATS webhooks, and institutional ERP synchronization.
+---
+
+## 19.1 API Architecture Standards
+
+SmartZen exposes a standardized RESTful API via `api.becomesmart.online`:
+
+* **URL Format:** `https://api.becomesmart.online/v1/{module}/{resource}`
+* **Content Negotiation:** `application/json` with UTF-8 encoding.
+* **Idempotency Keys:** Mutating `POST` requests require `Idempotency-Key: {UUIDv4}` to prevent duplicate financial or application submissions.
+* **Error Standards:** RFC 7807 Problem Details for HTTP APIs:
+
+```json
+{
+  "type": "https://docs.becomesmart.online/errors/COMPETENCY_THRESHOLD_NOT_MET",
+  "title": "Unmet Competency Threshold",
+  "status": 422,
+  "detail": "Application requires minimum Silver tier in Distributed Caching.",
+  "instance": "/v1/placement/applications/apply",
+  "code": "SMART_422_COMPETENCY_FLOOR"
+}
+```
+
+---
+
+## 19.2 Authentication & API Keys
+
+* **Session Access:** Stateless short-lived JSON Web Tokens (JWT, 15-minute TTL) with HttpOnly secure refresh cookies.
+* **Machine-to-Machine Integration:** Enterprise API keys formatted with typed prefixes:
+  * `sk_live_smartzen_{32_chars}`: Production enterprise access.
+  * `sk_test_smartzen_{32_chars}`: Sandboxed testing access.
+* **Authentication Header:** `Authorization: Bearer <token>` or `X-SmartZen-Key: <api_key>`.
+
+---
+
+## 19.3 ATS Webhook Dispatch Engine
+
+Enterprise recruiters receive real-time webhook updates when candidate milestones occur:
+
+* **Supported Payload Events:** `candidate.verified`, `application.shortlisted`, `offer.accepted`.
+* **Cryptographic Verification:** Every webhook contains an `X-SmartZen-Signature` header computed as:
+
+```text
+Signature = HMAC-SHA256(timestamp + "." + payload, WEBHOOK_SECRET)
+```
+
+---
+
+## 19.4 Institutional SIS / ERP Sync
+
+SmartZen supports automated synchronization with campus information systems:
+* **Batch Ingestion:** SFTP CSV uploads scheduled nightly at `01:00 IST`.
+* **Real-time Synchronization:** Webhook connectors for Ellucian Banner, SAP Student Lifecycle Management, and Canvas LMS.
+* **Conflict Resolution:** Institutional identity (Roll Number + University Domain) serves as immutable anchor.

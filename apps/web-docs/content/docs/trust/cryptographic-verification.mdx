@@ -1,0 +1,70 @@
+---
+title: Cryptographic Certificates & Verification
+description: HMAC-SHA256 signature chain, public verification portal, and tamper detection.
+---
+
+# Cryptographic Certificates & Verification
+
+Legacy educational credentials rely on printed PDFs or static images that are trivially altered using basic desktop software. 
+
+SMART implements a cryptographically anchored verification trust chain governed by [ADR-0016](file:///d:/Work's/Infinitica/smart/docs/adr/0016-cryptographic-certs-and-server-timer.md).
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CERTIFICATE ISSUANCE & SIGNATURE CHAIN                   │
+│                                                                             │
+│  [ Canonical Certificate Payload ]                                          │
+│  {                                                                          │
+│    "certificateId": "c8a14b30-...",                                         │
+│    "candidateId": "u91283-...",                                             │
+│    "trackId": "it-full-stack-v1",                                           │
+│    "tier": "GOLD",                                                          │
+│    "issuedAt": "2026-09-29T14:00:00.000Z"                                   │
+│  }                                                                          │
+│                             │                                               │
+│                             ▼                                               │
+│            HMAC-SHA256 with KMS Customer Key                                │
+│                             │                                               │
+│                             ▼                                               │
+│             64-Character Hex Signature Hash                                 │
+│       e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855     │
+│                             │                                               │
+│              ┌──────────────┴──────────────┐                                │
+│              ▼                             ▼                                │
+│   [ PostgreSQL Persistence ]    [ Public Verification URL & QR ]            │
+│   Stored in Certificate Table   verify.smart.com/verify/{id}?hash={hash}    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Canonical Signature Construction
+
+When a candidate successfully completes all required cognitive levels, the backend constructs a deterministic payload containing only immutable identification parameters. 
+
+This string is passed through `crypto.createHmac('sha256', process.env.CERTIFICATE_HMAC_SECRET)` and persisted in `Certificate.signatureHash`.
+
+```typescript
+export function computeCertificateSignature(payload: CanonicalCertificatePayload, secret: string): string {
+  const serialized = JSON.stringify({
+    certificateId: payload.certificateId,
+    candidateId: payload.candidateId,
+    trackId: payload.trackId,
+    tier: payload.tier,
+    issuedAt: payload.issuedAt.toISOString(),
+  });
+
+  return crypto.createHmac('sha256', secret).update(serialized).digest('hex');
+}
+```
+
+---
+
+## Public Verification Portal (`apps/web-verify`)
+
+The public verification endpoint (`GET /api/v1/verify/:certificate_id`) is open to any third-party employer without login friction:
+
+1. **Server-Side Verification:** The backend recomputes the signature from canonical fields and returns `signatureValid: boolean`.
+2. **Client-Side Defense-in-Depth:** The Next.js verification client validates the query parameter hash (`?hash=...`) against the returned payload to ensure in-transit response integrity.
+3. **Automated Tamper Alert:** If the signature hash fails verification, the verification portal renders a prominent `[SECURITY_EVENT]` alert indicating that the credential has been tampered with or revoked.
+4. **QR Code Resolution:** Every exported PDF carries a vector QR code encoding the verification link for instant mobile auditing.

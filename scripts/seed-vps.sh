@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Seed the database on a VPS from a named environment file.
+# Seed the database on a single High-End Linux VPS from a named environment file.
 #
-#   bash scripts/seed-vps.sh dev    # kvm2 — smart-dev
-#   bash scripts/seed-vps.sh qa     # kvm2 — smart-qa
-#   bash scripts/seed-vps.sh prod   # kvm4 — smart-prod
+#   bash scripts/seed-vps.sh dev    # Single VPS — smart-dev
+#   bash scripts/seed-vps.sh qa     # Single VPS — smart-qa
+#   bash scripts/seed-vps.sh prod   # Single VPS — smart-prod
 #
 # Run this from the deploy checkout (~deploy/smart on the server — NOT ~root,
 # and NOT a fresh `git clone`; deploys land there via CI rsync, there is no
@@ -20,7 +20,9 @@ cd "$(dirname "$0")/.."
 ENV_NAME="${1:-}"
 if [[ -z "$ENV_NAME" || ! "$ENV_NAME" =~ ^(dev|qa|prod)$ ]]; then
   echo "Usage: bash scripts/seed-vps.sh <dev|qa|prod>"
-  echo "  kvm2 → dev / qa   |   kvm4 → prod"
+  echo "  dev  → Single VPS smart-dev"
+  echo "  qa   → Single VPS smart-qa"
+  echo "  prod → Single VPS smart-prod"
   exit 1
 fi
 

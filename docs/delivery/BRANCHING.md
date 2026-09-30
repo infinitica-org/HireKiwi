@@ -24,11 +24,11 @@ main  ──── always production-ready. Gated & merged by @brittytino (or re
            └── chore/S6-TN-00-decentralised-review-model
 ```
 
-| Branch     | Purpose                                                             | Who reviews                                             | Who merges                               | Deploy target                                              |
-| ---------- | ------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------- |
-| **`dev`**  | Daily integration. Feature PRs require module owner approval.       | **Module Owner** (per CODEOWNERS) + Architect for seams | **`@brittytino` / `@vis465`** (after CI) | **kvm2** `smart-dev` (Caddy TLS, auto-deploy on green CI)  |
-| **`qa`**   | Freeze candidate for UAT / pilot. No feature work — promotion only. | **Tino** (System Architect)                             | **Only `@brittytino`**                   | **kvm2** `smart-qa`                                        |
-| **`main`** | Production / GA truth. Always deployable.                           | **Tino** (System Architect)                             | **Only `@brittytino`**                   | **kvm4** `smart-prod` (Caddy TLS, auto-deploy on green CI) |
+| Branch     | Purpose                                                             | Who reviews                                             | Who merges                               | Deploy target                                                                          |
+| ---------- | ------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------- |
+| **`dev`**  | Daily integration. Feature PRs require module owner approval.       | **Module Owner** (per CODEOWNERS) + Architect for seams | **`@brittytino` / `@vis465`** (after CI) | **Single VPS** `smart-dev` (`dev.becomesmart.online`, Caddy TLS, auto-deploy)          |
+| **`qa`**   | Freeze candidate for UAT / pilot. No feature work — promotion only. | **Tino** (System Architect)                             | **Only `@brittytino`**                   | **Single VPS** `smart-qa`                                                              |
+| **`main`** | Production / GA truth. Always deployable.                           | **Tino** (System Architect)                             | **Only `@brittytino`**                   | **Single VPS** `smart-prod` (`becomesmart.online`, Blue-Green Zero-Downtime Switching) |
 
 Engineers **never** commit directly to `main`, `qa`, or `dev`.
 Every change lands via a **pull request**, verified by CI and reviewed per the ownership matrix.

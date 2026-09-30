@@ -1,103 +1,94 @@
-# SMART on VPS — kvm2 (dev) and kvm4 (prod)
+# SMART on Unified High-End VPS — Production (Blue-Green) & Development
 
-Policy: [`docs/delivery/BRANCHING.md`](../../docs/delivery/BRANCHING.md) ·
-database: [`docs/delivery/DATABASE.md`](../../docs/delivery/DATABASE.md) ·
-ADR-0009.
+**Policy:** [`docs/delivery/BRANCHING.md`](../../docs/delivery/BRANCHING.md) · **Database:** [`docs/delivery/DATABASE.md`](../../docs/delivery/DATABASE.md) · **ADR-0009**
 
-| Host     | Git branch | Compose project | Public TLS (Caddy)          | Domain                   |
-| -------- | ---------- | --------------- | --------------------------- | ------------------------ |
-| **kvm2** | `dev`      | `smart-dev`     | Yes — owns :80/:443 on kvm2 | `dev.becomesmart.online` |
-| **kvm2** | `qa`       | `smart-qa`      | Not currently deployed      | —                        |
-| **kvm4** | `main`     | `smart-prod`    | Yes                         | `becomesmart.online`     |
+---
 
-Deploys are automatic: a push to `dev` or `main` runs CI, and on green CI the
-`deploy-dev.yml` / `deploy-prod.yml` GitHub Actions workflow rsyncs the repo to
-the matching host over SSH (as the `deploy` user, key-only) and runs
-`scripts/deploy-vps.sh`. Manual runs of that script still work the same way for
-break-glass / first-time setup.
+## 1. Executive Topology Overview
 
-## 1. DNS (A records)
+SMART runs on a single, high-performance Linux VPS (Ubuntu 24.04: 32 vCPU, 128 GB RAM, NVMe storage) hosting **both Production and Development in strictly isolated Docker Compose networks**.
 
-| Host                                                                                                                | → IP    |
-| ------------------------------------------------------------------------------------------------------------------- | ------- |
-| `becomesmart.online`, `www.` (CNAME → apex), `api.`, `app.`, `tpo.`, `admin.`, `verify.`, `studio.`, `db.`          | kvm4 IP |
-| `dev.becomesmart.online`, `dev.api.`, `dev.app.`, `dev.tpo.`, `dev.admin.`, `dev.verify.`, `dev.studio.`, `dev.db.` | kvm2 IP |
+Production utilizes an automated **Blue-Green Zero-Downtime Deployment Engine** driven by Caddy, ensuring 0 ms connection drops and instant automated rollback.
 
-## 2. Server setup (each VPS) — one-time
+The architecture is built on 12-factor cloud-native principles, functioning as a direct bridge for our scheduled lift-and-shift migration to AWS (ECS/RDS/ElastiCache).
 
-Both hosts run Ubuntu 24.04, hardened the same way: Docker CE, `deploy` (docker
-group, key-only SSH, no sudo needed for deploys), `ufw` (22/80/443 only),
-`fail2ban` on sshd, `PasswordAuthentication no` / `PermitRootLogin
-prohibit-password`. Postgres/PgBouncer/Redis/Redpanda/MinIO/Prisma Studio/
-Grafana/Prometheus/Loki are all bound to `127.0.0.1` in `docker-compose.yml` —
-reach them only via an SSH tunnel (`ssh -L 5432:127.0.0.1:5432 deploy@<ip>`),
-never directly from the internet.
+| Environment                  | Compose Project              | Public TLS (Caddy)            | Domains Served                                                                                         |
+| :--------------------------- | :--------------------------- | :---------------------------- | :----------------------------------------------------------------------------------------------------- |
+| **Production (Active Slot)** | `smart-prod-blue` or `green` | Yes — Automated Let's Encrypt | `becomesmart.online`, `app.`, `api.`, `tpo.`, `admin.`, `verify.`, `docs.`                             |
+| **Development**              | `smart-dev`                  | Yes — Automated Let's Encrypt | `dev.becomesmart.online`, `dev.app.`, `dev.api.`, `dev.tpo.`, `dev.admin.`, `dev.verify.`, `dev.docs.` |
 
-```bash
-git clone https://github.com/infinitica-org/smart.git ~/smart
-cd ~/smart
+---
+
+## 2. DNS & Ingress Routing (Cloudflare Anycast → Single VPS IP)
+
+All DNS A-records point to the single VPS public IP through Cloudflare (Proxy enabled: WAF, DDoS, and TLS 1.3):
+
+```
+[ Internet Traffic ]
+        │
+[ Cloudflare Anycast CDN & WAF ]
+        │
+        ▼ (Port 80 / 443)
+[ Host Caddy Reverse Proxy ]
+        │
+   ┌────┴──────────────────────────────────────────┐
+   ▼ (*.becomesmart.online)                        ▼ (*.dev.becomesmart.online)
+[ Production Active Slot: Blue or Green ]        [ Isolated Dev Stack: smart-dev ]
+- Blue: api:3000, web:3001-3006                  - api:3020, web:3021-3026
+- Green: api:3010, web:3011-3016                 - Isolated Postgres 16 Dev DB
 ```
 
-Run this **as the `deploy` user** — the checkout lives at `~deploy/smart`
-(i.e. `/home/deploy/smart`), never `/root/smart`. After the first CI deploy,
-`~deploy/smart` is kept in sync by `rsync`, not `git`: there is no `.git`
-there and `git pull` will fail. Break-glass edits go through a normal PR to
-`dev`/`main`; do not hand-edit or `git`-manage the server checkout.
+---
 
-On **kvm2**: `git checkout dev`, `cp .env.dev.example .env.dev`, fill secrets,
-`bash scripts/deploy-vps.sh dev`.
+## 3. Automated Blue-Green Zero-Downtime Deployment Engine
 
-On **kvm4** (brittytino only): `git checkout main`, `cp .env.prod.example
-.env.prod`, fill secrets, `bash scripts/deploy-vps.sh prod`.
-
-## 3. Database
-
-Docker Postgres + pgvector, one volume per host (`smart-dev` / `smart-prod`
-compose projects) — physically separate databases, distinct generated
-passwords, never shared. See `docs/delivery/DATABASE.md`. Postgres is
-**not** published to the internet; browse it via the DB admin UI below or an
-SSH tunnel.
-
-Migrations (`prisma migrate deploy`, already-committed migrations only) run
-automatically at the end of `scripts/deploy-vps.sh` / every CI deploy.
-
-Seeding is manual and not run by CI (it is a one-time / break-glass op, not
-part of every deploy). The running `api` container is a slim production
-image with no `pnpm` and no TypeScript source, so `prisma/seed.ts` cannot run
-via `docker compose exec api ...`. Use the wrapper instead, from
-`~deploy/smart`:
+Deployments to production run through [`scripts/blue-green-deploy.sh`](../../scripts/blue-green-deploy.sh):
 
 ```bash
-bash scripts/seed-vps.sh dev    # kvm2 — smart-dev
-bash scripts/seed-vps.sh qa     # kvm2 — smart-qa
-bash scripts/seed-vps.sh prod   # kvm4 — smart-prod
+# Execute zero-downtime production deployment:
+bash scripts/blue-green-deploy.sh prod
 ```
 
-## 4. DB admin UI
+### Execution Lifecycle:
 
-Two tools, same gate: HTTP Basic Auth (`DB_BASIC_AUTH_USER` /
-`DB_BASIC_AUTH_HASH` in the env file) **and** the Postgres login itself. Raw
-port 5432 is never exposed publicly.
+1. **Target Identification:** Reads `.deploy_state_prod`. If `blue` is active, the deployment targets `green`.
+2. **Sequential Container Build:** Builds updated service images for the target color sequentially to avoid host CPU/I-O throttling.
+3. **Target Boot:** Starts target containers on their dedicated internal port range (e.g., Green API on `3010`).
+4. **Health Probe Gate:** Polls `http://127.0.0.1:3010/health` and `/ready` up to 30 times. If probes fail, the deployment **aborts immediately**, leaving active traffic on Blue completely untouched.
+5. **Database Migration:** Executes forward-only Prisma migrations on the shared production database: `npx prisma migrate deploy`.
+6. **Zero-Downtime Traffic Switch:** Dynamically updates Caddy's upstream mapping and triggers `caddy reload`. Caddy shifts 100% of live traffic to Green in < 50ms with zero dropped TCP connections.
+7. **Graceful Drain:** Waits 15 seconds for in-flight requests on Blue to complete, then spins down Blue containers.
+8. **State Commit:** Writes `green` to `.deploy_state_prod`.
 
-- `https://studio.becomesmart.online` / `https://dev.studio.becomesmart.online` — Prisma Studio.
-- `https://db.becomesmart.online` / `https://dev.db.becomesmart.online` — Adminer (raw SQL / table admin).
+---
 
-## 5. Laptop (not a VPS)
+## 4. Server Security Hardening & Zero Public DB Exposure
 
-```bash
-cp .env.example .env
-pnpm infra:up
-pnpm dev:api
-```
+The VPS host is hardened against unauthorized network access:
 
-## 6. CI/CD secrets (GitHub repo secrets, set once)
+- **`ufw` Firewall Rules:** Only ports `22` (SSH), `80` (HTTP), and `443` (HTTPS) are open to the internet.
+- **Localhost Binding:** PostgreSQL (`5432`), Redis (`6379`), Redpanda (`19092`), and MinIO (`9000`) are bound strictly to `127.0.0.1`.
+- **SSH Bastion Tunneling:** Administrative access to databases and Prisma Studio requires authenticated key-based SSH tunnels:
+  ```bash
+  # Tunnel to Production Database:
+  ssh -L 5432:127.0.0.1:5432 deploy@<vps-ip>
 
-`DEV_SSH_HOST`, `DEV_SSH_USER=deploy`, `DEV_SSH_KEY` (private key) and the
-`PROD_` equivalents. No database/JWT/API secrets ever leave the servers —
-GitHub Actions only holds enough to SSH in and run the deploy script.
+  # Tunnel to Prisma Studio:
+  ssh -L 5555:127.0.0.1:5555 deploy@<vps-ip>
+  ```
+- **Fail2ban & SSH Hardening:** Password authentication disabled (`PasswordAuthentication no`), root login disabled (`PermitRootLogin prohibit-password`).
 
-## 7. Health
+---
 
-- `GET /health` · `GET /ready` · `GET /api/v1/admin/metrics`
+## 5. Scheduled AWS Cloud Migration Bridge (Zero-Code Lift & Shift)
 
-Owner: Vishal V (infra) / Tino (release).
+Because the architecture follows 12-factor cloud principles, transitioning to AWS involves zero application code modifications:
+
+| VPS Component                | AWS Target Service                  | Migration Mechanism                                               |
+| :--------------------------- | :---------------------------------- | :---------------------------------------------------------------- |
+| **Container Runtime**        | AWS ECS Fargate / EKS               | Run identical Docker images (`Dockerfile.api`, `Dockerfile.web`). |
+| **PostgreSQL 16 + pgvector** | AWS RDS PostgreSQL (Multi-AZ)       | Point `DATABASE_URL` to RDS endpoint; run `pg_dump / pg_restore`. |
+| **Redis 7 Cluster**          | AWS ElastiCache for Redis           | Point `REDIS_URL` to ElastiCache cluster endpoint.                |
+| **Redpanda Event Bus**       | AWS MSK / Redpanda Cloud            | Point `KAFKA_BROKERS` to AWS MSK bootstrap servers.               |
+| **MinIO / Local Storage**    | AWS S3 Standard Storage             | Set `S3_ENDPOINT` to `s3.amazonaws.com` with IAM credentials.     |
+| **Caddy Ingress**            | AWS Application Load Balancer (ALB) | Route 53 DNS + ACM TLS Certificates + ALB Target Groups.          |

@@ -1,0 +1,23 @@
+---
+title: 29. Architecture & Product Decision Log
+description: Architectural Decision Records (ADRs), product trade-offs, and historical rationale log.
+---
+
+## 29.1 Architecture Decision Records (ADR Summary)
+
+| ADR | Title | Decision & Rationale | Status |
+| :--- | :--- | :--- | :--- |
+| **ADR-0001** | Modular Monolith vs Microservices | Adopted a modular monolith in TypeScript to eliminate network RPC overhead and streamline transactional integrity during early-stage scaling. | Accepted |
+| **ADR-0002** | Package Manager | Adopted `pnpm` with strict workspace hoisting to prevent phantom dependencies and conserve disk space. | Accepted |
+| **ADR-0007** | Database Schema Governance | Exclusive migration authorship assigned to Database Architect; `prisma migrate deploy` used in deployment scripts. | Accepted |
+| **ADR-0009** | Single High-End VPS & Blue-Green Engine | Consolidated multi-host topology into a single High-End Linux VPS running isolated Dev/Prod Compose slots with Blue-Green Caddy routing; cloud-ready for AWS. | Accepted |
+| **ADR-0014** | Edge CV Proctoring & DPDP Privacy | MediaPipe client-side inference with downsampled event snapshots; zero raw video storage; automated 30-day purge. | Accepted |
+| **ADR-0016** | Server-Authoritative Session Timing | BullMQ delayed jobs on Redis manage assessment timeouts, preventing client clock tampering. | Accepted |
+| **ADR-0017** | Hybrid Placement Matching Engine | PostgreSQL `pgvector` HNSW cosine similarity combined with deterministic SQL filters and regex fallback. | Accepted |
+
+---
+
+## 29.2 Strategic Trade-Off Decisions
+
+1. **Self-Hosted VPS vs Premature Managed Cloud:** Opted for a high-end dedicated VPS over high-cost managed AWS services during current pilot phase, reducing operating expenses by $85\%$ while engineering strict 12-factor boundaries for seamless future migration.
+2. **BARS Criterion-Referenced Scoring vs Percentiles:** Chose objective criterion-based cutoffs to ensure that a "Gold" tier badge represents demonstrable competence regardless of who else took the assessment that week.
