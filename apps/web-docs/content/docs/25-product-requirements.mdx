@@ -1,139 +1,168 @@
 ---
 title: 25. Product Requirements & Specifications (PRD)
-description: Comprehensive Functional Requirements (FR-01 to FR-25), Role Permission Invariants, Non-Functional Latency/Throughput SLAs, and DPDP Compliance Constraints.
+description: The authoritative PRD reverse-engineered from the 52-module product backlog (442 functional requirements, 65 NFRs, 46 actors, and v0.12/v0.13 release plan).
 ---
 
-## 25.1 System Overview & Scope Definition
+## 25.1 System Purpose & Scope Definition
 
-SmartZen is an AI-powered Intellectual Talent Network and role-specific readiness verification platform. Unlike legacy resume-scraping repositories (e.g., Superset) that harvest and expose unverified candidate data, SmartZen operates an **autonomous, evidence-based verification engine** (combining AST static code analysis, proctored code defense, and employer-attested work experience) and closes the loop by diagnosing exact competency deficits with structured re-attempt pathways.
+SmartZen is an AI-powered **evidence-backed talent network platform** that connects universities, students, and enterprise employers around verified, evidence-based capabilities rather than self-declared resume claims (Source of Truth: `smart.ai_PRD_Functional_and_Non-Functional_Requirements.xlsx`, synthesized from the 442-story product backlog across 52 modules).
+
+### The Core Problem
+- **Employers:** Cannot trust self-declared student CVs or inflated keyword claims; spend 40+ hours per role on manual screening with high false-positive rates.
+- **Students:** Lack mechanisms to demonstrate genuine problem-solving capabilities beyond college pedigree and GPA.
+- **Universities:** Lack real-time visibility into student placement readiness and curriculum deficits.
+
+### The SmartZen Solution
+SmartZen collects multi-signal evidence (academic SIS records, GitHub repositories, corporate internship endorsements, and proctored technical evaluations), deploys autonomous agents led by **Vivi** (Source Verification Agent) to interrogate evidence directly at its authentic source, infers explainable skill levels with calibrated confidence, and matches students to active jobs with transparent reasons.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          SMARTZEN SCOPE BOUNDARY                            │
 ├──────────────────────────────────────┬──────────────────────────────────────┤
-│ WHAT SMARTZEN DOES                   │ WHAT SMARTZEN NEVER DOES             │
+│ IN SCOPE (PRD v0.12 & v0.13)         │ STRICTLY OUT OF SCOPE (Overview 3.7) │
 ├──────────────────────────────────────┼──────────────────────────────────────┤
-│ • Cryptographically verifies skills  │ • Bulk export raw student CSVs to HR │
-│ • Validates commit authorship via AST│ • Scrape candidate data for cold ads │
-│ • Proctors technical code defenses   │ • Store Aadhaar or PAN numbers       │
-│ • Enforces DPDP Act 2023 compliance  │ • Replace HRIS / Payroll platforms   │
-│ • BARS rubric competency scoring     │ • Permit unverified claims to rank   │
+│ • Autonomous source verification     │ • Automated hiring decisions (human  │
+│   via Vivi agent (SIS, Git, Corp)    │   review mandatory per SEC-02.09)    │
+│ • Criterion-referenced BARS rubrics  │ • Facial, emotion, or personality    │
+│ • Proctored AI project defenses      │   inference (strictly banned SEC-02) │
+│ • 4 canonical entitlements: Jobs,    │ • Student-paid plans or candidate    │
+│   Searches, Messages, Seats (BIL-01) │   monetization (100% free STU-01)    │
+│ • Row-Level multi-tenant isolation   │ • Native mobile applications         │
+│ • DPDP Act 2023 30-day purge         │ • Aadhaar or PAN storage/ingestion   │
 └──────────────────────────────────────┴──────────────────────────────────────┘
 ```
 
 ---
 
-## 25.2 User Roles & Trust Boundary Invariants
+## 25.2 The 52-Module Catalogue across 18 Domains
 
-The platform enforces strict role-based access control (RBAC) across four primary institutional user types. The most critical architectural boundary is the **Data Egress Invariant**: no role—including corporate recruiters—is permitted to perform bulk data extraction or resume scraping.
+The SmartZen product architecture encompasses 52 modules across 18 functional domains:
 
-| Capability                                | Super Admin                         | Academia (TPO)                 | Candidate          | Corporate Recruiter                         |
-| :---------------------------------------- | :---------------------------------- | :----------------------------- | :----------------- | :------------------------------------------ |
-| **Manage Institution / Company Accounts** | Full CRUD (Soft-delete)             | None                           | None               | None                                        |
-| **View Candidate Profile**                | Audit-logged (Reason code required) | Own campus students only       | Own profile only   | Only candidates shared into active pipeline |
-| **Feature Entitlement Flags**             | Full Config                         | None                           | None               | None                                        |
-| **Provision Candidate Accounts**          | Support escalation only             | Primary Owner (CSV / ERP Sync) | None               | None                                        |
-| **Post Job Requisition / Drive**          | System oversight                    | Relays to campus cohorts       | None               | Primary Creator                             |
-| **Shortlist Candidates**                  | None                                | Primary Gatekeeper             | Opt-in / Decline   | Secondary (from TPO-curated pool)           |
-| **Take Verification Assessments**         | None                                | None                           | Primary Actor      | None                                        |
-| **Bulk Export Candidate PII**             | Strictly Forbidden                  | Aggregates only (Own campus)   | Own dossier export | Strictly Forbidden (Hard 403)               |
-
-> **Trust Boundary Enforcement:** The prohibition against bulk data export is enforced mechanically at the NestJS API gateway layer via token rate-limiting (max 60 profile reads per minute per recruiter seat) and the deliberate absence of bulk pagination endpoints (`/candidates/export` does not exist in the routing table).
+| Domain | Module ID | Module Title | Scope & Purpose Summary | Release |
+| :----- | :-------- | :----------- | :---------------------- | :------ |
+| **Platform Foundation** | `PLT-01` | Identity & Authentication | Secure registration, JWT sign-in, MFA, session management for all portals. | v0.12 (P0) |
+| | `PLT-02` | Organizations & Tenancy | Row-Level multi-tenancy for universities, campuses, and corporate employers. | v0.12 (P0) |
+| | `PLT-03` | Roles & Permissions | Centralized role-based access control (RBAC) with deny-by-default support access. | v0.12 (P0) |
+| | `PLT-04` | Design System & Shell | Shared accessible component design system and responsive application shell. | v0.12 (P0) |
+| **University Portal** | `UNI-01` | Partnership & Provisioning | Institutional partnership onboarding, contract review, and tenant provisioning. | v0.12 (P0) |
+| | `UNI-02` | Eligibility & Whitelisting | Student eligibility control via `@university.edu` domains and roster uploads. | v0.12 (P0) |
+| | `UNI-03` | University Staff Management | Staff invitations, role assignments, and campus-level departmental scoping. | v0.13 (P1) |
+| | `UNI-04` | Readiness Dashboard | Real-time aggregate view of cohort verification and placement readiness tiers. | v0.12 (P0) |
+| | `UNI-05` | Employer & Event Management | University-controlled employer access approvals and on-campus career events. | v0.13 (P1) |
+| | `UNI-06` | University Reports | Exportable institutional reports (NAAC/NIRF compliance, cohort analytics). | v0.13 (P1) |
+| **Student Experience** | `STU-01` | Student Onboarding | Campus SSO registration, consent capture, and resumable multi-step onboarding. | v0.12 (P0) |
+| | `STU-02` | Profile Management | Evidence-backed profile editing, privacy/discoverability toggles, DPDP requests. | v0.12 (P0) |
+| | `STU-03` | Student Dashboard | Unified home dashboard tracking completion, verification, matches, and jobs. | v0.12 (P0) |
+| **Agents & Verification** | `VER-01` | Evidence Model & Provenance | Immutable evidence DAG with source provenance, cryptographic digests, expiry. | v0.12 (P0) |
+| | `VER-02` | Work-Experience Endorsement | Corporate domain endorsement links ($72$h TTL), anti-collusion fraud ring analysis. | v0.12 (P0) |
+| | `VER-03` | Credentials & Certifications | Direct API integration with issuers (AWS, Credly, Google), anomaly detection. | v0.12 (P0) |
+| | `VER-04` | Project Evidence | GitHub/GitLab AST parsing, commit authorship ($>35\%$), tutorial clone detection. | v0.12 (P0) |
+| **Assessment & AI Interview**| `ASM-01` | Assessment Engine | Timed, adaptive MCQ delivery, server-side timers, anti-tamper client telemetry. | v0.12 (P0) |
+| | `INT-01` | AI Project-Defense Interview | Interactive AI interview probing submitted code, audio transcript, BARS rubrics. | v0.12 (P0) |
+| **Competency Intelligence** | `SKL-01` | Skill Taxonomy & Rubrics | Versioned skill/competency taxonomy with 5-level BARS proficiency rubrics. | v0.12 (P0) |
+| | `SKL-02` | Evidence-to-Skill Inference | Asynchronous BullMQ workers mapping verified evidence DAG to skill proficiencies. | v0.12 (P0) |
+| | `SKL-03` | Skill Explanation | Human-understandable explanation citing verbatim code and stored evidence. | v0.12 (P0) |
+| **Verified Profile** | `PRF-01` | Verified Profile Composition | Consolidated profile displaying claim-level verification badges and provenance. | v0.12 (P0) |
+| | `PRF-02` | Profile Readiness | Quantitative readiness indicators ($0-100\%$) and skill gap recommendations. | v0.12 (P0) |
+| **Employer Onboarding** | `EMP-01` | Registration & Verification | Employer account registration, CIN/GSTIN verification, domain authentication. | v0.12 (P0) |
+| | `EMP-02` | Company Profile & Team | Recruiter seat management, company profile curation, team RBAC permissions. | v0.13 (P1) |
+| **Jobs & Matching** | `JOB-01` | Job Management | Job creation, required/preferred competency floors, lifecycle governance. | v0.12 (P0) |
+| | `MAT-01` | Matching Engine | Explainable semantic vector matching excluding protected attributes. | v0.12 (P0) |
+| | `JOB-02` | Student Job Discovery | Filterable job discovery interface displaying match scores and missing criteria. | v0.12 (P0) |
+| **Applications & Pipeline** | `APP-01` | Student Applications | Application submission with immutable evidence snapshotting at apply time. | v0.12 (P0) |
+| | `APP-02` | Candidate Pipeline | 6 standardized stages: Applied, Reviewing, Interviewing, Offered, Hired, Rejected. | v0.13 (P1) |
+| **Talent Search & Outreach**| `SRC-01` | Employer Talent Search | Search across discoverable students, strict rate limits against scraping. | v0.12 (P0) |
+| | `SRC-02` | Employer Opportunities | Direct invitations linked to active jobs; volume-controlled outreach. | v0.12 (P0) |
+| **Communication** | `COM-01` | Messaging | Authenticated messaging between students and verified employers/advisors. | v0.12 (P0) |
+| | `COM-02` | Notifications | In-app alerts and transactional email delivery with idempotency suppression. | v0.12 (P0) |
+| **Administration & Trust** | `ADM-01` | Admin Operations Dashboard | Internal operations console with drill-down into platform processing queues. | v0.12 (P0) |
+| | `ADM-02` | Verification Operations | Verifier queue for flagged evidence, document inspection, manual overrides. | v0.12 (P0) |
+| | `ADM-03` | Trust & Safety | Automated collusion ring detection, enforcement actions, formal appeals. | v0.12 (P0) |
+| | `ADM-04` | Support Tooling | Audited, reason-bound impersonation (view-as-user) with write-blocking. | v0.13 (P1) |
+| | `ADM-05` | Audit Logging | Immutable append-only audit logging of security, verification, scoring events. | v0.12 (P0) |
+| **Analytics & Outcomes** | `ANA-01` | Product Analytics | Funnel conversion metrics across onboarding, verification, and matching. | v0.12 (P0) |
+| | `ANA-02` | Hiring Outcome Feedback | Closed-loop ML calibration comparing employer interview outcomes with scores. | v0.12 (P0) |
+| | `ANA-03` | Employer Analytics | Employer-facing hiring analytics (time-to-hire, funnel drop-off, source yield). | v0.13 (P1) |
+| **Billing & Entitlements** | `BIL-01` | Employer Plans & Entitlements| 4 canonical quotas: Active Jobs, Searches, Direct Messages, Recruiter Seats. | v0.13 (P1) |
+| **Integrations** | `INTG-01`| University SIS/ERP | Integration with Banner, PeopleSoft, Canvas for student roster synchronization. | v0.13 (P1) |
+| | `INTG-02`| Student Evidence Integrations| OAuth connectors for GitHub, GitLab, LinkedIn, and Credly certification APIs. | v0.13 (P1) |
+| | `INTG-03`| Employer ATS Integrations | Candidate export to Greenhouse, Lever, and webhook bi-directional sync. | v0.13 (P2) |
+| **Security, Privacy & AI** | `SEC-01` | Privacy, Consent & Retention | Explicit consent capture, DPDP Act 2023 30-day purge, AES-256 encryption. | v0.12 (P0) |
+| | `SEC-02` | Responsible AI Governance | Traceability of AI outputs, prohibition of emotion/behavioral inferences. | v0.12 (P0) |
+| | `SEC-03` | Application Security | S3 magic byte checks, API rate limiting, CSP headers, secrets isolation. | v0.12 (P0) |
+| **Operations & Performance**| `OPS-01` | Observability & Operability | Prometheus/Grafana metrics, Winston structured logs, BullMQ retry DLQ. | v0.12 (P0) |
+| | `OPS-02` | Performance & Scale | Single High-End VPS optimization, PgBouncer 2000:20 pooling, load testing. | v0.13 (P1) |
 
 ---
 
-## 25.3 Functional Requirements Matrix (FR-01 to FR-25)
+## 25.3 User Actors & Role Hierarchy (46 Actors)
 
-The functional requirements are partitioned across five functional modules: **Super Admin (SA)**, **Academia / TPO (AC)**, **Candidate (CN)**, **Company / Recruiter (CO)**, and **Shared Core Engine (SE)**.
+The platform governs access across five distinct actor tiers:
 
-### Super Admin Module (SA)
-
-- **FR-SA-01 (Academia Tenant Management):** System must support complete CRUD lifecycle for university tenants. Deactivation must trigger a cascading session revocation for enrolled students while preserving historical audit logs (Soft-delete only).
-- **FR-SA-02 (Enterprise Academia SSO):** System must authenticate institutional administrators via Microsoft Entra ID (Azure AD) OIDC with admin-consent tenant domain mapping.
-- **FR-SA-03 (Company Tenant Management):** System must register corporate entities, requiring GSTIN/CIN validation, corporate website domain verification, and primary admin binding.
-- **FR-SA-04 (Corporate SSO):** System must authenticate corporate users via Google Workspace OIDC and Microsoft Entra ID, extensible to SAML 2.0 / Okta.
-- **FR-SA-05 (Dynamic Entitlement Flags):** System must evaluate tenant feature flags (e.g., `ai_code_defense_v2`, `bulk_roster_sync`) dynamically at runtime via Redis-cached tenant policies without application redeployment.
-- **FR-SA-06 (Candidate Dossier Audit Inspection):** Super Admin access to any candidate profile requires a mandatory justification reason code, emitting an immutable `AUDIT_EVENT_PII_ACCESS` record.
-- **FR-SA-07 (Domain & Competency Taxonomy Curation):** System must provide version-controlled CRUD for hierarchical skill taxonomies (Domain -> Role -> Competency -> Rubric Criterion).
-
-### Academia / TPO Module (AC)
-
-- **FR-AC-08 (Batch Student Provisioning):** TPO can upload CSV student rosters (Name, Email, Roll Number, Degree, Graduation Year) or trigger bi-directional ERP sync (SAP / Canvas). System auto-provisions sandboxed accounts locked to the university email domain.
-- **FR-AC-09 (Cohort Readiness Dashboard):** TPO dashboard must display aggregate distribution of student readiness tiers (Gold, Silver, Bronze, Remedial) filtered by academic branch and graduation year.
-- **FR-AC-10 (Job Requisition Relay):** TPO receives incoming corporate hiring drives, configures campus-specific eligibility filters (e.g., Minimum Silver Tier in Distributed Systems + 7.5 CGPA), and publishes the drive to eligible student cohorts.
-- **FR-AC-11 (Explainable Algorithmic Shortlisting):** TPO can generate ranked candidate shortlists for a requisition. The system must render an explainable match breakdown (Vector semantic score + Skill coverage ratio + Integrity coefficient).
-- **FR-AC-12 (Accreditation Placement Export):** System must generate regulatory compliance placement summaries (NAAC, NIRF, NBA) with verified CTC, offer timestamps, and anonymized hiring partner identifiers.
-
-### Candidate Module (CN)
-
-- **FR-CN-13 (Institutional Account Claiming):** Candidates authenticate via campus single sign-on to activate their pre-provisioned profile, establishing their cryptographic identity anchor.
-- **FR-CN-14 (GitHub Evidence Ingestion):** Candidate connects their GitHub account. The system ingests selected public repositories, runs AST parsers to calculate commit author frequency, checks repository fork ancestry, and flags duplicate code.
-- **FR-CN-15 (L1 Cognitive & MCQ Assessment):** Candidate completes timed, server-authoritative multiple-choice assessments with randomized question sequences and anti-tamper client event logging.
-- **FR-CN-16 (L2 Proctored Code Defense):** Candidate completes a 15-minute interactive code defense session where an AI evaluator prompts them to explain architectural trade-offs, refactor code snippets, and justify dependency choices.
-- **FR-CN-17 (Work-Experience Voucher Engine):** Candidate uploads proof of prior internships. The system rejects offer/appointment letters (`INVALID_DOCUMENT_TYPE`), accepts completion/relieving letters, and dispatches a verification voucher to the employer's official domain email.
-- **FR-CN-18 (Cryptographic Credential Generation):** Upon achieving verified status, the system issues a tamper-evident credential signed with HMAC-SHA256, resolvable at `becomesmart.online/verify/{certId}`.
-- **FR-CN-19 (Cooldown & Re-attempt State Machine):** If a candidate fails an assessment or integrity threshold, the skill transitions to `LOCKED_COOLDOWN` with a mandatory 14-day development window and personalized diagnostic feedback before re-testing.
-
-### Company / Recruiter Module (CO)
-
-- **FR-CO-20 (Job Requisition Management):** Recruiters create detailed job descriptions, specifying required competencies, BARS minimum thresholds (e.g., Level 4 in Backend Concurrency), and target compensation bands.
-- **FR-CO-21 (TPO Shortlist Review):** Recruiters review candidate dossiers forwarded by university TPOs. Each dossier includes verified GitHub evidence, recorded code defense responses, and BARS competency scores.
-- **FR-CO-22 (Application Lifecycle Pipeline):** Recruiters advance candidates through five standard states (`APPLIED`, `SHORTLISTED`, `INTERVIEW_SCHEDULED`, `OFFERED`, `HIRED`) with real-time webhook dispatch.
-- **FR-CO-23 (Post-Interview Calibration Feedback):** Upon completing technical interviews, recruiters submit structured feedback comparing candidate performance against predicted BARS scores, closing the ML calibration loop.
-
-### Shared Core Engine (SE)
-
-- **FR-SE-24 (pgvector Semantic Matching):** Engine computes cosine similarity between candidate competency embeddings (1536-dimensional vectors) and job requisition vector profiles, applying hard SQL filters for domain eligibility.
-- **FR-SE-25 (Asynchronous Job Processing):** All heavy computing operations (AST parsing, LLM rubric scoring, plagiarism scanning) execute via BullMQ asynchronous workers backed by Redis, isolating the API core from latency spikes.
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        ACTOR CATEGORY TAXONOMY                         │
+├────────────────────────────────────────────────────────────────────────┤
+│ 1. STUDENTS (95 Reqs):                                                 │
+│    • Student (Active profile builder, candidate)                       │
+│    • Returning Student (Alumni updating evidence)                      │
+│    • Mobile User (Responsive web access on mobile devices)             │
+│                                                                        │
+│ 2. EMPLOYERS (72 Reqs):                                                │
+│    • Employer Owner (Administering company account & billing)          │
+│    • Corporate Recruiter (Searching talent, posting jobs, pipeline)    │
+│    • Verified Employer (Completed company registration check)          │
+│    • Enterprise Customer (Custom contracts & dedicated integrations)   │
+│                                                                        │
+│ 3. UNIVERSITIES (40 Reqs):                                             │
+│    • University Administrator (Initial setup, whitelisting, contracts) │
+│    • Career Advisor / TPO (Cohort readiness, job drive management)     │
+│    • Departmental Staff (Faculty mentors, branch advisors)             │
+│                                                                        │
+│ 4. AGENTS & AUTOMATED SYSTEMS (102 Reqs):                              │
+│    • Vivi (Flagship Source Verification Agent: SIS, Git, Corp, Credly) │
+│    • AI Interviewer Agent (Interactive project-defense interviews)     │
+│    • Automated System (BullMQ workers, timer engine, vector indexer)   │
+│                                                                        │
+│ 5. SMART.AI INTERNAL TEAMS (82 Reqs):                                  │
+│    • Super Administrator (Tenant lifecycle, taxonomy configuration)   │
+│    • Verifier & Reviewer (Queue operations, manual audits, overrides) │
+│    • Auditor (Security compliance, PII inspection audits)              │
+│    • Support Agent (Reason-bound impersonation, issue remediation)     │
+│    • Trust & Safety Lead (Fraud ring mitigation, ban appeals)         │
+│                                                                        │
+│ 6. THIRD PARTIES (3 Reqs):                                             │
+│    • Corporate Endorser (External manager verifying work experience)   │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## 25.4 Non-Functional Requirements (NFRs)
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          SYSTEM PERFORMANCE TARGETS                         │
-├─────────────────────────┬───────────────────────┬───────────────────────────┤
-│ METRIC                  │ PRODUCTION SLA TARGET │ VERIFICATION METHOD       │
-├─────────────────────────┼───────────────────────┼───────────────────────────┤
-│ API Read Latency (p95)  │ < 80ms                │ k6 Baseline Load (100 VU) │
-│ Assessment Item Delivery│ < 50ms (p99)          │ k6 Spike Profile (3k VU)  │
-│ Semantic Vector Search  │ < 350ms (p95)         │ EXPLAIN ANALYZE pgvector  │
-│ Concurrent Test Takers  │ 5,000 active sessions │ k6 Stress Test (5k VU)    │
-│ System Availability     │ 99.95% uptime         │ External synthetic probes │
-│ Disaster Recovery RPO   │ < 15 minutes          │ Automated WAL-G PG backup │
-│ Disaster Recovery RTO   │ < 30 minutes          │ Blue-Green standby spinup │
-└─────────────────────────┴───────────────────────┴───────────────────────────┘
-```
+In accordance with the PRD `Non-Functional Reqs` baseline:
 
-### NFR-01: Latency & Responsiveness
+### 1. Performance SLAs
+- **API Read Latency (`NFR-PERF-02`):** Interactive read endpoints respond with `p95 <= 500ms`, `p99 <= 1.5s`.
+- **API Write Latency (`NFR-PERF-02`):** Mutation endpoints respond with `p95 <= 800ms`.
+- **Student Dashboard Load (`NFR-PERF-01`):** Complete rendering within `p95 <= 2.5s` on standard 4G broadband connections.
+- **Candidate Search Performance (`NFR-PERF-03`):** Employer search with up to 5 facet filters executes within `p95 <= 2.0s` over 100,000 searchable profiles.
+- **Asynchronous Execution (`NFR-PERF-04`):** Long-running tasks acknowledge status in `<= 1s`; AST repository scanning and skill inference complete in `p95 <= 15 min`; interview scoring completes in `p95 <= 30 min`.
+- **Assessment Autosave (`NFR-PERF-06`):** Candidate answers committed to Redis drafts every 30 seconds; zero data loss on network reconnection.
 
-- Static web assets and documentation served via CDN edge caching with p95 < 30ms.
-- API write operations (submitting assessment answers with server timestamping) must commit to Redis within < 40ms.
-- Complex multi-filter candidate shortlisting queries must return within < 500ms.
+### 2. Scalability Targets
+- **Cohort Onboarding (`NFR-SCAL-01`):** System sustains 10,000 student bulk imports and 2,000 concurrent registrations per hour with `< 0.5%` error rate.
+- **Concurrent Test Takers (`NFR-SCAL-02`):** Platform sustains 2,000 concurrent active examination sessions within agreed API latency targets.
+- **Design Capacity (`NFR-SCAL-03`):** Database and multi-tenant schema engineered for 100 partner universities, 1,000 corporate employers, and 500,000 student profiles.
 
-### NFR-02: Scalability & Throughput
+### 3. Reliability & Operations
+- **System Availability (`NFR-REL-01`):** `>= 99.9%` monthly uptime across student, university, and employer portals.
+- **Backup & Recovery Objectives (`NFR-REL-02`):** Recovery Point Objective (RPO) `<= 15 min`; Recovery Time Objective (RTO) `<= 4 hours`.
+- **Idempotency Guarantee (`NFR-REL-03`):** Mutating HTTP calls support `Idempotency-Key: {UUIDv4}`; retries produce zero duplicate records, scores, or notifications.
+- **Fault-Tolerant Retries (`NFR-REL-04`):** Failed BullMQ background jobs retry up to 5 times with exponential backoff before routing to Dead Letter Queues (DLQ); zero lost evidence items.
 
-- The single High-End VPS topology (16 vCPUs, 64GB RAM) must sustain 5,000 concurrent active test-taking sessions with CPU utilization capped at 75%.
-- PgBouncer connection pooler maintains 20 maximum dedicated connections to PostgreSQL while handling 2,000 concurrent application client connections in transaction pooling mode.
-
-### NFR-03: Security & Privacy (DPDP Act 2023 Compliance)
-
-- **Zero Aadhaar / PAN Ingestion:** The platform explicitly bars collection or persistence of national identity tokens.
-- **Data Minimization:** Webcam proctoring does not stream continuous high-resolution video. MediaPipe CV extracts 468 facial landmark coordinates in the client browser, transmitting downsampled 320x240 grayscale JPEG snapshots every 30 seconds only when an anomaly is triggered.
-- **Automated Retention Purge:** All raw proctoring telemetry, webcam snapshots, and candidate interview recordings are tagged with a 30-day TTL and automatically permanently destroyed via automated PostgreSQL cron workers.
-- **Encryption Standards:** TLS 1.3 enforced across all external endpoints. Data at rest encrypted via AES-256-GCM. Sensitive JWT tokens signed using RS256 asymmetric keys.
-
-### NFR-04: High Availability & Blue-Green Rollover
-
-- Zero-downtime deployments via Caddy reverse proxy upstream hot reloading.
-- Ongoing candidate assessment sessions survive application container deployments without disconnection or session state loss (Redis session checkpointing).
-
----
-
-## 25.5 Business Rules & System Invariants
-
-1. **One Active Offer Invariant:** When a candidate marks an institutional placement offer as `ACCEPTED`, their status automatically updates to `PLACED_LOCKED`. The system mechanically revokes eligibility for subsequent placement drives unless the university TPO grants an explicit `DREAM_OFFER_ELIGIBLE` waiver.
-2. **Work Experience Legitimacy Invariant:** An internship or job claim is only marked `VERIFIED` if the attestation email originated from an authorized company domain (free webmail domains such as `@gmail.com` or `@yahoo.com` are strictly rejected). Offer letters and joining letters are structurally classified as `INVALID_DOCUMENT_TYPE`.
-3. **BARS Score Calibration Invariant:** BARS competency scores must be mathematically anchored within $[1.0, 5.0]$. Scores above $4.5$ (Gold Tier) require both an assessment score $> 85\%$ and at least one verified external production code repository or verified employer voucher.
-4. **Contract-First Codebase Rule:** No database table, NestJS controller, or frontend screen may be implemented without first defining the canonical TypeScript DTO schemas inside `packages/contracts`.
+### 4. Privacy, Security & Responsible AI
+- **DPDP Act 2023 Compliance (`NFR-SEC-01` / `SEC-01`):** No Aadhaar or PAN storage. Explicit, revocable candidate consent captured before camera/microphone activation.
+- **Automated 30-Day Purge:** Webcam proctoring snapshots, audio transcripts, and interview telemetry tagged with 30-day retention TTL and permanently purged by automated cron workers.
+- **Responsible AI Boundary (`SEC-02.06` & `SEC-02.09`):** Emotion recognition, facial-expression analysis, and personality inference are mechanically prohibited. Autonomous hiring rejections are banned—all final employment choices belong to human employers.
+- **Audit Immutability (`ADM-05`):** Administrative and scoring audit events cannot be modified or deleted through application interfaces.

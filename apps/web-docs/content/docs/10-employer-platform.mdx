@@ -40,19 +40,19 @@ Recruiters can bypass job postings entirely and query the global talent graph:
 
 - **Natural Language Semantic Search:** _"Find candidates who built microservices with Redis queues and have verified Gold tier in PostgreSQL."_
 - **Facet Filters:** Filter by verified BARS tiers, university location, graduation year, and availability.
-- **Instant Candidate Dossier:** Click any candidate to inspect verified GitHub pull requests, test code coverage metrics, and 2-minute video snippets of their AI project defense.
+- **Instant Candidate Dossier:** Click any candidate to inspect verified GitHub pull requests, test code coverage metrics, and summarized competency rubric evaluations verified at the source by Vivi (interview recordings remain restricted per privacy safeguards `FR-INT-01.13`).
 
 ---
 
-## 10.5 Applicant Tracking & Candidate Pipeline
+## 10.5 Applicant Tracking & Candidate Pipeline (APP-02)
 
-The candidate pipeline is organized into five operational stages:
+The candidate pipeline is organized into six standardized operational stages (`FR-APP-02.01`):
 
 ```
-[APPLIED] ──► [SHORTLISTED] ──► [TECHNICAL ROUND] ──► [OFFER EXTENDED] ──► [HIRED]
-    │               │                    │                   │
-    ▼               ▼                    ▼                   ▼
-[REJECTED]      [REJECTED]          [REJECTED]          [DECLINED]
+[APPLIED] ──► [REVIEWING] ──► [INTERVIEWING] ──► [OFFERED] ──► [HIRED]
+    │              │                │                │
+    ▼              ▼                ▼                ▼
+[REJECTED]     [REJECTED]       [REJECTED]       [REJECTED / DECLINED]
 ```
 
 - **Bulk Actions:** Export shortlisted candidates to enterprise ATS (Greenhouse, Lever, Darwinbox) via webhook.

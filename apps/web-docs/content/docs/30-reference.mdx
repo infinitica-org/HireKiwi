@@ -1,52 +1,89 @@
 ---
 title: 30. Reference, Glossary & Data Dictionary
-description: Complete platform glossary, acronym index, status matrices, error code catalogue, and event registry.
+description: Complete platform glossary, domain terminology, acronym index, status matrices, error code catalogue, and event registry.
 ---
 
-## 30.1 Acronym Index
+## 30.1 PRD Glossary & Core Terminology
 
-| Acronym  | Definition                                              |
-| :------- | :------------------------------------------------------ |
-| **BARS** | Behaviorally Anchored Rating Scales                     |
-| **DPDP** | Digital Personal Data Protection Act 2023 (India)       |
-| **HMAC** | Hash-Based Message Authentication Code                  |
-| **HNSW** | Hierarchical Navigable Small World (Vector Graph Index) |
-| **JTBD** | Jobs-to-be-Done Framework                               |
-| **NFR**  | Non-Functional Requirement                              |
-| **PRD**  | Product Requirements Document                           |
-| **TPO**  | Training & Placement Officer (University)               |
-| **VIR**  | Verification Integrity Rate                             |
-| **VCMH** | Verified Capability Matches Hired (North Star Metric)   |
+Authentic definitions synthesised from `smart.ai_PRD_Functional_and_Non-Functional_Requirements.xlsx` and platform foundations:
+
+| Term | Enterprise Definition |
+| :--- | :-------------------- |
+| **SmartZen** | The AI-powered evidence-backed talent network platform connecting universities, students, and employers. |
+| **Agents** | Autonomous intelligent software actors executing verification, interviewing, inference, and matching. |
+| **Vivi** | The flagship Source Verification Agent whose mission is to verify talent data directly at its authentic source (SIS/ERP, GitHub AST, corporate domain, Credly API). |
+| **Evidence-Backed Talent Profile** | Consolidated candidate representation showing claim-level verification badges and cryptographic provenance. |
+| **Evidence** | An immutable record supporting a profile claim, accompanied by source provenance, cryptographic digest, and audit history. |
+| **Evidence Classes** | Standardized categorization of claim backing: `Self-declared`, `Source-verified`, `Assessed`, and `Human-reviewed`. |
+| **Active Evidence** | Real-time demonstrations directly observed by the platform (proctored coding, project defense, AI interviews). |
+| **Passive Evidence** | Pre-existing external artifacts (GitHub repositories, university degrees, corporate experience letters, certifications). |
+| **Competency** | A defined, observable ability under a skill, scored against standardized Behaviorally Anchored Rating Scales (BARS). |
+| **Proficiency** | Skill level from Beginner to Pro derived from evidence under versioned evaluation rules. |
+| **Confidence** | Metric ($0.00$ to $1.00$) quantifying the volume, authority, and reliability of evidence supporting a proficiency rating; distinct from proficiency itself. |
+| **Project Defense** | AI-led proctored interview where a student explains and defends code architecture and commits from a submitted project. |
+| **Corporate Endorser** | External industry professional who confirms a student's work experience through a cryptographically signed, expiring corporate domain link. |
+| **Whitelisting** | University administrator action establishing domains (`@university.edu`) or student rosters eligible to join the tenant. |
+| **Tenant** | An organization (university, campus, or employer) whose data is isolated via Row-Level Security and Prisma middleware. |
+| **Discoverability** | Candidate privacy setting controlling whether corporate employers can discover their profile in candidate searches. |
+| **Opportunity** | Employer-initiated outreach invitation directly linked to an active job opening (`SRC-02`). |
+| **Candidate Pipeline** | Standardized employer hiring stages: `Applied`, `Reviewing`, `Interviewing`, `Offered`, `Hired`, `Rejected`. |
+| **Entitlements** | Plan-based usage quotas on active jobs, candidate searches, direct outreach messages, and recruiter seats (`BIL-01`). |
+| **Trust Case** | Investigation of suspicious activity, collusion rings, or cheating reports, resolved with documented rationale by a reviewer (`ADM-03`). |
+| **Impersonation** | Audited, reason-bound support session viewing the product as a user with write operations blocked (`ADM-04`). |
 
 ---
 
-## 30.2 Error Code Catalogue
+## 30.2 Acronym Index
 
-| HTTP Status | Error Code                     | Description                                          | User Remedy                                      |
-| :---------- | :----------------------------- | :--------------------------------------------------- | :----------------------------------------------- |
-| `401`       | `SMART_401_AUTH_EXPIRED`       | JWT bearer token has expired or is invalid.          | Re-authenticate via institutional SSO.           |
-| `403`       | `SMART_403_TENANT_FORBIDDEN`   | User does not hold permissions within target tenant. | Contact campus or employer administrator.        |
-| `422`       | `SMART_422_COMPETENCY_FLOOR`   | Candidate does not satisfy minimum BARS tier.        | Complete recommended project defense.            |
-| `429`       | `SMART_429_RATE_LIMITED`       | Sliding window rate limit exceeded (100 req/min).    | Back off requests for 60 seconds.                |
-| `503`       | `SMART_503_INFERENCE_DEGRADED` | External LLM unavailable; regex fallback active.     | System operating in deterministic fallback mode. |
+| Acronym | Definition | Context |
+| :------ | :--------- | :------ |
+| **AST** | Abstract Syntax Tree | Code parsing and syntax complexity analysis |
+| **BARS** | Behaviorally Anchored Rating Scales | Criterion-referenced competency scoring rubrics (1.0 to 5.0) |
+| **DPDP** | Digital Personal Data Protection Act 2023 | Indian data privacy and minimization statutory framework |
+| **HMAC** | Hash-Based Message Authentication Code | Cryptographic signing of certificates and webhook payloads |
+| **HNSW** | Hierarchical Navigable Small World | Vector graph index in PostgreSQL `pgvector` for semantic candidate search |
+| **JTBD** | Jobs-to-be-Done | Product strategy framework aligning user motivations to outcomes |
+| **NFR** | Non-Functional Requirement | Measurable engineering constraints (latency, throughput, availability) |
+| **PRD** | Product Requirements Document | Single source of truth specifying functional and non-functional requirements |
+| **RPO / RTO** | Recovery Point / Time Objective | Disaster recovery targets (`RPO <= 15 min`, `RTO <= 4 hours`) |
+| **SIS / ERP** | Student Information / Enterprise Resource System | University data sources queried at source by Vivi (Banner, Canvas, PeopleSoft) |
+| **TPO** | Training & Placement Officer | University administrative lead managing campus recruitment drives |
+| **VIR** | Verification Integrity Rate | Proportion of claims verified without integrity infractions |
+| **VCMH** | Verified Capability Matches Hired | North Star Metric measuring verified student hires |
 
 ---
 
-## 30.3 Core Event Catalogue (Redpanda / Kafka)
+## 30.3 Error Code Catalogue
 
-- `candidate.onboarded.v1`: Candidate claims profile and completes initial survey.
-- `evidence.submitted.v1`: New GitHub repo or certificate registered for verification.
+| HTTP Status | Error Code | Description | User Remedy |
+| :---------- | :--------- | :---------- | :---------- |
+| `401` | `SMART_401_AUTH_EXPIRED` | JWT bearer token has expired or is invalid. | Re-authenticate via institutional SSO. |
+| `403` | `SMART_403_TENANT_FORBIDDEN` | User does not hold permissions within target organization tenant. | Contact campus or employer organization admin. |
+| `403` | `SMART_403_QUOTA_EXCEEDED` | Employer has exhausted plan entitlement for jobs, searches, or messages. | Upgrade employer subscription plan (`BIL-01.06`). |
+| `422` | `SMART_422_COMPETENCY_FLOOR` | Candidate does not satisfy mandatory competency floor for requisition. | Complete recommended practice project or defense. |
+| `422` | `SMART_422_INVALID_DOCUMENT` | Uploaded file is an offer/joining letter rather than completion certificate. | Upload official relieving or internship completion letter. |
+| `429` | `SMART_429_RATE_LIMITED` | Sliding window rate limit exceeded on search or API endpoint. | Back off requests for 60 seconds. |
+| `503` | `SMART_503_INFERENCE_DEGRADED` | External LLM unavailable; deterministic fallback scoring active. | System operating in deterministic fallback mode. |
+
+---
+
+## 30.4 Core Event Catalogue (Redpanda / Kafka)
+
+- `candidate.onboarded.v1`: Candidate claims profile and completes initial onboarding consent.
+- `evidence.submitted.v1`: New repository, certificate, or work claim registered for verification.
+- `vivi.source_verified.v1`: Vivi completes autonomous source verification and emits cryptographic token.
+- `vivi.anomaly_flagged.v1`: Vivi detects AST plagiarism, endorsement collusion ring, or expired credential; dispatches to `ADM-02`.
 - `defense.completed.v1`: Proctored AI project defense session concluded and transcribed.
 - `capability.tier_assigned.v1`: New BARS tier (Gold/Silver/Bronze) assigned and HMAC signed.
 - `match.generated.v1`: Match score computed between candidate and active job opening.
-- `application.status_changed.v1`: Candidate advances or is rejected in recruiter pipeline.
+- `application.status_changed.v1`: Candidate advances or is rejected in recruiter pipeline (`APP-02`).
 - `telemetry.purge_executed.v1`: Nightly DPDP purge script completes deletion of expired snapshots.
 
 ---
 
-## 30.4 Sprint 7 Epic & Story Index
+## 30.5 Sprint 7 Epic & Story Index
 
-All engineering user stories are indexed and tracked in [`SMART_Sprint7_Enterprise_Hardening_Tickets.xlsx`](file:///d:/Work's/Infinitica/smart/SMART_Sprint7_Enterprise_Hardening_Tickets.xlsx):
+Tracked in [`SMART_Sprint7_Enterprise_Hardening_Tickets.xlsx`](file:///d:/Work's/Infinitica/smart/SMART_Sprint7_Enterprise_Hardening_Tickets.xlsx):
 
 - **S7-VV-01:** University IdP SAML/OIDC Authentication
 - **S7-VV-02:** Single High-End VPS Blue-Green Zero-Downtime Deployment
@@ -59,3 +96,4 @@ All engineering user stories are indexed and tracked in [`SMART_Sprint7_Enterpri
 - **S7-TN-03:** PostgreSQL pgvector Semantic Matching & Regex Fallback
 - **S7-TN-04:** DPDP Act 2023 Compliance & Automated 30-Day Purge
 - **S7-TN-05:** Fumadocs Enterprise Documentation Portal & Release Notes
+- **S7-TN-08:** Authentic PRD Realignment, 4 Canonical Entitlements & Vivi Source Verification Agent

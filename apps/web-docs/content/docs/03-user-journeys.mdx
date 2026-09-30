@@ -40,14 +40,15 @@ SmartZen orchestrates synchronized journeys across four primary personas: **Cand
 3. **Domain Lock:** The student's primary domain is locked based on institutional enrollment (e.g., _Computer Science & Engineering_ -> _Software Engineering & Cloud_).
 4. **Skill Declaration:** Student selects up to 5 target competencies from the curated domain pool (e.g., _Node.js Backend Concurrency_, _PostgreSQL Query Optimization_, _Distributed Caching_).
 
-### 2. Evidence Ingestion & Repository AST Analysis
+### 2. Evidence Ingestion & Autonomous Source Verification (Vivi Agent)
 
-1. **GitHub Connection:** Student links their GitHub account via OAuth with read-only repository permissions.
-2. **Repository Nomination:** Student nominates up to 3 original repositories showcasing production-quality architecture.
-3. **AST Static Scanning (BullMQ Worker):**
-   - Code ownership verification: Analyzes commit hashes, email signatures, and commit timestamps to ensure authorship.
-   - Boilerplate detection: Flags code cloned from generic tutorial repositories (e.g., TodoMVC, freeCodeCamp clones).
-   - Complexity analysis: Computes Cyclomatic Complexity and Halstead metrics.
+1. **GitHub Connection:** Student links their GitHub account via OAuth with read-only repository permissions (`INTG-02`).
+2. **Repository Nomination:** Student nominates up to 3 original repositories showcasing production-quality architecture (`VER-04`).
+3. **Autonomous Source Verification by Vivi (BullMQ Async Agent):**
+   - **Code Provenance & Author Verification:** Vivi queries GitHub APIs to match commit author emails against student identities, evaluating GPG cryptographic signatures and commit timestamp entropy.
+   - **Boilerplate & Fork Detection:** Vivi scans repository fork ancestry and AST hashes, mechanically flagging code cloned from public tutorial repositories (e.g., TodoMVC, freeCodeCamp scaffolding).
+   - **AST Complexity Analysis:** Vivi runs Abstract Syntax Tree parsers to calculate Cyclomatic Complexity, Halstead metrics, and core logic contribution ratio ($>35\%$ non-boilerplate commits, $>40\%$ core logic).
+   - **Defense Queuing:** Upon successful source verification, Vivi queues the project for the AI project defense interview (`FR-VER-04.07`).
 
 ### 3. Assessment & Proctored Code Defense State Machine
 
@@ -91,15 +92,16 @@ SmartZen orchestrates synchronized journeys across four primary personas: **Cand
   - Client-side MediaPipe tracks facial presence and gaze anomalies.
 - **BARS Rubric Evaluation:** The LLM grading worker scores answers against structured Behavioral Anchored Rating Scales $[1.0 - 5.0]$, validating output via Zod contracts.
 
-### 4. Work-Experience Voucher Lifecycle
+### 4. Work-Experience Endorsement Protocol (Vivi Agent & VER-02)
 
-For claimed industry internships, SmartZen replaces unverifiable offer letters with an **attested corporate voucher workflow**:
+For claimed industry internships and work experience, Vivi executes an **autonomous source verification protocol** (`VER-02`):
 
-1. **Document Upload:** Candidate submits relieving or internship completion certificate. Offer letters are automatically classified as `INVALID_DOCUMENT_TYPE` and rejected.
-2. **Official Domain Email Validation:** Candidate provides direct manager or HR email. Free webmail providers (`@gmail.com`, `@outlook.com`) are rejected; only corporate domain addresses are accepted.
-3. **Voucher Dispatch:** System dispatches a cryptographically signed verification link to the corporate verifier.
+1. **Document Upload:** Candidate submits relieving or internship completion certificate (`FR-VER-02.01`). Offer letters are automatically classified as `INVALID_DOCUMENT_TYPE` and rejected.
+2. **Official Domain Email Validation:** Candidate provides direct manager or HR email. Vivi validates the corporate email domain (`FR-VER-02.06`), mechanically rejecting public webmail providers (`@gmail.com`, `@yahoo.com`, `@outlook.com`).
+3. **Cryptographic Endorsement Dispatch:** Vivi dispatches a cryptographically signed, single-use expiring token link ($72$-hour TTL) to the corporate verifier (`FR-VER-02.03`).
 4. **Structured Attestation:** Verifier confirms dates, role title, primary technologies, and performance rating (`YES`, `NO`, `PARTIAL_DISCREPANCY`).
-5. **Cadence & Expiry:** Automated reminder sent at 6 hours. If unanswered after 48 hours, status moves to `VERIFICATION_EXPIRED`, allowing the candidate to trigger a clean restart with updated contact details.
+5. **Anti-Fraud & Ring Detection:** Vivi monitors IP addresses, user agents, and reciprocity networks to detect circular endorsement fraud rings (`FR-VER-02.10`). If invalidated, Vivi automatically recalculates affected skill proficiencies (`FR-VER-02.12`).
+6. **Cadence & Expiry:** Automated reminder sent within rate limits (`FR-VER-02.08`). If unanswered after 72 hours, status moves to `VERIFICATION_EXPIRED`, allowing the candidate to trigger a clean restart with updated contact details.
 
 ### 5. Cooldown & Remedial Loop
 
@@ -159,10 +161,10 @@ For claimed industry internships, SmartZen replaces unverifiable offer letters w
 
 1. Recruiter receives the TPO-approved shortlist.
 2. Instead of standard text resumes, recruiter inspects the **Verified Candidate Dossier**:
-   - Cryptographically signed HMAC-SHA256 competency badge.
-   - GitHub AST metrics (verified author lines of code, original commit history).
-   - Video snippet playback from the candidate's interactive code defense session.
-   - Employer-attested work experience voucher confirmation.
+   - Cryptographically signed HMAC-SHA256 competency badge with source verification provenance from Vivi.
+   - GitHub AST metrics (verified author lines of code, original commit history verified at source).
+   - Summarized competency evidence and rubric criteria ratings (interview recordings remain restricted per privacy safeguards `FR-INT-01.13`).
+   - Corporate work-experience endorsement confirmation verified at corporate email domain.
 
 ### 4. Interview Pipeline & Closed-Loop ML Calibration
 

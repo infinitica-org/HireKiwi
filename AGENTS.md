@@ -36,4 +36,4 @@ Project rules under `.cursor/rules/*.mdc` apply at all times. `02-dev-workflow.m
 
 ## Product summary
 
-SMART is an Intellectual Talent Network and role-specific readiness verification platform. Candidates build verified talent profiles backed by unfakeable evidence, assessed on a multi-tier (Gold / Silver / Bronze) criterion-referenced competency grid, issued cryptographically signed (HMAC-SHA256), publicly verifiable credentials, and connected to opportunities via semantic vector matching across academic placement infrastructure and enterprise workforce mobility.
+SmartZen (SMART) is an **evidence-backed talent network** platform. Candidates build **evidence-backed talent profiles** backed by unfakeable evidence verified directly at its source by autonomous agents led by **Vivi** (Source Verification Agent), assessed on a multi-tier (Gold / Silver / Bronze) criterion-referenced competency grid, issued cryptographically signed (HMAC-SHA256), publicly verifiable credentials, and connected to opportunities via explainable semantic vector matching across academic placement infrastructure and enterprise workforce mobility.
