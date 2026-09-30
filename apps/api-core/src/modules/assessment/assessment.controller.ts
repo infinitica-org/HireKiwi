@@ -60,16 +60,6 @@ export class AssessmentController {
     @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
   ) {}
 
-  @Get('_meta')
-  meta() {
-    return {
-      module: 'assessment',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'active',
-    };
-  }
-
   @Get('skill-claims')
   @Roles('STUDENT', 'INSTITUTION_ADMIN', 'PLACEMENT_STAFF')
   @ApiBearerAuth()

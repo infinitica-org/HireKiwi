@@ -291,7 +291,6 @@ import {
   PublicVerificationDtoSchema,
   RepoLanguagesResponseSchema,
   ReverseGeocodeResponseSchema,
-  SandboxResultDtoSchema,
   SendBatchInvitesResultDtoSchema,
   SkillClaimDtoSchema,
   SkillLibraryResponseSchema,
@@ -1759,12 +1758,6 @@ export function assessmentApi(client: SmartApiClient) {
         schema: SaveDraftResponseSchema,
         timeoutMs: 5_000,
       }),
-
-    compileCode: (body: unknown) =>
-      client.post(prefixed('/assessment/compile-l2'), body, { schema: JobAcceptedSchema }),
-
-    sandboxResult: (jobId: string) =>
-      client.get(prefixed(`/assessment/sandbox/${jobId}`), { schema: SandboxResultDtoSchema }),
 
     requestAudioUploadUrl: (body: unknown) =>
       client.post(prefixed('/assessment/l3/upload-url'), body, {

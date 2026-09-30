@@ -15,7 +15,6 @@ import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module.js';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
 import { AssessmentModule } from './modules/assessment/assessment.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
-import { CalibrationModule } from './modules/calibration/calibration.module.js';
 import { CandidateCertificatesModule } from './modules/candidate-certificates/candidate-certificates.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
 import { ApplicationsModule } from './modules/applications/applications.module.js';
@@ -38,14 +37,12 @@ import { ProctoringModule } from './modules/proctoring/proctoring.module.js';
 import { ProjectsModule } from './modules/projects/projects.module.js';
 import { PublicProfileModule } from './modules/public-profile/public-profile.module.js';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module.js';
-import { SandboxModule } from './modules/sandbox/sandbox.module.js';
 import { UsernameModule } from './modules/username/username.module.js';
 import { AccountModule } from './modules/account/account.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { ReadinessModule } from './modules/readiness/readiness.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { WorkExperienceModule } from './modules/work-experience/work-experience.module.js';
-import { WebhooksModule } from './modules/webhooks/webhooks.module.js';
 import { TrustModule } from './modules/trust/trust.module.js';
 import { BillingModule } from './modules/billing/billing.module.js';
 import { ConfigModule } from './platform/config/config.module.js';
@@ -96,14 +93,12 @@ import { StorageModule } from './platform/storage/storage.module.js';
     InterviewsModule,
     CatalogModule,
     AssessmentModule,
-    SandboxModule,
     EvaluationModule,
     CorroborationModule,
     EvidenceModule,
     SignalIngestionModule,
     SignalEncoderModule,
     AiGatewayModule,
-    CalibrationModule,
     CandidateCertificatesModule,
     CertificateModule,
     MatchingModule,
@@ -113,7 +108,6 @@ import { StorageModule } from './platform/storage/storage.module.js';
     ProjectsModule,
     PublicProfileModule,
     AnalyticsModule,
-    WebhooksModule,
     TrustModule,
     SupportModule,
     BillingModule,
