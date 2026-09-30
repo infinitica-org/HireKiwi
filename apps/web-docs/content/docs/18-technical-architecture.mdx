@@ -47,12 +47,13 @@ SmartZen operates on a dedicated **High-Performance Linux VPS (Ubuntu 24.04 LTS)
 ```
 
 ### Port Mapping Matrix
-| Slot / Project | API Core | Web Applications | Environment Binding |
-| :--- | :--- | :--- | :--- |
-| **Prod Blue Slot** | `3000` | `3001`–`3006` | `becomesmart.online` (via Caddy upstream) |
-| **Prod Green Slot**| `3010` | `3011`–`3016` | Standby / deploy target during releases |
-| **Dev Isolated Slot**| `3020` | `3021`–`3026` | `dev.becomesmart.online` |
-| **Internal Data**  | `5432`, `6379`, `19092`, `9000` | Bound strictly to `127.0.0.1` (SSH Tunnel only) |
+
+| Slot / Project        | API Core                        | Web Applications                                | Environment Binding                       |
+| :-------------------- | :------------------------------ | :---------------------------------------------- | :---------------------------------------- |
+| **Prod Blue Slot**    | `3000`                          | `3001`–`3006`                                   | `becomesmart.online` (via Caddy upstream) |
+| **Prod Green Slot**   | `3010`                          | `3011`–`3016`                                   | Standby / deploy target during releases   |
+| **Dev Isolated Slot** | `3020`                          | `3021`–`3026`                                   | `dev.becomesmart.online`                  |
+| **Internal Data**     | `5432`, `6379`, `19092`, `9000` | Bound strictly to `127.0.0.1` (SSH Tunnel only) |
 
 ---
 
@@ -74,11 +75,11 @@ Deployments land via [`scripts/blue-green-deploy.sh`](file:///d:/Work's/Infiniti
 
 SmartZen adheres strictly to 12-factor cloud principles. Migrating to AWS in a few months requires **zero lines of code modification**:
 
-| VPS Infrastructure | AWS Managed Target | Application Environment Variable |
-| :--- | :--- | :--- |
-| PostgreSQL + pgvector | **AWS RDS PostgreSQL (Multi-AZ)** | `DATABASE_URL` |
-| PgBouncer Container | **AWS RDS Proxy** | `POOLED_DATABASE_URL` |
-| Redis Sentinel | **AWS ElastiCache for Redis (Cluster Mode)** | `REDIS_URL` |
-| Redpanda Message Broker| **AWS Managed Streaming for Kafka (MSK)** | `KAFKA_BROKERS` |
-| MinIO Object Storage | **Amazon Simple Storage Service (S3)** | `S3_BUCKET`, `AWS_REGION` |
-| Caddy Reverse Proxy | **AWS Application Load Balancer (ALB) + ECS**| Native target group health routing |
+| VPS Infrastructure      | AWS Managed Target                            | Application Environment Variable   |
+| :---------------------- | :-------------------------------------------- | :--------------------------------- |
+| PostgreSQL + pgvector   | **AWS RDS PostgreSQL (Multi-AZ)**             | `DATABASE_URL`                     |
+| PgBouncer Container     | **AWS RDS Proxy**                             | `POOLED_DATABASE_URL`              |
+| Redis Sentinel          | **AWS ElastiCache for Redis (Cluster Mode)**  | `REDIS_URL`                        |
+| Redpanda Message Broker | **AWS Managed Streaming for Kafka (MSK)**     | `KAFKA_BROKERS`                    |
+| MinIO Object Storage    | **Amazon Simple Storage Service (S3)**        | `S3_BUCKET`, `AWS_REGION`          |
+| Caddy Reverse Proxy     | **AWS Application Load Balancer (ALB) + ECS** | Native target group health routing |

@@ -14,21 +14,21 @@ description: Design principles, typography, accessible color palettes, micro-int
 
 ## 24.2 Typography & Color Tokens
 
-* **Primary Font:** Inter / Outfit via `@next/font/google`.
-* **Monospace Code Font:** JetBrains Mono for code blocks, AST traces, and diff viewers.
-* **Palette:**
-  * Background Dark: `#090a0f`
-  * Surface Dark: `#12141c`
-  * Border Slate: `#1e293b`
-  * Gold Tier: Amber-400 (`#fbbf24`) with subtle gold glow
-  * Silver Tier: Slate-300 (`#cbd5e1`)
-  * Bronze Tier: Orange-600 (`#ea580c`)
-  * Accent Primary: Indigo-500 (`#6366f1`)
+- **Primary Font:** Inter / Outfit via `@next/font/google`.
+- **Monospace Code Font:** JetBrains Mono for code blocks, AST traces, and diff viewers.
+- **Palette:**
+  - Background Dark: `#090a0f`
+  - Surface Dark: `#12141c`
+  - Border Slate: `#1e293b`
+  - Gold Tier: Amber-400 (`#fbbf24`) with subtle gold glow
+  - Silver Tier: Slate-300 (`#cbd5e1`)
+  - Bronze Tier: Orange-600 (`#ea580c`)
+  - Accent Primary: Indigo-500 (`#6366f1`)
 
 ---
 
 ## 24.3 State Standards: Loading, Empty, and Error
 
-* **Skeleton Loaders:** Content layouts display pulse-animated skeleton cards matching the exact dimensions of incoming data to eliminate cumulative layout shift (CLS $< 0.05$).
-* **Actionable Empty States:** Every empty list provides an illustrated graphic, clear rationale, and an immediate call-to-action button (e.g., *"No repositories linked yet — Connect GitHub"*).
-* **Error Boundaries:** React error boundaries capture unexpected client exceptions, presenting friendly recovery prompts and logging stack traces to Sentry.
+- **Skeleton Loaders:** Content layouts display pulse-animated skeleton cards matching the exact dimensions of incoming data to eliminate cumulative layout shift (CLS $< 0.05$).
+- **Actionable Empty States:** Every empty list provides an illustrated graphic, clear rationale, and an immediate call-to-action button (e.g., _"No repositories linked yet — Connect GitHub"_).
+- **Error Boundaries:** React error boundaries capture unexpected client exceptions, presenting friendly recovery prompts and logging stack traces to Sentry.

@@ -43,6 +43,13 @@
     "trust",
     "placement",
     "governance",
-    "release-notes"
+    "release-notes",
+    "adr",
+    "delivery",
+    "blueprints",
+    "playbooks",
+    "product",
+    "engineering",
+    "employer-billing"
   ]
 }

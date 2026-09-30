@@ -1,0 +1,15 @@
+{
+  "title": "Role Competency Blueprints",
+  "pages": [
+    "SMART_Blueprint_AIMLEngineer",
+    "SMART_Blueprint_CloudDevOpsEngineer",
+    "SMART_Blueprint_CybersecurityAnalyst",
+    "SMART_Blueprint_DataAnalyst",
+    "SMART_Blueprint_FullStackDeveloper",
+    "SMART_Blueprint_MBA_BusinessAnalytics",
+    "SMART_Blueprint_MBA_Finance",
+    "SMART_Blueprint_MBA_HR",
+    "SMART_Blueprint_MBA_Marketing",
+    "SMART_Blueprint_MBA_Operations"
+  ]
+}

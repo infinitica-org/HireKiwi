@@ -29,20 +29,25 @@ In SmartZen, **evidence is the atomic unit of capability representation**. A tal
 ## 4.2 Evidence Types
 
 ### 1. Active Demonstration Evidence
+
 Generated in real time under authenticated platform observation:
-* **Interactive Code Defense:** Candidate answers dynamic probes about repository commits.
-* **Proctored Coding Challenges:** Real-time problem solving with server-side keystroke and syntax tree logging.
-* **Structured AI Voice Interviews:** Responses to technical architectural inquiries transcribed and evaluated.
+
+- **Interactive Code Defense:** Candidate answers dynamic probes about repository commits.
+- **Proctored Coding Challenges:** Real-time problem solving with server-side keystroke and syntax tree logging.
+- **Structured AI Voice Interviews:** Responses to technical architectural inquiries transcribed and evaluated.
 
 ### 2. Passive Artifact Evidence
+
 Pre-existing external professional and academic records:
-* **Production Repositories:** Git commit history, pull request discussions, AST syntax complexity metrics.
-* **Work Experience Letters:** Employer verification tokens, corporate email validation, authorized HR verification.
-* **Academic Transcripts:** Degree credentials validated via campus registrar integration.
+
+- **Production Repositories:** Git commit history, pull request discussions, AST syntax complexity metrics.
+- **Work Experience Letters:** Employer verification tokens, corporate email validation, authorized HR verification.
+- **Academic Transcripts:** Degree credentials validated via campus registrar integration.
 
 ### 3. Third-Party Credentials
-* Industry certifications (AWS Certified Solutions Architect, CKA, Google Cloud Professional).
-* Verified credentials issued by accredited testing bodies with cryptographic public keys.
+
+- Industry certifications (AWS Certified Solutions Architect, CKA, Google Cloud Professional).
+- Verified credentials issued by accredited testing bodies with cryptographic public keys.
 
 ---
 
@@ -93,7 +98,7 @@ Confidence is modeled as a Bayesian probability reflecting evidence strength and
 Confidence = (w_s * S_source) + (w_d * D_demonstration) + (w_r * R_recency) - P_anomalies
 ```
 
-* `S_source`: Source authority weight (Institutional registrar = 1.0; Verified GitHub = 0.85; Unverified upload = 0.20).
-* `D_demonstration`: Active defense score (0.0 to 1.0).
-* `R_recency`: Exponential time decay (decay factor = 0.95 per year elapsed).
-* `P_anomalies`: Proctoring penalties (tab switches, webcam drops).
+- `S_source`: Source authority weight (Institutional registrar = 1.0; Verified GitHub = 0.85; Unverified upload = 0.20).
+- `D_demonstration`: Active defense score (0.0 to 1.0).
+- `R_recency`: Exponential time decay (decay factor = 0.95 per year elapsed).
+- `P_anomalies`: Proctoring penalties (tab switches, webcam drops).

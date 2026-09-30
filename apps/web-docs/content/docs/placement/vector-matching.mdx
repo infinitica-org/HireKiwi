@@ -39,11 +39,12 @@ HNSW Cosine Distance Query   Exact Competency Match
 ## 2. PostgreSQL `pgvector` Cosine Similarity
 
 When an employer submits a role requirement or JD text:
+
 1. The JD is tokenized and embedded into a 1536-dimensional vector via the `ai-gateway`.
 2. The query executes a cosine distance scan against candidates possessing active, certified credentials:
 
 ```sql
-SELECT 
+SELECT
     c.id AS candidate_id,
     c.full_name,
     cert.track_id,

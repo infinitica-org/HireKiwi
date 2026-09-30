@@ -28,12 +28,12 @@ Capability in SmartZen is structured hierarchically. Rather than treating techni
 
 ## 6.2 Skill vs Competency
 
-| Attribute | Skill | Competency |
-| :--- | :--- | :--- |
-| **Definition** | A specific, granular technical tool, language, or concept. | An applied combination of skills, architecture decisions, and behavioral outcomes. |
-| **Examples** | `TypeScript`, `Redis`, `Git`, `PostgreSQL` | `Distributed Caching Strategy`, `Relational Data Modeling`, `API Reliability` |
-| **Measurement** | Syntax execution, syntax accuracy, tool usage. | Architectural trade-off analysis, system design defense, debugging under pressure. |
-| **Verification** | Code linting, unit test completion. | Interactive project defense, end-to-end system build. |
+| Attribute        | Skill                                                      | Competency                                                                         |
+| :--------------- | :--------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| **Definition**   | A specific, granular technical tool, language, or concept. | An applied combination of skills, architecture decisions, and behavioral outcomes. |
+| **Examples**     | `TypeScript`, `Redis`, `Git`, `PostgreSQL`                 | `Distributed Caching Strategy`, `Relational Data Modeling`, `API Reliability`      |
+| **Measurement**  | Syntax execution, syntax accuracy, tool usage.             | Architectural trade-off analysis, system design defense, debugging under pressure. |
+| **Verification** | Code linting, unit test completion.                        | Interactive project defense, end-to-end system build.                              |
 
 ---
 
@@ -85,6 +85,6 @@ The capability graph represents relationships between adjacent competencies:
 [HNSW pgvector Embeddings] ──► [High-Concurrency API Performance]
 ```
 
-* **Prerequisite Edges:** e.g., `TypeScript` requires mastery of `JavaScript ES6+`.
-* **Co-occurrence Edges:** e.g., Candidates demonstrating `Redis` often exhibit high capability in `Session Management`.
-* **Substitutability Edges:** e.g., Mastery of `FastAPI` provides a $0.75$ baseline prior for learning `NestJS`.
+- **Prerequisite Edges:** e.g., `TypeScript` requires mastery of `JavaScript ES6+`.
+- **Co-occurrence Edges:** e.g., Candidates demonstrating `Redis` often exhibit high capability in `Session Management`.
+- **Substitutability Edges:** e.g., Mastery of `FastAPI` provides a $0.75$ baseline prior for learning `NestJS`.

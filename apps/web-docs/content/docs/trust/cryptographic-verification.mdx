@@ -5,7 +5,7 @@ description: HMAC-SHA256 signature chain, public verification portal, and tamper
 
 # Cryptographic Certificates & Verification
 
-Legacy educational credentials rely on printed PDFs or static images that are trivially altered using basic desktop software. 
+Legacy educational credentials rely on printed PDFs or static images that are trivially altered using basic desktop software.
 
 SMART implements a cryptographically anchored verification trust chain governed by [ADR-0016](file:///d:/Work's/Infinitica/smart/docs/adr/0016-cryptographic-certs-and-server-timer.md).
 
@@ -40,12 +40,15 @@ SMART implements a cryptographically anchored verification trust chain governed 
 
 ## Canonical Signature Construction
 
-When a candidate successfully completes all required cognitive levels, the backend constructs a deterministic payload containing only immutable identification parameters. 
+When a candidate successfully completes all required cognitive levels, the backend constructs a deterministic payload containing only immutable identification parameters.
 
 This string is passed through `crypto.createHmac('sha256', process.env.CERTIFICATE_HMAC_SECRET)` and persisted in `Certificate.signatureHash`.
 
 ```typescript
-export function computeCertificateSignature(payload: CanonicalCertificatePayload, secret: string): string {
+export function computeCertificateSignature(
+  payload: CanonicalCertificatePayload,
+  secret: string,
+): string {
   const serialized = JSON.stringify({
     certificateId: payload.certificateId,
     candidateId: payload.candidateId,
