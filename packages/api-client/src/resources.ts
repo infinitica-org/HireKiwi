@@ -329,7 +329,6 @@ import {
   SkillVerifyInterviewDtoSchema,
   SkillVerifyPrepareDtoSchema,
   SkillVerifySessionDtoSchema,
-  SsoStartResponseSchema,
   StudentInviteLinkResponseSchema,
   SubscriptionPlanDtoSchema,
   TenantEntitlementsDtoSchema,
@@ -442,12 +441,6 @@ export function authApi(client: SmartApiClient) {
         schema: RegisterResponseSchema,
         anonymous: true,
       }),
-
-    ssoStart: (body: { provider: string; institutionDomain?: string; redirectUri: string }) =>
-      client.post(prefixed('/auth/sso/start'), body, { schema: SsoStartResponseSchema }),
-
-    ssoCallback: (body: { code: string; state: string }) =>
-      client.post(prefixed('/auth/sso/callback'), body, { schema: AuthTokenResponseSchema }),
 
     /**
      * Refresh sends no body: the refresh token is an HttpOnly cookie, so it is
@@ -1764,26 +1757,12 @@ export function assessmentApi(client: SmartApiClient) {
         timeoutMs: 5_000,
       }),
 
-    requestAudioUploadUrl: (body: unknown) =>
-      client.post(prefixed('/assessment/l3/upload-url'), body, {
-        schema: z.object({
-          uploadUrl: z.string(),
-          objectKey: z.string(),
-          expiresInSeconds: z.number(),
-        }),
-      }),
-
     // An attempt completes once, so its id is the natural key: a repeat replays the first result.
     complete: (body: { attemptId: string }) =>
       client.post(prefixed('/assessment/complete'), body, {
         schema: CompleteAttemptResponseSchema,
         headers: { 'idempotency-key': `attempt-complete-${body.attemptId}` },
       }),
-
-    reportIntegrityEvent: (body: unknown) =>
-      client
-        .post<void>(prefixed('/assessment/integrity-event'), body, { timeoutMs: 3_000 })
-        .catch(() => undefined),
   };
 }
 
@@ -1877,9 +1856,6 @@ export function certificateApi(client: SmartApiClient) {
 
 export function placementApi(client: SmartApiClient) {
   return {
-    ingestJd: (body: unknown) =>
-      client.post(prefixed('/placement/ingest-jd'), body, { schema: JobAcceptedSchema }),
-
     match: (body: unknown) =>
       client.post(prefixed('/placement/match'), body, { schema: JobAcceptedSchema }),
 

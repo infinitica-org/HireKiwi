@@ -58,7 +58,6 @@ export * from './dto/evaluation.dto.js';
 export * from './dto/cert-agenda.dto.js';
 export * from './dto/candidate-certificate.dto.js';
 export * from './dto/cert-verify.dto.js';
-export * from './dto/cognitive-profile.dto.js';
 export * from './dto/calibration.dto.js';
 export * from './dto/rate-limit.dto.js';
 export * from './dto/certificate.dto.js';
