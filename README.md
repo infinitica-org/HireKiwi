@@ -98,6 +98,7 @@ Sign in at **http://localhost:3005/login** — the session redirects to the port
 | Admin   | 3003 | Institution and platform operations                       |
 | Verify  | 3004 | Public certificate lookup (no authentication)             |
 | Auth    | 3005 | Login, invitation acceptance, password setup              |
+| Docs    | 3006 | Interactive documentation portal (Fumadocs)               |
 
 Invitation emails are captured by Mailpit (`http://localhost:8025`) in local development. Invitation links resolve on the auth application (`/invite/:token`).
 

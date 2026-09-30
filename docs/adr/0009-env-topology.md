@@ -1,23 +1,52 @@
-# ADR-0009: Branch, VPS, and database topology
+# ADR-0009: Branch, Single High-End VPS, Blue-Green Deployment, and Cloud-Ready Migration Path
 
-- **Status:** Accepted
-- **Date:** 2026-08-24
-- **Deciders:** Tino
-- **Ticket:** S0-TN-03
+- **Status:** Accepted (Updated 2026-09-30)
+- **Deciders:** Tino (System Architect)
+- **Ticket:** S6-TN-05
 
 ## Context
 
-The team needs three promotion stages (`dev` → `qa` → `main`) and two VPS hosts (kvm2, kvm4). The running stack is Prisma + self-hosted Postgres only.
+The SMART platform requires high-availability zero-downtime releases, isolated development environments, hardened security, and a future-proof foundation for upcoming migration to AWS. Previous multi-server arrangements introduced coordination overhead, deployment contention, and maintenance sprawl. The infrastructure is unified onto a single dedicated High-End Linux VPS running Ubuntu 24.04 LTS, hosting both Dev and Prod under strict Docker Compose isolation, fronted by Caddy reverse proxy with Blue-Green deployment switching.
 
 ## Decision
 
-1. Long-lived git branches: `dev`, `qa`, `main`. Feature PRs target `dev`.
-2. **kvm2** hosts **dev** and **qa** Compose projects. **kvm4** hosts **production** (`main`) only.
-3. Only one stack per host binds Caddy `:80/:443`. On kvm2 that is **qa**. Dev uses published app ports or a second hostname set without a second Caddy.
-4. Database is **PostgreSQL + pgvector** via `DATABASE_URL`, self-hosted in Docker Compose on each VPS.
-5. One database per environment. No sharing.
+1. **Long-lived Git Promotion Branches:**
+   - `dev` → Automatic deployment to isolated Development stack (`dev.becomesmart.online`).
+   - `qa` → Release candidate freeze and integration verification.
+   - `main` → Production truth (`becomesmart.online`) triggered via automated Blue-Green deployment (`scripts/blue-green-deploy.sh`).
+
+2. **Single High-End VPS Host Architecture:**
+   - A single, dedicated high-performance Linux VPS hosts both environments in completely segregated Docker Compose networks and volumes.
+   - Public TLS 1.3 is managed exclusively by a root Caddy reverse proxy on `:80` and `:443`.
+   - **Production Blue Slot:** API port `3000`, Web apps `3001`–`3006`.
+   - **Production Green Slot:** API port `3010`, Web apps `3011`–`3016`.
+   - **Isolated Dev Slot:** API port `3020`, Web apps `3021`–`3026`.
+
+3. **Zero-Downtime Blue-Green Deployment:**
+   - Production updates deploy to the currently inactive slot (Blue or Green).
+   - Sequential container builds prevent resource starvation.
+   - Automated health (`/health`) and readiness (`/ready`) probes verify container integrity before traffic shift.
+   - Dynamic Caddy upstream reload completes under 50ms with 0 dropped active connections.
+   - Rollback is instantaneous by pointing Caddy back to the previous active slot if health checks fail.
+
+4. **Internal Network Hardening & Compliance:**
+   - Database (`postgres:5432`), Redis (`redis:6379`), Redpanda (`redpanda:19092`), and MinIO (`minio:9000`) bind strictly to internal Docker bridge networks and `127.0.0.1`.
+   - External access is restricted exclusively to authenticated SSH key tunnels.
+   - Connection pooling via PgBouncer prevents Postgres connection pool exhaustion.
+   - Strictly no Aadhaar or PAN storage in the database; biometric and proctoring telemetry complies with DPDP Act 2023 with downsampled snapshots and automated 30-day purge.
+
+5. **Cloud-Ready AWS Migration Bridge:**
+   - All services adhere strictly to 12-factor application architecture.
+   - Configuration is externalized via standard environment variables (`DATABASE_URL`, `POOLED_DATABASE_URL`, `REDIS_URL`, `KAFKA_BROKERS`, `S3_ENDPOINT`).
+   - Moving from VPS to AWS requires zero application code changes:
+     - VPS Postgres/pgvector → AWS RDS PostgreSQL with `pgvector`
+     - VPS Redis → AWS ElastiCache Redis
+     - VPS Redpanda → AWS Managed Streaming for Kafka (MSK)
+     - VPS MinIO → AWS S3 bucket
+     - VPS Caddy/Docker → AWS ALB + ECS Fargate
 
 ## Consequences
 
-- Deploy script: `bash scripts/deploy-vps.sh <dev|qa|prod>` with matching `.env.<name>`.
-- Detail: [`docs/delivery/DATABASE.md`](../delivery/DATABASE.md), [`infra/vps/README.md`](../../infra/vps/README.md).
+- Automated Blue-Green deployment orchestrated via `scripts/blue-green-deploy.sh prod`.
+- Dev deployments run via `scripts/deploy-vps.sh dev`.
+- Comprehensive architecture and operational runbooks detailed in [`infra/vps/README.md`](../../infra/vps/README.md), [`docs/delivery/DATABASE.md`](../delivery/DATABASE.md), and `@smart/web-docs`.

@@ -1,0 +1,90 @@
+---
+title: 05. Core Domain — Verification
+description: Automated verification pipelines, human-in-the-loop workflows, state machines, and auditability.
+---
+
+## 5.1 Verification Framework
+
+Verification in SmartZen is the formal deterministic process that elevates unverified assertions into trusted, tamper-evident talent intelligence.
+
+```
+CLAIM ──► SOURCE PROOF ──► SYSTEM VALIDATION ──► LEVEL ASSIGNMENT ──► CRYPTOGRAPHIC SIGNATURE
+```
+
+---
+
+## 5.2 Verification Types
+
+| Verification Type | Target Artifact | Mechanism | Turnaround SLA |
+| :--- | :--- | :--- | :--- |
+| **Automated Static Scan** | GitHub repositories, code files | AST analysis, Git authorship tree, commit frequency entropy | Instant (< 30 seconds) |
+| **Active Proctored Defense** | Project code, technical architecture | Python MediaPipe CV telemetry + LLM dynamic technical probe | 15 minutes |
+| **Institutional Attestation** | Academic enrollment, degree, GPA | SAML 2.0 / registrar webhook assertion | Instant (SSO federated) |
+| **Corporate Employment Check** | Work experience letters, internships | Work domain email magic link / HR verification portal | < 48 hours |
+| **Human Auditor Review** | Edge-case appeals, flagged integrity sessions | Senior evaluator manual transcript & video review | < 72 hours |
+
+---
+
+## 5.3 Verification State Machine
+
+```
+               ┌───────────────┐
+               │    PENDING    │
+               └───────┬───────┘
+                       │ Automated Scan Initiated
+               ┌───────▼───────┐
+               │  IN_REVIEW    │
+               └───────┬───────┘
+         ┌─────────────┴─────────────┐
+Passes Threshold               Integrity Anomaly Flagged
+         │                           │
+┌────────▼────────┐         ┌────────▼────────┐
+│    VERIFIED     │         │ MANUAL_AUDIT    │
+└────────┬────────┘         └────────┬────────┘
+         │                           │
+         │                  ┌────────┴────────┐
+         │             Auditor Approves   Auditor Rejects
+         │                  │                 │
+         │                  ▼                 ▼
+         └──────────► [ VERIFIED ]       [ REJECTED ]
+                                              │
+                                              ▼
+                                         [ APPEALED ]
+```
+
+---
+
+## 5.4 Automated Verification Rules
+
+1. **Authorship Minimum Threshold:** In a collaborative repository, the candidate must account for at least $35\%$ of non-boilerplate commits and $40\%$ of core business logic lines of code.
+2. **Commit Distribution Entropy:** Commits made in a single bulk push with identical timestamps without intermediate development branch history trigger an automatic `MANUAL_AUDIT` state.
+3. **AST Complexity Floor:** Projects submitted for Gold-tier backend competency must exhibit cyclomatic complexity, structured dependency injection, and comprehensive unit test coverage ($> 65\%$).
+
+---
+
+## 5.5 Rejections, Resubmissions, and Appeals
+
+* **Rejection Notification:** If an artifact is rejected, the candidate receives an explainability report detailing the failure trigger (e.g., *"Commit history analysis indicates repository was cloned from an existing public repository without attribution"*).
+* **Cooldown Period:** A candidate may not resubmit the exact same repository within 14 calendar days.
+* **Formal Appeals Process:** Candidates may request human arbitration within 7 days of rejection. A senior evaluator conducts a live 10-minute code walkthrough. If approved, the rejection is rescinded and the audit log records the manual override.
+
+---
+
+## 5.6 Tamper-Evident Verification Audit Trail
+
+All verification decisions are appended to an immutable PostgreSQL table `VerificationAuditLog`:
+
+```sql
+CREATE TABLE "VerificationAuditLog" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "evidenceId" UUID NOT NULL REFERENCES "Evidence"("id"),
+  "actorId" TEXT NOT NULL,
+  "action" TEXT NOT NULL, -- VERIFY | REJECT | OVERRIDE | REVOKE
+  "previousState" TEXT NOT NULL,
+  "newState" TEXT NOT NULL,
+  "rationale" TEXT NOT NULL,
+  "metadata" JSONB NOT NULL,
+  "ipAddress" INET NOT NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```

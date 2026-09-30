@@ -1,0 +1,34 @@
+---
+title: 25. Product Requirements & Specifications
+description: Core functional specifications, non-functional latency/throughput constraints, and business rules.
+---
+
+## 25.1 Functional Requirements Matrix
+
+| ID | Module | Functional Requirement | Priority | Verification Method |
+| :--- | :--- | :--- | :--- | :--- |
+| **FR-01** | Auth | Candidate can authenticate via institutional SAML 2.0 / OIDC SSO. | P0 | Automated E2E test |
+| **FR-02** | Evidence | System ingests public GitHub repositories, verifying commit authorship and line counts. | P0 | Integration test with mocked GitHub API |
+| **FR-03** | Anti-Cheat | MediaPipe CV flags webcam occlusion or multiple faces during project defense. | P0 | Synthetic video stream test |
+| **FR-04** | Inference | LLM evaluator outputs structured BARS rubric scores validated by Zod schemas. | P0 | Golden Dataset contract test |
+| **FR-05** | Credential | System signs verified talent profile with HMAC-SHA256, resolvable publicly. | P0 | Cryptographic signature verification test |
+| **FR-06** | Match | Matching engine executes pgvector cosine similarity ranking under hard filters. | P0 | SQL query execution plan test |
+| **FR-07** | Pipeline | Recruiters can move applicants through 5 lifecycle stages with webhook triggers. | P1 | State machine unit tests |
+| **FR-08** | Audit | System records tamper-evident audit logs for all administrative actions. | P1 | Database append-only log test |
+
+---
+
+## 25.2 Non-Functional Requirements (NFRs)
+
+* **Latency (p95):** Read API endpoints must respond in < 80ms; next-item assessment delivery in < 50ms; complex semantic search in < 350ms.
+* **Throughput:** System must sustain 5,000 concurrent active assessment takers per single High-End VPS instance.
+* **Availability:** $99.95\%$ uptime target for public verification and candidate profile endpoints.
+* **Security SLA:** Zero critical CVEs in production dependencies; automated dependency audit on every pull request.
+
+---
+
+## 25.3 Business Invariants & Constraints
+
+1. **One Active Offer Policy:** When a candidate accepts an official job offer, their status automatically flags other pending applications as `LOCKED_PLACED`, unless the university authorizes "Dream Offer" participation.
+2. **Contract-First Constraint:** No database model or API endpoint may be merged into `dev` without corresponding DTO schemas in `packages/contracts`.
+3. **No Direct Production Pushes:** All code changes must enter via pull request branches with 100% passing automated CI checks.

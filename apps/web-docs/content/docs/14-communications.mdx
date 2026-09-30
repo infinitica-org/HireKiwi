@@ -1,0 +1,44 @@
+---
+title: 14. Communications
+description: Multi-channel notification framework, transactional messaging, event triggers, and failure retry semantics.
+---
+
+## 14.1 Notification Architecture
+
+The communications engine is built around asynchronous event consumers on **Redpanda (Kafka)**, isolating high-throughput application events from external notification delivery latency.
+
+```
+[Domain Service Event] ──► [Redpanda: events.notifications.v1] ──► [Worker Pool]
+                                                                        │
+                                                  ┌─────────────────────┼─────────────────────┐
+                                                  │                     │                     │
+                                            [Email / SES]        [In-App Redis SSE]      [Webhooks]
+```
+
+---
+
+## 14.2 Channel Standards & Delivery Modes
+
+* **In-App Real-Time Notifications:** Delivered via Server-Sent Events (SSE) backed by Redis pub/sub. Latency < 250ms.
+* **Transactional Email:** Powered by Amazon SES or Postmark with strict SPF, DKIM, and DMARC alignment.
+* **Recruiter Webhooks:** External HTTP POST payloads dispatched to corporate ATS endpoints with HMAC-SHA256 signature headers.
+
+---
+
+## 14.3 Key Event Triggers
+
+| Trigger Event | Target Recipient | Channels | Priority |
+| :--- | :--- | :--- | :--- |
+| `EVIDENCE_VERIFIED` | Candidate | In-App, Email | P1 |
+| `ASSESSMENT_INTEGRITY_FLAG` | Trust & Safety Admin | In-App Alert | P0 |
+| `CANDIDATE_SHORTLISTED` | Candidate, TPO | In-App, Email | P1 |
+| `OFFER_EXTENDED` | Candidate, TPO | In-App, Email, SMS | P0 |
+| `PLACEMENT_DRIVE_ANNOUNCED` | Eligible Students | In-App, Email | P2 |
+
+---
+
+## 14.4 Delivery Guarantees & Exponential Backoff
+
+* All notification workers enforce **at-least-once delivery**.
+* Transitory network failures trigger exponential retry backoff (2^n * 1 second, maximum 5 attempts).
+* Permanent downstream failures (HTTP 4xx, invalid mailbox) route to a Dead Letter Queue (`notifications.dlq`) for administrative inspection.

@@ -1,0 +1,37 @@
+---
+title: 27. Releases & Product Roadmap
+description: Strategic roadmap milestones, release cadence, feature flags, and v2.1.0 production release notes.
+---
+
+## 27.1 Strategic Horizon Roadmap
+
+```
+[ v2.1.0: ENTERPRISE CORE (CURRENT) ]
+• Blue-Green Zero Downtime Deployments on High-End VPS
+• Fumadocs Enterprise Documentation Portal (@smart/web-docs)
+• DPDP Act 2023 Compliance & Automated 30-Day Purge
+• BARS Rubric Evaluator & HMAC-SHA256 Cryptographic Verification
+
+[ v2.2.0: MULTI-CAMPUS ENTERPRISE PILOT (Q4 2026) ]
+• Institutional ERP Bi-directional Sync (SAP, Canvas)
+• Dynamic Code Defense with Real-Time WebAssembly Sandboxing
+• Recruiter ATS Webhooks (Greenhouse, Lever)
+
+[ v3.0.0: AWS LIFT-AND-SHIFT & GLOBAL TALENT MESH (Q1 2027) ]
+• Zero-downtime migration to AWS RDS, ElastiCache, MSK, and ECS
+• Cross-border enterprise hiring compliance & multi-currency billing
+• Federated Zero-Knowledge Proofs for academic credentialing
+```
+
+---
+
+## 27.2 Release Notes Summary (v2.1.0-prod)
+
+* **Release Tag:** `v2.1.0`
+* **Commit:** Production Blue-Green deployment candidate
+* **Key Enhancements:**
+  * Single High-Performance VPS topology with Caddy upstream hot reloads.
+  * Automated Blue-Green deployment orchestrator (`scripts/blue-green-deploy.sh`).
+  * Removal of legacy host references (`kvm2`/`kvm4`).
+  * Comprehensive Fumadocs Knowledge Base with session password gate.
+  * Strict DPDP Act 2023 telemetry downsampling and automated TTL data purge.

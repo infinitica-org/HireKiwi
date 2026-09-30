@@ -1,0 +1,135 @@
+---
+title: 02. Product Architecture
+description: Capability mapping, domain boundaries, multi-tenancy models, and system flywheel for SmartZen.
+---
+
+## 2.1 SmartZen Product Architecture
+
+The SmartZen platform is architected as an event-driven modular monolith with strict domain boundaries, separating data ingestion, verification pipelines, capability inference, and demand-side matching.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        EXPERIENCE LAYER                                │
+│  Student Portal │ University TPO Portal │ Employer Portal │ Admin Ops  │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Next.js 16 / TypeScript / Tailind
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                    EDGE & REVERSE PROXY LAYER (Caddy)                  │
+│          Automatic TLS 1.3 │ Rate Limiting │ Blue-Green Routing        │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                  CORE DOMAIN SERVICES (NestJS API-Core)                │
+│ ┌───────────────────┐ ┌───────────────────┐ ┌────────────────────────┐ │
+│ │  Auth & Tenancy   │ │ Evidence Registry │ │ Verification Engine    │ │
+│ └───────────────────┘ └───────────────────┘ └────────────────────────┘ │
+│ ┌───────────────────┐ ┌───────────────────┐ ┌────────────────────────┐ │
+│ │ Assessment & CV   │ │ Placement Matcher │ │ Communications & Audit │ │
+│ └───────────────────┘ └───────────────────┘ └────────────────────────┘ │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                    PERSISTENCE & EVENT FABRIC                          │
+│  PostgreSQL 16 + pgvector │ Redis Sentinel │ Redpanda (Kafka) │ MinIO  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2.2 Capability Map
+
+The platform's functional footprint is organized across six core enterprise capabilities:
+
+1. **Ingestion & Integration:** GitHub OAuth connectors, resume parsing sidecars, LMS credential importers, and university batch roster ingestion.
+2. **Telemetry & Anti-Cheat:** Server-authoritative session timers, MediaPipe facial presence telemetry, tab-switch monitoring, and copy-paste anomaly detection.
+3. **Capability Inference:** LLM-assisted code defense evaluation, rubric scoring runners, BARS level assignment, and confidence calibrators.
+4. **Credentialing & Provenance:** HMAC-SHA256 signature generation, public verification endpoint hosting, and tamper-evident audit logging.
+5. **Semantic Match Engine:** PostgreSQL `pgvector` HNSW vector embeddings, cosine distance similarity scoring, and deterministic regex eligibility filtering.
+6. **Enterprise Workflow:** Multi-stage applicant tracking (Shortlisted, Technical Interview, Offer, Hired), company team permissions, and placement analytics.
+
+---
+
+## 2.3 Product Domains
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              PRODUCT DOMAINS                                 │
+├─────────────────────┬──────────────────────┬─────────────────────────────────┤
+│ Identity & Tenancy  │ Candidate Evidence   │ Capability Intelligence         │
+│ • University Org    │ • Passive Repos      │ • Taxonomy Hierarchy            │
+│ • Employer Teams    │ • Active Defense     │ • Rubric Level Invariants       │
+│ • RBAC Permissions  │ • Credential Proof   │ • Confidence Scoring            │
+├─────────────────────┼──────────────────────┼─────────────────────────────────┤
+│ Verification Ops    │ Placement Matching   │ Communications & Governance     │
+│ • Automated Checks  │ • Vector Embeddings  │ • Webhooks & Email Alerts       │
+│ • Human In Loop     │ • Hard Eligibility   │ • Audit Logs & DPDP Purge       │
+│ • Appeals Workflow  │ • Pipeline Tracking  │ • Explainability Telemetry      │
+└─────────────────────┴──────────────────────┴─────────────────────────────────┘
+```
+
+---
+
+## 2.4 System Context
+
+SmartZen operates within a federated ecosystem connecting three distinct institutional nodes:
+
+* **Universities / Colleges:** Provision academic rosters, authenticate candidate identities via campus SSO, and review placement cohort analytics.
+* **Employers / Recruiters:** Publish verified job openings, specify technical competency thresholds, search talent graphs, and manage interview pipelines.
+* **External Verification Networks:** GitHub API (commit history verification), PyPI/npm (package ownership), and certification authorities.
+
+---
+
+## 2.5 Core Product Loop
+
+```
+   1. INGEST           2. VERIFY            3. INFER
+[Raw Signals] ────► [Proof Chains] ────► [Competencies]
+      ▲                                         │
+      │                                         │
+   6. LEARN            5. HIRE              4. MATCH
+[Feedback Loop] ◄── [Interviews]   ◄── [Opportunities]
+```
+
+1. **Ingest:** Candidate submits project repositories, work history, and academic records.
+2. **Verify:** System performs automated AST code scans, commit frequency analysis, and proctored technical defense.
+3. **Infer:** Rubrics calculate BARS proficiency levels and confidence scores across specific skills.
+4. **Match:** Semantic embeddings match verified candidate graphs against live corporate requisitions.
+5. **Hire:** Recruiters review project defense recordings and verified proofs, expediting offers.
+6. **Learn:** Post-interview recruiter feedback calibrates matching algorithms and rubric weights.
+
+---
+
+## 2.6 The Product Flywheel
+
+More verified candidates attract premium enterprise employers $\longrightarrow$ More corporate requisitions drive university institutional adoption $\longrightarrow$ Higher institutional density increases candidate evidence volume $\longrightarrow$ Richer evidence yields higher-accuracy semantic matching and faster hiring velocities.
+
+---
+
+## 2.7 User Types & Role-Based Access Control (RBAC)
+
+* **Super Admin (`PLATFORM_ADMIN`):** Unrestricted access to tenant management, system configuration, audit logs, and global model weights.
+* **University Admin / TPO (`INSTITUTION_ADMIN`):** Access scoped strictly to students enrolled in their campus tenant.
+* **Faculty Evaluator (`EVALUATOR`):** Permissions to review project defense logs and grade department-level assessments.
+* **Employer Admin (`COMPANY_ADMIN`):** Manages enterprise billing, team recruiter seats, and job postings.
+* **Recruiter (`RECRUITER`):** Scoped to candidate search, applicant pipelines, and interview scheduling.
+* **Candidate (`CANDIDATE`):** Owns their evidence profile, privacy sharing controls, and assessment attempts.
+
+---
+
+## 2.8 Organizations & Multi-Tenancy Model
+
+SmartZen utilizes a **row-level multi-tenant isolation model** within a unified PostgreSQL database:
+
+* Each database table holding tenant data contains an immutable `organizationId` foreign key.
+* Prisma middleware automatically injects tenant boundary filters into all queries.
+* Cross-tenant data leakage is structurally impossible at the query layer.
+* Global talent matching indexes candidate profiles using privacy-preserving anonymized tokens until candidate grants explicit disclosure consent to an employer.
+
+---
+
+## 2.9 Platform Boundaries
+
+To preserve architectural integrity, SmartZen explicitly delegates:
+* **Payroll & Core HRIS:** Delegated to external enterprise systems (Workday, Darwinbox) via webhook exports.
+* **Live Video Streaming:** WebRTC media routing is handled peer-to-peer or via ephemeral TURN relays; raw video is never persisted to application disks.
+* **Third-Party Identity:** Identity federation relies on SAML 2.0 / OIDC; SmartZen does not act as a primary social identity provider.

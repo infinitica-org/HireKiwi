@@ -73,11 +73,11 @@ Label completeness is checked by `.github/workflows/pr-label-check.yml` (warning
 
 ## 5. Automated Deployments
 
-| Branch | Workflow          | Trigger                 | Target            |
-| ------ | ----------------- | ----------------------- | ----------------- |
-| `dev`  | `deploy-dev.yml`  | Successful CI on `dev`  | kvm2 `smart-dev`  |
-| `qa`   | `deploy-qa.yml`   | Successful CI on `qa`   | kvm2 `smart-qa`   |
-| `main` | `deploy-prod.yml` | Successful CI on `main` | kvm4 `smart-prod` |
+| Branch | Workflow          | Trigger                 | Target                                                              |
+| ------ | ----------------- | ----------------------- | ------------------------------------------------------------------- |
+| `dev`  | `deploy-dev.yml`  | Successful CI on `dev`  | Single VPS `smart-dev` (`dev.becomesmart.online`)                   |
+| `qa`   | `deploy-qa.yml`   | Successful CI on `qa`   | Single VPS `smart-qa`                                               |
+| `main` | `deploy-prod.yml` | Successful CI on `main` | Single VPS `smart-prod` (`becomesmart.online`, Blue-Green Strategy) |
 
 Deployments use a **blue-green strategy** (`scripts/blue-green-deploy.sh`) to eliminate downtime. See script header for operation details.
 

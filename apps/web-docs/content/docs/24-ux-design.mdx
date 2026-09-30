@@ -1,0 +1,34 @@
+---
+title: 24. UX & Design System
+description: Design principles, typography, accessible color palettes, micro-interactions, and component standards.
+---
+
+## 24.1 Design Principles
+
+1. **Clarity Over Clutter:** Dense information must be structured with scannable visual hierarchy.
+2. **Honest Capability Representation:** Visual distinctions between verified evidence and claimed assertions must be unmistakable.
+3. **Low-Cognitive Load Runners:** Assessment and defense interfaces eliminate all peripheral navigation and distraction.
+4. **Inclusive Accessibility:** Strict compliance with **WCAG 2.1 AA** standards for color contrast, screen reader compatibility, and full keyboard navigability.
+
+---
+
+## 24.2 Typography & Color Tokens
+
+* **Primary Font:** Inter / Outfit via `@next/font/google`.
+* **Monospace Code Font:** JetBrains Mono for code blocks, AST traces, and diff viewers.
+* **Palette:**
+  * Background Dark: `#090a0f`
+  * Surface Dark: `#12141c`
+  * Border Slate: `#1e293b`
+  * Gold Tier: Amber-400 (`#fbbf24`) with subtle gold glow
+  * Silver Tier: Slate-300 (`#cbd5e1`)
+  * Bronze Tier: Orange-600 (`#ea580c`)
+  * Accent Primary: Indigo-500 (`#6366f1`)
+
+---
+
+## 24.3 State Standards: Loading, Empty, and Error
+
+* **Skeleton Loaders:** Content layouts display pulse-animated skeleton cards matching the exact dimensions of incoming data to eliminate cumulative layout shift (CLS $< 0.05$).
+* **Actionable Empty States:** Every empty list provides an illustrated graphic, clear rationale, and an immediate call-to-action button (e.g., *"No repositories linked yet — Connect GitHub"*).
+* **Error Boundaries:** React error boundaries capture unexpected client exceptions, presenting friendly recovery prompts and logging stack traces to Sentry.
