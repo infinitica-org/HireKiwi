@@ -177,9 +177,32 @@ export function CandidateSuggestionCard({
 
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <div className="h-full rounded-xl border border-[var(--tpo-accent-border)]/80 bg-gradient-to-br from-[var(--tpo-accent-tint)] to-[var(--ds-surface)] p-4">
-            <p className={sectionLabelClass}>Recruiter summary</p>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--ds-text)]">{whyText}</p>
+          <div className="h-full flex flex-col rounded-xl border border-[var(--tpo-accent-border)]/80 bg-gradient-to-br from-[var(--tpo-accent-tint)] to-[var(--ds-surface)] p-4">
+            <p className={sectionLabelClass}>Why this candidate</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--ds-text)] flex-1">{whyText}</p>
+            <div className="mt-3 border-t border-[var(--tpo-accent-border)]/40 pt-3">
+              <p className={`text-xs font-medium ${mutedTextClass}`}>
+                {skillGapCount === 0 && competencyGapCount === 0 ? (
+                  <span className="text-emerald-700 font-semibold">
+                    ✓ Perfect match — all requirements met
+                  </span>
+                ) : skillGapCount === 0 ? (
+                  <span className="text-amber-700">
+                    ⚠ Strong match — {competencyGapCount} capability gap
+                    {competencyGapCount === 1 ? '' : 's'}
+                  </span>
+                ) : competencyGapCount === 0 ? (
+                  <span className="text-amber-700">
+                    ⚠ Partial match — {skillGapCount} skill gap{skillGapCount === 1 ? '' : 's'}
+                  </span>
+                ) : (
+                  <span className="text-rose-700">
+                    ⚠ Multiple gaps — {skillGapCount} skill + {competencyGapCount} competency gap
+                    {skillGapCount + competencyGapCount === 1 ? '' : 's'}
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
         </div>
 

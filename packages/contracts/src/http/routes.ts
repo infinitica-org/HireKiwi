@@ -3163,6 +3163,18 @@ export const ROUTES: readonly RouteSpec[] = [
     summary: 'Replace an owned project with another; the old project becomes inactive.',
   },
   {
+    method: 'DELETE',
+    path: '/projects/:projectId',
+    module: 'platform',
+    owner: 'Vishal V',
+    roles: ['STUDENT'],
+    rateLimit: 'projects.submit',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 200,
+    summary: 'Delete an owned project and all associated data (skill mappings, interview records).',
+  },
+  {
     method: 'POST',
     path: '/projects/:projectId/defense/prepare',
     module: 'evaluation',

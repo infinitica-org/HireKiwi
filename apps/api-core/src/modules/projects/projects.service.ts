@@ -66,6 +66,9 @@ export class ProjectsService {
       data: ProjectSubmittedDataSchema.parse({ projectId: row.id, studentId }),
     });
 
+    // Immediately mark project as interview-eligible upon submission
+    await this.interviewGate.markVerifyComplete(row.id);
+
     // Sync fallback when Kafka consumer is not running (local dev).
     await this.verifyRunner.runForProject(row.id, studentId);
 

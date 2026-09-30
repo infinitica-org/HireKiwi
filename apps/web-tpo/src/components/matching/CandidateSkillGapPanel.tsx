@@ -18,14 +18,6 @@ import { EmployerSkillInspectionPanel } from './EmployerSkillInspectionPanel';
 
 type GapTab = 'skills' | 'competencies';
 
-function countSkillGaps(rows: readonly SkillFitRow[]): number {
-  return rows.filter((row) => row.status !== 'MET').length;
-}
-
-function countCompetencyGaps(rows: readonly CapabilityFitRow[]): number {
-  return rows.filter((row) => row.hitScore < 0.5).length;
-}
-
 function otherVerifiedSkills(
   required: readonly SkillFitRow[],
   verified: readonly VerifiedSkillSummary[] | undefined,
@@ -136,6 +128,10 @@ function GapTabButton({
   total: number;
   icon: ReactNode;
 }) {
+  const metCount = total - gapCount;
+  const gapPercentage = total > 0 ? Math.round((gapCount / total) * 100) : 0;
+  const isCritical = gapCount > 0 && gapPercentage >= 50;
+
   return (
     <button
       type="button"
@@ -149,15 +145,32 @@ function GapTabButton({
           : 'hover:border-[var(--ds-border-hover)]',
       ].join(' ')}
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--ds-surface-muted)] text-[var(--ds-text-secondary)]">
+      <span
+        className={[
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--ds-text-secondary)]',
+          isCritical ? 'bg-rose-100' : 'bg-[var(--ds-surface-muted)]',
+        ].join(' ')}
+      >
         {icon}
       </span>
-      <div>
+      <div className="flex-1">
         <p className={sectionLabelClass}>{label}</p>
-        <p className="text-2xl font-bold tabular-nums text-[var(--ds-text)]">
-          {gapCount}/{total || gapCount}
-        </p>
+        <div className="mt-1 flex items-baseline gap-2">
+          <p
+            className={[
+              'text-2xl font-bold tabular-nums',
+              gapCount === 0 ? 'text-emerald-700' : isCritical ? 'text-rose-700' : 'text-amber-700',
+            ].join(' ')}
+          >
+            {gapCount}
+          </p>
+          <p className={`text-xs font-medium ${mutedTextClass}`}>
+            {gapCount === 1 ? 'gap' : 'gaps'} of {total}
+          </p>
+        </div>
         <p className={`mt-0.5 text-[11px] ${mutedTextClass}`}>
+          {metCount > 0 ? `${metCount} ${metCount === 1 ? 'item' : 'items'} met` : 'No matches'}
+          {' · '}
           {active ? 'Showing below' : 'Click to view'}
         </p>
       </div>
@@ -177,8 +190,14 @@ export function CandidateSkillGapPanel({
   const skillFit = candidate.explanation.skillFit ?? [];
   const capabilityFit = candidate.explanation.capabilityFit ?? [];
   const verifiedSkills = candidate.explanation.verifiedSkills;
-  const skillGapCount = countSkillGaps(skillFit);
-  const competencyGapCount = countCompetencyGaps(capabilityFit);
+
+  // Separate met and gap items
+  const skillsMetCount = skillFit.filter((row) => row.status === 'MET').length;
+  const skillGapCount = skillFit.filter((row) => row.status !== 'MET').length;
+
+  const competenciesMetCount = capabilityFit.filter((row) => row.hitScore >= 0.5).length;
+  const competencyGapCount = capabilityFit.filter((row) => row.hitScore < 0.5).length;
+
   const otherSkills = otherVerifiedSkills(skillFit, verifiedSkills);
 
   const hasSkills = skillFit.length > 0 || otherSkills.length > 0;
@@ -231,21 +250,41 @@ export function CandidateSkillGapPanel({
         <div className="flex flex-col gap-6">
           {skillFit.length > 0 ? (
             <div>
-              <p className={`mb-3 text-sm font-semibold text-[var(--ds-text)]`}>
-                Skills required by this opening
-              </p>
+              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                <div>
+                  <p className={`text-sm font-semibold text-[var(--ds-text)]`}>
+                    Skills required by this opening
+                  </p>
+                  <p className={`mt-0.5 text-xs ${mutedTextClass}`}>
+                    {skillsMetCount} met · {skillGapCount} gap{skillGapCount === 1 ? '' : 's'}
+                  </p>
+                </div>
+              </div>
               <p className={`mb-3 text-xs ${mutedTextClass}`}>
                 Parsed from the job description for {roleTitle}. Green circles show verified levels
                 through what the role requires.
               </p>
               <ul className="flex flex-col gap-3">
-                {skillFit.map((row) => (
-                  <RequirementSkillRow
-                    key={row.skillCode}
-                    row={row}
-                    onInspect={() => setInspectSkillCode(row.skillCode)}
-                  />
-                ))}
+                {/* Show met skills first */}
+                {skillFit
+                  .filter((row) => row.status === 'MET')
+                  .map((row) => (
+                    <RequirementSkillRow
+                      key={row.skillCode}
+                      row={row}
+                      onInspect={() => setInspectSkillCode(row.skillCode)}
+                    />
+                  ))}
+                {/* Then show gap skills */}
+                {skillFit
+                  .filter((row) => row.status !== 'MET')
+                  .map((row) => (
+                    <RequirementSkillRow
+                      key={row.skillCode}
+                      row={row}
+                      onInspect={() => setInspectSkillCode(row.skillCode)}
+                    />
+                  ))}
               </ul>
             </div>
           ) : (
@@ -283,17 +322,34 @@ export function CandidateSkillGapPanel({
         <div className="flex flex-col gap-6">
           {capabilityFit.length > 0 ? (
             <div>
-              <p className={`mb-3 text-sm font-semibold text-[var(--ds-text)]`}>
-                Competencies required by this opening
-              </p>
+              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                <div>
+                  <p className={`text-sm font-semibold text-[var(--ds-text)]`}>
+                    Competencies required by this opening
+                  </p>
+                  <p className={`mt-0.5 text-xs ${mutedTextClass}`}>
+                    {competenciesMetCount} demonstrated · {competencyGapCount} gap
+                    {competencyGapCount === 1 ? '' : 's'}
+                  </p>
+                </div>
+              </div>
               <p className={`mb-3 text-xs ${mutedTextClass}`}>
                 Role capabilities inferred from the JD. Green circles show demonstrated depth;
                 dashed circles are still expected for this role.
               </p>
               <ul className="flex flex-col gap-3">
-                {capabilityFit.map((row) => (
-                  <RequirementCompetencyRow key={row.competencyId} row={row} />
-                ))}
+                {/* Show demonstrated competencies first */}
+                {capabilityFit
+                  .filter((row) => row.hitScore >= 0.5)
+                  .map((row) => (
+                    <RequirementCompetencyRow key={row.competencyId} row={row} />
+                  ))}
+                {/* Then show gap competencies */}
+                {capabilityFit
+                  .filter((row) => row.hitScore < 0.5)
+                  .map((row) => (
+                    <RequirementCompetencyRow key={row.competencyId} row={row} />
+                  ))}
               </ul>
             </div>
           ) : (
