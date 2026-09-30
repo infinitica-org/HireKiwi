@@ -517,7 +517,6 @@ export function BatchImportWizard({
                   variant="outline"
                   onClick={() => void downloadErrorReport()}
                   disabled={busy}
-                  isLoading={busy}
                 >
                   Download Import-Errors-Report.xlsx
                 </Button>

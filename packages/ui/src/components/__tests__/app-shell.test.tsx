@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { AppShell } from '../app-shell';
 import { Breadcrumbs } from '../breadcrumbs';
@@ -69,6 +69,9 @@ describe('AppShell & Responsive Shell Components', () => {
       />,
     );
 
+    const trigger = screen.getByRole('button', { name: /User menu for Tino Britty/i });
+    expect(trigger).toBeDefined();
+    fireEvent.click(trigger);
     expect(screen.getByText('Tino Britty')).toBeDefined();
   });
 
