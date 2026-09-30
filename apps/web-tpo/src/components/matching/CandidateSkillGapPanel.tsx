@@ -162,14 +162,16 @@ function GapTabButton({
               gapCount === 0 ? 'text-emerald-700' : isCritical ? 'text-rose-700' : 'text-amber-700',
             ].join(' ')}
           >
-            {gapCount}
+            {metCount}
           </p>
           <p className={`text-xs font-medium ${mutedTextClass}`}>
-            {gapCount === 1 ? 'gap' : 'gaps'} of {total}
+            {metCount === 1 ? 'matched' : 'matched'}
+            {' / '}
+            {gapCount} {gapCount === 1 ? 'gap' : 'gaps'}
           </p>
         </div>
         <p className={`mt-0.5 text-[11px] ${mutedTextClass}`}>
-          {metCount > 0 ? `${metCount} ${metCount === 1 ? 'item' : 'items'} met` : 'No matches'}
+          {total > 0 ? `${Math.round((metCount / total) * 100)}% coverage` : 'No items'}
           {' · '}
           {active ? 'Showing below' : 'Click to view'}
         </p>

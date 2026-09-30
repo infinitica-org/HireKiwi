@@ -179,7 +179,9 @@ export function CandidateSuggestionCard({
         <div className="lg:col-span-5">
           <div className="h-full flex flex-col rounded-xl border border-[var(--tpo-accent-border)]/80 bg-gradient-to-br from-[var(--tpo-accent-tint)] to-[var(--ds-surface)] p-4">
             <p className={sectionLabelClass}>Why this candidate</p>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--ds-text)] flex-1">{whyText}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--ds-text)] flex-1">
+              {candidate.explanation.recruiterSummary || whyText}
+            </p>
             <div className="mt-3 border-t border-[var(--tpo-accent-border)]/40 pt-3">
               <p className={`text-xs font-medium ${mutedTextClass}`}>
                 {skillGapCount === 0 && competencyGapCount === 0 ? (
