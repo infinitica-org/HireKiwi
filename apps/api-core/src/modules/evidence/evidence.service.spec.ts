@@ -71,6 +71,18 @@ function buildService(overrides?: { prisma?: Record<string, unknown> }) {
   };
   const dedup = new CredentialDedupService(prisma as never);
   const auditPublisher = { record: vi.fn().mockResolvedValue(undefined) };
+  const skillExplanation = {
+    getForStudent: vi.fn().mockResolvedValue({
+      basis: 'ASSESSMENT_AND_EVIDENCE',
+      confidence: 'MEDIUM',
+      confidenceReason: 'Conservative min(assessment HIGH, project LOW)',
+      whyThisLevel:
+        'Assessment and linked project evidence were fused to support intermediate proficiency.',
+      verifiedVsAi: { alignment: 'ALIGNED' },
+      ruleSetVersion: 'v1',
+      computedAt: '2026-09-29T12:00:00.000Z',
+    }),
+  };
   const skillClaimAutoDeclare = {
     ensureClaimsForProjectTags: vi.fn().mockResolvedValue(undefined),
   };
@@ -106,6 +118,7 @@ function buildService(overrides?: { prisma?: Record<string, unknown> }) {
     skillInference as any,
     evidenceVersions as any,
     auditPublisher as any,
+    skillExplanation as any,
   );
   return {
     service,
@@ -120,6 +133,7 @@ function buildService(overrides?: { prisma?: Record<string, unknown> }) {
     skillInference,
     evidenceVersions,
     auditPublisher,
+    skillExplanation,
   };
 }
 
@@ -940,6 +954,63 @@ describe('EvidenceService credential upload validation', () => {
           reviewNote: 'No justification provided',
         }),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('snapshots the raw explanation basis into the dispute audit metadata', async () => {
+      const { service, prisma, auditPublisher, skillExplanation } = buildService();
+      prisma.evidenceRecord.findFirst.mockResolvedValueOnce({ id: 'evidence-1' });
+      prisma.evidenceSkillDispute.create.mockResolvedValueOnce({
+        id: 'dispute-9',
+        createdAt: new Date('2026-09-30T00:00:00.000Z'),
+      });
+
+      const res = await service.submitEvidenceSkillDispute('student-1', {
+        skillCode: 'SE_DATA_STRUCTURES_ALGORITHMS',
+        reason: 'This evidence belongs to a different skill entirely.',
+      });
+
+      expect(res.disputeId).toBe('dispute-9');
+      expect(skillExplanation.getForStudent).toHaveBeenCalledWith(
+        'student-1',
+        'SE_DATA_STRUCTURES_ALGORITHMS',
+      );
+      const audit = auditPublisher.record.mock.calls[0]?.[0];
+      expect(audit.action).toBe('evidence.disputed');
+      expect(audit.metadata).toEqual(
+        expect.objectContaining({
+          disputeId: 'dispute-9',
+          skillCode: 'SE_DATA_STRUCTURES_ALGORITHMS',
+          explanation: {
+            basis: 'ASSESSMENT_AND_EVIDENCE',
+            confidence: 'MEDIUM',
+            confidenceReason: 'Conservative min(assessment HIGH, project LOW)',
+            whyThisLevel:
+              'Assessment and linked project evidence were fused to support intermediate proficiency.',
+            alignment: 'ALIGNED',
+            ruleSetVersion: 'v1',
+            computedAt: '2026-09-29T12:00:00.000Z',
+          },
+        }),
+      );
+    });
+
+    it('still submits the dispute when the explanation snapshot fails', async () => {
+      const { service, prisma, auditPublisher, skillExplanation } = buildService();
+      prisma.evidenceRecord.findFirst.mockResolvedValueOnce({ id: 'evidence-1' });
+      prisma.evidenceSkillDispute.create.mockResolvedValueOnce({
+        id: 'dispute-10',
+        createdAt: new Date('2026-09-30T00:00:00.000Z'),
+      });
+      skillExplanation.getForStudent.mockRejectedValueOnce(new Error('no blueprint'));
+
+      const res = await service.submitEvidenceSkillDispute('student-1', {
+        skillCode: 'SE_DATA_STRUCTURES_ALGORITHMS',
+        reason: 'This evidence belongs to a different skill entirely.',
+      });
+
+      expect(res.disputeId).toBe('dispute-10');
+      const audit = auditPublisher.record.mock.calls[0]?.[0];
+      expect(audit.metadata.explanation).toBeNull();
     });
   });
 });

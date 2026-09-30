@@ -1548,6 +1548,9 @@ model JobOpening {
   rawText                  String?            @map("raw_text")
   jdParseStatus            JdParseStatus      @default(PENDING) @map("jd_parse_status")
   parseConfidence          Decimal?           @map("parse_confidence") @db.Decimal(4, 3)
+  /// Gap 3: JD-parse versioning — tracks which JdParseParameters version produced this parse.
+  /// Format: "jd-parse-v1.0", allows future threshold/parameter changes without data loss.
+  jdParseVersion           String?            @map("jd_parse_version")
   parsedAt                 DateTime?          @map("parsed_at") @db.Timestamptz(6)
   parsedRequirements       Json?              @map("parsed_requirements")
   status                   JobOpeningStatus   @default(DRAFT)

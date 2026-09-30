@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   FileText,
   CheckCircle2,
@@ -47,6 +48,7 @@ export interface AssessmentItem {
 }
 
 export function StudentAssessmentHub() {
+  const router = useRouter();
   const [skillClaims, setSkillClaims] = useState<SkillClaimDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'PENDING' | 'COMPLETED'>('PENDING');
@@ -166,6 +168,10 @@ export function StudentAssessmentHub() {
   };
 
   const handleStartTest = (item: AssessmentItem) => {
+    if (item.claimId) {
+      router.push(`/assessments/skills/${item.claimId}`);
+      return;
+    }
     setActiveTest(item);
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});

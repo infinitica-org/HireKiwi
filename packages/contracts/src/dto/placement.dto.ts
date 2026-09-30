@@ -72,6 +72,7 @@ export type JobDescriptionDto = z.infer<typeof JobDescriptionDtoSchema>;
 export const SkillRequirementSchema = z.object({
   skillCode: TaxonomySkillCodeSchema,
   minProficiency: SkillProficiencySchema,
+  importance: z.enum(['critical', 'must_have', 'nice_to_have']).optional(),
 });
 export type SkillRequirement = z.infer<typeof SkillRequirementSchema>;
 
@@ -149,6 +150,7 @@ export const CapabilityFitRowSchema = z.object({
   skillCode: TaxonomySkillCodeSchema,
   hitScore: z.number().min(0).max(1),
   evidenceSource: MatchEvidenceSourceSchema,
+  evidenceSourceLabel: z.enum(['Assessment', 'Project', 'Inferred', 'None']).optional(),
 });
 export type CapabilityFitRow = z.infer<typeof CapabilityFitRowSchema>;
 
@@ -156,7 +158,11 @@ export const POTENTIAL_FIT_BANDS = ['STRONG', 'MODERATE', 'STRETCH'] as const;
 export const PotentialFitSchema = z.enum(POTENTIAL_FIT_BANDS);
 export type PotentialFit = z.infer<typeof PotentialFitSchema>;
 
-export const TRANSFER_SKILL_REASONS = ['SAME_CATEGORY', 'CAPABILITY_OVERLAP'] as const;
+export const TRANSFER_SKILL_REASONS = [
+  'SAME_CATEGORY',
+  'CAPABILITY_OVERLAP',
+  'GRAPH_BASED',
+] as const;
 export const TransferSkillReasonSchema = z.enum(TRANSFER_SKILL_REASONS);
 export type TransferSkillReason = z.infer<typeof TransferSkillReasonSchema>;
 
@@ -164,8 +170,25 @@ export const TransferSkillRowSchema = z.object({
   skillCode: TaxonomySkillCodeSchema,
   skillName: z.string(),
   reason: TransferSkillReasonSchema,
+  rank: z.number().int().min(1).max(5).optional(),
+  /** Explanation of why this skill transfers */
+  transferExplanation: z.string().max(200).optional(),
 });
 export type TransferSkillRow = z.infer<typeof TransferSkillRowSchema>;
+
+/**
+ * Evidence quality metrics for a capability or skill assessment.
+ * Reflects the psychometric validity of the evidence backing a claim.
+ */
+export const EvidenceQualityMetricsSchema = z.object({
+  constructCoverage: z.number().min(0).max(1),
+  interRaterReliability: z.number().min(0).max(1),
+  sourceReliability: z.number().min(0).max(1),
+  recencyDays: z.number().int().nonnegative(),
+  decayFactor: z.number().min(0).max(1),
+  compositeValidityScore: z.number().min(0).max(1),
+});
+export type EvidenceQualityMetrics = z.infer<typeof EvidenceQualityMetricsSchema>;
 
 /**
  * One matched candidate. `explanation` is required, not optional: a TPO must be
@@ -187,6 +210,8 @@ export const CandidateMatchDtoSchema = z.object({
    */
   matchScore: z.number().min(0).max(1),
   method: MatchMethodSchema.default('RULES'),
+  matchStrategy: z.enum(['EXPLOITATION', 'EXPLORATION']).optional(),
+  explorationRationale: z.string().max(300).optional(),
   explanation: z.object({
     thresholdsMet: z.array(
       z.object({ level: LevelNumberSchema, required: TierSchema, actual: TierSchema }),
@@ -225,6 +250,7 @@ export const CandidateMatchDtoSchema = z.object({
     requiredSkillsHeld: z.number().int().min(0).optional(),
     requiredSkillsMissing: z.number().int().min(0).optional(),
     transferSkills: z.array(TransferSkillRowSchema).optional(),
+    evidenceQualityMetrics: z.array(EvidenceQualityMetricsSchema).max(10).optional(),
     competencyEvidenceSummaries: z.array(PublicCompetencyEvidenceSummarySchema).max(12).optional(),
   }),
 });
@@ -638,6 +664,37 @@ export const ApplicationConfidenceDtoSchema = z.object({
   sendBlockedReason: z.string().nullable(),
 });
 export type ApplicationConfidenceDto = z.infer<typeof ApplicationConfidenceDtoSchema>;
+
+/**
+ * Longitudinal placement outcome record for model validation & Phase 1 recalibration.
+ * Captures conversion, retention (6/12mo tenure), employer performance ratings,
+ * and the exact model/parameter version that generated the match.
+ */
+export const PlacementOutcomeDtoSchema = z.object({
+  outcomeId: UuidSchema,
+  applicationId: UuidSchema,
+  openingId: UuidSchema,
+  studentId: UuidSchema,
+  institutionId: UuidSchema,
+  /** Parameter/model version that scored this match (e.g. 'pjf-v1-schmidt-hunter-prior') */
+  modelVersion: z.string().min(1).max(64),
+  matchStrategy: z.enum(['EXPLOITATION', 'EXPLORATION']),
+  matchScore: z.number().min(0).max(1),
+  stageReached: AtsStageSchema,
+  hiredDate: IsoDateSchema.nullable().optional(),
+  offeredSalary: z.number().nonnegative().nullable().optional(),
+  /** Standardized employer job performance rating on a 1-5 scale */
+  performanceRating: z.number().min(1).max(5).nullable().optional(),
+  /** 6-month retention verification */
+  retainedAt6mo: z.boolean().nullable().optional(),
+  /** 12-month retention verification */
+  retainedAt12mo: z.boolean().nullable().optional(),
+  verifiedTenureDays: z.number().int().nonnegative().nullable().optional(),
+  feedbackNotes: z.string().max(2000).nullable().optional(),
+  createdAt: IsoDateTimeSchema,
+  updatedAt: IsoDateTimeSchema,
+});
+export type PlacementOutcomeDto = z.infer<typeof PlacementOutcomeDtoSchema>;
 
 export const SkillClaimDtoSchema = z.object({
   claimId: UuidSchema,

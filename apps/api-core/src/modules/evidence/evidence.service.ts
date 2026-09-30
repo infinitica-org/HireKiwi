@@ -86,6 +86,7 @@ import type { CredentialVerificationJobPayload } from './verification/credential
 import { SkillClaimAutoDeclareService } from '../assessment/skill-claim-auto-declare.service.js';
 import { EvidenceSyncService } from './evidence-sync.service.js';
 import { EvidenceSkillInferenceService } from './evidence-skill-inference.service.js';
+import { SkillLevelExplanationService } from './skill-level-explanation.service.js';
 
 const CREDENTIAL_DOCUMENT_ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
@@ -117,6 +118,8 @@ export class EvidenceService {
     private readonly evidenceVersions: EvidenceVersionService,
     @Inject(AuditPublisherService)
     private readonly auditPublisher: AuditPublisherService,
+    @Inject(SkillLevelExplanationService)
+    private readonly skillExplanation: SkillLevelExplanationService,
   ) {}
 
   private async recomputeInferenceForSkills(
@@ -1245,6 +1248,34 @@ export class EvidenceService {
     };
   }
 
+  /**
+   * Raw structured basis behind the student-facing level copy at dispute time.
+   * The dispute row has no JSON column, so the snapshot rides on the audit
+   * event (audit_logs.metadata) where reviewers can retrieve it by disputeId.
+   * A failure here never blocks dispute submission.
+   */
+  private async skillExplanationSnapshot(studentId: string, skillCode: string) {
+    try {
+      const payload = await this.skillExplanation.getForStudent(studentId, skillCode);
+      return {
+        basis: payload.basis,
+        confidence: payload.confidence,
+        confidenceReason: payload.confidenceReason,
+        whyThisLevel: payload.whyThisLevel,
+        alignment: payload.verifiedVsAi.alignment,
+        ruleSetVersion: payload.ruleSetVersion,
+        computedAt: payload.computedAt,
+      };
+    } catch (err) {
+      this.logger.warn(
+        `Skill explanation snapshot unavailable for dispute (student=${studentId}, skill=${skillCode}): ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      return null;
+    }
+  }
+
   async submitEvidenceSkillDispute(
     studentId: string,
     body: EvidenceSkillDisputeRequest,
@@ -1321,6 +1352,8 @@ export class EvidenceService {
           skillCode: body.skillCode,
           reason: body.reason,
           submittedAt: now,
+          // Raw basis the student's dispute is arguing against (unfriendly server text).
+          explanation: await this.skillExplanationSnapshot(studentId, body.skillCode),
         },
       });
     }
