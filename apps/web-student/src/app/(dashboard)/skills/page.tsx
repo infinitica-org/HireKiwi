@@ -146,6 +146,7 @@ export default function SkillsProfilePage() {
     return SKILL_DEFINITIONS.filter((def) => claimedCodes.has(def.code)).map((def) => {
       const claim = claimByCode.get(def.code);
       const isVerified = claim?.status === 'VERIFIED';
+      const isDeclared = claim?.status === 'DECLARED';
 
       let levelScore = 1;
       if (isVerified) {
@@ -368,25 +369,36 @@ export default function SkillsProfilePage() {
                       <h3 className="font-heading text-base font-bold text-zinc-950 dark:text-white">
                         {item.definition.name}
                       </h3>
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
-                          isVerified
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                            : ZINC_TONE,
-                        )}
-                      >
-                        {item.level}
-                      </span>
-                      <span
-                        title="How sure we are about this level"
-                        className={cn(
-                          'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
-                          cue.tone,
-                        )}
-                      >
-                        {cue.label}
-                      </span>
+                      {isVerified ? (
+                        <>
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
+                              'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
+                            )}
+                          >
+                            {item.level}
+                          </span>
+                          <span
+                            title="How sure we are about this level"
+                            className={cn(
+                              'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
+                              cue.tone,
+                            )}
+                          >
+                            {cue.label}
+                          </span>
+                        </>
+                      ) : (
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
+                            'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+                          )}
+                        >
+                          Not Verified
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -428,7 +440,7 @@ export default function SkillsProfilePage() {
                       onClick={() => setImproveSkillTarget(item)}
                       className="inline-flex items-center gap-1 rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
                     >
-                      Level up this skill →
+                      {isVerified ? 'Level up this skill →' : 'Verify Skill →'}
                     </button>
 
                     <button
@@ -536,14 +548,28 @@ export default function SkillsProfilePage() {
               </button>
 
               <h2 className="font-heading text-lg font-bold text-zinc-950 dark:text-white">
-                Level up {improveSkillTarget.definition.name}
+                {improveSkillTarget.claim?.status === 'VERIFIED'
+                  ? `Level up ${improveSkillTarget.definition.name}`
+                  : `Verify ${improveSkillTarget.definition.name}`}
               </h2>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                You&apos;re at{' '}
-                <span className="font-bold text-zinc-900 dark:text-white">
-                  {improveSkillTarget.level}
-                </span>
-                . Do any of these to climb higher:
+                {improveSkillTarget.claim?.status === 'VERIFIED' ? (
+                  <>
+                    You&apos;re at{' '}
+                    <span className="font-bold text-zinc-900 dark:text-white">
+                      {improveSkillTarget.level}
+                    </span>
+                    . Do any of these to climb higher:
+                  </>
+                ) : (
+                  <>
+                    Take a skill verification to confirm your level for{' '}
+                    <span className="font-bold text-zinc-900 dark:text-white">
+                      {improveSkillTarget.definition.name}
+                    </span>
+                    :
+                  </>
+                )}
               </p>
 
               <div className="mt-4 space-y-2.5">
