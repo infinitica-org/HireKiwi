@@ -7,9 +7,11 @@ import {
   getVerificationByToken,
   listWorkExperiences,
   login,
+  restartVerification,
+  sendManagerEndorsement,
   sendVerification,
 } from '../helpers/api.js';
-import { waitForVerificationUrl } from '../helpers/mailpit.js';
+import { waitForManagerSurveyUrl, waitForVerificationUrl } from '../helpers/mailpit.js';
 import { signInViaAuthApp } from '../helpers/auth.js';
 
 test.describe.configure({ mode: 'serial' });
@@ -114,8 +116,12 @@ test.describe('Work experience verification (S6-VB-01)', () => {
       page,
       e2eEnv.studentEmail,
       e2eEnv.password,
-      `${e2eEnv.studentAppUrl}/profile`,
+      `${e2eEnv.studentAppUrl}/profile?section=experience`,
     );
+    const expTab = page.getByRole('button', { name: 'Work Experience' });
+    if (await expTab.isVisible()) {
+      await expTab.click();
+    }
     await expect(page.getByRole('heading', { name: /Work Experience/i })).toBeVisible();
     await expect(page.getByText(companyName, { exact: true }).first()).toBeVisible();
     await expect(page.getByText(/VERIFIED|Verified/i).first()).toBeVisible();
@@ -165,5 +171,156 @@ test.describe('Work experience verification — failure modes', () => {
     await page.getByRole('button', { name: /Partially confirm/i }).click();
     await page.getByRole('button', { name: /Submit verification response/i }).click();
     await expect(page.getByText(/Comments of at least 8 characters are required/i)).toBeVisible();
+  });
+
+  test('NEED_CLARIFICATION decision requires comments', async ({ page }) => {
+    await page.goto(`${e2eEnv.verifyAppUrl}/work-experience/preview-token-not-used`);
+    await page.route('**/api/v1/users/work-experiences/verify-token/**', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            experienceId: '00000000-0000-4000-8000-000000000002',
+            candidateName: 'Jane Candidate',
+            companyName: 'Acme Corp',
+            role: 'Engineer',
+            employmentType: 'FULL_TIME',
+            startDate: '2022-01-01',
+            endDate: null,
+            isCurrent: true,
+            responsibilities: 'Built APIs',
+            verifierName: 'Manager',
+            verifierEmail: 'manager@acme.com',
+            verifierDesignation: 'Lead',
+            status: 'PENDING_EMPLOYER',
+            expiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+            isExpired: false,
+            isAlreadyResponded: false,
+          }),
+        });
+        return;
+      }
+      await route.continue();
+    });
+
+    await expect(
+      page.getByRole('heading', { name: /Work Experience Verification Request/i }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: /Need clarification/i }).click();
+    await page.getByRole('button', { name: /Submit verification response/i }).click();
+    await expect(page.getByText(/Comments of at least 8 characters are required/i)).toBeVisible();
+  });
+});
+
+test.describe('Work experience verification — rejection and restart flow', () => {
+  let studentToken = '';
+  let rejectExpId = '';
+  let companyName = '';
+  let verifierEmail = '';
+  let verifyUrl = '';
+
+  test.afterAll(async ({ request }) => {
+    if (studentToken && rejectExpId) {
+      await deleteWorkExperience(request, studentToken, rejectExpId).catch(() => undefined);
+    }
+  });
+
+  test('employer rejects claim and candidate restarts verification', async ({ page, request }) => {
+    const session = await login(request, e2eEnv.studentEmail, e2eEnv.password);
+    studentToken = session.accessToken;
+    companyName = `Reject Acme E2E ${Date.now()}`;
+    verifierEmail = `e2e-reject-manager-${Date.now()}@acme.com`;
+
+    const created = await createWorkExperience(request, studentToken, {
+      companyName,
+      role: 'Backend Engineer',
+      companyWebsite: 'https://acme.com',
+      companyLinkedinUrl: 'https://linkedin.com/company/acme',
+      verifierEmail,
+    });
+    rejectExpId = created.id;
+
+    await sendVerification(request, studentToken, rejectExpId);
+    verifyUrl = await waitForVerificationUrl(request, verifierEmail, {
+      mustInclude: companyName,
+    });
+
+    await page.goto(verifyUrl);
+    await expect(
+      page.getByRole('heading', { name: /Work Experience Verification Request/i }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: /Cannot confirm/i }).click();
+    await page.locator('textarea').fill('Candidate did not work at our organization.');
+    await page.getByRole('button', { name: /Submit verification response/i }).click();
+    await expect(
+      page.getByText(/Work experience rejected|Response already recorded/i),
+    ).toBeVisible();
+
+    const token = verifyUrl.split('/work-experience/')[1] ?? '';
+    const statusAfterReject = await getVerificationByToken(request, token);
+    expect(statusAfterReject.status).toBe('REJECTED');
+
+    // Candidate restarts verification
+    const restartResult = await restartVerification(request, studentToken, rejectExpId);
+    expect(restartResult.status).toBe('PENDING_EMPLOYER');
+
+    // A new verification email is dispatched
+    const newVerifyUrl = await waitForVerificationUrl(request, verifierEmail, {
+      mustInclude: companyName,
+      notUrl: verifyUrl,
+    });
+    expect(newVerifyUrl).toContain('/work-experience/');
+    expect(newVerifyUrl).not.toBe(verifyUrl);
+  });
+});
+
+test.describe('Work experience manager endorsement (WE-T03)', () => {
+  let studentToken = '';
+  let surveyExpId = '';
+  let companyName = '';
+  let managerEmail = '';
+
+  test.afterAll(async ({ request }) => {
+    if (studentToken && surveyExpId) {
+      await deleteWorkExperience(request, studentToken, surveyExpId).catch(() => undefined);
+    }
+  });
+
+  test('manager endorses work experience via magic link survey', async ({ page, request }) => {
+    const session = await login(request, e2eEnv.studentEmail, e2eEnv.password);
+    studentToken = session.accessToken;
+    companyName = `Survey Acme E2E ${Date.now()}`;
+    managerEmail = `e2e-manager-endorse-${Date.now()}@acme.com`;
+
+    const created = await createWorkExperience(request, studentToken, {
+      companyName,
+      role: 'Full Stack Engineer',
+      companyWebsite: 'https://acme.com',
+      companyLinkedinUrl: 'https://linkedin.com/company/acme',
+      verifierEmail: managerEmail,
+    });
+    surveyExpId = created.id;
+
+    // Send manager endorsement
+    const endorseResult = await sendManagerEndorsement(request, studentToken, surveyExpId, {
+      managerEmail,
+      managerName: 'Alex Manager',
+      managerDesignation: 'Engineering Lead',
+      skillsToRate: ['PYTHON_APPLICATION_BACKEND_DEVELOPMENT'],
+    });
+    expect(endorseResult.success).toBe(true);
+    expect(endorseResult.endorsementId).toBeTruthy();
+
+    const surveyUrl = await waitForManagerSurveyUrl(request, managerEmail, {
+      mustInclude: companyName,
+    });
+    expect(surveyUrl).toContain('/work-experience/manager-survey/');
+
+    await page.goto(surveyUrl);
+    await expect(page.getByRole('heading', { name: /Manager Endorsement Request/i })).toBeVisible();
+    await page.getByRole('button', { name: /Confirm & Endorse Claim/i }).click();
+
+    await expect(page.getByText(/endorsement has been recorded|already recorded/i)).toBeVisible();
   });
 });

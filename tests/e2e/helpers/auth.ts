@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { e2eEnv } from './env.js';
 
 export async function signInViaAuthApp(
@@ -11,8 +11,11 @@ export async function signInViaAuthApp(
   loginUrl.searchParams.set('returnTo', returnTo);
 
   await page.goto(loginUrl.toString());
+  await expect(page.locator('#email')).toBeVisible();
   await page.locator('#email').fill(email);
+  await expect(page.locator('#email')).toHaveValue(email);
   await page.locator('#password').fill(password);
-  await page.getByRole('button', { name: /^Sign in$/i }).click();
+  await expect(page.locator('#password')).toHaveValue(password);
+  await page.getByRole('button', { name: /^(Sign in|Continue)$/i }).click();
   await page.waitForURL((url) => url.origin === new URL(returnTo).origin, { timeout: 30_000 });
 }

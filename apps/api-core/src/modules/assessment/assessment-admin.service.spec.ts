@@ -61,14 +61,24 @@ function setup() {
       update: vi.fn(),
     },
     itemOption: { deleteMany: vi.fn(), createMany: vi.fn() },
-    cutScore: { findMany: vi.fn().mockResolvedValue([]), findUnique: vi.fn(), upsert: vi.fn() },
+    cutScore: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 3 }),
+    },
     $transaction: vi.fn((ops: unknown) =>
       typeof ops === 'function' ? ops(prisma) : Promise.all(ops),
     ),
   };
   const auditPublisher = { record: vi.fn().mockResolvedValue(undefined) };
-  const service = new AssessmentAdminService(prisma as never, auditPublisher as never);
-  return { service, prisma, auditPublisher };
+  const outbox = { enqueueEnvelope: vi.fn().mockResolvedValue(undefined) };
+  const service = new AssessmentAdminService(
+    prisma as never,
+    auditPublisher as never,
+    outbox as never,
+  );
+  return { service, prisma, auditPublisher, outbox };
 }
 
 describe('AssessmentAdminService levels (T10)', () => {
@@ -265,5 +275,138 @@ describe('AssessmentAdminService cut scores (T11)', () => {
     await expect(
       service.upsertCutScore(actorId, levelId, { tier: 'GOLD', mean: 75, sd: 4 }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects publishing when any of GOLD, SILVER, BRONZE tier is missing', async () => {
+    const { service, prisma } = setup();
+    prisma.cutScore.findMany.mockResolvedValue([
+      {
+        id: randomUUID(),
+        levelId,
+        tier: 'GOLD',
+        mean: 80,
+        sd: 5,
+        published: false,
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        levelId,
+        tier: 'SILVER',
+        mean: 65,
+        sd: 5,
+        published: false,
+        createdAt: new Date(),
+      },
+    ]);
+    await expect(service.publishCutScores(actorId, levelId)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('rejects publishing when tier means are not strictly monotonic (GOLD > SILVER > BRONZE)', async () => {
+    const { service, prisma } = setup();
+    prisma.cutScore.findMany.mockResolvedValue([
+      {
+        id: randomUUID(),
+        levelId,
+        tier: 'GOLD',
+        mean: 60,
+        sd: 5,
+        published: false,
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        levelId,
+        tier: 'SILVER',
+        mean: 70,
+        sd: 5,
+        published: false,
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        levelId,
+        tier: 'BRONZE',
+        mean: 50,
+        sd: 5,
+        published: false,
+        createdAt: new Date(),
+      },
+    ]);
+    await expect(service.publishCutScores(actorId, levelId)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('publishes valid cut scores, writes audit log, and emits track.updated event', async () => {
+    const { service, prisma, auditPublisher, outbox } = setup();
+    const rows = [
+      {
+        id: randomUUID(),
+        levelId,
+        tier: 'GOLD',
+        mean: 85,
+        sd: 5,
+        published: false,
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        levelId,
+        tier: 'SILVER',
+        mean: 70,
+        sd: 5,
+        published: false,
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        levelId,
+        tier: 'BRONZE',
+        mean: 55,
+        sd: 5,
+        published: false,
+        createdAt: new Date(),
+      },
+    ];
+    prisma.cutScore.findMany
+      .mockResolvedValueOnce(rows)
+      .mockResolvedValueOnce(rows.map((r) => ({ ...r, published: true })));
+
+    const result = await service.publishCutScores(actorId, levelId);
+    expect(result.cutScores).toHaveLength(3);
+    expect(result.cutScores.every((c) => c.published)).toBe(true);
+
+    expect(prisma.cutScore.updateMany).toHaveBeenCalledWith({
+      where: { levelId },
+      data: { published: true },
+    });
+
+    expect(auditPublisher.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'admin.cut_score.published',
+        resourceType: 'CutScore',
+        resourceId: levelId,
+      }),
+    );
+
+    expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topic: 'smart.track.updated',
+        partitionKey: 'IT_SE',
+        data: expect.objectContaining({
+          trackCode: 'IT_SE',
+          changeKind: 'CUT_SCORES_PUBLISHED',
+          affectedLevels: [1],
+          invalidateKeys: expect.arrayContaining([
+            `cut_scores:track:${trackId}`,
+            'cut_scores:track:IT_SE',
+            `cut_scores:level:${levelId}`,
+          ]),
+        }),
+      }),
+    );
   });
 });

@@ -38,7 +38,7 @@ export class RateLimitService {
     route: string,
     attemptId: string | null = null,
   ): Promise<RateLimitDecision> {
-    const policy = getRateLimitPolicy(policyKey);
+    const policy = await this.getEffectivePolicy(policyKey, identity);
     const windowMs = policy.windowSeconds * 1000;
     const now = Date.now();
     const key = policy.redisKey.replace('{id}', identity);
@@ -113,6 +113,44 @@ export class RateLimitService {
         policy,
       };
     }
+  }
+
+  async getEffectivePolicy(policyKey: string, identity: string): Promise<RateLimitPolicy> {
+    const policy = getRateLimitPolicy(policyKey);
+    if (!isUuid(identity)) {
+      return policy;
+    }
+    try {
+      const overrideKey = `rl:override:${identity}:${policyKey}`;
+      const raw = await this.redis.get(overrideKey);
+      if (!raw) return policy;
+      const parsed = JSON.parse(raw);
+      if (typeof parsed?.limit === 'number' && parsed.limit > 0) {
+        return {
+          ...policy,
+          limit: parsed.limit,
+          burst:
+            typeof parsed.burst === 'number' && parsed.burst >= 0 ? parsed.burst : policy.burst,
+          windowSeconds:
+            typeof parsed.windowSeconds === 'number' && parsed.windowSeconds > 0
+              ? parsed.windowSeconds
+              : policy.windowSeconds,
+        };
+      }
+    } catch (error) {
+      logEvent(
+        this.logger,
+        'warn',
+        LOG_EVENTS.REDIS_DEGRADED,
+        {
+          policyKey,
+          identity,
+          err: error instanceof Error ? error.message : 'unknown',
+        },
+        'Failed to parse or fetch dynamic rate limit override; falling back to static policy',
+      );
+    }
+    return policy;
   }
 
   private async publishExceeded(
