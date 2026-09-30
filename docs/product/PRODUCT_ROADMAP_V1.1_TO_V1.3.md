@@ -1,5 +1,9 @@
 # SMART — Product roadmap
 
+> **Live Single Source of Truth (SSOT):**  
+> The active interactive roadmap is maintained in the **`@smart/web-docs`** portal:  
+> [27. Releases & Product Roadmap (v1.0 to v1.3)](file:///d:/Work's/Infinitica/smart/apps/web-docs/content/docs/27-releases-roadmap.mdx)
+
 **v1.1.0 (15 Sep 2026) → v1.2 → v1.3**
 
 | Field    | Value                                                                                                            |

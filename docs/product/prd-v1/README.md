@@ -1,6 +1,13 @@
 # SMART PRD v1.0 — frozen product pack
 
-**Status:** Frozen for V1 MMP (28 Aug 2026). Improvements go through an ADR + contract PR, not by editing this pack in place.
+> **Live Single Source of Truth (SSOT):**  
+> The active, searchable, and verified PRD and Roadmap specifications are hosted in the **`@smart/web-docs`** portal (port 3006).
+>
+> - Interactive PRD: [25. Product Requirements & Specifications](file:///d:/Work's/Infinitica/smart/apps/web-docs/content/docs/25-product-requirements.mdx)
+> - User Journey Flows: [03. User & Customer Journeys](file:///d:/Work's/Infinitica/smart/apps/web-docs/content/docs/03-user-journeys.mdx)
+> - Evolution Roadmap: [27. Releases & Product Roadmap](file:///d:/Work's/Infinitica/smart/apps/web-docs/content/docs/27-releases-roadmap.mdx)
+
+**Status:** Frozen for V1 MMP (28 Aug 2026). Active specifications evolve in `@smart/web-docs`.
 
 **Owner:** Product Owner · **Architect steward:** Tino (`docs/delivery/PRD_V1_ARCHITECT_REVIEW.md`)
 

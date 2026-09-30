@@ -1,37 +1,121 @@
 ---
-title: 27. Releases & Product Roadmap
-description: Strategic roadmap milestones, release cadence, feature flags, and v2.1.0 production release notes.
+title: 27. Releases & Product Roadmap (v1.0 to v1.3)
+description: Strategic evolution from v1.0 MMP Concierge Pilot to v1.3 Enterprise Scale, comprehensive backlog reengineering cleanup, and production release notes.
 ---
 
-## 27.1 Strategic Horizon Roadmap
+## 27.1 Evolution Roadmap: v1.0 to v1.3
+
+SmartZen's product roadmap progresses through four deliberate phases, prioritizing **verification defensibility** and **trust operations** before scaling outward into an automated employer marketplace.
 
 ```
-[ v2.1.0: ENTERPRISE CORE (CURRENT) ]
-• Blue-Green Zero Downtime Deployments on High-End VPS
-• Fumadocs Enterprise Documentation Portal (@smart/web-docs)
-• DPDP Act 2023 Compliance & Automated 30-Day Purge
-• BARS Rubric Evaluator & HMAC-SHA256 Cryptographic Verification
-
-[ v2.2.0: MULTI-CAMPUS ENTERPRISE PILOT (Q4 2026) ]
-• Institutional ERP Bi-directional Sync (SAP, Canvas)
-• Dynamic Code Defense with Real-Time WebAssembly Sandboxing
-• Recruiter ATS Webhooks (Greenhouse, Lever)
-
-[ v3.0.0: AWS LIFT-AND-SHIFT & GLOBAL TALENT MESH (Q1 2027) ]
-• Zero-downtime migration to AWS RDS, ElastiCache, MSK, and ECS
-• Cross-border enterprise hiring compliance & multi-currency billing
-• Federated Zero-Knowledge Proofs for academic credentialing
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       STRATEGIC ROADMAP (v1.0 ──► v1.3)                     │
+├────────────────────┬────────────────────┬───────────────────────────────────┤
+│ VERSION & TIMELINE │ THEME              │ CORE SHIPPED CAPABILITIES         │
+├────────────────────┼────────────────────┼───────────────────────────────────┤
+│ v1.0 (10 Sep 2026) │ CONCIERGE PILOT    │ • Student Onboarding & Claiming   │
+│ Minimum Marketable │ "Prove the profile │ • L1 MCQ & Project Submission     │
+│ Product (MMP)      │ is real"           │ • TPO-mediated Shortlists         │
+│                    │                    │ • Public web-verify certificate   │
+├────────────────────┼────────────────────┼───────────────────────────────────┤
+│ v1.1 (15 Sep 2026) │ DEFENSIBLE PROFILE │ • Work-Experience Voucher Engine  │
+│ Trust Operations & │ "Stop asking HR    │ • Rejection of Offer Letters      │
+│ Attestation Engine │ to take our word"  │ • Corporate Domain Email Checks   │
+│                    │                    │ • 48h Expiry & Restart Lifecycle  │
+├────────────────────┼────────────────────┼───────────────────────────────────┤
+│ v1.2 (Oct 2026)    │ RECRUITER SELF-SERVE│ • Recruiter Self-Serve Requisitions│
+│ Frictionless Try & │ "Shortlist in min, │ • 3-Minute Explainable Ranking    │
+│ Explainable Match  │ not TPO meetings"  │ • Candidate Direct Opt-In / Out   │
+│                    │                    │ • BARS Rubric Radar Comparisons   │
+├────────────────────┼────────────────────┼───────────────────────────────────┤
+│ v1.3 (Nov 2026)    │ OUTCOME TELEMETRY  │ • Gold vs Baseline Conversion     │
+│ Enterprise Scale & │ "Prove Gold gets   │ • Post-Interview Calibration Loop │
+│ Conversion Proof   │ hired faster"      │ • Multi-Campus Placement Mesh     │
+│                    │                    │ • Automated NAAC/NIRF Compliance  │
+└────────────────────┴────────────────────┴───────────────────────────────────┘
 ```
 
 ---
 
-## 27.2 Release Notes Summary (v2.1.0-prod)
+## 27.2 Version Breakdown: Deep Specification
 
-* **Release Tag:** `v2.1.0`
-* **Commit:** Production Blue-Green deployment candidate
-* **Key Enhancements:**
-  * Single High-Performance VPS topology with Caddy upstream hot reloads.
-  * Automated Blue-Green deployment orchestrator (`scripts/blue-green-deploy.sh`).
-  * Removal of legacy host references (`kvm2`/`kvm4`).
-  * Comprehensive Fumadocs Knowledge Base with session password gate.
-  * Strict DPDP Act 2023 telemetry downsampling and automated TTL data purge.
+### 1. v1.0.0 — Minimum Marketable Product (MMP Concierge Pilot)
+
+- **Goal:** Validate that institutional students complete verified profiles and that universities can mediate candidate shortlists without data-dump aggregators.
+- **Delivered Capabilities:**
+  - Institutional student roster claiming via university domain emails.
+  - Baseline student capability profile: declared skills, GitHub repository linking, and L1 cognitive/coding assessment.
+  - Concierge TPO-mediated shortlisting: corporate JDs routed through university TPOs who generate curated candidate cohorts.
+  - Public verification surface (`web-verify`): unauthenticated, tamper-evident cryptographic certificate view for skeptical recruiters.
+
+### 2. v1.1.0 — Defensible Profile & Work-Experience Voucher Engine
+
+- **Goal:** Eliminate candidate resume inflation by verifying real-world work claims against direct employer attestations.
+- **Delivered Capabilities:**
+  - **Work-Experience Voucher Engine:** Moves work experience from unverified claims to cryptographically signed verification vouchers.
+  - **Strict Offer Letter Classification:** PDF uploads of offer letters, appointment orders, or joining emails are automatically flagged as `INVALID_DOCUMENT_TYPE`. Only relieving letters and completion certificates are accepted for review.
+  - **Official Domain Verifier Routing:** The system validates verifier email domains against corporate websites, rejecting free webmail providers (`@gmail.com`, `@yahoo.com`).
+  - **State Machine Cadence:** Automated reminder sent after 6 hours; moves to `VERIFICATION_EXPIRED` after 48 hours without spamming, issuing a clean restart with updated contact details.
+  - **TPO / Ops Real-Time Voucher Radar:** Operational dashboard displaying verification stage, employer domain, and remaining SLA timers across the candidate cohort.
+
+### 3. v1.2.0 — Recruiter Self-Serve & Explainable Match Engine
+
+- **Goal:** Enable recruiters to configure requisitions and receive instant, explainable shortlists in 3 minutes without requiring manual TPO meetings.
+- **Delivered Capabilities:**
+  - **Self-Serve Requisition Builder:** Employers define competency requirements with explicit BARS minimum proficiency thresholds.
+  - **Explainable Matching Telemetry:** Candidate match scores are broken down into transparent dimensions (Vector Semantic Similarity + Rubric Score Coverage + Verified Evidence Ratio).
+  - **Candidate Consent & Opt-In:** Candidates receive notification of match inclusion and can accept or decline participation before their dossier is shared with recruiters.
+
+### 4. v1.3.0 — Outcome Telemetry & Enterprise Multi-Campus Scale
+
+- **Goal:** Statistically prove that Gold-tier candidates achieve higher conversion and faster time-to-hire compared to traditional campus baselines.
+- **Delivered Capabilities:**
+  - **Conversion Analytics:** Tracks hiring conversion rates across Gold, Silver, and Bronze tiers against university baseline metrics.
+  - **Closed-Loop Calibration:** Post-interview feedback from corporate interviewers recalibrates platform scoring rubrics.
+  - **Enterprise Multi-Campus Federation:** Allows enterprise hiring teams to run unified multi-institution hiring drives across dozens of partnered colleges simultaneously.
+
+---
+
+## 27.3 Reengineering Backlog Cleanup: Deprecations & Architectural Upgrades
+
+During the transition from initial experimental prototypes to the enterprise-grade v1.0–v1.3 architecture, significant legacy technical debt was purged and re-engineered:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    BACKLOG CLEANUP & REENGINEERING AUDIT                    │
+├─────────────────────────┬───────────────────────┬───────────────────────────┤
+│ LEGACY BACKLOG PATTERN  │ RESOLUTION / STATUS   │ ARCHITECTURAL RATIONALE   │
+├─────────────────────────┼───────────────────────┼───────────────────────────┤
+│ Bulk Resume Scraping /  │ PERMANENTLY REMOVED   │ Violates DPDP Act 2023 and│
+│ CSV Candidate Export    │ (Anti-Pattern)        │ core anti-aggregator bet. │
+├─────────────────────────┼───────────────────────┼───────────────────────────┤
+│ Offer Letter Upload as  │ DEPRECATED & REJECTED │ Offer letters do not prove│
+│ Work Experience Proof   │ (INVALID_DOC_TYPE)    │ completed work experience.│
+├─────────────────────────┼───────────────────────┼───────────────────────────┤
+│ Synchronous AI          │ RE-ENGINEERED TO      │ Heavy LLM calls during    │
+│ Assessment Endpoints    │ BullMQ ASYNC WORKERS  │ peak exams take down API. │
+├─────────────────────────┼───────────────────────┼───────────────────────────┤
+│ Single Super Admin      │ REPLACED WITH GRANULAR│ Root admin account is a   │
+│ Monolithic Account      │ MULTI-TENANT RBAC     │ compliance & audit risk.  │
+├─────────────────────────┼───────────────────────┼───────────────────────────┤
+│ Multi-Host VPS Topology │ CONSOLIDATED TO SINGLE│ Eliminates sync lag, split│
+│ (kvm2 / kvm4 clusters)  │ VPS BLUE-GREEN        │ brain, and high idle cost.│
+└─────────────────────────┴───────────────────────┴───────────────────────────┘
+```
+
+1. **Purged Bulk Data Export Endpoints:** All legacy backlog stories requesting CSV or bulk JSON candidate exports were permanently rejected and removed from sprint backlogs. SmartZen provides curated candidate cards and verified dossiers only.
+2. **Re-engineered Work Experience Verification:** Replaced passive PDF attachment storage with the active 4-state corporate voucher state machine with official domain checks.
+3. **Async Queue Architecture for AI:** Converted synchronous `/evaluate` REST endpoints into asynchronous BullMQ jobs backed by Redis, protecting API responsiveness under peak test concurrency.
+4. **Clean Infrastructure Consolidation:** All legacy scripts referencing `kvm2` and `kvm4` were deleted. Deployments are unified on a Single High-End VPS utilizing automated Caddy Blue-Green zero-downtime container swaps (`scripts/blue-green-deploy.sh`).
+
+---
+
+## 27.4 Current Release Notes (v2.1.0-prod)
+
+- **Release Tag:** `v2.1.0-prod`
+- **Release Date:** 30 September 2026
+- **Key Monorepo Enhancements:**
+  - **Unified Documentation Portal:** `@smart/web-docs` compiled with Fumadocs, full-text search, and session password gate (`DOCS_PASSWORD`).
+  - **Strict DPDP Compliance Pipeline:** Webcam proctoring downscaled to 320x240 grayscale JPEG snapshots with automated 30-day PostgreSQL cron purge.
+  - **Zero-Downtime Blue-Green Orchestration:** Automated Caddy upstream switching with zero active assessment drop.
+  - **Verified Contracts:** Monorepo `@smart/contracts` package verified with 552 passing unit tests across 40 test suites.
