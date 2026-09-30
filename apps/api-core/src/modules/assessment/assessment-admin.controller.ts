@@ -83,4 +83,11 @@ export class AssessmentAdminController {
   ) {
     return this.service.upsertCutScore(user.sub, levelId, body);
   }
+
+  @Post('levels/:levelId/cut-scores/publish')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Publish cut scores for a level and emit track updated event (T11).' })
+  publishCutScores(@CurrentUser() user: RequestUser, @Param('levelId') levelId: string) {
+    return this.service.publishCutScores(user.sub, levelId);
+  }
 }

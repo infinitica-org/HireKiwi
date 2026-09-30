@@ -60,6 +60,7 @@ export * from './dto/candidate-certificate.dto.js';
 export * from './dto/cert-verify.dto.js';
 export * from './dto/cognitive-profile.dto.js';
 export * from './dto/calibration.dto.js';
+export * from './dto/rate-limit.dto.js';
 export * from './dto/certificate.dto.js';
 export * from './dto/placement.dto.js';
 export * from './dto/analytics.dto.js';
