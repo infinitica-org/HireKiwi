@@ -38,36 +38,44 @@ In compliance with enterprise architecture standards, every data mutation inside
 ## Detailed Stage Specifications
 
 ### Stage 1: Ingestion
+
 Data enters via four dedicated presentation channels:
+
 - Student Portal (`web-student`): Resume documents, code solutions, audio responses.
 - Institutional TPO Portal (`web-tpo`): Batch candidate rosters (CSV/XLSX), job drive postings.
 - Public Verification (`web-verify`): Employer credential queries via QR deep-links.
 - B2B API Endpoints: Secure partner integrations authenticated via `X-SMART-API-KEY`.
 
 ### Stage 2: Validation
+
 - **Stateless Guard:** Fastify request interceptors enforce JWT signature validity, user identity, and tenant tenancy.
 - **Contract Enforcement:** All request payloads are validated against immutable Zod schemas defined in `@smart/contracts`. Invalid shapes are rejected at the edge with HTTP 422 before reaching service layers.
 - **MIME & Byte Inspection:** File uploads (e.g. Resumes) must pass strict magic-number byte checks (`%PDF-`) with a hard 5MB size limit.
 
 ### Stage 3: Processing
+
 - Asynchronous tasks (code compilation, PDF compilation, AI evaluation) are routed through BullMQ queues with backpressure controls.
 - Code execution is quarantined in transient, un-networked Docker containers with 256MB RAM and 5-second execution ceilings.
 
 ### Stage 4: Transformation
+
 - Mathematical scoring calculations are executed via `Effect.ts` in `@smart/scoring-engine` to guarantee deterministic, side-effect-free evaluation.
 - Spoken responses and text submissions are transformed into 1536-dimensional embeddings for vector storage.
 - Certificates are compiled into canonical JSON payloads and signed with HMAC-SHA256.
 
 ### Stage 5: Persistence
+
 - **Relational Data:** PostgreSQL 16 storing normalized schemas with foreign key integrity.
 - **Vector Index:** `pgvector` HNSW indexes optimizing cosine distance matching.
 - **Ephemeral State:** Redis 7 with `volatile-lru` eviction policy for session state and rate-limiting sliding windows.
 - **Object Storage:** Pre-signed S3/R2 buckets for immutable candidate artifacts.
 
 ### Stage 6: Retrieval
+
 - Cache-aside lookups for hot item banks and student profile headers (target < 50ms p95).
 - Masked projection of candidate identity attributes to prevent accidental PII leakage in employer-facing roster views.
 
 ### Stage 7: Egress
+
 - Responses delivered as strictly typed DTOs over TLS 1.3.
 - Outbound event webhooks dispatched to university ERPs carrying HMAC-SHA256 signature headers (`X-SMART-SIGNATURE`).

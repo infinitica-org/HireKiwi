@@ -15,13 +15,13 @@ CLAIM ──► SOURCE PROOF ──► SYSTEM VALIDATION ──► LEVEL ASSIGNM
 
 ## 5.2 Verification Types
 
-| Verification Type | Target Artifact | Mechanism | Turnaround SLA |
-| :--- | :--- | :--- | :--- |
-| **Automated Static Scan** | GitHub repositories, code files | AST analysis, Git authorship tree, commit frequency entropy | Instant (< 30 seconds) |
-| **Active Proctored Defense** | Project code, technical architecture | Python MediaPipe CV telemetry + LLM dynamic technical probe | 15 minutes |
-| **Institutional Attestation** | Academic enrollment, degree, GPA | SAML 2.0 / registrar webhook assertion | Instant (SSO federated) |
-| **Corporate Employment Check** | Work experience letters, internships | Work domain email magic link / HR verification portal | < 48 hours |
-| **Human Auditor Review** | Edge-case appeals, flagged integrity sessions | Senior evaluator manual transcript & video review | < 72 hours |
+| Verification Type              | Target Artifact                               | Mechanism                                                   | Turnaround SLA          |
+| :----------------------------- | :-------------------------------------------- | :---------------------------------------------------------- | :---------------------- |
+| **Automated Static Scan**      | GitHub repositories, code files               | AST analysis, Git authorship tree, commit frequency entropy | Instant (< 30 seconds)  |
+| **Active Proctored Defense**   | Project code, technical architecture          | Python MediaPipe CV telemetry + LLM dynamic technical probe | 15 minutes              |
+| **Institutional Attestation**  | Academic enrollment, degree, GPA              | SAML 2.0 / registrar webhook assertion                      | Instant (SSO federated) |
+| **Corporate Employment Check** | Work experience letters, internships          | Work domain email magic link / HR verification portal       | < 48 hours              |
+| **Human Auditor Review**       | Edge-case appeals, flagged integrity sessions | Senior evaluator manual transcript & video review           | < 72 hours              |
 
 ---
 
@@ -64,9 +64,9 @@ Passes Threshold               Integrity Anomaly Flagged
 
 ## 5.5 Rejections, Resubmissions, and Appeals
 
-* **Rejection Notification:** If an artifact is rejected, the candidate receives an explainability report detailing the failure trigger (e.g., *"Commit history analysis indicates repository was cloned from an existing public repository without attribution"*).
-* **Cooldown Period:** A candidate may not resubmit the exact same repository within 14 calendar days.
-* **Formal Appeals Process:** Candidates may request human arbitration within 7 days of rejection. A senior evaluator conducts a live 10-minute code walkthrough. If approved, the rejection is rescinded and the audit log records the manual override.
+- **Rejection Notification:** If an artifact is rejected, the candidate receives an explainability report detailing the failure trigger (e.g., _"Commit history analysis indicates repository was cloned from an existing public repository without attribution"_).
+- **Cooldown Period:** A candidate may not resubmit the exact same repository within 14 calendar days.
+- **Formal Appeals Process:** Candidates may request human arbitration within 7 days of rejection. A senior evaluator conducts a live 10-minute code walkthrough. If approved, the rejection is rescinded and the audit log records the manual override.
 
 ---
 

@@ -33,14 +33,14 @@ SmartZen enforces strict alignment with the **Digital Personal Data Protection A
 
 ## 20.3 Cryptographic Standards & Key Management
 
-* **Data in Transit:** Enforced TLS 1.3 using modern AEAD ciphers (`TLS_AES_256_GCM_SHA384`, `TLS_CHACHA20_POLY1305_SHA256`).
-* **Data at Rest:** Transparent Data Encryption (TDE) for PostgreSQL database tables; AES-256 server-side encryption for MinIO S3 objects.
-* **Credentials:** Passwords hashed using Argon2id with 64MB memory cost, 3 iterations, and 4 threads. JWTs signed using 256-bit HMAC secret tokens with mandatory 24-hour secret rotation capabilities.
+- **Data in Transit:** Enforced TLS 1.3 using modern AEAD ciphers (`TLS_AES_256_GCM_SHA384`, `TLS_CHACHA20_POLY1305_SHA256`).
+- **Data at Rest:** Transparent Data Encryption (TDE) for PostgreSQL database tables; AES-256 server-side encryption for MinIO S3 objects.
+- **Credentials:** Passwords hashed using Argon2id with 64MB memory cost, 3 iterations, and 4 threads. JWTs signed using 256-bit HMAC secret tokens with mandatory 24-hour secret rotation capabilities.
 
 ---
 
 ## 20.4 Security Incident Response
 
-* Automated anomaly alerts route to `security@becomesmart.online`.
-* Suspected credential compromise triggers automatic token invalidation across all Redis cluster nodes in < 100ms.
-* Comprehensive forensic audit logging for all root database queries and administrative overrides.
+- Automated anomaly alerts route to `security@becomesmart.online`.
+- Suspected credential compromise triggers automatic token invalidation across all Redis cluster nodes in < 100ms.
+- Comprehensive forensic audit logging for all root database queries and administrative overrides.

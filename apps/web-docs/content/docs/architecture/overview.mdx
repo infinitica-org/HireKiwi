@@ -5,7 +5,7 @@ description: Modular monolith topology, High-End VPS deployment, bounded context
 
 # System Architecture & Topology
 
-SMART's backend is architected as a high-performance **modular monolith**, implemented in NestJS 11 and Fastify (`apps/api-core`). 
+SMART's backend is architected as a high-performance **modular monolith**, implemented in NestJS 11 and Fastify (`apps/api-core`).
 
 All modules run inside a single unified process, share an in-memory execution context, and are deployed via Docker Compose onto hardened, dedicated High-End Linux VPS servers behind Caddy and Cloudflare.
 
@@ -46,12 +46,13 @@ All modules run inside a single unified process, share an in-memory execution co
 
 SMART is deployed on a dedicated, high-performance Linux VPS instance (Ubuntu 24.04: 32 vCPU, 128 GB RAM, NVMe storage), running both Production and Development in strictly isolated Docker Compose networks:
 
-| Environment | Deployment Slice | Public Domain | Zero-Downtime Traffic Routing |
-| :--- | :--- | :--- | :--- |
-| **Production** | `smart-prod-blue` & `smart-prod-green` | `becomesmart.online` | Caddy dynamic upstream switches between Blue and Green upon passing `/health` checks. |
-| **Development** | `smart-dev` | `dev.becomesmart.online` | Dedicated compose project with isolated database volumes and dev app ports. |
+| Environment     | Deployment Slice                       | Public Domain            | Zero-Downtime Traffic Routing                                                         |
+| :-------------- | :------------------------------------- | :----------------------- | :------------------------------------------------------------------------------------ |
+| **Production**  | `smart-prod-blue` & `smart-prod-green` | `becomesmart.online`     | Caddy dynamic upstream switches between Blue and Green upon passing `/health` checks. |
+| **Development** | `smart-dev`                            | `dev.becomesmart.online` | Dedicated compose project with isolated database volumes and dev app ports.           |
 
 ### Blue-Green Zero-Downtime Switchover Protocol
+
 1. New production builds deploy to the currently inactive color (e.g. Green).
 2. Database migrations are applied forward-only via `prisma migrate deploy`.
 3. Automated health probes verify `http://127.0.0.1:3010/health` and `/ready`.
@@ -59,7 +60,9 @@ SMART is deployed on a dedicated, high-performance Linux VPS instance (Ubuntu 24
 5. In-flight requests drain safely before the inactive slot is powered down.
 
 ### Cloud-Readiness & Scheduled AWS Migration
+
 The entire deployment adheres strictly to 12-factor cloud principles:
+
 - Containerized workloads run independently of host-specific binaries.
 - Externalized environment configuration (`DATABASE_URL`, `REDIS_URL`, `KAFKA_BROKERS`, `S3_ENDPOINT`) enables zero-code-change migration directly into **AWS ECS Fargate, AWS RDS PostgreSQL (Multi-AZ with pgvector), AWS ElastiCache Redis, and AWS MSK**.
 
@@ -68,6 +71,7 @@ The entire deployment adheres strictly to 12-factor cloud principles:
 ## Bounded Module Contexts
 
 Each module inside `apps/api-core/src/modules/*` maintains strict domain encapsulation:
+
 - **`auth`**: Stateless 15-minute JWT verification, 7–14 day HttpOnly refresh rotation, and SAML 2.0 / OIDC institutional SSO.
 - **`assessment`**: Assessment attempt lifecycle, Redis session caches (`session:assessment:{id}`), and BullMQ server-authoritative timeout jobs.
 - **`sandbox`**: Non-networked Docker container execution for student code snippets with 256MB RAM caps and 5-second hard timeouts.

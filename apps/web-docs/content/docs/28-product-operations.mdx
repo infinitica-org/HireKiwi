@@ -7,9 +7,9 @@ description: Monitoring topologies, Prometheus alerting rules, daily operational
 
 SmartZen deploys an integrated metrics and logging pipeline:
 
-* **Metrics Collection:** Prometheus scrapes `/metrics` endpoints on `api-core` (authenticated via `METRICS_SCRAPE_TOKEN`).
-* **Visualizations:** Grafana dashboards monitor event latency, API error budgets, Redis memory utilization, and BullMQ queue lag.
-* **Log Aggregation:** Fluentbit streams container stdout/stderr to centralized storage with sensitive PII masking filters.
+- **Metrics Collection:** Prometheus scrapes `/metrics` endpoints on `api-core` (authenticated via `METRICS_SCRAPE_TOKEN`).
+- **Visualizations:** Grafana dashboards monitor event latency, API error budgets, Redis memory utilization, and BullMQ queue lag.
+- **Log Aggregation:** Fluentbit streams container stdout/stderr to centralized storage with sensitive PII masking filters.
 
 ---
 
@@ -19,15 +19,16 @@ SmartZen deploys an integrated metrics and logging pipeline:
 [PostgreSQL Database] ──(Daily 03:00 UTC pg_dump)──► [Local Encrypted GZIP] ──(S3 Sync)──► [Offsite Cold Storage]
 ```
 
-* **RPO (Recovery Point Objective):** < 1 hour (WAL archiving enabled).
-* **RTO (Recovery Time Objective):** < 30 minutes for complete database restoration.
-* **Automated Weekly Restore Drill:** A scheduled cron job validates backup integrity by restoring the latest dump onto an isolated test container.
+- **RPO (Recovery Point Objective):** < 1 hour (WAL archiving enabled).
+- **RTO (Recovery Time Objective):** < 30 minutes for complete database restoration.
+- **Automated Weekly Restore Drill:** A scheduled cron job validates backup integrity by restoring the latest dump onto an isolated test container.
 
 ---
 
 ## 28.3 Standard Operating Runbooks
 
 ### Runbook 1: Production Blue-Green Emergency Rollback
+
 ```bash
 # If candidate deployment exhibits errors post-switch:
 # Force Caddy reverse proxy to point back to previous stable slot:
@@ -35,6 +36,7 @@ bash scripts/blue-green-deploy.sh rollback
 ```
 
 ### Runbook 2: Redis Cache Flush & Token Blacklist
+
 ```bash
 # In event of session token revocation:
 docker compose -f infra/docker/docker-compose.yml exec redis redis-cli FLUSHDB

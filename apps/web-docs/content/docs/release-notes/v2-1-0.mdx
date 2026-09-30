@@ -8,7 +8,7 @@ description: Official release record for SMART v2.1.0 (Sprint 6 GA Promotion).
 **Release:** v2.1.0-prod  
 **Build Promotion:** `dev` → `qa` → `main`  
 **Release Sign-off:** Tino (`@brittytino`), System Architect  
-**Deployment Date:** 29 September 2026  
+**Deployment Date:** 29 September 2026
 
 ---
 
@@ -17,6 +17,7 @@ description: Official release record for SMART v2.1.0 (Sprint 6 GA Promotion).
 Release v2.1.0 marks the conclusion of our Sprint 6 delivery cycle. Over the past four sprints, our modular monolith backend (`apps/api-core`) and candidate/employer presentation layers have transitioned from prototype assessment scripts into a resilient, tamper-evident talent verification network.
 
 This release delivers three foundational architectural requirements for our institutional campus rollout:
+
 1. **Server-Authoritative Anti-Cheating Timer:** Replaced client-driven countdown clocks with a BullMQ delayed-job force-submit processor that terminates and evaluates attempts at the server deadline, regardless of candidate network state.
 2. **Cryptographic Certificate Trust Chain:** Added HMAC-SHA256 signature hashes to all issued candidate certificates, validated on our public verification portal (`verify.smart.com`) with automated tamper alerts and QR routing.
 3. **Deterministic Placement Matching Engine:** Deployed PostgreSQL `pgvector` cosine similarity matching between candidate competency vectors and incoming Job Descriptions, backed by a deterministic keyword fallback parser to guarantee zero match downtime.
@@ -26,21 +27,25 @@ This release delivers three foundational architectural requirements for our inst
 ## Shipped Architectural Features
 
 ### 1. Server-Authoritative Assessment Timer (ADR-0016)
+
 - Implemented `AssessmentForceSubmitProcessor` backed by BullMQ queue `bull:queue:assessment_force_submit`.
 - At deadline arrival, the BullMQ worker retrieves the attempt from Redis (`session:assessment:{id}`), transitions the DB state from `IN_PROGRESS` to `SUBMITTED`, writes `Attempt.forceSubmittedAt`, and triggers the asynchronous evaluation pipeline.
 - Implemented duplicate-submission guards using Redis atomic locks (`SET NX EX`) to prevent race conditions.
 
 ### 2. HMAC-SHA256 Cryptographic Verification (ADR-0016)
+
 - Canonical JSON payloads are signed using `crypto.createHmac('sha256', process.env.CERTIFICATE_HMAC_SECRET)`.
 - The signature hash is persisted in the PostgreSQL `certificates` table under `signature_hash`.
 - Public verification service (`apps/web-verify`) executes an in-memory recalculation against the stored record and renders a `[SECURITY_EVENT]` warning alert on any signature mismatch.
 
 ### 3. Semantic Vector Placement Matching & Fallback (ADR-0017)
+
 - Enabled the `pgvector` extension in PostgreSQL 16.
 - Seeded 1536-dimensional embedding vectors for all 10 domain competency blueprints (5 IT tracks, 5 MBA tracks).
 - Implemented automatic failover to `deterministic-fallback-extractor.ts` if the embedding service experiences a 429 rate limit or network timeout.
 
 ### 4. Proctoring Snapshot Sidecar & DPDP Statutory Consent (ADR-0014)
+
 - Deployed `apps/proctoring-cv` as an isolated Python HTTP microservice running OpenCV and MediaPipe.
 - Candidate client captures randomized snapshots (1 frame every 30–60 seconds) rather than raw continuous video.
 - Implemented DPDP Section 6 explicit consent gate prior to webcam hardware initialization. All captured telemetry frames are flagged with an automated 30-day lifecycle purge rule.
@@ -50,6 +55,7 @@ This release delivers three foundational architectural requirements for our inst
 ## Database Schema Changes & Migrations
 
 All migrations were authored and stewarded by Vishal V (`@vis465`) in compliance with ADR-0007:
+
 - `20260925120000_add_certificate_hmac`: Added `signature_hash`, `revocation_status`, `qr_payload`.
 - `20260927091500_add_force_submit_to_attempts`: Added `force_submitted_at`, `server_deadline`, `timer_status`.
 - `20260928143000_enable_pgvector_competencies`: Created `vector` extension, added `embedding vector(1536)`.

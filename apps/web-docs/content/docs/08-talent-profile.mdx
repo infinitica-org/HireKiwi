@@ -32,12 +32,12 @@ A SmartZen Verified Talent Profile is not a static PDF resume; it is an interact
 
 SmartZen visually and structurally segregates claimed data from verified evidence:
 
-| Visual Element | Claimed Data | Verified Evidence |
-| :--- | :--- | :--- |
-| **Badge Styling** | Muted grey border, "Self-Reported" label | Glowing Gold/Silver/Bronze badge with checkmark |
-| **Search Weight** | Excluded from recruiter minimum filter gates | Indexed in PostgreSQL `pgvector` HNSW index |
-| **Verification Proof** | None | Clickable modal displaying commit SHAs and defense transcript |
-| **Tamper Status** | Mutable by user at any time | Append-only; changes require re-defense |
+| Visual Element         | Claimed Data                                 | Verified Evidence                                             |
+| :--------------------- | :------------------------------------------- | :------------------------------------------------------------ |
+| **Badge Styling**      | Muted grey border, "Self-Reported" label     | Glowing Gold/Silver/Bronze badge with checkmark               |
+| **Search Weight**      | Excluded from recruiter minimum filter gates | Indexed in PostgreSQL `pgvector` HNSW index                   |
+| **Verification Proof** | None                                         | Clickable modal displaying commit SHAs and defense transcript |
+| **Tamper Status**      | Mutable by user at any time                  | Append-only; changes require re-defense                       |
 
 ---
 
@@ -50,6 +50,7 @@ https://verify.becomesmart.online/profile/{verificationUuid}
 ```
 
 The verification endpoint displays:
+
 1. Candidate anonymized identity or authenticated public name.
 2. Verified competencies and achieved BARS tiers.
 3. Cryptographic signature generated via `HMAC-SHA256(candidateId + competencies + issueDate, SERVER_SECRET)`.
@@ -60,6 +61,7 @@ The verification endpoint displays:
 ## 8.4 Privacy, Consent & Anonymized Discovery
 
 In accordance with the Indian DPDP Act 2023:
-* **Default Blind Search:** Employers browsing candidate pools see anonymized profiles (e.g., `Candidate #4829 - Tier: Gold Backend`). Identifiers like name, email, phone number, and gender are hidden.
-* **Consent-Gated Unmasking:** When an employer expresses interest, the candidate receives an in-app and email authorization request.
-* **Revocation of Sharing:** Candidates may revoke employer access to their dossier at any time with a single click.
+
+- **Default Blind Search:** Employers browsing candidate pools see anonymized profiles (e.g., `Candidate #4829 - Tier: Gold Backend`). Identifiers like name, email, phone number, and gender are hidden.
+- **Consent-Gated Unmasking:** When an employer expresses interest, the candidate receives an in-app and email authorization request.
+- **Revocation of Sharing:** Candidates may revoke employer access to their dossier at any time with a single click.
