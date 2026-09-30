@@ -1969,6 +1969,11 @@ export function projectsApi(client: SmartApiClient) {
       client.post(prefixed(`/projects/${projectId}/defense/appeal`), body, {
         schema: ProjectDefenseAppealResponseSchema,
       }),
+
+    delete: (projectId: string) =>
+      client.delete(prefixed(`/projects/${projectId}`), {
+        schema: z.void(),
+      }),
   };
 }
 

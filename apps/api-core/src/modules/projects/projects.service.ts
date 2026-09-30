@@ -110,6 +110,55 @@ export class ProjectsService {
   }
 
   /**
+   * Deletes an owned project and all its associated data (skill mappings, interview records).
+   * Only active projects can be deleted; once deleted, a project cannot be recovered.
+   */
+  async delete(studentId: string, projectId: string): Promise<void> {
+    const id = UuidSchema.parse(projectId);
+    const row = await this.loadRow(id);
+
+    if (!row) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Project not found.',
+        statusCode: 404,
+      });
+    }
+
+    if (row.studentId !== studentId) {
+      throw new ForbiddenException({
+        error: 'forbidden',
+        message: 'You can only delete your own projects.',
+        statusCode: 403,
+      });
+    }
+
+    // Delete project skill mappings (cascade)
+    await this.prisma.projectSkillMapping.deleteMany({
+      where: { projectId: id },
+    });
+
+    // Delete the project itself (interview state is stored in Redis and will expire on its own)
+    await this.prisma.project.delete({
+      where: { id },
+    });
+
+    await this.auditPublisher.record({
+      actorId: studentId,
+      action: 'project.deleted',
+      resourceType: 'Project',
+      resourceId: id,
+      reasonCode: null,
+      metadata: {
+        studentId,
+        deletedProjectId: id,
+      },
+    });
+
+    this.logger.log(`Project ${id} deleted by student ${studentId}`);
+  }
+
+  /**
    * Marks the owned project inactive and keeps the replacement as the current portfolio project.
    * Verification status and historical rows are preserved.
    */

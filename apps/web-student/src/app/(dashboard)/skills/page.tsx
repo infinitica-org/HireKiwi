@@ -78,6 +78,23 @@ const CONFIDENCE_CUES: Record<string, { label: string; tone: string }> = {
   },
 };
 
+// Detect if a skill is under verification (assessment taken but result pending)
+function isUnderVerification(claim: SkillClaimDto | undefined): boolean {
+  if (!claim) return false;
+  // Under verification if: latestAssessmentResult exists OR verificationInProgress is true
+  return Boolean(claim.latestAssessmentResult || claim.verificationInProgress);
+}
+
+// Get the display status for a skill claim
+function getSkillStatus(
+  claim: SkillClaimDto | undefined,
+): 'DECLARED' | 'UNDER_VERIFICATION' | 'VERIFIED' {
+  if (!claim) return 'DECLARED';
+  if (claim.status === 'VERIFIED') return 'VERIFIED';
+  if (isUnderVerification(claim)) return 'UNDER_VERIFICATION';
+  return 'DECLARED';
+}
+
 // Keeps the level badge honest: the card always carries a lightweight "how
 // sure" signal, so the level is never presented bare.
 function confidenceCue(claim: SkillClaimDto | undefined): { label: string; tone: string } {
@@ -354,7 +371,9 @@ export default function SkillsProfilePage() {
         ) : (
           filteredSkills.map((item) => {
             const isExpanded = expandedSkillCode === item.definition.code;
-            const isVerified = item.claim?.status === 'VERIFIED';
+            const skillStatus = getSkillStatus(item.claim);
+            const isVerified = skillStatus === 'VERIFIED';
+            const isUnderVerif = skillStatus === 'UNDER_VERIFICATION';
             const cue = confidenceCue(item.claim);
 
             return (
@@ -388,6 +407,15 @@ export default function SkillsProfilePage() {
                             Verified
                           </span>
                         </>
+                      ) : isUnderVerif ? (
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
+                            'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300',
+                          )}
+                        >
+                          Under Verification
+                        </span>
                       ) : (
                         <span
                           className={cn(
@@ -441,7 +469,11 @@ export default function SkillsProfilePage() {
                       onClick={() => setImproveSkillTarget(item)}
                       className="inline-flex items-center gap-1 rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
                     >
-                      {isVerified ? 'Level up this skill →' : 'Verify Skill →'}
+                      {isVerified
+                        ? 'Level up this skill →'
+                        : isUnderVerif
+                          ? 'Assessment in progress →'
+                          : 'Verify Skill →'}
                     </button>
 
                     <button
@@ -551,7 +583,9 @@ export default function SkillsProfilePage() {
               <h2 className="font-heading text-lg font-bold text-zinc-950 dark:text-white">
                 {improveSkillTarget.claim?.status === 'VERIFIED'
                   ? `Level up ${improveSkillTarget.definition.name}`
-                  : `Verify ${improveSkillTarget.definition.name}`}
+                  : isUnderVerification(improveSkillTarget.claim)
+                    ? `Verify ${improveSkillTarget.definition.name}`
+                    : `Verify ${improveSkillTarget.definition.name}`}
               </h2>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 {improveSkillTarget.claim?.status === 'VERIFIED' ? (
@@ -561,6 +595,14 @@ export default function SkillsProfilePage() {
                       {improveSkillTarget.level}
                     </span>
                     . Do any of these to climb higher:
+                  </>
+                ) : isUnderVerification(improveSkillTarget.claim) ? (
+                  <>
+                    Your assessment for{' '}
+                    <span className="font-bold text-zinc-900 dark:text-white">
+                      {improveSkillTarget.definition.name}
+                    </span>{' '}
+                    is being evaluated. It may take a few moments.
                   </>
                 ) : (
                   <>
