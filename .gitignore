@@ -60,6 +60,7 @@ Thumbs.db
 .windsurf/
 .agents/
 skills-lock.json
+graphify-out/
 
 # --- Cursor: personal agent context (team .cursor/rules + .cursor/kb stay tracked) ---
 .cursor/local/**

@@ -7,6 +7,8 @@ import { Providers } from './providers';
 export const metadata: Metadata = {
   title: 'Student portal · SMART',
   description: 'Track enrolment, L1-L5 player, results.',
+  // Authenticated portal: keep out of search indexes (Th6-598).
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

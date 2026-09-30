@@ -173,7 +173,7 @@ export default function DemoModal() {
                 </p>
 
                 <div className="mt-6 rounded-2xl border border-zinc-100 bg-zinc-50/70 p-5 text-left">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
                     What happens next
                   </span>
                   <ol className="mt-3 space-y-2 text-sm text-zinc-700">

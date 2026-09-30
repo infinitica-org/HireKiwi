@@ -9,6 +9,8 @@ export const metadata: Metadata = {
     template: '%s · SMART TPO',
   },
   description: 'Cohort readiness, JD ingest, shortlists.',
+  // Authenticated portal: keep out of search indexes (Th6-598).
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

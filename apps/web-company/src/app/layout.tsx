@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     template: '%s · SMART Employers',
   },
   description: 'Post jobs, find verified students, and manage your hiring pipeline.',
+  // Authenticated portal: keep out of search indexes (Th6-598).
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

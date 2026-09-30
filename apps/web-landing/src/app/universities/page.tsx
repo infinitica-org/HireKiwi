@@ -9,9 +9,7 @@ import {
   ShieldCheck,
   ArrowRight,
   TrendingUp,
-  CheckCircle2,
   Sparkles,
-  FileCheck2,
   Check,
 } from 'lucide-react';
 
@@ -19,7 +17,8 @@ const UNIVERSITY_WORDS = ['hired.', 'verified.', 'ready.', 'placed.'] as const;
 
 export default function UniversitiesPage() {
   const [wordIndex, setWordIndex] = useState(0);
-  const [text, setText] = useState('');
+  // Start on the first word so the server-rendered h1 has real text (LCP / crawlers).
+  const [text, setText] = useState<string>(UNIVERSITY_WORDS[0]);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -57,11 +56,9 @@ export default function UniversitiesPage() {
       >
         <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-8">
           {/* Main Headline with Animated Typewriter and Lime Highlight */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
-            className="font-header text-5xl font-medium leading-[1.02] tracking-[-0.04em] text-slate-900 sm:text-6xl md:text-7xl lg:text-[5.5rem] xl:text-[6.25rem]"
+          <h1
+            className="animate-enter-lcp font-header text-5xl font-medium leading-[1.02] tracking-[-0.04em] text-slate-900 sm:text-6xl md:text-7xl lg:text-[5.5rem] xl:text-[6.25rem]"
+            style={{ animationDelay: '60ms' }}
           >
             Get your students
             <span className="mt-2 block sm:mt-3">
@@ -77,25 +74,21 @@ export default function UniversitiesPage() {
                 />
               </span>
             </span>
-          </motion.h1>
+          </h1>
 
           {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg md:max-w-2xl font-normal"
+          <p
+            className="animate-enter-lcp mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg md:max-w-2xl font-normal"
+            style={{ '--enter-y': '14px', animationDelay: '120ms' } as React.CSSProperties}
           >
             Strengthen your team&apos;s connections with top employers and prove student outcomes
             with verifiable capability credentials on the network built for early talent.
-          </motion.p>
+          </p>
 
           {/* Call to Action Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center gap-4"
+          <div
+            className="animate-enter mt-8 sm:mt-10 flex flex-col sm:flex-row items-center gap-4"
+            style={{ '--enter-y': '18px', animationDelay: '180ms' } as React.CSSProperties}
           >
             <Link
               href="/universities/contact"
@@ -104,7 +97,7 @@ export default function UniversitiesPage() {
               <span>Schedule a Demo</span>
               <ArrowRight className="size-4" />
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -113,7 +106,7 @@ export default function UniversitiesPage() {
         <div className="mx-auto max-w-7xl">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
-            <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-2 block">
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-700 mb-2 block">
               Campus Career Infrastructure
             </span>
             <h2 className="font-header text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-slate-950">

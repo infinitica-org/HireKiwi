@@ -51,7 +51,7 @@ export default function AudienceTabs() {
                     isPreviewFirst ? 'order-2 lg:order-2' : 'order-2 lg:order-1'
                   }`}
                 >
-                  <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+                  <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
                     {audience.tabLabel}
                   </span>
                   <h3 className="mt-2 font-manrope text-3xl font-medium tracking-tight text-zinc-950 sm:text-4xl">
@@ -150,7 +150,7 @@ export default function AudienceTabs() {
                         {/* Evidence Audit Card */}
                         <div className="rounded-xl bg-white/95 p-4 sm:p-5 shadow-xl shadow-black/8 border border-white/60 backdrop-blur-md">
                           <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5 mb-3">
-                            <span className="text-[11px] font-medium tracking-wider text-zinc-400">
+                            <span className="text-[11px] font-medium tracking-wider text-zinc-500">
                               Evidence Audit Record
                             </span>
                             <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
@@ -162,19 +162,19 @@ export default function AudienceTabs() {
                               <span className="font-medium text-zinc-800">
                                 Distributed Systems Concurrency
                               </span>
-                              <span className="font-medium text-emerald-600">98.4% Match</span>
+                              <span className="font-medium text-emerald-700">98.4% Match</span>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-100 border border-zinc-200/70">
                               <span className="font-medium text-zinc-800">
                                 PostgreSQL Index Execution
                               </span>
-                              <span className="font-medium text-emerald-600">95.2% Match</span>
+                              <span className="font-medium text-emerald-700">95.2% Match</span>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-100 border border-zinc-200/70">
                               <span className="font-medium text-zinc-800">
                                 Cryptographic Proof Verification
                               </span>
-                              <span className="font-medium text-emerald-600">100% Verified</span>
+                              <span className="font-medium text-emerald-700">100% Verified</span>
                             </div>
                           </div>
                         </div>
@@ -191,7 +191,7 @@ export default function AudienceTabs() {
                             <div className="text-2xl sm:text-3xl font-medium text-zinc-950 mt-1">
                               92.4%
                             </div>
-                            <span className="text-[11px] text-emerald-600 font-medium mt-1 inline-block">
+                            <span className="text-[11px] text-emerald-700 font-medium mt-1 inline-block">
                               +14% vs. unverified
                             </span>
                           </div>
@@ -202,14 +202,14 @@ export default function AudienceTabs() {
                             <div className="text-xl sm:text-3xl font-medium text-zinc-950 mt-1">
                               18 Days
                             </div>
-                            <span className="text-[11px] text-emerald-600 font-medium mt-1 inline-block">
+                            <span className="text-[11px] text-emerald-700 font-medium mt-1 inline-block">
                               3.2× industry average
                             </span>
                           </div>
                         </div>
 
                         <div className="rounded-xl bg-white/95 p-4 sm:p-5 shadow-xl shadow-black/8 border border-white/60 backdrop-blur-md">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
                             Institutional Accreditation Export
                           </span>
                           <div className="mt-2.5 flex items-center justify-between text-xs sm:text-sm text-zinc-800">
@@ -229,7 +229,7 @@ export default function AudienceTabs() {
                             <span className="text-xs font-bold text-zinc-900">
                               Pre-Qualified Pipeline
                             </span>
-                            <span className="text-xs font-bold text-emerald-600">
+                            <span className="text-xs font-bold text-emerald-700">
                               Zero false resumes
                             </span>
                           </div>

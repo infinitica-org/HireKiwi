@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'motion/react';
 import Link from 'next/link';
 import {
   CheckCircle2,
@@ -15,7 +14,6 @@ import {
   ExternalLink,
   GraduationCap,
   Briefcase,
-  Users,
 } from 'lucide-react';
 import { authSignUpUrl, studentAppUrl } from '@/lib/portal-urls';
 
@@ -106,11 +104,9 @@ export default function StudentsPage() {
         <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             {/* Left Column: Headlines & CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-7 flex flex-col items-start"
+            <div
+              className="animate-enter-lcp lg:col-span-7 flex flex-col items-start"
+              style={{ '--enter-y': '24px' } as React.CSSProperties}
             >
               {/* Badge */}
               <div className="inline-flex items-center gap-2 rounded-full border border-lime-300 bg-[#d9fa61]/40 px-3.5 py-1 text-xs sm:text-sm font-semibold text-zinc-900 mb-6">
@@ -171,15 +167,10 @@ export default function StudentsPage() {
                   <span>Accepted by 1,000+ Hiring Teams</span>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Right Column: Interactive Credential Showcase Card */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-5"
-            >
+            <div className="animate-enter-scale lg:col-span-5" style={{ animationDelay: '150ms' }}>
               <div className="relative rounded-3xl border border-zinc-200/90 bg-white p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
                 {/* Glow pill behind card */}
                 <div
@@ -194,7 +185,7 @@ export default function StudentsPage() {
                       S
                     </div>
                     <div>
-                      <div className="text-xs uppercase tracking-wider font-semibold text-zinc-400">
+                      <div className="text-xs uppercase tracking-wider font-semibold text-zinc-500">
                         Official SMART Credential
                       </div>
                       <div className="font-bold text-zinc-900 text-sm sm:text-base">
@@ -213,9 +204,7 @@ export default function StudentsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-xs font-semibold text-zinc-500">Certified Track</span>
-                      <h4 className="text-base font-bold text-zinc-900">
-                        Backend Software Engineer
-                      </h4>
+                      <p className="text-base font-bold text-zinc-900">Backend Software Engineer</p>
                     </div>
                     <span className="rounded-lg bg-[#d9fa61] px-2.5 py-1 text-xs font-extrabold text-zinc-950 border border-[#c6ec44]">
                       Level 2 · Practitioner
@@ -226,7 +215,7 @@ export default function StudentsPage() {
                   <div className="mt-4 pt-3 border-t border-zinc-200/60 flex items-baseline justify-between">
                     <span className="text-xs text-zinc-600 font-medium">BARS Competency Index</span>
                     <span className="text-xl font-extrabold text-zinc-950">
-                      94<span className="text-xs font-semibold text-zinc-400">/100</span>
+                      94<span className="text-xs font-semibold text-zinc-500">/100</span>
                     </span>
                   </div>
                   <div className="mt-1.5 h-2 w-full rounded-full bg-zinc-200 overflow-hidden">
@@ -236,7 +225,7 @@ export default function StudentsPage() {
 
                 {/* Evaluated Skill Competencies */}
                 <div className="mt-5 space-y-3">
-                  <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  <div className="text-xs font-bold uppercase tracking-wider text-zinc-500">
                     Verified Competency Breakdown
                   </div>
                   <div className="space-y-2">
@@ -265,14 +254,14 @@ export default function StudentsPage() {
                 </div>
 
                 {/* Cryptographic Signature Footer */}
-                <div className="mt-6 pt-4 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+                <div className="mt-6 pt-4 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
                   <span>Ed25519: 8f9b...a34e</span>
                   <span className="text-zinc-600 font-sans font-medium flex items-center gap-1">
                     Public Audit Key <ExternalLink className="size-3" />
                   </span>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -297,7 +286,7 @@ export default function StudentsPage() {
       <section className="py-20 sm:py-28 bg-white">
         <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-8">
           <div className="max-w-2xl mx-auto text-center mb-16">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
               Clear Progression
             </span>
             <h2 className="mt-2 font-manrope text-3xl sm:text-4xl font-extrabold text-zinc-950">
@@ -310,14 +299,14 @@ export default function StudentsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {TIER_STEPS.map((step, idx) => (
+            {TIER_STEPS.map((step) => (
               <div
                 key={step.tier}
                 className="relative rounded-3xl border border-zinc-200 bg-white p-7 shadow-xs flex flex-col justify-between hover:border-zinc-300 transition-all hover:shadow-md"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-widest">
+                    <span className="text-xs font-mono font-bold text-zinc-500 uppercase tracking-widest">
                       {step.tier}
                     </span>
                     <span
@@ -333,7 +322,7 @@ export default function StudentsPage() {
                   <p className="mt-2.5 text-sm text-zinc-600 leading-relaxed">{step.description}</p>
 
                   <div className="mt-6 space-y-2">
-                    <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                    <div className="text-xs font-bold uppercase tracking-wider text-zinc-500">
                       Core Milestones
                     </div>
                     {step.skills.map((skill) => (
@@ -383,7 +372,7 @@ export default function StudentsPage() {
                   <div className="size-10 rounded-xl bg-[#d9fa61]/60 flex items-center justify-center text-zinc-950 mb-4 border border-[#c4eb46]">
                     <Icon className="size-5" />
                   </div>
-                  <h4 className="text-base font-bold text-zinc-900">{adv.title}</h4>
+                  <h3 className="text-base font-bold text-zinc-900">{adv.title}</h3>
                   <p className="mt-2 text-xs sm:text-sm text-zinc-600 leading-relaxed">
                     {adv.desc}
                   </p>

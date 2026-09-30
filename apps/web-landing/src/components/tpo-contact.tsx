@@ -112,7 +112,7 @@ export function NeatSelect({
       >
         <span
           className={
-            selectedOption ? 'text-slate-900 font-medium truncate' : 'text-slate-400 truncate'
+            selectedOption ? 'text-slate-900 font-medium truncate' : 'text-slate-500 truncate'
           }
         >
           {selectedOption ? selectedOption.label : placeholder}
@@ -422,7 +422,7 @@ export default function TpoContactForm({
                 className="block text-sm font-semibold text-slate-800 mb-2"
               >
                 Additional questions or cohort details{' '}
-                <span className="text-slate-400 font-normal">(Optional)</span>
+                <span className="text-slate-500 font-normal">(Optional)</span>
               </label>
               <textarea
                 id="tpo-message"
