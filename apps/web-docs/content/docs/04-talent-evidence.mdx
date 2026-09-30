@@ -20,7 +20,7 @@ In SmartZen, **evidence is the atomic unit of capability representation**. A tal
 │ • confidenceScore: Float (0.00 to 1.00)                                │
 │ • verificationStatus: PENDING | VERIFIED | REJECTED | REVOKED          │
 │ • verifiedAt: ISO8601 Timestamp                                        │
-│ • verifiedBy: AUTOMATED_ENGINE | HUMAN_AUDITOR                         │
+│ • verifiedBy: VIVI_AGENT | HUMAN_AUDITOR                               │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -73,19 +73,19 @@ To prevent impersonation and artifact tampering, every evidence item generates a
 
 ---
 
-## 4.4 Evidence Lifecycle
+## 4.4 Evidence Lifecycle & Vivi's Verification Pipeline
 
 ```
-[SUBMITTED] ──► [AST / FRAUD SCAN] ──► [PROCTORED DEFENSE] ──► [VERIFIED] ──► [INDEXED]
-     │                    │                     │
-     ▼                    ▼                     ▼
-[MALFORMED]          [FLAGGED]             [REJECTED]
+[SUBMITTED] ──► [VIVI SOURCE INSPECT] ──► [AI DEFENSE / PROBE] ──► [VERIFIED] ──► [INDEXED]
+     │                   │                       │
+     ▼                   ▼                       ▼
+[MALFORMED]         [MANUAL_AUDIT]          [REJECTED]
 ```
 
-1. **Submitted:** Artifact URI or repository payload registered.
-2. **Scanned:** Automated scanners check for plagiarism, open-source template forks, and commit spoofing.
-3. **Defended:** Active verification session validates candidate comprehension.
-4. **Verified:** HMAC signature issued; evidence linked to competency taxonomy.
+1. **Submitted:** Artifact URI or repository payload registered by candidate.
+2. **Vivi Source Inspection:** Vivi agent connects to the authentic external data source (SIS, GitHub, corporate domain, Credly), checks AST syntax tree, and validates commit/credential authenticity.
+3. **Defended:** For technical projects, the interactive AI project defense interview (`INT-01`) validates candidate comprehension.
+4. **Verified:** HMAC signature issued; evidence linked to competency taxonomy with verified confidence score ($C$).
 5. **Indexed:** Semantic vector embeddings generated in PostgreSQL `pgvector`.
 
 ---

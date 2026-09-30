@@ -5,7 +5,7 @@ description: Foundational understanding, core principles, product map, and termi
 
 Welcome to **SmartZen**.
 
-SmartZen is a powerful **talent network platform** that transforms fragmented information about people into **evidence-backed talent profiles**. It brings together evidence from multiple active and passive sources, verifies and interprets that evidence, and creates a richer representation of a person's skills, capabilities, experience, and potential.
+SmartZen is a powerful **evidence-backed talent network platform** that transforms fragmented information about people into **evidence-backed talent profiles**. It brings together evidence from multiple active and passive sources, verifies and interprets that evidence, and creates a richer representation of a person's skills, capabilities, experience, and potential.
 
 This section provides the foundational understanding required to work with SmartZen.
 
@@ -74,7 +74,7 @@ The result is an **evidence-backed talent profile** that can continuously evolve
 
 ### Primary
 
-> **SmartZen is a talent network that builds evidence-backed profiles from active and passive sources to connect people with the right opportunities.**
+> **SmartZen is an evidence-backed talent network that builds evidence-backed talent profiles from active and passive sources to connect people with the right opportunities.**
 
 ### Short Version
 
@@ -82,7 +82,7 @@ The result is an **evidence-backed talent profile** that can continuously evolve
 
 ### Expanded Version
 
-> **SmartZen transforms fragmented talent data into continuously evolving, evidence-backed profiles by combining active demonstrations and passive professional evidence—helping people build trusted professional identities and helping organizations discover relevant talent.**
+> **SmartZen transforms fragmented talent data into continuously evolving, evidence-backed talent profiles by combining active demonstrations and passive professional evidence—helping people build trusted professional identities and helping organizations discover relevant talent.**
 
 ---
 
@@ -151,17 +151,17 @@ SmartZen structures fragmented information into a unified talent record. Evidenc
 - Achievements
 - Professional attributes
 
-### 3. Verifies Evidence
+### 3. Verifies Evidence via Autonomous Agents (Vivi)
 
-SmartZen distinguishes between:
+Verification in SmartZen is executed autonomously by **Agents**, led by **Vivi**—the flagship **Source Verification Agent**. Vivi's mandate is to interrogate and validate data directly at its authentic source:
 
-- Self-declared information
-- Supported evidence
-- Verified evidence
-- Demonstrated capability
-- Evidence requiring further validation
+- **Academic Verification at Source:** Direct queries against university SIS/ERP and institutional domain whitelists.
+- **Code & AST Provenance at Source:** Direct connection to GitHub/GitLab APIs to evaluate commit author signatures, repository fork trees, and Abstract Syntax Tree (AST) complexity.
+- **Corporate Experience at Source:** Cryptographically signed, single-use expiring token links dispatched exclusively to corporate email domains (`@company.com`), detecting circular endorsement fraud rings.
+- **Credentials at Source:** Direct API verification against credential issuing authorities (AWS, Credly, Google Cloud, Coursera).
+- **Active Demonstrations:** AI project defense interviews and proctored technical evaluations.
 
-Verification may involve automated checks, external sources, assessments, endorsements, AI evaluation, or human review depending on the evidence type.
+Verification produces tamper-evident, HMAC-SHA256 signed evidence nodes with distinct confidence ratings.
 
 ### 4. Builds Talent Intelligence
 
@@ -229,18 +229,20 @@ Claim ──► Evidence ──► Verification ──► Intelligence ──►
 
 ## 00.7 SmartZen Terminology & Glossary
 
-| Term                    | Enterprise Definition                                                                                     |
-| :---------------------- | :-------------------------------------------------------------------------------------------------------- |
-| **SmartZen**            | The evidence-backed talent network and capability verification platform.                                  |
-| **Talent**              | An individual whose capabilities, experience, and verified artifacts form their network record.           |
-| **Talent Profile**      | The multi-dimensional structured representation of a person's verified professional capability.           |
-| **Active Evidence**     | Direct demonstrations observed by the system (proctored coding, project defense, AI interview).           |
-| **Passive Evidence**    | Pre-existing historical artifacts (GitHub commits, degrees, experience letters, certifications).          |
-| **Evidence Provenance** | The immutable cryptographic chain and audit trail identifying source, timestamps, and validator.          |
-| **Verification**        | The deterministic or human-assisted process establishing evidentiary validity.                            |
-| **Competency**          | An integrated cluster of skills, knowledge, and behaviors demonstrated through applied outcomes.          |
-| **Readiness**           | Quantitative measure of fit between verified competencies and target role requirements.                   |
-| **Confidence**          | A Bayesian or empirical measure representing the volume and reliability of evidence backing an inference. |
+| Term                                | Enterprise Definition                                                                                     |
+| :---------------------------------- | :-------------------------------------------------------------------------------------------------------- |
+| **SmartZen**                        | The evidence-backed talent network and capability verification platform.                                  |
+| **Agents**                          | Autonomous software actors executing continuous verification, dynamic interviewing, and skill inference. |
+| **Vivi**                            | The flagship Source Verification Agent whose mission is to verify talent data directly at its authentic source. |
+| **Talent**                          | An individual whose capabilities, experience, and verified artifacts form their network record.           |
+| **Evidence-Backed Talent Profile**  | The multi-dimensional structured representation of a person's verified capability backed by proof.         |
+| **Active Evidence**                 | Direct demonstrations observed by the system (proctored coding, project defense, AI interview).           |
+| **Passive Evidence**                | Pre-existing historical artifacts (GitHub commits, degrees, experience letters, certifications).          |
+| **Evidence Provenance**             | The immutable cryptographic chain and audit trail identifying source, timestamps, and validator.          |
+| **Verification**                    | The agent-driven or human-assisted process establishing evidentiary validity at the authentic source.     |
+| **Competency**                      | An integrated cluster of skills, knowledge, and behaviors demonstrated through applied outcomes.          |
+| **Readiness**                       | Quantitative measure of fit between verified competencies and target role requirements.                   |
+| **Confidence**                      | An empirical measure ($0.00$ to $1.00$) representing the volume and reliability of evidence backing a claim.|
 
 ---
 
