@@ -2936,6 +2936,8 @@ model DataSubjectRequest {
   resolution       String?
   resolvedById     String?   @map("resolved_by_id") @db.Uuid
 
+  /// S6-VV-159 — plus a partial unique index (migration only; Prisma can't declare it):
+  /// one OPEN/IN_REVIEW request per (user_id, type).
   @@index([userId, type, status])
   @@index([status, createdAt])
   @@map("data_subject_requests")

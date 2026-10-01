@@ -23,6 +23,14 @@ import type { DsrExportJobPayload } from './dsr-export.processor.js';
 
 const OPEN_STATUSES = ['OPEN', 'IN_REVIEW'] as const;
 
+function alreadyOpen(type: string): ConflictException {
+  return new ConflictException({
+    error: 'data_request_already_open',
+    message: `You already have an open ${type.toLowerCase()} request.`,
+    statusCode: 409,
+  });
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -256,17 +264,16 @@ export class AccountService {
     const existing = await this.prisma.dataSubjectRequest.findFirst({
       where: { userId, type: body.type, status: { in: [...OPEN_STATUSES] } },
     });
-    if (existing) {
-      throw new ConflictException({
-        error: 'data_request_already_open',
-        message: `You already have an open ${body.type.toLowerCase()} request.`,
-        statusCode: 409,
-      });
-    }
+    if (existing) throw alreadyOpen(body.type);
     if (body.type === 'EXPORT') await this.assertExportCooldown(userId);
-    const row = await this.prisma.dataSubjectRequest.create({
-      data: { userId, type: body.type, details: body.details },
-    });
+    // S6-VV-159: the check above is only a fast path. Two concurrent creates both pass it, so the
+    // partial unique index on open (user_id, type) decides, and the loser gets the same 409.
+    const row = await this.prisma.dataSubjectRequest
+      .create({ data: { userId, type: body.type, details: body.details } })
+      .catch((error: unknown) => {
+        if ((error as { code?: string }).code === 'P2002') throw alreadyOpen(body.type);
+        throw error;
+      });
     // An export needs no reviewer; the job id makes a double enqueue a no-op.
     if (row.type === 'EXPORT') {
       await this.exportQueue?.add('build', { requestId: row.id }, { jobId: row.id });
