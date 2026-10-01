@@ -2,15 +2,20 @@
 
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import type { EvidenceType } from '@smart/contracts';
+import { EvidenceUsageNote } from './EvidenceUsageNote';
 
 export function ProfileSectionHeader({
   title,
   description,
   action,
+  evidenceType,
 }: {
   title: string;
   description: string;
   action?: ReactNode;
+  /** S6-VV-114: adds the "How this is used" disclosure for this kind of evidence. */
+  evidenceType?: EvidenceType;
 }) {
   return (
     <div className="flex w-full flex-col gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800 lg:flex-row lg:items-center lg:justify-between font-sans select-none">
@@ -19,6 +24,7 @@ export function ProfileSectionHeader({
           {title}
         </h2>
         <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{description}</p>
+        {evidenceType ? <EvidenceUsageNote type={evidenceType} /> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>

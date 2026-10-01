@@ -297,7 +297,11 @@ export function ProfessionalLinksSection() {
       className="flex w-full min-w-0 flex-col gap-6 font-sans select-none"
       aria-label="Professional links"
     >
-      <ProfileSectionHeader title={meta.title} description={meta.description} />
+      <ProfileSectionHeader
+        title={meta.title}
+        description={meta.description}
+        evidenceType="PASSIVE_SIGNAL"
+      />
 
       {isLoading ? <p className="text-sm text-zinc-500">Loading professional links…</p> : null}
 

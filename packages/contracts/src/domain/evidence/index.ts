@@ -1,4 +1,5 @@
 export * from './enums.js';
+export * from './evidence-usage.js';
 export * from './metadata.js';
 export * from './artifact.js';
 export * from './evidence.js';
