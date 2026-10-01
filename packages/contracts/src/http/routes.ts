@@ -4030,6 +4030,18 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'GET',
+    path: '/admin/health/integrations',
+    module: 'health',
+    owner: 'Vishal V',
+    roles: ['SUPER_ADMIN'],
+    rateLimit: 'role.student',
+    criticality: 'REPORTING',
+    execution: 'SYNC',
+    slaMs: 200,
+    summary: 'Last probe result for each third-party integration (S6-VV-129).',
+  },
+  {
+    method: 'GET',
     path: '/me/notifications',
     module: 'notifications',
     owner: 'Vishal V',
