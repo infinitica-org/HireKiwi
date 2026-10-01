@@ -7,8 +7,6 @@ import {
   AUDIO_EVALUATION_QUEUE,
   PDF_GENERATION_DLQ,
   PDF_GENERATION_QUEUE,
-  SANDBOX_EXECUTION_DLQ,
-  SANDBOX_EXECUTION_QUEUE,
 } from './queue.names.js';
 
 export abstract class DlqAwareProcessor extends WorkerHost {
@@ -32,20 +30,6 @@ export abstract class DlqAwareProcessor extends WorkerHost {
           `Failed to write DLQ for ${job.queueName}:${job.id ?? '?'}: ${dlqError instanceof Error ? dlqError.message : 'unknown'}`,
         );
       });
-  }
-}
-
-@Processor(SANDBOX_EXECUTION_QUEUE)
-export class SandboxExecutionProcessor extends DlqAwareProcessor {
-  protected readonly logger = new Logger(SandboxExecutionProcessor.name);
-
-  constructor(@InjectQueue(SANDBOX_EXECUTION_DLQ) protected readonly dlq: Queue) {
-    super();
-  }
-
-  async process(job: Job): Promise<void> {
-    this.logger.warn(`sandbox_execution ${job.id ?? ''} is not implemented yet`);
-    throw new Error('Sandbox runner is not wired yet');
   }
 }
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Inject, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { API_PREFIX } from '@smart/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -10,16 +10,6 @@ import { EvaluationService } from './evaluation.service.js';
 @Controller(`${API_PREFIX}/evaluation`)
 export class EvaluationController {
   constructor(@Inject(EvaluationService) private readonly service: EvaluationService) {}
-
-  @Get('_meta')
-  meta() {
-    return {
-      module: 'evaluation',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'sde-v4-form+cert-agenda (skill interview via assessment only)',
-    };
-  }
 
   @Post('skill-form/questions')
   @Roles('STUDENT')

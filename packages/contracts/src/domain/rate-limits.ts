@@ -191,15 +191,6 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     onViolation: 'INTEGRITY_LOG',
   },
   {
-    key: 'assessment.compileL2',
-    scope: 'USER',
-    limit: 10,
-    windowSeconds: 60,
-    burst: 2,
-    redisKey: 'rl:l2_compile:{id}',
-    rationale: 'Protects the Docker sandbox pool from CPU and memory exhaustion.',
-  },
-  {
     key: 'assessment.evaluateL3L4',
     scope: 'USER',
     limit: 5,

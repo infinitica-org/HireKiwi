@@ -11,18 +11,6 @@ import { CorroborationService } from './corroboration.service.js';
 export class CorroborationController {
   constructor(@Inject(CorroborationService) private readonly service: CorroborationService) {}
 
-  @Get('_meta')
-  @Roles('STUDENT')
-  @ApiBearerAuth()
-  meta() {
-    return {
-      module: 'corroboration',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'passive-signal-fusion-v1',
-    };
-  }
-
   @Get('me')
   @Roles('STUDENT')
   @ApiBearerAuth()

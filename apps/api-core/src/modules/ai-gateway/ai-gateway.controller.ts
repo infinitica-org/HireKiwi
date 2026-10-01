@@ -61,16 +61,6 @@ export class AiGatewayController {
     return this.service.toggleModelVersion(body);
   }
 
-  @Get(`${API_PREFIX}/ai-gateway/_meta`)
-  meta() {
-    return {
-      module: 'ai-gateway',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'active',
-    };
-  }
-
   @Post(`${API_PREFIX}/ai-gateway/complete`)
   @Roles('SUPER_ADMIN', 'INSTITUTION_ADMIN', 'PLACEMENT_STAFF')
   complete(@Body() body: unknown): Promise<AiCompletionResponse> {

@@ -304,13 +304,6 @@ export const quotaExceeded = new Counter({
   registers: [registry],
 });
 
-export const sandboxExecutions = new Counter({
-  name: 'smart_sandbox_executions_total',
-  help: 'Code sandbox executions by language and outcome.',
-  labelNames: ['language', 'outcome'] as const,
-  registers: [registry],
-});
-
 export const certificatesIssued = new Counter({
   name: 'smart_certificates_issued_total',
   help: 'Certificates issued by track and headline tier.',

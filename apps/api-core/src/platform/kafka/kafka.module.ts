@@ -4,7 +4,6 @@ import { CorroborationModule } from '../../modules/corroboration/corroboration.m
 import { SignalEncoderModule } from '../../modules/signal-encoder/signal-encoder.module.js';
 import { CertificateModule } from '../../modules/certificate/certificate.module.js';
 import { NotificationsModule } from '../../modules/notifications/notifications.module.js';
-import { WebhooksModule } from '../../modules/webhooks/webhooks.module.js';
 import { AiCompletionRecordedConsumer } from './ai-completion-recorded.consumer.js';
 import { ApplicationStageChangedConsumer } from './application-stage-changed.consumer.js';
 import { AssessmentSubmittedConsumer } from './assessment-submitted.consumer.js';
@@ -20,13 +19,11 @@ import { KafkaOutboxService } from './kafka-outbox.service.js';
 import { KafkaService } from './kafka.service.js';
 import { SkillVerificationCompletedConsumer } from './skill-verification-completed.consumer.js';
 import { TrackUpdatedConsumer } from './track-updated.consumer.js';
-import { WebhookDispatchConsumer } from './webhook-dispatch.consumer.js';
 
 @Global()
 @Module({
   imports: [
     NotificationsModule,
-    WebhooksModule,
     CertificateModule,
     AssessmentModule,
     CorroborationModule,
@@ -44,7 +41,6 @@ import { WebhookDispatchConsumer } from './webhook-dispatch.consumer.js';
     AuditRecordedConsumer,
     AiCompletionRecordedConsumer,
     EvalCompletedConsumer,
-    WebhookDispatchConsumer,
     CandidateSkillsDiscoveredConsumer,
     SignalIngestedEncoderConsumer,
     SkillVerificationCorroborationConsumer,
