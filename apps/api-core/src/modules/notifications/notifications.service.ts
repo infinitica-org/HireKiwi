@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
 import type {
@@ -16,6 +16,7 @@ import {
 } from '../../platform/mailer/mailer.types.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/index.js';
+import { NotificationPreferencesService } from './notification-preferences.service.js';
 
 export interface NotifyParams {
   readonly userId: string;
@@ -42,6 +43,9 @@ export class NotificationsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @InjectQueue(EMAIL_QUEUE) private readonly emailQueue: Queue<EmailJobPayload>,
+    @Optional()
+    @Inject(NotificationPreferencesService)
+    private readonly preferences?: NotificationPreferencesService,
   ) {}
 
   async notify(params: NotifyParams): Promise<NotificationDto> {
@@ -51,6 +55,10 @@ export class NotificationsService {
       });
       if (existing) return toNotificationDto(existing);
     }
+
+    // S6-VV-121: a muted in-app channel still keeps the history row, just already read (no badge).
+    const muted: ReadonlySet<string> =
+      (await this.preferences?.mutedChannels(params.userId, params.kind)) ?? new Set();
 
     let row;
     try {
@@ -62,6 +70,7 @@ export class NotificationsService {
           body: params.body,
           linkUrl: params.linkUrl ?? null,
           dedupeKey: params.dedupeKey ?? null,
+          readAt: muted.has('IN_APP') ? new Date() : null,
           metadata: (params.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
         },
       });
@@ -76,7 +85,7 @@ export class NotificationsService {
       throw error;
     }
 
-    if (params.email && params.emailTemplate && params.emailData) {
+    if (params.email && params.emailTemplate && params.emailData && !muted.has('EMAIL')) {
       await this.emailQueue.add(
         'send',
         { to: params.email, template: params.emailTemplate, data: params.emailData },

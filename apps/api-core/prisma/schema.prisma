@@ -301,6 +301,12 @@ enum AtsStage {
   WITHDRAWN
 }
 
+/// S6-VV-121 — delivery channel for notification preferences.
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+}
+
 enum NotificationKind {
   OPPORTUNITY
   STAGE_CHANGE
@@ -565,6 +571,7 @@ model User {
   jobOpeningsCreated                   JobOpening[]                  @relation("JobOpeningCreatedBy")
   matchRunsRequested                   MatchRun[]                    @relation("MatchRunRequestedBy")
   notifications                        Notification[]
+  notificationPreferences              NotificationPreference[]
   workExperiences                      WorkExperience[]
   candidateCertificates                CandidateCertificate[]
   candidateEducations                  CandidateEducation[]
@@ -1808,6 +1815,20 @@ model Notification {
   @@index([userId, readAt])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+/// S6-VV-121 (#434) — a channel the user turned off (or back on) for one notification kind.
+/// No row means enabled. ACCOUNT and TRUST_ENFORCEMENT ignore these (mandatory).
+model NotificationPreference {
+  userId    String              @map("user_id") @db.Uuid
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      NotificationKind
+  channel   NotificationChannel
+  enabled   Boolean
+  updatedAt DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@id([userId, kind, channel])
+  @@map("notification_preferences")
 }
 
 model CognitiveProfile {

@@ -4,6 +4,7 @@ import { DataRequestsCard } from '@/components/account/DataRequestsCard';
 import { DeactivateAccountCard } from '@/components/account/DeactivateAccountCard';
 import { DiscoverabilityCard } from '@/components/account/DiscoverabilityCard';
 import { MessagingPreferenceCard } from '@/components/account/MessagingPreferenceCard';
+import { NotificationPreferencesCard } from '@/components/account/NotificationPreferencesCard';
 import { PersonalInfoCard } from '@/components/account/PersonalInfoCard';
 import { ProfileViewsSettingCard } from '@/components/account/ProfileViewsSettingCard';
 import { VisibilitySettingsCard } from '@/components/public-profile/visibility-settings-card';
@@ -23,6 +24,7 @@ export default function SettingsPage() {
       <VisibilitySettingsCard />
       <DiscoverabilityCard />
       <MessagingPreferenceCard />
+      <NotificationPreferencesCard />
       <ProfileViewsSettingCard />
       <DataRequestsCard />
       <DeactivateAccountCard />
