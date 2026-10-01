@@ -52,6 +52,7 @@ import { ConfigModule } from './platform/config/config.module.js';
 import { AuditModule } from './platform/audit/audit.module.js';
 import { env } from './platform/config/env.js';
 import { HealthModule } from './platform/health/health.module.js';
+import { IntegrationHealthModule } from './modules/integration-health/integration-health.module.js';
 import { KafkaModule } from './platform/kafka/kafka.module.js';
 import { MailerModule } from './platform/mailer/mailer.module.js';
 import { PrismaModule } from './platform/prisma/prisma.module.js';
@@ -79,6 +80,7 @@ import { StorageModule } from './platform/storage/storage.module.js';
     MailerModule,
     QueueModule,
     HealthModule,
+    IntegrationHealthModule,
     RateLimitModule,
     AuthModule,
     UsersModule,

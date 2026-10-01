@@ -73,6 +73,25 @@ export const authzDeniedTotal = new Counter({
   registers: [registry],
 });
 
+/* --------------------------- third-party health --------------------------- */
+
+/** S6-VV-129 — 1 when the last probe of a configured integration succeeded, 0 when it failed. */
+export const integrationUp = new Gauge({
+  name: 'smart_integration_up',
+  help: 'Third-party integration reachable on the last probe (1) or not (0); configured ones only.',
+  labelNames: ['integration'] as const,
+  registers: [registry],
+});
+
+/** S6-VV-129 — how long each integration probe took. */
+export const integrationProbeDuration = new Histogram({
+  name: 'smart_integration_probe_duration_seconds',
+  help: 'Duration of third-party integration health probes.',
+  labelNames: ['integration'] as const,
+  buckets: [0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+  registers: [registry],
+});
+
 /* ------------------------------ rate limiting ----------------------------- */
 
 export const rateLimitRejections = new Counter({
