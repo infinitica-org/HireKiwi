@@ -48,6 +48,7 @@ export * from './dto/auth.dto.js';
 export * from './dto/company-team.dto.js';
 export * from './dto/company-review.dto.js';
 export * from './dto/student-jobs.dto.js';
+export * from './dto/employer-jobs.dto.js';
 export * from './dto/messaging.dto.js';
 export * from './dto/applications.dto.js';
 export * from './dto/candidate-workflow.dto.js';
