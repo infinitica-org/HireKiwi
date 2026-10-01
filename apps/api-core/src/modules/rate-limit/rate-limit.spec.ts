@@ -151,6 +151,79 @@ describe('RateLimitService', () => {
     expect(decision.limit).toBe(100);
     expect(decision.count).toBe(5);
   });
+
+  it('resolves dynamic Redis override when configured for an institution', async () => {
+    const instId = '11111111-1111-4111-8111-111111111111';
+    const override = {
+      institutionId: instId,
+      policyKey: 'role.student',
+      limit: 500,
+      burst: 100,
+      windowSeconds: 120,
+    };
+    const redis = {
+      get: vi.fn(async (key: string) => {
+        if (key === `rl:override:${instId}:role.student`) {
+          return JSON.stringify(override);
+        }
+        return null;
+      }),
+      eval: vi.fn(async () => [1, 10, 1_771_574_400]),
+    };
+    const service = new RateLimitService(redis as never, { enqueueEnvelope: vi.fn() } as never);
+    const decision = await service.consume(
+      'role.student',
+      instId,
+      'INSTITUTION_ADMIN',
+      '/tpo/students',
+    );
+    expect(decision.allowed).toBe(true);
+    expect(decision.limit).toBe(500);
+    expect(decision.policy.burst).toBe(100);
+    expect(decision.policy.windowSeconds).toBe(120);
+    expect(redis.get).toHaveBeenCalledWith(`rl:override:${instId}:role.student`);
+  });
+
+  it('safely falls back to default static policy when Redis override is malformed or throws', async () => {
+    const instId = '11111111-1111-4111-8111-111111111111';
+    const redis = {
+      get: vi.fn(async () => '{ invalid-json'),
+      eval: vi.fn(async () => [1, 10, 1_771_574_400]),
+    };
+    const service = new RateLimitService(redis as never, { enqueueEnvelope: vi.fn() } as never);
+    const decision = await service.consume('role.student', instId, 'STUDENT', '/student/dashboard');
+    expect(decision.allowed).toBe(true);
+    expect(decision.limit).toBe(60); // standard default for role.student
+  });
+
+  it('ensures override for Institution A does not affect Institution B', async () => {
+    const instA = '11111111-1111-4111-8111-111111111111';
+    const instB = '22222222-2222-4222-8222-222222222222';
+    const redis = {
+      get: vi.fn(async (key: string) => {
+        if (key === `rl:override:${instA}:role.student`) {
+          return JSON.stringify({ limit: 500, burst: 100, windowSeconds: 120 });
+        }
+        return null;
+      }),
+      eval: vi.fn(async () => [1, 10, 1_771_574_400]),
+    };
+    const service = new RateLimitService(redis as never, { enqueueEnvelope: vi.fn() } as never);
+    const decisionA = await service.consume(
+      'role.student',
+      instA,
+      'INSTITUTION_ADMIN',
+      '/tpo/students',
+    );
+    const decisionB = await service.consume(
+      'role.student',
+      instB,
+      'INSTITUTION_ADMIN',
+      '/tpo/students',
+    );
+    expect(decisionA.limit).toBe(500);
+    expect(decisionB.limit).toBe(60);
+  });
 });
 
 describe('RateLimitInterceptor', () => {

@@ -259,6 +259,9 @@ import {
   UniversityContactRequestDtoSchema,
   type ConnectPartnerUniversityRequest,
   type RequestUniversityContactRequest,
+  type SetRateLimitOverrideRequest,
+  ListRateLimitPoliciesResponseSchema,
+  RateLimitOverrideDtoSchema,
   PlatformAdminDtoSchema,
   InstitutionStudentDtoSchema,
   IntegrityQueueItemDtoSchema,
@@ -1294,6 +1297,15 @@ export function onboardingApi(client: SmartApiClient) {
       client.post(prefixed(`/admin/levels/${levelId}/cut-scores`), body, {
         schema: AdminCutScoreDtoSchema,
       }),
+
+    publishCutScores: (levelId: string) =>
+      client.post(
+        prefixed(`/admin/levels/${levelId}/cut-scores/publish`),
+        {},
+        {
+          schema: ListAdminCutScoresResponseSchema,
+        },
+      ),
 
     listGradingQueue: (query?: { page?: number; pageSize?: number }) =>
       client.get(prefixed('/admin/grading-queue'), {
@@ -2857,6 +2869,29 @@ function campusApi(client: SmartApiClient) {
   };
 }
 
+export function rateLimitsApi(client: SmartApiClient) {
+  return {
+    listPolicies: (query?: { institutionId?: string }) =>
+      client.get(prefixed('/admin/rate-limits/policies'), {
+        schema: ListRateLimitPoliciesResponseSchema,
+        query,
+      }),
+
+    setOverride: (institutionId: string, policyKey: string, body: SetRateLimitOverrideRequest) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed(`/admin/rate-limits/overrides/${institutionId}/${policyKey}`),
+        body,
+        schema: RateLimitOverrideDtoSchema,
+      }),
+
+    deleteOverride: (institutionId: string, policyKey: string) =>
+      client.delete(prefixed(`/admin/rate-limits/overrides/${institutionId}/${policyKey}`), {
+        schema: z.object({ success: z.boolean() }),
+      }),
+  };
+}
+
 export function createSmartApi(client: SmartApiClient) {
   return {
     auth: authApi(client),
@@ -2884,6 +2919,7 @@ export function createSmartApi(client: SmartApiClient) {
     messaging: messagingApi(client),
     campus: campusApi(client),
     adminApplications: adminApplicationsApi(client),
+    rateLimits: rateLimitsApi(client),
   };
 }
 

@@ -950,6 +950,10 @@ export const IntegrityQueueItemDtoSchema = z.object({
   severity: IntegrityScoreBandSchema,
   /** Most recent violation kind on record for this attempt, if any (cheap evidence hint). */
   flagReason: z.string().nullable(),
+  /** Numeric integrity score computed from recorded violations (0..100). */
+  integrityScore: z.number().int().nonnegative().optional(),
+  /** Timestamp of the most recent classified integrity violation event, if any. */
+  latestViolationAt: IsoDateTimeSchema.nullable().optional(),
 });
 export type IntegrityQueueItemDto = z.infer<typeof IntegrityQueueItemDtoSchema>;
 

@@ -134,6 +134,18 @@ To ensure high security while protecting backend databases from token validation
 
 Target Capacity: **1 Million Active Candidates per Placement Season** with a peak concurrency of **50,000 active test takers**.
 
+### 3.0 Infrastructure Hosting Topology — Unified High-End Linux VPS with Blue-Green Deployment
+
+> **Infrastructure Directive:** SMART is deployed on a dedicated, high-performance Linux VPS (Ubuntu 24.04: 32 vCPU, 128 GB RAM, NVMe storage), hosting both Production and Development in strictly isolated Docker Compose projects with automated **Blue-Green Zero-Downtime Deployment**.
+>
+> - **Unified Host:** Single high-end VPS running Caddy reverse proxy on host ports 80/443.
+> - **Production Slice (`becomesmart.online`):** Managed via `smart-prod-blue` and `smart-prod-green` slices. Caddy dynamically shifts live traffic between Blue and Green slots upon health check pass (`GET /health`), ensuring 0 ms downtime and instant rollback capability.
+> - **Development Slice (`dev.becomesmart.online`):** Managed via `smart-dev`, completely isolated on its own network and separate PostgreSQL/Redis volumes on the same host.
+> - **Network Isolation:** PostgreSQL 16 (5432), Redis 7 (6379), Redpanda (19092), and MinIO (9000) are strictly bound to `127.0.0.1` and accessible only via SSH tunnels (`ssh -L`).
+> - **Edge Protection:** Cloudflare Edge Anycast DNS, TLS 1.3, WAF, and DDoS mitigation ahead of Caddy.
+> - **AWS Cloud-Migration Bridge:** Built following 12-factor cloud principles. All database connections, object storage, and event streams use decoupled environment variables (`DATABASE_URL`, `REDIS_URL`, `KAFKA_BROKERS`, `S3_ENDPOINT`), enabling a seamless zero-code-change migration to AWS (ECS Fargate, RDS PostgreSQL Multi-AZ with pgvector, ElastiCache, MSK, and S3).
+> - **Regulatory Compliance:** Strict Indian DPDP Act 2023 alignment. No Aadhaar or PAN numbers are collected or stored in the database. Proctoring telemetry is downsampled to periodic snapshots and purged after 30 days.
+
 ````
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                             EDGE GATEWAY LAYER                              │

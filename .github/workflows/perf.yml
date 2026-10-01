@@ -1,12 +1,9 @@
 name: Performance
 
-# Manual-trigger by default. ci.yml already documents the self-hosted runner
-# (`kvm2`, 2 vCPU / 8 GB) as also running the live dev stack — an automatic
-# load/stress/spike/soak run on every PR would contend with that. Smoke is
-# cheap enough (15 VUs, 3 min) to also run on `workflow_dispatch` for a PR,
-# but nothing here fires on `pull_request`/`push` by default. Flip that on
-# deliberately (see the commented triggers below) once the runner has
-# capacity, or point RUNS_ON at a dedicated runner.
+# Manual-trigger by default. Load, stress, spike, and soak runs require
+# dedicated capacity to avoid resource contention with active dev/prod stacks.
+# Smoke is cheap enough (15 VUs, 3 min) to run on `workflow_dispatch` for a PR.
+# Run on-demand or during scheduled performance testing windows.
 on:
   workflow_dispatch:
     inputs:

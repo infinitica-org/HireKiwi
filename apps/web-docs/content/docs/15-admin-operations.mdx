@@ -1,0 +1,39 @@
+---
+title: 15. Administration & Operations
+description: Admin operations console, trust and safety protocols, user management, and incident response playbooks.
+---
+
+## 15.1 Admin Mission Control (`admin.becomesmart.online`)
+
+The Admin Console provides platform operations, security auditors, and system architects with high-privilege tooling to manage tenants, inspect audit logs, and oversee verification integrity.
+
+```
+[Tenancy Manager] │ [Trust & Safety Queue] │ [Model Governance] │ [Audit Explorer]
+```
+
+---
+
+## 15.2 Trust & Safety Moderation Queue
+
+When the MediaPipe proctoring sidecar detects anomalies during active defense sessions:
+
+- **Trigger Rules:** More than 3 sustained gaze deviations, appearance of secondary face in frame for $> 5$ seconds, or continuous window focus loss.
+- **Review Interface:** Evaluators inspect anonymized downsampled frames alongside the generated audio defense transcript.
+- **Disposition Options:**
+  1. `DISMISS`: False positive (e.g., student looked down at physical notebook).
+  2. `INVALIDATE_ATTEMPT`: Candidate granted a proctored re-take.
+  3. `SUSPEND_CANDIDATE`: Proven malicious impersonation or third-party proxy assistance.
+
+---
+
+## 15.3 Global Audit Logs & Compliance Monitoring
+
+Every administrative action (manual tier override, tenant suspension, data purge request) produces a cryptographically signed audit log record containing actor ID, IP address, timestamp, previous state, and justification.
+
+---
+
+## 15.4 Operational Incident Playbooks
+
+- **P0 Outage (API Core Unreachable):** Auto-failover via Caddy reverse proxy to parallel Blue-Green slot.
+- **P1 Degradation (LLM API Latency):** Circuit breaker trips to deterministic taxonomy regex matching engine without disrupting placement drives.
+- **P1 Security Incident (Suspected Token Leakage):** Global invalidation of active JWT sessions via Redis blacklist cache reload.

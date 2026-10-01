@@ -1,0 +1,96 @@
+---
+title: 23. Billing & Commercial Model
+description: Commercial tier structures, employer subscription plans, the four canonical entitlement quotas, billing state machines, and invoice compliance.
+---
+
+## 23.1 Monetization & Value Architecture
+
+SmartZen operates on a B2B employer subscription and enterprise contract model (PRD Module `BIL-01`). The platform connects universities, students, and employers around verified, evidence-backed capabilities:
+
+```
+[Universities] ──► Free Baseline Campus Tier / Enterprise Institutional Partnerships (UNI-01)
+[Employers]    ──► Tiered Subscriptions & Custom Enterprise Contracts (BIL-01)
+[Students]     ──► 100% Free Lifetime Portfolio, Verification & Career Access (STU-01)
+```
+
+In accordance with PRD non-goals (`Overview 3.7`), student-paid plans and candidate fee-gating are strictly out of scope. Candidates never pay to build their evidence-backed talent profiles, undergo verification, or receive opportunities.
+
+---
+
+## 23.2 Employer Subscription Tiers & Entitlements
+
+In strict compliance with `FR-BIL-01.08` and `@smart/contracts` (`QUOTA_DIMENSIONS`), SmartZen enforces exactly four canonical plan entitlements:
+1. **`ACTIVE_JOBS`**: Limit on concurrently published job requisitions (`JOB-01`).
+2. **`CANDIDATE_SEARCHES`**: Limit on discoverable student profile searches per billing cycle (`SRC-01`).
+3. **`DIRECT_MESSAGES`**: Limit on direct employer-initiated opportunities and candidate outreach messages (`SRC-02`, `COM-01`).
+4. **`EMPLOYER_SEATS`**: Limit on concurrent recruiter and hiring team member seats (`EMP-02`).
+
+| Entitlement Dimension | FREE Tier | BASIC Tier | PRO Tier | ENTERPRISE Contract |
+| :-------------------- | :-------- | :--------- | :------- | :------------------ |
+| **Active Job Postings** (`ACTIVE_JOBS`) | 1 active job | 5 active jobs | 20 active jobs | Unlimited / Custom Quota |
+| **Candidate Searches** (`CANDIDATE_SEARCHES`) | 20 searches/mo | 250 searches/mo | 1,500 searches/mo | Unlimited Talent Graph Search |
+| **Direct Outreach** (`DIRECT_MESSAGES`) | 5 messages/mo | 50 messages/mo | 300 messages/mo | Unlimited / Negotiated Tier |
+| **Recruiter Seats** (`EMPLOYER_SEATS`) | 1 seat | 3 seats | 10 seats | Unlimited (SSO & Role Scoping) |
+| **Billing Intervals** | N/A | Monthly / Annual | Monthly / Annual | Multi-Year Enterprise Schedule |
+| **ATS Integrations** (`INTG-03`) | CSV Export | Webhook Export | Standard ATS (Greenhouse/Lever) | Custom Bi-Directional Sync |
+| **Support SLA** | Community | Standard (48h) | Priority Business (12h) | Dedicated Account Team & 24/7 SLA |
+
+> [!NOTE]
+> **Privacy Invariant (`FR-INT-01.13` & `SEC-01.07`):** Interview recordings and raw proctoring telemetry are private to candidates and authorized auditors. Employers receive summarized competency evidence, rubric ratings, and source verification proofs, never raw session replays.
+
+---
+
+## 23.3 Billing State Machine & Grace Period Management
+
+Employer subscriptions transition through an automated, audit-logged lifecycle managed by NestJS `BillingService` and BullMQ background workers (`FR-BIL-01.09`):
+
+```
+       ┌───────────────┐
+       │    PENDING    │
+       └───────┬───────┘
+               │ Razorpay Checkout Verified
+       ┌───────▼───────┐
+  ┌───►│    ACTIVE     │◄───────────────────┐
+  │    └───────┬───────┘                    │
+  │            │ Payment Renewal Fails      │ Successful Retry
+  │    ┌───────▼───────┐                    │
+  │    │ GRACE_PERIOD  │────────────────────┘
+  │    └───────┬───────┘
+  │            │ 48h Grace Window Expires (BullMQ Sweep)
+  │    ┌───────▼───────┐
+  │    │   PAST_DUE    │
+  │    └───────┬───────┘
+  │            │ Invoice Unresolved / Admin Termination
+  │    ┌───────▼───────┐
+  └────┤   CANCELED    │
+       └───────┬───────┘
+               │ Retention Expiry
+       ┌───────▼───────┐
+       │    EXPIRED    │
+       └───────────────┘
+```
+
+### Controlled Grace Period (`FR-BIL-01.09`)
+- When a recurring subscription renewal fails, the subscription immediately enters `GRACE_PERIOD` rather than hard termination.
+- A BullMQ delayed job (`BillingGraceExpiryProcessor`) schedules an automated check 48 hours post-failure.
+- During the grace period, active job postings and search access remain uninterrupted while automated payment retry webhooks and employer notification emails are dispatched (`COM-02`).
+- If payment succeeds during grace, state reverts to `ACTIVE`. If unpaid after 48 hours, state transitions to `PAST_DUE`, gating new candidate searches and direct outreach.
+
+---
+
+## 23.4 Quota Enforcement Architecture
+
+Usage quotas are asserted in real time by `BillingService.assertQuota(companyId, dimension)`:
+- Quotas are resolved from the company's active `SubscriptionPlan` or override `EnterpriseContract` (`FR-BIL-01.10`).
+- Atomic increments and reservation tokens prevent race conditions across distributed recruiter seats.
+- When an entitlement limit is reached, the API returns a structured HTTP `403 FORBIDDEN` with error code `SMART_403_QUOTA_EXCEEDED` and the specific dimension exceeded, prompting the employer to upgrade (`FR-BIL-01.06`).
+
+---
+
+## 23.5 Invoicing, Tax & Financial Auditability
+
+In compliance with `FR-BIL-01.04` and `FR-BIL-01.05`:
+- **Payment Gateway:** Razorpay Subscriptions integration with cryptographic HMAC-SHA256 webhook verification.
+- **GST Compliance:** Automated tax breakdown (CGST/SGST/IGST) with company GSTIN snapshotting on every finalized invoice (`EmployerInvoice`).
+- **Immutable PDF Generation:** Invoices render as standardized PDFs with cryptographic checksums, stored in secure S3/MinIO buckets with short-lived presigned download URLs.
+- **Enterprise Contracts (`FR-BIL-01.10`):** Super-administrators can draft, approve, and bind custom enterprise contracts with negotiated pricing, custom quotas, and purchase-order billing terms.

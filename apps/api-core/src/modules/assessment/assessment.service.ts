@@ -1715,13 +1715,15 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
     const violations = classifiedEvents
       .map((event) => this.toStoredViolation(event))
       .filter((v): v is StoredViolation => v !== null);
-    const latestEvent = classifiedEvents[0]?.detail as { kind?: string } | null;
+    const rawLatestEvent = classifiedEvents[0];
+    const latestEvent = rawLatestEvent?.detail as { kind?: string } | null;
     const moreCount = Math.max(0, totalClassifiedEventCount - (latestEvent ? 1 : 0));
     const flagReason = latestEvent?.kind
       ? moreCount > 0
         ? `${latestEvent.kind} (+${moreCount} more)`
         : latestEvent.kind
       : null;
+    const score = integrityScore(violations);
     return {
       attemptId: row.id,
       userId: row.userId,
@@ -1731,8 +1733,10 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
       status: row.status,
       startedAt: row.startedAt.toISOString(),
       completedAt: row.completedAt?.toISOString() ?? null,
-      severity: bandForScore(integrityScore(violations)),
+      severity: bandForScore(score),
       flagReason,
+      integrityScore: score,
+      latestViolationAt: rawLatestEvent ? rawLatestEvent.createdAt.toISOString() : null,
     };
   }
 

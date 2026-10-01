@@ -35,7 +35,6 @@ export default async function Page({ params, searchParams }: PageProps) {
   const { id } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const sig = resolvedSearchParams?.sig;
-  const sigHash = resolvedSearchParams?.sig ?? resolvedSearchParams?.hash;
 
   // Adversarial Test 2: Request non-existent certificate UUID or malformed UUID
   // Return 404 page without leaking stack traces
@@ -45,13 +44,14 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   // Adversarial Test 1: Signature tampering check (client-side hash param)
   let isTampered = false;
-  if (sigHash && sigHash !== sig) {
-    const isValidSignature = verifyCertificateSignature(id, sigHash);
+  const hashToCheck = resolvedSearchParams?.hash ?? sig;
+  if (hashToCheck) {
+    const isValidSignature = verifyCertificateSignature(id, hashToCheck);
     if (!isValidSignature) {
       isTampered = true;
       // Log security event for tamper attempt
       console.error(
-        `[SECURITY_EVENT] Tampered certificate signature hash detected for ID: ${id}. Given signature hash: ${sigHash}`,
+        `[SECURITY_EVENT] Tampered certificate signature hash detected for ID: ${id}. Given signature hash: ${hashToCheck}`,
       );
     }
   }

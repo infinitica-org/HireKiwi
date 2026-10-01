@@ -1,0 +1,104 @@
+---
+title: 04. Core Domain — Talent Evidence
+description: The foundational evidence model, active vs passive sources, provenance hashing, and confidence calibration.
+---
+
+## 4.1 The Evidence Model
+
+In SmartZen, **evidence is the atomic unit of capability representation**. A talent profile does not store raw assertions; it maintains an append-only directed acyclic graph (DAG) of verified evidence nodes.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                          EVIDENCE ENTITY MODEL                         │
+├────────────────────────────────────────────────────────────────────────┤
+│ • evidenceId: UUID (Primary Key)                                       │
+│ • candidateId: UUID (Foreign Key)                                      │
+│ • evidenceType: ACTIVE_DEMONSTRATION | PASSIVE_ARTIFACT | CREDENTIAL   │
+│ • sourceProvider: GITHUB | INSTITUTION_LMS | PROCTORED_SESSION | ATS   │
+│ • rawPayloadUri: S3 Encrypted URI                                      │
+│ • provenanceHash: SHA-256 (Artifact Digest + Timestamps + Identity)   │
+│ • confidenceScore: Float (0.00 to 1.00)                                │
+│ • verificationStatus: PENDING | VERIFIED | REJECTED | REVOKED          │
+│ • verifiedAt: ISO8601 Timestamp                                        │
+│ • verifiedBy: VIVI_AGENT | HUMAN_AUDITOR                               │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 4.2 Evidence Types
+
+### 1. Active Demonstration Evidence
+
+Generated in real time under authenticated platform observation:
+
+- **Interactive Code Defense:** Candidate answers dynamic probes about repository commits.
+- **Proctored Coding Challenges:** Real-time problem solving with server-side keystroke and syntax tree logging.
+- **Structured AI Voice Interviews:** Responses to technical architectural inquiries transcribed and evaluated.
+
+### 2. Passive Artifact Evidence
+
+Pre-existing external professional and academic records:
+
+- **Production Repositories:** Git commit history, pull request discussions, AST syntax complexity metrics.
+- **Work Experience Letters:** Employer verification tokens, corporate email validation, authorized HR verification.
+- **Academic Transcripts:** Degree credentials validated via campus registrar integration.
+
+### 3. Third-Party Credentials
+
+- Industry certifications (AWS Certified Solutions Architect, CKA, Google Cloud Professional).
+- Verified credentials issued by accredited testing bodies with cryptographic public keys.
+
+---
+
+## 4.3 Evidence Provenance & Cryptographic Proof
+
+To prevent impersonation and artifact tampering, every evidence item generates a **Provenance Proof Object**:
+
+```json
+{
+  "evidenceId": "8f3e2b10-6c9a-4e2b-91d1-7c9b8a3e2f10",
+  "candidateId": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+  "artifactSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "originTimestamp": "2026-09-30T14:32:00Z",
+  "source": {
+    "provider": "GITHUB",
+    "repository": "https://github.com/candidate/smartzen-engine",
+    "commitSha": "361bcdd12a78f309a4e61b72a8c3d9021e847c1b",
+    "verifiedAuthorship": true
+  },
+  "hmacSignature": "a7f8e9d0c1b2a3f4e5d6c7b8a9f0e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8"
+}
+```
+
+---
+
+## 4.4 Evidence Lifecycle & Vivi's Verification Pipeline
+
+```
+[SUBMITTED] ──► [VIVI SOURCE INSPECT] ──► [AI DEFENSE / PROBE] ──► [VERIFIED] ──► [INDEXED]
+     │                   │                       │
+     ▼                   ▼                       ▼
+[MALFORMED]         [MANUAL_AUDIT]          [REJECTED]
+```
+
+1. **Submitted:** Artifact URI or repository payload registered by candidate.
+2. **Vivi Source Inspection:** Vivi agent connects to the authentic external data source (SIS, GitHub, corporate domain, Credly), checks AST syntax tree, and validates commit/credential authenticity.
+3. **Defended:** For technical projects, the interactive AI project defense interview (`INT-01`) validates candidate comprehension.
+4. **Verified:** HMAC signature issued; evidence linked to competency taxonomy with verified confidence score ($C$).
+5. **Indexed:** Semantic vector embeddings generated in PostgreSQL `pgvector`.
+
+---
+
+## 4.5 Evidence Confidence Scoring
+
+Confidence is modeled as a Bayesian probability reflecting evidence strength and recency:
+
+```text
+Confidence = (w_s * S_source) + (w_d * D_demonstration) + (w_r * R_recency) - P_anomalies
+```
+
+- `S_source`: Source authority weight (Institutional registrar = 1.0; Verified GitHub = 0.85; Unverified upload = 0.20).
+- `D_demonstration`: Active defense score (0.0 to 1.0).
+- `R_recency`: Exponential time decay (decay factor = 0.95 per year elapsed).
+- `P_anomalies`: Proctoring penalties (tab switches, webcam drops).
