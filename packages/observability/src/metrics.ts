@@ -51,6 +51,28 @@ export const fileScansTotal = new Counter({
   registers: [registry],
 });
 
+/* -------------------------------- security -------------------------------- */
+
+/**
+ * S6-VV-126 — security-relevant audit events, counted where they are audited
+ * (`AuditPublisherService`). `action` is a fixed allowlist; `reason` is only set
+ * for failed logins, from their closed set of reason codes.
+ */
+export const securityEventsTotal = new Counter({
+  name: 'smart_security_events_total',
+  help: 'Security-relevant audit events by action (and login failure reason).',
+  labelNames: ['action', 'reason'] as const,
+  registers: [registry],
+});
+
+/** S6-VV-126 — requests refused by RolesGuard (role or permission), by route template. */
+export const authzDeniedTotal = new Counter({
+  name: 'smart_authz_denied_total',
+  help: 'Requests refused by the role/permission guard, by route template and caller role.',
+  labelNames: ['route', 'role'] as const,
+  registers: [registry],
+});
+
 /* ------------------------------ rate limiting ----------------------------- */
 
 export const rateLimitRejections = new Counter({

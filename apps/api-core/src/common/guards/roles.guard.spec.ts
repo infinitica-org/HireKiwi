@@ -1,6 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
+import { registry } from '@smart/observability';
 import { IS_PUBLIC_KEY } from './public.decorator.js';
 import { PERMISSIONS_KEY } from './permissions.js';
 import { ROLES_KEY } from './roles.decorator.js';
@@ -102,5 +103,27 @@ describe('RolesGuard with @RequirePermission (S6-VV-99)', () => {
   it('still lets public routes through regardless of permissions', () => {
     const guard = new RolesGuard(reflector(true, undefined, ['audit.read']) as never);
     expect(guard.canActivate(contextWithUser(undefined))).toBe(true);
+  });
+
+  it('counts each refusal by route template and role (S6-VV-126)', async () => {
+    const denied = async () =>
+      (await registry.getMetricsAsJSON())
+        .find((m) => m.name === 'smart_authz_denied_total')
+        ?.values.find(
+          (v) => v.labels.route === '/api/v1/admin/users/:id' && v.labels.role === 'STUDENT',
+        )?.value ?? 0;
+    const before = await denied();
+    const student: RequestUser = { sub: 's', role: 'STUDENT', inst: null };
+    const context = {
+      ...contextWithUser(student),
+      switchToHttp: () => ({
+        getRequest: () => ({ user: student, routeOptions: { url: '/api/v1/admin/users/:id' } }),
+      }),
+    } as ExecutionContext;
+
+    expect(() =>
+      new RolesGuard(reflector(false, ['SUPER_ADMIN']) as never).canActivate(context),
+    ).toThrow(ForbiddenException);
+    expect(await denied()).toBe(before + 1);
   });
 });
