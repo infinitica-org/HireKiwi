@@ -78,6 +78,8 @@ import {
   CompanyMemberSchema,
   CompanyProfileSchema,
   ListCompanyMembersResponseSchema,
+  ListCompanyJoinRequestsResponseSchema,
+  type RejectCompanyJoinRequestRequest,
   CompanyReviewSchema,
   ListCompanyReviewsResponseSchema,
   type RespondToReviewRequest,
@@ -2563,6 +2565,26 @@ function employerApi(client: SmartApiClient) {
 
     listMembers: () =>
       client.get(prefixed('/employer/members'), { schema: ListCompanyMembersResponseSchema }),
+
+    /** S6-VV-108: pending requests to join the company (owners only). */
+    listJoinRequests: () =>
+      client.get(prefixed('/employer/join-requests'), {
+        schema: ListCompanyJoinRequestsResponseSchema,
+      }),
+
+    approveJoinRequest: (joinRequestId: string) =>
+      client.post(
+        prefixed(`/employer/join-requests/${joinRequestId}/approve`),
+        {},
+        {
+          schema: CompanyJoinRequestDtoSchema,
+        },
+      ),
+
+    rejectJoinRequest: (joinRequestId: string, body: RejectCompanyJoinRequestRequest) =>
+      client.post(prefixed(`/employer/join-requests/${joinRequestId}/reject`), body, {
+        schema: CompanyJoinRequestDtoSchema,
+      }),
 
     inviteRecruiter: (body: InviteRecruiterRequest, idempotencyKey: string) =>
       client.post(prefixed('/employer/invitations'), body, {

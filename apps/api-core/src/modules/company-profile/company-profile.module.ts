@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BillingModule } from '../billing/billing.module.js';
 import { InvitationsModule } from '../invitations/invitations.module.js';
+import { CompanyJoinApprovalService } from './company-join-approval.service.js';
 import { CompanyProfileService } from './company-profile.service.js';
 import { CompanyReviewsService } from './company-reviews.service.js';
 import { CompanyTeamService } from './company-team.service.js';
@@ -27,6 +28,7 @@ import { LocationsController } from './locations.controller.js';
     CompanyProfileService,
     CompanyReviewsService,
     CompanyTeamService,
+    CompanyJoinApprovalService,
     IdempotencyService,
     LocationSearchService,
   ],

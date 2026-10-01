@@ -1,5 +1,6 @@
 import { z, EmailSchema, IsoDateTimeSchema, UuidSchema } from './common.js';
 import { COMPANY_MEMBER_ROLES } from '../domain/company-permissions.js';
+import { CompanyJoinRequestDtoSchema } from './company-onboarding.dto.js';
 
 /** EMP-02 — company profile, details and team. Shared by client and server (one Zod schema). */
 
@@ -150,3 +151,15 @@ export const DeactivateCompanyMemberRequestSchema = z.object({
   reason: z.string().trim().max(500).optional(),
 });
 export type DeactivateCompanyMemberRequest = z.infer<typeof DeactivateCompanyMemberRequestSchema>;
+
+/** S6-VV-108 (#341): pending requests to join the caller's company (owners decide). */
+export const ListCompanyJoinRequestsResponseSchema = z.object({
+  requests: z.array(CompanyJoinRequestDtoSchema),
+});
+export type ListCompanyJoinRequestsResponse = z.infer<typeof ListCompanyJoinRequestsResponseSchema>;
+
+export const RejectCompanyJoinRequestRequestSchema = z.object({
+  /** Shown to the requester on their registration page. */
+  reason: z.string().trim().max(500).optional(),
+});
+export type RejectCompanyJoinRequestRequest = z.infer<typeof RejectCompanyJoinRequestRequestSchema>;
