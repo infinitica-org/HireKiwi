@@ -148,6 +148,7 @@ import type {
   UpdateProfileVisibilityRequest,
   UpdatePersonalInfoRequest,
   UpdateMessagingPreferenceRequest,
+  UpdateNotificationPreferencesRequest,
   DiscoverabilityPreference,
   DeactivateAccountRequest,
   CreateDataRequest,
@@ -277,6 +278,7 @@ import {
   ListMyCandidateCertificatesResponseSchema,
   ListMyProjectsResponseSchema,
   ListNotificationsResponseSchema,
+  NotificationPreferencesResponseSchema,
   NextItemDtoSchema,
   NotificationDtoSchema,
   SubmitCertificateEndorsementDecisionResponseSchema,
@@ -2088,6 +2090,20 @@ export function notificationsApi(client: SmartApiClient) {
         method: 'PATCH',
         path: prefixed(`/me/notifications/${notificationId}/read`),
         schema: NotificationDtoSchema,
+      }),
+
+    /** S6-VV-121: every kind × channel; mandatory kinds come back enabled and locked. */
+    getPreferences: () =>
+      client.get(prefixed('/me/notification-preferences'), {
+        schema: NotificationPreferencesResponseSchema,
+      }),
+
+    updatePreferences: (body: UpdateNotificationPreferencesRequest) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed('/me/notification-preferences'),
+        body,
+        schema: NotificationPreferencesResponseSchema,
       }),
   };
 }
