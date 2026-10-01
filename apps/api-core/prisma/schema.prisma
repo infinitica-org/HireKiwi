@@ -1024,6 +1024,18 @@ model KafkaOutbox {
   @@map("kafka_outbox")
 }
 
+/// S6-VV-123 (#592) — consumer-side dedupe for at-least-once Kafka delivery: one row per
+/// (consumer group, envelope eventId) handled. Purged by the retention sweep after 14 days.
+model ConsumedEvent {
+  consumerGroup String   @map("consumer_group")
+  eventId       String   @map("event_id") @db.Uuid
+  consumedAt    DateTime @default(now()) @map("consumed_at") @db.Timestamptz(6)
+
+  @@id([consumerGroup, eventId])
+  @@index([consumedAt])
+  @@map("consumed_events")
+}
+
 enum UsernameStatus {
   RESERVED
   ACTIVE
