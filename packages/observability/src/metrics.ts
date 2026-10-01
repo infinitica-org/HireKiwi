@@ -214,6 +214,24 @@ export const kafkaConsumerLag = new Gauge({
   registers: [registry],
 });
 
+/* ------------------------------ BullMQ queues ------------------------------ */
+
+/** S6-VV-127 — jobs per BullMQ queue (and DLQ) by state, polled every 15 s. */
+export const queueJobs = new Gauge({
+  name: 'smart_queue_jobs',
+  help: 'BullMQ jobs by queue and state (waiting, active, delayed, failed).',
+  labelNames: ['queue', 'state'] as const,
+  registers: [registry],
+});
+
+/** S6-VV-127 — age of the oldest waiting job; a stalled worker shows here before depth does. */
+export const queueOldestWaitingSeconds = new Gauge({
+  name: 'smart_queue_oldest_waiting_seconds',
+  help: 'Age in seconds of the oldest waiting job per BullMQ queue (0 when empty).',
+  labelNames: ['queue'] as const,
+  registers: [registry],
+});
+
 export const cacheOperations = new Counter({
   name: 'smart_cache_operations_total',
   help: 'Redis cache operations by namespace and result.',

@@ -47,6 +47,7 @@ import {
   BULK_WHITELIST_IMPORT_DLQ,
   BULK_WHITELIST_IMPORT_QUEUE,
 } from './queue.names.js';
+import { QueueMetricsCollector } from './queue-metrics.collector.js';
 
 const queues = [
   { name: EMAIL_QUEUE },
@@ -101,7 +102,9 @@ const queues = [
     PdfGenerationProcessor,
     RetentionSweepService,
     RetentionSweepProcessor,
+    { provide: 'QUEUE_NAMES', useValue: queues.map((queue) => queue.name) },
+    QueueMetricsCollector,
   ],
-  exports: [BullModule],
+  exports: [BullModule, QueueMetricsCollector],
 })
 export class QueueModule {}
