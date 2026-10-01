@@ -9,7 +9,7 @@ import { Menu, X, ArrowUpRight } from 'lucide-react';
 
 import smartTextImg from '@smart/ui/assets/images/Logos/WebP/samrt-text.png';
 import { authLoginUrl } from '@/lib/portal-urls';
-import { getClientSession, SessionInfo } from '@/lib/session';
+import { getClientSession, type SessionInfo } from '@/lib/session';
 
 interface NavItem {
   label: string;

@@ -22,6 +22,7 @@ import {
   SMART_TOPICS,
   TIER_RANK,
   TrackCodeSchema,
+  VerifiedSkillSummarySchema,
   type CandidateMatchDto,
   type CertifiableTier,
   type CreateMatchRunResponse,
@@ -1564,10 +1565,14 @@ export class MatchingService {
     const targetVector = [0.7, 0.7, 0.6, 0.5, 0.5, 0.67]; // Standard threshold baseline
     const vectorMatches = matchCandidatesWithVectorSimilarity(candidateProfiles, targetVector);
 
+    const profileById = new Map(candidateProfiles.map((profile) => [profile.studentId, profile]));
     return vectorMatches.ranked.map((match) => {
-      const verified = (match.radarBreakdown ?? []).map((rb) => ({
-        skillCode: rb.axis,
-      }));
+      // The candidate's real verified skills, not the radar axes ("Domain A" is not a skill code):
+      // axes here made CandidateMatchDtoSchema.parse throw, so this search answered 500. A skill
+      // the taxonomy no longer knows is dropped instead of failing the whole search.
+      const verified = mapVerifiedSkillsSummary(
+        profileById.get(match.studentId)?.verifiedSkills ?? [],
+      ).filter((skill) => VerifiedSkillSummarySchema.safeParse(skill).success);
       return CandidateMatchDtoSchema.parse({
         studentId: match.studentId,
         studentName: match.studentName,
@@ -1576,7 +1581,7 @@ export class MatchingService {
         highestLevelCleared: match.highestLevelCleared,
         headlineTier: match.headlineTier,
         similarityScore: Math.round(match.cosineSimilarity * 100) / 100,
-        matchScore: Math.min(1, Math.round(match.cosineSimilarity * 100) / 100),
+        matchScore: Math.min(1, Math.round(match.fitScore * 100) / 100),
         method: 'HYBRID',
         explanation: {
           thresholdsMet: [],

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { UniversitySettings } from './UniversitySettings';
 
@@ -56,15 +56,17 @@ describe('UniversitySettings', () => {
 
   it('renders wireframe sections with live data', async () => {
     render(<UniversitySettings />);
+    // The page opens on "Staff & Access"; every section shows under "All Settings".
+    fireEvent.click(await screen.findByRole('button', { name: 'All Settings' }));
     await waitFor(() => {
-      expect(screen.getByText('Verified student email domains')).toBeDefined();
+      expect(screen.getByText(/^Verified student email domains$/i)).toBeDefined();
     });
     expect(screen.getByText('@riverdale.edu')).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Campuses' })).toBeDefined();
     expect(await screen.findByText('Main Campus')).toBeDefined();
     expect(screen.getByText('Primary')).toBeDefined();
     expect(screen.getByText('Riverdale · 3 batches')).toBeDefined();
-    expect(screen.getByText('Employer approval queue')).toBeDefined();
+    expect(screen.getByText(/^Employer approval queue$/i)).toBeDefined();
     expect(screen.getByText('Northline Corp')).toBeDefined();
   });
 });

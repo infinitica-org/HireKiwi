@@ -15,7 +15,6 @@ import {
   ExternalLink,
   GraduationCap,
   Briefcase,
-  Users,
 } from 'lucide-react';
 import { authSignUpUrl, studentAppUrl } from '@/lib/portal-urls';
 
@@ -310,7 +309,7 @@ export default function StudentsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {TIER_STEPS.map((step, idx) => (
+            {TIER_STEPS.map((step, _idx) => (
               <div
                 key={step.tier}
                 className="relative rounded-3xl border border-zinc-200 bg-white p-7 shadow-xs flex flex-col justify-between hover:border-zinc-300 transition-all hover:shadow-md"

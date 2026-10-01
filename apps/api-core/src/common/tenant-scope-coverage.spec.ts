@@ -34,9 +34,6 @@ const ALLOWED: Record<string, string> = {
   'CorroborationAdminController.listReviewFlags': 'filterFlagsForActor keeps actor.inst flags',
   'CorroborationAdminController.resolveReviewFlag': 'assertActorCanAccessFlag checks actor.inst',
   'EvidenceController.createDecision': "keyed to the caller's own id as studentId",
-  'InterviewsController.listScorecards':
-    'KNOWN GAP: in-memory scorecard stub, nothing persisted; must be scoped when it moves to the DB',
-  'InterviewsController.listSlots': "filtered by the caller's own institution/company id",
   'MessagingController.block': SELF,
   'MessagingController.list': SELF,
   'MessagingController.listBlocks': SELF,

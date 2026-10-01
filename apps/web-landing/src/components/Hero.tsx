@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle2, ShieldCheck, TrendingUp, Zap, Search, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { studentAppUrl } from '@/lib/portal-urls';
 
 const WORDS = ['Faster.', 'Verified.', 'Smarter.'] as const;

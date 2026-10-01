@@ -101,6 +101,9 @@ export default function DemoModal() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+      // Anonymous public form with its own Idempotency-Key: there is no session to refresh, and
+      // web-landing doesn't depend on @smart/api-client.
+      // eslint-disable-next-line no-restricted-globals
       const res = await fetch(`${apiUrl}/api/v1/institutions/partnership-requests`, {
         method: 'POST',
         headers: {

@@ -2,21 +2,16 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import Link from 'next/link';
 import {
   CheckCircle2,
   ArrowRight,
   ShieldCheck,
   Search,
-  Filter,
   BarChart3,
   Building2,
-  Users,
   Clock,
   Sparkles,
   ExternalLink,
-  Laptop,
-  Check,
 } from 'lucide-react';
 import { authLoginUrl } from '@/lib/portal-urls';
 import { useDemoModal } from '@/context/DemoModalContext';
