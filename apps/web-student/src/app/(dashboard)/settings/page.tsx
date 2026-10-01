@@ -3,6 +3,7 @@
 import { DataRequestsCard } from '@/components/account/DataRequestsCard';
 import { DeactivateAccountCard } from '@/components/account/DeactivateAccountCard';
 import { DiscoverabilityCard } from '@/components/account/DiscoverabilityCard';
+import { EvidenceUsageCard } from '@/components/account/EvidenceUsageCard';
 import { MessagingPreferenceCard } from '@/components/account/MessagingPreferenceCard';
 import { PersonalInfoCard } from '@/components/account/PersonalInfoCard';
 import { ProfileViewsSettingCard } from '@/components/account/ProfileViewsSettingCard';
@@ -24,6 +25,7 @@ export default function SettingsPage() {
       <DiscoverabilityCard />
       <MessagingPreferenceCard />
       <ProfileViewsSettingCard />
+      <EvidenceUsageCard />
       <DataRequestsCard />
       <DeactivateAccountCard />
     </div>

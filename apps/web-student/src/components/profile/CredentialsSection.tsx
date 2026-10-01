@@ -169,6 +169,7 @@ export function CredentialsSection() {
     >
       <ProfileSectionHeader
         title={meta.title}
+        evidenceType="CREDENTIAL"
         description={meta.description}
         action={
           !loading && (credentials.length > 0 || showForm) ? (

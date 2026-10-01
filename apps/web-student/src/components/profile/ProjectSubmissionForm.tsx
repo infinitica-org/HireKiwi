@@ -302,6 +302,7 @@ export function ProjectSubmissionForm() {
     >
       <ProfileSectionHeader
         title={meta.title}
+        evidenceType="PROJECT"
         description={meta.description}
         action={
           canSubmitProjects && displayProjects.length > 0 ? (
