@@ -14,6 +14,7 @@ import { CandidateSkillsDiscoveredConsumer } from '../../modules/assessment/cand
 import { SignalIngestedEncoderConsumer } from '../../modules/signal-encoder/signal-ingested.encoder-consumer.js';
 import { SkillVerificationCorroborationConsumer } from '../../modules/corroboration/skill-verification-corroboration.consumer.js';
 import { EvalCompletedConsumer } from '../../modules/certificate/eval-completed.consumer.js';
+import { ConsumerInbox } from './consumer-inbox.js';
 import { InvitationSentConsumer } from './invitation-sent.consumer.js';
 import { KafkaOutboxService } from './kafka-outbox.service.js';
 import { KafkaService } from './kafka.service.js';
@@ -32,6 +33,7 @@ import { WebhookDispatchConsumer } from './webhook-dispatch.consumer.js';
     SignalEncoderModule,
   ],
   providers: [
+    ConsumerInbox,
     KafkaService,
     KafkaOutboxService,
     AssessmentSubmittedConsumer,

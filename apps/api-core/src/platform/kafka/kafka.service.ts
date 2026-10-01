@@ -1,5 +1,5 @@
 import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Kafka, type Admin, type Consumer, type Producer } from 'kafkajs';
 import {
   consumerGroupFor,
@@ -18,6 +18,7 @@ import {
   logEvent,
 } from '@smart/observability';
 import { env } from '../config/env.js';
+import { ConsumerInbox } from './consumer-inbox.js';
 
 /** How often to recompute consumer-group lag against broker high-water marks. */
 const LAG_POLL_INTERVAL_MS = 15_000;
@@ -43,6 +44,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private readonly subscriptions: Array<{ topic: string; groupId: string }> = [];
   private admin: Admin | null = null;
   private lagPollTimer: ReturnType<typeof setInterval> | null = null;
+
+  constructor(@Optional() @Inject(ConsumerInbox) private readonly inbox?: ConsumerInbox) {}
 
   async onModuleInit(): Promise<void> {
     if (env.NODE_ENV === 'test') return;
@@ -188,11 +191,12 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
           if (headerValue) headers[headerKey] = headerValue.toString();
         }
         try {
-          await params.handler(value, headers);
+          const run = () => params.handler(value, headers);
+          const outcome = this.inbox ? await this.inbox.handle(groupId, value, run) : await run();
           kafkaEventsConsumed.inc({
             topic: params.topic,
             consumer_group: groupId,
-            outcome: 'success',
+            outcome: outcome === 'duplicate' ? 'duplicate' : 'success',
           });
         } catch (error) {
           kafkaEventsConsumed.inc({

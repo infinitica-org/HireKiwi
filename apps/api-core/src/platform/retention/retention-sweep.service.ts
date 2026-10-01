@@ -28,6 +28,12 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
   },
   { category: 'dsr_export_bundles', days: 7, action: 'delete', why: 'S6-VV-115 download window' },
   {
+    category: 'consumed_events',
+    days: 14,
+    action: 'delete',
+    why: 'S6-VV-123 dedupe window; far past any redelivery',
+  },
+  {
     category: 'integrity_events',
     days: 730,
     action: 'report',
@@ -116,6 +122,11 @@ export class RetentionSweepService {
           (await db.emailVerificationToken.deleteMany({ where: expiredTokens(c) })).count +
           (await db.passwordResetToken.deleteMany({ where: expiredTokens(c) })).count +
           (await db.refreshToken.deleteMany({ where: expiredTokens(c) })).count,
+      },
+      consumed_events: {
+        count: (c) => db.consumedEvent.count({ where: { consumedAt: { lt: c } } }),
+        purge: async (c) =>
+          (await db.consumedEvent.deleteMany({ where: { consumedAt: { lt: c } } })).count,
       },
       dsr_export_bundles: {
         count: (c) => db.dataSubjectRequest.count({ where: exportBundles(c) }),
