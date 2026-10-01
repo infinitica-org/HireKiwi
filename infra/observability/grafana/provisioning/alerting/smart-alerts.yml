@@ -1,0 +1,340 @@
+# S6-VV-125 (#581): Grafana-managed alerting, provisioned from files.
+# The destination is config, not code (decision D3): set ALERT_EMAIL_TO and ALERT_WEBHOOK_URL.
+# Every rule links its runbook section in web-docs (delivery/ALERTS).
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: smart-team
+    receivers:
+      - uid: smart-team-email
+        type: email
+        settings:
+          addresses: ${ALERT_EMAIL_TO}
+          singleEmail: true
+      - uid: smart-team-webhook
+        type: webhook
+        settings:
+          url: ${ALERT_WEBHOOK_URL}
+          httpMethod: POST
+
+policies:
+  - orgId: 1
+    receiver: smart-team
+    group_by: [grafana_folder, alertname]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 12h
+    routes:
+      - receiver: smart-team
+        object_matchers: [[severity, "=", critical]]
+        repeat_interval: 1h
+
+groups:
+  - orgId: 1
+    name: smart-critical
+    folder: SMART
+    interval: 1m
+    rules:
+      - uid: smart-api-scrape-down
+        title: "API not scraped (down or rejecting the scrape)"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'up{job="smart-api"}'
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+        for: 2m
+        noDataState: Alerting
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus cannot scrape api-core: the API is down, or /api/v1/admin/metrics rejects the scrape token."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#api-not-scraped
+      - uid: smart-api-5xx-ratio
+        title: "API 5xx ratio above 2%"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'sum(rate(smart_http_requests_total{status_code=~"5.."}[5m])) / clamp_min(sum(rate(smart_http_requests_total[5m])), 1e-9)'
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.02] }
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: "More than 2% of API requests are failing with 5xx."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#api-5xx-ratio
+      - uid: smart-postgres-down
+        title: "Postgres down"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: "pg_up"
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+        for: 1m
+        noDataState: Alerting
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: "postgres-exporter reports the database unreachable (or the exporter is down)."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#postgres-down
+      - uid: smart-redis-down
+        title: "Redis down"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: "redis_up"
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+        for: 1m
+        noDataState: Alerting
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: "redis-exporter reports Redis unreachable: queues, rate limits and sessions are affected."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#redis-down
+      - uid: smart-backup-stale
+        title: "No successful backup in 26 hours"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: "(time() - max(smart_backup_last_success_timestamp_seconds)) and on() (max(smart_backup_enabled) == 1)"
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [93600] }
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backups are enabled but the last successful run is more than 26 hours old."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#backup-stale
+  - orgId: 1
+    name: smart-warning
+    folder: SMART
+    interval: 1m
+    rules:
+      - uid: smart-api-p95-latency
+        title: "API p95 latency above 1.5 s"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: "histogram_quantile(0.95, sum by (le) (rate(smart_http_request_duration_seconds_bucket[5m])))"
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [1.5] }
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "API p95 latency has been above 1.5 s for 10 minutes."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#api-p95-latency
+      - uid: smart-disk-usage
+        title: "Host disk above 85%"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: '1 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"})'
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.85] }
+        for: 15m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "The root filesystem is more than 85% full."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#disk-usage
+      - uid: smart-kafka-lag
+        title: "Kafka consumer lag above 1,000"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: "max by (topic, consumer_group) (smart_kafka_consumer_lag_messages)"
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [1000] }
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "A consumer group is more than 1,000 messages behind."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#kafka-lag
+      - uid: smart-scoring-paused
+        title: "Automated scoring paused"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: "max(smart_automated_scoring_paused)"
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        for: 1m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "Automated scoring is paused (inter-rater agreement fell below threshold); submissions wait for humans."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#scoring-paused
+      - uid: smart-ai-queue-stalled
+        title: "AI queue job waiting over 15 minutes"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'max by (queue) (smart_queue_oldest_waiting_seconds{queue=~"skill_verify_grade|score_recalculation|credential_verification|audio_evaluation|qlix_poll|jd_parse"})'
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [900] }
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "An AI-processing queue has had a job waiting over 15 minutes: its worker may be stalled."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#ai-queue-stalled
+      - uid: smart-dlq-growing
+        title: "Jobs landing in a dead-letter queue"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 1800, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: "sum by (queue) (delta(smart_queue_jobs{queue=~\".*\\\\.dlq\",state=\"waiting\"}[30m]))"
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        for: 0s
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "Jobs exhausted their retries and were dead-lettered in the last 30 minutes."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#dlq-growing

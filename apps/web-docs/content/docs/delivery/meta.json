@@ -2,6 +2,7 @@
   "title": "Delivery & Engineering Protocols",
   "pages": [
     "AGILE_PLAN",
+    "ALERTS",
     "BACKUP_RESTORE",
     "BOOTSTRAP_SIGNOFF",
     "BRANCHING",

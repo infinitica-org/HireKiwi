@@ -569,10 +569,16 @@ services:
     # output (tools/load-tests) push live VU/RPS/latency metrics during a run —
     # see tools/load-tests/README.md. Loopback-only exposure (127.0.0.1 below)
     # keeps this an acceptable local/CI trade-off.
+    # S6-VV-125: api-core rejects metric scrapes without x-metrics-token in production, so the token
+    # is written to a file that prometheus.yml reads (http_headers.files) before Prometheus starts.
+    environment:
+      METRICS_SCRAPE_TOKEN: ${METRICS_SCRAPE_TOKEN:-}
+    entrypoint: ["/bin/sh", "-c"]
     command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.path=/prometheus
-      - --web.enable-remote-write-receiver
+      - >-
+        printf '%s' "$$METRICS_SCRAPE_TOKEN" > /tmp/metrics-token &&
+        exec /bin/prometheus --config.file=/etc/prometheus/prometheus.yml
+        --storage.tsdb.path=/prometheus --web.enable-remote-write-receiver
     volumes:
       - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -594,6 +600,16 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_USERS_DEFAULT_THEME: dark
+      # S6-VV-125: alert delivery (provisioning/alerting). Destination per decision D3; the
+      # defaults send alert email to Mailpit and point the webhook at a discard address.
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@smart.local}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-http://127.0.0.1:9/alert-webhook-not-configured}
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: ${GRAFANA_SMTP_HOST:-mailpit:1025}
+      GF_SMTP_USER: ${GRAFANA_SMTP_USER:-}
+      GF_SMTP_PASSWORD: ${GRAFANA_SMTP_PASSWORD:-}
+      GF_SMTP_FROM_ADDRESS: ${GRAFANA_SMTP_FROM:-alerts@smart.local}
+      GF_SMTP_FROM_NAME: SMART alerts
     ports:
       # Host 3100 (not 3030) — keep Loki on 3101 to avoid collision.
       - "127.0.0.1:${GRAFANA_PORT:-3100}:3000"

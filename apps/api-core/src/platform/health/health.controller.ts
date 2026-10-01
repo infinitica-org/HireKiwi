@@ -1,13 +1,14 @@
 import {
   Controller,
   Get,
-  Header,
   Headers,
   Inject,
+  Res,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import type { FastifyReply } from 'fastify';
 import { API_PREFIX, type HealthStatus } from '@smart/contracts';
 import { collectMetrics, METRICS_CONTENT_TYPE } from '@smart/observability';
 import { Public } from '../../common/guards/public.decorator.js';
@@ -81,8 +82,10 @@ export class HealthController {
 
   @Public()
   @Get(`${API_PREFIX}/admin/metrics`)
-  @Header('content-type', METRICS_CONTENT_TYPE)
-  async metrics(@Headers('x-metrics-token') scrapeToken?: string): Promise<string> {
+  async metrics(
+    @Headers('x-metrics-token') scrapeToken: string | undefined,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<string> {
     const expected = env.METRICS_SCRAPE_TOKEN;
     if (env.NODE_ENV === 'production' || expected) {
       if (!expected || scrapeToken !== expected) {
@@ -93,6 +96,9 @@ export class HealthController {
         });
       }
     }
+    // Set only on success (S6-VV-125): a route-level text/plain header made the JSON 401 body
+    // unserializable, so a bad scrape token came back as a 500.
+    void reply.header('content-type', METRICS_CONTENT_TYPE);
     return collectMetrics();
   }
 }
