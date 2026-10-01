@@ -23,11 +23,19 @@ import {
   type SkillVerifyError,
 } from '@/lib/skill-verify-errors';
 import { releaseProctoringSession } from '@/lib/proctoring/fullscreen';
+import {
+  clearSkillVerifyDraft,
+  readSkillVerifyDraft,
+  writeSkillVerifyDraft,
+} from '@/lib/skill-verify-draft';
 import { ProctoringShell } from '@/components/proctoring/proctoring-shell';
 import { SkillVerifyExam } from './skill-verify-exam';
 import { SkillVerifyLoading } from './skill-verify-loading';
 import { SkillVerifyPendingStep } from './skill-verify-pending-step';
 import { SkillVerifyReport } from './skill-verify-report';
+
+/** S6-VV-162 (#613 F2): unsaved answers go to the server at least this often. */
+export const SKILL_VERIFY_AUTOSAVE_MS = 20_000;
 
 export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
   const router = useRouter();
@@ -49,6 +57,10 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
   const [postAssessment, setPostAssessment] = useState<'summary' | 'pending' | null>(null);
   const [catalogSkillCode, setCatalogSkillCode] = useState<string | null>(null);
   const generateStarted = useRef(false);
+  // S6-VV-162 (#613 F3): a real in-flight flag; the old transition ended before the request did.
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const dirtyRef = useRef(false);
 
   useEffect(() => {
     if (postAssessment) {
@@ -111,7 +123,9 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
       for (const row of started.answers) {
         next[row.index] = { selectedKey: row.selectedKey, text: row.text };
       }
-      setAnswers(next);
+      const draft = readSkillVerifyDraft(started.sessionId);
+      dirtyRef.current = Object.keys(draft).length > 0;
+      setAnswers({ ...next, ...draft });
       setCurrentIndex(0);
     } catch (err) {
       generateStarted.current = false;
@@ -137,6 +151,19 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
   responsesRef.current = responses;
 
   const sessionId = session?.sessionId ?? prepared?.sessionId;
+
+  // Every change is kept on this device at once and counts as unsaved until the server has it.
+  const liveSessionId = session?.sessionId;
+  const firstAnswers = useRef(true);
+  useEffect(() => {
+    if (!liveSessionId) return;
+    if (firstAnswers.current) {
+      firstAnswers.current = false;
+      return;
+    }
+    writeSkillVerifyDraft(liveSessionId, answers);
+    dirtyRef.current = true;
+  }, [liveSessionId, answers]);
   const onLockTerminate = useCallback(async () => {
     if (!sessionId) return Promise.resolve();
     try {
@@ -145,6 +172,7 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
         technicalFailure: false,
         integrityTerminated: true,
       });
+      clearSkillVerifyDraft(sessionId);
       const cooldownIso = res?.claim?.lockedUntil ?? new Date(Date.now() + 86400000).toISOString();
       await releaseProctoringSession();
       setTerminationCooldown(cooldownIso);
@@ -156,26 +184,40 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
   }, [sessionId]);
 
   const save = () => {
-    if (!session) return;
+    if (!session || submittingRef.current) return;
+    dirtyRef.current = false;
     startTransition(() => {
       void (async () => {
         try {
           const next = await api.assessment.saveSkillVerify(session.sessionId, { responses });
           setSession(next);
         } catch (err) {
+          dirtyRef.current = true;
           setError(skillVerifyErrorFromUnknown(err, 'save'));
         }
       })();
     });
   };
 
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(() => {
+    if (!liveSessionId) return;
+    const timer = window.setInterval(() => {
+      if (dirtyRef.current) saveRef.current();
+    }, SKILL_VERIFY_AUTOSAVE_MS);
+    return () => window.clearInterval(timer);
+  }, [liveSessionId]);
+
   const complete = () => {
-    if (!session) return;
+    if (!session || submittingRef.current) return;
     if (!areAllSkillVerifyItemsAnswered(session, answers)) {
       setError(skillVerifyIncompleteError());
       return;
     }
     setError(null);
+    submittingRef.current = true;
+    setSubmitting(true);
     startTransition(() => {
       void (async () => {
         try {
@@ -184,6 +226,7 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
             technicalFailure: false,
             integrityTerminated: false,
           });
+          clearSkillVerifyDraft(session.sessionId);
           if (settled.claim?.status === 'LOCKED' || settled.claim?.lockedUntil) {
             await releaseProctoringSession();
             setTerminationCooldown(
@@ -222,6 +265,9 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
           router.push('/assessments');
         } catch (err) {
           setError(skillVerifyErrorFromUnknown(err, 'submit'));
+        } finally {
+          submittingRef.current = false;
+          setSubmitting(false);
         }
       })();
     });
@@ -331,7 +377,7 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
           session={session}
           currentIndex={currentIndex}
           answers={answers}
-          pending={isPending}
+          pending={isPending || submitting}
           error={error}
           kioskTitle={kioskTitle}
           onSelectKey={(itemIndex, key) =>
