@@ -4744,6 +4744,19 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'POST',
+    path: '/public/company/onboarding/sessions/:sessionToken/join-request',
+    module: 'institutions',
+    owner: 'Vishal V',
+    roles: ['PUBLIC'],
+    rateLimit: 'company.onboarding.submit',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 300,
+    summary:
+      'Ask to join the approved company on the verified work email domain; notifies its owners (S6-VV-107).',
+  },
+  {
+    method: 'POST',
     path: '/public/company/onboarding/sessions/:sessionToken/submit',
     module: 'institutions',
     owner: 'Vishal V',

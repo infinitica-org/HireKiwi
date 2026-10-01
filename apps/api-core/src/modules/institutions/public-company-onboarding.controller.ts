@@ -24,6 +24,7 @@ import {
 } from '@smart/contracts';
 import { Public } from '../../common/guards/public.decorator.js';
 import { CompanyOnboardingDocumentService } from './company-onboarding-document.service.js';
+import { CompanyJoinRequestService } from './company-join-request.service.js';
 import { CompanyOnboardingService } from './company-onboarding.service.js';
 
 @ApiTags('company-onboarding')
@@ -33,6 +34,7 @@ export class PublicCompanyOnboardingController {
     @Inject(CompanyOnboardingService) private readonly onboarding: CompanyOnboardingService,
     @Inject(CompanyOnboardingDocumentService)
     private readonly documents: CompanyOnboardingDocumentService,
+    @Inject(CompanyJoinRequestService) private readonly joinRequests: CompanyJoinRequestService,
   ) {}
 
   @Post('sessions')
@@ -73,6 +75,15 @@ export class PublicCompanyOnboardingController {
   @ApiOperation({ summary: 'Verify corporate email with OTP.' })
   verifyEmail(@Param('sessionToken') sessionToken: string, @Body() body: unknown) {
     return this.onboarding.verifyEmail(sessionToken, VerifyCorporateEmailRequestSchema.parse(body));
+  }
+
+  @Post('sessions/:sessionToken/join-request')
+  @Public()
+  @ApiOperation({ summary: 'Ask to join the approved company on the verified email domain.' })
+  @ApiResponse({ status: 201, description: 'The pending request (an open one is returned again).' })
+  @ApiResponse({ status: 404, description: 'No approved company uses this email domain.' })
+  requestToJoin(@Param('sessionToken') sessionToken: string) {
+    return this.joinRequests.requestToJoin(sessionToken);
   }
 
   @Post('sessions/:sessionToken/submit')

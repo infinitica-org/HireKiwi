@@ -6,6 +6,8 @@ import { ReadinessModule } from '../readiness/readiness.module.js';
 import { AuditLogExportService } from './audit-log-export.service.js';
 import { CompaniesAdminController } from './companies-admin.controller.js';
 import { CompanyOnboardingDocumentService } from './company-onboarding-document.service.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
+import { CompanyJoinRequestService } from './company-join-request.service.js';
 import { CompanyOnboardingService } from './company-onboarding.service.js';
 import { CompaniesService } from './companies.service.js';
 import { PublicCompanyOnboardingController } from './public-company-onboarding.controller.js';
@@ -25,7 +27,13 @@ import { OrganizationsService } from './organizations.service.js';
 import { BulkWhitelistImportProcessor } from './bulk-whitelist-import.processor.js';
 
 @Module({
-  imports: [InvitationsModule, StorageModule, MessagingModule, ReadinessModule],
+  imports: [
+    InvitationsModule,
+    StorageModule,
+    MessagingModule,
+    ReadinessModule,
+    NotificationsModule,
+  ],
   controllers: [
     PlansController,
     InstitutionsAdminController,
@@ -47,6 +55,7 @@ import { BulkWhitelistImportProcessor } from './bulk-whitelist-import.processor.
     OrganizationsService,
     CompanyOnboardingDocumentService,
     CompanyOnboardingService,
+    CompanyJoinRequestService,
     IdempotencyService,
     BulkWhitelistImportProcessor,
   ],

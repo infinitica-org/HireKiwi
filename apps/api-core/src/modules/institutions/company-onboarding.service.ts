@@ -6,6 +6,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import type { Queue } from 'bullmq';
@@ -56,6 +57,7 @@ import {
 } from './company-onboarding.util.js';
 import { CompanyOnboardingDocumentService } from './company-onboarding-document.service.js';
 import { findCompanyDuplicateSignals } from './company-duplicate-signals.js';
+import { CompanyJoinRequestService } from './company-join-request.service.js';
 import {
   requireOnboardingSessionByToken,
   resolveCurrentSessionVerification,
@@ -70,7 +72,7 @@ import { OrganizationsService } from './organizations.service.js';
  */
 const REGISTRATION_CONFLICT_MESSAGES = {
   COMPANY_ALREADY_REGISTERED:
-    'This company is already registered on SMART. Ask one of its owners to invite you to the team instead of registering again.',
+    'This company is already registered on SMART. Start again with your work email on the company domain to ask to join it, or ask one of its owners to invite you to the team.',
   COMPANY_VERIFICATION_PENDING:
     'A registration for this company is already being reviewed. Once it is approved, ask the colleague who applied to invite you to the team.',
   DUPLICATE_REGISTRATION_REVIEW:
@@ -97,6 +99,9 @@ export class CompanyOnboardingService {
     @InjectQueue(EMAIL_QUEUE) private readonly emailQueue: Queue<EmailJobPayload>,
     @Inject(CompanyOnboardingDocumentService)
     private readonly documents: CompanyOnboardingDocumentService,
+    @Optional()
+    @Inject(CompanyJoinRequestService)
+    private readonly joinRequests?: CompanyJoinRequestService,
   ) {}
 
   async startSession(body: StartCompanyOnboardingRequest): Promise<StartCompanyOnboardingResponse> {
@@ -562,7 +567,10 @@ export class CompanyOnboardingService {
             OR: [{ website: { contains: host, mode: 'insensitive' } }, { domain: host }],
           },
         });
-        if (approved) {
+        // S6-VV-107: someone on that company's own email domain may continue, verify their email
+        // and ask to join it; everyone else still gets the conflict.
+        const joinable = approved && (await this.joinRequests?.joinableCompanyFor(workEmail));
+        if (approved && joinable?.companyId !== approved.id) {
           throw this.registrationConflict('COMPANY_ALREADY_REGISTERED');
         }
       }
@@ -659,6 +667,11 @@ export class CompanyOnboardingService {
       },
       verification: draft.verification ?? {},
       documents,
+      joinableCompany:
+        session.emailVerifiedAt && this.joinRequests
+          ? await this.joinRequests.joinableCompanyFor(session.representativeEmail)
+          : null,
+      joinRequest: (await this.joinRequests?.latestForSession(session.id)) ?? null,
       updatedAt: session.updatedAt.toISOString(),
     };
     return CompanyOnboardingSessionDtoSchema.parse(dto);
