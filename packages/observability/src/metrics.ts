@@ -254,6 +254,15 @@ export const queueOldestWaitingSeconds = new Gauge({
   registers: [registry],
 });
 
+/** S6-VV-128 — BullMQ job run time by queue and outcome (completed / retrying / failed). */
+export const queueJobDuration = new Histogram({
+  name: 'smart_queue_job_duration_seconds',
+  help: 'Background job run time by queue and outcome.',
+  labelNames: ['queue', 'outcome'] as const,
+  buckets: [0.05, 0.25, 1, 5, 15, 60, 300],
+  registers: [registry],
+});
+
 export const cacheOperations = new Counter({
   name: 'smart_cache_operations_total',
   help: 'Redis cache operations by namespace and result.',
