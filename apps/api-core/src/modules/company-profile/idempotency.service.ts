@@ -11,6 +11,13 @@ export interface IdempotentOutcome<T> {
 
 const MAX_KEY_LENGTH = 200;
 
+/**
+ * S6-VV-158: a `pending` reservation older than this is treated as stranded (the process died
+ * mid-request, so neither `done` nor the release ever ran) and the next retry takes it over.
+ * Comfortably longer than any request `once()` wraps.
+ */
+export const STALE_RESERVATION_MS = 2 * 60 * 1000;
+
 /** Ledger body written by `once()`: a reservation while running, then the stored response. */
 type OnceBody<T> = { state: 'pending' } | { state: 'done'; result: T };
 
@@ -100,11 +107,9 @@ export class IdempotencyService {
       if (existing && existing.requestHash !== requestHash) throw keyReused();
       const body = existing?.responseBody as OnceBody<T> | null | undefined;
       if (body?.state === 'done') return body.result;
-      throw new ConflictException({
-        error: 'request_in_progress',
-        message: 'This request is already being processed. Wait a moment, then refresh.',
-        statusCode: 409,
-      });
+      if (!existing || !(await this.takeOverStale(identity, existing.createdAt))) {
+        throw this.inProgress();
+      }
     }
 
     let result: T;
@@ -120,6 +125,30 @@ export class IdempotencyService {
       data: { responseBody: done as unknown as Prisma.InputJsonValue },
     });
     return result;
+  }
+
+  private inProgress(): ConflictException {
+    return new ConflictException({
+      error: 'request_in_progress',
+      message: 'This request is already being processed. Wait a moment, then refresh.',
+      statusCode: 409,
+    });
+  }
+
+  /**
+   * Claims a stranded reservation. The `createdAt` match makes it a compare-and-swap, so when two
+   * retries race for the same stale row only one of them gets it; the other answers 409.
+   */
+  private async takeOverStale(
+    identity: { userId: string; scope: string; key: string },
+    reservedAt: Date,
+  ): Promise<boolean> {
+    if (Date.now() - reservedAt.getTime() < STALE_RESERVATION_MS) return false;
+    const { count } = await this.prisma.idempotencyRecord.updateMany({
+      where: { ...identity, createdAt: reservedAt },
+      data: { createdAt: new Date() },
+    });
+    return count === 1;
   }
 
   /** Records a response for flows that cannot run inside one transaction (e.g. invite + email). */

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { IdempotencyService } from './idempotency.service.js';
+import { IdempotencyService, STALE_RESERVATION_MS } from './idempotency.service.js';
 
-type Row = { requestHash: string; responseBody: unknown };
+type Row = { requestHash: string; responseBody: unknown; createdAt: Date };
 
 /** In-memory idempotency_records with the unique (userId, scope, key) constraint. */
 function ledger() {
@@ -13,7 +13,11 @@ function ledger() {
       create: vi.fn(
         async ({ data }: { data: Row & { userId: string; scope: string; key: string } }) => {
           if (rows.has(id(data))) throw Object.assign(new Error('unique'), { code: 'P2002' });
-          rows.set(id(data), { requestHash: data.requestHash, responseBody: data.responseBody });
+          rows.set(id(data), {
+            requestHash: data.requestHash,
+            responseBody: data.responseBody,
+            createdAt: new Date(),
+          });
           return data;
         },
       ),
@@ -35,6 +39,20 @@ function ledger() {
           const row = rows.get(id(where.userId_scope_key)) as Row;
           row.responseBody = data.responseBody;
           return row;
+        },
+      ),
+      updateMany: vi.fn(
+        async ({
+          where,
+          data,
+        }: {
+          where: { userId: string; scope: string; key: string; createdAt: Date };
+          data: { createdAt: Date };
+        }) => {
+          const row = rows.get(id(where));
+          if (!row || row.createdAt.getTime() !== where.createdAt.getTime()) return { count: 0 };
+          row.createdAt = data.createdAt;
+          return { count: 1 };
         },
       ),
       deleteMany: vi.fn(
@@ -109,5 +127,35 @@ describe('IdempotencyService.once (S6-VV-124)', () => {
       status: 409,
       response: expect.objectContaining({ error: 'idempotency_key_reused' }),
     });
+  });
+
+  it('takes over a reservation stranded by a crashed request (S6-VV-158)', async () => {
+    const { service, rows } = ledger();
+    const hung = service.once({ ...base, key: 'k5', execute: () => new Promise(() => undefined) });
+    await Promise.resolve();
+    void hung;
+    const row = rows.get('u-1|account.data-requests.create|k5') as Row;
+    row.createdAt = new Date(Date.now() - STALE_RESERVATION_MS - 1000);
+
+    const execute = vi.fn().mockResolvedValue({ id: 'r-5' });
+    await expect(service.once({ ...base, key: 'k5', execute })).resolves.toEqual({ id: 'r-5' });
+    expect(execute).toHaveBeenCalledOnce();
+    await expect(service.once({ ...base, key: 'k5', execute })).resolves.toEqual({ id: 'r-5' });
+    expect(execute).toHaveBeenCalledOnce();
+  });
+
+  it('lets only one of two racing retries take over a stale reservation', async () => {
+    const { service, rows } = ledger();
+    void service.once({ ...base, key: 'k6', execute: () => new Promise(() => undefined) });
+    await Promise.resolve();
+    (rows.get('u-1|account.data-requests.create|k6') as Row).createdAt = new Date(0);
+
+    const slow = vi.fn(() => new Promise((resolve) => setTimeout(() => resolve({ id: 'r-6' }), 5)));
+    const results = await Promise.allSettled([
+      service.once({ ...base, key: 'k6', execute: slow }),
+      service.once({ ...base, key: 'k6', execute: slow }),
+    ]);
+    expect(slow).toHaveBeenCalledOnce();
+    expect(results.map((r) => r.status).sort()).toEqual(['fulfilled', 'rejected']);
   });
 });
