@@ -690,7 +690,7 @@ describe('S6-VV-148 employer visibility', () => {
           id: studentId,
           fullName: 'Alice Developer',
           primaryTrackCode: 'TECH_FULLSTACK',
-          certificateId: 'cert-1',
+          certificateId: '0c3a1f6e-2b8d-4c5e-9a7f-3d2e1b0c9a8f',
           highestLevelCleared: 3,
           headlineTier: 'GOLD',
           skills: [

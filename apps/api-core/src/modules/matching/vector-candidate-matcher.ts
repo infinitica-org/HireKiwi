@@ -48,6 +48,8 @@ export interface VectorMatchResult {
   readonly highestLevelCleared: LevelNumber;
   readonly headlineTier: CertifiableTier;
   readonly cosineSimilarity: number;
+  /** cosineSimilarity × requirement coverage; what results are ranked by and matchPercentage shows. */
+  readonly fitScore: number;
   readonly matchPercentage: number;
   readonly radarBreakdown: readonly RadarCompetencyAxis[];
   readonly why: string;
@@ -144,6 +146,19 @@ export function buildJobThresholdVector(jd: JdThresholdVector): number[] {
   return vec;
 }
 
+/** Mean share of each required dimension the candidate meets, each capped at 1. */
+export function requirementCoverage(
+  candidate: readonly number[],
+  required: readonly number[],
+): number {
+  if (required.length === 0) return 1;
+  const total = required.reduce((sum, need, i) => {
+    if (need <= 0) return sum + 1;
+    return sum + Math.min(1, (candidate[i] ?? 0) / need);
+  }, 0);
+  return total / required.length;
+}
+
 /**
  * Match candidates using cosine similarity, strictly respecting privacy opt-outs.
  */
@@ -175,7 +190,11 @@ export function matchCandidatesWithVectorSimilarity(
   const results: VectorMatchResult[] = eligibleCandidates.map((c) => {
     const candidateVec = buildCandidateDomainVector(c);
     const sim = cosineSimilarity(candidateVec, jobVector);
-    const matchPercentage = Math.round(sim * 100);
+    // Cosine compares the profile's shape, not its level: a candidate under every requirement in
+    // proportion scores as high as one who exceeds them all. Weight it by how much of each
+    // requirement is met so the stronger candidate ranks first.
+    const fitScore = sim * requirementCoverage(candidateVec, jobVector);
+    const matchPercentage = Math.round(fitScore * 100);
 
     // Build radar breakdown across standard 5 domains
     const domains = ['A', 'B', 'C', 'D', 'E'];
@@ -208,6 +227,7 @@ export function matchCandidatesWithVectorSimilarity(
       highestLevelCleared: c.highestLevelCleared,
       headlineTier: c.headlineTier,
       cosineSimilarity: sim,
+      fitScore,
       matchPercentage,
       radarBreakdown,
       why,
@@ -216,8 +236,7 @@ export function matchCandidatesWithVectorSimilarity(
     };
   });
 
-  // Sort descending by cosine similarity
-  results.sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
+  results.sort((a, b) => b.fitScore - a.fitScore);
 
   const durationMs = performance.now() - startTime;
 
@@ -241,7 +260,7 @@ export function toCandidateMatchDtoFromVector(match: VectorMatchResult): Candida
     highestLevelCleared: match.highestLevelCleared,
     headlineTier: match.headlineTier,
     similarityScore: Math.round(match.cosineSimilarity * 100) / 100,
-    matchScore: Math.min(1, Math.round(match.cosineSimilarity * 100) / 100),
+    matchScore: Math.min(1, Math.round(match.fitScore * 100) / 100),
     method: 'HYBRID',
     explanation: {
       thresholdsMet: [],

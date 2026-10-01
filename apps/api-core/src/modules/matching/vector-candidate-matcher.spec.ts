@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cosineSimilarity,
+  requirementCoverage,
   matchCandidatesWithVectorSimilarity,
   toCandidateMatchDtoFromVector,
   type CandidateVectorProfile,
@@ -122,8 +123,14 @@ describe('Th6-I611: Semantic Vector Candidate Matcher with Privacy Opt-Out Enfor
     expect(candidate?.radarBreakdown[0]?.candidateScore).toBeGreaterThan(0);
     expect(candidate?.radarBreakdown[0]?.requiredScore).toBe(0.7);
 
-    const dto = toCandidateMatchDtoFromVector(candidate!);
+    if (!candidate) throw new Error('expected a candidate');
+    const dto = toCandidateMatchDtoFromVector(candidate);
     expect(dto.method).toBe('HYBRID');
     expect(dto.similarityScore).toBeGreaterThan(0);
+  });
+
+  it('weights similarity by how much of each requirement is met', () => {
+    expect(requirementCoverage([0.9, 0.9], [0.8, 0.6])).toBe(1);
+    expect(requirementCoverage([0.4, 0.6], [0.8, 0.6])).toBeCloseTo(0.75);
   });
 });

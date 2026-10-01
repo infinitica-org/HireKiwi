@@ -9,9 +9,7 @@ import {
   ShieldCheck,
   ArrowRight,
   TrendingUp,
-  CheckCircle2,
   Sparkles,
-  FileCheck2,
   Check,
 } from 'lucide-react';
 

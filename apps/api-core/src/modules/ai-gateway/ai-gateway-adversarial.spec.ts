@@ -103,7 +103,9 @@ describe("Peer Audit: Ramansh's AI Gateway & Reliability Controls", () => {
 
       // 1. Candidate request must not be dropped
       expect(response).toBeDefined();
-      expect(response.auditId).toBe(AUDIT_ID);
+      // Audits are published through the outbox and persisted by the consumer, so the synchronous
+      // response carries no audit id (AiGatewayAuditService.record).
+      expect(response.auditId).toBeNull();
       expect(response.model).toBe('gemini-2.5-pro');
 
       // 2. Fallback provider must be GOOGLE (Gemini)
