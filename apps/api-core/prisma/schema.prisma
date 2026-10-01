@@ -199,6 +199,13 @@ enum CompanyMode {
 }
 
 /// CO self-onboarding applicant progress — mirrors @smart/contracts CompanyOnboardingStatus.
+/// S6-VV-107 — lifecycle of a request to join an existing company.
+enum CompanyJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum CompanyOnboardingStatus {
   DRAFT
   EMAIL_VERIFICATION_PENDING
@@ -1101,6 +1108,7 @@ model Company {
   enterpriseContract    EnterpriseContract?
   profile               CompanyProfile?
   reviews               CompanyReview[]
+  joinRequests          CompanyJoinRequest[]
   campusAccessRequests  CampusAccessRequest[]
   campusAccess          UniversityEmployerAccess[]
 
@@ -1256,6 +1264,30 @@ model IdempotencyRecord {
 
 /// Public company self-onboarding session. Raw session tokens are never stored — only sessionTokenHash.
 /// Company row is linked once the tenant exists (typically before submit with verificationStatus=PENDING).
+/// S6-VV-107 (#340) — someone whose verified work email is on an approved company's domain asks
+/// to join it instead of registering it again. An owner approves (an EMP-02 invitation is sent,
+/// S6-VV-108) or rejects it. One PENDING request per (company, email): partial unique index in
+/// the migration.
+model CompanyJoinRequest {
+  id           String                   @id @default(uuid()) @db.Uuid
+  companyId    String                   @map("company_id") @db.Uuid
+  company      Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  /// The onboarding session that verified `email`; the requester's status page reads it back.
+  sessionId    String                   @map("session_id") @db.Uuid
+  email        String
+  fullName     String                   @map("full_name")
+  status       CompanyJoinRequestStatus @default(PENDING)
+  decidedById  String?                  @map("decided_by_id") @db.Uuid
+  decidedAt    DateTime?                @map("decided_at") @db.Timestamptz(6)
+  reason       String?
+  invitationId String?                  @map("invitation_id") @db.Uuid
+  createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([companyId, status])
+  @@index([sessionId])
+  @@map("company_join_requests")
+}
+
 model CompanyOnboardingSession {
   id                         String                  @id @default(uuid()) @db.Uuid
   companyId                  String?                 @map("company_id") @db.Uuid

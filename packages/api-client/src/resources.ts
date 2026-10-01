@@ -282,6 +282,7 @@ import {
   SubmitCertificateEndorsementDecisionResponseSchema,
   PublicCandidateProfileDtoSchema,
   CompanyOnboardingSessionDtoSchema,
+  CompanyJoinRequestDtoSchema,
   CompanyOnboardingVerificationDocumentDtoSchema,
   SendCorporateEmailVerificationResponseSchema,
   StartCompanyOnboardingResponseSchema,
@@ -2157,6 +2158,14 @@ export function publicApi(client: SmartApiClient) {
         schema: SubmitCompanyOnboardingResponseSchema,
         anonymous: true,
       }),
+
+    /** S6-VV-107: ask to join the approved company on the verified work-email domain. */
+    requestCompanyJoin: (sessionToken: string) =>
+      client.post(
+        companyOnboardingSessionPath(sessionToken, '/join-request'),
+        {},
+        { schema: CompanyJoinRequestDtoSchema, anonymous: true },
+      ),
   };
 }
 

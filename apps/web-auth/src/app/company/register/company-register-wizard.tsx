@@ -8,6 +8,7 @@ import {
   COMPANY_SIZE_BAND_LABELS,
   COMPANY_WORK_EMAIL_REQUIRED_MESSAGE,
   isFreeMailDomain,
+  type CompanyJoinRequestDto,
   type CompanySizeBand,
 } from '@smart/contracts';
 import { SmartLogo } from '@smart/ui';
@@ -24,7 +25,7 @@ const inputClass =
 
 const labelClass = 'mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#6b7280]';
 
-type Step = 'start' | 'details' | 'email' | 'documents' | 'submit' | 'done';
+type Step = 'start' | 'details' | 'email' | 'join' | 'documents' | 'submit' | 'done';
 
 function errorMessage(err: unknown, fallback: string): string {
   return describeApiError(err, fallback);
@@ -59,6 +60,9 @@ export function CompanyRegisterWizard() {
   const [businessRegistrationNumber, setBusinessRegistrationNumber] = useState('');
 
   const [documentFile, setDocumentFile] = useState<File | null>(null);
+  // S6-VV-107: the approved company on the verified email domain, and this session's request.
+  const [joinable, setJoinable] = useState<{ companyId: string; name: string } | null>(null);
+  const [joinRequest, setJoinRequest] = useState<CompanyJoinRequestDto | null>(null);
   const [reviewFeedback, setReviewFeedback] = useState<{
     reason: string | null;
     rejectedDocuments: { documentId: string; fileName: string; reviewReason: string | null }[];
@@ -81,6 +85,15 @@ export function CompanyRegisterWizard() {
           }
         : null,
     );
+    setJoinable(session.joinableCompany ?? null);
+    setJoinRequest(session.joinRequest ?? null);
+    if (
+      session.joinRequest ||
+      (session.joinableCompany && session.onboardingStatus === 'EMAIL_VERIFIED')
+    ) {
+      setStep('join');
+      return;
+    }
     if (session.onboardingStatus === 'PENDING_REVIEW' || session.onboardingStatus === 'SUBMITTED') {
       setStep('done');
       return;
@@ -200,9 +213,24 @@ export function CompanyRegisterWizard() {
     setError(null);
     try {
       await api.public.verifyCompanyOnboardingEmail(sessionToken, { code: emailCode.trim() });
-      setStep('documents');
+      const session = await api.public.getCompanyOnboardingSession(sessionToken);
+      setJoinable(session.joinableCompany ?? null);
+      setStep(session.joinableCompany ? 'join' : 'documents');
     } catch (err) {
       setError(errorMessage(err, 'Verification failed. Check the code in Mailpit (local dev).'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onRequestToJoin() {
+    if (!sessionToken) return;
+    setLoading(true);
+    setError(null);
+    try {
+      setJoinRequest(await api.public.requestCompanyJoin(sessionToken));
+    } catch (err) {
+      setError(errorMessage(err, 'Could not send your request. Try again.'));
     } finally {
       setLoading(false);
     }
@@ -497,6 +525,50 @@ export function CompanyRegisterWizard() {
             Resend code
           </button>
         </form>
+      ) : null}
+
+      {step === 'join' ? (
+        <div className="mt-8 space-y-4 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-6 text-sm text-[#334155]">
+          {joinRequest ? (
+            <>
+              <p className="font-medium text-[#172033]">
+                {joinRequest.status === 'PENDING' && `Request sent to ${joinRequest.companyName}`}
+                {joinRequest.status === 'APPROVED' && `${joinRequest.companyName} approved you`}
+                {joinRequest.status === 'REJECTED' &&
+                  `${joinRequest.companyName} declined your request`}
+              </p>
+              <p>
+                {joinRequest.status === 'PENDING' &&
+                  'Its owners have been notified. When one approves, you will get an invitation email to set your password and sign in.'}
+                {joinRequest.status === 'APPROVED' &&
+                  'Check your email for the invitation to set your password and sign in.'}
+                {joinRequest.status === 'REJECTED' &&
+                  (joinRequest.reason ?? 'Contact the company if you think this is a mistake.')}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-medium text-[#172033]">{joinable?.name} is already on SMART</p>
+              <p>
+                Your work email is on its domain. Ask to join its team instead of registering the
+                company again; one of its owners will approve you.
+              </p>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void onRequestToJoin();
+                }}
+              >
+                <WizardActions
+                  loading={loading}
+                  primaryLabel="Request to join"
+                  secondaryLabel="It's a different company"
+                  onSecondary={() => setStep('documents')}
+                />
+              </form>
+            </>
+          )}
+        </div>
       ) : null}
 
       {step === 'documents' && reviewFeedback ? (
