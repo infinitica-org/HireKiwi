@@ -6,7 +6,6 @@ import {
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import type {
   CandidateResumeFile,
@@ -261,10 +260,19 @@ export class UsersService {
   private readResumeFiles(details: Record<string, unknown>): CandidateResumeFile[] {
     const parsedArray = CandidateResumeFilesSchema.safeParse(details.resumeFiles);
     if (parsedArray.success && parsedArray.data.length > 0) {
-      return parsedArray.data;
+      return parsedArray.data.slice(0, CANDIDATE_RESUME_FILES_MAX);
     }
     const single = CandidateResumeFileSchema.safeParse(details.resumeFile);
-    return single.success ? [single.data] : [];
+    if (single.success) {
+      return [single.data];
+    }
+    if (Array.isArray(details.resumeFiles) && details.resumeFiles.length > 0) {
+      const first = CandidateResumeFileSchema.safeParse(details.resumeFiles[0]);
+      if (first.success) {
+        return [first.data];
+      }
+    }
+    return [];
   }
 
   async getResumeState(userId: string): Promise<CandidateResumeStateResponse> {
@@ -314,6 +322,14 @@ export class UsersService {
       });
     }
 
+    const existing =
+      user.onboardingDetails && typeof user.onboardingDetails === 'object'
+        ? (user.onboardingDetails as Record<string, unknown>)
+        : {};
+    const currentFiles = this.readResumeFiles(existing);
+    const oldObjectKey = currentFiles[0]?.objectKey;
+
+    // Failure-safe: upload new object before altering DB state
     const objectKey = await this.storage.upload({
       buffer: file.buffer,
       namespace: `resumes/${userId}`,
@@ -330,20 +346,8 @@ export class UsersService {
       lastParsedAt: null,
     });
 
-    const existing =
-      user.onboardingDetails && typeof user.onboardingDetails === 'object'
-        ? (user.onboardingDetails as Record<string, unknown>)
-        : {};
-    const currentFiles = this.readResumeFiles(existing);
-    if (currentFiles.length >= CANDIDATE_RESUME_FILES_MAX) {
-      throw new UnprocessableEntityException({
-        error: 'resume_limit_reached',
-        message: `You can store up to ${CANDIDATE_RESUME_FILES_MAX} resume files. Remove one before uploading another.`,
-        statusCode: 422,
-      });
-    }
-
-    const resumeFiles = [resumeFile, ...currentFiles];
+    // Single resume rule: replacing any existing resume entry
+    const resumeFiles = [resumeFile];
     const merged = this.mergeProgressiveProfileDetails(existing, {
       resumeFile,
       resumeFiles,
@@ -353,6 +357,15 @@ export class UsersService {
       where: { id: userId },
       data: { onboardingDetails: merged as Prisma.InputJsonValue },
     });
+
+    // Best-effort cleanup of replaced storage object after DB update commits
+    if (oldObjectKey && oldObjectKey !== objectKey) {
+      try {
+        await this.storage.deleteObject(oldObjectKey);
+      } catch {
+        // Non-blocking: DB update is already authoritative
+      }
+    }
 
     return { resumeFile, resumeFiles };
   }
@@ -394,6 +407,12 @@ export class UsersService {
       where: { id: userId },
       data: { onboardingDetails: merged as Prisma.InputJsonValue },
     });
+
+    try {
+      await this.storage.deleteObject(objectKey);
+    } catch {
+      // Non-blocking
+    }
 
     return { resumeFiles };
   }

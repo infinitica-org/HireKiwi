@@ -2,7 +2,7 @@ import type { CandidateResumeFile, CandidateResumeStateResponse } from '@smart/c
 import { CANDIDATE_RESUME_FILES_MAX as contractResumeFilesMax } from '@smart/contracts';
 
 /** Keep in sync with `@smart/contracts` — fallback when package dist is stale locally. */
-export const CANDIDATE_RESUME_FILES_MAX = contractResumeFilesMax ?? 5;
+export const CANDIDATE_RESUME_FILES_MAX = contractResumeFilesMax ?? 1;
 
 export function normalizeResumeFiles(state: CandidateResumeStateResponse): CandidateResumeFile[] {
   if (state.resumeFiles?.length) return state.resumeFiles;

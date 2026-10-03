@@ -118,8 +118,8 @@ export const ParseResumeResponseSchema = z.object({
 });
 export type ParseResumeResponse = z.infer<typeof ParseResumeResponseSchema>;
 
-/** Maximum resume files a candidate may store on their profile. */
-export const CANDIDATE_RESUME_FILES_MAX = 5;
+/** Maximum resume files a candidate may store on their profile (single resume with replacement). */
+export const CANDIDATE_RESUME_FILES_MAX = 1;
 
 export const CandidateResumeFilesSchema = z
   .array(CandidateResumeFileSchema)
