@@ -51,11 +51,10 @@ function aggregateEvidenceMetrics(capabilityFit: readonly unknown[]): EvidenceQu
   );
 
   // interRaterReliability: Consistency of evidence assessment (simulated from hit scores)
-  const scores = capabilityFit
-    .map((row: unknown): number => {
-      const r = row as Record<string, unknown>;
-      return typeof r.hitScore === 'number' ? r.hitScore : 0.5;
-    });
+  const scores = capabilityFit.map((row: unknown): number => {
+    const r = row as Record<string, unknown>;
+    return typeof r.hitScore === 'number' ? r.hitScore : 0.5;
+  });
   const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
   const variance =
     scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;

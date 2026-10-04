@@ -8,7 +8,7 @@ import { type AssessmentResultView } from '@/lib/competency-display';
 
 export function SkillVerifyReport({
   grade,
-  assessmentResult,
+  assessmentResult: _assessmentResult,
   catalogSkillCode,
   onDone,
 }: {

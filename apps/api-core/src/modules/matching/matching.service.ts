@@ -211,7 +211,8 @@ function adaptPersonJobFitToSkillCapabilityScore(
     return {
       skillCode,
       status: fit.isMet ? ('MET' as const) : ('GAP' as const),
-      importance: fit.importance === 'must_have' ? ('MUST_HAVE' as const) : ('NICE_TO_HAVE' as const),
+      importance:
+        fit.importance === 'must_have' ? ('MUST_HAVE' as const) : ('NICE_TO_HAVE' as const),
       requiredRank: fit.requiredRank,
       demonstratedRank: fit.demonstratedRank,
       rankDelta: fit.demonstratedRank - fit.requiredRank,
@@ -943,10 +944,10 @@ export class MatchingService {
             capabilityCoveragePct: score.capabilityCoveragePct,
             potentialFit: score.potentialFit,
             skillFit: score.skillFit,
-            capabilityFit: score.capabilityFit.filter(
-              (row: unknown): row is CapabilityFitRowInternal =>
-                typeof row === 'object' && row !== null && 'hitScore' in row && row.hitScore > 0
-            ),
+            capabilityFit: score.capabilityFit.filter((row) => {
+              const record = row as unknown as Record<string, unknown>;
+              return typeof record.hitScore === 'number' && record.hitScore > 0;
+            }) as CapabilityFitRowInternal[],
             gaps: score.gapCompetencies,
           },
         });
@@ -1077,10 +1078,10 @@ export class MatchingService {
             capabilityCoveragePct: score.capabilityCoveragePct,
             potentialFit: score.potentialFit,
             skillFit: score.skillFit,
-            capabilityFit: score.capabilityFit.filter(
-              (row: unknown): row is CapabilityFitRowInternal =>
-                typeof row === 'object' && row !== null && 'hitScore' in row && row.hitScore > 0
-            ),
+            capabilityFit: score.capabilityFit.filter((row) => {
+              const record = row as unknown as Record<string, unknown>;
+              return typeof record.hitScore === 'number' && record.hitScore > 0;
+            }) as CapabilityFitRowInternal[],
             gaps: score.gapCompetencies,
           },
         });
