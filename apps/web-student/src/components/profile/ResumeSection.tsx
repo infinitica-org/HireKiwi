@@ -13,7 +13,7 @@ import {
 } from '@/components/profile/ProfileSectionChrome';
 import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
 import { profileSectionMeta } from '@/lib/profile-sections';
-import { CANDIDATE_RESUME_FILES_MAX, canAddResume, normalizeResumeFiles } from '@/lib/resume-list';
+import { normalizeResumeFiles } from '@/lib/resume-list';
 import { extractResumeRawText } from '@/lib/extract-resume-text';
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -48,12 +48,7 @@ export function ResumeSection() {
   }, []);
 
   const startUpload = async (file: File) => {
-    if (!canAddResume(resumeFiles)) {
-      setError(
-        `You can store up to ${CANDIDATE_RESUME_FILES_MAX} resumes. Remove one to upload another.`,
-      );
-      return;
-    }
+    if (busy) return;
 
     const allowed = [
       'application/pdf',
@@ -94,7 +89,13 @@ export function ResumeSection() {
       }
     } catch (err: unknown) {
       setUploadStatus('failed');
-      setError(isSmartApiError(err) ? err.message : 'Resume upload failed.');
+      setError(
+        isSmartApiError(err)
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'Resume upload failed.',
+      );
     }
   };
 
@@ -113,7 +114,7 @@ export function ResumeSection() {
   };
 
   const busy = uploadStatus === 'uploading' || uploadStatus === 'parsing';
-  const slotsRemaining = CANDIDATE_RESUME_FILES_MAX - resumeFiles.length;
+  const hasResume = resumeFiles.length > 0;
 
   return (
     <section
@@ -124,7 +125,7 @@ export function ResumeSection() {
         title={meta.title}
         description={meta.description}
         action={
-          !loading && canAddResume(resumeFiles) ? (
+          !loading ? (
             <button
               type="button"
               disabled={busy}
@@ -133,25 +134,27 @@ export function ResumeSection() {
             >
               {busy ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : hasResume ? (
+                <Upload className="size-4" strokeWidth={2} aria-hidden />
               ) : (
                 <Plus className="size-4" strokeWidth={2} aria-hidden />
               )}
-              Add resume
+              {hasResume ? 'Replace resume' : 'Upload resume'}
             </button>
           ) : null
         }
       />
 
-      {loading ? <p className="text-sm text-[var(--ds-text-muted)]">Loading resumes…</p> : null}
+      {loading ? <p className="text-sm text-[var(--ds-text-muted)]">Loading resume…</p> : null}
 
-      {!loading && resumeFiles.length === 0 ? (
+      {!loading && !hasResume ? (
         <ProfileBentoEmptyPanel
           tipIcon={FileText}
           tipIconClassName="text-[var(--student-info)]"
-          tipTitle="Keep versions ready for different roles"
-          tipBody={`Store up to ${CANDIDATE_RESUME_FILES_MAX} PDF or Word resumes. SMART can parse the latest upload to suggest profile pre-fill.`}
+          tipTitle="Keep your verified resume current"
+          tipBody="Upload your resume in PDF, DOCX, DOC, or TXT format. SMART can parse your resume to suggest profile pre-fill."
           emptyIcon={Upload}
-          emptyTitle="No resumes yet"
+          emptyTitle="No resume yet"
           emptyBody="Upload a resume to attach it to your profile and optionally parse it for faster data entry."
           actions={
             <button
@@ -165,33 +168,25 @@ export function ResumeSection() {
               ) : (
                 <Plus className="size-4" strokeWidth={2} aria-hidden />
               )}
-              Upload your first resume
+              Upload your resume
             </button>
           }
         />
       ) : null}
 
-      {!loading && resumeFiles.length > 0 ? (
-        <>
-          <p className="text-[13px] text-[var(--ds-text-muted)]">
-            {resumeFiles.length} of {CANDIDATE_RESUME_FILES_MAX} slots used
-            {slotsRemaining > 0
-              ? ` · ${slotsRemaining} remaining`
-              : ' · remove a file to upload another'}
-          </p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {resumeFiles.map((file, index) => (
-              <ResumeEntryCard
-                key={file.objectKey}
-                file={file}
-                accentIndex={index}
-                isPrimary={index === 0}
-                deleting={deletingKey === file.objectKey}
-                onDelete={() => void handleDelete(file.objectKey)}
-              />
-            ))}
-          </div>
-        </>
+      {!loading && hasResume ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {resumeFiles.map((file, index) => (
+            <ResumeEntryCard
+              key={file.objectKey}
+              file={file}
+              accentIndex={index}
+              isPrimary={true}
+              deleting={deletingKey === file.objectKey}
+              onDelete={() => void handleDelete(file.objectKey)}
+            />
+          ))}
+        </div>
       ) : null}
 
       <input
