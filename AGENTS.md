@@ -36,4 +36,65 @@ Project rules under `.cursor/rules/*.mdc` apply at all times. `02-dev-workflow.m
 
 ## Product summary
 
-SmartZen (SMART) is an **evidence-backed talent network** platform. Candidates build **evidence-backed talent profiles** backed by unfakeable evidence verified directly at its source by autonomous agents led by **Vivi** (Source Verification Agent), assessed on a multi-tier (Gold / Silver / Bronze) criterion-referenced competency grid, issued cryptographically signed (HMAC-SHA256), publicly verifiable credentials, and connected to opportunities via explainable semantic vector matching across academic placement infrastructure and enterprise workforce mobility.
+**SmartKiwi (SMART) Intelligent Talent Discovery Platform** (formerly known under working prototypes as SMART / SmartZen / HireKiwi) is an **evidence-backed talent discovery and readiness platform**.
+
+Candidates build **evidence-backed capability profiles** combining **active evidence** (criterion-referenced assessments, AI project defense, coding sandboxes, spoken BARS simulations) and **passive evidence** (work experience, projects, verified credentials, GitHub, LeetCode, LinkedIn, endorsements).
+
+Capabilities are structured via a **Universal Capability Ontology** (Domains, Competencies, Skills, Tools, Knowledge, Tasks, Roles) and verified through cryptographic signatures (HMAC-SHA256) and tamper-evident verification trails.
+
+## The AI-DLC Delivery Doctrine: "The Hardest Part Was Never Generation — It Was Delivery"
+
+This repository operates under **AI-DLC (AI-Driven Software Delivery Lifecycle)**. Modern LLMs (Claude, Gemini) generate code instantly ("vibe coding"), but unmanaged generation creates knowledge gaps, silent regressions, and integration debt. AI-DLC enforces closed-loop delivery governance:
+
+1. **Machine-Executable Ticket Units:** Every ticket pulled via Zoho Sprints MCP contains explicit bounded contexts, schemas, input/output assertions, and verification commands.
+2. **Contract-First Architectural Gating:** No feature code is written without prior merged types in `@smart/contracts`. Parallel DTOs are prohibited.
+3. **Deterministic Mechanical Verification:** Before opening a PR, agents must execute and verify:
+   - `pnpm lint && pnpm typecheck && pnpm test:unit && pnpm format:check`
+4. **Bounded Diffs (<400 LOC):** Exactly one ticket per PR; max 400 hand-written lines.
+5. **Living Documentation SSOT & Mandatory Agent Updates:** Authoritative documentation resides in `@smart/web-docs` (port 3006/3026). Whenever an agent or engineer works on a ticket, their agent MUST update the relevant `@smart/web-docs` documentation as part of the ticket PR, ensuring zero documentation drift. Before opening a PR, verify `pnpm --filter @smart/web-docs build` compiles cleanly with zero errors.
+
+### Core Architectural Principles & October Mandates (Anti-Hallucination Guardrails)
+
+1. **Algorithmic Matching First (No LLM Guesswork in Ranking):**
+   Candidate-to-role matching must NOT rely on open-ended LLM prompting or generative ranking. Matching must be **computationally efficient, deterministic, and inspectable** using:
+   - Hard eligibility filters (SQL).
+   - Weighted requirement scoring against validated proficiency thresholds (1–5 scale).
+   - `pgvector` HNSW cosine similarity for semantic candidate-to-role requirement embeddings.
+   - Transparent, evidence-grounded match explanations.
+2. **Deep Learning Pipeline & 4D Telemetry Validation:**
+   Multidimensional behavioral and assessment telemetry (e.g. 4D proctoring and attempt data) must pass rigorous validation mechanisms and confidence calibration before entering the Evidence Fusion & Inference Engine.
+3. **Batch Normalization & Dynamic Profile Re-indexing:**
+   - Candidate scores must be normalized across assessment and matching batches to prevent drift.
+   - When a student registers newly, advances proficiency, or completes gap assessments, the platform triggers an **event-driven delta re-indexing pipeline** (`smart.user.updated` / `smart.eval.completed`) rather than expensive full-cohort recomputations.
+4. **Dual Human Review Accountability Model:**
+   - **Partnered Institution Students:** Flagged assessment integrity or verification disputes are routed to the **College / TPO Review Queue**.
+   - **Independent Candidates:** Flagged disputes are routed to the **SmartKiwi Platform Trust & Safety Review Queue**.
+5. **Database & Identifier Standards:**
+   - Canonical **Skill Inventory** maintained centrally in PostgreSQL (with ESCO / O*NET crosswalks).
+   - Standardized cryptographic **Verification ID structure** (`VK-YYYYMMDD-UUID8`) across all credentials.
+   - Migration from legacy 32-bit Job IDs to an **incremental, structured Job ID format** (`JOB-YYYY-NNNNNN`).
+6. **Platform Security & Authentication:**
+   - Strict rate limiting on student login and signup endpoints.
+   - Resilient, stable HttpOnly JWT token refresh mechanism.
+   - **1 Mobile Number = 1 Account** verification guard with friendly duplicate-number handling.
+7. **Vivi is the Intelligent Agent Persona:**
+   **Vivi** is the unified AI agent persona, proctoring supervisor, and candidate copilot across the SmartKiwi platform (do NOT rename Vivi to SmartKiwi; SmartKiwi is the product platform name, Vivi is the intelligent agent). Vivi conducts project defense interviews, guides students through skill gap assessments, and provides contextual feedback. Implementation-wise, Vivi's capabilities are backed by clean, modular services within `apps/api-core` and shared packages (`@smart/contracts`, `packages/scoring-engine`, `packages/prompts`), orchestrated via BullMQ and Kafka. No phantom autonomous agent frameworks.
+
+### Environment & Port Allocations (Single Linux VPS)
+
+All environments run on a single Linux VPS managed via isolated Docker Compose projects with Caddy TLS reverse proxy and automated Blue-Green zero-downtime switching:
+
+| Service / Application         | Production Blue   | Production Green  | Dev (`dev.becomesmart.online`) | Description                                          |
+| :---------------------------- | :---------------- | :---------------- | :----------------------------- | :--------------------------------------------------- |
+| `apps/api-core`               | `:3000`           | `:3010`           | `:3020`                        | Fastify + NestJS Backend API Core                    |
+| `apps/web-student`            | `:3001`           | `:3011`           | `:3021`                        | Next.js 16 Student Assessment & Profile Portal       |
+| `apps/web-tpo`                | `:3002`           | `:3012`           | `:3022`                        | Next.js 16 University / TPO Cohort Portal            |
+| `apps/web-admin`              | `:3003`           | `:3013`           | `:3023`                        | Next.js 16 Super Admin & Review Console              |
+| `apps/web-verify`             | `:3004`           | `:3014`           | `:3024`                        | Next.js 16 Public Verification & Credential Portal   |
+| `apps/web-recruiter` (future) | `:3005`           | `:3015`           | `:3025`                        | Recruiter Talent Search & Matching Portal            |
+| `apps/web-docs`               | `:3006`           | `:3016`           | `:3026`                        | Next.js 16 Fumadocs Documentation SSOT               |
+| `apps/worker-telemetry`       | `:3007`           | `:3017`           | `:3027`                        | 4D Telemetry Ingestion Worker / WebSocket            |
+| `apps/sandbox-runner`         | `:3008`           | `:3018`           | `:3028`                        | Sandboxed Code Execution Gateway                     |
+| PostgreSQL                    | `127.0.0.1:5432`  | `127.0.0.1:5432`  | `127.0.0.1:5432`               | Relational Store with `pgvector` HNSW                |
+| Redis                         | `127.0.0.1:6379`  | `127.0.0.1:6379`  | `127.0.0.1:6379`               | Token bucket, sliding-window rate limit, cache       |
+| Kafka / Redpanda              | `127.0.0.1:19092` | `127.0.0.1:19092` | `127.0.0.1:19092`              | Event bus for asynchronous telemetry & delta updates |

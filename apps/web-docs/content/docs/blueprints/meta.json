@@ -1,6 +1,7 @@
 {
   "title": "Role Competency Blueprints",
   "pages": [
+    "smartkiwi-rnd-blueprint",
     "SMART_Blueprint_AIMLEngineer",
     "SMART_Blueprint_CloudDevOpsEngineer",
     "SMART_Blueprint_CybersecurityAnalyst",
