@@ -50,9 +50,9 @@ describe('ResumeSection', () => {
     parseResume.mockResolvedValue({ status: 'PARSED', draft: { parseConfidence: 0.8 } });
   });
 
-  it('uploads and parses a resume from profile', async () => {
+  it('uploads and parses a resume when none exists', async () => {
     render(<ResumeSection />);
-    expect(await screen.findByText(/No resumes yet/i)).toBeDefined();
+    expect(await screen.findByText(/No resume yet/i)).toBeDefined();
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(
@@ -66,6 +66,97 @@ describe('ResumeSection', () => {
       expect(uploadResume).toHaveBeenCalled();
       expect(parseResume).toHaveBeenCalled();
       expect(screen.getByText('resume.pdf')).toBeDefined();
+    });
+  });
+
+  it('displays existing resume and allows replacing it', async () => {
+    getResume.mockResolvedValue({
+      resumeFile: {
+        fileName: 'old-resume.pdf',
+        objectKey: 'resumes/user/old-resume.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 1000,
+        uploadedAt: '2026-09-01T10:00:00.000Z',
+      },
+      resumeFiles: [
+        {
+          fileName: 'old-resume.pdf',
+          objectKey: 'resumes/user/old-resume.pdf',
+          mimeType: 'application/pdf',
+          fileSizeBytes: 1000,
+          uploadedAt: '2026-09-01T10:00:00.000Z',
+        },
+      ],
+    });
+
+    uploadResume.mockResolvedValue({
+      resumeFile: {
+        fileName: 'new-resume.pdf',
+        objectKey: 'resumes/user/new-resume.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 2000,
+        uploadedAt: '2026-09-15T10:00:00.000Z',
+      },
+      resumeFiles: [
+        {
+          fileName: 'new-resume.pdf',
+          objectKey: 'resumes/user/new-resume.pdf',
+          mimeType: 'application/pdf',
+          fileSizeBytes: 2000,
+          uploadedAt: '2026-09-15T10:00:00.000Z',
+        },
+      ],
+    });
+
+    render(<ResumeSection />);
+    expect(await screen.findByText('old-resume.pdf')).toBeDefined();
+    expect(screen.getByRole('button', { name: /Replace resume/i })).toBeDefined();
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const newFile = new File(['new resume text content'], 'new-resume.pdf', {
+      type: 'application/pdf',
+    });
+    fireEvent.change(input, { target: { files: [newFile] } });
+
+    await waitFor(() => {
+      expect(uploadResume).toHaveBeenCalled();
+      expect(screen.getByText('new-resume.pdf')).toBeDefined();
+      expect(screen.queryByText('old-resume.pdf')).toBeNull();
+    });
+  });
+
+  it('preserves existing resume when replacement upload fails', async () => {
+    getResume.mockResolvedValue({
+      resumeFile: {
+        fileName: 'current-resume.pdf',
+        objectKey: 'resumes/user/current-resume.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 1000,
+        uploadedAt: '2026-09-01T10:00:00.000Z',
+      },
+      resumeFiles: [
+        {
+          fileName: 'current-resume.pdf',
+          objectKey: 'resumes/user/current-resume.pdf',
+          mimeType: 'application/pdf',
+          fileSizeBytes: 1000,
+          uploadedAt: '2026-09-01T10:00:00.000Z',
+        },
+      ],
+    });
+
+    uploadResume.mockRejectedValue(new Error('Network upload failed'));
+
+    render(<ResumeSection />);
+    expect(await screen.findByText('current-resume.pdf')).toBeDefined();
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['content'], 'failed.pdf', { type: 'application/pdf' });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Network upload failed')).toBeDefined();
+      expect(screen.getByText('current-resume.pdf')).toBeDefined();
     });
   });
 });

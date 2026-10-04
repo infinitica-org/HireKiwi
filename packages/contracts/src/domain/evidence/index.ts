@@ -27,3 +27,4 @@ export * from './skill-demonstration-evidence.js';
 export * from './competency-fusion.js';
 export * from './skill-evidence-inference.js';
 export * from './skill-level-explanation.js';
+export * from './skill-graph.js';

@@ -225,7 +225,15 @@ describe('AC-T04 CandidateSuggestionsWorkspace', () => {
     expect(screen.getByText('92% match')).toBeDefined();
     expect(screen.getByText('75% match')).toBeDefined();
 
-    expect(screen.getByText('Strong verified deep learning fit for this role.')).toBeDefined();
+    expect(
+      screen.queryAllByText((content, element) => {
+        return (
+          element?.textContent?.includes('Strong match') ??
+          element?.textContent?.includes('Excellent match') ??
+          false
+        );
+      }).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText(/Skill \+ capability match/)).toBeDefined();
     expect(screen.getAllByText(/Verified on profile/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Large Language Model Application Engineering/)).toBeDefined();

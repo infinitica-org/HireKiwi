@@ -24,12 +24,8 @@ describe('resume-list', () => {
     ).toHaveLength(2);
   });
 
-  it('enforces max five uploads on the client', () => {
-    const files = Array.from({ length: 5 }, (_, index) => ({
-      ...sampleFile,
-      objectKey: `k-${index}`,
-    }));
-    expect(canAddResume(files)).toBe(false);
-    expect(canAddResume(files.slice(0, 4))).toBe(true);
+  it('enforces single resume restriction on the client', () => {
+    expect(canAddResume([])).toBe(true);
+    expect(canAddResume([sampleFile])).toBe(false);
   });
 });
