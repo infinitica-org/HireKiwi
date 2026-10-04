@@ -27,8 +27,11 @@ function aggregateEvidenceMetrics(capabilityFit: readonly unknown[]): EvidenceQu
   // Extract evidence from capability fit rows
   // Each row has hitScore (0-1) which reflects confidence in evidence
   const evidenceSources = capabilityFit
-    .filter((row: any) => row.evidenceSource && row.evidenceSource !== 'NONE')
-    .map((row: any) => ({
+    .filter((row: unknown): row is { evidenceSource: string; hitScore?: number } => {
+      const r = row as Record<string, unknown>;
+      return typeof r.evidenceSource === 'string' && r.evidenceSource !== 'NONE';
+    })
+    .map((row) => ({
       hitScore: row.hitScore ?? 0.5,
       source: row.evidenceSource,
     }));
@@ -38,18 +41,21 @@ function aggregateEvidenceMetrics(capabilityFit: readonly unknown[]): EvidenceQu
   }
 
   // Aggregate metrics across all evidence sources
-  const avgHitScore =
-    evidenceSources.reduce((sum, e) => sum + e.hitScore, 0) / evidenceSources.length;
-
-  // Compute psychometric components
   // constructCoverage: Portion of required competencies covered by evidence
   const constructCoverage = Math.min(
     1,
-    (capabilityFit.filter((row: any) => row.hitScore >= 0.5).length || 1) / capabilityFit.length,
+    (capabilityFit.filter((row: unknown): row is { hitScore?: number } => {
+      const r = row as Record<string, unknown>;
+      return typeof r.hitScore === 'number' && r.hitScore >= 0.5;
+    }).length || 1) / capabilityFit.length,
   );
 
   // interRaterReliability: Consistency of evidence assessment (simulated from hit scores)
-  const scores = capabilityFit.map((row: any) => row.hitScore ?? 0.5);
+  const scores = capabilityFit
+    .map((row: unknown): number => {
+      const r = row as Record<string, unknown>;
+      return typeof r.hitScore === 'number' ? r.hitScore : 0.5;
+    });
   const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
   const variance =
     scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;
@@ -64,7 +70,7 @@ function aggregateEvidenceMetrics(capabilityFit: readonly unknown[]): EvidenceQu
     NONE: 0,
   };
   const sourceReliability =
-    evidenceSources.reduce((sum, e) => sum + (sourceWeights[e.source] || 0.7), 0) /
+    evidenceSources.reduce((sum, e) => sum + (sourceWeights[e.source] ?? 0.7), 0) /
     evidenceSources.length;
 
   // recencyDays: Assume assessment/project evidence is recent (0-30 days)

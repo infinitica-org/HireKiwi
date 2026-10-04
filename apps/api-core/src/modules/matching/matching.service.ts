@@ -93,8 +93,6 @@ import {
 } from './vector-candidate-matcher.js';
 import {
   calculatePersonJobFit,
-  type CandidateDemonstratedSkill,
-  type PersonJobFitInput,
   DEFAULT_PERSON_JOB_FIT_PARAMS,
   type PersonJobFitParameters,
 } from '@smart/scoring-engine';
@@ -152,7 +150,7 @@ function scoreStudentAgainstJobWithCorroboration(
       requiredSkills: requiredSkills.map((skill) => ({
         skillCode: skill.code,
         requiredRank: skill.minRank,
-        importance: (skill.importance ?? 'must_have') as any,
+        importance: (skill.importance ?? 'must_have') as 'must_have' | 'nice_to_have',
       })),
       candidateSkills: studentVerifiedSkills.map((skill) => ({
         skillCode: skill.code,
@@ -181,7 +179,15 @@ function scoreStudentAgainstJobWithCorroboration(
     mustHavesMet: pjfScore.mustHavesMet,
     coverageOfMustHaves: pjfScore.coverageOfMustHaves,
     weightedProficiencyAccuracy: pjfScore.weightedProficiencyAccuracy,
-    skillFitBreakdown: pjfScore.skillFitBreakdown as any, // direct pass-through
+    skillFitBreakdown: pjfScore.skillFitBreakdown as Array<{
+      skillCode: string;
+      importance: string;
+      requiredRank: number;
+      demonstratedRank: number;
+      isMet: boolean;
+      confidence: 'LOW' | 'MEDIUM' | 'HIGH';
+      sourceDiscrepancy: boolean;
+    }>, // direct pass-through
     matchStrategy: pjfScore.matchStrategy as 'EXPLOITATION' | 'EXPLORATION',
     explorationRationale,
     why,
@@ -200,15 +206,18 @@ function adaptPersonJobFitToSkillCapabilityScore(
   inferredCapabilities: readonly InferredCapabilityRow[] = [],
 ): SkillCapabilityScore {
   // Map PJF skill breakdown to SkillCapabilityScore's skillFit format
-  const skillFit = pjfScore.skillFitBreakdown.map((fit) => ({
-    skillCode: fit.skillCode as any,
-    status: fit.isMet ? ('MET' as const) : ('GAP' as const),
-    importance: fit.importance === 'must_have' ? ('MUST_HAVE' as const) : ('NICE_TO_HAVE' as const),
-    requiredRank: fit.requiredRank,
-    demonstratedRank: fit.demonstratedRank,
-    rankDelta: fit.demonstratedRank - fit.requiredRank,
-    sourceDiscrepancy: fit.sourceDiscrepancy,
-  }));
+  const skillFit = pjfScore.skillFitBreakdown.map((fit) => {
+    const skillCode = fit.skillCode as unknown as SkillFitRowInternal['skillCode'];
+    return {
+      skillCode,
+      status: fit.isMet ? ('MET' as const) : ('GAP' as const),
+      importance: fit.importance === 'must_have' ? ('MUST_HAVE' as const) : ('NICE_TO_HAVE' as const),
+      requiredRank: fit.requiredRank,
+      demonstratedRank: fit.demonstratedRank,
+      rankDelta: fit.demonstratedRank - fit.requiredRank,
+      sourceDiscrepancy: fit.sourceDiscrepancy,
+    };
+  });
 
   const requiredSkillsHeld = skillFit.filter((s) => s.status === 'MET').length;
   const requiredSkillsMissing = skillFit.filter((s) => s.status === 'GAP').length;
@@ -217,15 +226,18 @@ function adaptPersonJobFitToSkillCapabilityScore(
   // Note: InferredCapabilityRow has limited info; we use it to compute capability coverage
   const capabilityFit = inferredCapabilities
     .filter((cap) => cap.skillCode !== null)
-    .map((cap) => ({
-      competencyId: `inferred-${cap.skillCode}`,
-      capability: cap.capabilityLabel,
-      skillCode: cap.skillCode as any,
-      hitScore: cap.confidenceScore,
-      evidenceSource: cap.assessmentVerified
-        ? ('ASSESSMENT_VERIFIED' as const)
-        : ('INFERRED' as const),
-    }));
+    .map((cap) => {
+      const skillCode = cap.skillCode as unknown as CapabilityFitRowInternal['skillCode'];
+      return {
+        competencyId: `inferred-${cap.skillCode}`,
+        capability: cap.capabilityLabel,
+        skillCode,
+        hitScore: cap.confidenceScore,
+        evidenceSource: cap.assessmentVerified
+          ? ('ASSESSMENT_VERIFIED' as const)
+          : ('INFERRED' as const),
+      };
+    });
 
   const capabilitiesCovered = capabilityFit.filter((c) => c.hitScore >= 0.5).length;
   const capabilitiesTotal = capabilityFit.length || 1;
@@ -931,7 +943,10 @@ export class MatchingService {
             capabilityCoveragePct: score.capabilityCoveragePct,
             potentialFit: score.potentialFit,
             skillFit: score.skillFit,
-            capabilityFit: score.capabilityFit.filter((row: any) => row.hitScore > 0),
+            capabilityFit: score.capabilityFit.filter(
+              (row: unknown): row is CapabilityFitRowInternal =>
+                typeof row === 'object' && row !== null && 'hitScore' in row && row.hitScore > 0
+            ),
             gaps: score.gapCompetencies,
           },
         });
@@ -1062,7 +1077,10 @@ export class MatchingService {
             capabilityCoveragePct: score.capabilityCoveragePct,
             potentialFit: score.potentialFit,
             skillFit: score.skillFit,
-            capabilityFit: score.capabilityFit.filter((row: any) => row.hitScore > 0),
+            capabilityFit: score.capabilityFit.filter(
+              (row: unknown): row is CapabilityFitRowInternal =>
+                typeof row === 'object' && row !== null && 'hitScore' in row && row.hitScore > 0
+            ),
             gaps: score.gapCompetencies,
           },
         });
