@@ -8,11 +8,7 @@ export async function POST(request: NextRequest) {
     const { password } = body;
     const expectedPassword = process.env.DOCS_PASSWORD || 'smartkiwi2026';
 
-    if (
-      password === expectedPassword ||
-      password === 'smartkiwi2026' ||
-      password === 'smartzen2026'
-    ) {
+    if (password === expectedPassword || password === 'smartkiwi2026') {
       const response = NextResponse.json({ success: true });
       response.cookies.set({
         name: AUTH_COOKIE,
