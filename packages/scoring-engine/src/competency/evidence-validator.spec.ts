@@ -4,7 +4,7 @@ import {
   computeRecencyDecay,
   validateEvidenceMetrics,
 } from './evidence-validator.js';
-import { calculatePersonJobFit, IMPORTANCE_WEIGHTS } from './person-job-fit.js';
+import { calculatePersonJobFit } from './person-job-fit.js';
 
 describe('Evidence Validation Psychometric Tests', () => {
   it('computes inter-rater reliability with low variance leading to high agreement', () => {

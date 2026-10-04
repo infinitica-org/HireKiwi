@@ -74,8 +74,9 @@ function aggregatePassiveByDimension(
     if (items.length >= 2) {
       for (let i = 0; i < items.length; i++) {
         for (let j = i + 1; j < items.length; j++) {
-          const itemA = items[i]!;
-          const itemB = items[j]!;
+          const itemA = items[i];
+          const itemB = items[j];
+          if (!itemA || !itemB) continue;
           // If both sources carry at least moderate confidence and their scores diverge strongly
           if (
             itemA.entry.confidence >= 0.2 &&
@@ -96,7 +97,8 @@ function aggregatePassiveByDimension(
     // the agreeing cluster represents genuine Campbell & Fiske corroboration and outvotes an isolated outlier.
     let selectedPassiveScore = 0;
     let selectedConfidence = 0;
-    const first = items[0]!;
+    const first = items[0];
+    if (!first) continue;
 
     if (internalPassiveConflict) {
       // Find agreement clusters
@@ -104,7 +106,8 @@ function aggregatePassiveByDimension(
       const clusters: SourceCluster[] = [];
 
       for (let i = 0; i < items.length; i++) {
-        const base = items[i]!;
+        const base = items[i];
+        if (!base) continue;
         const clusterItems = [base];
         let totalRel =
           base.entry.confidence *
@@ -112,7 +115,8 @@ function aggregatePassiveByDimension(
 
         for (let j = 0; j < items.length; j++) {
           if (i === j) continue;
-          const other = items[j]!;
+          const other = items[j];
+          if (!other) continue;
           if (Math.abs(base.weighted - other.weighted) <= maxPassiveDiscrepancy) {
             clusterItems.push(other);
             totalRel +=
@@ -137,7 +141,8 @@ function aggregatePassiveByDimension(
         return b.totalReliability - a.totalReliability;
       });
 
-      const bestCluster = clusters[0]!;
+      const bestCluster = clusters[0];
+      if (!bestCluster) continue;
       selectedPassiveScore = bestCluster.avgScore;
 
       // Max confidence within winning cluster, dampened by versioned policy penalty

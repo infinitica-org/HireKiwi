@@ -4,9 +4,9 @@
   "private": true,
   "description": "SMART Architectural & Engineering Documentation Portal. Powered by Fumadocs.",
   "scripts": {
-    "dev": "next dev --port 3006",
+    "dev": "next dev --port 3008",
     "build": "next build",
-    "start": "next start --port 3006",
+    "start": "next start --port 3008",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint . --max-warnings=0"
   },

@@ -283,7 +283,7 @@ function findTransferableViaGraph(
     // In a full graph DB, we'd query: MATCH (s:Skill)-[TRANSFERABLE_TO]-(target:Skill) WHERE s.code = claimedSkillCode
     // For now, we infer via shared competency patterns in skill blueprints
     // This is a placeholder that will be replaced with actual graph queries
-    const capabilityPattern = competency.capability.toLowerCase();
+    const _capabilityPattern = competency.capability.toLowerCase();
 
     // Query all skills to find ones with similar competency patterns
     // Note: In production, this would be a graph database query

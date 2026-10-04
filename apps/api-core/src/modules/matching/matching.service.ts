@@ -291,7 +291,10 @@ async function loadCorroborationContradictions(
     if (!map.has(row.userId)) {
       map.set(row.userId, new Set());
     }
-    map.get(row.userId)!.add(row.skillCode);
+    const userSet = map.get(row.userId);
+    if (userSet) {
+      userSet.add(row.skillCode);
+    }
   }
   return map;
 }
@@ -797,7 +800,6 @@ export class MatchingService {
     request: RunMatchingParams,
     resolved: ResolvedOpeningJob,
   ): Promise<ShortlistDto> {
-    const job = resolved.skillCapabilityJob;
     const rows = await this.prisma.$queryRaw<RawEligibleStudentRow[]>(
       buildEligibleStudentsQuery(institutionId, {
         ...request,
@@ -2015,24 +2017,21 @@ export class MatchingService {
 
     const profileById = new Map(candidateProfiles.map((profile) => [profile.studentId, profile]));
     return vectorMatches.ranked.map((match) => {
-<<<<<<< HEAD
       // The candidate's real verified skills, not the radar axes ("Domain A" is not a skill code):
-      // axes here made CandidateMatchDtoSchema.parse throw, so this search answered 500. A skill
-      // the taxonomy no longer knows is dropped instead of failing the whole search.
+      // Filter by both SKILL_CODE_SET and VerifiedSkillSummarySchema validation to ensure
+      // only valid, known skills are included. A skill the taxonomy no longer knows is
+      // dropped instead of failing the whole search.
+      const candidateProfile = profileById.get(match.studentId);
       const verified = mapVerifiedSkillsSummary(
-        profileById.get(match.studentId)?.verifiedSkills ?? [],
-      ).filter((skill) => VerifiedSkillSummarySchema.safeParse(skill).success);
-=======
-      const candidateProfile = candidateProfiles.find((c) => c.studentId === match.studentId);
-      const verified = mapVerifiedSkillsSummary(
-        (candidateProfile?.verifiedSkills ?? []).filter((s) => SKILL_CODE_SET.has(s.code)),
+        (candidateProfile?.verifiedSkills ?? []).filter(
+          (s) => SKILL_CODE_SET.has(s.code) && VerifiedSkillSummarySchema.safeParse(s).success,
+        ),
       );
       const certIdValid =
         match.certificateId && UuidSchema.safeParse(match.certificateId).success
           ? match.certificateId
           : null;
 
->>>>>>> 41e42948 (feat(matching): complete E2E pipeline with evidence metrics and transfer skills)
       return CandidateMatchDtoSchema.parse({
         studentId: match.studentId,
         studentName: match.studentName,

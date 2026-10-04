@@ -16,7 +16,9 @@ describe('EvidenceValidationIndicator Component', () => {
   });
 
   it('renders nothing when metrics is null', () => {
-    const { container } = render(<EvidenceValidationIndicator metrics={null as any} />);
+    const { container } = render(
+      <EvidenceValidationIndicator metrics={null as unknown as EvidenceQualityMetrics[]} />,
+    );
     expect(container.firstChild).toBeNull();
   });
 

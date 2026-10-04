@@ -163,7 +163,6 @@ export default function SkillsProfilePage() {
     return SKILL_DEFINITIONS.filter((def) => claimedCodes.has(def.code)).map((def) => {
       const claim = claimByCode.get(def.code);
       const isVerified = claim?.status === 'VERIFIED';
-      const isDeclared = claim?.status === 'DECLARED';
 
       let levelScore = 1;
       if (isVerified) {
@@ -374,7 +373,7 @@ export default function SkillsProfilePage() {
             const skillStatus = getSkillStatus(item.claim);
             const isVerified = skillStatus === 'VERIFIED';
             const isUnderVerif = skillStatus === 'UNDER_VERIFICATION';
-            const cue = confidenceCue(item.claim);
+            const _cue = confidenceCue(item.claim);
 
             return (
               <div

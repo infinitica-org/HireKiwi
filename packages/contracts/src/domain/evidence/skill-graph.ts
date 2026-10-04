@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { TaxonomySkillCodeSchema } from '../../dto/catalog.dto.js';
 import { UuidSchema } from '../../dto/common.js';
-import { CompetencyStatusSchema } from './competency-status.js';
 import { EvidenceTypeSchema } from './enums.js';
 
 export const SKILL_GRAPH_EDGE_TYPES = [

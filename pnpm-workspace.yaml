@@ -129,3 +129,4 @@ allowBuilds:
   # code-execution need. Denying it is the safe default (matches @scarf/scarf,
   # @google/genai, protobufjs above).
   core-js: false
+  better-sqlite3: set this to true or false
