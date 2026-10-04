@@ -1,0 +1,17 @@
+---
+inclusion: always
+---
+
+# Definition of Done (essentials)
+
+Full checklist: `docs/delivery/DEFINITION_OF_DONE.md`. Agents must not treat a task as finished unless these hold:
+
+- Acceptance criteria + named failure modes handled (module non-negotiables in TEAM.md).
+- Types in `@smart/contracts` merged first; Zod-validated; no `any` at boundaries.
+- Unit + integration tests for I/O; LLM stubbed at gateway in CI; `pnpm test` green.
+- `pnpm lint` / `typecheck` / `build` / `format:check` clean.
+- RBAC + rate-limit tier declared; Redis keys have TTL; no secrets in code/logs.
+- Structured logs + at least one metric; Swagger on new endpoints.
+- Feature branch + PR into `dev` (no direct commits to protected branches). See `docs/delivery/BRANCHING.md`.
+- Tino review required; squash-merge; ticket ID in Conventional Commit title.
+- Agents: do not call work "done" until the PR exists (unless the user asked for local-only exploration).

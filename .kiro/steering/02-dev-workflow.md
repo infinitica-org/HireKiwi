@@ -1,0 +1,68 @@
+---
+inclusion: always
+---
+
+# Agent development workflow (mandatory)
+
+These rules are **not optional**. If a request would violate them, refuse that part and explain the required workflow.
+
+## Branching
+
+1. **Never** commit directly to `main`, `qa`, or `dev` — **no exceptions, including agents**.
+   - `dev` is a protected branch. All changes enter via a feature/bugfix PR.
+   - Direct pushes to `dev` are mechanically blocked for everyone except `@brittytino` (architect-only emergency access).
+2. **Always** work on a feature branch before any commit:
+   `<type>/S<sprint>-<initials>-<nn>-<slug>`
+   - Types: `feat` | `fix` | `chore` | `docs` | `refactor` | `test` | `perf`
+   - Initials: `TN` `VV` `SV` `VB` `RM` `VG` (from `.cursor/local/IDENTITY.md` or the user)
+3. Create the branch from up-to-date **`dev`**.
+4. One ticket → one branch → one PR. Do not pile unrelated tickets onto one branch.
+
+Policy: `docs/delivery/BRANCHING.md`.
+
+## Quality gates (before every commit / PR)
+
+Run and fix failures (scoped filters OK when the change is package-local):
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm format:check
+```
+
+- Do **not** use `--no-verify`, `--no-gpg-sign`, or skip husky/lint-staged.
+- Do **not** weaken ESLint/CI to make a PR green.
+- Hand-written diff target: **≤ 400 LOC** per PR; split larger work.
+
+## Commits
+
+- Follow `.cursor/rules/09-commits-and-prs.mdc` exactly.
+- Format: `<type>(<scope>): <summary> (<TICKET>)` — scopes from `commitlint.config.mjs`.
+- Commit **only** when the user asks, or when opening a PR that requires a commit (still ask if ambiguous).
+- Never commit secrets (`.env`, keys, credentials).
+
+## Pull requests (required for shippable work)
+
+1. Push the feature branch with `-u` when ready.
+2. Open a PR into **`dev`** with Conventional title, template body, and **labels** (priority + area + sprint) per `09-commits-and-prs.mdc`.
+3. Do **not** treat local commits as done — **no PR = not delivered**.
+4. **Review & Merge Governance (Two-Tier Model):**
+   - **Feature PRs into `dev`:** Reviewed and approved by the designated **Module Code Owner** (per `.github/CODEOWNERS` and `TEAM.md`). Squash-and-merge is permitted once CI is green and the owner approves.
+   - **Architect-Owned Paths:** Any change touching `packages/contracts/`, `.github/workflows/`, `.github/CODEOWNERS`, `ARCHITECTURE.md`, `docs/adr/`, or build graph (`turbo.json`, root configs) **strictly requires System Architect (`@brittytino`) approval**.
+   - **Release Promotions:** All promotion PRs (`dev → qa`, `qa → main`) are gated, verified, and executed exclusively by Tino (`@brittytino`).
+5. Never force-push `main` / `qa` / `dev`. Force-push feature branches only if the user explicitly requests it.
+6. Only `@brittytino` merges into **`qa`** and **`main`**. Promote via `dev` → `qa` → `main` PRs only.
+
+## Ownership & scope
+
+- Edit paths owned by the active engineer (see `TEAM.md` / `.cursor/kb/ownership.md`).
+- Cross-module types: PR to `@smart/contracts` **first**, wait for merge, then implement.
+- Tino writes **no** feature code; agents must not invent feature work under his name.
+
+## Backlog / issues
+
+- Ticket **content** lives in `tools/zoho-sprint0/backlog.mjs` and `tools/zoho-sprint1/backlog.mjs`.
+- After editing backlog, sync **GitHub Issues only**: `node tools/backlog/sync-github.mjs`.
+- **Do not** call Zoho MCP to update item descriptions or create items unless the user explicitly asks.
+- See `.cursor/kb/backlog-issues.md`.

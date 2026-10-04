@@ -97,6 +97,11 @@ export function ProjectSubmissionForm() {
       .finally(() => setDetailLoading(false));
   }, []);
 
+  const handleProjectDeleted = useCallback((projectId: string) => {
+    setProjects((prev) => (prev ?? []).filter((p) => p.projectId !== projectId));
+    setDetailProject(null);
+  }, []);
+
   useEffect(() => {
     if (!highlightProjectId || !projects?.length) return;
     const match = projects.find((project) => project.projectId === highlightProjectId);
@@ -375,6 +380,7 @@ export function ProjectSubmissionForm() {
           topStack={topStack}
           canSubmit={canSubmitProjects}
           onView={viewProject}
+          onDelete={handleProjectDeleted}
           onAdd={() => openForm()}
         />
       ) : null}

@@ -98,6 +98,7 @@ export function runSkillEvidenceFusion(input: {
         fusionTrace: [],
         assessmentComplete: false,
         recommendedNextStep: 'EVIDENCE_VERIFICATION',
+        evidenceValidationMetrics: [],
       };
       return mapFusionToSkillEvidenceInference({
         skillCode: input.skillCode,

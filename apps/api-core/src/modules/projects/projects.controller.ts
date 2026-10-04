@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   API_PREFIX,
@@ -71,5 +71,24 @@ export class ProjectsController {
     @Body() body: unknown,
   ): Promise<ReplaceProjectResponse> {
     return this.service.replace(user.sub, projectId, body);
+  }
+
+  @Delete(':projectId')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Delete an owned project and all associated data (skill mappings, interview records).',
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Project successfully deleted.',
+  })
+  @ApiResponse({ status: 403, description: 'JWT subject does not own this project.' })
+  @ApiResponse({ status: 404, description: 'Unknown projectId.' })
+  async deleteProject(
+    @CurrentUser() user: RequestUser,
+    @Param('projectId') projectId: string,
+  ): Promise<void> {
+    return this.service.delete(user.sub, projectId);
   }
 }

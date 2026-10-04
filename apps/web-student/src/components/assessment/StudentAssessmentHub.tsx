@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   FileText,
   CheckCircle2,
@@ -21,6 +22,23 @@ import { api } from '@/lib/api';
 import { skillNameForCode, categoryNameForCode } from '@/lib/skill-declarations';
 import type { SkillClaimDto } from '@smart/contracts';
 
+// Detect if a skill is under verification (assessment taken but result pending)
+function isUnderVerification(claim: SkillClaimDto | undefined): boolean {
+  if (!claim) return false;
+  // Under verification if: latestAssessmentResult exists OR verificationInProgress is true
+  return Boolean(claim.latestAssessmentResult || claim.verificationInProgress);
+}
+
+// Get the display status for a skill claim
+function getSkillStatus(
+  claim: SkillClaimDto | undefined,
+): 'DECLARED' | 'UNDER_VERIFICATION' | 'VERIFIED' {
+  if (!claim) return 'DECLARED';
+  if (claim.status === 'VERIFIED') return 'VERIFIED';
+  if (isUnderVerification(claim)) return 'UNDER_VERIFICATION';
+  return 'DECLARED';
+}
+
 export interface AssessmentItem {
   id: string;
   claimId?: string;
@@ -30,6 +48,7 @@ export interface AssessmentItem {
   provider: string;
   estimatedTime: string;
   status: 'PENDING' | 'COMPLETED';
+  skillStatus?: 'DECLARED' | 'UNDER_VERIFICATION' | 'VERIFIED';
   proficiency?: string;
   result?: {
     passed: boolean;
@@ -47,6 +66,7 @@ export interface AssessmentItem {
 }
 
 export function StudentAssessmentHub() {
+  const router = useRouter();
   const [skillClaims, setSkillClaims] = useState<SkillClaimDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'PENDING' | 'COMPLETED'>('PENDING');
@@ -85,6 +105,7 @@ export function StudentAssessmentHub() {
   const assessments: AssessmentItem[] = useMemo(() => {
     return skillClaims.map((claim) => {
       const isVerified = claim.status === 'VERIFIED';
+      const skillStatus = getSkillStatus(claim);
       const name = `${skillNameForCode(claim.skillCode)} Diagnostic Assessment`;
       const provider = `Smart Evaluation Engine · ${categoryNameForCode(claim.skillCode)}`;
 
@@ -97,6 +118,7 @@ export function StudentAssessmentHub() {
         provider,
         estimatedTime: '~15 min',
         status: isVerified ? 'COMPLETED' : 'PENDING',
+        skillStatus,
         proficiency: claim.proficiency,
         result: isVerified
           ? {
@@ -166,6 +188,10 @@ export function StudentAssessmentHub() {
   };
 
   const handleStartTest = (item: AssessmentItem) => {
+    if (item.claimId) {
+      router.push(`/assessments/skills/${item.claimId}`);
+      return;
+    }
     setActiveTest(item);
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
@@ -517,6 +543,12 @@ export function StudentAssessmentHub() {
                     <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                       {item.type}
                     </span>
+                    {item.skillStatus === 'UNDER_VERIFICATION' && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300">
+                        <Clock className="size-3 text-sky-600" />
+                        Under Review
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     Provider: {item.provider} · Estimated time: {item.estimatedTime}
