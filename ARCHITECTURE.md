@@ -1,8 +1,8 @@
-# SMART — Master Technical Architecture & Product Specification
+# SmartKiwi (SMART) — Master Technical Architecture & Product Specification
 
-> **Version:** v2.1 (Updated Sprint 6 — 29 Sep 2026)
+> **Version:** v2.2 (Updated Sprint 8 — Oct 2026)
 > **Maintainer:** Infinitica Engineering Team
-> **Purpose:** Single source of truth for SMART's product vision, microservice architecture, rate limiting specification, Claude AI engine, scoring mechanics, domain taxonomies, placement overlay, public verification, and phased delivery plan.
+> **Purpose:** Single source of truth for SmartKiwi's product vision, microservice architecture, rate limiting specification, AI engine, scoring mechanics, domain taxonomies, placement overlay, public verification, and phased delivery plan. Authoritative living documentation maintained in `@smart/web-docs` (port 3008/3028).
 
 > **Sprint 6 Implementation Status (as of 2026-09-29):**
 > The following sections of this document have moved from design to production implementation:

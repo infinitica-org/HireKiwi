@@ -1,16 +1,16 @@
-# Contributing to SMART
+# Contributing to SmartKiwi (SMART)
 
-**New engineer:** begin with [`docs/delivery/ENGINEER_START_CHECKLIST.md`](./docs/delivery/ENGINEER_START_CHECKLIST.md) — access provisioning, environment bootstrap, sign-off, first ticket, and pull-request workflow.
+**New engineer:** begin with [`apps/web-docs/content/docs/delivery/ENGINEER_START_CHECKLIST.mdx`](./apps/web-docs/content/docs/delivery/ENGINEER_START_CHECKLIST.mdx) — access provisioning, environment bootstrap, sign-off, first ticket, and pull-request workflow. Living documentation SSOT: `@smart/web-docs` (port 3008/3028).
 
 Read the following in order before writing code:
 
 1. [`TEAM.md`](./TEAM.md) — ownership by path
-2. [`docs/delivery/ENGINEER_GUIDES.md`](./docs/delivery/ENGINEER_GUIDES.md) — day-to-day engineering practice
-3. [`docs/delivery/DEFINITION_OF_DONE.md`](./docs/delivery/DEFINITION_OF_DONE.md) — merge criteria
-4. [`docs/delivery/AGILE_PLAN.md`](./docs/delivery/AGILE_PLAN.md) — delivery methodology and cadence
+2. [`apps/web-docs/content/docs/delivery/ENGINEER_GUIDES.mdx`](./apps/web-docs/content/docs/delivery/ENGINEER_GUIDES.mdx) — day-to-day engineering practice
+3. [`apps/web-docs/content/docs/delivery/DEFINITION_OF_DONE.mdx`](./apps/web-docs/content/docs/delivery/DEFINITION_OF_DONE.mdx) — merge criteria
+4. [`apps/web-docs/content/docs/delivery/AI_DLC_FRAMEWORK.mdx`](./apps/web-docs/content/docs/delivery/AI_DLC_FRAMEWORK.mdx) — AI-DLC delivery doctrine and cadence
 5. [`AGENTS.md`](./AGENTS.md) and [`.cursor/`](./.cursor/) — shared agent and human knowledge base and workflow rules
-6. [`docs/delivery/LOCAL_DEV.md`](./docs/delivery/LOCAL_DEV.md) — exact local commands
-7. [`docs/delivery/BRANCHING.md`](./docs/delivery/BRANCHING.md) — the `main` / `qa` / `dev` branching model
+6. [`apps/web-docs/content/docs/delivery/LOCAL_DEV.mdx`](./apps/web-docs/content/docs/delivery/LOCAL_DEV.mdx) — exact local commands
+7. [`apps/web-docs/content/docs/delivery/BRANCHING.mdx`](./apps/web-docs/content/docs/delivery/BRANCHING.mdx) — the `main` / `qa` / `dev` branching model
 
 ## Non-negotiable rules
 
@@ -32,16 +32,17 @@ Personal working notes (identity, working memory) live in `.cursor/local/` and a
 
 ## Local development loop
 
-Full command reference: [`docs/delivery/LOCAL_DEV.md`](./docs/delivery/LOCAL_DEV.md).
+Full command reference: [`apps/web-docs/content/docs/delivery/LOCAL_DEV.mdx`](./apps/web-docs/content/docs/delivery/LOCAL_DEV.mdx).
 
 ```bash
 pnpm bootstrap          # install, start data plane, generate Prisma client, seed
 pnpm dev:api            # Nest API on :3000
-pnpm dev:web            # all four portals, :3001–:3004
+pnpm dev:web            # web portals, :3001–:3008
+pnpm ports              # display active port matrix
 ```
 
-Seeded credentials for local and non-production environments are environment-specific; see [`docs/delivery/DATABASE.md`](./docs/delivery/DATABASE.md).
+Seeded credentials for local and non-production environments are environment-specific; see [`apps/web-docs/content/docs/delivery/DATABASE.mdx`](./apps/web-docs/content/docs/delivery/DATABASE.mdx).
 
 ## Server operations
 
-See [`infra/vps/README.md`](./infra/vps/README.md). Connect as the designated deployment user, not as `root` — the deployed checkout is synchronized by the continuous-deployment pipeline (`rsync`), not by `git pull`, and is not to be hand-edited. To seed an environment's database: `bash scripts/seed-vps.sh <dev|qa|prod>` (see [`docs/delivery/DATABASE.md`](./docs/delivery/DATABASE.md)).
+See [`infra/vps/README.md`](./infra/vps/README.md). Connect as the designated deployment user, not as `root` — the deployed checkout is synchronized by the continuous-deployment pipeline (`rsync`), not by `git pull`, and is not to be hand-edited. To seed an environment's database: `bash scripts/seed-vps.sh <dev|qa|prod>` (see [`apps/web-docs/content/docs/delivery/DATABASE.mdx`](./apps/web-docs/content/docs/delivery/DATABASE.mdx)).

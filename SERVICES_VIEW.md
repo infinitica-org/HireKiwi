@@ -1,9 +1,9 @@
-# SMART — Module Boundaries & Service Topology
+# SmartKiwi (SMART) — Module Boundaries & Service Topology
 
-> **Version:** v4.0 — Sprint 6 Module Surface (29 Sep 2026)
+> **Version:** v4.1 — Sprint 8 Module Surface (Oct 2026)
 > **Maintainer:** System Architect
 > **Ownership:** Architectural content only. For current per-module and per-engineer ownership, see [`TEAM.md`](./TEAM.md).
-> **Purpose:** Authoritative reference for SMART's backend module boundaries, authentication strategy, synchronous/asynchronous execution SLAs, data contracts, Kafka event topics, and REST API surface.
+> **Purpose:** Authoritative reference for SmartKiwi's backend module boundaries, authentication strategy, synchronous/asynchronous execution SLAs, data contracts, Kafka event topics, and REST API surface. Authoritative living documentation maintained in `@smart/web-docs` (port 3008/3028).
 
 ---
 

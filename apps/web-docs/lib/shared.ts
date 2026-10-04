@@ -1,6 +1,6 @@
 import { createGetUrl } from 'fumadocs-core/source';
 
-export const appName = 'SmartZen Knowledge Base & PRD';
+export const appName = 'SmartKiwi Knowledge Base & PRD';
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
