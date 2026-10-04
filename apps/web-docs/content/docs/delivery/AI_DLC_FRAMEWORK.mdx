@@ -134,20 +134,23 @@ To prevent team and agent confusion:
 
 All environments run on a single Linux VPS managed via isolated Docker Compose projects with Caddy TLS reverse proxy:
 
-| Service / Application | Production Blue | Production Green | Dev (`dev.becomesmart.online`) | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `apps/api-core` | `:3000` | `:3010` | `:3020` | Fastify + NestJS Backend API Core |
-| `apps/web-student` | `:3001` | `:3011` | `:3021` | Next.js 16 Student Assessment & Profile Portal |
-| `apps/web-tpo` | `:3002` | `:3012` | `:3022` | Next.js 16 University / TPO Cohort Portal |
-| `apps/web-admin` | `:3003` | `:3013` | `:3023` | Next.js 16 Super Admin & Review Console |
-| `apps/web-verify` | `:3004` | `:3014` | `:3024` | Next.js 16 Public Verification & Credential Portal |
-| `apps/web-recruiter` (future) | `:3005` | `:3015` | `:3025` | Recruiter Talent Search & Matching Portal |
-| `apps/web-docs` | `:3006` | `:3016` | `:3026` | Next.js 16 Fumadocs Documentation SSOT |
-| `apps/worker-telemetry` | `:3007` | `:3017` | `:3027` | 4D Telemetry Ingestion Worker / WebSocket |
-| `apps/sandbox-runner` | `:3008` | `:3018` | `:3028` | Sandboxed Code Execution Gateway |
-| PostgreSQL | `127.0.0.1:5432` | `127.0.0.1:5432` | `127.0.0.1:5432` | Relational Store with `pgvector` HNSW |
-| Redis | `127.0.0.1:6379` | `127.0.0.1:6379` | `127.0.0.1:6379` | Token bucket, sliding-window rate limit, cache |
-| Kafka / Redpanda | `127.0.0.1:19092` | `127.0.0.1:19092` | `127.0.0.1:19092` | Event bus for asynchronous telemetry & delta updates |
+| Service / Application | Production Blue | Production Green | Dev (`dev.becomesmart.online`) | Local Host | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `apps/api-core` | `:3000` | `:3010` | `:3020` | `http://localhost:3000` | Fastify + NestJS Backend API Core |
+| `apps/web-student` | `:3001` | `:3011` | `:3021` | `http://localhost:3001` | Next.js 16 Student Assessment & Profile Portal |
+| `apps/web-tpo` | `:3002` | `:3012` | `:3022` | `http://localhost:3002` | Next.js 16 University / TPO Cohort Portal |
+| `apps/web-admin` | `:3003` | `:3013` | `:3023` | `http://localhost:3003` | Next.js 16 Super Admin & Review Console |
+| `apps/web-verify` | `:3004` | `:3014` | `:3024` | `http://localhost:3004` | Next.js 16 Public Verification & Credential Portal |
+| `apps/web-auth` | `:3005` | `:3015` | `:3025` | `http://localhost:3005` | Next.js 16 Unified Auth & Invitation Portal |
+| `apps/web-company` | `:3006` | `:3016` | `:3026` | `http://localhost:3006` | Next.js 16 Employer / Recruiter Company Portal |
+| `apps/web-landing` | `:3007` | `:3017` | `:3027` | `http://localhost:3007` | Next.js 16 Public Marketing Landing Site |
+| `apps/web-docs` | `:3008` | `:3018` | `:3028` | `http://localhost:3008` | Next.js 16 Fumadocs Documentation SSOT |
+| `apps/proctoring-cv` | `:8091` | `:8092` | `:8093` | `http://localhost:8091` | Python CV Proctoring Sidecar (YuNet/YOLO) |
+| PostgreSQL | `127.0.0.1:5432` | `127.0.0.1:5432` | `127.0.0.1:5432` | `127.0.0.1:5432` | Relational Store with `pgvector` HNSW |
+| PgBouncer | `127.0.0.1:6432` | `127.0.0.1:6432` | `127.0.0.1:6432` | `127.0.0.1:6432` | Transaction Pooling Gateway |
+| Redis | `127.0.0.1:6379` | `127.0.0.1:6379` | `127.0.0.1:6379` | `127.0.0.1:6380` | Token bucket, sliding-window rate limit, cache |
+| Kafka / Redpanda | `127.0.0.1:19092` | `127.0.0.1:19092` | `127.0.0.1:19092` | `127.0.0.1:19092` | Event bus for asynchronous telemetry & delta updates |
+| MinIO S3 | `127.0.0.1:9000` | `127.0.0.1:9000` | `127.0.0.1:9000` | `127.0.0.1:9000` | S3 Object Storage API (Console: `:9001`) |
 
 > [!IMPORTANT]
 > **Week 1 Milestone Target:** For Week 1 (Oct 05 - Oct 11, 2026), we are **NOT moving to production**. The deliverable deadline on Friday (Oct 09) targets an end-to-end deployment to the **Dev environment (`dev.becomesmart.online`)** on ports `3020-3028` for internal stakeholder validation, sprint review demo, and stability handover.

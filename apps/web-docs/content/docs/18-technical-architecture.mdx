@@ -46,14 +46,14 @@ SmartZen operates on a dedicated **High-Performance Linux VPS (Ubuntu 24.04 LTS)
               • Redpanda Kafka (19092)          • MinIO S3 (9000)
 ```
 
-### Port Mapping Matrix
+### Port Mapping Matrix (10 Apps + Data Plane)
 
-| Slot / Project        | API Core                        | Web Applications                                | Environment Binding                       |
-| :-------------------- | :------------------------------ | :---------------------------------------------- | :---------------------------------------- |
-| **Prod Blue Slot**    | `3000`                          | `3001`–`3006`                                   | `becomesmart.online` (via Caddy upstream) |
-| **Prod Green Slot**   | `3010`                          | `3011`–`3016`                                   | Standby / deploy target during releases   |
-| **Dev Isolated Slot** | `3020`                          | `3021`–`3026`                                   | `dev.becomesmart.online`                  |
-| **Internal Data**     | `5432`, `6379`, `19092`, `9000` | Bound strictly to `127.0.0.1` (SSH Tunnel only) |
+| Slot / Project        | API Core                        | Web Applications (`web-*`)                      | CV Sidecar | Environment Binding                       |
+| :-------------------- | :------------------------------ | :---------------------------------------------- | :--------- | :---------------------------------------- |
+| **Prod Blue Slot**    | `3000`                          | `3001`–`3008` (Student, TPO, Admin, Verify, Auth, Company, Landing, Docs) | `8091`     | `becomesmart.online` (via Caddy upstream) |
+| **Prod Green Slot**   | `3010`                          | `3011`–`3018` (Standby mirrors)                 | `8092`     | Standby / deploy target during releases   |
+| **Dev Isolated Slot** | `3020`                          | `3021`–`3028` (Dev mirrors)                     | `8093`     | `dev.becomesmart.online`                  |
+| **Internal Data**     | `5432`, `6432`, `6379`, `19092`, `9000` | Bound strictly to `127.0.0.1` (SSH Tunnel only) |
 
 ---
 
