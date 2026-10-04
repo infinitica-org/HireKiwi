@@ -1,53 +1,39 @@
-# SMART
+# SmartKiwi (SMART) Intelligent Talent Discovery Platform
 
-SMART is an **Intellectual Talent Network** and role-specific readiness verification platform. Candidates build verified talent profiles backed by unfakeable evidence (projects, repositories, work vouchers, and proctored tasks), assessed against a criterion-referenced multi-tier (Gold / Silver / Bronze) competency grid mapped to real industry job tracks. Certified candidates receive student-controlled, cryptographically signed (HMAC-SHA256), publicly verifiable credentials, and are matched semantically to high-fit employer opportunities via vector intelligence (`pgvector`). SMART operates across two unified deployment models: embedded in academia as verified placement infrastructure, and embedded in enterprises for internal mobility and workforce readiness.
+**SmartKiwi (SMART)** is an **evidence-backed talent discovery and readiness platform**. Candidates build capability profiles backed by verified active and passive evidence (projects, repositories, work vouchers, spoken BARS simulations, and proctored tasks), assessed against a criterion-referenced multi-tier (Gold / Silver / Bronze) competency grid mapped to real industry job tracks. Certified candidates receive student-controlled, cryptographically signed (HMAC-SHA256), publicly verifiable credentials, and are matched semantically to high-fit employer opportunities via vector intelligence (`pgvector`). SmartKiwi operates across two unified deployment models: embedded in academia as verified placement infrastructure, and embedded in enterprises for internal mobility and workforce readiness.
 
-Governing references: team charter and ownership — [`TEAM.md`](./TEAM.md); delivery methodology — [`docs/delivery/AGILE_PLAN.md`](./docs/delivery/AGILE_PLAN.md); architecture decision records — [`docs/adr/`](./docs/adr/); branching policy — [`docs/delivery/BRANCHING.md`](./docs/delivery/BRANCHING.md).
+**Vivi** is the unified AI agent persona, proctoring supervisor, and candidate copilot across the SmartKiwi platform.
 
-**New to the codebase:** begin with [`docs/delivery/ENGINEER_START_CHECKLIST.md`](./docs/delivery/ENGINEER_START_CHECKLIST.md), then [`CONTRIBUTING.md`](./CONTRIBUTING.md). Product specification: [`docs/product/prd-v1/`](./docs/product/prd-v1/README.md).
+Governing references: team charter and ownership — [`TEAM.md`](./TEAM.md); delivery methodology — [`apps/web-docs/content/docs/delivery/AI_DLC_FRAMEWORK.mdx`](./apps/web-docs/content/docs/delivery/AI_DLC_FRAMEWORK.mdx); architecture documentation SSOT — `@smart/web-docs` on port `3008` / `3028`; branching policy — [`apps/web-docs/content/docs/delivery/BRANCHING.mdx`](./apps/web-docs/content/docs/delivery/BRANCHING.mdx).
 
-## What was shipped in Sprint 6
+**New to the codebase:** begin with [`apps/web-docs/content/docs/delivery/ENGINEER_START_CHECKLIST.mdx`](./apps/web-docs/content/docs/delivery/ENGINEER_START_CHECKLIST.mdx), then [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-The following capabilities were merged into `dev` as part of Sprint 6 and represent the current live feature surface:
+## Ecosystem Applications & Architecture
 
-| Feature                                                                                                                                               | PR   | Module            |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ----------------- |
-| **Server-authoritative assessment timer** — BullMQ delayed-job force-submits on expiry regardless of client connectivity                              | #380 | `assessment`      |
-| **Cryptographic certificate issuance** — HMAC-SHA256 canonical payload, QR code, async PDF generation                                                 | #380 | `certificate`     |
-| **Public credential verification view** — tier trail, confidence note, calibration employer panel, revocation/supersession states                     | #380 | `web-verify`      |
-| **14-day manager endorsement token** — extended from 7 days; reminder + expiry scheduled via BullMQ                                                   | #380 | `work-experience` |
-| **Spreadsheet formula injection protection** — CWE-1236 neutralization for student whitelist imports                                                  | #380 | `institutions`    |
-| **JD offline fallback extractor** — heuristic skill extraction + 10-track threshold vector when AI gateway times out                                  | #379 | `matching`        |
-| **Semantic vector candidate matcher** — cosine similarity with privacy opt-out triple-gate and 5-domain radar chart                                   | #379 | `matching`        |
-| **TPO partnership onboarding** — partnership request lifecycle (create → review → provision), 7-day activation token, university account provisioning | #377 | `institutions`    |
-| **Bulk whitelist importer** — 10 000-row CSV/XLSX async import via BullMQ, email/dept/year validation, error quarantine, pre-signed error report      | #377 | `institutions`    |
-| **Peer audit: certificate tamper detection** — UUID validation, client-side HMAC hash check, `[SECURITY_EVENT]` logging, 404 stack-trace protection   | #378 | `web-verify`      |
-| **Print alignment CSS** — `@media print` single-page constraint for certificate print view                                                            | #378 | `web-verify`      |
+SmartKiwi is composed of **10 applications** running within a Turborepo monorepo:
 
-## Ownership model
-
-Module and path ownership is authoritative in [`TEAM.md`](./TEAM.md) and enforced by [`.github/CODEOWNERS`](./.github/CODEOWNERS). At a system level, ownership is organized as:
-
-| Domain                  | Scope                                                                           |
-| ----------------------- | ------------------------------------------------------------------------------- |
-| Architecture & Review   | System architecture, `@smart/contracts`, quality gates. No feature code.        |
-| Platform / Backend Core | Authentication, Prisma, Redis, Kafka, rate limiting, sandboxing, infrastructure |
-| Frontend & Full-Stack   | `@smart/ui`, `@smart/api-client`, student and TPO applications                  |
-| Full-Stack & Backend    | Assessment lifecycle, certificates, verification and admin applications         |
-| AI Engineering          | AI gateway, evaluation, matching, `@smart/prompts`, `@smart/scoring-engine`     |
-| Data & AI/Backend       | Catalog, calibration, item banks, placement records, analytics                  |
-
-New engineers: [`ENGINEER_START_CHECKLIST.md`](./docs/delivery/ENGINEER_START_CHECKLIST.md) · Day-to-day guidance: [`ENGINEER_GUIDES.md`](./docs/delivery/ENGINEER_GUIDES.md) · [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+| #   | Application Name     | Port | Description                                                  |
+| --- | -------------------- | :--: | ------------------------------------------------------------ |
+| 1   | `@smart/api-core`    | 3000 | Fastify + NestJS Core API (`/health`, `/ready`, `/api/docs`) |
+| 2   | `@smart/web-student` | 3001 | Candidate portal & AI project defense                        |
+| 3   | `@smart/web-tpo`     | 3002 | University / TPO placement cohort & analytics console        |
+| 4   | `@smart/web-admin`   | 3003 | Super admin console & integrity dispute review queue         |
+| 5   | `@smart/web-verify`  | 3004 | Public cryptographic credential verification portal          |
+| 6   | `@smart/web-auth`    | 3005 | Unified authentication, SSO, and invitation flow             |
+| 7   | `@smart/web-company` | 3006 | Employer & recruiter talent search and job management        |
+| 8   | `@smart/web-landing` | 3007 | Public marketing landing & conversion website                |
+| 9   | `@smart/web-docs`    | 3008 | Fumadocs Architecture & Engineering Documentation SSOT       |
+| 10  | `proctoring-cv`      | 8091 | Python CV proctoring sidecar (YuNet / YOLO / head pose)      |
 
 ## Stack
 
-Turborepo + pnpm workspaces. Next.js 16 (four portals) · NestJS 11 / Fastify · PostgreSQL 16 with **pgvector** · Redis 7 · Redpanda (Kafka) · MinIO (S3) · Mailpit (development SMTP) · Caddy.
+Turborepo + pnpm workspaces. 8 Next.js 16 portals · NestJS 11 / Fastify core · Python CV sidecar · PostgreSQL 16 with **pgvector** · Redis 7 · Redpanda (Kafka) · MinIO (S3) · Mailpit (development SMTP) · Caddy TLS reverse proxy.
 
 Shared packages: `@smart/contracts` (frozen API surface), `@smart/scoring-engine`, `@smart/prompts`, `@smart/observability`, `@smart/api-client`, `@smart/ui`.
 
 ## Local development
 
-Exact step-by-step commands (Windows and Unix): [`docs/delivery/LOCAL_DEV.md`](./docs/delivery/LOCAL_DEV.md).
+Exact step-by-step commands (Windows and Unix): [`apps/web-docs/content/docs/delivery/LOCAL_DEV.mdx`](./apps/web-docs/content/docs/delivery/LOCAL_DEV.mdx).
 
 Requires Node **22.20** (see `.nvmrc`) and pnpm **11.22** (pinned in `packageManager`). Docker Desktop is recommended for the data plane.
 
@@ -55,28 +41,35 @@ Requires Node **22.20** (see `.nvmrc`) and pnpm **11.22** (pinned in `packageMan
 pnpm bootstrap          # install, start data plane, Prisma generate/migrate, seed
 pnpm doctor             # toolchain check (scripts/doctor.sh — requires bash)
 pnpm infra:up           # data plane only (see ports below)
-pnpm dev:api            # http://localhost:3000 — /health, /ready, /api/docs
+pnpm ports              # display active port matrix across local/blue/green/dev
 pnpm dev                # API + all web apps
-pnpm dev:web            # student / TPO / admin / verify / auth (`@smart/web-*`)
+pnpm dev:api            # http://localhost:3000 — /health, /ready, /api/docs
+pnpm dev:student        # http://localhost:3001 — student portal
+pnpm dev:tpo            # http://localhost:3002 — TPO portal
+pnpm dev:admin          # http://localhost:3003 — admin console
+pnpm dev:verify         # http://localhost:3004 — public verification
+pnpm dev:auth           # http://localhost:3005 — unified authentication
+pnpm dev:company        # http://localhost:3006 — employer portal
+pnpm dev:landing        # http://localhost:3007 — marketing landing
+pnpm dev:docs           # http://localhost:3008 — documentation portal
+pnpm dev:cv             # http://localhost:8091 — python CV sidecar
 ```
 
 ### Data plane (`pnpm infra:up`)
 
 | Service       | Host URL / port                          | Notes                                                           |
 | ------------- | ---------------------------------------- | --------------------------------------------------------------- |
-| Postgres      | `localhost:5432`                         | `pgvector/pgvector:pg16`                                        |
+| Postgres      | `localhost:5432`                         | `pgvector/pgvector:pg16` (PgBouncer: `localhost:6432`)          |
 | Redis         | `localhost:6380` → container `6379`      | Windows commonly binds host `6379` already                      |
-| Redpanda      | `localhost:19092`                        | Kafka-compatible                                                |
+| Redpanda      | `localhost:19092`                        | Kafka-compatible event bus                                      |
 | MinIO         | `localhost:9000` / console `:9001`       | S3-compatible; stores certificate PDFs and import error reports |
 | Mailpit       | UI `http://localhost:8025`, SMTP `:1025` | Captures outbound mail                                          |
 | Prisma Studio | `http://localhost:5555`                  | Browse and edit rows against the same database as the API       |
 
 Optional Compose profiles:
 
-- `pnpm infra:obs` — Prometheus, Grafana, Loki
-- `pnpm infra:apps` — containerized API and four web applications (VPS/integration style; no Next.js HMR)
-
-> **Windows / pnpm 9:** if `PATH` still surfaces a standalone pnpm 9, wrapped scripts (`infra:*`, `db:*`, `bootstrap`) print a notice and continue, or re-exec via `npx pnpm@11.22.0`. `pnpm install` remains strict — place `%APPDATA%\npm` before `%LOCALAPPDATA%\pnpm`, or use Corepack. Details: [`LOCAL_DEV.md` §0](./docs/delivery/LOCAL_DEV.md).
+- `pnpm infra:obs` — Prometheus (9090), Grafana (3100), Loki (3101), Tempo (3103)
+- `pnpm infra:apps` — containerized API and web applications under Docker Compose
 
 ### API probes (after `pnpm dev:api`)
 
@@ -86,19 +79,11 @@ Optional Compose profiles:
 | `/ready`    | Readiness (Postgres and Redis reachable) |
 | `/api/docs` | Swagger UI                               |
 
-Seeded accounts exist for local and non-production environments only; credentials are environment-specific and are not documented here. See [`docs/delivery/DATABASE.md`](./docs/delivery/DATABASE.md) for the seeding mechanism.
+Seeded accounts exist for local and non-production environments only; credentials are environment-specific and are not documented here.
 
 Sign in at **http://localhost:3005/login** — the session redirects to the portal appropriate to the authenticated role.
 
-| App     | Port | Notes                                                     |
-| ------- | ---- | --------------------------------------------------------- |
-| API     | 3000 | `/health`, `/ready`, `/api/docs`                          |
-| Student | 3001 | Candidate portal                                          |
-| TPO     | 3002 | Batch management, student invitations, bulk import wizard |
-| Admin   | 3003 | Institution and platform operations                       |
-| Verify  | 3004 | Public certificate lookup (no authentication)             |
-| Auth    | 3005 | Login, invitation acceptance, password setup              |
-| Docs    | 3006 | Interactive documentation portal (Fumadocs)               |
+Invitation emails are captured by Mailpit (`http://localhost:8025`) in local development. Invitation links resolve on the auth application (`/invite/:token`).
 
 Invitation emails are captured by Mailpit (`http://localhost:8025`) in local development. Invitation links resolve on the auth application (`/invite/:token`).
 
