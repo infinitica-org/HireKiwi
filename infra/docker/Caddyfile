@@ -26,6 +26,14 @@
 	reverse_proxy web-company:3000
 }
 
+{$LANDING_HOST} {
+	reverse_proxy web-landing:3000
+}
+
+{$DOCS_HOST} {
+	reverse_proxy web-docs:3000
+}
+
 {$STUDIO_HOST} {
 	basic_auth {
 		{$DB_BASIC_AUTH_USER} {$DB_BASIC_AUTH_HASH}
