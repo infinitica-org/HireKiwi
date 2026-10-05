@@ -31,146 +31,27 @@ function dimensionKey(ref: { dimensionKey: string; taxonomyVersion: string }): s
 function aggregatePassiveByDimension(
   entries: readonly VectorizedSignalEntry[],
   weights: SignalWeightModel,
-  policy: CorroborationPolicy = DEFAULT_CORROBORATION_POLICY,
 ): Map<
   string,
-  {
-    passiveScore: number;
-    confidence: number;
-    dimension: VectorizedSignalEntry['dimension'];
-    internalPassiveConflict: boolean;
-  }
+  { passiveScore: number; confidence: number; dimension: VectorizedSignalEntry['dimension'] }
 > {
-  const maxPassiveDiscrepancy = policy.maxPassiveDiscrepancy ?? 0.4;
-  const penaltyMultiplier = policy.conflictConfidencePenaltyMultiplier ?? 0.6;
-
-  // Group entries by dimension to check pairwise agreement across independent passive sources
-  const grouped = new Map<string, { entry: VectorizedSignalEntry; weighted: number }[]>();
+  const map = new Map<
+    string,
+    { passiveScore: number; confidence: number; dimension: VectorizedSignalEntry['dimension'] }
+  >();
 
   for (const entry of entries) {
     const key = dimensionKey(entry.dimension);
     const weight = resolveSignalWeight(weights, entry.sourceId, entry.dimension.dimensionKey);
     const weighted = entry.score * weight;
-    const list = grouped.get(key) ?? [];
-    list.push({ entry, weighted });
-    grouped.set(key, list);
-  }
-
-  const map = new Map<
-    string,
-    {
-      passiveScore: number;
-      confidence: number;
-      dimension: VectorizedSignalEntry['dimension'];
-      internalPassiveConflict: boolean;
-    }
-  >();
-
-  for (const [key, items] of grouped.entries()) {
-    if (items.length === 0) continue;
-
-    // Detect internal disagreement between independent passive sources
-    let internalPassiveConflict = false;
-    if (items.length >= 2) {
-      for (let i = 0; i < items.length; i++) {
-        for (let j = i + 1; j < items.length; j++) {
-          const itemA = items[i];
-          const itemB = items[j];
-          if (!itemA || !itemB) continue;
-          // If both sources carry at least moderate confidence and their scores diverge strongly
-          if (
-            itemA.entry.confidence >= 0.2 &&
-            itemB.entry.confidence >= 0.2 &&
-            Math.abs(itemA.weighted - itemB.weighted) > maxPassiveDiscrepancy
-          ) {
-            internalPassiveConflict = true;
-            break;
-          }
-        }
-        if (internalPassiveConflict) break;
-      }
-    }
-
-    // Resolution rule:
-    // Multi-source consensus & clustering:
-    // If 3+ sources are present and a cluster of 2+ independent sources agree (delta <= discrepancy),
-    // the agreeing cluster represents genuine Campbell & Fiske corroboration and outvotes an isolated outlier.
-    let selectedPassiveScore = 0;
-    let selectedConfidence = 0;
-    const first = items[0];
-    if (!first) continue;
-
-    if (internalPassiveConflict) {
-      // Find agreement clusters
-      type SourceCluster = { items: typeof items; totalReliability: number; avgScore: number };
-      const clusters: SourceCluster[] = [];
-
-      for (let i = 0; i < items.length; i++) {
-        const base = items[i];
-        if (!base) continue;
-        const clusterItems = [base];
-        let totalRel =
-          base.entry.confidence *
-          resolveSignalWeight(weights, base.entry.sourceId, base.entry.dimension.dimensionKey);
-
-        for (let j = 0; j < items.length; j++) {
-          if (i === j) continue;
-          const other = items[j];
-          if (!other) continue;
-          if (Math.abs(base.weighted - other.weighted) <= maxPassiveDiscrepancy) {
-            clusterItems.push(other);
-            totalRel +=
-              other.entry.confidence *
-              resolveSignalWeight(
-                weights,
-                other.entry.sourceId,
-                other.entry.dimension.dimensionKey,
-              );
-          }
-        }
-
-        const avgScore =
-          clusterItems.reduce((acc, it) => acc + it.weighted, 0) / clusterItems.length;
-        clusters.push({ items: clusterItems, totalReliability: totalRel, avgScore });
-      }
-
-      // Sort clusters: multi-source agreement (count >= 2) first, then total reliability
-      clusters.sort((a, b) => {
-        if (a.items.length >= 2 && b.items.length < 2) return -1;
-        if (b.items.length >= 2 && a.items.length < 2) return 1;
-        return b.totalReliability - a.totalReliability;
+    const existing = map.get(key);
+    if (!existing || weighted > existing.passiveScore) {
+      map.set(key, {
+        passiveScore: Math.min(1, weighted),
+        confidence: entry.confidence,
+        dimension: entry.dimension,
       });
-
-      const bestCluster = clusters[0];
-      if (!bestCluster) continue;
-      selectedPassiveScore = bestCluster.avgScore;
-
-      // Max confidence within winning cluster, dampened by versioned policy penalty
-      const clusterMaxConf = Math.max(...bestCluster.items.map((it) => it.entry.confidence));
-      selectedConfidence = roundTo(clusterMaxConf * penaltyMultiplier, 2);
-    } else {
-      // Concordant sources: select strongest demonstrated weighted signal with highest confidence
-      let maxWeighted = 0;
-      let maxConfidence = 0;
-
-      for (const item of items) {
-        if (item.weighted > maxWeighted) {
-          maxWeighted = item.weighted;
-        }
-        if (item.entry.confidence > maxConfidence) {
-          maxConfidence = item.entry.confidence;
-        }
-      }
-      selectedPassiveScore = maxWeighted;
-      selectedConfidence = maxConfidence;
     }
-
-    map.set(key, {
-      passiveScore: Math.min(1, selectedPassiveScore),
-      confidence: selectedConfidence,
-      dimension: first.entry.dimension,
-      internalPassiveConflict,
-    });
   }
 
   return map;
@@ -221,7 +102,6 @@ export function fuseSignals(input: FuseSignalsInput): FuseSignalsResult {
   const passiveMap = aggregatePassiveByDimension(
     passiveSignals.flatMap((signal) => signal.entries),
     input.weights,
-    policy,
   );
   const assessmentMap = input.assessmentY
     ? assessmentByDimension(input.assessmentY.entries)
@@ -244,21 +124,18 @@ export function fuseSignals(input: FuseSignalsInput): FuseSignalsResult {
 
     let corroborationScore: number;
     let confidence: number;
-    // An internal conflict between independent passive sources also flags contradiction!
-    let contradictionFlag = passive?.internalPassiveConflict ?? false;
+    let contradictionFlag = false;
 
     if (assessmentNorm !== null && passiveNorm !== null) {
       corroborationScore = computeAgreement(passiveNorm, assessmentNorm);
       confidence = roundTo(Math.min(1, passiveConfidence + 0.5), 2);
-      if (!contradictionFlag) {
-        contradictionFlag = shouldFlagContradiction(
-          assessment.passed,
-          passiveNorm,
-          passiveConfidence,
-          assessment.proficiencyLevel,
-          policy,
-        );
-      }
+      contradictionFlag = shouldFlagContradiction(
+        assessment.passed,
+        passiveNorm,
+        passiveConfidence,
+        assessment.proficiencyLevel,
+        policy,
+      );
     } else if (passiveNorm !== null) {
       corroborationScore = passiveOnlyScore(passiveNorm, passiveConfidence);
       confidence = passiveConfidence;

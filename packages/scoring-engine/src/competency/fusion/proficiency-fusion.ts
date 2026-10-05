@@ -8,7 +8,6 @@ import type {
   FusionTraceEntry,
   CompetencyFusionResult,
   FusionInput,
-  EvidenceValidationMetrics,
 } from '@smart/contracts';
 import {
   determineSupportedProficiency,
@@ -24,7 +23,6 @@ import {
 } from './fusion-rules.v1.js';
 import { computeDomainConfidence } from './domain-confidence.js';
 import { buildCapabilityGaps } from './capability-gaps.js';
-import { validateEvidenceMetrics } from '../evidence-validator.js';
 
 function statusFromSource(
   admissible: Array<{
@@ -51,41 +49,11 @@ export function fuseDomainCapability(
     const fusionTrace: FusionTraceEntry[] = [];
     const conflicts: CompetencyFusionResult['conflicts'] = [];
     const appliedDomainVetoIds = new Set<string>();
-    const evidenceValidationMetrics: EvidenceValidationMetrics[] = [];
 
     let domainCap: ProficiencyLevel | null = null;
 
     if (input.proctoringRiskHigh) {
       appliedDomainVetoIds.add('V-INTEGRITY-01');
-    }
-
-    // Compute evidence validation metrics for each bundle
-    for (const bundle of bundles) {
-      if (!bundle.available) continue;
-
-      const bundleObservations = bundle.observations ?? [];
-      if (bundleObservations.length === 0) continue;
-
-      const testedItemCount = bundle.metadata?.testedItemCount ?? bundleObservations.length;
-      const totalConstructCompetencyCount = input.competencyModel.length;
-
-      const projectReport = bundle.metadata?.projectReport as
-        { scores?: { raterRatings?: readonly number[] }; ageDays?: number } | null | undefined;
-
-      const evidenceMetrics = validateEvidenceMetrics({
-        evidenceId: bundle.sourceId.toLowerCase(),
-        evidenceType: bundle.sourceId === 'ASSESSMENT' ? 'ASSESSMENT' : 'PROJECT',
-        methodType: bundle.sourceId === 'ASSESSMENT' ? 'FORMAL_TEST' : 'PROJECT_WORK',
-        testedCompetencyCount: Math.min(testedItemCount, bundleObservations.length),
-        totalConstructCompetencyCount,
-        raterRatings: projectReport?.scores?.raterRatings,
-        sourceAuthorityWeight:
-          bundle.trustTier === 'TRUSTED' ? 0.9 : bundle.trustTier === 'PROVISIONAL' ? 0.7 : 0.5,
-        ageDays: projectReport?.ageDays ?? 0,
-        halfLifeDays: 365,
-      });
-
-      evidenceValidationMetrics.push(evidenceMetrics);
     }
 
     for (const competency of input.competencyModel) {
@@ -272,7 +240,6 @@ export function fuseDomainCapability(
       fusionTrace,
       assessmentComplete: true,
       recommendedNextStep,
-      evidenceValidationMetrics,
     };
   });
 }
