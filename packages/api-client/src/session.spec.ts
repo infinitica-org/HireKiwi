@@ -27,7 +27,7 @@ const origins = {
   student: 'http://localhost:3001',
   tpo: 'http://localhost:3002',
   admin: 'http://localhost:3003',
-  company: 'http://localhost:3006',
+  company: 'http://localhost:3008',
 };
 
 describe('resolvePortalOriginsFromEnv', () => {
@@ -98,7 +98,7 @@ describe('login redirect per role', () => {
     expect(portalHomeForRole('INSTITUTION_ADMIN', origins)).toBe('http://localhost:3002/');
     expect(portalHomeForRole('PLACEMENT_STAFF', origins)).toBe('http://localhost:3002/');
     expect(portalHomeForRole('SUPER_ADMIN', origins)).toBe('http://localhost:3003/admin');
-    expect(portalHomeForRole('COMPANY', origins)).toBe('http://localhost:3006/');
+    expect(portalHomeForRole('COMPANY', origins)).toBe('http://localhost:3008/');
   });
 
   it('ignores returnTo that points at a different portal', () => {

@@ -70,7 +70,7 @@ export function getClientSession(): SessionInfo {
     const studentBase = process.env.NEXT_PUBLIC_STUDENT_URL ?? 'http://localhost:3001';
     const tpoBase = process.env.NEXT_PUBLIC_TPO_URL ?? 'http://localhost:3002';
     const adminBase = process.env.NEXT_PUBLIC_ADMIN_URL ?? 'http://localhost:3003';
-    const companyBase = process.env.NEXT_PUBLIC_COMPANY_URL ?? 'http://localhost:3006';
+    const companyBase = process.env.NEXT_PUBLIC_COMPANY_URL ?? 'http://localhost:3008';
 
     if (role === 'STUDENT') {
       portalUrl = `${studentBase}/dashboard`;

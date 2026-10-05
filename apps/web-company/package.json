@@ -4,7 +4,7 @@
   "private": true,
   "description": "B2B company portal. Owner: Vishal V (auth/platform) with UI patterns from Satheswaran V.",
   "scripts": {
-    "dev": "next dev --port 3006",
+    "dev": "next dev --port 3008",
     "build": "next build",
     "start": "next start --port 3006",
     "typecheck": "tsc -p tsconfig.json --noEmit",
