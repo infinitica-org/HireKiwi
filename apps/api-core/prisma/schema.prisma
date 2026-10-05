@@ -509,6 +509,8 @@ model User {
   onboardingDetails      Json?                     @map("onboarding_details")
   /// Object storage key for the candidate profile photo (signed URL served at read time).
   profilePhotoObjectKey  String?                   @map("profile_photo_object_key")
+  /// Professional headline shown under the student name; assigned once, then stored here.
+  profileHeadline        String?                   @map("profile_headline")
   dpdpConsentAt          DateTime?                 @map("dpdp_consent_at") @db.Timestamptz(6)
   /// Persistent, non-expiring public-profile share link (lazily minted on first request).
   publicProfileSlug      String?                   @unique @map("public_profile_slug")
@@ -1506,10 +1508,28 @@ model Project {
   report              ProjectVerificationReport?
   qlixCheckResult     QlixCheckResult?
   studentCapabilities StudentCapability[]
+  /// Th6-600 - PDF/PNG evidence files (object keys) attached to the project.
+  documents           ProjectDocument[]
 
   @@index([studentId, status])
   @@index([studentId, isActive])
   @@map("projects")
+}
+
+/// Th6-600 - evidence file attached to a project. `fileUrl` holds the storage object key;
+/// the API swaps it for a 15-minute presigned download URL.
+model ProjectDocument {
+  id            String   @id @default(uuid()) @db.Uuid
+  projectId     String   @map("project_id") @db.Uuid
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileUrl       String   @map("file_url")
+  fileName      String   @map("file_name")
+  fileSizeBytes Int      @map("file_size_bytes")
+  mimeType      String   @map("mime_type")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([projectId])
+  @@map("project_documents")
 }
 
 model QlixCheckResult {

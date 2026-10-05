@@ -6,20 +6,32 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import {
   CreateProjectRequestSchema,
+  EvidenceFileConfirmSchema,
   ProjectSubmittedDataSchema,
   ReplaceProjectRequestSchema,
   SMART_TOPICS,
   UuidSchema,
   type ListMyProjectsResponse,
+  type ProjectDocumentDto,
   type ProjectDto,
   type ReplaceProjectResponse,
 } from '@smart/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
+import {
+  createEvidenceUploadUrl,
+  isEvidenceObjectKey,
+  verifyUploadedEvidence,
+} from '../../platform/storage/evidence-file.js';
+import { StorageService } from '../../platform/storage/storage.service.js';
+
+/** Th6-600 — every project evidence object lives under this storage prefix. */
+export const PROJECT_EVIDENCE_NAMESPACE = 'project-evidence';
 import { ProjectInterviewGateService } from '../evaluation/project-interview-gate.service.js';
 import { ProjectVerifyRunnerService } from '../evaluation/project-verify-runner.service.js';
 import { toProjectDto, type ProjectRow } from '../evaluation/project-verify.mapper.js';
@@ -37,7 +49,142 @@ export class ProjectsService {
     @Inject(ProjectInterviewGateService)
     private readonly interviewGate: ProjectInterviewGateService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
+    @Optional() @Inject(StorageService) private readonly storage?: StorageService,
   ) {}
+
+  /* ------------------------- Th6-600 — project evidence files ------------------------- */
+
+  private requireStorage(): StorageService {
+    if (!this.storage) {
+      throw new BadRequestException({
+        error: 'storage_unavailable',
+        message: 'Evidence upload is unavailable.',
+        statusCode: 400,
+      });
+    }
+    return this.storage;
+  }
+
+  private evidenceNamespace(studentId: string, projectId: string): string {
+    return `${PROJECT_EVIDENCE_NAMESPACE}/${studentId}/${projectId}`;
+  }
+
+  private async assertOwnedProject(studentId: string, projectId: string): Promise<string> {
+    const id = UuidSchema.parse(projectId);
+    const row = await this.prisma.project.findUnique({
+      where: { id },
+      select: { studentId: true },
+    });
+    if (!row) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Project not found.',
+        statusCode: 404,
+      });
+    }
+    if (row.studentId !== studentId) {
+      throw new ForbiddenException({
+        error: 'forbidden',
+        message: 'You can only change your own projects.',
+        statusCode: 403,
+      });
+    }
+    return id;
+  }
+
+  /** Presigned PUT (15 min) for one PDF/PNG evidence file, max 10 MB. */
+  async createDocumentUploadUrl(studentId: string, projectId: string, body: unknown) {
+    const id = await this.assertOwnedProject(studentId, projectId);
+    return createEvidenceUploadUrl(
+      this.requireStorage(),
+      this.evidenceNamespace(studentId, id),
+      body,
+    );
+  }
+
+  /** Verifies the uploaded object (size, magic bytes, extension, type, virus scan) and attaches it. */
+  async attachDocument(
+    studentId: string,
+    projectId: string,
+    body: unknown,
+  ): Promise<ProjectDocumentDto> {
+    const id = await this.assertOwnedProject(studentId, projectId);
+    const parsed = EvidenceFileConfirmSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        error: 'validation_error',
+        message: parsed.error.issues[0]?.message ?? 'Invalid evidence file.',
+        statusCode: 400,
+        details: parsed.error.flatten(),
+      });
+    }
+    const storage = this.requireStorage();
+    await verifyUploadedEvidence(storage, this.evidenceNamespace(studentId, id), parsed.data);
+    const doc = await this.prisma.projectDocument.create({
+      data: {
+        projectId: id,
+        fileUrl: parsed.data.objectKey,
+        fileName: parsed.data.fileName,
+        fileSizeBytes: parsed.data.fileSizeBytes,
+        mimeType: parsed.data.mimeType,
+      },
+    });
+    await this.auditPublisher.record({
+      actorId: studentId,
+      action: 'project.document_attached',
+      resourceType: 'project',
+      resourceId: id,
+      reasonCode: null,
+      metadata: { documentId: doc.id },
+    });
+    return this.toDocumentDto(doc);
+  }
+
+  async removeDocument(studentId: string, projectId: string, documentId: string): Promise<void> {
+    const id = await this.assertOwnedProject(studentId, projectId);
+    const doc = await this.prisma.projectDocument.findUnique({ where: { id: documentId } });
+    if (!doc || doc.projectId !== id) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Project document not found.',
+        statusCode: 404,
+      });
+    }
+    await this.prisma.projectDocument.delete({ where: { id: documentId } });
+    if (this.storage) await this.storage.deleteObject(doc.fileUrl).catch(() => undefined);
+    await this.auditPublisher.record({
+      actorId: studentId,
+      action: 'project.document_removed',
+      resourceType: 'project',
+      resourceId: id,
+      reasonCode: null,
+      metadata: { documentId },
+    });
+  }
+
+  private async toDocumentDto(doc: {
+    id: string;
+    projectId: string;
+    fileUrl: string;
+    fileName: string;
+    fileSizeBytes: number;
+    mimeType: string;
+    createdAt: Date;
+  }): Promise<ProjectDocumentDto> {
+    const fileUrl =
+      this.storage && isEvidenceObjectKey(doc.fileUrl, [PROJECT_EVIDENCE_NAMESPACE])
+        ? await this.storage.getSignedDownloadUrl(doc.fileUrl)
+        : doc.fileUrl;
+    return {
+      id: doc.id,
+      projectId: doc.projectId,
+      fileUrl,
+      fileName: doc.fileName,
+      fileSizeBytes: doc.fileSizeBytes,
+      mimeType: doc.mimeType,
+      createdAt: doc.createdAt.toISOString(),
+    };
+  }
 
   async create(studentId: string, body: unknown): Promise<ProjectDto> {
     const request = CreateProjectRequestSchema.parse(body);
@@ -275,6 +422,11 @@ export class ProjectsService {
 
   private async toDtoWithInterview(row: ProjectRow): Promise<ProjectDto> {
     const interview = await this.interviewGate.getState(row.id);
-    return toProjectDto(row, interview);
+    const docs = await this.prisma.projectDocument.findMany({
+      where: { projectId: row.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    const documents = await Promise.all(docs.map((doc) => this.toDocumentDto(doc)));
+    return { ...toProjectDto(row, interview), documents };
   }
 }

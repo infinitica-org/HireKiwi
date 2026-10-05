@@ -48,7 +48,7 @@ function Card({ title, testId, children }: { title: string; testId: string; chil
   return (
     <section
       data-testid={testId}
-      className="rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]"
+      className="rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]"
     >
       <h2 className="font-heading text-base font-bold tracking-tight text-zinc-900 dark:text-white">
         {title}

@@ -34,7 +34,7 @@ export function ProjectDetailModal({ project, loading, onClose }: ProjectDetailM
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center font-sans"
       role="presentation"
       onClick={onClose}
     >
@@ -42,7 +42,7 @@ export function ProjectDetailModal({ project, loading, onClose }: ProjectDetailM
         role="dialog"
         aria-modal="true"
         aria-labelledby="project-detail-title"
-        className="max-h-[min(92dvh,880px)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-xl"
+        className="max-h-[min(92dvh,880px)] w-full max-w-2xl overflow-y-auto rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <header className="sticky top-0 z-[1] flex items-start justify-between gap-3 border-b border-[var(--ds-border-subtle)] bg-[var(--ds-surface)] px-6 py-4">
@@ -57,7 +57,7 @@ export function ProjectDetailModal({ project, loading, onClose }: ProjectDetailM
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
+            className="rounded-md p-2 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
             aria-label="Close project details"
           >
             <X className="h-5 w-5" />
@@ -137,7 +137,7 @@ export function ProjectDetailModal({ project, loading, onClose }: ProjectDetailM
               <ProjectDefenseInterviewDialog project={project} />
             ) : null}
 
-            <section className="rounded-lg border border-[var(--ds-border-subtle)] bg-[var(--ds-surface-hover)]/50 p-4">
+            <section className="rounded-md border border-[var(--ds-border-subtle)] bg-[var(--ds-surface-hover)]/50 p-4">
               <h4 className="text-sm font-semibold text-[var(--ds-text)]">Verification</h4>
               <p className="mt-2 text-sm text-[var(--ds-text-secondary)]">{copy.body}</p>
               {project.report ? (

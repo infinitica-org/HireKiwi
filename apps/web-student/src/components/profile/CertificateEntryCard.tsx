@@ -33,15 +33,15 @@ interface CertificateEntryCardProps {
 export function CertificateEntryCard({ certificate }: CertificateEntryCardProps) {
   const proof = certificateProofSummary(certificate);
   const skillCount = certificate.skills.length;
-  const manageHref = `/certificates/add?id=${certificate.certificateId}`;
-  const assessmentHref = `/certificates/${certificate.certificateId}/verify`;
+  const manageHref = `/student/certificates/add?id=${certificate.certificateId}`;
+  const assessmentHref = `/student/certificates/${certificate.certificateId}/verify`;
 
   const isVerified = certificateStatusIsVerified(certificate.status);
   const isRejected = certificateStatusIsRejected(certificate.status);
   const isPending = certificateStatusIsPending(certificate.status);
 
   return (
-    <article className="overflow-hidden rounded-md border border-zinc-200/80 bg-white shadow-2xs font-sans select-none dark:border-zinc-800 dark:bg-[#161616]">
+    <article className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-2xs font-sans select-none dark:border-zinc-800 dark:bg-[#161616]">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 border-b border-zinc-100 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-[#161616]">
         <div className="flex items-start gap-3 min-w-0">
@@ -92,7 +92,7 @@ export function CertificateEntryCard({ certificate }: CertificateEntryCardProps)
 
       {/* Bento Tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-zinc-50/50 dark:bg-zinc-900/30">
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Issue Date
           </span>
@@ -102,7 +102,7 @@ export function CertificateEntryCard({ certificate }: CertificateEntryCardProps)
           </div>
         </div>
 
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Credential Proof
           </span>
@@ -112,7 +112,7 @@ export function CertificateEntryCard({ certificate }: CertificateEntryCardProps)
           </div>
         </div>
 
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-3.5 shadow-2xs sm:col-span-2 dark:border-zinc-800 dark:bg-[#161616]">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-3.5 shadow-2xs sm:col-span-2 dark:border-zinc-800 dark:bg-[#161616]">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
               Mapped Skills ({skillCount})

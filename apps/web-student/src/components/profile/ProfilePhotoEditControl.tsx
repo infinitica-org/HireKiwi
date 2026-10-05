@@ -8,6 +8,7 @@ import { useQueryClient } from '@smart/ui';
 
 import { CandidateAvatar } from '@/components/profile/CandidateAvatar';
 import { api } from '@/lib/api';
+import { PhotoCropDialog } from '@/components/profile/PhotoCropDialog';
 import {
   PROFILE_PHOTO_ACCEPT,
   profilePhotoDisplayUrl,
@@ -40,15 +41,23 @@ export function ProfilePhotoEditControl({
   const resolvedPhotoUrl =
     displayPhotoUrl !== undefined ? displayPhotoUrl : (profilePhotoUrl ?? null);
 
-  const handleSelect = async (file: File | undefined) => {
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // Picking a file opens the crop dialog; only the adjusted square is uploaded.
+  const handleSelect = (file: File | undefined) => {
+    if (inputRef.current) inputRef.current.value = '';
     if (!file) return;
     const validationError = validateProfilePhotoFile(file);
     if (validationError) {
       setError(validationError);
       return;
     }
-
     setError(null);
+    setPendingFile(file);
+  };
+
+  const uploadCropped = async (file: File) => {
+    setPendingFile(null);
     setUploading(true);
     try {
       const response = await api.users.uploadProfilePhoto(file, file.name);
@@ -105,13 +114,18 @@ export function ProfilePhotoEditControl({
         type="file"
         accept={PROFILE_PHOTO_ACCEPT}
         className="hidden"
-        onChange={(event) => void handleSelect(event.target.files?.[0])}
+        onChange={(event) => handleSelect(event.target.files?.[0])}
       />
       {error ? (
         <p className="absolute left-0 top-full z-10 mt-1 max-w-[12rem] text-xs text-[var(--ds-coral)]">
           {error}
         </p>
       ) : null}
+      <PhotoCropDialog
+        file={pendingFile}
+        onCancel={() => setPendingFile(null)}
+        onConfirm={(cropped) => void uploadCropped(cropped)}
+      />
     </div>
   );
 }

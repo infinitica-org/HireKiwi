@@ -1,4 +1,5 @@
 import {
+  Optional,
   BadRequestException,
   ForbiddenException,
   Inject,
@@ -18,8 +19,16 @@ import {
 import { Prisma } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
-import { assertDataUriClean } from '../../platform/storage/file-scanner.js';
+import {
+  createEvidenceUploadUrl,
+  isEvidenceObjectKey,
+  verifyUploadedEvidence,
+} from '../../platform/storage/evidence-file.js';
+import { StorageService } from '../../platform/storage/storage.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
+
+/** Th6-600 — every education proof object lives under this storage prefix. */
+export const EDUCATION_PROOF_NAMESPACE = 'education-proofs';
 
 export function isEducationEligible(education: { status: string }): boolean {
   return education.status === 'verified';
@@ -30,7 +39,48 @@ export class CandidateEducationService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
+    @Optional() @Inject(StorageService) private readonly storage?: StorageService,
   ) {}
+
+  /** Th6-600 — storage namespace that owns one student's proofs for one education entry. */
+  private proofNamespace(userId: string, educationId: string): string {
+    return `${EDUCATION_PROOF_NAMESPACE}/${userId}/${educationId}`;
+  }
+
+  private requireStorage(): StorageService {
+    if (!this.storage) {
+      throw new BadRequestException({
+        error: 'storage_unavailable',
+        message: 'Proof document upload is unavailable.',
+        statusCode: 400,
+      });
+    }
+    return this.storage;
+  }
+
+  /** Th6-600 — presigned PUT (15 min) for one education proof file. */
+  async createDocumentUploadUrl(userId: string, educationId: string, body: unknown) {
+    await this.getForStudent(userId, educationId);
+    return createEvidenceUploadUrl(
+      this.requireStorage(),
+      this.proofNamespace(userId, educationId),
+      body,
+    );
+  }
+
+  /** Replaces stored object keys with 15-minute presigned download URLs before a DTO leaves the API. */
+  private async signDocuments(dto: CandidateEducationDto): Promise<CandidateEducationDto> {
+    if (!this.storage || !dto.documents?.length) return dto;
+    const storage = this.storage;
+    const documents = await Promise.all(
+      dto.documents.map(async (doc) =>
+        isEvidenceObjectKey(doc.fileUrl, [EDUCATION_PROOF_NAMESPACE])
+          ? { ...doc, fileUrl: await storage.getSignedDownloadUrl(doc.fileUrl) }
+          : doc,
+      ),
+    );
+    return { ...dto, documents };
+  }
 
   private recordAudit(
     actorId: string,
@@ -60,7 +110,7 @@ export class CandidateEducationService {
     });
 
     if (records.length > 0) {
-      return records.map((r) => this.mapToDto(r));
+      return Promise.all(records.map((r) => this.signDocuments(this.mapToDto(r))));
     }
 
     // Auto-sync fallback from user.onboardingDetails if 0 records exist in DB
@@ -117,7 +167,7 @@ export class CandidateEducationService {
         statusCode: 403,
       });
     }
-    return this.mapToDto(record);
+    return this.signDocuments(this.mapToDto(record));
   }
 
   async create(userId: string, body: unknown): Promise<CandidateEducationDto> {
@@ -218,7 +268,14 @@ export class CandidateEducationService {
       });
     }
 
-    await assertDataUriClean(parsed.data.fileUrl, parsed.data.fileName);
+    // Th6-600 — `fileUrl` is the object key from createDocumentUploadUrl; verify the real bytes.
+    const storage = this.requireStorage();
+    await verifyUploadedEvidence(storage, this.proofNamespace(userId, educationId), {
+      objectKey: parsed.data.fileUrl,
+      fileName: parsed.data.fileName,
+      mimeType: parsed.data.mimeType,
+      fileSizeBytes: parsed.data.fileSizeBytes,
+    });
     const doc = await this.prisma.candidateEducationDocument.create({
       data: {
         educationId,
@@ -234,7 +291,8 @@ export class CandidateEducationService {
       documentId: doc.id,
       documentType: doc.documentType,
     });
-    return this.mapDocumentToDto(doc);
+    const dto = this.mapDocumentToDto(doc);
+    return { ...dto, fileUrl: await storage.getSignedDownloadUrl(doc.fileUrl) };
   }
 
   async removeDocument(userId: string, educationId: string, documentId: string): Promise<void> {
@@ -251,6 +309,9 @@ export class CandidateEducationService {
     }
 
     await this.prisma.candidateEducationDocument.delete({ where: { id: documentId } });
+    if (this.storage && isEvidenceObjectKey(doc.fileUrl, [EDUCATION_PROOF_NAMESPACE])) {
+      await this.storage.deleteObject(doc.fileUrl).catch(() => undefined);
+    }
     await this.recordAudit(userId, 'candidate_education.document_removed', educationId, {
       documentId,
     });

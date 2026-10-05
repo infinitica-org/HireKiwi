@@ -31,6 +31,7 @@ import {
   CompleteCandidateOnboardingRequestSchema,
   CURRENT_CONSENT_VERSION,
   DeleteResumeRequestSchema,
+  profileHeadlineForUser,
   SaveCandidateOnboardingDraftRequestSchema,
   SMART_TOPICS,
 } from '@smart/contracts';
@@ -75,6 +76,13 @@ export class UsersService {
         message: 'User not found.',
         statusCode: 404,
       });
+    }
+    // A student gets a headline from the shared list the first time they load their account
+    // (new and existing students alike); it is stored, so it stays the same afterwards.
+    if (user.role === 'STUDENT' && !user.profileHeadline) {
+      const profileHeadline = profileHeadlineForUser(user.id);
+      await this.prisma.user.update({ where: { id: userId }, data: { profileHeadline } });
+      return toAuthenticatedUserWithPhoto(this.storage, { ...user, profileHeadline });
     }
     return toAuthenticatedUserWithPhoto(this.storage, user);
   }
@@ -183,6 +191,7 @@ export class UsersService {
         details: parsed.error.flatten(),
       });
     }
+    await this.assertCatalogSkills(parsed.data.skills ?? []);
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== 'STUDENT') {
@@ -507,6 +516,35 @@ export class UsersService {
     });
   }
 
+  /**
+   * Th6-600 — technical skills must be real entries of the 10-track skill catalog. The schema
+   * already rejects free text and self-ratings; this rejects codes that are well-formed but unknown.
+   */
+  private async assertCatalogSkills(
+    skills: ReadonlyArray<{ type: 'technical' | 'language'; code?: string }>,
+  ): Promise<void> {
+    const codes = [
+      ...new Set(
+        skills.flatMap((skill) => (skill.type === 'technical' && skill.code ? [skill.code] : [])),
+      ),
+    ];
+    if (codes.length === 0) return;
+    const known = await this.prisma.skill.findMany({
+      where: { code: { in: codes } },
+      select: { code: true },
+    });
+    const knownCodes = new Set(known.map((row) => row.code));
+    const unknown = codes.filter((code) => !knownCodes.has(code));
+    if (unknown.length > 0) {
+      throw new BadRequestException({
+        error: 'validation_error',
+        message: 'Choose skills from the SMART skill catalog.',
+        statusCode: 400,
+        details: { unknownSkillCodes: unknown },
+      });
+    }
+  }
+
   async completeOnboarding(userId: string, body: unknown): Promise<AuthenticatedUser> {
     const parsed = CompleteCandidateOnboardingRequestSchema.safeParse(body);
     if (!parsed.success) {
@@ -519,6 +557,7 @@ export class UsersService {
     }
 
     const request: CompleteCandidateOnboardingRequest = parsed.data;
+    await this.assertCatalogSkills(request.skills);
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== 'STUDENT') {
       throw new ForbiddenException({

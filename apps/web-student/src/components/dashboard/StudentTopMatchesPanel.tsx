@@ -15,7 +15,7 @@ export interface MatchItem {
 
 export function StudentTopMatchesPanel({ matches = [] }: { matches?: MatchItem[] }) {
   return (
-    <section className="relative overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs font-sans select-none dark:border-zinc-800 dark:bg-[#161616]">
+    <section className="relative overflow-hidden rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs font-sans select-none dark:border-zinc-800 dark:bg-[#161616]">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-zinc-100 pb-4 dark:border-zinc-850">
         <div>
           <h2 className="font-heading text-base font-bold tracking-tight text-zinc-900 dark:text-white">
@@ -27,7 +27,7 @@ export function StudentTopMatchesPanel({ matches = [] }: { matches?: MatchItem[]
           </p>
         </div>
         <Link
-          href="/matches"
+          href="/student/matches"
           className="inline-flex items-center justify-center gap-1.5 rounded-md bg-zinc-900 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs transition-colors duration-150 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
         >
           View all matches
@@ -35,7 +35,7 @@ export function StudentTopMatchesPanel({ matches = [] }: { matches?: MatchItem[]
         </Link>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-md border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mt-4 overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">
         {matches.length === 0 ? (
           <div className="px-6 py-10 text-center">
             <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 mb-3 dark:bg-zinc-800 dark:text-zinc-400">
@@ -49,7 +49,7 @@ export function StudentTopMatchesPanel({ matches = [] }: { matches?: MatchItem[]
               hiring partners.
             </p>
             <Link
-              href="/matches"
+              href="/student/matches"
               className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
             >
               Explore Matches
@@ -105,7 +105,7 @@ export function StudentTopMatchesPanel({ matches = [] }: { matches?: MatchItem[]
         <div className="mt-3 flex items-center justify-between px-1 text-xs text-zinc-400">
           <span>Showing top {matches.length} matches</span>
           <Link
-            href="/matches"
+            href="/student/matches"
             className="font-semibold text-zinc-900 hover:underline dark:text-white"
           >
             Explore full matches list →

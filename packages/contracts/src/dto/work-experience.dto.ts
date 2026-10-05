@@ -1,5 +1,11 @@
 import { z } from 'zod';
 import {
+  EvidenceFileMimeTypeSchema,
+  EvidenceFileNameSchema,
+  EvidenceFileSizeSchema,
+  evidenceExtensionMatches,
+} from './evidence-file.dto.js';
+import {
   EmploymentTypeSchema,
   ExperienceDocumentTypeSchema,
   ManagerEndorsementStatusSchema,
@@ -40,13 +46,26 @@ export const WorkExperienceDocumentSchema = z.object({
 });
 export type WorkExperienceDocumentDto = z.infer<typeof WorkExperienceDocumentSchema>;
 
-export const CreateWorkExperienceDocumentSchema = z.object({
-  documentType: ExperienceDocumentTypeSchema,
-  fileUrl: z.string().min(1, 'File URL is required'),
-  fileName: z.string().min(1, 'File name is required'),
-  fileSizeBytes: z.number().int().positive('File size must be positive'),
-  mimeType: z.string().min(1, 'MIME type is required'),
-});
+/** Th6-600 — `fileUrl` carries the storage object key returned by the evidence upload URL. */
+export const CreateWorkExperienceDocumentSchema = z
+  .object({
+    documentType: ExperienceDocumentTypeSchema,
+    fileUrl: z
+      .string()
+      .min(1, 'File URL is required')
+      .max(512)
+      .refine(
+        (v) => !v.startsWith('data:'),
+        'Upload the file first; inline data URIs are not accepted.',
+      ),
+    fileName: EvidenceFileNameSchema,
+    fileSizeBytes: EvidenceFileSizeSchema,
+    mimeType: EvidenceFileMimeTypeSchema,
+  })
+  .refine((v) => evidenceExtensionMatches(v.fileName, v.mimeType), {
+    message: 'The file extension does not match its type.',
+    path: ['fileName'],
+  });
 export type CreateWorkExperienceDocumentDto = z.infer<typeof CreateWorkExperienceDocumentSchema>;
 
 export const CreateWorkExperienceBaseSchema = z.object({

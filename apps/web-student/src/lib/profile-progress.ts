@@ -18,6 +18,7 @@ export const PROFILE_AREA_IDS = [
   'projects',
   'certifications',
   'professionalLinks',
+  'profilePhoto',
 ] as const;
 
 export type ProfileAreaId = (typeof PROFILE_AREA_IDS)[number];
@@ -30,13 +31,14 @@ export const PROFILE_AREA_LABELS: Record<ProfileAreaId, string> = {
   projects: 'Projects',
   certifications: 'Certifications',
   professionalLinks: 'Professional links',
+  profilePhoto: 'Profile photo',
 };
 
-/** Dashboard section grid labels (same 8 areas; skills shown as basic profile details). */
+/** Dashboard section grid labels (same areas; skills shown as basic profile details). */
 export const DASHBOARD_AREA_LABELS: Record<ProfileAreaId, string> = {
   ...PROFILE_AREA_LABELS,
   skills: 'Basic details',
-  professionalLinks: 'Professional Links',
+  professionalLinks: 'Integrations',
 };
 
 const AREA_COUNT = PROFILE_AREA_IDS.length;
@@ -49,13 +51,15 @@ export const PROFILE_VERIFICATION_UNLOCK_MESSAGE =
   'Complete all profile sections to unlock skill verification.';
 
 export const PROFILE_AREA_HREFS: Record<ProfileAreaId, string> = {
-  skills: '/profile?section=skills',
-  languages: '/profile?section=languages',
-  education: '/profile?section=education',
-  experience: '/profile?section=experience',
-  projects: '/profile?section=projects',
-  certifications: '/profile?section=certifications',
-  professionalLinks: '/profile?section=links',
+  skills: '/student/profile?section=skills',
+  languages: '/student/profile?section=languages',
+  education: '/student/profile?section=education',
+  experience: '/student/profile?section=experience',
+  projects: '/student/profile?section=projects',
+  certifications: '/student/profile?section=certifications',
+  professionalLinks: '/student/profile?section=links',
+  // The photo is edited from the profile hero, not a dedicated section.
+  profilePhoto: '/student/profile',
 };
 
 export type ProfileStrengthTier = 'getting_started' | 'building' | 'strong' | 'verification_ready';
@@ -93,7 +97,7 @@ export function profileStrengthFromPercent(percent: number): {
   };
 }
 
-/** True when the eight-area profile completion gate allows skill verification. */
+/** True when the profile completion gate allows skill verification. */
 export function canVerifySkills(percent: number | null | undefined): boolean {
   return (percent ?? 0) >= PROFILE_SKILL_VERIFICATION_UNLOCK_PERCENT;
 }
@@ -107,6 +111,7 @@ export interface ProfileProgressInput {
   experiences: WorkExperienceDto[];
   projects: ProjectDto[];
   certificates: CandidateCertificateDto[];
+  hasProfilePhoto: boolean;
 }
 
 export interface ProfileProgressResult {
@@ -176,6 +181,10 @@ export function isProfessionalLinksAreaComplete(input: ProfileProgressInput): bo
   return linkedin.length > 0 || github.length > 0;
 }
 
+export function isProfilePhotoAreaComplete(input: ProfileProgressInput): boolean {
+  return input.hasProfilePhoto;
+}
+
 export function computeAreaStatus(input: ProfileProgressInput): Record<ProfileAreaId, boolean> {
   return {
     skills: isSkillsAreaComplete(input),
@@ -185,6 +194,7 @@ export function computeAreaStatus(input: ProfileProgressInput): Record<ProfileAr
     projects: isProjectsAreaComplete(input),
     certifications: isCertificationsAreaComplete(input),
     professionalLinks: isProfessionalLinksAreaComplete(input),
+    profilePhoto: isProfilePhotoAreaComplete(input),
   };
 }
 
@@ -219,7 +229,7 @@ function profileSectionActions(input: ProfileProgressInput): RecommendedAction[]
       title: 'Add your skills',
       description: 'Tell SMART what you already know.',
       ctaLabel: 'Add skills',
-      href: '/profile?section=skills',
+      href: '/student/profile?section=skills',
     });
   }
   if (!isLanguagesAreaComplete(input)) {
@@ -228,7 +238,7 @@ function profileSectionActions(input: ProfileProgressInput): RecommendedAction[]
       title: 'Add languages',
       description: 'Language skills can open more opportunities.',
       ctaLabel: 'Add languages',
-      href: '/profile?section=languages',
+      href: '/student/profile?section=languages',
     });
   }
   if (!isEducationAreaComplete(input)) {
@@ -238,7 +248,7 @@ function profileSectionActions(input: ProfileProgressInput): RecommendedAction[]
       description:
         'Add your academic background to strengthen your profile and showcase your qualifications.',
       ctaLabel: 'Continue to Education',
-      href: '/profile?section=education',
+      href: '/student/profile?section=education',
     });
   }
   if (!isExperienceAreaComplete(input)) {
@@ -247,7 +257,7 @@ function profileSectionActions(input: ProfileProgressInput): RecommendedAction[]
       title: 'Add work experience',
       description: 'Share roles that shaped your professional journey.',
       ctaLabel: 'Add experience',
-      href: '/profile?section=experience',
+      href: '/student/profile?section=experience',
     });
   }
   if (!isProjectsAreaComplete(input)) {
@@ -256,7 +266,7 @@ function profileSectionActions(input: ProfileProgressInput): RecommendedAction[]
       title: 'Add a project',
       description: 'Projects are strong evidence of what you have built.',
       ctaLabel: 'Add project',
-      href: '/profile?section=projects',
+      href: '/student/profile?section=projects',
     });
   }
   if (!isCertificationsAreaComplete(input)) {
@@ -265,7 +275,7 @@ function profileSectionActions(input: ProfileProgressInput): RecommendedAction[]
       title: 'Add a certification',
       description: 'External certifications strengthen your profile.',
       ctaLabel: 'Add certification',
-      href: '/profile?section=certifications',
+      href: '/student/profile?section=certifications',
     });
   }
   if (!isProfessionalLinksAreaComplete(input)) {
@@ -274,7 +284,16 @@ function profileSectionActions(input: ProfileProgressInput): RecommendedAction[]
       title: 'Add professional links',
       description: 'LinkedIn or GitHub helps employers learn more about you.',
       ctaLabel: 'Add links',
-      href: '/profile?section=links',
+      href: '/student/profile?section=links',
+    });
+  }
+  if (!isProfilePhotoAreaComplete(input)) {
+    actions.push({
+      id: 'add-profile-photo',
+      title: 'Add a profile photo',
+      description: 'A clear photo helps employers recognise you.',
+      ctaLabel: 'Add photo',
+      href: '/student/profile',
     });
   }
   return actions;
@@ -293,7 +312,7 @@ export function recommendNextActionCandidates(input: ProfileProgressInput): Reco
         title: `Verify ${skillName}`,
         description: 'Show employers what you can do with evidence-backed verification.',
         ctaLabel: `Verify ${skillName}`,
-        href: `/assessments/skills/${verifiable.claimId}`,
+        href: `/student/assessments/skills/${verifiable.claimId}`,
       });
     }
   }
@@ -303,7 +322,7 @@ export function recommendNextActionCandidates(input: ProfileProgressInput): Reco
     title: 'Explore your public profile',
     description: 'See how employers will view your SMART profile.',
     ctaLabel: 'View public profile',
-    href: '/public-profile',
+    href: '/student/public-profile',
   });
 
   return actions;
@@ -316,7 +335,7 @@ export function recommendNextAction(input: ProfileProgressInput): RecommendedAct
       title: 'Explore your public profile',
       description: 'See how employers will view your SMART profile.',
       ctaLabel: 'View public profile',
-      href: '/public-profile',
+      href: '/student/public-profile',
     }
   );
 }
@@ -373,6 +392,8 @@ function isRecommendedActionStillRelevant(
       return !isCertificationsAreaComplete(input);
     case 'add-professional-links':
       return !isProfessionalLinksAreaComplete(input);
+    case 'add-profile-photo':
+      return !isProfilePhotoAreaComplete(input);
     default:
       return true;
   }

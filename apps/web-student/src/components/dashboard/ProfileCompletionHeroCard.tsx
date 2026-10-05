@@ -47,7 +47,7 @@ export function ProfileCompletionHeroCard({
 
         {!loading ? (
           <Link
-            href="/profile"
+            href="/student/profile"
 
             aria-label="Go to Profile"
 
@@ -79,7 +79,10 @@ export function ProfileCompletionHeroCard({
 
         aria-label={`Profile completion: ${completedCount ?? 0} of ${SECTION_COUNT} sections`}
       >
-        <div className="grid grid-cols-8 gap-px">
+        <div
+          className="grid gap-px"
+          style={{ gridTemplateColumns: `repeat(${SECTION_COUNT}, minmax(0, 1fr))` }}
+        >
           {PROFILE_AREA_IDS.map((areaId, index) => {
             const filled =
               completedCount !== null ? index < completedCount : (areaStatus?.[areaId] ?? false);

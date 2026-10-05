@@ -74,11 +74,11 @@ describe('StudentAssessmentHub', () => {
 
     expect(await screen.findByText('No pending skill assessments')).toBeDefined();
     expect(screen.getByRole('link', { name: /Add Skills in Profile/i }).getAttribute('href')).toBe(
-      '/skills',
+      '/student/skills',
     );
   });
 
-  it('lists declared claims and routes to skill verification proctored player', async () => {
+  it('lists declared claims and routes to skill assessment player', async () => {
     listSkillClaimsMock.mockResolvedValue([
       { claimId: 'claim-1', skillCode: 'SE_REACT', status: 'DECLARED', lastAttemptId: null },
       { claimId: 'claim-2', skillCode: 'SE_PYTHON', status: 'DECLARED', lastAttemptId: 'att-1' },
@@ -95,6 +95,6 @@ describe('StudentAssessmentHub', () => {
     expect(startButtons.length).toBe(2);
     if (startButtons[0]) fireEvent.click(startButtons[0]);
 
-    expect(push).toHaveBeenCalledWith('/assessments/skills/claim-2');
+    expect(push).toHaveBeenCalledWith('/student/assessments/skills/claim-1');
   });
 });

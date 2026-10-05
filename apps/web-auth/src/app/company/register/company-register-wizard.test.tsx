@@ -7,7 +7,6 @@ const getSession = vi.fn();
 const updateDraft = vi.fn();
 const sendVerification = vi.fn();
 const startOnboarding = vi.fn();
-const requestJoin = vi.fn();
 
 vi.mock('../../../lib/api', () => ({
   api: {
@@ -16,9 +15,16 @@ vi.mock('../../../lib/api', () => ({
       getCompanyOnboardingSession: (...a: unknown[]) => getSession(...a),
       updateCompanyOnboardingDraft: (...a: unknown[]) => updateDraft(...a),
       sendCompanyOnboardingEmailVerification: (...a: unknown[]) => sendVerification(...a),
-      requestCompanyJoin: (...a: unknown[]) => requestJoin(...a),
     },
   },
+}));
+const searchCompanies = vi.fn();
+const requestToJoinCompany = vi.fn();
+
+vi.mock('../../../lib/company-directory', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  searchCompanies: (...a: unknown[]) => searchCompanies(...a),
+  requestToJoinCompany: (...a: unknown[]) => requestToJoinCompany(...a),
 }));
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -46,7 +52,8 @@ beforeEach(() => {
   updateDraft.mockReset();
   sendVerification.mockReset();
   startOnboarding.mockReset();
-  requestJoin.mockReset();
+  searchCompanies.mockReset();
+  requestToJoinCompany.mockReset();
 });
 afterEach(() => {
   cleanup();
@@ -134,48 +141,52 @@ describe('CompanyRegisterWizard start step', () => {
   });
 });
 
-describe('CompanyRegisterWizard join request (S6-VV-107)', () => {
-  const verifiedOnAcme = {
-    onboardingStatus: 'EMAIL_VERIFIED',
-    representative: { fullName: 'Riya', workEmail: 'riya@acme.com' },
-    profile: {},
-    documents: [],
-    joinableCompany: { companyId: 'c-1', name: 'Acme' },
-    joinRequest: null,
-  };
+async function openSearchStep() {
+  render(<CompanyRegisterWizard />);
+  fireEvent.change(await screen.findByLabelText('Your full name'), { target: { value: 'Ada' } });
+  const email = screen.getByLabelText('Work email');
+  fireEvent.change(email, { target: { value: 'ada@acme.example' } });
+  const form = email.closest('form');
+  if (!form) throw new Error('form missing');
+  fireEvent.submit(form);
+  return screen.findByLabelText('Find your company');
+}
 
-  it('offers to join the company on the verified domain and sends the request', async () => {
-    window.localStorage.setItem(COMPANY_ONBOARDING_SESSION_KEY, 'token');
-    window.sessionStorage.setItem(COMPANY_ONBOARDING_SESSION_KEY, 'token');
-    getSession.mockResolvedValue(verifiedOnAcme);
-    requestJoin.mockResolvedValue({
-      joinRequestId: 'jr-1',
-      companyId: 'c-1',
-      companyName: 'Acme',
-      email: 'riya@acme.com',
-      fullName: 'Riya',
-      status: 'PENDING',
-      reason: null,
-      createdAt: '2026-10-01T00:00:00.000Z',
-      decidedAt: null,
+describe('CompanyRegisterWizard company search step', () => {
+  it('searches using the work email domain and sends a join request', async () => {
+    searchCompanies.mockResolvedValue({
+      available: true,
+      items: [
+        { orgId: 'org-1', displayName: 'Acme', website: null, city: 'Chennai', verified: true },
+      ],
     });
-    render(<CompanyRegisterWizard />);
+    requestToJoinCompany.mockResolvedValue(undefined);
 
-    expect(await screen.findByText('Acme is already on SMART')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Request to join' }));
+    const input = (await openSearchStep()) as HTMLInputElement;
+    expect(input.value).toBe('acme');
+    fireEvent.click(await screen.findByRole('button', { name: 'Request to join' }));
 
-    expect(await screen.findByText('Request sent to Acme')).toBeTruthy();
-    expect(requestJoin).toHaveBeenCalledWith('token');
+    expect(await screen.findByText('Join request sent')).toBeTruthy();
+    expect(searchCompanies.mock.calls[0]?.[0]).toBe('acme');
+    expect(requestToJoinCompany).toHaveBeenCalledWith('org-1', {
+      fullName: 'Ada',
+      workEmail: 'ada@acme.example',
+    });
+    expect(startOnboarding).not.toHaveBeenCalled();
   });
 
-  it('lets someone from a different company continue registering', async () => {
-    window.localStorage.setItem(COMPANY_ONBOARDING_SESSION_KEY, 'token');
-    window.sessionStorage.setItem(COMPANY_ONBOARDING_SESSION_KEY, 'token');
-    getSession.mockResolvedValue(verifiedOnAcme);
-    render(<CompanyRegisterWizard />);
+  it('falls back to creating a company when search is unavailable', async () => {
+    searchCompanies.mockResolvedValue({ available: false });
+    startOnboarding.mockResolvedValue({ sessionToken: 'new-token' });
 
-    fireEvent.click(await screen.findByRole('button', { name: "It's a different company" }));
-    await waitFor(() => expect(screen.getByText(/business registration document/)).toBeTruthy());
-    expect(requestJoin).not.toHaveBeenCalled();
+    await openSearchStep();
+    expect(await screen.findByText(/search isn.t available yet/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Create a new company' }));
+
+    expect(await screen.findByLabelText('Company website')).toBeTruthy();
+    expect(startOnboarding).toHaveBeenCalledWith({
+      representative: { fullName: 'Ada', workEmail: 'ada@acme.example' },
+      website: undefined,
+    });
   });
 });

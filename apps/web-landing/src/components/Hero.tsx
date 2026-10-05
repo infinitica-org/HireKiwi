@@ -14,7 +14,8 @@ export default function Hero() {
 
   // Typing effect state for three words
   const [wordIndex, setWordIndex] = useState(0);
-  const [text, setText] = useState('');
+  // Start on the first word so the server-rendered h1 has real text (LCP / crawlers).
+  const [text, setText] = useState<string>(WORDS[0]);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -64,11 +65,9 @@ export default function Hero() {
       className="relative w-full min-h-screen flex flex-col justify-center items-center overflow-hidden bg-white bg-[radial-gradient(ellipse_65%_45%_at_50%_0%,rgba(225,255,160,0.7)_0%,rgba(180,248,220,0.4)_45%,rgba(255,255,255,0)_80%)] px-5 sm:px-8 pt-20 sm:pt-24 pb-20 sm:pb-28"
     >
       <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-8">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
-          className="font-header text-5xl font-medium leading-[1.02] tracking-[-0.04em] text-slate-900 sm:text-6xl md:text-7xl lg:text-[5.5rem] xl:text-[6.25rem]"
+        <h1
+          className="animate-enter-lcp font-header text-5xl font-medium leading-[1.02] tracking-[-0.04em] text-slate-900 sm:text-6xl md:text-7xl lg:text-[5.5rem] xl:text-[6.25rem]"
+          style={{ animationDelay: '60ms' }}
         >
           The right fit.
           <span className="mt-1 block sm:mt-2">
@@ -84,23 +83,19 @@ export default function Hero() {
               />
             </span>
           </span>
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg md:max-w-2xl"
+        <p
+          className="animate-enter mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg md:max-w-2xl"
+          style={{ '--enter-y': '14px', animationDelay: '120ms' } as React.CSSProperties}
         >
           15M+ students. 1M+ companies. One network where every profile is real.
-        </motion.p>
+        </p>
 
         {/* Aesthetic Search Input Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-8 sm:mt-10 w-full max-w-3xl sm:max-w-4xl"
+        <div
+          className="animate-enter mt-8 sm:mt-10 w-full max-w-3xl sm:max-w-4xl"
+          style={{ '--enter-y': '18px', animationDelay: '160ms' } as React.CSSProperties}
         >
           <form
             onSubmit={handleSearch}
@@ -148,14 +143,12 @@ export default function Hero() {
               <ArrowRight className="size-5 sm:size-5.5" />
             </motion.button>
           </form>
-        </motion.div>
+        </div>
 
         {/* Filter Chips */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-6 sm:mt-7 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5"
+        <div
+          className="animate-enter mt-6 sm:mt-7 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5"
+          style={{ '--enter-y': '14px', animationDelay: '220ms' } as React.CSSProperties}
         >
           {FILTER_CHIPS.map((label) => {
             const isActive = activeFilter === label;
@@ -177,7 +170,7 @@ export default function Hero() {
               </motion.button>
             );
           })}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

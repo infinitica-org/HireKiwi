@@ -36,7 +36,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
   const event = query.data;
   return (
     <div className="space-y-4">
-      <Link href="/events" className="text-sm text-zinc-600 hover:underline">
+      <Link href="/student/events" className="text-sm text-zinc-600 hover:underline">
         ← All events
       </Link>
       {event.cancelled ? (

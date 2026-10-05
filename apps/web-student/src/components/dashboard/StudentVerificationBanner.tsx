@@ -25,7 +25,7 @@ export function StudentVerificationBanner({
   return (
     <section
       data-testid="student-verification-banner"
-      className="rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616] font-sans select-none"
+      className="rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616] font-sans select-none"
     >
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -116,7 +116,7 @@ export function StudentVerificationBanner({
         {/* Action button */}
         <div className="shrink-0">
           <Link
-            href="/profile"
+            href="/student/profile"
             className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-xs font-semibold text-white shadow-2xs transition-all hover:bg-zinc-800 active:scale-[0.99] dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
           >
             <span>Finish verification</span>

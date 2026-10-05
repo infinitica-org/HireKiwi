@@ -25,7 +25,7 @@ export function SkillVerifyReport({
     <div className="mx-auto flex w-full max-w-lg flex-col gap-6 p-6 text-[var(--text-primary)]">
       <header className="space-y-4">
         <div>
-          <h1 className="text-2xl font-semibold">Great work! 🎉</h1>
+          <h1 className="text-xl font-semibold">Assessment complete</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">{skillLabel}</p>
         </div>
 
@@ -45,7 +45,7 @@ export function SkillVerifyReport({
           Back to Skills
         </Button>
         <Link
-          href="/assessment"
+          href="/student/assessments"
           className="inline-flex flex-1 items-center justify-center rounded-lg border border-border bg-muted px-4 py-2 text-sm font-semibold text-foreground hover:bg-background"
         >
           View assessments

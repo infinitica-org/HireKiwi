@@ -52,6 +52,7 @@ export {
   verifiedTooltip,
   type VerifiedBadgeProps,
 } from './components/verified-badge';
+export { SidebarLegalLinks, type SidebarLegalLinksProps } from './components/sidebar-legal-links';
 export { StatusBadge, type WorkflowStatus, type StatusBadgeProps } from './components/status-badge';
 export { Modal, type ModalSize, type ModalProps } from './components/modal';
 export {
@@ -208,6 +209,7 @@ export const UI_VERSION = '0.1.0';
 
 /* COM-01 — direct messaging (Th6-422 to Th6-430). */
 export { MessagesWorkspace, type MessagesWorkspaceProps } from './messaging/messages-workspace';
+export { NotificationsMenu, type NotificationsMenuProps } from './notifications/notifications-menu';
 export {
   StartConversationDialog,
   type StartConversationDialogProps,

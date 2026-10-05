@@ -51,8 +51,8 @@ export default function PrivacyPage() {
             <p>We may collect information including:</p>
             <ul className="list-disc space-y-1.5 pl-6">
               <li>
-                <strong>Account Information:</strong> Name, school/personal email, password hash,
-                and contact details.
+                <strong>Account Information:</strong> Name, university/personal email, password
+                hash, and contact details.
               </li>
               <li>
                 <strong>Candidate Profile Data:</strong> Education history, skills, certifications,

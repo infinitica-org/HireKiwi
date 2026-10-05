@@ -31,16 +31,16 @@ export function KpiTile({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
       className={cn(
-        'group flex h-full flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-4 text-zinc-900 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs dark:border-zinc-800 dark:bg-zinc-900/90 dark:text-zinc-100 dark:hover:border-zinc-700',
+        'group relative flex h-full flex-col justify-between overflow-hidden rounded-lg border border-zinc-200/80 bg-white p-5 text-zinc-900 shadow-2xs transition-[border-color,box-shadow] duration-200 hover:border-zinc-300 md:p-6',
         href && 'cursor-pointer hover:-translate-y-0.5',
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{label}</p>
+        <p className="text-xs font-semibold text-zinc-500">{label}</p>
         <IconWell icon={icon} tone={tone} />
       </div>
       <div className="mt-2 space-y-1">
-        <p className="font-heading text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
+        <p className="font-heading text-2xl leading-none font-extrabold tracking-tight text-zinc-900 sm:text-3xl">
           <NumberTicker value={value} className="text-zinc-950 dark:text-white" />
         </p>
         {hint ? (
@@ -55,7 +55,7 @@ export function KpiTile({
   if (!href) return content;
 
   return (
-    <Link href={href} prefetch={false} className="block rounded-md">
+    <Link href={href} prefetch={false} className="block rounded-lg">
       {content}
     </Link>
   );
@@ -80,7 +80,7 @@ export function Panel({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
       className={cn(
-        'flex h-full flex-col rounded-md border border-zinc-200/80 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900',
+        'relative flex h-full flex-col overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-2xs transition-[border-color,box-shadow] duration-200 hover:border-zinc-300',
         className,
       )}
     >
@@ -117,7 +117,7 @@ export function TenantMix({
           value={percent}
           label="Active"
           className="size-32"
-          gaugePrimaryColor="#10b981"
+          gaugePrimaryColor="#14b8a6"
           gaugeSecondaryColor="#e2e8f0"
         />
         <ul className="w-full space-y-2.5 text-xs">
@@ -211,7 +211,7 @@ export function OpsBoard({
               <Link
                 href={step.href}
                 prefetch={false}
-                className="group flex h-full flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs dark:border-zinc-800 dark:bg-zinc-900/90 dark:hover:border-zinc-700 hover:-translate-y-0.5"
+                className="group flex h-full flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs dark:border-zinc-800 dark:bg-zinc-900/90 dark:hover:border-zinc-700 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between">
                   <span className="flex size-8 items-center justify-center rounded-md bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 group-hover:bg-zinc-900 group-hover:text-white transition-colors">

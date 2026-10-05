@@ -128,7 +128,7 @@ export function LanguagesSection() {
         title={meta.title}
         description={meta.description}
         action={
-          !loading && languages.length > 0 ? (
+          !loading ? (
             <button
               type="button"
               onClick={openCreateModal}
@@ -161,7 +161,7 @@ export function LanguagesSection() {
               className={`${profilePrimaryButtonSmClass} justify-center px-5 py-2.5 text-[13px]`}
             >
               <Plus className="size-4" strokeWidth={2} aria-hidden />
-              Add your first language
+              Add Language
             </button>
           }
         />
@@ -182,9 +182,9 @@ export function LanguagesSection() {
       ) : null}
 
       {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm font-sans">
           <div
-            className="w-full max-w-md overflow-hidden rounded-[18px] border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-[0_8px_30px_rgba(16,24,40,0.12)]"
+            className="w-full max-w-md overflow-hidden rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-[0_8px_30px_rgba(16,24,40,0.12)]"
             role="dialog"
             aria-modal="true"
             aria-labelledby="language-form-title"
@@ -200,7 +200,7 @@ export function LanguagesSection() {
                 type="button"
                 onClick={closeModal}
                 aria-label="Close"
-                className="flex size-8 items-center justify-center rounded-lg text-[var(--ds-text-muted)] transition hover:bg-[var(--ds-surface-muted)] hover:text-[var(--ds-text)]"
+                className="flex size-8 items-center justify-center rounded-md text-[var(--ds-text-muted)] transition hover:bg-[var(--ds-surface-muted)] hover:text-[var(--ds-text)]"
               >
                 <X className="size-5" strokeWidth={1.5} />
               </button>
@@ -208,7 +208,7 @@ export function LanguagesSection() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-5 py-4">
               {formError ? (
-                <div className="rounded-[10px] border border-amber-200/80 bg-amber-50/90 px-3 py-2.5 text-xs text-amber-900">
+                <div className="rounded-md border border-amber-200/80 bg-amber-50/90 px-3 py-2.5 text-xs text-amber-900">
                   {formError}
                 </div>
               ) : null}
@@ -248,7 +248,7 @@ export function LanguagesSection() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-[10px] border border-[var(--ds-border)] bg-[var(--ds-surface-muted)]/50 px-4 py-2 text-[13px] font-semibold text-[var(--ds-text)] transition hover:bg-[var(--ds-surface-muted)]"
+                  className="rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface-muted)]/50 px-4 py-2 text-[13px] font-semibold text-[var(--ds-text)] transition hover:bg-[var(--ds-surface-muted)]"
                 >
                   Cancel
                 </button>

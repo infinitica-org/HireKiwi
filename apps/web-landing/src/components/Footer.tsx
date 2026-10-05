@@ -58,7 +58,7 @@ export default function Footer() {
         </div>
 
         {/* Minimal Sub-bar */}
-        <div className="mt-8 pt-6 border-t border-zinc-100 items-center gap-3 text-xs text-zinc-400">
+        <div className="mt-8 pt-6 border-t border-zinc-100 items-center gap-3 text-xs text-zinc-500">
           <div>© {new Date().getFullYear()} SMART. All rights reserved.</div>
         </div>
       </div>

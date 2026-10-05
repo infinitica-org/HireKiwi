@@ -1,4 +1,17 @@
 import {
+  EvidenceUploadUrlResponseSchema,
+  ProjectDocumentDtoSchema,
+  type EvidenceFileConfirm,
+  type EvidenceUploadUrlRequest,
+} from '@smart/contracts';
+import { ListActiveUsersResponseSchema, type ListActiveUsersQuery } from '@smart/contracts';
+import {
+  ConnectSignalSourceResponseSchema,
+  ListSignalConnectionsResponseSchema,
+  type ConnectSignalSourceRequest,
+  type ConnectableSignalSourceId,
+} from '@smart/contracts';
+import {
   CampusAccessRequestDtoSchema,
   CareerEventDtoSchema,
   DecideCampusAccessResponseSchema,
@@ -756,6 +769,12 @@ export function usersApi(client: SmartApiClient) {
 
     deleteEducation: (id: string) => client.delete<void>(prefixed(`/users/me/education/${id}`)),
 
+    /** Th6-600 — presigned PUT URL (15 min) for a PDF/PNG education proof. */
+    createEducationDocumentUploadUrl: (educationId: string, body: EvidenceUploadUrlRequest) =>
+      client.post(prefixed(`/users/me/education/${educationId}/documents/upload-url`), body, {
+        schema: EvidenceUploadUrlResponseSchema,
+      }),
+
     attachEducationDocument: (educationId: string, body: CreateCandidateEducationDocumentDto) =>
       client.post(prefixed(`/users/me/education/${educationId}/documents`), body, {
         schema: CandidateEducationDocumentSchema,
@@ -809,6 +828,12 @@ export function usersApi(client: SmartApiClient) {
 
     deleteWorkExperience: (id: string) =>
       client.delete<void>(prefixed(`/users/me/work-experiences/${id}`)),
+
+    /** Th6-600 — presigned PUT URL (15 min) for a PDF/PNG work-experience proof. */
+    createWorkExperienceDocumentUploadUrl: (id: string, body: EvidenceUploadUrlRequest) =>
+      client.post(prefixed(`/users/me/work-experiences/${id}/documents/upload-url`), body, {
+        schema: EvidenceUploadUrlResponseSchema,
+      }),
 
     attachWorkExperienceDocument: (id: string, body: CreateWorkExperienceDocumentDto) =>
       client.post(prefixed(`/users/me/work-experiences/${id}/documents`), body, {
@@ -1387,6 +1412,13 @@ export function onboardingApi(client: SmartApiClient) {
         schema: z.array(InstitutionAdminDtoSchema),
       }),
 
+    /** Admin dashboard — users signed in right now, by Student / TPO / Company. */
+    listActiveUsers: (query: Partial<ListActiveUsersQuery> = {}) =>
+      client.get(prefixed('/admin/users/active'), {
+        query: { group: query.group, page: query.page, pageSize: query.pageSize },
+        schema: ListActiveUsersResponseSchema,
+      }),
+
     /** Switch an institution staff member between INSTITUTION_ADMIN and PLACEMENT_STAFF. */
     assignUserRole: (userId: string, body: { role: InstitutionStaffRole; reason: string }) =>
       client.post(prefixed(`/admin/users/${userId}/role`), body, {
@@ -1940,6 +1972,21 @@ export function projectsApi(client: SmartApiClient) {
 
     get: (projectId: string) =>
       client.get(prefixed(`/projects/${projectId}`), { schema: ProjectDtoSchema }),
+
+    /** Th6-600 — presigned PUT URL (15 min) for a PDF/PNG project evidence file. */
+    createDocumentUploadUrl: (projectId: string, body: EvidenceUploadUrlRequest) =>
+      client.post(prefixed(`/projects/${projectId}/documents/upload-url`), body, {
+        schema: EvidenceUploadUrlResponseSchema,
+      }),
+
+    /** Th6-600 — attach an uploaded evidence file; the server verifies its bytes. */
+    attachDocument: (projectId: string, body: EvidenceFileConfirm) =>
+      client.post(prefixed(`/projects/${projectId}/documents`), body, {
+        schema: ProjectDocumentDtoSchema,
+      }),
+
+    removeDocument: (projectId: string, documentId: string) =>
+      client.delete<void>(prefixed(`/projects/${projectId}/documents/${documentId}`)),
 
     replace: (projectId: string, body: unknown) =>
       client.post(prefixed(`/projects/${projectId}/replace`), body, {
@@ -2913,6 +2960,26 @@ export function rateLimitsApi(client: SmartApiClient) {
   };
 }
 
+/** External passive-signal connections (GitHub, HackerRank, LeetCode, LinkedIn, Credly). */
+export function signalsApi(client: SmartApiClient) {
+  return {
+    listConnections: () =>
+      client.get(prefixed('/signals/connections'), {
+        schema: ListSignalConnectionsResponseSchema,
+      }),
+
+    connect: (sourceId: ConnectableSignalSourceId, body: ConnectSignalSourceRequest) =>
+      client.post(prefixed(`/signals/connect/${sourceId}`), body, {
+        schema: ConnectSignalSourceResponseSchema,
+      }),
+
+    disconnect: (sourceId: ConnectableSignalSourceId) =>
+      client.delete(prefixed(`/signals/disconnect/${sourceId}`), {
+        schema: z.object({ ok: z.boolean() }),
+      }),
+  };
+}
+
 export function createSmartApi(client: SmartApiClient) {
   return {
     auth: authApi(client),
@@ -2941,6 +3008,7 @@ export function createSmartApi(client: SmartApiClient) {
     campus: campusApi(client),
     adminApplications: adminApplicationsApi(client),
     rateLimits: rateLimitsApi(client),
+    signals: signalsApi(client),
   };
 }
 

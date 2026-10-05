@@ -6,6 +6,7 @@ const STUDENT_ID = '11111111-1111-4111-8111-111111111111';
 function completeUser() {
   return {
     onboardingCompleted: true,
+    profilePhotoObjectKey: 'profile-photos/ada.webp',
     onboardingDetails: {
       interestDomain: 'CS_IT',
       firstName: 'Ada',
@@ -102,7 +103,7 @@ function completePrismaMocks() {
 }
 
 describe('ProfileCompletionService', () => {
-  it('reports 100% when all eight areas are present', async () => {
+  it('reports 100% when all nine areas are present', async () => {
     const prisma = completePrismaMocks();
     const service = new ProfileCompletionService(prisma as never);
 
@@ -121,6 +122,17 @@ describe('ProfileCompletionService', () => {
 
     expect(progress.percent).toBe(88);
     expect(await service.isCompleteForSkillVerification(STUDENT_ID)).toBe(true);
+  });
+
+  it('treats a user without a stored profile photo as missing that area', async () => {
+    const prisma = completePrismaMocks();
+    prisma.user.findUnique.mockResolvedValue({ ...completeUser(), profilePhotoObjectKey: null });
+    const service = new ProfileCompletionService(prisma as never);
+
+    const progress = await service.getProgressForStudent(STUDENT_ID);
+
+    expect(progress.areaStatus.profilePhoto).toBe(false);
+    expect(progress.incompleteAreas).toEqual(['profilePhoto']);
   });
 
   it('throws profile_incomplete when profile is below 10%', async () => {

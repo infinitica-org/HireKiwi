@@ -48,10 +48,40 @@ body {
   --ds-green-soft: #e8f7f3;
   --ds-nav-active-bg: #eaf8f5;
 
-  --admin-accent: #10b981;
-  --admin-accent-hover: #059669;
+  /* Accent aligned with the TPO console (SMART brand teal). */
+  --admin-accent: #14b8a6;
+  --admin-accent-hover: #0d9488;
   --admin-accent-tint: #ecfdf5;
-  --admin-accent-border: #a7f3d0;
+  --admin-accent-border: #99f6e4;
+}
+
+/*
+ * Bento workspace tokens — ported from the TPO console (`.tpo-bento-theme` in
+ * apps/web-tpo/src/app/globals.css) so both consoles read as one product.
+ */
+.admin-console {
+  --ds-canvas: #ffffff;
+  --ds-surface: #ffffff;
+  --ds-surface-muted: #f7f8fa;
+  --ds-text: #0f172a;
+  --ds-text-secondary: #475569;
+  --ds-text-muted: #64748b;
+  --ds-text-subtle: #94a3b8;
+
+  --ds-border: #e8ecf2;
+  --ds-border-subtle: #eef1f5;
+  --ds-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.03), 0 2px 8px rgba(15, 23, 42, 0.04);
+  --ds-border-hover: #dfe4ec;
+  --ds-card-shadow-hover: 0 2px 10px rgba(15, 23, 42, 0.05);
+
+  --admin-dash-accent-blue: #3b82f6;
+  --admin-dash-accent-blue-soft: #eff6ff;
+  --admin-dash-accent-mint: #5bc7a5;
+  --admin-dash-accent-mint-soft: #ecfdf7;
+  --admin-dash-accent-lavender: #8b7cf6;
+  --admin-dash-accent-lavender-soft: #f5f3ff;
+  --admin-dash-accent-amber: #e9a23b;
+  --admin-dash-accent-amber-soft: #fff8ed;
 }
 
 html,
@@ -85,3 +115,14 @@ h6,
   }
 }
 
+/* Shared @smart/ui Card inside the console — TPO bento radius and hover border. */
+.admin-console [data-slot='card'] {
+  border-radius: var(--radius-lg);
+  transition:
+    border-color 200ms,
+    box-shadow 200ms;
+}
+
+.admin-console [data-slot='card']:hover {
+  border-color: var(--color-zinc-300);
+}

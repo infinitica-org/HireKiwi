@@ -183,7 +183,7 @@ export default function EditJobPage() {
   if (loading) {
     return (
       <div className={pageStack}>
-        <div className="flex h-64 items-center justify-center rounded-[20px] border border-[var(--ds-border)] bg-white">
+        <div className="flex h-64 items-center justify-center rounded-lg border border-zinc-200/80 bg-white shadow-2xs">
           <p className="flex items-center gap-2 text-sm text-[var(--ds-text-muted)]">
             <Loader2 className="size-4 animate-spin" /> Loading job opening...
           </p>

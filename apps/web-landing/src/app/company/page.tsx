@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'motion/react';
 import {
   CheckCircle2,
   ArrowRight,
@@ -91,11 +90,9 @@ export default function CompanyPage() {
         <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             {/* Left: Headlines & CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-7 flex flex-col items-start"
+            <div
+              className="animate-enter-lcp lg:col-span-7 flex flex-col items-start"
+              style={{ '--enter-y': '24px' } as React.CSSProperties}
             >
               {/* Badge */}
               <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3.5 py-1 text-xs sm:text-sm font-semibold text-zinc-800 mb-6">
@@ -156,15 +153,10 @@ export default function CompanyPage() {
                   <span>Instant Candidate Verification</span>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Right: Mock Recruiter Talent Discovery Dashboard */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-5"
-            >
+            <div className="animate-enter-scale lg:col-span-5" style={{ animationDelay: '150ms' }}>
               <div className="relative rounded-3xl border border-zinc-200/90 bg-white p-5 sm:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
                 {/* Glow behind card */}
                 <div
@@ -178,7 +170,7 @@ export default function CompanyPage() {
                     <div className="size-3 rounded-full bg-rose-400" />
                     <div className="size-3 rounded-full bg-amber-400" />
                     <div className="size-3 rounded-full bg-emerald-400" />
-                    <span className="ml-2 text-xs font-semibold text-zinc-400">
+                    <span className="ml-2 text-xs font-semibold text-zinc-500">
                       SMART Enterprise Sourcing
                     </span>
                   </div>
@@ -244,7 +236,7 @@ export default function CompanyPage() {
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -269,7 +261,7 @@ export default function CompanyPage() {
       <section className="py-20 sm:py-28 bg-white">
         <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-8">
           <div className="max-w-2xl mx-auto text-center mb-16">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
               Enterprise Advantages
             </span>
             <h2 className="mt-2 font-manrope text-3xl sm:text-4xl font-extrabold text-zinc-950">
@@ -319,7 +311,7 @@ export default function CompanyPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="rounded-3xl border border-zinc-200 bg-white p-7">
-              <div className="font-mono text-xs font-bold text-emerald-600 uppercase tracking-widest">
+              <div className="font-mono text-xs font-bold text-emerald-700 uppercase tracking-widest">
                 Step 01
               </div>
               <h3 className="mt-3 font-manrope text-xl font-bold text-zinc-950">
@@ -332,7 +324,7 @@ export default function CompanyPage() {
             </div>
 
             <div className="rounded-3xl border border-zinc-200 bg-white p-7">
-              <div className="font-mono text-xs font-bold text-emerald-600 uppercase tracking-widest">
+              <div className="font-mono text-xs font-bold text-emerald-700 uppercase tracking-widest">
                 Step 02
               </div>
               <h3 className="mt-3 font-manrope text-xl font-bold text-zinc-950">
@@ -345,7 +337,7 @@ export default function CompanyPage() {
             </div>
 
             <div className="rounded-3xl border border-zinc-200 bg-white p-7">
-              <div className="font-mono text-xs font-bold text-emerald-600 uppercase tracking-widest">
+              <div className="font-mono text-xs font-bold text-emerald-700 uppercase tracking-widest">
                 Step 03
               </div>
               <h3 className="mt-3 font-manrope text-xl font-bold text-zinc-950">
@@ -363,7 +355,7 @@ export default function CompanyPage() {
       {/* -------------------- TRUSTED COMPANIES -------------------- */}
       <section className="py-14 border-t border-zinc-200/80 bg-white text-center">
         <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-8">
-          <p className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-6">
+          <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-6">
             Trusted by forward-thinking hiring organizations
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-75">

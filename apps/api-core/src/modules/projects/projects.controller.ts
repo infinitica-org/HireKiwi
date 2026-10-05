@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   API_PREFIX,
   type ListMyProjectsResponse,
+  type ProjectDocumentDto,
   type ProjectDto,
   type ReplaceProjectResponse,
 } from '@smart/contracts';
@@ -49,6 +50,48 @@ export class ProjectsController {
     @Param('projectId') projectId: string,
   ): Promise<ProjectDto> {
     return this.service.getForStudent(user.sub, projectId);
+  }
+
+  @Post(':projectId/documents/upload-url')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Th6-600 — presigned PUT (15 min) for a PDF/PNG project evidence file, max 10 MB.',
+  })
+  @ApiResponse({ status: 201, description: 'Presigned upload URL and object key.' })
+  createDocumentUploadUrl(
+    @CurrentUser() user: RequestUser,
+    @Param('projectId') projectId: string,
+    @Body() body: unknown,
+  ) {
+    return this.service.createDocumentUploadUrl(user.sub, projectId, body);
+  }
+
+  @Post(':projectId/documents')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Th6-600 — attach an uploaded evidence file to an owned project.' })
+  @ApiResponse({ status: 201, description: 'Attached evidence file.' })
+  @ApiResponse({ status: 422, description: 'File bytes, extension and type disagree.' })
+  attachDocument(
+    @CurrentUser() user: RequestUser,
+    @Param('projectId') projectId: string,
+    @Body() body: unknown,
+  ): Promise<ProjectDocumentDto> {
+    return this.service.attachDocument(user.sub, projectId, body);
+  }
+
+  @HttpCode(204)
+  @Delete(':projectId/documents/:documentId')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Th6-600 — remove an evidence file from an owned project.' })
+  removeDocument(
+    @CurrentUser() user: RequestUser,
+    @Param('projectId') projectId: string,
+    @Param('documentId') documentId: string,
+  ): Promise<void> {
+    return this.service.removeDocument(user.sub, projectId, documentId);
   }
 
   @Post(':projectId/replace')

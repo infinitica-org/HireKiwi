@@ -22,7 +22,8 @@ export const NotificationDtoSchema = z.object({
   kind: NotificationKindSchema,
   title: z.string(),
   body: z.string(),
-  linkUrl: z.string().url().nullable(),
+  /** Absolute URL, or an app-relative path such as `/events/<id>` (several producers store paths). */
+  linkUrl: z.union([z.string().url(), z.string().startsWith('/')]).nullable(),
   readAt: IsoDateTimeSchema.nullable(),
   createdAt: IsoDateTimeSchema,
 });

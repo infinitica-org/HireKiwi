@@ -50,7 +50,7 @@ export function LoginForm() {
   }
 
   return (
-    <section className="flex h-full w-full flex-col items-center justify-between text-center">
+    <section className="flex w-full flex-1 flex-col items-center justify-between text-center">
       <div className="my-auto flex w-full flex-col items-center justify-center pt-14 ">
         <img src="/icon.png" alt="SMART" className="mx-auto h-11 w-11 object-contain" />
 
@@ -73,7 +73,9 @@ export function LoginForm() {
           <button
             type="button"
             onClick={() => {
-              alert('Google authentication will redirect to your school single sign-on provider.');
+              alert(
+                'Google authentication will redirect to your university single sign-on provider.',
+              );
             }}
             className="flex h-11 w-full items-center justify-center gap-3 rounded-md border border-[#e5e7eb] bg-white px-4 text-md font-semibold text-[#111827]  transition hover:bg-slate-50 active:scale-[0.99]"
           >
@@ -175,7 +177,7 @@ export function LoginForm() {
       </div>
 
       {/* Footer Legal Disclaimer */}
-      <footer className="mx-auto mt-auto pt-6 max-w-5xl text-center text-[12px] leading-relaxed text-neutral-400 px-4">
+      <footer className="mx-auto mt-auto w-full max-w-2xl px-4 pt-6 text-center text-[12px] leading-relaxed text-neutral-400">
         By continuing, you agree to our{' '}
         <Link
           href="/terms"

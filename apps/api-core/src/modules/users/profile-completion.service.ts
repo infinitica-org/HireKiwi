@@ -40,7 +40,11 @@ export class ProfileCompletionService {
       await Promise.all([
         this.prisma.user.findUnique({
           where: { id: userId },
-          select: { onboardingCompleted: true, onboardingDetails: true },
+          select: {
+            onboardingCompleted: true,
+            onboardingDetails: true,
+            profilePhotoObjectKey: true,
+          },
         }),
         this.prisma.skillClaim.findMany({
           where: { studentId: userId },
@@ -71,6 +75,7 @@ export class ProfileCompletionService {
       experiences,
       projects,
       certificates,
+      hasProfilePhoto: Boolean(user?.profilePhotoObjectKey),
     };
   }
 }

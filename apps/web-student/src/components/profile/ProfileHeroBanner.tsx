@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Building2, GraduationCap, Briefcase, Share2, CheckCircle2, X, Mail } from 'lucide-react';
-import type { AuthenticatedUser, CandidateEducationDto } from '@smart/contracts';
+import {
+  profileHeadlineForUser,
+  type AuthenticatedUser,
+  type CandidateEducationDto,
+} from '@smart/contracts';
 
 import { ProfilePhotoEditControl } from '@/components/profile/ProfilePhotoEditControl';
 import {
@@ -11,6 +15,7 @@ import {
   primaryDepartmentName,
   primaryInstitutionName,
 } from '@/lib/profile-identity';
+import { PROFILE_AREA_HREFS, PROFILE_AREA_IDS, PROFILE_AREA_LABELS } from '@/lib/profile-progress';
 
 // Official SMART 16-point scalloped verified badge
 export function SmartVerifiedBadge(props: React.SVGProps<SVGSVGElement>) {
@@ -45,6 +50,32 @@ export function SmartVerifiedBadge(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+// Same scalloped SMART badge in red with a cross: shown until the profile is 100% complete.
+export function SmartUnverifiedBadge(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="shrink-0"
+      {...props}
+    >
+      <path
+        d="M5.89596 15.5452C5.56658 15.6923 5.17931 15.5651 5.00143 15.2512L3.9333 13.3666L1.90833 12.8952C1.56822 12.816 1.33848 12.4983 1.36989 12.1505L1.56966 9.93802L0.162633 8.25342C-0.0543614 7.99361 -0.0543617 7.61576 0.162633 7.35596L1.56966 5.67135L1.36989 3.45892C1.33848 3.11113 1.56822 2.79338 1.90833 2.7142L3.9333 2.24278L5.00143 0.358158C5.17931 0.044304 5.56658 -0.0829616 5.89596 0.0641976L7.78784 0.909449L9.67972 0.0641977C10.0091 -0.0829615 10.3964 0.0443043 10.5743 0.358158L11.6424 2.24278L13.6673 2.7142C14.0075 2.79338 14.2372 3.11113 14.2058 3.45892L14.006 5.67135L15.4131 7.35596C15.63 7.61576 15.63 7.99361 15.4131 8.25342L14.006 9.93802L14.2058 12.1505C14.2372 12.4982 14.0075 12.816 13.6673 12.8952L11.6424 13.3666L10.5743 15.2512C10.3964 15.5651 10.0091 15.6923 9.67972 15.5452L7.78784 14.6999L5.89596 15.5452Z"
+        fill="#E5484D"
+      />
+      <path
+        d="M5.6 5.4 10 9.8M10 5.4 5.6 9.8"
+        stroke="#FFFFFF"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 // Brand SVG icons for social sharing
 function LinkedInIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -68,6 +99,10 @@ interface ProfileHeroBannerProps {
   linkedinVerified: boolean;
   githubVerified: boolean;
   percent?: number | null;
+  /** Claimed username (CN-T09), shown as @handle when set. */
+  username?: string | null;
+  /** Real public-profile link from the API — /@username once claimed, else /candidate/<slug>. */
+  publicLinkUrl?: string | null;
   completedCount?: number | null;
   areaStatus?: Partial<Record<string, boolean>>;
   loading?: boolean;
@@ -76,14 +111,15 @@ interface ProfileHeroBannerProps {
 const HERO_AVATAR_CLASS =
   'h-28 w-28 sm:h-32 sm:w-32 shrink-0 rounded-full border-2 border-zinc-100 bg-zinc-100 text-3xl font-extrabold text-zinc-900 shadow-sm dark:border-zinc-800 dark:bg-zinc-800 dark:text-white';
 
-const VERIFIED_BADGE_CLASS =
-  'inline-flex items-center gap-1 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
-
 export function ProfileHeroBanner({
   user,
   education,
   linkedinVerified,
   githubVerified,
+  percent = null,
+  areaStatus,
+  username = null,
+  publicLinkUrl = null,
   loading: _loading = false,
 }: ProfileHeroBannerProps) {
   const collegeName = primaryInstitutionName(education, user);
@@ -95,13 +131,11 @@ export function ProfileHeroBanner({
   const [copied, setCopied] = useState(false);
 
   const fullName = user?.fullName?.trim() || 'Candidate';
-  const handle =
-    user?.email?.split('@')[0]?.toLowerCase() ||
-    fullName.toLowerCase().replace(/\s+/g, '') ||
-    'edd';
-
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3004';
-  const shareUrl = `${origin}/@${handle}`;
+  // The headline is stored on the student's account; the fallback only covers the first paint.
+  const headline = user?.profileHeadline ?? profileHeadlineForUser(user?.userId ?? fullName);
+  const missingAreas = PROFILE_AREA_IDS.filter((id) => areaStatus?.[id] === false);
+  const handle = username ?? null;
+  const shareUrl = publicLinkUrl ?? '';
 
   const copyLinkToClipboard = async () => {
     try {
@@ -123,7 +157,7 @@ export function ProfileHeroBanner({
       data-testid="profile-hero-banner"
       className="w-full font-sans select-none"
     >
-      <div className="bg-white p-4 sm:p-6 dark:bg-[#161616]">
+      <div className=" p-4 sm:p-6 dark:bg-[#161616]">
         {/* Profile Avatar Photo */}
         <div className="relative flex items-center shrink-0">
           <ProfilePhotoEditControl
@@ -143,19 +177,52 @@ export function ProfileHeroBanner({
               <h1 className="font-medium text-2xl sm:text-3xl   text-zinc-950 dark:text-white">
                 {fullName}
               </h1>
-              {/* Official SMART 16-point scalloped verified badge */}
-              <SmartVerifiedBadge />
-
-              {linkedinVerified && (
-                <span className={VERIFIED_BADGE_CLASS}>
-                  <CheckCircle2 className="size-3 text-emerald-600" />
-                  LinkedIn Verified
-                </span>
-              )}
-              {githubVerified && (
-                <span className={VERIFIED_BADGE_CLASS}>
-                  <CheckCircle2 className="size-3 text-emerald-600" />
-                  GitHub Verified
+              {/* SMART badge: green tick at 100% profile completion, red cross until then */}
+              {percent === 100 ? (
+                <SmartVerifiedBadge role="img" aria-label="Profile complete" />
+              ) : (
+                <span className="group relative inline-flex">
+                  <span
+                    tabIndex={0}
+                    role="img"
+                    aria-label={
+                      typeof percent === 'number'
+                        ? `Profile ${percent}% complete`
+                        : 'Profile not complete yet'
+                    }
+                    aria-describedby="profile-missing-areas"
+                    className="inline-flex cursor-help rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+                  >
+                    <SmartUnverifiedBadge aria-hidden="true" />
+                  </span>
+                  {/* pt-2 bridges the gap so the card stays open while the pointer moves onto it */}
+                  <span className="invisible absolute top-full left-1/2 z-30 -translate-x-1/2 pt-2 opacity-0 transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                    <span
+                      id="profile-missing-areas"
+                      role="tooltip"
+                      className="block w-60 rounded-lg border border-zinc-200 bg-white p-3 text-left shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+                    >
+                      <span className="block text-xs font-semibold text-zinc-900 dark:text-white">
+                        {missingAreas.length > 0
+                          ? 'Add these to complete your profile'
+                          : 'Checking what is missing…'}
+                      </span>
+                      {missingAreas.length > 0 ? (
+                        <span className="mt-2 block space-y-1">
+                          {missingAreas.map((area) => (
+                            <Link
+                              key={area}
+                              href={PROFILE_AREA_HREFS[area]}
+                              className="flex items-center gap-2 rounded-md px-1.5 py-1 text-xs text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+                            >
+                              <span className="size-1.5 shrink-0 rounded-full bg-rose-500" />
+                              {PROFILE_AREA_LABELS[area]}
+                            </Link>
+                          ))}
+                        </span>
+                      ) : null}
+                    </span>
+                  </span>
                 </span>
               )}
             </div>
@@ -184,12 +251,13 @@ export function ProfileHeroBanner({
           </div>
 
           {/* Username Handle */}
-          <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500">@{handle}</p>
+          {handle ? (
+            <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500">@{handle}</p>
+          ) : null}
 
           {/* Tagline / Bio Quote */}
           <p className="text-xs sm:text-sm font-normal text-zinc-600 dark:text-zinc-300 max-w-2xl leading-relaxed">
-            &ldquo;Motivated student eager to explore new opportunities and apply my skills in a
-            dynamic environment.&rdquo;
+            &ldquo;{headline}&rdquo;
           </p>
 
           {/* Department */}

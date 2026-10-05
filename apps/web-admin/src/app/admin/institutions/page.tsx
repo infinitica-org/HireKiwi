@@ -273,7 +273,7 @@ export default function InstitutionsPage() {
           <DataTable
             headers={[
               '',
-              'School & Domain',
+              'University & Domain',
               'Enrolled Students',
               'Pending Invites',
               'Status',
@@ -498,7 +498,7 @@ export default function InstitutionsPage() {
           <CardContent>
             <form onSubmit={onCreate}>
               <FormGrid>
-                <Field label="University / School Name">
+                <Field label="University Name">
                   <AdminInput value={name} onChange={(e) => setName(e.target.value)} required />
                 </Field>
                 <Field label="Domain Whitelist">

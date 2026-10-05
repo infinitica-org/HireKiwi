@@ -78,47 +78,63 @@ export function MessagesWorkspace({
   };
 
   return (
-    <div className="grid min-h-[70vh] gap-4 md:grid-cols-[minmax(0,320px)_1fr]">
-      <aside className={cn('flex flex-col gap-3', activeId ? 'hidden md:flex' : 'flex')}>
-        <input
-          type="search"
-          value={term}
-          onChange={(event) => setTerm(event.target.value)}
-          placeholder="Search your messages"
-          aria-label="Search your messages"
-          className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
-        />
-        {term.trim().length > 0 && !searching ? (
-          <p className="text-xs text-neutral-500">
-            Type at least {MESSAGE_SEARCH_MIN_LENGTH} characters to search.
-          </p>
-        ) : null}
-        {searching ? (
-          <SearchResults
-            loading={search.isLoading}
-            error={search.error}
-            onRetry={() => void search.refetch()}
-            hits={search.data?.hits ?? []}
-            onOpen={(hit) => open(hit.conversationId, hit.messageId)}
-          />
-        ) : (
-          <ConversationList
-            loading={conversations.isLoading}
-            error={conversations.error}
-            onRetry={() => void conversations.refetch()}
-            items={conversations.data?.conversations ?? []}
-            activeId={activeId}
-            onOpen={(id) => open(id)}
-          />
+    <div className="grid h-[calc(100vh-12rem)] min-h-[520px] overflow-hidden rounded-md border border-zinc-200/80 bg-white font-sans shadow-2xs md:grid-cols-[minmax(0,320px)_1fr] dark:border-zinc-800 dark:bg-[#161616]">
+      <aside
+        className={cn(
+          'min-h-0 flex-col border-zinc-200/80 md:border-r dark:border-zinc-800',
+          activeId ? 'hidden md:flex' : 'flex',
         )}
-        {blockedUsersHref ? (
-          <a href={blockedUsersHref} className="text-xs text-neutral-500 underline">
-            Blocked users
-          </a>
-        ) : null}
+      >
+        <div className="border-b border-zinc-100 p-3 dark:border-zinc-800">
+          <input
+            type="search"
+            value={term}
+            onChange={(event) => setTerm(event.target.value)}
+            placeholder="Search your messages"
+            aria-label="Search your messages"
+            className="w-full rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-900"
+          />
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {term.trim().length > 0 && !searching ? (
+            <p className="px-3 pt-3 text-xs text-zinc-500">
+              Type at least {MESSAGE_SEARCH_MIN_LENGTH} characters to search.
+            </p>
+          ) : null}
+          {searching ? (
+            <SearchResults
+              loading={search.isLoading}
+              error={search.error}
+              onRetry={() => void search.refetch()}
+              hits={search.data?.hits ?? []}
+              onOpen={(hit) => open(hit.conversationId, hit.messageId)}
+            />
+          ) : (
+            <ConversationList
+              loading={conversations.isLoading}
+              error={conversations.error}
+              onRetry={() => void conversations.refetch()}
+              items={conversations.data?.conversations ?? []}
+              activeId={activeId}
+              onOpen={(id) => open(id)}
+            />
+          )}
+          {blockedUsersHref ? (
+            <a href={blockedUsersHref} className="block px-4 py-3 text-xs text-zinc-500 underline">
+              Blocked users
+            </a>
+          ) : null}
+        </div>
       </aside>
 
-      <section className={cn('min-w-0', activeId ? 'block' : 'hidden md:block')}>
+      <section
+        className={cn(
+          'min-h-0 min-w-0',
+          activeId
+            ? 'flex flex-col'
+            : 'hidden md:flex md:flex-col md:items-center md:justify-center',
+        )}
+      >
         {activeId && me.data ? (
           <Thread
             key={activeId}
@@ -164,7 +180,7 @@ function ConversationList(props: {
     );
   }
   return (
-    <ul className="divide-y divide-neutral-200 overflow-hidden rounded-xl border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
+    <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
       {props.items.map((item) => (
         <li key={item.id}>
           <button
@@ -172,36 +188,39 @@ function ConversationList(props: {
             onClick={() => props.onOpen(item.id)}
             aria-current={item.id === props.activeId ? 'true' : undefined}
             className={cn(
-              'flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900',
-              item.id === props.activeId && 'bg-neutral-100 dark:bg-neutral-900',
+              'relative flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50',
+              item.id === props.activeId &&
+                'bg-zinc-100 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-zinc-900 dark:bg-zinc-800 dark:before:bg-white',
             )}
           >
             <span
               aria-hidden
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-semibold dark:bg-neutral-800"
+              className="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-zinc-900"
             >
               {item.counterpart.name.slice(0, 2).toUpperCase()}
             </span>
             <span className="min-w-0 flex-1">
               <span className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-sm font-semibold">{item.counterpart.name}</span>
-                <span className="shrink-0 text-[11px] text-neutral-500">
+                <span className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                  {item.counterpart.name}
+                </span>
+                <span className="shrink-0 text-[11px] text-zinc-400">
                   {formatTime(item.lastMessageAt)}
                 </span>
               </span>
               {item.counterpart.orgName ? (
-                <span className="block truncate text-xs text-neutral-500">
+                <span className="block truncate text-xs text-zinc-500">
                   {item.counterpart.orgName}
                 </span>
               ) : null}
-              <span className="mt-0.5 block truncate text-xs text-neutral-600 dark:text-neutral-400">
+              <span className="mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-400">
                 {item.lastMessage?.body ?? 'No messages yet'}
               </span>
             </span>
             {item.unreadCount > 0 ? (
               <span
                 aria-label={`${item.unreadCount} unread`}
-                className="mt-1 rounded-full bg-emerald-600 px-1.5 text-[11px] font-semibold text-white"
+                className="mt-1 min-w-5 rounded-full bg-zinc-900 px-1.5 text-center text-[11px] leading-5 font-semibold text-white dark:bg-white dark:text-zinc-900"
               >
                 {item.unreadCount}
               </span>
@@ -234,13 +253,13 @@ function SearchResults(props: {
     return <EmptyState title="No messages found" description="Try different words." />;
   }
   return (
-    <ul className="divide-y divide-neutral-200 rounded-xl border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
+    <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
       {props.hits.map((hit) => (
         <li key={hit.messageId}>
           <button
             type="button"
             onClick={() => props.onOpen(hit)}
-            className="w-full px-3 py-3 text-left text-sm hover:bg-neutral-50 dark:hover:bg-neutral-900"
+            className="w-full px-4 py-3 text-left text-sm transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
           >
             <span className="flex justify-between gap-2 text-xs text-neutral-500">
               <span className="font-semibold">{hit.counterpartName}</span>
@@ -394,20 +413,22 @@ function Thread(props: {
   }
 
   return (
-    <div className="flex h-full min-h-[60vh] flex-col rounded-xl border border-neutral-200 dark:border-neutral-800">
-      <header className="flex items-center gap-2 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
+    <div className="flex h-full min-h-0 w-full flex-col">
+      <header className="flex items-center gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
         <button
           type="button"
           onClick={props.onBack}
-          className="text-sm md:hidden"
+          className="rounded-md p-1 text-sm text-zinc-500 hover:bg-zinc-100 md:hidden"
           aria-label="Back to conversations"
         >
           ←
         </button>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{counterpart?.name ?? 'Conversation'}</p>
+          <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+            {counterpart?.name ?? 'Conversation'}
+          </p>
           {counterpart?.orgName ? (
-            <p className="truncate text-xs text-neutral-500">{counterpart.orgName}</p>
+            <p className="truncate text-xs text-zinc-500">{counterpart.orgName}</p>
           ) : null}
         </div>
         <Button
@@ -431,7 +452,10 @@ function Thread(props: {
         </Alert>
       ) : null}
 
-      <ul className="flex-1 space-y-2 overflow-y-auto px-4 py-3" aria-label="Messages">
+      <ul
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-zinc-50/50 px-4 py-4 dark:bg-transparent"
+        aria-label="Messages"
+      >
         {cursor ? (
           <li className="text-center">
             <Button
@@ -450,7 +474,7 @@ function Thread(props: {
           </li>
         ) : null}
         {messages.length === 0 && outbox.length === 0 ? (
-          <li className="text-center text-sm text-neutral-500">No messages yet. Say hello.</li>
+          <li className="py-10 text-center text-sm text-zinc-500">No messages yet. Say hello.</li>
         ) : null}
         {messages.map((m) => {
           const mine = m.senderId === myId;
@@ -462,8 +486,10 @@ function Thread(props: {
             >
               <div
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-3 py-2 text-sm',
-                  mine ? 'bg-emerald-600 text-white' : 'bg-neutral-100 dark:bg-neutral-800',
+                  'max-w-[75%] px-3.5 py-2 text-sm leading-relaxed shadow-2xs',
+                  mine
+                    ? 'rounded-2xl rounded-br-md bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                    : 'rounded-2xl rounded-bl-md border border-zinc-200/80 bg-white text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100',
                   m.id === focusId && 'ring-2 ring-yellow-400',
                 )}
               >
@@ -473,7 +499,7 @@ function Thread(props: {
                   <MessageText text={m.body} />
                 )}
               </div>
-              <div className="mt-0.5 flex gap-2 text-[11px] text-neutral-500">
+              <div className="mt-1 flex gap-2 px-1 text-[11px] text-zinc-400">
                 <span>{formatTime(m.createdAt)}</span>
                 {!m.deleted && mine ? (
                   <button type="button" className="underline" onClick={() => remove.mutate(m.id)}>
@@ -491,10 +517,10 @@ function Thread(props: {
         })}
         {outbox.map((item) => (
           <li key={item.key} className="flex flex-col items-end">
-            <div className="max-w-[85%] rounded-2xl bg-emerald-600/60 px-3 py-2 text-sm text-white">
+            <div className="max-w-[75%] rounded-2xl rounded-br-md bg-zinc-900/60 px-3.5 py-2 text-sm leading-relaxed text-white dark:bg-white/60 dark:text-zinc-900">
               <MessageText text={item.body} />
             </div>
-            <div className="mt-0.5 flex gap-2 text-[11px]">
+            <div className="mt-1 flex gap-2 px-1 text-[11px]">
               {item.status === 'sending' ? (
                 <span className="text-neutral-500">Sending…</span>
               ) : (
@@ -522,7 +548,7 @@ function Thread(props: {
 
       {canSend ? (
         <form
-          className="border-t border-neutral-200 p-3 dark:border-neutral-800"
+          className="border-t border-zinc-100 p-3 dark:border-zinc-800"
           onSubmit={(event) => {
             event.preventDefault();
             submit();
@@ -540,13 +566,13 @@ function Thread(props: {
             rows={2}
             aria-label="Write a message"
             placeholder="Write a message…"
-            className="w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+            className="w-full resize-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-900"
           />
-          <div className="mt-1 flex items-center justify-between">
+          <div className="mt-2 flex items-center justify-between">
             <span
               className={cn(
                 'text-xs',
-                draft.length > MESSAGE_MAX_LENGTH ? 'text-red-600' : 'text-neutral-500',
+                draft.length > MESSAGE_MAX_LENGTH ? 'text-red-600' : 'text-zinc-400',
               )}
             >
               {draft.length}/{MESSAGE_MAX_LENGTH}

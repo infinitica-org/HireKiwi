@@ -12,7 +12,7 @@ const addSkillsAction = {
   title: 'Add your skills',
   description: 'Tell SMART what you already know.',
   ctaLabel: 'Add skills',
-  href: '/profile?section=skills',
+  href: '/student/profile?section=skills',
 };
 
 const verifySkillAction = {
@@ -20,7 +20,7 @@ const verifySkillAction = {
   title: 'Verify React',
   description: 'Show employers what you can do with evidence-backed verification.',
   ctaLabel: 'Verify React',
-  href: '/assessments/skills/clm_1',
+  href: '/student/assessments/skills/clm_1',
 };
 
 describe('NextActionCard', () => {
@@ -39,7 +39,7 @@ describe('NextActionCard', () => {
     expect(screen.getByText('Recommended Next Step')).toBeTruthy();
     expect(screen.getByText('Add your skills')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Add skills' }).getAttribute('href')).toBe(
-      '/profile?section=skills',
+      '/student/profile?section=skills',
     );
   });
 
@@ -47,7 +47,7 @@ describe('NextActionCard', () => {
     render(<NextActionCard action={verifySkillAction} onLater={vi.fn()} />);
     expect(screen.getByRole('heading', { name: 'Verify React' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Verify React' }).getAttribute('href')).toBe(
-      '/assessments/skills/clm_1',
+      '/student/assessments/skills/clm_1',
     );
   });
 
@@ -73,13 +73,13 @@ describe('NextActionCard', () => {
           title: 'Explore your public profile',
           description: 'See how employers will view your SMART profile.',
           ctaLabel: 'View public profile',
-          href: '/public-profile',
+          href: '/student/public-profile',
         }}
         onLater={vi.fn()}
       />,
     );
     expect(screen.getByRole('link', { name: 'View public profile' }).getAttribute('href')).toBe(
-      '/public-profile',
+      '/student/public-profile',
     );
   });
 

@@ -2,6 +2,12 @@ import { z } from 'zod';
 import { EducationDocumentTypeSchema, SharedVerificationStatusSchema } from '../domain/enums.js';
 import { CandidateAcademicScoresSchema } from './candidate-onboarding.dto.js';
 import { CandidateDegreeDetailsSchema } from './candidate-degree-details.dto.js';
+import {
+  EvidenceFileMimeTypeSchema,
+  EvidenceFileNameSchema,
+  EvidenceFileSizeSchema,
+  evidenceExtensionMatches,
+} from './evidence-file.dto.js';
 
 export const CandidateEducationDocumentSchema = z.object({
   id: z.string().uuid(),
@@ -15,13 +21,26 @@ export const CandidateEducationDocumentSchema = z.object({
 });
 export type CandidateEducationDocumentDto = z.infer<typeof CandidateEducationDocumentSchema>;
 
-export const CreateCandidateEducationDocumentSchema = z.object({
-  documentType: EducationDocumentTypeSchema,
-  fileUrl: z.string().min(1, 'File URL is required'),
-  fileName: z.string().min(1, 'File name is required'),
-  fileSizeBytes: z.number().int().positive('File size must be positive'),
-  mimeType: z.string().min(1, 'MIME type is required'),
-});
+/** Th6-600 — `fileUrl` carries the storage object key returned by the evidence upload URL. */
+export const CreateCandidateEducationDocumentSchema = z
+  .object({
+    documentType: EducationDocumentTypeSchema,
+    fileUrl: z
+      .string()
+      .min(1, 'File URL is required')
+      .max(512)
+      .refine(
+        (v) => !v.startsWith('data:'),
+        'Upload the file first; inline data URIs are not accepted.',
+      ),
+    fileName: EvidenceFileNameSchema,
+    fileSizeBytes: EvidenceFileSizeSchema,
+    mimeType: EvidenceFileMimeTypeSchema,
+  })
+  .refine((v) => evidenceExtensionMatches(v.fileName, v.mimeType), {
+    message: 'The file extension does not match its type.',
+    path: ['fileName'],
+  });
 export type CreateCandidateEducationDocumentDto = z.infer<
   typeof CreateCandidateEducationDocumentSchema
 >;

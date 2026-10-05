@@ -8,5 +8,5 @@ const PORTAL_ORIGINS = {
 };
 
 export default function NotFound() {
-  return <NotFoundWall homeHref="/dashboard" portalOrigins={PORTAL_ORIGINS} />;
+  return <NotFoundWall homeHref="/student/dashboard" portalOrigins={PORTAL_ORIGINS} />;
 }

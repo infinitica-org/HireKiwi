@@ -19,25 +19,9 @@ export const TPO_ROLE_OPTIONS: Option[] = [
   { label: 'Other', value: 'other' },
 ];
 
-export const TPO_REFERRAL_OPTIONS: Option[] = [
-  { label: 'SMART Webinar / Demo session', value: 'webinar' },
-  { label: 'Partner University / Colleague recommendation', value: 'colleague' },
-  { label: 'Conference / Higher Ed Summit', value: 'conference' },
-  { label: 'Corporate Recruiter / Employer', value: 'employers' },
-  { label: 'SMART Website / Blog / Research', value: 'blog' },
-  { label: 'Social Media (LinkedIn, etc.)', value: 'social' },
-  { label: 'Other', value: 'other' },
-];
-
-export const TPO_FUNCTION_OPTIONS: Option[] = [
-  { label: 'Campus Placement Automation & Drive Management', value: 'placement_automation' },
-  { label: 'Competency Assessment & 5x3 Tier Certification', value: 'tier_certification' },
-  { label: 'Connecting with Enterprise Recruiters', value: 'employer_relations' },
-  { label: 'Student Readiness & Skill Analytics', value: 'readiness_analytics' },
-  { label: 'Accreditation Reporting & Outcome Evidence', value: 'accreditation_reporting' },
-  { label: 'Comprehensive Campus Suite', value: 'comprehensive' },
-  { label: 'Other', value: 'other' },
-];
+export const COLLEGE_DESIGNATION_OPTIONS = TPO_ROLE_OPTIONS;
+export const TPO_REFERRAL_OPTIONS: Option[] = [];
+export const TPO_FUNCTION_OPTIONS: Option[] = [];
 
 interface NeatSelectProps {
   label: string;
@@ -63,6 +47,7 @@ export function NeatSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -73,6 +58,32 @@ export function NeatSelect({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Prevent entire page from scrolling when scrolling inside the dropdown list
+  useEffect(() => {
+    const el = scrollableRef.current;
+    if (!el || !isOpen) return;
+
+    function handleWheel(e: WheelEvent) {
+      const { scrollTop, scrollHeight, clientHeight } = el!;
+      const deltaY = e.deltaY;
+      const isScrollingDown = deltaY > 0;
+      const isScrollingUp = deltaY < 0;
+
+      if (
+        (isScrollingDown && scrollTop + clientHeight >= scrollHeight - 1) ||
+        (isScrollingUp && scrollTop <= 1)
+      ) {
+        e.preventDefault();
+      }
+      e.stopPropagation();
+    }
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', handleWheel);
+    };
+  }, [isOpen]);
 
   function handleToggle() {
     if (!isOpen && containerRef.current) {
@@ -112,7 +123,7 @@ export function NeatSelect({
       >
         <span
           className={
-            selectedOption ? 'text-slate-900 font-medium truncate' : 'text-slate-400 truncate'
+            selectedOption ? 'text-slate-900 font-medium truncate' : 'text-slate-500 truncate'
           }
         >
           {selectedOption ? selectedOption.label : placeholder}
@@ -147,7 +158,11 @@ export function NeatSelect({
               openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
             }`}
           >
-            <div className="max-h-60 overflow-y-auto space-y-0.5 pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-200 hover:[&::-webkit-scrollbar-thumb]:bg-slate-300">
+            <div
+              ref={scrollableRef}
+              style={{ overscrollBehavior: 'contain' }}
+              className="max-h-60 overflow-y-auto overscroll-contain space-y-0.5 pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-200 hover:[&::-webkit-scrollbar-thumb]:bg-slate-300"
+            >
               {options.map((opt) => {
                 const isSelected = opt.value === value;
                 return (
@@ -193,14 +208,13 @@ export default function TpoContactForm({
   onSuccess,
 }: TpoContactFormProps) {
   const [formData, setFormData] = useState({
+    institutionName: '',
+    location: '',
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    institutionName: '',
     role: '',
-    referralSource: '',
-    functions: '',
     message: '',
   });
 
@@ -267,14 +281,13 @@ export default function TpoContactForm({
               onClick={() => {
                 setSubmitted(false);
                 setFormData({
+                  institutionName: '',
+                  location: '',
                   firstName: '',
                   lastName: '',
                   email: '',
                   phone: '',
-                  institutionName: '',
                   role: '',
-                  referralSource: '',
-                  functions: '',
                   message: '',
                 });
               }}
@@ -286,7 +299,47 @@ export default function TpoContactForm({
         </motion.div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5 text-left">
-          {/* First Name & Last Name */}
+          {/* 1. College Details FIRST: Institution Name & Location (Full Width Long Inputs) */}
+          <div>
+            <label
+              htmlFor="tpo-institution"
+              className="block text-sm font-semibold text-slate-800 mb-2"
+            >
+              Institution / University name <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="tpo-institution"
+              type="text"
+              name="institutionName"
+              required
+              placeholder="E.g. Stanford University / Massachusetts Institute of Technology / IIT"
+              value={formData.institutionName}
+              onChange={handleChange}
+              className="w-full h-12 rounded-lg border border-slate-200 bg-slate-50/60 px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="tpo-location"
+              className="block text-sm font-semibold text-slate-800 mb-2"
+            >
+              College / Campus location (City, State / Country){' '}
+              <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="tpo-location"
+              type="text"
+              name="location"
+              required
+              placeholder="E.g. Chennai, Tamil Nadu, India"
+              value={formData.location}
+              onChange={handleChange}
+              className="w-full h-12 rounded-lg border border-slate-200 bg-slate-50/60 px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
+            />
+          </div>
+
+          {/* 2. Contact Person Details: First Name & Last Name */}
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label
@@ -326,7 +379,7 @@ export default function TpoContactForm({
             </div>
           </div>
 
-          {/* Email Address & Phone Number */}
+          {/* 3. Contact Coordinates: Email & Phone Number */}
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label
@@ -366,27 +419,7 @@ export default function TpoContactForm({
             </div>
           </div>
 
-          {/* Institution Name */}
-          <div>
-            <label
-              htmlFor="tpo-institution"
-              className="block text-sm font-semibold text-slate-800 mb-2"
-            >
-              Institution / University name <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="tpo-institution"
-              type="text"
-              name="institutionName"
-              required
-              placeholder="E.g. Stanford University / MIT"
-              value={formData.institutionName}
-              onChange={handleChange}
-              className="w-full h-12 rounded-lg border border-slate-200 bg-slate-50/60 px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
-            />
-          </div>
-
-          {/* Role Select */}
+          {/* 4. Role Select */}
           <NeatSelect
             id="tpo-role"
             label="What best describes your role?"
@@ -396,33 +429,14 @@ export default function TpoContactForm({
             onChange={(val) => handleSelectChange('role', val)}
           />
 
-          {/* Functions / Focus Area Select */}
-          <NeatSelect
-            id="tpo-functions"
-            label="What is your primary area of interest?"
-            options={TPO_FUNCTION_OPTIONS}
-            value={formData.functions}
-            onChange={(val) => handleSelectChange('functions', val)}
-          />
-
-          {/* Referral Source Select */}
-          <NeatSelect
-            id="tpo-referral"
-            label="How did you hear about SMART?"
-            options={TPO_REFERRAL_OPTIONS}
-            value={formData.referralSource}
-            onChange={(val) => handleSelectChange('referralSource', val)}
-          />
-
-          {/* Optional Message */}
+          {/* 5. Optional Message */}
           {!compact && (
             <div>
               <label
                 htmlFor="tpo-message"
                 className="block text-sm font-semibold text-slate-800 mb-2"
               >
-                Additional questions or cohort details{' '}
-                <span className="text-slate-400 font-normal">(Optional)</span>
+                Additional questions <span className="text-slate-500 font-normal">(Optional)</span>
               </label>
               <textarea
                 id="tpo-message"

@@ -172,7 +172,7 @@ export function CredentialsSection() {
         evidenceType="CREDENTIAL"
         description={meta.description}
         action={
-          !loading && (credentials.length > 0 || showForm) ? (
+          !loading ? (
             <button
               type="button"
               onClick={() => {
@@ -297,7 +297,7 @@ export function CredentialsSection() {
               className={`${profilePrimaryButtonSmClass} justify-center px-5 py-2.5 text-[13px]`}
             >
               <Plus className="size-4" strokeWidth={2} aria-hidden />
-              Add your first credential
+              Add credential
             </button>
           }
         />

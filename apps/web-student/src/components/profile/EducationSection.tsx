@@ -8,6 +8,7 @@ import type { CandidateEducationDocumentDto, CandidateEducationDto } from '@smar
 import { queryKeys } from '@smart/api-client';
 import { useQuery } from '@smart/ui';
 import { api } from '@/lib/api';
+import { uploadEducationProof } from '@/lib/evidence-upload';
 import { EducationDetailsModal } from '@/components/profile/EducationDetailsModal';
 import {
   educationDtoToFormValues,
@@ -101,13 +102,8 @@ export function EducationSection() {
 
       if (values.courseProofFile && educationId) {
         const file = values.courseProofFile;
-        await api.users.attachEducationDocument(educationId, {
-          documentType: 'MARKSHEET',
-          fileName: file.name,
-          fileUrl: `storage/education-proofs/${file.name.toLowerCase().replace(/[^a-z0-9.]/g, '_')}`,
-          fileSizeBytes: file.size || 1,
-          mimeType: file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/png'),
-        });
+        // Th6-600 — real presigned upload; the server verifies the bytes on attach.
+        await uploadEducationProof(educationId, 'MARKSHEET', file);
       }
 
       closeModal();
@@ -139,16 +135,9 @@ export function EducationSection() {
   }) => {
     if (!docModalEducationId) return;
     const { file, documentType } = payload;
-    const fileName = file.name;
     try {
       setUploadingDoc(true);
-      await api.users.attachEducationDocument(docModalEducationId, {
-        documentType,
-        fileName,
-        fileUrl: `storage/education-proofs/${fileName.toLowerCase().replace(/[^a-z0-9.]/g, '_')}`,
-        fileSizeBytes: file.size || 1,
-        mimeType: file.type || (fileName.endsWith('.pdf') ? 'application/pdf' : 'image/png'),
-      });
+      await uploadEducationProof(docModalEducationId, documentType, file);
       setDocModalEducationId(null);
       await fetchEducation();
     } catch (err: unknown) {
@@ -169,7 +158,7 @@ export function EducationSection() {
         title={meta.title}
         description={meta.description}
         action={
-          !loading && educationList.length > 0 ? (
+          !loading ? (
             <button
               type="button"
               onClick={openCreateModal}
@@ -204,7 +193,7 @@ export function EducationSection() {
               className={`${profilePrimaryButtonSmClass} justify-center px-5 py-2.5 text-[13px]`}
             >
               <Plus className="size-4" strokeWidth={2} aria-hidden />
-              Add your first education
+              Add Education
             </button>
           }
         />

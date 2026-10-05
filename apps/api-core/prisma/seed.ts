@@ -329,6 +329,8 @@ async function main(): Promise<void> {
       role: 'COMPANY',
       institutionId: null,
       companyId: company.id,
+      // Without a company role every company permission check (profile, team, applicants) fails.
+      companyRole: 'OWNER' as const,
       primaryTrackId: null,
       passwordHash: devPasswordHash,
     },

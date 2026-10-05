@@ -34,12 +34,15 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="flex flex-col gap-3 border-b border-[var(--ds-border-subtle)] pb-5 md:flex-row md:items-start md:justify-between">
-      <div className="min-w-0 space-y-1.5">
+    // Matches the TPO console's flat page header (TpoBentoPageHeader `minimal`).
+    <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0 flex-1">
         <h1 className={pageTitle}>{title}</h1>
-        {description ? <p className={`max-w-2xl ${pageDescription}`}>{description}</p> : null}
+        {description ? <p className={`mt-1 max-w-2xl ${pageDescription}`}>{description}</p> : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 md:pl-4">{actions}</div>
+      ) : null}
     </header>
   );
 }
@@ -77,10 +80,10 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative w-full max-w-md rounded-[20px] border border-[var(--ds-border)] bg-white p-6 shadow-xl"
+        className="relative w-full max-w-md rounded-xl border border-zinc-200/80 bg-white p-6 shadow-xl"
       >
         <div className="mb-4 flex items-start justify-between gap-4">
-          <h2 className="text-base font-semibold text-[var(--ds-text)]">{title}</h2>
+          <h2 className="font-heading text-base font-bold tracking-tight text-zinc-900">{title}</h2>
           <button
             type="button"
             aria-label="Close"

@@ -262,7 +262,7 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
             setPostAssessment('summary');
             return;
           }
-          router.push('/assessments');
+          router.push('/student/assessments');
         } catch (err) {
           setError(skillVerifyErrorFromUnknown(err, 'submit'));
         } finally {
@@ -290,7 +290,7 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
           ) : null}
           <button
             type="button"
-            onClick={() => router.push('/assessments')}
+            onClick={() => router.push('/student/assessments')}
             className="mt-4 rounded-lg border border-border bg-muted px-4 py-2 text-xs font-semibold text-foreground hover:bg-background"
           >
             Back to Skills
@@ -311,7 +311,7 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
         </Alert>
         {profileGate ? (
           <Link
-            href="/profile"
+            href="/student/profile"
             className="inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background hover:bg-foreground/90"
           >
             Complete your profile
@@ -331,7 +331,7 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
 
   const backToSkills = () => {
     void releaseProctoringSession().finally(() => {
-      router.push('/assessment');
+      router.push('/student/assessments');
     });
   };
 
@@ -403,7 +403,7 @@ export function SkillVerifyPlayer({ claimId }: { claimId: string }) {
               return next;
             })
           }
-          onExit={() => router.push('/assessment')}
+          onExit={() => router.push('/student/assessments')}
           onSubmit={complete}
           onRunCode={(item, source) =>
             api.evaluation.runSkillFormCode({

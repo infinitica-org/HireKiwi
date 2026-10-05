@@ -41,7 +41,7 @@ export function CertificatesSection() {
         description="External credentials from AWS, Coursera, Google, and other providers — verified and shown on your public profile."
         action={
           <Link
-            href="/certificates/add"
+            href="/student/certificates/add"
             className={`${profilePrimaryButtonSmClass} justify-center px-4 py-2.5 text-[13px] font-semibold tracking-[-0.01em]`}
           >
             <Plus className="size-4" strokeWidth={2} aria-hidden />
@@ -67,11 +67,11 @@ export function CertificatesSection() {
           emptyBody="When you add a certificate, it appears here with verification status and linked skills."
           actions={
             <Link
-              href="/certificates/add"
+              href="/student/certificates/add"
               className={`${profilePrimaryButtonSmClass} justify-center px-5 py-2.5 text-[13px]`}
             >
               <Plus className="size-4" strokeWidth={2} aria-hidden />
-              Add your first certificate
+              Add Certificate
             </Link>
           }
         />

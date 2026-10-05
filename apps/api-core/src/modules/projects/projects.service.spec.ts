@@ -49,6 +49,7 @@ function projectRow(overrides: Record<string, unknown> = {}) {
 
 function setup() {
   const prisma = {
+    projectDocument: { findMany: vi.fn().mockResolvedValue([]) },
     project: {
       create: vi.fn().mockResolvedValue(projectRow()),
       findUnique: vi.fn().mockResolvedValue(projectRow()),

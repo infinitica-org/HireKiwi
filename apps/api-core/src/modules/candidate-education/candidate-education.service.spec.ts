@@ -4,6 +4,14 @@ import type { PrismaService } from '../../platform/prisma/prisma.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { CandidateEducationService, isEducationEligible } from './candidate-education.service.js';
 
+vi.mock('../../platform/storage/file-scanner.js', () => ({
+  assertFileClean: vi.fn().mockResolvedValue(undefined),
+  assertDataUriClean: vi.fn().mockResolvedValue(undefined),
+}));
+
+const PDF_BYTES = Buffer.from('%PDF-1.4\nDegree certificate');
+let storageMock: any;
+
 describe('CandidateEducationService', () => {
   let service: CandidateEducationService;
   let prismaMock: any;
@@ -58,9 +66,15 @@ describe('CandidateEducationService', () => {
       },
     };
     auditPublisher = { record: vi.fn().mockResolvedValue(undefined) };
+    storageMock = {
+      getObjectBuffer: vi.fn().mockResolvedValue(PDF_BYTES),
+      deleteObject: vi.fn().mockResolvedValue(undefined),
+      getSignedDownloadUrl: vi.fn().mockResolvedValue('https://storage.test/signed'),
+    };
     service = new CandidateEducationService(
       prismaMock as unknown as PrismaService,
       auditPublisher as never,
+      storageMock as never,
     );
   });
 
@@ -640,22 +654,25 @@ describe('CandidateEducationService', () => {
         id: '66666666-6666-4666-8666-666666666666',
         educationId: eduId,
         documentType: 'DEGREE_CERTIFICATE',
-        fileUrl: 'storage/education-proofs/degree.pdf',
+        fileUrl: `education-proofs/${studentId}/${eduId}/abc-degree.pdf`,
         fileName: 'degree.pdf',
-        fileSizeBytes: 1200,
+        fileSizeBytes: PDF_BYTES.byteLength,
         mimeType: 'application/pdf',
         createdAt: now,
       });
 
       const result = await service.attachDocument(studentId, eduId, {
         documentType: 'DEGREE_CERTIFICATE',
-        fileUrl: 'storage/education-proofs/degree.pdf',
+        fileUrl: `education-proofs/${studentId}/${eduId}/abc-degree.pdf`,
         fileName: 'degree.pdf',
-        fileSizeBytes: 1200,
+        fileSizeBytes: PDF_BYTES.byteLength,
         mimeType: 'application/pdf',
       });
 
       expect(result.fileName).toBe('degree.pdf');
+      // Th6-600 — the stored bytes were checked and the client gets a presigned link back.
+      expect(storageMock.getObjectBuffer).toHaveBeenCalled();
+      expect(result.fileUrl).toBe('https://storage.test/signed');
       expect(prismaMock.candidateEducationDocument.create).toHaveBeenCalled();
     });
   });

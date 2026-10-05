@@ -4,6 +4,14 @@ import { cn } from '@smart/ui';
 
 export type IconTone = 'accent' | 'teal' | 'inverse' | 'muted';
 
+/** TPO-console accent wells: soft tinted square with a coloured glyph. */
+const ICON_TONE_CLASS: Record<IconTone, string> = {
+  accent: 'bg-[var(--admin-dash-accent-blue-soft)] text-[var(--admin-dash-accent-blue)]',
+  teal: 'bg-[var(--admin-dash-accent-mint-soft)] text-[var(--admin-dash-accent-mint)]',
+  inverse: 'bg-zinc-900 text-white',
+  muted: 'bg-[var(--admin-dash-accent-lavender-soft)] text-[var(--admin-dash-accent-lavender)]',
+};
+
 export function IconWell({
   icon: Icon,
   tone = 'accent',
@@ -16,24 +24,24 @@ export function IconWell({
   return (
     <span
       className={cn(
-        'flex size-9 shrink-0 items-center justify-center rounded-md border border-zinc-200/80 bg-zinc-100/90 text-zinc-900 shadow-2xs dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-100',
-        tone === 'inverse' &&
-          'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950',
-        tone === 'muted' &&
-          'border-zinc-200 bg-zinc-100 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300',
+        'flex size-10 shrink-0 items-center justify-center rounded-lg',
+        ICON_TONE_CLASS[tone],
         className,
       )}
     >
-      <Icon className="size-4.5" strokeWidth={1.75} aria-hidden />
+      <Icon className="size-[18px]" strokeWidth={1.5} aria-hidden />
     </span>
   );
 }
 
+/**
+ * Page title in the TPO console style (Candidates, Placement, Campus, Reports, Settings):
+ * large bold heading, muted one-line description, actions on the right — no card, no icon.
+ * `icon`/`tone` are still accepted so existing call sites keep compiling.
+ */
 export function PageHeader({
   title,
   description,
-  icon,
-  tone = 'accent',
   children,
 }: {
   title: string;
@@ -43,19 +51,16 @@ export function PageHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between pb-2 border-b border-zinc-200/60 dark:border-zinc-800/60">
-      <div className="flex items-start gap-3">
-        {icon ? <IconWell icon={icon} tone={tone} /> : null}
-        <div className="space-y-1">
-          <h1 className="font-heading text-xl font-bold tracking-tight text-zinc-950 dark:text-white md:text-2xl">
-            {title}
-          </h1>
-          {description ? (
-            <p className="max-w-2xl text-xs text-zinc-500 dark:text-zinc-400">{description}</p>
-          ) : null}
-        </div>
+    <header className="flex flex-col gap-3 px-1 pt-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-medium tracking-tight text-zinc-950 sm:text-3xl">{title}</h1>
+        {description ? (
+          <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm">{description}</p>
+        ) : null}
       </div>
-      {children ? <div className="flex flex-wrap items-center gap-2">{children}</div> : null}
-    </div>
+      {children ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">{children}</div>
+      ) : null}
+    </header>
   );
 }

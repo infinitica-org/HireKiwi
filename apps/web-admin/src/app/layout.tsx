@@ -9,6 +9,8 @@ import { TooltipProvider } from '@smart/ui/tooltip';
 export const metadata: Metadata = {
   title: 'Platform admin · SMART',
   description: 'Integrity queue, AI health, cut scores.',
+  // Authenticated portal: keep out of search indexes (Th6-598).
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

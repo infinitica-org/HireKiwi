@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@smart/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@smart/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '../../../components/admin-tabs';
 import { ConfirmDialog } from '@smart/ui';
 import { PageHeader } from '@/components/page-header';
 import {

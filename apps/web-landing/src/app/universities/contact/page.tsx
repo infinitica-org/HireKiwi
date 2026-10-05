@@ -16,25 +16,21 @@ export default function UniversityContactPage() {
         />
 
         <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="font-cabinet font-medium text-4xl sm:text-5xl lg:text-6xl leading-[1.08] tracking-tight text-slate-950"
+          <h1
+            className="animate-enter-lcp font-cabinet font-medium text-4xl sm:text-5xl lg:text-6xl leading-[1.08] tracking-tight text-slate-950"
+            style={{ '--enter-y': '16px' } as React.CSSProperties}
           >
             Let&apos;s Connect
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="mx-auto mt-4 sm:mt-5 max-w-2xl text-base sm:text-lg lg:text-xl font-normal leading-relaxed text-slate-600"
+          <p
+            className="animate-enter-lcp mx-auto mt-4 sm:mt-5 max-w-2xl text-base sm:text-lg lg:text-xl font-normal leading-relaxed text-slate-600"
+            style={{ '--enter-y': '16px', animationDelay: '150ms' } as React.CSSProperties}
           >
             Discover how SMART equips career centers and placement offices with verifiable 5×3 grid
             competency assessments, automated drive workflows, and real-time student readiness
             intelligence.
-          </motion.p>
+          </p>
         </div>
       </section>
 

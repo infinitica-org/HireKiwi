@@ -11,7 +11,12 @@ vi.mock('@/components/onboarding/steps/SocialVerification', () => ({
   default: () => <div data-testid="social-verification">Social form</div>,
 }));
 
+vi.mock('@/components/profile/CodingPlatformIntegrations', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  CodingPlatformIntegrations: () => null,
+}));
 vi.mock('@smart/ui', () => ({
+  useQuery: () => ({ data: undefined }),
   useQueryClient: () => ({ invalidateQueries: vi.fn().mockResolvedValue(undefined) }),
 }));
 
@@ -34,8 +39,11 @@ describe('ProfessionalLinksSection', () => {
   it('renders showcase work cards and platforms', () => {
     render(<ProfessionalLinksSection />);
 
-    expect(screen.getByRole('heading', { name: 'Professional Links' })).toBeTruthy();
-    expect(screen.getByText('Showcase your work from:')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Integrations' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Connected accounts' })).toBeTruthy();
+    const cards = screen.getByTestId('integration-cards');
+    expect(cards.textContent).toContain('Not connected');
+    expect(screen.getByRole('button', { name: 'Connect LinkedIn' })).toBeTruthy();
     expect(screen.getByText('GitHub')).toBeTruthy();
     expect(screen.getByText('LinkedIn')).toBeTruthy();
   });

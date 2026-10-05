@@ -628,7 +628,11 @@ export default function SkillsProfilePage() {
 
               <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                 <Link
-                  href="/assessments"
+                  href={
+                    improveSkillTarget.claim?.claimId
+                      ? `/student/assessments/skills/${improveSkillTarget.claim.claimId}`
+                      : '/student/assessments'
+                  }
                   className="rounded-md bg-zinc-900 px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
                 >
                   Take a skill check →

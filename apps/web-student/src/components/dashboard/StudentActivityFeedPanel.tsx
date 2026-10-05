@@ -1,6 +1,8 @@
 'use client';
 
-import { Eye, FileText, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Eye, FileText, TrendingUp } from 'lucide-react';
+import { cn } from '@smart/ui';
 
 export interface ActivityFeedItem {
   id: string;
@@ -8,9 +10,28 @@ export interface ActivityFeedItem {
   text: string;
 }
 
+const PAGE_SIZE = 3;
+/** How many page numbers to show at once before the row starts sliding. */
+const MAX_PAGE_BUTTONS = 5;
+
+function visiblePages(current: number, total: number): number[] {
+  const count = Math.min(MAX_PAGE_BUTTONS, total);
+  const start = Math.min(Math.max(1, current - Math.floor(count / 2)), total - count + 1);
+  return Array.from({ length: count }, (_, i) => start + i);
+}
+
+const pageButtonClass =
+  'flex size-7 items-center justify-center rounded-md text-xs font-semibold transition-colors disabled:pointer-events-none disabled:opacity-40';
+
 export function StudentActivityFeedPanel({ activities = [] }: { activities?: ActivityFeedItem[] }) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(activities.length / PAGE_SIZE));
+  // Clamp when the list shrinks (e.g. after a refetch).
+  const current = Math.min(page, totalPages);
+  const pageItems = activities.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+
   return (
-    <section className="relative overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs font-sans select-none dark:border-zinc-800 dark:bg-[#161616]">
+    <section className="relative overflow-hidden rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs font-sans select-none dark:border-zinc-800 dark:bg-[#161616]">
       <div className="flex items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-850">
         <div>
           <h2 className="font-heading text-base font-bold tracking-tight text-zinc-900 dark:text-white">
@@ -34,7 +55,7 @@ export function StudentActivityFeedPanel({ activities = [] }: { activities?: Act
         </div>
       ) : (
         <div className="mt-4 space-y-2.5">
-          {activities.map((act) => {
+          {pageItems.map((act) => {
             let Icon = Eye;
             if (act.icon === 'file') Icon = FileText;
             if (act.icon === 'trending') Icon = TrendingUp;
@@ -58,6 +79,55 @@ export function StudentActivityFeedPanel({ activities = [] }: { activities?: Act
           })}
         </div>
       )}
+
+      {totalPages > 1 ? (
+        <nav
+          aria-label="Recent activity pages"
+          className="mt-4 flex items-center justify-center gap-1 border-t border-zinc-100 pt-4 dark:border-zinc-800"
+        >
+          <button
+            type="button"
+            onClick={() => setPage(current - 1)}
+            disabled={current === 1}
+            aria-label="Previous page"
+            className={cn(
+              pageButtonClass,
+              'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800',
+            )}
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          {visiblePages(current, totalPages).map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setPage(n)}
+              aria-label={`Page ${n}`}
+              aria-current={n === current ? 'page' : undefined}
+              className={cn(
+                pageButtonClass,
+                n === current
+                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950'
+                  : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800',
+              )}
+            >
+              {n}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setPage(current + 1)}
+            disabled={current === totalPages}
+            aria-label="Next page"
+            className={cn(
+              pageButtonClass,
+              'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800',
+            )}
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </nav>
+      ) : null}
     </section>
   );
 }
