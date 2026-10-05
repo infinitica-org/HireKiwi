@@ -178,14 +178,18 @@ export type TransferSkillRow = z.infer<typeof TransferSkillRowSchema>;
 
 /**
  * Evidence quality metrics for a capability or skill assessment.
- * Reflects the psychometric validity of the evidence backing a claim.
+ *
+ * `null` means "not measured" and is never a stand-in for a good value: the matching
+ * pipeline has no rater or timestamp data, so those fields are null rather than synthesised.
+ * `sourceAuthorityWeight` is a declared policy weight per evidence source type, not a measured
+ * reliability coefficient. `compositeValidityScore` is renormalised over the known components.
  */
 export const EvidenceQualityMetricsSchema = z.object({
   constructCoverage: z.number().min(0).max(1),
-  interRaterReliability: z.number().min(0).max(1),
-  sourceReliability: z.number().min(0).max(1),
-  recencyDays: z.number().int().nonnegative(),
-  decayFactor: z.number().min(0).max(1),
+  interRaterReliability: z.number().min(0).max(1).nullable(),
+  sourceAuthorityWeight: z.number().min(0).max(1),
+  recencyDays: z.number().int().nonnegative().nullable(),
+  decayFactor: z.number().min(0).max(1).nullable(),
   compositeValidityScore: z.number().min(0).max(1),
 });
 export type EvidenceQualityMetrics = z.infer<typeof EvidenceQualityMetricsSchema>;
