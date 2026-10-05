@@ -2,7 +2,7 @@ import {
   PROFICIENCY_LEVEL_ORDER,
   type CompetencyStatus,
   type ProficiencyLevel,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export const STATUS_ORDINAL = {
   NOT_TESTED: 0,

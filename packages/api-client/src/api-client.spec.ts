@@ -1,4 +1,4 @@
-import { BatchImportResultDtoSchema } from '@smart/contracts';
+import { BatchImportResultDtoSchema } from '@hirekiwi/contracts';
 import { z } from 'zod';
 import { describe, expect, it, vi } from 'vitest';
 import {

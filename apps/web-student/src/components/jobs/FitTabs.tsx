@@ -1,6 +1,6 @@
 'use client';
 
-import { JOB_FIT_TABS, type JobFitTab, type StudentJobCounts } from '@smart/contracts';
+import { JOB_FIT_TABS, type JobFitTab, type StudentJobCounts } from '@hirekiwi/contracts';
 import { FIT_TAB_LABELS } from '@/lib/jobs-url-state';
 
 interface FitTabsProps {

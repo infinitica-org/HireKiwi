@@ -10,7 +10,7 @@ import type {
   GithubRepoReadmeResponse,
   ListGithubReposResponse,
   RepoLanguagesResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { extractGithubLogin, GithubApiClient, GithubNotFoundError } from './github-api.client.js';
 
 const MAX_SELECTED_REPOS = 5;

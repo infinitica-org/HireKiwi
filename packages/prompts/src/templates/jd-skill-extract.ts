@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { JdSkillExtractVectorSchema } from '@smart/contracts';
+import { JdSkillExtractVectorSchema } from '@hirekiwi/contracts';
 import type { PromptTemplate } from '../types.js';
 import { INJECTION_GUARD, jsonOnly, untrusted } from '../shared.js';
 

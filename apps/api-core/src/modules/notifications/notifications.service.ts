@@ -6,7 +6,7 @@ import type {
   ListNotificationsResponse,
   NotificationDto,
   NotificationKind,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { env } from '../../platform/config/env.js';
 import {
   EMAIL_QUEUE,

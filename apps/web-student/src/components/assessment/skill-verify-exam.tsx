@@ -7,8 +7,8 @@ import {
   type SdeSkillFormFormat,
   type SdeSkillFormPublicItem,
   type SkillVerifySessionDto,
-} from '@smart/contracts';
-import { AnswerOption, Badge, Button, ProgressIndicator, QuestionCard, Timer } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { AnswerOption, Badge, Button, ProgressIndicator, QuestionCard, Timer } from '@hirekiwi/ui';
 import {
   AssessmentSessionShell,
   SessionAsidePanel,

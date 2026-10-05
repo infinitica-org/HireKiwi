@@ -94,7 +94,7 @@ describe('track registry', () => {
 
   it('throws a clear error for an unknown track code', () => {
     // @ts-expect-error deliberately invalid at the type level
-    expect(() => getTrackDefinition('NOT_A_TRACK')).toThrow(/Unknown SMART track code/);
+    expect(() => getTrackDefinition('NOT_A_TRACK')).toThrow(/Unknown HireKiwi track code/);
   });
 });
 

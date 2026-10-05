@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Alert } from '@smart/ui';
-import type { ProctoringViolationKind } from '@smart/contracts';
+import { Alert } from '@hirekiwi/ui';
+import type { ProctoringViolationKind } from '@hirekiwi/contracts';
 import { isFaceAlignmentKind } from '../../lib/proctoring/live-webcam';
 
 export const INTEGRITY_LOCKOUT_SECONDS = 12;

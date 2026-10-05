@@ -5,9 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { X } from 'lucide-react';
-import { cn, SidebarLegalLinks } from '@smart/ui';
+import { cn, SidebarLegalLinks } from '@hirekiwi/ui';
 
-import smartLogoImg from '@smart/ui/assets/images/Logos/WebP/Smart-logo.png';
+import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
 import { isNavLinkActive, isPlacementTopNavActive } from '../lib/tpo-nav';
 import {
   LayoutDashboard,

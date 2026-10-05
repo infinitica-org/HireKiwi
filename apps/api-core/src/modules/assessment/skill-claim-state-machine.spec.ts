@@ -4,7 +4,7 @@ import {
   SKILL_MAX_ATTEMPTS,
   SKILL_REATTEMPTS,
   SKILL_REFRESH_DAYS,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   RETRY_ITEM_SCOPE,

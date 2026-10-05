@@ -3,7 +3,7 @@ import {
   ACTIVE_TAXONOMY_VERSION,
   type ConnectSignalSourceRequest,
   type RawSignalEnvelope,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type {
   AdapterFetchContext,
   ConnectValidationResult,

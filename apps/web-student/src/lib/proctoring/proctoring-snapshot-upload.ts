@@ -1,4 +1,4 @@
-import { PROCTORING_SNAPSHOT_HEIGHT, PROCTORING_SNAPSHOT_WIDTH } from '@smart/contracts';
+import { PROCTORING_SNAPSHOT_HEIGHT, PROCTORING_SNAPSHOT_WIDTH } from '@hirekiwi/contracts';
 
 import { api } from '../api';
 

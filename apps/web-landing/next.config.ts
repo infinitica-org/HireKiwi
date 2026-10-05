@@ -1,12 +1,12 @@
 import type { NextConfig } from 'next';
-import { withSmartConfig } from '@smart/next-config';
+import { withSmartConfig } from '@hirekiwi/next-config';
 
 const config: NextConfig = {
   allowedDevOrigins: ['localhost', '127.0.0.1', 'localhost:3007', '127.0.0.1:3007'],
   transpilePackages: [
-    '@smart/ui',
-    '@smart/api-client',
-    '@smart/contracts',
+    '@hirekiwi/ui',
+    '@hirekiwi/api-client',
+    '@hirekiwi/contracts',
     'motion',
     '@mediapipe/tasks-vision',
     'motion',

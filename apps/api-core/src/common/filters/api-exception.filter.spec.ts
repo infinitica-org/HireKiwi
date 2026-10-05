@@ -1,7 +1,7 @@
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { newCorrelationId, runWithContext } from '@smart/observability';
+import { newCorrelationId, runWithContext } from '@hirekiwi/observability';
 import { ApiExceptionFilter } from './api-exception.filter.js';
 
 function mockHost(headers: Record<string, string> = {}, requestId = 'req-1') {

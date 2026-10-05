@@ -7,7 +7,7 @@ import {
   type WorkExperienceDto,
   type WorkExperienceResponsibility,
   type WorkExperienceStructuredMetadata,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type {
   WorkExperience,
   WorkExperienceResponsibility as WorkExperienceResponsibilityRow,

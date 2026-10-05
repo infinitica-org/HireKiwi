@@ -25,7 +25,7 @@ export async function generateCertificatePdfBuffer(data: CertificatePdfData): Pr
         margins: { top: 40, bottom: 40, left: 50, right: 50 },
         info: {
           Title: `SMART Readiness Certificate - ${data.candidateName}`,
-          Author: 'SMART Platform Certification Authority',
+          Author: 'HireKiwi Platform Certification Authority',
           Subject: `${data.trackName} Readiness Credential`,
         },
       });

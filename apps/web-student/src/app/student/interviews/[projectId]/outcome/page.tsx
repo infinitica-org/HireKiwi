@@ -4,7 +4,7 @@ import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Award, CheckCircle2, AlertTriangle, XCircle, FileText } from 'lucide-react';
 import { api } from '@/lib/api';
-import type { ProjectDefenseOutcomeDto } from '@smart/contracts';
+import type { ProjectDefenseOutcomeDto } from '@hirekiwi/contracts';
 
 interface OutcomePageProps {
   params: Promise<{ projectId: string }>;

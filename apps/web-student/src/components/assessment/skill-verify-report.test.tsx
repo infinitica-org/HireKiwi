@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import type { GradeSdeSkillFormResponse } from '@smart/contracts';
+import type { GradeSdeSkillFormResponse } from '@hirekiwi/contracts';
 
 import type { AssessmentResultView } from '@/lib/competency-display';
 

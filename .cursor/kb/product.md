@@ -1,6 +1,6 @@
-# Product — SmartKiwi (SMART) Intelligent Talent Discovery Platform
+# Product — HireKiwi Intelligent Talent Discovery Platform
 
-**SmartKiwi (SMART)** transforms fragmented claims about candidates into **evidence-backed capability profiles** and matches them to roles with defensible, explainable precision.
+**HireKiwi** transforms fragmented claims about candidates into **evidence-backed capability profiles** and matches them to roles with defensible, explainable precision.
 
 Operates under **AI-DLC (AI-Driven Software Delivery Lifecycle)**: _"The hardest part of AI coding was never generation — it was delivery."_
 
@@ -39,7 +39,7 @@ Per `HireKiwi_RnD_Workstream_Blueprint.md` and the architecture MindMap:
 ## Human Review Accountability Model (October 2026 Decision)
 
 - **Partnered Institutions:** Academic integrity / assessment flags are routed to the **College / Placement Admin Queue**.
-- **Independent Students:** Directly routed to the **SmartKiwi Platform Trust & Safety Queue**.
+- **Independent Students:** Directly routed to the **HireKiwi Platform Trust & Safety Queue**.
 
 ## Database & Security Mandates
 

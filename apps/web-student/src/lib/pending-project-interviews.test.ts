@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProjectDto } from '@smart/contracts';
+import type { ProjectDto } from '@hirekiwi/contracts';
 
 import { pendingProjectOwnershipInterviews } from './pending-project-interviews';
 

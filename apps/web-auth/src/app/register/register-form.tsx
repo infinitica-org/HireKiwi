@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
-import { isDisallowedEndorserEmailDomain } from '@smart/contracts';
-import type { SelectableInstitutionDto } from '@smart/contracts';
-import { SmartLogo } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { isDisallowedEndorserEmailDomain } from '@hirekiwi/contracts';
+import type { SelectableInstitutionDto } from '@hirekiwi/contracts';
+import { SmartLogo } from '@hirekiwi/ui';
 import { EyeIcon, EyeOffIcon } from '../../components/auth-icons';
 import { ResendVerification } from '../../components/resend-verification';
 import { api } from '../../lib/api';

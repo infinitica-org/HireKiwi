@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, FileText, Loader2, Plus, Upload } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import type { CandidateResumeFile } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { CandidateResumeFile } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import { ResumeEntryCard } from '@/components/profile/ResumeEntryCard';
 import {

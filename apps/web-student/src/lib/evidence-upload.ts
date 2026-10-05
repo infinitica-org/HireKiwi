@@ -3,8 +3,8 @@ import {
   EVIDENCE_FILE_MAX_BYTES,
   type CandidateEducationDocumentDto,
   type WorkExperienceDocumentDto,
-} from '@smart/contracts';
-import { uploadEvidenceFile, validateEvidenceFile } from '@smart/api-client';
+} from '@hirekiwi/contracts';
+import { uploadEvidenceFile, validateEvidenceFile } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 
 /**

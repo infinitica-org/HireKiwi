@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import type { ApplicationDto, JobOpeningDto } from '@smart/contracts';
+import type { ApplicationDto, JobOpeningDto } from '@hirekiwi/contracts';
 import { applicationsApi, openingsApi } from '../../lib/api';
 import {
   bentoCardClass,

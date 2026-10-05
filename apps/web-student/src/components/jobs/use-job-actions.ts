@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
-import { isSmartApiError } from '@smart/api-client';
-import type { StudentJobCard, StudentJobDetail } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { StudentJobCard, StudentJobDetail } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import { STUDENT_JOBS_KEY, jobDetailKey, patchCachedJob, savedJobsKey } from './job-cache';
 

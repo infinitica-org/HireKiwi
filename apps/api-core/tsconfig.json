@@ -1,5 +1,5 @@
 {
-  "extends": "@smart/tsconfig/nest.json",
+  "extends": "@hirekiwi/tsconfig/nest.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",

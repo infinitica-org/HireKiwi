@@ -7,7 +7,7 @@ import type {
   ProjectDto,
   SkillClaimDto,
   WorkExperienceDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { skillNameForCode } from './skill-declarations';
 
 export const PROFILE_AREA_IDS = [

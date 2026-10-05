@@ -40,7 +40,7 @@ import {
   skillFocusFromMetadata,
   skillClaimVerificationInProgress,
   skillClaimDeclareOrigin,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   BadRequestException,
   ConflictException,
@@ -54,14 +54,14 @@ import {
 import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
-import { attemptsStarted, cacheOperations, draftsSaved, getContext } from '@smart/observability';
+import { attemptsStarted, cacheOperations, draftsSaved, getContext } from '@hirekiwi/observability';
 import { Effect, Either } from 'effect';
 import { z } from 'zod';
 import {
   computeMarkWeightedScore,
   MARK_WEIGHTS,
   type MarkWeightedItemType,
-} from '@smart/scoring-engine';
+} from '@hirekiwi/scoring-engine';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
@@ -500,7 +500,7 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
    * POST /assessment/complete — SE-T01/CN-T04 finalisation.
    *
    * Scores the attempt's responses with the INF-05 mark-weighted formula
-   * (`@smart/scoring-engine`), then — when `claimId` is supplied — drives
+   * (`@hirekiwi/scoring-engine`), then — when `claimId` is supplied — drives
    * `applySkillClaimTransition` against the SkillClaim's PRD v1 §7.3 pass
    * bars (`skill-pass-thresholds.ts`) and persists the result. Without
    * `claimId` this only finalises the attempt and returns its score.

@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle2, FileText, Sparkles, Trash2 } from 'lucide-react';
-import type { CandidateResumeFile } from '@smart/contracts';
+import type { CandidateResumeFile } from '@hirekiwi/contracts';
 
 import { CERTIFICATE_CARD_ACCENTS } from '@/lib/certificate-entry-presenters';
 import { formatResumeSize } from '@/lib/resume-list';

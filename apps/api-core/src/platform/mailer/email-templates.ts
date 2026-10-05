@@ -281,7 +281,7 @@ function buildCompanyPortalInvite(invite: InviteEmailData): RenderedEmail {
 /* ---------------- platform-admin-invite (SUPER_ADMIN) ---------------- */
 
 function buildPlatformAdminInvite(invite: InviteEmailData): RenderedEmail {
-  const subject = "You're invited to become a SMART platform admin";
+  const subject = "You're invited to become a HireKiwi platform admin";
   const bodyHtml = [
     paragraph(
       `Hello ${strong(invite.fullName)}, you've been granted ${strong('platform admin')} access on SMART — full administrative control across every institution and company on the platform.`,
@@ -710,7 +710,7 @@ function buildWorkExperienceVerifierInvite(
     ]),
   ].join('');
   const text = [
-    `Hello ${verifierName}, ${payload.candidateName} has listed ${payload.roleTitle} at ${payload.companyName} (${payload.startDate} to ${payload.endDate}) on the SMART platform and named you as the verifier.`,
+    `Hello ${verifierName}, ${payload.candidateName} has listed ${payload.roleTitle} at ${payload.companyName} (${payload.startDate} to ${payload.endDate}) on the HireKiwi platform and named you as the verifier.`,
     `Review this request: ${payload.verificationUrl}`,
     `This link expires in ${payload.expiresAtFormatted}.`,
   ].join('\n\n');

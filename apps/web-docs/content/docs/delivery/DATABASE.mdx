@@ -75,7 +75,7 @@ docker compose -f infra/docker/docker-compose.yml --profile apps exec api \
 
 ## Seeding
 
-Local: `pnpm bootstrap` (or `pnpm --filter @smart/api-core db:seed`).
+Local: `pnpm bootstrap` (or `pnpm --filter @hirekiwi/api-core db:seed`).
 
 VPS: the `api` container is a slim production image — no `pnpm`, no
 TypeScript source — so `prisma/seed.ts` cannot run via `docker compose exec`.

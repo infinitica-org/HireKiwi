@@ -46,7 +46,7 @@ export function codegenSkillTaxonomy(): void {
   const source = `/**
  * AUTO-GENERATED from tools/content-pipeline/data/taxonomies/skill.json
  * Source: docs/Global_IT_Skills_Database.xlsx (Category + Skill columns)
- * Regenerate: pnpm --filter @smart/content-pipeline codegen:skill
+ * Regenerate: pnpm --filter @hirekiwi/content-pipeline codegen:skill
  * DO NOT EDIT MANUALLY.
  */
 

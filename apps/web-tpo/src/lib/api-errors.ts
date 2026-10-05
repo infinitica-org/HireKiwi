@@ -1,4 +1,4 @@
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 
 /** User-facing API error text for TPO placement pages. */
 export function tpoApiErrorMessage(caught: unknown, fallback: string): string {
@@ -6,7 +6,7 @@ export function tpoApiErrorMessage(caught: unknown, fallback: string): string {
     if (caught.message === 'An unexpected error occurred.') {
       return (
         `${caught.message} The API may be out of date — run ` +
-        '`pnpm --filter @smart/api-core exec prisma migrate deploy`, then `pnpm --filter @smart/api-core exec prisma generate`, and restart api-core.'
+        '`pnpm --filter @hirekiwi/api-core exec prisma migrate deploy`, then `pnpm --filter @hirekiwi/api-core exec prisma generate`, and restart api-core.'
       );
     }
     return caught.message;

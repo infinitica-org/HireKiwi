@@ -1,4 +1,4 @@
-import type { ProjectDto } from '@smart/contracts';
+import type { ProjectDto } from '@hirekiwi/contracts';
 
 import { needsOwnershipInterview } from '@/lib/project-submission';
 

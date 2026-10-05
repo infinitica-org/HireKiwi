@@ -119,7 +119,7 @@ function zipStore(entries) {
 // ----------------------------------------------------
 
 const sheetSummary = [
-  ['SMART Platform — Sprint 7 Enterprise Hardening & Review Defense'],
+  ['HireKiwi Platform — Sprint 7 Enterprise Hardening & Review Defense'],
   [
     'Version: v2.1.0-prod | Lead Architect: Tino (@brittytino) | Review Target: Day 2 Review Meeting',
   ],
@@ -147,7 +147,7 @@ const sheetSummary = [
   ],
   [
     'Documentation Portal',
-    'Interactive Fumadocs portal in @smart/web-docs (port 3006) + Production Release Notes v2.1.0.',
+    'Interactive Fumadocs portal in @hirekiwi/web-docs (port 3006) + Production Release Notes v2.1.0.',
   ],
   [
     'Quality Gates',

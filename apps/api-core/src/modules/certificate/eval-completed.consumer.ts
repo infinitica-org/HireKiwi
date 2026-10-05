@@ -1,7 +1,7 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { EvalCompletedEventSchema, SMART_TOPICS } from '@smart/contracts';
-import { runKafkaHandler } from '@smart/observability';
+import { EvalCompletedEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import { KafkaService } from '../../platform/kafka/kafka.service.js';
 import { CertificateService } from '../../modules/certificate/certificate.service.js';

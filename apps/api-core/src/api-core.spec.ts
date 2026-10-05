@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HealthStatusSchema } from '@smart/contracts';
+import { HealthStatusSchema } from '@hirekiwi/contracts';
 import { matchContractRoute } from './common/interceptors/rate-limit.interceptor.js';
 import { loadEnv } from './platform/config/env.js';
 import { HealthController } from './platform/health/health.controller.js';

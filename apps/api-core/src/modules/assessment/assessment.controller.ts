@@ -36,7 +36,7 @@ import {
   type SkillVerifyPrepareDto,
   type SkillVerifySessionDto,
   SKILL_PROFICIENCIES,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { FastifyRequest } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';

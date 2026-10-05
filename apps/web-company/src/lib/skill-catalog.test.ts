@@ -1,5 +1,5 @@
-import { SKILL_DEFINITIONS } from '@smart/contracts';
-import { SkillRequirementSchema } from '@smart/contracts';
+import { SKILL_DEFINITIONS } from '@hirekiwi/contracts';
+import { SkillRequirementSchema } from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   fromRequiredSkills,

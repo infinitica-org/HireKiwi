@@ -9,7 +9,7 @@ import {
   validateWorkExperienceLetterRules,
   type WorkExperienceDocumentDto,
   type WorkExperienceDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 import {
   DOCUMENT_TYPE_LABELS,

@@ -21,14 +21,14 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from 'lucide-react';
-import { cn, VerifiedBadge } from '@smart/ui';
+import { cn, VerifiedBadge } from '@hirekiwi/ui';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProfileProgress } from '@/lib/use-profile-progress';
 import { canVerifySkills } from '@/lib/profile-progress';
 import { api, apiClient } from '@/lib/api';
-import { API_PREFIX } from '@smart/contracts';
-import { queryKeys } from '@smart/api-client';
-import { useQuery } from '@smart/ui';
+import { API_PREFIX } from '@hirekiwi/contracts';
+import { queryKeys } from '@hirekiwi/api-client';
+import { useQuery } from '@hirekiwi/ui';
 import { skillNameForCode } from '@/lib/skill-declarations';
 
 export interface JobMatch {

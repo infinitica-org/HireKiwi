@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { BlockedUsersList } from '@smart/ui';
+import { BlockedUsersList } from '@hirekiwi/ui';
 import { PageHeader } from '../../../../components/ui';
 import { pageStack } from '../../../../lib/ui';
 

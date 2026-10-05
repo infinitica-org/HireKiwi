@@ -12,7 +12,7 @@ import {
   Clock,
   School,
 } from 'lucide-react';
-import type { CandidateEducationDto } from '@smart/contracts';
+import type { CandidateEducationDto } from '@hirekiwi/contracts';
 import { parseEducationDisplay } from '@/lib/education-entry-presenters';
 
 interface EducationEntryCardProps {

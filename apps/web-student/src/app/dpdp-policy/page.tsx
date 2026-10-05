@@ -2,7 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Digital Personal Data Protection Act (DPDP Act), 2023 - Privacy Notice | SMART Platform',
+  title:
+    'Digital Personal Data Protection Act (DPDP Act), 2023 - Privacy Notice | HireKiwi Platform',
   description:
     'Statutory Data Privacy Notice issued pursuant to Sections 5 & 6 of the Digital Personal Data Protection Act (DPDP Act), 2023.',
 };
@@ -34,7 +35,7 @@ export default function DpdpPolicyPage() {
               1. Regulatory Identification & Data Fiduciary Notice
             </h2>
             <p className="text-xs text-gray-600">
-              <strong>SMART Platform</strong> (&quot;Data Fiduciary&quot;) hereby notifies all
+              <strong>HireKiwi Platform</strong> (&quot;Data Fiduciary&quot;) hereby notifies all
               registered candidates and applicants (&quot;Data Principals&quot;) regarding the
               processing of digital personal data under the{' '}
               <strong>Digital Personal Data Protection Act (DPDP Act), 2023</strong>. Personal data
@@ -170,7 +171,7 @@ export default function DpdpPolicyPage() {
         {/* Footer */}
         <div className="mt-8 border-t border-gray-200 pt-4 flex justify-between items-center text-xs text-gray-500">
           <p>
-            &copy; {new Date().getFullYear()} SMART Platform. All statutory rights under DPDP Act
+            &copy; {new Date().getFullYear()} HireKiwi Platform. All statutory rights under DPDP Act
             2023 reserved.
           </p>
           <Link href="/onboarding" className="text-blue-600 hover:underline font-semibold">

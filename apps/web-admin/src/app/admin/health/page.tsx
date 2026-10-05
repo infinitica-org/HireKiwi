@@ -6,11 +6,11 @@ import type {
   AiUsageSummaryDto,
   AiUsageWindow,
   VerificationEventDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { GitBranch, HeartPulse, RefreshCw, ServerCrash, Timer } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@smart/ui/card';
-import { Button } from '@smart/ui/button';
-import { Progress } from '@smart/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@hirekiwi/ui/card';
+import { Button } from '@hirekiwi/ui/button';
+import { Progress } from '@hirekiwi/ui/progress';
 
 import { PageHeader } from '@/components/page-header';
 import {

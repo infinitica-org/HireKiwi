@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { NotificationsMenu as SharedNotificationsMenu } from '@smart/ui';
+import { NotificationsMenu as SharedNotificationsMenu } from '@hirekiwi/ui';
 
 /** Student top-bar bell — the shared menu with in-app (Next) navigation. */
 export function NotificationsMenu() {

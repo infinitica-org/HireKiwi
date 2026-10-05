@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { PROJECT_VERIFY_WEB_SEARCH_HITS, REDIS_TTL_SECONDS } from '@smart/contracts';
+import { PROJECT_VERIFY_WEB_SEARCH_HITS, REDIS_TTL_SECONDS } from '@hirekiwi/contracts';
 import { duplicateScore } from './project-verify.heuristics.js';
 
 const GITHUB_SEARCH = 'https://api.github.com/search/repositories';

@@ -15,7 +15,7 @@ vi.mock('@/components/profile/CodingPlatformIntegrations', async (importOriginal
   ...(await importOriginal<Record<string, unknown>>()),
   CodingPlatformIntegrations: () => null,
 }));
-vi.mock('@smart/ui', () => ({
+vi.mock('@hirekiwi/ui', () => ({
   useQuery: () => ({ data: undefined }),
   useQueryClient: () => ({ invalidateQueries: vi.fn().mockResolvedValue(undefined) }),
 }));

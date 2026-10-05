@@ -5,7 +5,7 @@ import type {
   AuthenticatedUser,
   CandidateEducationDto,
   CandidateOnboardingJobPreferences,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 import { ProfilePhotoEditControl } from '@/components/profile/ProfilePhotoEditControl';
 import { primaryInstitutionName } from '@/lib/profile-identity';

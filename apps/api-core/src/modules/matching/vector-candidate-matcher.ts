@@ -17,7 +17,7 @@ import {
   type LevelNumber,
   type TrackCode,
   type JdThresholdVector,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export interface CandidateVectorProfile {
   readonly studentId: string;

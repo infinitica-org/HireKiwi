@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import type { StudentDashboardSummary } from '@smart/contracts';
+import type { StudentDashboardSummary } from '@hirekiwi/contracts';
 import { renderWithQueryClient } from '@/test/render-with-query-client';
 import DashboardPage from './page';
 

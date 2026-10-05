@@ -9,7 +9,7 @@ import {
   resolveCorrelationId,
   runWithContext,
   type LoggerContext,
-} from '@smart/observability';
+} from '@hirekiwi/observability';
 import type { RequestUser } from '../guards/jwt-auth.guard.js';
 
 export type RequestWithLogContext = FastifyRequest & {

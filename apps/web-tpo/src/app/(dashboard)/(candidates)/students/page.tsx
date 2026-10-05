@@ -10,7 +10,7 @@ import {
   proficiencyLevelUiLabel,
   type InstitutionStudentDto,
   type SkillClaimDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 import { CandidateDetailDrawer } from '../../../../components/candidate-detail-drawer';
 import { CustomSelect } from '../../../../components/ui/CustomSelect';

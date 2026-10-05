@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { Gauge, RotateCcw, Sliders, Building2, CheckCircle2 } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import type { InstitutionDto, RateLimitPolicyItemDto } from '@smart/contracts';
-import { Badge } from '@smart/ui/badge';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { InstitutionDto, RateLimitPolicyItemDto } from '@hirekiwi/contracts';
+import { Badge } from '@hirekiwi/ui/badge';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

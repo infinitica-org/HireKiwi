@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence } from 'motion/react';
 import { Loader2, MapPin } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { LightSelect } from '../../ui/LightSelect';
 import { CITY_OPTIONS, type OnboardingProfileForm } from '@/lib/onboarding-form';
 import { api } from '@/lib/api';

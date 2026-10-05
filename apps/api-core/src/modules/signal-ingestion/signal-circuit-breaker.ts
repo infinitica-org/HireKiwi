@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { ConnectableSignalSourceId } from '@smart/contracts';
+import type { ConnectableSignalSourceId } from '@hirekiwi/contracts';
 
 export class SignalCircuitOpenError extends Error {
   constructor(public readonly sourceId: ConnectableSignalSourceId) {

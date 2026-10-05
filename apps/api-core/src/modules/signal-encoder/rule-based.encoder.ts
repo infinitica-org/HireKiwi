@@ -9,8 +9,8 @@ import {
   type SignalSourceId,
   type VectorizedSignal,
   type VectorizedSignalEntry,
-} from '@smart/contracts';
-import { encodeQlixFusionEntries, type QlixProjectFusionInput } from '@smart/scoring-engine';
+} from '@hirekiwi/contracts';
+import { encodeQlixFusionEntries, type QlixProjectFusionInput } from '@hirekiwi/scoring-engine';
 import {
   CERTIFICATE_PROFICIENCY_SCORE,
   confidenceForCertificateTier,

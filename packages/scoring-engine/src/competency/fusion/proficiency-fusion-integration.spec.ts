@@ -1,6 +1,6 @@
 import { Effect } from 'effect';
 import { describe, expect, it } from 'vitest';
-import type { FusionInput, ObservationBundle } from '@smart/contracts';
+import type { FusionInput, ObservationBundle } from '@hirekiwi/contracts';
 import { fuseDomainCapability } from './proficiency-fusion.js';
 
 /**

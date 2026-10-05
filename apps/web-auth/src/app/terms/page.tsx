@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SmartLogo } from '@smart/ui';
+import { SmartLogo } from '@hirekiwi/ui';
 
 export const metadata: Metadata = {
   title: 'Terms & Conditions · SMART',
-  description: 'Terms & Conditions governing your use of the SMART platform.',
+  description: 'Terms & Conditions governing your use of the HireKiwi platform.',
 };
 
 export default function TermsPage() {

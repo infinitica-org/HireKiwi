@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import type { ProjectDto } from '@smart/contracts';
-import { Alert, Button } from '@smart/ui';
+import type { ProjectDto } from '@hirekiwi/contracts';
+import { Alert, Button } from '@hirekiwi/ui';
 import { ArrowLeft } from 'lucide-react';
 import { ProjectDefenseOutcomePanel } from '@/components/profile/ProjectDefenseOutcomePanel';
 import { ProjectDefensePlayer } from '@/components/profile/ProjectDefensePlayer';

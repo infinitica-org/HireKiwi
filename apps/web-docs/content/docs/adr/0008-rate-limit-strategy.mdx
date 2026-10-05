@@ -16,7 +16,7 @@ Unlimited endpoints will not survive pilot traffic or abuse on public verify rou
 
 ## Decision
 
-- Every route declares RBAC + rate-limit policy in `@smart/contracts` (`http/routes.ts` + `domain/rate-limits.ts`).
+- Every route declares RBAC + rate-limit policy in `@hirekiwi/contracts` (`http/routes.ts` + `domain/rate-limits.ts`).
 - Enforcement: Redis sliding-window (Lua) in API middleware — source of truth for runtime counters.
 - Role/default tiers and endpoint overrides are contract data; changing limits is a contracts PR.
 - Redis keys always have TTL (`REDIS_TTL_SECONDS`).

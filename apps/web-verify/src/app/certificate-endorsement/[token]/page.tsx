@@ -1,8 +1,11 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
-import { proficiencyLevelUiLabel, type GetCertificateEndorsementResponse } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import {
+  proficiencyLevelUiLabel,
+  type GetCertificateEndorsementResponse,
+} from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 
 function Icon({ path, className }: { path: string; className?: string }) {

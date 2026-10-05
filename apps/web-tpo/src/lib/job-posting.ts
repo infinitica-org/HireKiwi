@@ -7,7 +7,7 @@ import {
   type JobOpeningAttachedDocument,
   type SkillProficiency,
   type SkillTaxonomyDomain,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export type JobPostingCompanyLogo = {
   storageKey: string;

@@ -3,11 +3,11 @@ title: "05. Verification & Trust Engine — Source Protocols & Dual Human Review
 description: "Modular verification architecture for evidence validation, source protocols, cryptographic proof, and the dual human review accountability model."
 ---
 
-## 5.1 The Verification Paradigm in SmartKiwi (SMART)
+## 5.1 The Verification Paradigm in HireKiwi
 
-Verification in SmartKiwi is not a static form-checking exercise or an ungrounded autonomous agent. It is driven by a **deterministic, modular Verification Engine** executing structured source-verification protocols orchestrated via BullMQ workers.
+Verification in HireKiwi is not a static form-checking exercise or an ungrounded autonomous agent. It is driven by a **deterministic, modular Verification Engine** executing structured source-verification protocols orchestrated via BullMQ workers.
 
-In legacy recruitment, candidate claims (resumes, portfolios, listed skills) are accepted on faith or subjected to manual, error-prone background checks weeks after an offer is extended. SmartKiwi inverts this model: **unverified claims are never elevated to capability intelligence without source-level verification**.
+In legacy recruitment, candidate claims (resumes, portfolios, listed skills) are accepted on faith or subjected to manual, error-prone background checks weeks after an offer is extended. HireKiwi inverts this model: **unverified claims are never elevated to capability intelligence without source-level verification**.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -42,7 +42,7 @@ In legacy recruitment, candidate claims (resumes, portfolios, listed skills) are
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-The core doctrine of SmartKiwi verification is:
+The core doctrine of HireKiwi verification is:
 > **"Verify at the authentic source. Trust zero unverified assertions. Ground every capability in immutable cryptographic provenance."**
 
 ---
@@ -167,7 +167,7 @@ To resolve institutional governance and accountability:
 | Student Category | Review Routing | Accountable Reviewer | Escalation Path |
 | --- | --- | --- | --- |
 | **Partnered Institution Students** | College Placement / TPO Queue | College Department Head / TPO Admin | Institutional Super Admin |
-| **Independent Candidates** | Platform Trust & Safety Queue | SmartKiwi Trust & Safety Verifier Team | System Architect / Lead Admin |
+| **Independent Candidates** | Platform Trust & Safety Queue | HireKiwi Trust & Safety Verifier Team | System Architect / Lead Admin |
 
 ### Review Protocol & Justification
 - **Mandatory Justification (`FR-ADM-02.01`):** Every manual approval, rejection, or override requires an explicit reason code and explanatory note recorded in the audit log.
@@ -177,7 +177,7 @@ To resolve institutional governance and accountability:
 
 ## 5.6 Confidence Scoring Engine
 
-In accordance with PRD principles, SmartKiwi strictly separates **Skill Proficiency** (1 to 5 scale) from **Evidence Confidence** ($0.00$ to $1.00$).
+In accordance with PRD principles, HireKiwi strictly separates **Skill Proficiency** (1 to 5 scale) from **Evidence Confidence** ($0.00$ to $1.00$).
 
 Evidence Confidence ($C$) is computed using a multi-factor formula:
 

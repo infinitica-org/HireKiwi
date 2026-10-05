@@ -15,7 +15,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import type { EmployerApplicantCard } from '@smart/contracts';
+import type { EmployerApplicantCard } from '@hirekiwi/contracts';
 import { useCompanyAccount } from '@/lib/use-company-account';
 import { api, companyJobsApi } from '@/lib/api';
 import { AccountErrorPanel, AccountLoadingPanel } from '@/components/account-state-panel';

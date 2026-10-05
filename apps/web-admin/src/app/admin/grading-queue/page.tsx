@@ -1,10 +1,10 @@
 'use client';
 
-import type { GradingQueueItemDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { GradingQueueItemDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { PenLine } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button } from '@smart/ui/button';
+import { Button } from '@hirekiwi/ui/button';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

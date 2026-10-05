@@ -1,6 +1,6 @@
 import { ForbiddenException } from '@nestjs/common';
-import { companyRoleHasPermission } from '@smart/contracts';
-import type { CompanyMemberRole, CompanyPermission } from '@smart/contracts';
+import { companyRoleHasPermission } from '@hirekiwi/contracts';
+import type { CompanyMemberRole, CompanyPermission } from '@hirekiwi/contracts';
 import type { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 export interface CompanyActor {

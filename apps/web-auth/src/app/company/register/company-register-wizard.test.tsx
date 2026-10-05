@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { COMPANY_SIZE_BANDS, COMPANY_WORK_EMAIL_REQUIRED_MESSAGE } from '@smart/contracts';
-import { SmartApiError } from '@smart/api-client';
+import { COMPANY_SIZE_BANDS, COMPANY_WORK_EMAIL_REQUIRED_MESSAGE } from '@hirekiwi/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
 
 const getSession = vi.fn();
 const updateDraft = vi.fn();

@@ -1,10 +1,10 @@
 /**
- * @smart/api-client — the only way a SMART frontend talks to the API.
+ * @hirekiwi/api-client — the only way a SMART frontend talks to the API.
  *
  * Raw `fetch` is blocked by ESLint in the web apps, because four things must
  * happen on every request and none of them survive being left to memory:
  *
- *   1. the response is validated against `@smart/contracts`, so a shape change
+ *   1. the response is validated against `@hirekiwi/contracts`, so a shape change
  *      fails at the boundary with the route name attached;
  *   2. the correlation id travels, so a candidate's bug report is traceable;
  *   3. a 401 triggers exactly one refresh, shared across concurrent requests;

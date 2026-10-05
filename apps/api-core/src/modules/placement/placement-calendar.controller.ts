@@ -18,7 +18,7 @@ import {
   PlacementReportExportParamsSchema,
   VouchOfferLetterResponseSchema,
   VouchOfferLetterSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type {
   CreatePlacementCalendarEventDto,
   PlacementCalendarEventDto,
@@ -26,7 +26,7 @@ import type {
   PlacementReportExportParamsDto,
   VouchOfferLetterDto,
   VouchOfferLetterResponseDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { FastifyReply } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js';

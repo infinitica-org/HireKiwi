@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { CreditCard, FileText, RefreshCw, AlertCircle, Layers } from 'lucide-react';
-import type { SubscriptionPlanDto } from '@smart/contracts';
+import type { SubscriptionPlanDto } from '@hirekiwi/contracts';
 import { Badge, PageHeader } from '../../../components/ui';
 import type { Invoice } from '../../../lib/types';
 import { api, formatApiError } from '../../../lib/api';

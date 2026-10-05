@@ -12,8 +12,8 @@ import {
   reconcileAccessTokenFromCookie,
   SESSION_LOGOUT_CHANNEL,
   type PortalOrigins,
-} from '@smart/api-client';
-import type { UserRole } from '@smart/contracts';
+} from '@hirekiwi/api-client';
+import type { UserRole } from '@hirekiwi/contracts';
 import { ForbiddenWall } from './components/status-walls';
 import { BrandLoadingScreen } from './components/brand-loading-screen';
 

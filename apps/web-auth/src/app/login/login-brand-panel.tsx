@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import loginImg from '@smart/ui/assets/images/Logos/WebP/login-img.png';
+import loginImg from '@hirekiwi/ui/assets/images/Logos/WebP/login-img.png';
 
 export function LoginBrandPanel() {
   return (

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   Alert,
   Button,
@@ -13,8 +13,8 @@ import {
   LevelStepper,
   TierBadge,
   TierTrail,
-} from '@smart/ui';
-import { LEVEL_DEFINITIONS } from '@smart/contracts';
+} from '@hirekiwi/ui';
+import { LEVEL_DEFINITIONS } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import { isValidUuid, verifyCertificateSignature } from '@/lib/cert-signature';
 import { PrintButton } from './print-button';

@@ -14,7 +14,7 @@ import {
   type ListSavedCandidatesResponse,
   type SavedCandidateDto,
   type MatchFeedbackResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   SmartApiClient,
   clearAccessToken,
@@ -22,7 +22,7 @@ import {
   createSmartApi,
   getAccessToken,
   isSmartApiError,
-} from '@smart/api-client';
+} from '@hirekiwi/api-client';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 

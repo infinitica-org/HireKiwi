@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { registry } from '@smart/observability';
+import { registry } from '@hirekiwi/observability';
 import { IntegrationHealthService } from './integration-health.service.js';
 
 const aiAdapter = (reachable: boolean, message?: string) => ({

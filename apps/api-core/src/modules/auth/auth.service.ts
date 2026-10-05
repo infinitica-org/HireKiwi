@@ -30,7 +30,7 @@ import {
   type RegisterRequest,
   type RegisterStudentRequest,
   type SelectableInstitutionDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { env } from '../../platform/config/env.js';

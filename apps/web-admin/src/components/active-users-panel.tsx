@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Radio, Users } from 'lucide-react';
-import type { ActiveUserGroup, ListActiveUsersResponse } from '@smart/contracts';
+import type { ActiveUserGroup, ListActiveUsersResponse } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 
 const PAGE_SIZE = 5;

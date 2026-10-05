@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { TierBadge, useQuery } from '@smart/ui';
-import { PROFICIENCY_LEVEL_ORDER, type PublicCandidateProfileDto } from '@smart/contracts';
+import { TierBadge, useQuery } from '@hirekiwi/ui';
+import { PROFICIENCY_LEVEL_ORDER, type PublicCandidateProfileDto } from '@hirekiwi/contracts';
 import {
   Award,
   Briefcase,
@@ -212,10 +212,10 @@ export function PublicProfilePreview({ embedded = false }: { embedded?: boolean 
         .filter(Boolean)
         .join(' · ')
     : '';
-  const headline = trackLabel ? `${trackLabel} candidate` : 'SMART candidate';
+  const headline = trackLabel ? `${trackLabel} candidate` : 'HireKiwi candidate';
 
   const q = query.trim();
-  const hidden = (section: string) => profile?.hiddenSections.includes(section) ?? false;
+  const hidden = (section: string) => profile?.hiddenSections?.includes(section) ?? false;
 
   const filtered = useMemo(() => {
     if (!profile) return null;

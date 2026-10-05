@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ConfidenceNote } from '@smart/ui';
-import type { ConfidenceNoteDto } from '@smart/contracts';
+import { ConfidenceNote } from '@hirekiwi/ui';
+import type { ConfidenceNoteDto } from '@hirekiwi/contracts';
 
 const mockNote: ConfidenceNoteDto = {
   trackCode: 'MBA_FINANCE',

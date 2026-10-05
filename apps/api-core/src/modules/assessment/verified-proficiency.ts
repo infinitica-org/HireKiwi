@@ -1,6 +1,6 @@
-import type { ProficiencyRequirementLevel, SkillProficiency } from '@smart/contracts';
+import type { ProficiencyRequirementLevel, SkillProficiency } from '@hirekiwi/contracts';
 
-import { proficiencyMeetsTarget } from '@smart/scoring-engine';
+import { proficiencyMeetsTarget } from '@hirekiwi/scoring-engine';
 
 export function hasDemonstratedProficiency(
   demonstrated: ProficiencyRequirementLevel | null,

@@ -6,7 +6,7 @@
  * This script uploads every data-URI proof to storage under the per-entry evidence prefix and
  * rewrites `fileUrl` to the object key, so downloads go through 15-minute presigned URLs.
  *
- *   Dry run (default — no writes):  pnpm --filter @smart/api-core exec tsx scripts/migrate-evidence-to-storage.ts
+ *   Dry run (default — no writes):  pnpm --filter @hirekiwi/api-core exec tsx scripts/migrate-evidence-to-storage.ts
  *   Apply:                          ... scripts/migrate-evidence-to-storage.ts --apply
  *
  * Rows it cannot migrate are reported, never deleted:
@@ -15,7 +15,7 @@
  */
 import 'reflect-metadata';
 import '../src/platform/config/load-dotenv.bootstrap.js';
-import { EVIDENCE_FILE_MAX_BYTES } from '@smart/contracts';
+import { EVIDENCE_FILE_MAX_BYTES } from '@hirekiwi/contracts';
 import { PrismaService } from '../src/platform/prisma/prisma.service.js';
 import { StorageService } from '../src/platform/storage/storage.service.js';
 import { detectEvidenceMimeType } from '../src/platform/storage/evidence-file.js';

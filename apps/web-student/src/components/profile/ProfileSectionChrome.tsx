@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { EvidenceType } from '@smart/contracts';
+import type { EvidenceType } from '@hirekiwi/contracts';
 import { EvidenceUsageNote } from './EvidenceUsageNote';
 
 export function ProfileSectionHeader({

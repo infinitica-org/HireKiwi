@@ -1,4 +1,4 @@
-import type { RecordActorDto } from '@smart/contracts';
+import type { RecordActorDto } from '@hirekiwi/contracts';
 
 /**
  * S6-VV-105 (#168) — "Created by … · Last modified by …" for tenant detail headers.

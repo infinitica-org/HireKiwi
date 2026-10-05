@@ -7,7 +7,7 @@ import { INJECTION_GUARD, NO_INFLATION, jsonOnly, untrusted } from '../shared.js
  * Schema document's Short Answer (0-3), Long Answer (0-6) and coding
  * design-quality (0-3, 30% of a coding item) question types, plus the
  * Professional debug/incident-scenario gate (dormant — see
- * `@smart/scoring-engine`'s `mark-weighted-scoring.ts` docstring for why).
+ * `@hirekiwi/scoring-engine`'s `mark-weighted-scoring.ts` docstring for why).
  *
  * Unlike `bars-l3`/`defense-*`, SkillClaim verification has no calibrated
  * behavioural anchors or certification tier to protect (see the

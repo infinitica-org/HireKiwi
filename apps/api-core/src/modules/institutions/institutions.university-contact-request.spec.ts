@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import { RequestUniversityContactRequestSchema } from '@smart/contracts';
+import { RequestUniversityContactRequestSchema } from '@hirekiwi/contracts';
 import { InstitutionsStudentController } from './institutions-student.controller.js';
 import { InstitutionsService } from './institutions.service.js';
 

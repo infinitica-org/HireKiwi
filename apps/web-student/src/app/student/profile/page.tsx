@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useQuery } from '@smart/ui';
+import { useQuery } from '@hirekiwi/ui';
 
 import { CertificatesSection } from '@/components/profile/CertificatesSection';
 import { CredentialsSection } from '@/components/profile/CredentialsSection';

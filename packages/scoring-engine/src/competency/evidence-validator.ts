@@ -1,4 +1,4 @@
-import type { EvidenceValidationMetrics } from '@smart/contracts';
+import type { EvidenceValidationMetrics } from '@hirekiwi/contracts';
 
 export interface EvidenceValidationInput {
   evidenceId: string;

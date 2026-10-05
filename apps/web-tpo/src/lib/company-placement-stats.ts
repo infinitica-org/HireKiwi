@@ -1,4 +1,4 @@
-import type { PlacementRecordDto } from '@smart/contracts';
+import type { PlacementRecordDto } from '@hirekiwi/contracts';
 
 export type YearlyPlacementStat = {
   year: string;

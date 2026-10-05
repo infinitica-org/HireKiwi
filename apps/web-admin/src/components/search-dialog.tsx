@@ -11,7 +11,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@smart/ui/command';
+} from '@hirekiwi/ui/command';
 import { navGroups } from './admin-sidebar';
 
 function useIsMac(): boolean {

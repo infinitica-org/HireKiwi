@@ -1,12 +1,12 @@
 ---
-title: "SmartKiwi R&D Workstream Blueprint"
-description: "Research, architecture decisions, experiments, and readiness criteria for the SmartKiwi Intelligent Talent Discovery Platform."
+title: "HireKiwi R&D Workstream Blueprint"
+description: "Research, architecture decisions, experiments, and readiness criteria for the HireKiwi Intelligent Talent Discovery Platform."
 ---
 
-# SmartKiwi R&D Workstream Blueprint
+# HireKiwi R&D Workstream Blueprint
 ## Research, Architecture Decisions, Experiments, and Readiness Criteria
 
-**Purpose:** A foundational working document for the SmartKiwi R&D team to investigate, decide, prototype, and validate intelligence capabilities before full-scale implementation.
+**Purpose:** A foundational working document for the HireKiwi R&D team to investigate, decide, prototype, and validate intelligence capabilities before full-scale implementation.
 
 > **Document Status:** Authoritative Working Blueprint  
 > **Release Target:** October 2026 (Sprints 7 & 8)  
@@ -20,7 +20,7 @@ description: "Research, architecture decisions, experiments, and readiness crite
 
 Establish a reliable, defensible chain from raw active and passive evidence to capability understanding, and from capability understanding to explainable candidate–role matching.
 
-The objective is **not** to build an unwieldy skills database, a black-box deep learning model, or an arbitrary composite score for its own sake. The objective is to determine whether SmartKiwi can produce **defensible, useful, and reproducible explanations** of why available evidence supports a candidate’s fit for a particular role.
+The objective is **not** to build an unwieldy skills database, a black-box deep learning model, or an arbitrary composite score for its own sake. The objective is to determine whether HireKiwi can produce **defensible, useful, and reproducible explanations** of why available evidence supports a candidate’s fit for a particular role.
 
 ### Core Intelligence Pipeline
 
@@ -48,7 +48,7 @@ flowchart LR
 
 ## 2. Workstream 1 — Product Intelligence Definition
 
-**Goal:** Define exactly what SmartKiwi’s intelligence must understand and produce.
+**Goal:** Define exactly what HireKiwi’s intelligence must understand and produce.
 
 ### Research and Decision Areas
 - **Intelligence Objective:** Skill discovery, capability verification, proficiency estimation (1–5 scale), role fit, and inspectable candidate ranking.
@@ -155,7 +155,7 @@ flowchart LR
 
 - Supervised NLP/transformer token classification for skill extraction.
 - Deterministic formulas for score aggregation and cutoffs.
-- Claude + Gemini failover circuit breaker via AI Gateway (`@smart/ai-gateway`).
+- Claude + Gemini failover circuit breaker via AI Gateway (`@hirekiwi/ai-gateway`).
 
 ---
 
@@ -173,7 +173,7 @@ flowchart LR
 
 **Goal:** Modular, robust service boundaries across the monorepo.
 
-- Monorepo packages: `@smart/contracts`, `@smart/scoring-engine`, `@smart/prompts`, `@smart/ui`, `@smart/api-client`.
+- Monorepo packages: `@hirekiwi/contracts`, `@hirekiwi/scoring-engine`, `@hirekiwi/prompts`, `@hirekiwi/ui`, `@hirekiwi/api-client`.
 - Backend services: Fastify + NestJS in `apps/api-core`.
 - Asynchronous orchestration: BullMQ delayed queues and Kafka event bus (`smart.*`).
 - Single High-End VPS with Blue-Green Caddy proxy and PgBouncer connection pooling.

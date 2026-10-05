@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSkillLibraryResponse } from '@smart/contracts';
+import { buildSkillLibraryResponse } from '@hirekiwi/contracts';
 
 import { flattenSkillLibrary, stackLabelFromSkillCodes } from './project-form-skills';
 

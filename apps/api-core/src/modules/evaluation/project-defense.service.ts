@@ -38,14 +38,14 @@ import {
   type ProjectDefenseSessionDto,
   type PrepareProjectDefenseResponse,
   type StartProjectDefenseResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   ProjectDefenseGradeOutputV2Schema,
   projectDefenseExaminerTemplate,
   projectDefenseGraderV2Template,
-} from '@smart/prompts';
+} from '@hirekiwi/prompts';
 import { ProjectDefenseRecordService } from './project-defense-record.service.js';
-import { computeDefenseScore } from '@smart/scoring-engine';
+import { computeDefenseScore } from '@hirekiwi/scoring-engine';
 import { Effect } from 'effect';
 import { z } from 'zod';
 import { AiGatewayService } from '../ai-gateway/ai-gateway.service.js';

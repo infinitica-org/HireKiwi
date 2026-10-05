@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
-import { AiCompletionRecordedDataSchema, SMART_TOPICS, type AiProvider } from '@smart/contracts';
+import { AiCompletionRecordedDataSchema, SMART_TOPICS, type AiProvider } from '@hirekiwi/contracts';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 
 export interface ModelPricing {

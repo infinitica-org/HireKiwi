@@ -12,8 +12,8 @@ import type {
   InvitationPreviewDto,
   InvitationStatus,
   UserRole,
-} from '@smart/contracts';
-import { SMART_TOPICS } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import { SMART_TOPICS } from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
@@ -149,7 +149,7 @@ export class InvitationsService {
       });
     }
 
-    let institutionName = params.tenantName ?? 'SMART Platform';
+    let institutionName = params.tenantName ?? 'HireKiwi Platform';
     if (params.institutionId) {
       const institution = await this.prisma.institution.findUnique({
         where: { id: params.institutionId },
@@ -248,7 +248,7 @@ export class InvitationsService {
 
     await this.enqueueEmail(
       updated,
-      invitation.institution?.name ?? 'SMART Platform',
+      invitation.institution?.name ?? 'HireKiwi Platform',
       raw,
       inviteTemplateForRole(invitation.role as UserRole),
     );
@@ -361,7 +361,7 @@ export class InvitationsService {
       });
       await this.enqueueEmail(
         updated,
-        invitation.institution?.name ?? 'SMART Platform',
+        invitation.institution?.name ?? 'HireKiwi Platform',
         raw,
         'student-invite',
       );
@@ -426,7 +426,7 @@ export class InvitationsService {
     if (invitation.role === 'COMPANY') {
       return invitation.user?.company?.name ?? 'Your company';
     }
-    return invitation.institution?.name ?? 'SMART Platform';
+    return invitation.institution?.name ?? 'HireKiwi Platform';
   }
 
   private async assertCompanyInvitationEligible(userId: string): Promise<void> {

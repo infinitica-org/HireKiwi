@@ -1,5 +1,5 @@
 {
-  "extends": "@smart/tsconfig/library.json",
+  "extends": "@hirekiwi/tsconfig/library.json",
   "compilerOptions": {
     "outDir": ".",
     "rootDir": "."

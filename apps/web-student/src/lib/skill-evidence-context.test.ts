@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { EvidenceRecordDto } from '@smart/contracts';
+import type { EvidenceRecordDto } from '@hirekiwi/contracts';
 import {
   buildLinkedSkillEvidenceContext,
   resolveSkillEvidenceContext,

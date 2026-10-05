@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
-import type { MatchRunDto, MatchRequest } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { MatchRunDto, MatchRequest } from '@hirekiwi/contracts';
 import { matchingApi } from './api';
 
 const POLL_INTERVAL_MS = 2000;
@@ -11,7 +11,7 @@ function isTerminal(status: MatchRunDto['status']): boolean {
 
 /**
  * Triggers an async, batch-scoped match run (S6-VV-76) and polls its status every
- * `POLL_INTERVAL_MS` until it reaches a terminal state. No `@smart/ui` `useQuery` here since
+ * `POLL_INTERVAL_MS` until it reaches a terminal state. No `@hirekiwi/ui` `useQuery` here since
  * web-tpo doesn't wrap its app in a `SmartApiProvider`/`QueryClientProvider` today.
  */
 export function useMatchRun(pollIntervalMs: number = POLL_INTERVAL_MS) {

@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@smart/api-client';
-import { SEND_TO_COMPANY_STAGE } from '@smart/contracts';
-import type { ApplicationConfidenceDto, ApplicationDto } from '@smart/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
+import { SEND_TO_COMPANY_STAGE } from '@hirekiwi/contracts';
+import type { ApplicationConfidenceDto, ApplicationDto } from '@hirekiwi/contracts';
 import { applicationsApi, openingsApi } from '../lib/api';
 import { ConfidenceReviewWorkspace } from './confidence-review-workspace';
 

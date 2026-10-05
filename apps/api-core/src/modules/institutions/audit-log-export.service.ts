@@ -1,5 +1,5 @@
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import type { ListAuditLogsQuery } from '@smart/contracts';
+import type { ListAuditLogsQuery } from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { auditExportHeader, auditExportLine, type AuditExportFormat } from './audit-log-export.js';

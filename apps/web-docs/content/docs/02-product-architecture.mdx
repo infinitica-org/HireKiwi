@@ -5,7 +5,7 @@ description: Domain boundaries, multi-tenancy models, mid-flight session persist
 
 ## 2.1 Enterprise Product Architecture Overview
 
-SmartKiwi is architected as an event-driven modular monolith with strict domain boundaries, separating data ingestion, verification pipelines, capability inference, and demand-side matching. The system balances ultra-low read latencies with asynchronous, fault-tolerant background execution.
+HireKiwi is architected as an event-driven modular monolith with strict domain boundaries, separating data ingestion, verification pipelines, capability inference, and demand-side matching. The system balances ultra-low read latencies with asynchronous, fault-tolerant background execution.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -38,7 +38,7 @@ SmartKiwi is architected as an event-driven modular monolith with strict domain 
 
 ## 2.2 Organizations & Multi-Tenancy Architecture
 
-SmartKiwi implements a **Row-Level Multi-Tenant Isolation Model** within a unified PostgreSQL database, reinforced by application middleware and database Row Level Security (RLS).
+HireKiwi implements a **Row-Level Multi-Tenant Isolation Model** within a unified PostgreSQL database, reinforced by application middleware and database Row Level Security (RLS).
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -122,7 +122,7 @@ A critical requirement of an enterprise assessment platform is handling **mid-fl
 
 ## 2.4 Scalability Architecture & Sizing
 
-SmartKiwi is engineered to run high-density workloads efficiently on a **Single High-End Linux VPS** (16 vCPUs, 64GB ECC RAM, NVMe storage) with a verified 12-factor migration bridge to AWS.
+HireKiwi is engineered to run high-density workloads efficiently on a **Single High-End Linux VPS** (16 vCPUs, 64GB ECC RAM, NVMe storage) with a verified 12-factor migration bridge to AWS.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -143,7 +143,7 @@ SmartKiwi is engineered to run high-density workloads efficiently on a **Single 
 ### PgBouncer Connection Pooling:
 
 - Node.js / NestJS applications create multiple connection pools. Without connection pooling, 5,000 concurrent candidate sessions can exhaust PostgreSQL's `max_connections` (causing fatal `FATAL: remaining connection slots are reserved for non-replication superuser connections`).
-- SmartKiwi deploys **PgBouncer** in `transaction` pooling mode:
+- HireKiwi deploys **PgBouncer** in `transaction` pooling mode:
   - Application services connect to PgBouncer on port `6432`.
   - PgBouncer handles up to **2,000 concurrent client connections** while holding only **20 persistent connections** to PostgreSQL.
   - Server connection overhead drops from ~10MB per client process to virtually zero, maintaining PostgreSQL memory efficiency.

@@ -3,9 +3,16 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Users } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import type { CompanyMember, CompanyMemberRole } from '@smart/contracts';
-import { Alert, ConfirmDialog, EmptyState, ErrorState, FormMessage, LoadingState } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { CompanyMember, CompanyMemberRole } from '@hirekiwi/contracts';
+import {
+  Alert,
+  ConfirmDialog,
+  EmptyState,
+  ErrorState,
+  FormMessage,
+  LoadingState,
+} from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { createKeyTracker, fieldErrorsFromError } from '@/lib/company-profile-form';
 import { useCompanyAccount } from '@/lib/use-company-account';

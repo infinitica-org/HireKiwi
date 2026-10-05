@@ -66,7 +66,7 @@ describe('ReviewCompanyDialog (Th6-355)', () => {
   });
 
   it('shows the server message and reuses the Idempotency-Key on retry', async () => {
-    const { SmartApiError } = await import('@smart/api-client');
+    const { SmartApiError } = await import('@hirekiwi/api-client');
     createReview.mockRejectedValueOnce(
       new SmartApiError({
         error: 'review_exists',

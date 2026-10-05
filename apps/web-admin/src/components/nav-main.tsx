@@ -9,7 +9,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@smart/ui/sidebar';
+} from '@hirekiwi/ui/sidebar';
 import type { NavGroup, NavItem } from '@/navigation/sidebar-items';
 
 function isActive(pathname: string, item: NavItem): boolean {

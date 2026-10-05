@@ -2,9 +2,9 @@
 
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@smart/api-client';
-import type { EmployerCampusAccessRow } from '@smart/contracts';
-import { Alert, EmptyState, ErrorState, LoadingState } from '@smart/ui';
+import { queryKeys } from '@hirekiwi/api-client';
+import type { EmployerCampusAccessRow } from '@hirekiwi/contracts';
+import { Alert, EmptyState, ErrorState, LoadingState } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { createKeyTracker } from '@/lib/company-profile-form';
 import { Badge, Modal, PageHeader } from '../../../components/ui';

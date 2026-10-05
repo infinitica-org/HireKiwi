@@ -1,10 +1,10 @@
 'use client';
 
-import type { SkillRetakePolicyDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { SkillRetakePolicyDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button } from '@smart/ui/button';
+import { Button } from '@hirekiwi/ui/button';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

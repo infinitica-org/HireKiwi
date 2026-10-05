@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ArrowLeft, ArrowRight, Loader2, LogOut } from 'lucide-react';
 import { motion } from 'motion/react';
 import { signOut } from '@/lib/auth';
-import smartLogo from '@smart/ui/assets/images/Logos/WebP/smart-logo-text.jpg';
+import smartLogo from '@hirekiwi/ui/assets/images/Logos/WebP/smart-logo-text.jpg';
 
 /** Light-themed primitives for the candidate onboarding wizard. */
 

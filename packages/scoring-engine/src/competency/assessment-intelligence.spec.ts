@@ -3,7 +3,7 @@ import { Effect } from 'effect';
 import {
   buildCategoryCompetencyModel,
   buildDefaultProficiencyRequirements,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   competencyIdsBlockingProficiency,
   evaluateAssessmentIntelligence,

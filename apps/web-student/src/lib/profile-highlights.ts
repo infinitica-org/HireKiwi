@@ -3,7 +3,7 @@ import type {
   CandidateOnboardingDraft,
   CandidateOnboardingProfile,
   WorkExperienceDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export interface ProfileHighlightExperience {
   primary: string;

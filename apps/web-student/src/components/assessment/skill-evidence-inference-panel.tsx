@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { GetSkillEvidenceInferenceResponse } from '@smart/contracts';
+import type { GetSkillEvidenceInferenceResponse } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 
 const LEVEL_LABELS: Record<string, string> = {

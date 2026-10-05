@@ -17,8 +17,8 @@ import {
   UserRound,
   type LucideIcon,
 } from 'lucide-react';
-import { queryKeys } from '@smart/api-client';
-import type { NotificationDto, NotificationKind } from '@smart/contracts';
+import { queryKeys } from '@hirekiwi/api-client';
+import type { NotificationDto, NotificationKind } from '@hirekiwi/contracts';
 import { useQuery, useQueryClient, useSmartApi } from '../api-provider';
 import { cn } from '../lib/cn';
 

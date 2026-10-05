@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { isSmartApiError, queryKeys } from '@smart/api-client';
-import { useQueryClient } from '@smart/ui';
+import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { useQueryClient } from '@hirekiwi/ui';
 import { Link2, Loader2, ArrowRight, Plus } from 'lucide-react';
 import {
   applyServerDraft,
@@ -22,7 +22,7 @@ import {
 import { profileSectionMeta } from '@/lib/profile-sections';
 import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
 import { useOnboarding } from '@/lib/use-onboarding';
-import type { FetchGithubProfileResponse } from '@smart/contracts';
+import type { FetchGithubProfileResponse } from '@hirekiwi/contracts';
 import { AnimatePresence, motion } from 'motion/react';
 
 // Brand SVG Icons

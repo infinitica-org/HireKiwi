@@ -1,9 +1,9 @@
 ---
-title: 'SMART Platform Playbook'
+title: 'HireKiwi Platform Playbook'
 description: 'Master Framework & Playbook'
 ---
 
-# SMART Platform Playbook
+# HireKiwi Platform Playbook
 
 ### Intellectual Talent Network & Talent Verification Architecture, Standards & Build Reference
 
@@ -210,7 +210,7 @@ flowchart TD
 
 **Standard — Interview trigger:** the interview component activates only for Advanced and Expert claims. These carry the highest hiring stakes and the highest incentive to misrepresent; lower-tier claims are adequately gated by the proctored test alone.
 
-**Standard — Retry policy (locked 1 Sep 2026):** one initial attempt and **one reattempt** (`SKILL_MAX_ATTEMPTS = 2` in `@smart/contracts`). 48 hours between those two attempts, refreshed items on the retry. After the reattempt fails the skill is `LOCKED`. The candidate may refresh / re-declare after **35 days** (`SKILL_REFRESH_DAYS`). Technical failures do not consume an attempt. Do not implement a third try or a 90-day rolling window.
+**Standard — Retry policy (locked 1 Sep 2026):** one initial attempt and **one reattempt** (`SKILL_MAX_ATTEMPTS = 2` in `@hirekiwi/contracts`). 48 hours between those two attempts, refreshed items on the retry. After the reattempt fails the skill is `LOCKED`. The candidate may refresh / re-declare after **35 days** (`SKILL_REFRESH_DAYS`). Technical failures do not consume an attempt. Do not implement a third try or a 90-day rolling window.
 
 ### 5.7 Trust & Tier Computation
 

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { assertFileClean } = vi.hoisted(() => ({ assertFileClean: vi.fn() }));
 vi.mock('./file-scanner.js', () => ({ assertFileClean }));
 
-import { EVIDENCE_FILE_MAX_BYTES } from '@smart/contracts';
+import { EVIDENCE_FILE_MAX_BYTES } from '@hirekiwi/contracts';
 import {
   assertEvidenceFile,
   detectEvidenceMimeType,

@@ -1,4 +1,4 @@
-import type { CandidateCertificateDto, CandidateCertificateStatus } from '@smart/contracts';
+import type { CandidateCertificateDto, CandidateCertificateStatus } from '@hirekiwi/contracts';
 
 export { CERTIFICATE_CARD_ACCENTS } from '@/lib/student-bento-accents';
 

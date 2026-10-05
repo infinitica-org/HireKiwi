@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
 
-import smartTextImg from '@smart/ui/assets/images/Logos/WebP/samrt-text.png';
+import smartTextImg from '@hirekiwi/ui/assets/images/Logos/WebP/samrt-text.png';
 import { authLoginUrl } from '@/lib/portal-urls';
 import { getClientSession, type SessionInfo } from '@/lib/session';
 

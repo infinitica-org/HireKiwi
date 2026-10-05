@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { API_PREFIX, ConversionMetricsQuerySchema } from '@smart/contracts';
+import { API_PREFIX, ConversionMetricsQuerySchema } from '@hirekiwi/contracts';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import { PipelineMetricsService } from './pipeline-metrics.service.js';
 

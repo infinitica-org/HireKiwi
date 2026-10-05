@@ -66,7 +66,7 @@ If OpenAI/OpenRouter embedding services experience latency or downtime, the matc
 Per the 03 October 2026 architecture review, student-to-job matching addresses two critical operational dynamics:
 
 ### 1. Batch Score Normalization Across Cohorts
-When running matching across varied evaluation cohorts (different colleges, time windows, or assessment forms), raw match scores can drift due to slight variance in assessment difficulty or cohort size. SmartKiwi implements a **z-score batch normalization layer**:
+When running matching across varied evaluation cohorts (different colleges, time windows, or assessment forms), raw match scores can drift due to slight variance in assessment difficulty or cohort size. HireKiwi implements a **z-score batch normalization layer**:
 - Computes mean ($\mu_B$) and standard deviation ($\sigma_B$) of raw requirement match scores within each processing batch.
 - Normalizes scores across batches to maintain a consistent percentile scale ($0$ to $100$).
 - Guarantees that a 85% match score represents identical relative readiness across any recruiting drive or cohort.
@@ -78,7 +78,7 @@ In real campus placement and talent discovery environments:
 - Students prepare for assessments to actively bridge identified requirement gaps.
 
 **Delta Re-indexing Pipeline:**
-Instead of expensive, high-latency re-runs of the entire student database, SmartKiwi listens to Kafka domain events:
+Instead of expensive, high-latency re-runs of the entire student database, HireKiwi listens to Kafka domain events:
 - `smart.eval.completed` (Assessment finished or tier upgraded)
 - `smart.user.updated` (Profile, resume, or verification state changed)
 
@@ -88,7 +88,7 @@ An asynchronous BullMQ worker intercepts the event, retrieves active job opening
 
 ## 9.5 Transparent Match Explanation
 
-Black-box match scores undermine recruiter trust. Every SmartKiwi recommendation includes an inspectable, evidence-grounded **Match Breakdown Card**:
+Black-box match scores undermine recruiter trust. Every HireKiwi recommendation includes an inspectable, evidence-grounded **Match Breakdown Card**:
 
 ```
 Match Score: 89% (High Fit — Batch Normalized)

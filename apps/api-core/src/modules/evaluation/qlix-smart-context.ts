@@ -1,4 +1,4 @@
-import { getSkillBlueprint, getSkillDefinition, type ProficiencyLevel } from '@smart/contracts';
+import { getSkillBlueprint, getSkillDefinition, type ProficiencyLevel } from '@hirekiwi/contracts';
 
 export type QlixSmartContextInput = {
   projectId: string;

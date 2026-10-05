@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { InstitutionStudentDto, SkillClaimDto } from '@smart/contracts';
+import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import { computeDashboardMetrics, greetingForHour } from './tpo-dashboard-metrics';
 
 const student = (overrides: Partial<InstitutionStudentDto>): InstitutionStudentDto => ({

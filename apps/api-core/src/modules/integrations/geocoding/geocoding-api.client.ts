@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { REDIS_TTL_SECONDS } from '@smart/contracts';
+import { REDIS_TTL_SECONDS } from '@hirekiwi/contracts';
 import { z } from 'zod';
 import { RedisService } from '../../../platform/redis/redis.service.js';
 

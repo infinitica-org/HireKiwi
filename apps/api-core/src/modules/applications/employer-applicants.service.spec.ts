@@ -2,7 +2,7 @@ import {
   APPLICANT_SORT_KEYS,
   ListEmployerApplicantsQuerySchema,
   SKILL_DEFINITIONS,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IDS } from '../company-profile/test-utils.js';
 import {

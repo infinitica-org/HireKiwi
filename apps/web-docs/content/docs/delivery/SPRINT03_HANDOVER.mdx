@@ -16,7 +16,7 @@ description: 'Delivery & Engineering Protocols - SPRINT03_HANDOVER'
 Frozen product: [`docs/product/prd-v1/`](../product/prd-v1/README.md)  
 Who does what: [`PRD_V1_ARCHITECT_REVIEW.md`](./PRD_V1_ARCHITECT_REVIEW.md)  
 Matching: [ADR 0012](../adr/0012-mmp-placement-matching.md)  
-Contracts **v0.2.0** (`@smart/contracts`) already has `JobOpening`, `Application`, `AtsStage`, `SkillClaim`, rules match explanation, `smart.application.stage_changed`. Implement against those. Do not invent parallel DTOs.
+Contracts **v0.2.0** (`@hirekiwi/contracts`) already has `JobOpening`, `Application`, `AtsStage`, `SkillClaim`, rules match explanation, `smart.application.stage_changed`. Implement against those. Do not invent parallel DTOs.
 
 ---
 
@@ -46,7 +46,7 @@ Product Owner xlsx: `CO-T04` dashboard → **SV**. `CO-T05` stage sync + `INF-02
 ## Do
 
 - One ticket, one branch from `dev`: `&lt;type&gt;/S3-&lt;initials&gt;-&lt;nn&gt;-&lt;slug&gt;`
-- Import types from `@smart/contracts` only
+- Import types from `@hirekiwi/contracts` only
 - Declare RBAC + rate-limit using the route already in `ROUTES`
 - Tests for the promise you ship
 - PR to `dev` with labels: priority + area + `sprint-3`

@@ -15,7 +15,7 @@ import {
   ExternalLink,
   Plus,
 } from 'lucide-react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProfileProgress } from '@/lib/use-profile-progress';
 import { skillNameForCode } from '@/lib/skill-declarations';

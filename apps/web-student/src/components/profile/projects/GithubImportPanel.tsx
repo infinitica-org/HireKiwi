@@ -1,6 +1,6 @@
 'use client';
 
-import type { GithubRepoSummary } from '@smart/contracts';
+import type { GithubRepoSummary } from '@hirekiwi/contracts';
 import { GitBranch, Loader2 } from 'lucide-react';
 import { formatRepoUpdatedAt } from '@/components/profile/projects/project-presenters';
 import {

@@ -1,4 +1,4 @@
-import { PROJECT_DEFENSE_MIN_CANDIDATE_TURNS } from '@smart/contracts';
+import { PROJECT_DEFENSE_MIN_CANDIDATE_TURNS } from '@hirekiwi/contracts';
 
 /** True only when the candidate denies building the project — not casual "I didn't make X feature". */
 export function candidateDeniedProjectOwnership(text: string): boolean {

@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { WorkExperienceOpsDashboardItemDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { WorkExperienceOpsDashboardItemDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { AlertCircle, Briefcase, Clock, RefreshCw } from 'lucide-react';
-import { Badge, Card } from '@smart/ui';
+import { Badge, Card } from '@hirekiwi/ui';
 import { api } from '../lib/api';
 
 function errorMessage(caught: unknown, fallback: string): string {

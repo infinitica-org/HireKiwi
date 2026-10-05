@@ -22,7 +22,7 @@ merged, none of it yet emitting/consuming traces.
 ## Decision
 
 1. **Extend `tools/load-tests/`, don't create a parallel `performance/` tree.**
-   It is already a reserved, committed `@smart/load-tests` workspace package
+   It is already a reserved, committed `@hirekiwi/load-tests` workspace package
    with a root `pnpm load` script wired to it.
 2. **Reuse the exporter/Tempo commits from `feat/observability-stack-expansion`
    via cherry-pick** (`a74d3fe`, `4e43ec5`) rather than re-implementing the same

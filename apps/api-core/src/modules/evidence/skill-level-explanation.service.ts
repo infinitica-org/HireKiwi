@@ -7,8 +7,8 @@ import {
   getSkillBlueprint,
   getSkillDefinition,
   type ProficiencyLevel,
-} from '@smart/contracts';
-import { buildEmployerSkillInspection, buildSkillLevelExplanation } from '@smart/scoring-engine';
+} from '@hirekiwi/contracts';
+import { buildEmployerSkillInspection, buildSkillLevelExplanation } from '@hirekiwi/scoring-engine';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { EvidenceSkillInferenceService } from './evidence-skill-inference.service.js';

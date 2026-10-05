@@ -1,5 +1,5 @@
 import { Webhook } from 'lucide-react';
-import { Card, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 import { PageHeader } from '@/components/page-header';
 import { PageStack } from '@/components/admin-ui';
 

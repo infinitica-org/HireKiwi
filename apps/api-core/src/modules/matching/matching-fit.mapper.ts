@@ -9,7 +9,7 @@ import {
   type SkillRequirement,
   type PublicCompetencyEvidenceSummary,
   type VerifiedSkillSummary,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { SkillCapabilityScore } from './skill-capability-ranker.js';
 
 const skillNameByCode = new Map(SKILL_DEFINITIONS.map((skill) => [skill.code, skill.name]));

@@ -1,5 +1,5 @@
-import { COMPANY_EMPLOYEE_COUNT_LABELS, type CompanyProfile } from '@smart/contracts';
-import { VerifiedBadge } from '@smart/ui';
+import { COMPANY_EMPLOYEE_COUNT_LABELS, type CompanyProfile } from '@hirekiwi/contracts';
+import { VerifiedBadge } from '@hirekiwi/ui';
 
 const SOCIAL_LABELS: Record<string, string> = {
   linkedin: 'LinkedIn',

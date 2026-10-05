@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Mic } from 'lucide-react';
-import type { ProjectDto } from '@smart/contracts';
-import { Alert } from '@smart/ui';
+import type { ProjectDto } from '@hirekiwi/contracts';
+import { Alert } from '@hirekiwi/ui';
 
 import { projectDefenseInterviewHref } from '@/components/profile/ProjectDefenseInterviewDialog';
 import { api } from '@/lib/api';

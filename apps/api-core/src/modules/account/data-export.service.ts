@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import type { DataExportDownload } from '@smart/contracts';
+import type { DataExportDownload } from '@hirekiwi/contracts';
 import {
   TextReader,
   Uint8ArrayReader,

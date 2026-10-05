@@ -16,8 +16,8 @@ import {
   AlertCircle,
   Info,
 } from 'lucide-react';
-import type { WorkExperienceDto } from '@smart/contracts';
-import { cn, useQuery } from '@smart/ui';
+import type { WorkExperienceDto } from '@hirekiwi/contracts';
+import { cn, useQuery } from '@hirekiwi/ui';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '../../lib/api';
 import { MY_APPLICATIONS_POLL_MS } from '../../lib/my-applications';

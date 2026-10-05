@@ -7,7 +7,7 @@ import {
   useQuery,
   useSmartApi,
   type ConversionRange,
-} from '@smart/ui';
+} from '@hirekiwi/ui';
 
 /** Th6-421 — platform-wide conversion. Needs a SmartApiProvider above it (MessagingProvider). */
 export function ConversionPanel() {

@@ -1,9 +1,9 @@
-# SmartKiwi (SMART) — Module Boundaries & Service Topology
+# HireKiwi — Module Boundaries & Service Topology
 
 > **Version:** v4.1 — Sprint 8 Module Surface (Oct 2026)
 > **Maintainer:** System Architect
 > **Ownership:** Architectural content only. For current per-module and per-engineer ownership, see [`TEAM.md`](./TEAM.md).
-> **Purpose:** Authoritative reference for SmartKiwi's backend module boundaries, authentication strategy, synchronous/asynchronous execution SLAs, data contracts, Kafka event topics, and REST API surface. Authoritative living documentation maintained in `@smart/web-docs` (port 3008/3028).
+> **Purpose:** Authoritative reference for HireKiwi's backend module boundaries, authentication strategy, synchronous/asynchronous execution SLAs, data contracts, Kafka event topics, and REST API surface. Authoritative living documentation maintained in `@hirekiwi/web-docs` (port 3008/3028).
 
 ---
 

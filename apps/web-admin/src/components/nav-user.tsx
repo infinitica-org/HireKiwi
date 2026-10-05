@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { EllipsisVertical, LogOut } from 'lucide-react';
-import type { AuthenticatedUser } from '@smart/contracts';
+import type { AuthenticatedUser } from '@hirekiwi/contracts';
 
 import {
   DropdownMenu,
@@ -11,9 +11,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@smart/ui/dropdown-menu';
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@smart/ui/sidebar';
-import { getInitials } from '@smart/ui';
+} from '@hirekiwi/ui/dropdown-menu';
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@hirekiwi/ui/sidebar';
+import { getInitials } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { signOut } from '@/lib/auth';
 

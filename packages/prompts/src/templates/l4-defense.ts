@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BarsGradeSchema } from '@smart/contracts';
+import { BarsGradeSchema } from '@hirekiwi/contracts';
 import type { PromptTemplate } from '../types.js';
 import {
   INJECTION_GUARD,
@@ -126,7 +126,7 @@ export type DefenseGraderVariables = z.infer<typeof DefenseGraderVariables>;
 
 /**
  * Dimension scores, not a single number: the weights differ per track and the
- * weighted total is computed in `@smart/scoring-engine` so the arithmetic is
+ * weighted total is computed in `@hirekiwi/scoring-engine` so the arithmetic is
  * auditable rather than something a model did in its head.
  */
 export const DefenseGradeSchema = BarsGradeSchema.extend({

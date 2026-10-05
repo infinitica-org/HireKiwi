@@ -5,9 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Settings, X, type LucideIcon } from 'lucide-react';
-import { cn, useUnreadMessageCount, SidebarLegalLinks } from '@smart/ui';
+import { cn, useUnreadMessageCount, SidebarLegalLinks } from '@hirekiwi/ui';
 
-import smartLogoImg from '@smart/ui/assets/images/Logos/WebP/Smart-logo.png';
+import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
 import { companyNavItems } from '@/navigation/sidebar-items';
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';

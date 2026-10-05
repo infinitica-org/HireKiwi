@@ -1,5 +1,8 @@
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
-import { CandidateOnboardingDraftSchema, CandidateOnboardingProfileSchema } from '@smart/contracts';
+import {
+  CandidateOnboardingDraftSchema,
+  CandidateOnboardingProfileSchema,
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import {
   PROFILE_SKILL_VERIFICATION_UNLOCK_PERCENT,

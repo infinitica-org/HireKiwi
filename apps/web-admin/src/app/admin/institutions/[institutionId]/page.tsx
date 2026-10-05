@@ -12,12 +12,12 @@ import type {
   PlanCode,
   StudentInviteFilter,
   TenantEntitlementsDto,
-} from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
-import { Badge } from '@smart/ui/badge';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
-import { Switch } from '@smart/ui/switch';
+} from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { Badge } from '@hirekiwi/ui/badge';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
+import { Switch } from '@hirekiwi/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/admin-tabs';
 import { PageHeader } from '@/components/page-header';
 import {

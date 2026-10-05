@@ -6,8 +6,8 @@ import type {
   ObservationBundle,
   ProficiencyLevel,
   SkillCompetency,
-} from '@smart/contracts';
-import { FUSION_RULE_SET_VERSION } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import { FUSION_RULE_SET_VERSION } from '@hirekiwi/contracts';
 import { fuseDomainCapability } from './proficiency-fusion.js';
 import { mergeProjectObservationBundles } from './qlix-project-observations.js';
 

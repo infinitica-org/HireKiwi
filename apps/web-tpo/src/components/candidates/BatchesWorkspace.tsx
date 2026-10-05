@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { BatchDto, CampusDto } from '@smart/contracts';
+import type { BatchDto, CampusDto } from '@hirekiwi/contracts';
 import {
   LayoutGrid,
   Loader2,

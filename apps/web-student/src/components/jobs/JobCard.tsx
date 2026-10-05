@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { Bookmark, BookmarkCheck, EyeOff, Flag, MapPin } from 'lucide-react';
-import type { JobFitBand, StudentJobCard } from '@smart/contracts';
-import { AppliedBadge, VerifiedBadge } from '@smart/ui';
+import type { JobFitBand, StudentJobCard } from '@hirekiwi/contracts';
+import { AppliedBadge, VerifiedBadge } from '@hirekiwi/ui';
 import { EMPLOYMENT_TYPE_LABELS, WORK_MODE_LABELS } from '@/lib/jobs-url-state';
 
 const BAND_LABEL: Record<JobFitBand, string> = {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 
 import { ArrowRight, GraduationCap, Sparkles } from 'lucide-react';
 

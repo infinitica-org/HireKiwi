@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import type { ConnectableSignalSourceId } from '@smart/contracts';
+import type { ConnectableSignalSourceId } from '@hirekiwi/contracts';
 import type { SignalSourceAdapter } from './adapters/signal-source.adapter.js';
 import { GithubSignalAdapter } from './adapters/github-signal.adapter.js';
 import { HackerrankSignalAdapter } from './adapters/hackerrank-signal.adapter.js';

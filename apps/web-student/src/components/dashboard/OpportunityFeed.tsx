@@ -4,8 +4,8 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bookmark, CircleCheck, BadgeCheck } from 'lucide-react';
-import type { StudentDashboardSummary } from '@smart/contracts';
-import { cn, useQuery } from '@smart/ui';
+import type { StudentDashboardSummary } from '@hirekiwi/contracts';
+import { cn, useQuery } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { STUDENT_JOBS_KEY, savedJobsKey } from '@/components/jobs/job-cache';
 

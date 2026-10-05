@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Badge, Button, EmptyState, ErrorState, LoadingState, formatEventRange } from '@smart/ui';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  formatEventRange,
+} from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { EVENTS_KEY, RegistrationButton } from './RegistrationButton';
 

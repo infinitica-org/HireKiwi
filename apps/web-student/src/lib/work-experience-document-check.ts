@@ -1,5 +1,5 @@
-import { isInvalidEmploymentProofAttachmentType } from '@smart/contracts';
-import type { WorkExperienceDocumentDto } from '@smart/contracts';
+import { isInvalidEmploymentProofAttachmentType } from '@hirekiwi/contracts';
+import type { WorkExperienceDocumentDto } from '@hirekiwi/contracts';
 
 export type WorkExperienceDocumentCheckSummary = {
   text: string;

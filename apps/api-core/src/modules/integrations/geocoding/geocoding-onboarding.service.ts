@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
-import type { ReverseGeocodeResponse } from '@smart/contracts';
+import type { ReverseGeocodeResponse } from '@hirekiwi/contracts';
 import { GeocodingApiClient, GeocodingNotFoundError } from './geocoding-api.client.js';
 
 @Injectable()

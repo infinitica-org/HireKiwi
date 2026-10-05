@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { JobOpeningDto, PlacementEmployerSummary } from '@smart/contracts';
-import { PLACEMENT_CITY_OPTIONS } from '@smart/contracts';
+import type { JobOpeningDto, PlacementEmployerSummary } from '@hirekiwi/contracts';
+import { PLACEMENT_CITY_OPTIONS } from '@hirekiwi/contracts';
 import { employersApi, openingsApi } from '../lib/api';
 import { tpoApiErrorMessage } from '../lib/api-errors';
 import { aggregateCampusCompanies, type CampusCompanyRow } from '../lib/company-repository';

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SMART_TOPICS, TrackUpdatedEventSchema } from '@smart/contracts';
+import { SMART_TOPICS, TrackUpdatedEventSchema } from '@hirekiwi/contracts';
 import { env } from '../config/env.js';
 import type { KafkaService } from './kafka.service.js';
 import type { RedisService } from '../redis/redis.service.js';

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
-import { PROJECT_VERIFY_README_MAX_CHARS, REDIS_TTL_SECONDS } from '@smart/contracts';
+import { PROJECT_VERIFY_README_MAX_CHARS, REDIS_TTL_SECONDS } from '@hirekiwi/contracts';
 import { env } from '../../../platform/config/env.js';
 import { RedisService } from '../../../platform/redis/redis.service.js';
 

@@ -1,6 +1,6 @@
 # Kafka topics
 
-Payload schemas live in `@smart/contracts` (`events/topics.ts`, `events/payloads.ts`). Changing a payload = contract PR + every consumer named.
+Payload schemas live in `@hirekiwi/contracts` (`events/topics.ts`, `events/payloads.ts`). Changing a payload = contract PR + every consumer named.
 
 | Topic                                    | Producer-owner | Consumers                                         |
 | ---------------------------------------- | -------------- | ------------------------------------------------- |

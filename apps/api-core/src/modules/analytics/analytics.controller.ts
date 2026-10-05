@@ -1,5 +1,5 @@
 import { Controller, Get, Inject, Query } from '@nestjs/common';
-import { API_PREFIX, TrackCodeSchema } from '@smart/contracts';
+import { API_PREFIX, TrackCodeSchema } from '@hirekiwi/contracts';
 import { AnalyticsService } from './analytics.service.js';
 
 @Controller(`${API_PREFIX}/analytics`)

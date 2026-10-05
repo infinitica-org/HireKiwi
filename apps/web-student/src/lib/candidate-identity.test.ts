@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AuthenticatedUser } from '@smart/contracts';
+import type { AuthenticatedUser } from '@hirekiwi/contracts';
 import { headlineFor } from './candidate-identity';
 
 const baseUser: AuthenticatedUser = {

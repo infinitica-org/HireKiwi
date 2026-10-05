@@ -1,4 +1,4 @@
-import { Card, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 
 export function ComingSoonPanel({ title, description }: { title: string; description: string }) {
   return (

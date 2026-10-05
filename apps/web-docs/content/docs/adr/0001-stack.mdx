@@ -24,11 +24,11 @@ SMART must ship a role-specific certification platform (4 portals + API + AI eva
 | Cache / limits | Redis 7                                                           |
 | Events         | Redpanda (Kafka API)                                              |
 | Objects        | MinIO (local) / R2 (prod)                                         |
-| Shared types   | `@smart/contracts` (Zod)                                          |
-| Scoring math   | `@smart/scoring-engine` (Effect.ts)                               |
+| Shared types   | `@hirekiwi/contracts` (Zod)                                          |
+| Scoring math   | `@hirekiwi/scoring-engine` (Effect.ts)                               |
 
 ## Consequences
 
 - One modular monolith API for V1; extract services later only with an ADR.
-- Portals share `@smart/ui` and `@smart/api-client`.
+- Portals share `@hirekiwi/ui` and `@hirekiwi/api-client`.
 - Orion RAG is out of band — SMART owns its own AI gateway and vectors.

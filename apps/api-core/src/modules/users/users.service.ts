@@ -13,7 +13,7 @@ import type {
   DeleteResumeResponse,
   UploadProfilePhotoResponse,
   UploadResumeResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type {
   AuthenticatedUser,
   CandidateOnboardingProfileResponse,
@@ -21,7 +21,7 @@ import type {
   CompleteCandidateOnboardingRequest,
   EnrollTrackRequest,
   LinkedinVerification,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   CandidateOnboardingDraftSchema,
   CandidateOnboardingProfileSchema,
@@ -34,7 +34,7 @@ import {
   profileHeadlineForUser,
   SaveCandidateOnboardingDraftRequestSchema,
   SMART_TOPICS,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';

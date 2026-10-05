@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import type { TpoNavLink } from '../../lib/tpo-nav';
 import { isNavLinkActive } from '../../lib/tpo-nav';
 

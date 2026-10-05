@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import type { GithubRepoSummary } from '@smart/contracts';
+import type { GithubRepoSummary } from '@hirekiwi/contracts';
 import { AlertCircle, Loader2, Search, Star } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { OnboardingProfileForm } from '@/lib/onboarding-form';

@@ -2,7 +2,7 @@ import type {
   ConnectSignalSourceRequest,
   ConnectableSignalSourceId,
   RawSignalEnvelope,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export interface EncryptedCredentialsRef {
   readonly refId: string;

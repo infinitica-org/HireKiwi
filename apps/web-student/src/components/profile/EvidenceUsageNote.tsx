@@ -1,7 +1,7 @@
 'use client';
 
 import { Info } from 'lucide-react';
-import { EVIDENCE_USAGE, type EvidenceType } from '@smart/contracts';
+import { EVIDENCE_USAGE, type EvidenceType } from '@hirekiwi/contracts';
 
 /** S6-VV-114 (#550): "How this is used" disclosure shown on every evidence add/connect surface. */
 export function EvidenceUsageNote({ type }: { type: EvidenceType }) {

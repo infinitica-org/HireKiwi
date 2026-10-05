@@ -78,15 +78,15 @@ jobs:
       - uses: ./.github/actions/setup-node-pnpm
 
       - name: build landing (production, indexable)
-        run: pnpm exec turbo run build --filter=@smart/web-landing
+        run: pnpm exec turbo run build --filter=@hirekiwi/web-landing
         env:
           NEXT_PUBLIC_ENV: production
 
       - name: lighthouse ci (mobile + desktop)
-        run: pnpm --filter @smart/web-landing lhci
+        run: pnpm --filter @hirekiwi/web-landing lhci
 
       - name: seo + axe e2e
-        run: pnpm --filter @smart/web-landing test:e2e
+        run: pnpm --filter @hirekiwi/web-landing test:e2e
         env:
           PLAYWRIGHT_CHROME_CHANNEL: chrome
 

@@ -1,4 +1,4 @@
-import { LEVEL_DEFINITIONS } from '@smart/contracts';
+import { LEVEL_DEFINITIONS } from '@hirekiwi/contracts';
 import { cn } from '../lib/cn';
 
 export type LevelState = 'locked' | 'active' | 'cleared';

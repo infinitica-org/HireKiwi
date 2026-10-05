@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { isSmartApiError } from '@smart/api-client';
-import type { BatchMemberDto, BatchDto } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { BatchMemberDto, BatchDto } from '@hirekiwi/contracts';
 import { TpoBentoPageHeader } from '../../../../../components/tpo-bento/TpoBentoPageHeader';
 import { BatchImportWizard } from '../../../../../components/batch-import-wizard';
 import { api } from '../../../../../lib/api';

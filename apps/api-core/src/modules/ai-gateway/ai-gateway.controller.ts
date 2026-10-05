@@ -5,7 +5,7 @@ import {
   type AiCompletionResponse,
   type AiHealthDto,
   type AiUsageSummaryDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { Public } from '../../common/guards/public.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import { AiGatewayService } from './ai-gateway.service.js';

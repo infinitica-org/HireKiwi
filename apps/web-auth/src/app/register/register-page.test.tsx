@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import RegisterPage from './page';
-import { SmartApiError } from '@smart/api-client';
+import { SmartApiError } from '@hirekiwi/api-client';
 import { api, redirectForRole, storeSession } from '../../lib/api';
 
 vi.mock('next/navigation', () => ({
@@ -37,7 +37,7 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText(/First name/i)).toBeDefined();
     expect(screen.getByLabelText(/Last name/i)).toBeDefined();
     expect(screen.getByLabelText(/Mobile Number/i)).toBeDefined();
-    expect(screen.getByLabelText(/School Email/i)).toBeDefined();
+    expect(screen.getByLabelText(/(?:School|University)\s*Email/i)).toBeDefined();
     expect(screen.getByLabelText(/^Password \*/i)).toBeDefined();
     expect(screen.getByRole('button', { name: /Get started/i })).toBeDefined();
     expect(screen.getByRole('link', { name: /Login/i })).toBeDefined();
@@ -49,7 +49,7 @@ describe('RegisterPage', () => {
     fireEvent.change(await screen.findByLabelText(/First name/i), { target: { value: 'Jane' } });
     fireEvent.change(screen.getByLabelText(/Last name/i), { target: { value: 'Doe' } });
     fireEvent.change(screen.getByLabelText(/Mobile Number/i), { target: { value: '9876543210' } });
-    fireEvent.change(screen.getByLabelText(/School Email/i), {
+    fireEvent.change(screen.getByLabelText(/(?:School|University)\s*Email/i), {
       target: { value: 'jane@psgtech.ac.in' },
     });
     fireEvent.change(screen.getByLabelText(/^Password \*/i), { target: { value: 'Password123!' } });
@@ -77,7 +77,7 @@ describe('RegisterPage', () => {
     render(<RegisterPage />);
 
     fireEvent.change(await screen.findByLabelText(/First name/i), { target: { value: 'Jane' } });
-    fireEvent.change(screen.getByLabelText(/School Email/i), {
+    fireEvent.change(screen.getByLabelText(/(?:School|University)\s*Email/i), {
       target: { value: 'jane@psgtech.ac.in' },
     });
     fireEvent.change(screen.getByLabelText(/^Password \*/i), { target: { value: 'Password123!' } });
@@ -103,7 +103,7 @@ describe('RegisterPage', () => {
 
     fireEvent.change(await screen.findByLabelText(/First name/i), { target: { value: 'Jane' } });
     fireEvent.change(screen.getByLabelText(/Last name/i), { target: { value: 'Doe' } });
-    fireEvent.change(screen.getByLabelText(/School Email/i), {
+    fireEvent.change(screen.getByLabelText(/(?:School|University)\s*Email/i), {
       target: { value: 'jane@psgtech.ac.in' },
     });
     fireEvent.change(screen.getByLabelText(/^Password \*/i), { target: { value: 'Password123!' } });

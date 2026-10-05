@@ -6,7 +6,7 @@ import {
   REPORT_REASONS,
   type Message,
   type ReportReason,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { useMutation, useSmartApi } from '../api-provider';
 import { Alert } from '../components/alert';
 import { Button } from '../components/button';

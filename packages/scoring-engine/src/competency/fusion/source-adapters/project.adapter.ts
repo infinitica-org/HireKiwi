@@ -1,6 +1,6 @@
-import type { SkillCompetency } from '@smart/contracts';
-import type { ObservationBundle, Observation, TrustTier } from '@smart/contracts';
-import type { ProjectVerificationReportDto } from '@smart/contracts';
+import type { SkillCompetency } from '@hirekiwi/contracts';
+import type { ObservationBundle, Observation, TrustTier } from '@hirekiwi/contracts';
+import type { ProjectVerificationReportDto } from '@hirekiwi/contracts';
 
 export function projectTrustFromReport(report: ProjectVerificationReportDto): TrustTier {
   if (report.confidence < 0.5) return 'UNTRUSTED';

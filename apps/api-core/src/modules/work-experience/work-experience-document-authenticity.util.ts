@@ -3,7 +3,7 @@ import type {
   WorkExperienceDocumentAuthenticityStatus,
   WorkExperienceLetterAuthenticityExtract,
   WorkExperienceLetterAuthenticityResult,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { normalizeCompanyName, extractDomain } from './company-name.util.js';
 
 const MIN_OCR_CONFIDENCE = 0.75;

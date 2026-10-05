@@ -3,7 +3,7 @@
  * (`./globals.css` → here) so Cabinet Grotesk, Axiforma, semantic tokens, and
  * shadcn primitives render identically on student, TPO, admin, auth, and verify.
  */
-@import '@smart/tailwind-config/theme.css';
+@import '@hirekiwi/tailwind-config/theme.css';
 @import './assets/fonts/CabinetGrotesk/css/cabinet-grotesk.css';
 @import './assets/fonts/Manrope/css/manrope.css';
 @import 'tw-animate-css';

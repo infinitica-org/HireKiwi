@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { SmartLogo } from '@smart/ui';
+import { SmartLogo } from '@hirekiwi/ui';
 import { ResendVerification } from '../../../components/resend-verification';
 import { api } from '../../../lib/api';
 import { LoginShell } from '../../login/login-shell';

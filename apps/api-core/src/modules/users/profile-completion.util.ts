@@ -1,4 +1,4 @@
-import type { CandidateOnboardingDraft, CandidateOnboardingProfile } from '@smart/contracts';
+import type { CandidateOnboardingDraft, CandidateOnboardingProfile } from '@hirekiwi/contracts';
 
 export const PROFILE_AREA_IDS = [
   'skills',

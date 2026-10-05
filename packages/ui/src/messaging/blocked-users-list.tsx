@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { BlockedUser } from '@smart/contracts';
+import type { BlockedUser } from '@hirekiwi/contracts';
 import { UserX } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient, useSmartApi } from '../api-provider';
 import { Button } from '../components/button';

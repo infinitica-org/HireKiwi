@@ -1,7 +1,7 @@
 import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { IntegrationHealth, IntegrationHealthResponse } from '@smart/contracts';
-import { integrationProbeDuration, integrationUp } from '@smart/observability';
+import type { IntegrationHealth, IntegrationHealthResponse } from '@hirekiwi/contracts';
+import { integrationProbeDuration, integrationUp } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import { KafkaService } from '../../platform/kafka/kafka.service.js';
 import { SmtpService } from '../../platform/mailer/smtp.service.js';

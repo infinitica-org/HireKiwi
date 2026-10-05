@@ -1,7 +1,7 @@
 'use client';
 
 import { Gauge, Pencil, Trash2 } from 'lucide-react';
-import type { CandidateLanguageDto } from '@smart/contracts';
+import type { CandidateLanguageDto } from '@hirekiwi/contracts';
 
 import {
   LANGUAGE_CARD_ACCENTS,

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { EvidenceQualityMetrics } from '@smart/contracts';
+import type { EvidenceQualityMetrics } from '@hirekiwi/contracts';
 
 export interface EvidenceValidationIndicatorProps {
   metrics: EvidenceQualityMetrics[];

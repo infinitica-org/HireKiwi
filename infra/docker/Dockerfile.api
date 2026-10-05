@@ -44,7 +44,7 @@ COPY apps ./apps
 
 ENV DATABASE_URL=postgresql://smart:smart@127.0.0.1:5432/smart
 
-RUN pnpm --filter @smart/api-core... build
+RUN pnpm --filter @hirekiwi/api-core... build
 
 # ---------------------------------------------------------
 # Runtime

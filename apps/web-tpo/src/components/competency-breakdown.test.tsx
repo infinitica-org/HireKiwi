@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { AssessmentResult } from '@smart/contracts';
+import type { AssessmentResult } from '@hirekiwi/contracts';
 import { CompetencyBreakdown } from './competency-breakdown';
 
 const sampleResult: AssessmentResult = {

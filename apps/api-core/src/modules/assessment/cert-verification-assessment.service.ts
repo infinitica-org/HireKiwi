@@ -20,7 +20,7 @@ import {
   type CertVerifySessionDto,
   type CompleteCertVerifyResponse,
   type PolymorphicAssessmentSessionDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

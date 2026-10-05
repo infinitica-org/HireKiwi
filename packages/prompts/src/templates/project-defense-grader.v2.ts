@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ProjectVerifyFlagSchema } from '@smart/contracts';
+import { ProjectVerifyFlagSchema } from '@hirekiwi/contracts';
 import type { PromptTemplate } from '../types.js';
 import {
   INJECTION_GUARD,

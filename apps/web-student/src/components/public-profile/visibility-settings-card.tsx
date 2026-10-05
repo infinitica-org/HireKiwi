@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@smart/ui';
-import { isSmartApiError } from '@smart/api-client';
+import { useQuery, useQueryClient } from '@hirekiwi/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { AtSign, Eye, Loader2, Lock } from 'lucide-react';
 import { api } from '@/lib/api';
 
-/** A small animated on/off pill switch — no shared `@smart/ui` primitive for this yet. */
+/** A small animated on/off pill switch — no shared `@hirekiwi/ui` primitive for this yet. */
 function ToggleSwitch({
   checked,
   onChange,

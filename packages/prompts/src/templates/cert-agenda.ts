@@ -7,7 +7,7 @@ import {
   type CertAgendaInternalItem,
   type CertAgendaPublicItem,
   type CertAgendaScorableItem,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { PromptTemplate } from '../types.js';
 import { INJECTION_GUARD, jsonOnly } from '../shared.js';
 

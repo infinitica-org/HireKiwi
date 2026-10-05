@@ -39,14 +39,14 @@ import {
   type UniversityRosterQuery,
   type UniversityRosterResponse,
   type UniversityStudentSummary,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   SmartApiClient,
   clearAccessToken,
   createRefreshAccessToken,
   createSmartApi,
   getAccessToken,
-} from '@smart/api-client';
+} from '@hirekiwi/api-client';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 // web-auth is the one login screen for every portal now.

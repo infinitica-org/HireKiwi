@@ -1,4 +1,4 @@
-import type { EvidenceRecordDto } from '@smart/contracts';
+import type { EvidenceRecordDto } from '@hirekiwi/contracts';
 import { profileSectionHref } from '@/lib/profile-sections';
 
 export function profileProjectHref(projectId: string): string {

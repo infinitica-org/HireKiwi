@@ -1,9 +1,9 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Alert, Button, Modal } from '@smart/ui';
-import { MESSAGE_MAX_LENGTH, UniversityMessageStudentRequestSchema } from '@smart/contracts';
-import { SmartApiError } from '@smart/api-client';
+import { Alert, Button, Modal } from '@hirekiwi/ui';
+import { MESSAGE_MAX_LENGTH, UniversityMessageStudentRequestSchema } from '@hirekiwi/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
 import { universityApi } from '../../lib/api';
 
 /**

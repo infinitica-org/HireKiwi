@@ -57,7 +57,7 @@ A new `VectorCandidateMatcher` service replaces the rules-based shortlisting for
 ### Negative / Trade-offs
 
 - Offline fallback vectors are lower-fidelity; a `source: 'offline_fallback'` flag should be surfaced in the employer UI in a follow-up.
-- `RadarCompetencyAxis` type is internal; it should be exported from `@smart/contracts` if employer frontend needs typed consumption.
+- `RadarCompetencyAxis` type is internal; it should be exported from `@hirekiwi/contracts` if employer frontend needs typed consumption.
 - Vector similarity over large candidate pools can be CPU-intensive; a rate-limit guard on `searchStudents` is recommended.
 
 ---

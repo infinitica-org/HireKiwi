@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { AdminDataRequestDto, DataRequestStatus, DataRequestType } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { AdminDataRequestDto, DataRequestStatus, DataRequestType } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { FileLock } from 'lucide-react';
-import { Button } from '@smart/ui/button';
+import { Button } from '@hirekiwi/ui/button';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

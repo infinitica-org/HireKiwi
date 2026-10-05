@@ -42,14 +42,14 @@ import {
   type SubmitMatchFeedbackRequest,
   type MatchFeedbackSummaryDto,
   type TrackCode,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { Prisma } from '../../generated/prisma/index.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { MATCH_RUN_QUEUE } from '../../platform/queue/queue.names.js';
 import { InstitutionsService } from '../institutions/institutions.service.js';
-import type { CompetencyStatus } from '@smart/contracts';
+import type { CompetencyStatus } from '@hirekiwi/contracts';
 import { mapStudentCapabilitiesToSummaries } from '../../common/competency-evidence-summary.js';
 import {
   EMPLOYER_DISCOVERABLE_STUDENT_SQL,
@@ -95,7 +95,7 @@ import {
   calculatePersonJobFit,
   DEFAULT_PERSON_JOB_FIT_PARAMS,
   type PersonJobFitParameters,
-} from '@smart/scoring-engine';
+} from '@hirekiwi/scoring-engine';
 
 const FALLBACK_TRACK: TrackCode = 'TECH_FULLSTACK';
 

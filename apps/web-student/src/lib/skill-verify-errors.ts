@@ -1,5 +1,5 @@
-import { isSmartApiError, SmartNetworkError } from '@smart/api-client';
-import type { SkillVerifySessionDto } from '@smart/contracts';
+import { isSmartApiError, SmartNetworkError } from '@hirekiwi/api-client';
+import type { SkillVerifySessionDto } from '@hirekiwi/contracts';
 
 export function isSkillVerifyAnswered(
   answer:

@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ChevronLeft, ChevronRight, ScrollText } from 'lucide-react';
-import type { AdminDashboardDto } from '@smart/contracts';
+import type { AdminDashboardDto } from '@hirekiwi/contracts';
 import { ActiveUsersPanel } from '@/components/active-users-panel';
 import { InlineAlert } from '@/components/admin-ui';
-import { NumberTicker } from '@smart/ui';
+import { NumberTicker } from '@hirekiwi/ui';
 import { formatAuditAction, formatResourceType } from '@/lib/audit-actions';
 import { api } from '@/lib/api';
 

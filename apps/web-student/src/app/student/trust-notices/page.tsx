@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { NotificationDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { NotificationDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { AlertTriangle, CheckCircle2, FileText, Send, ShieldCheck } from 'lucide-react';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 import { api } from '@/lib/api';
 
 function formatApiError(error: unknown, fallback: string): string {

@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
-import type { TransferSkillRow } from '@smart/contracts';
+import type { TransferSkillRow } from '@hirekiwi/contracts';
 import { TransferSkillsDisplay } from './TransferSkillsDisplay';
 
 /**

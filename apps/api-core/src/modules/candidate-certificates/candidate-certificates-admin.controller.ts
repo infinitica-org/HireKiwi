@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
-import { API_PREFIX, AdminCertificateReviewRequestSchema } from '@smart/contracts';
+import { API_PREFIX, AdminCertificateReviewRequestSchema } from '@hirekiwi/contracts';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import { CandidateCertificatesService } from './candidate-certificates.service.js';
 

@@ -3,7 +3,7 @@ import {
   API_PREFIX,
   ListAdminDataRequestsQuerySchema,
   ResolveDataRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { AuditAccess } from '../../common/decorators/audit-access.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

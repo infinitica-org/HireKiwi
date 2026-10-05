@@ -23,7 +23,7 @@ x-app-env: &app-env
   LOG_LEVEL: ${LOG_LEVEL:-info}
   SMTP_HOST: mailpit
   SMTP_PORT: "1025"
-  SMTP_FROM: SMART Platform <noreply@smart.local>
+  SMTP_FROM: HireKiwi Platform <noreply@smart.local>
   AUTH_APP_URL: ${AUTH_APP_URL:-http://localhost:3005}
   STUDENT_APP_URL: ${STUDENT_APP_URL:-http://localhost:3001}
   TPO_APP_URL: ${TPO_APP_URL:-http://localhost:3002}

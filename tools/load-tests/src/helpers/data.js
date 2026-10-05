@@ -3,7 +3,7 @@
  * shared read-only across every VU — not duplicated per-VU in memory (the
  * task's "avoid loading enormous datasets into k6 memory" requirement).
  *
- * The file itself is produced by `pnpm --filter @smart/api-core
+ * The file itself is produced by `pnpm --filter @hirekiwi/api-core
  * db:seed:load-test` (see apps/api-core/prisma/seed-load-test.ts) and holds
  * emails only, never passwords — the shared TEST_PASSWORD comes from config
  * at run time.

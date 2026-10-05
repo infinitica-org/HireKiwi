@@ -1,4 +1,4 @@
-import type { ProficiencyLevel } from '@smart/contracts';
+import type { ProficiencyLevel } from '@hirekiwi/contracts';
 
 /**
  * Practitioner-frozen corroboration policy defaults (S6-RM-10).

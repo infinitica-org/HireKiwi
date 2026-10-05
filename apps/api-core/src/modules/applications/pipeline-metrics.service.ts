@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { ConversionMetrics, ConversionMetricsQuery } from '@smart/contracts';
+import type { ConversionMetrics, ConversionMetricsQuery } from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 function rate(entered: number, converted: number) {

@@ -6,8 +6,8 @@ import {
   NotFoundException,
   Optional,
 } from '@nestjs/common';
-import { CompanyProfileSchema } from '@smart/contracts';
-import type { CompanyProfile, UpdateCompanyProfileRequest } from '@smart/contracts';
+import { CompanyProfileSchema } from '@hirekiwi/contracts';
+import type { CompanyProfile, UpdateCompanyProfileRequest } from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';

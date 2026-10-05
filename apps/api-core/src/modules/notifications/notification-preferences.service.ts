@@ -7,7 +7,7 @@ import {
   type NotificationKind,
   type NotificationPreferencesResponse,
   type UpdateNotificationPreferencesRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 const isMandatory = (kind: NotificationKind) => MANDATORY_NOTIFICATION_KINDS.includes(kind);

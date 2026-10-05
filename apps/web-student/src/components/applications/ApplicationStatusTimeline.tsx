@@ -1,9 +1,9 @@
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import {
   APPLICATION_STATUS_LABELS,
   type ApplicationStatus,
   type StudentApplicationDetail,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 /** The forward path a student sees. Not selected / Withdrawn are endings, not steps. */
 export const STATUS_STEPS = ['APPLIED', 'REVIEWING', 'INTERVIEWING', 'OFFERED', 'HIRED'] as const;

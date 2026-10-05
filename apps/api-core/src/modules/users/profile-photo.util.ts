@@ -1,4 +1,4 @@
-import type { AuthenticatedUser } from '@smart/contracts';
+import type { AuthenticatedUser } from '@hirekiwi/contracts';
 import type { StorageService } from '../../platform/storage/storage.service.js';
 import { toAuthenticatedUser } from '../auth/auth.service.js';
 

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { isDisallowedEndorserEmailDomain } from '@smart/contracts';
-import { Button, Input } from '@smart/ui';
+import { isDisallowedEndorserEmailDomain } from '@hirekiwi/contracts';
+import { Button, Input } from '@hirekiwi/ui';
 
 interface EndorsementRequestFormProps {
   onSubmit: (details: {

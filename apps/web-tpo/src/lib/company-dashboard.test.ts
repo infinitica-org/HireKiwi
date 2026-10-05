@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ApplicationDto, JobOpeningDto } from '@smart/contracts';
+import type { ApplicationDto, JobOpeningDto } from '@hirekiwi/contracts';
 import {
   ACTIVE_OPENING_STATUS,
   NEW_MATCH_STAGE,

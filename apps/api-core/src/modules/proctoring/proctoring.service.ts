@@ -39,8 +39,8 @@ import {
   type ProctoringViolationRequest,
   type ProctoringVoiceResponse,
   type ProctoringWarningSnapshot,
-} from '@smart/contracts';
-import { integrityFlags } from '@smart/observability';
+} from '@hirekiwi/contracts';
+import { integrityFlags } from '@hirekiwi/observability';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { env } from '../../platform/config/env.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';

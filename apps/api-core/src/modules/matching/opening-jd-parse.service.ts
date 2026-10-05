@@ -7,8 +7,8 @@ import {
   getSkillBlueprint,
   type JdSkillExtractVector,
   type SkillRequirement,
-} from '@smart/contracts';
-import { JD_SKILL_EXTRACT_PROMPT_REF } from '@smart/prompts';
+} from '@hirekiwi/contracts';
+import { JD_SKILL_EXTRACT_PROMPT_REF } from '@hirekiwi/prompts';
 import { z } from 'zod';
 import { AiGatewayService } from '../ai-gateway/ai-gateway.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

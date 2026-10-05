@@ -6,7 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { CandidateEducationDocumentDto, CandidateEducationDto } from '@smart/contracts';
+import type { CandidateEducationDocumentDto, CandidateEducationDto } from '@hirekiwi/contracts';
 import {
   CandidateDegreeDetailsSchema,
   CandidateEducationDocumentSchema,
@@ -15,7 +15,7 @@ import {
   CreateCandidateEducationSchema,
   RejectCandidateEducationSchema,
   UpdateCandidateEducationSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { Prisma } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

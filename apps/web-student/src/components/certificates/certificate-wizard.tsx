@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useQuery, Button } from '@smart/ui';
-import type { CandidateCertificateDto, TrackCode } from '@smart/contracts';
+import { useQuery, Button } from '@hirekiwi/ui';
+import type { CandidateCertificateDto, TrackCode } from '@hirekiwi/contracts';
 import { ArrowLeft, RefreshCw, ShieldAlert, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { CertificateGuidelinesBanner } from './certificate-guidelines-banner';

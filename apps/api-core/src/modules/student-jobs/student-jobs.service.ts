@@ -15,7 +15,7 @@ import type {
   ListStudentJobsResponse,
   StudentJobCard,
   StudentJobDetail,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';

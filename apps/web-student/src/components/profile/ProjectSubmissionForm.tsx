@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { isSmartApiError } from '@smart/api-client';
-import type { GithubRepoSummary, ProjectDto } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { GithubRepoSummary, ProjectDto } from '@hirekiwi/contracts';
 import { AlertCircle, CheckCircle2, GitBranch, Plus, X } from 'lucide-react';
 import { ProjectDetailModal } from '@/components/profile/projects/ProjectDetailModal';
 import { ProjectEmptyState } from '@/components/profile/projects/ProjectEmptyState';

@@ -1,1 +1,1 @@
-export { cn } from '@smart/ui';
+export { cn } from '@hirekiwi/ui';

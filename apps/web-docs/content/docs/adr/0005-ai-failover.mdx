@@ -18,7 +18,7 @@ Evaluation must survive provider outages without every module embedding SDKs.
 
 - Only **`ai-gateway`** talks to LLMs.
 - Primary: Anthropic Claude. Fallback: Google Gemini.
-- Prompts are versioned in `@smart/prompts`; outputs schema-validated via contracts.
+- Prompts are versioned in `@hirekiwi/prompts`; outputs schema-validated via contracts.
 - Invalid or failed primary responses escalate to fallback; persistent failure escalates to human/ops path — never silent invent.
 
 ## Consequences

@@ -19,8 +19,8 @@ import {
   skillFocusOptions,
   type SkillClaimDto,
   type SkillDefinition,
-} from '@smart/contracts';
-import { cn } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { cn } from '@hirekiwi/ui';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '@/lib/api';
 import { SKILL_VERIFICATION_DIAGNOSTIC_PROFICIENCY } from '@/lib/skill-declarations';

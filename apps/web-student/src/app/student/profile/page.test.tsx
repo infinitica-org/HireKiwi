@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { fireEvent, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import ProfilePage from './page';
+
+function renderWithQuery(ui: React.ReactElement) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 const push = vi.fn();
 const replace = vi.fn();
@@ -22,7 +28,7 @@ vi.mock('@/lib/candidate-identity', () => ({
     },
   }),
   useTracks: () => ({ data: [] }),
-  headlineFor: () => 'SMART candidate',
+  headlineFor: () => 'HireKiwi candidate',
   initialsOf: (fullName?: string) => {
     const parts = fullName?.trim().split(/\s+/u).filter(Boolean) ?? [];
     return `${parts[0]?.[0] ?? ''}${parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : ''}`.toUpperCase();
@@ -38,7 +44,7 @@ vi.mock('@/lib/use-onboarding', () => ({
   }),
 }));
 
-vi.mock('@smart/ui', async (importOriginal) => {
+vi.mock('@hirekiwi/ui', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
@@ -131,7 +137,7 @@ vi.mock('@/components/profile/ResumeSection', () => ({
 
 describe('ProfilePage', () => {
   it('defaults to education workspace without professional summary above tabs', () => {
-    render(<ProfilePage />);
+    renderWithQuery(<ProfilePage />);
 
     expect(screen.queryByRole('button', { name: 'About' })).toBeNull();
     expect(screen.getByText('Education section')).toBeTruthy();
@@ -147,7 +153,7 @@ describe('ProfilePage', () => {
   });
 
   it('navigates to another subsection via top nav without showing all sections', () => {
-    render(<ProfilePage />);
+    renderWithQuery(<ProfilePage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Work Experience' }));
 

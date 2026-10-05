@@ -12,9 +12,9 @@ import {
   ScrollText,
   UserCog,
 } from 'lucide-react';
-import type { AuthenticatedUser } from '@smart/contracts';
+import type { AuthenticatedUser } from '@hirekiwi/contracts';
 import { SearchDialog } from './search-dialog';
-import { UserMenu } from '@smart/ui';
+import { UserMenu } from '@hirekiwi/ui';
 
 import { api } from '../lib/api';
 import { signOut } from '../lib/auth';

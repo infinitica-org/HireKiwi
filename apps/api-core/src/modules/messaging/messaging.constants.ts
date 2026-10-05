@@ -1,4 +1,4 @@
-import type { UserRole } from '@smart/contracts';
+import type { UserRole } from '@hirekiwi/contracts';
 
 /** University staff who act as advisors for the students of their institution. */
 export const ADVISOR_ROLES: readonly UserRole[] = ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN'];

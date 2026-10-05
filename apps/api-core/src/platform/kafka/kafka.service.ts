@@ -6,7 +6,7 @@ import {
   deadLetterTopicFor,
   SMART_TOPICS,
   type SmartTopic,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   CORRELATION_KAFKA_HEADER,
   getContext,
@@ -16,7 +16,7 @@ import {
   kafkaEventsProduced,
   LOG_EVENTS,
   logEvent,
-} from '@smart/observability';
+} from '@hirekiwi/observability';
 import { env } from '../config/env.js';
 import { ConsumerInbox } from './consumer-inbox.js';
 

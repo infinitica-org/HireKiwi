@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Alert } from '@smart/ui';
+import { Alert } from '@hirekiwi/ui';
 import type {
   AssessmentResult,
   GradeSdeSkillFormResponse,
   SkillVerifyPrepareDto,
   SkillVerifySessionDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import {
   SKILL_VERIFICATION_PROFILE_UNLOCK_MESSAGE,

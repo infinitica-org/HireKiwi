@@ -1,5 +1,5 @@
 {
-  "name": "@smart/api-core",
+  "name": "@hirekiwi/api-core",
   "version": "0.1.0",
   "private": true,
   "description": "SMART NestJS API: platform core plus owned domain modules. Owners: Vishal V (platform), plus module owners in TEAM.md.",
@@ -61,10 +61,10 @@
     "@prisma/adapter-pg": "catalog:",
     "@prisma/client": "catalog:",
     "@prisma/client-runtime-utils": "catalog:",
-    "@smart/contracts": "workspace:*",
-    "@smart/observability": "workspace:*",
-    "@smart/prompts": "workspace:*",
-    "@smart/scoring-engine": "workspace:*",
+    "@hirekiwi/contracts": "workspace:*",
+    "@hirekiwi/observability": "workspace:*",
+    "@hirekiwi/prompts": "workspace:*",
+    "@hirekiwi/scoring-engine": "workspace:*",
     "@zip.js/zip.js": "2.18.2",
     "class-transformer": "catalog:",
     "class-validator": "catalog:",
@@ -88,8 +88,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@smart/eslint-config": "workspace:*",
-    "@smart/tsconfig": "workspace:*",
+    "@hirekiwi/eslint-config": "workspace:*",
+    "@hirekiwi/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "@types/nodemailer": "7.0.1",
     "@types/pdfkit": "catalog:",

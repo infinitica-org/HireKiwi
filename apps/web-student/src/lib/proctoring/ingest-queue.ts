@@ -1,4 +1,4 @@
-import type { ProctoringViolationKind } from '@smart/contracts';
+import type { ProctoringViolationKind } from '@hirekiwi/contracts';
 
 const DEFAULT_DEBOUNCE_MS = 3_000;
 

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PROJECT_VERIFY_PROMPT_REF, ProjectVerifyLlmOutputSchema } from '@smart/contracts';
+import { PROJECT_VERIFY_PROMPT_REF, ProjectVerifyLlmOutputSchema } from '@hirekiwi/contracts';
 import type { PromptTemplate } from '../types.js';
 import { INJECTION_GUARD, jsonOnly, untrusted } from '../shared.js';
 

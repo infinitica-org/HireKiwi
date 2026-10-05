@@ -10,7 +10,7 @@ import {
   getRateLimitPolicy,
   type RateLimitScope,
   type RouteSpec,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { RateLimitService } from '../../modules/rate-limit/rate-limit.service.js';
 import type { RequestUser } from '../guards/jwt-auth.guard.js';
 

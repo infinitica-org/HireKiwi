@@ -63,7 +63,7 @@ const EnvSchema = z.object({
     .transform((value) => value === 'true'),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  SMTP_FROM: z.string().default('SMART Platform <noreply@smart.local>'),
+  SMTP_FROM: z.string().default('HireKiwi Platform <noreply@smart.local>'),
 
   AUTH_APP_URL: z.string().default('http://localhost:3005'),
   STUDENT_APP_URL: z.string().default('http://localhost:3001'),

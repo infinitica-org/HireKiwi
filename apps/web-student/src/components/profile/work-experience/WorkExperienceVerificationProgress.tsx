@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, Circle, Clock } from 'lucide-react';
-import type { WorkExperienceDto } from '@smart/contracts';
+import type { WorkExperienceDto } from '@hirekiwi/contracts';
 
 import { summarizeWorkExperienceDocumentCheck } from '@/lib/work-experience-document-check';
 

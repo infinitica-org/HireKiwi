@@ -1,6 +1,6 @@
 'use client';
 
-import type { CandidateCertificateStatus, CertificateSourceStatus } from '@smart/contracts';
+import type { CandidateCertificateStatus, CertificateSourceStatus } from '@hirekiwi/contracts';
 import {
   CheckCircle2,
   AlertCircle,

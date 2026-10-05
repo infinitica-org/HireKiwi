@@ -8,8 +8,8 @@ import {
   getAccessToken,
   PORTAL_ROLES,
   resolvePortalOriginsFromEnv,
-} from '@smart/api-client';
-import { RolesGuard, SessionBootstrap, SessionHoldWall, SmartApiProvider } from '@smart/ui';
+} from '@hirekiwi/api-client';
+import { RolesGuard, SessionBootstrap, SessionHoldWall, SmartApiProvider } from '@hirekiwi/ui';
 import { api } from '../lib/api';
 import { signOut } from '../lib/auth';
 

@@ -10,7 +10,7 @@ import {
   type CandidateMatchDto,
   type SkillFitRow,
   type VerifiedSkillSummary,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { Rocket, Sparkles } from 'lucide-react';
 import { ProficiencyLevelCircles, ProficiencyLevelLegend } from './proficiency-level-ui';
 import { sectionLabelClass, mutedTextClass, cardClass } from '../../lib/tpo-ui';

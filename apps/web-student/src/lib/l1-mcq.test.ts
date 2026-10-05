@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SmartApiError, SmartNetworkError } from '@smart/api-client';
-import type { AttemptSessionDto, DeliverableItemDto } from '@smart/contracts';
+import { SmartApiError, SmartNetworkError } from '@hirekiwi/api-client';
+import type { AttemptSessionDto, DeliverableItemDto } from '@hirekiwi/contracts';
 import {
   buildMcqDraftPayload,
   canSubmitLockedAttempt,

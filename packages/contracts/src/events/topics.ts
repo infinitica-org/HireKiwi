@@ -2,7 +2,7 @@
  * Kafka topic registry.
  *
  * A topic has exactly ONE producer-owner (TEAM.md §3.3). Consuming is free;
- * changing a payload is a `@smart/contracts` PR that must name every consumer
+ * changing a payload is a `@hirekiwi/contracts` PR that must name every consumer
  * in the body so nobody is surprised at integration time.
  *
  * Owner: Tino (System Architect).

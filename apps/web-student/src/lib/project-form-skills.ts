@@ -1,4 +1,4 @@
-import { getSkillDefinition, type SkillLibraryResponse } from '@smart/contracts';
+import { getSkillDefinition, type SkillLibraryResponse } from '@hirekiwi/contracts';
 
 export type ProjectSkillOption = {
   code: string;

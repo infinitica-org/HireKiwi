@@ -173,7 +173,7 @@ Access control is enforced across three sequential defensive rings:
 │    • Reverse proxy enforces origin routing per portal domain                │
 │    • Public endpoints rate-limited to 20 req/min                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 2. CLIENT PORTAL GATE (Browser-Side @smart/ui)                              │
+│ 2. CLIENT PORTAL GATE (Browser-Side @hirekiwi/ui)                              │
 │    • RolesGuard intercepts route navigation before component render         │
 │    • evaluatePortalAccess() verifies JWT payload role claim                 │
 │    • ForbiddenWall (HTTP 403 equivalent) renders if role is unauthorized    │
@@ -210,7 +210,7 @@ When an unauthorized role (e.g., a `STUDENT` attempting to access `/campus` on p
 Within legitimate portals, specific buttons and sub-components are conditionally rendered using centralized permission checkers:
 
 ```tsx
-import { companyRoleHasPermission } from '@smart/contracts';
+import { companyRoleHasPermission } from '@hirekiwi/contracts';
 
 // In web-company team management panel
 {companyRoleHasPermission(memberRole, 'company.team.manage') && (
@@ -222,7 +222,7 @@ import { companyRoleHasPermission } from '@smart/contracts';
 
 ### 5.3 Server-Side Defense-in-Depth
 
-Client-side gating is strictly an interface usability and information architecture mechanism. The backend NestJS server enforces absolute access control via `@smart/contracts/src/http/routes.ts`:
+Client-side gating is strictly an interface usability and information architecture mechanism. The backend NestJS server enforces absolute access control via `@hirekiwi/contracts/src/http/routes.ts`:
 
 - Every single route declares its permitted `roles` array in contracts.
 - Missing roles trigger continuous integration invariant failures (`invariants.spec.ts`).

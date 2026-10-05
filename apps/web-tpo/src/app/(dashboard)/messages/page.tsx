@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { LoadingState, MessagesWorkspace } from '@smart/ui';
+import { LoadingState, MessagesWorkspace } from '@hirekiwi/ui';
 import { MessagingProvider } from '../../../components/messaging-provider';
 
 function MessagesContent() {

@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
 import { PortalAuthGate } from '@/components/portal-auth-gate';
-import { ThemeProvider } from '@smart/ui/theme-provider';
-import { TooltipProvider } from '@smart/ui/tooltip';
+import { ThemeProvider } from '@hirekiwi/ui/theme-provider';
+import { TooltipProvider } from '@hirekiwi/ui/tooltip';
 
 export const metadata: Metadata = {
   title: {

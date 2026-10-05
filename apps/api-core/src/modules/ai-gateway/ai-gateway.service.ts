@@ -5,9 +5,9 @@ import {
   type AiCompletionResponse,
   type AiHealthDto,
   type AiProvider,
-} from '@smart/contracts';
-import { listPrompts, renderPromptRef } from '@smart/prompts';
-import { LOG_EVENTS, logEvent } from '@smart/observability';
+} from '@hirekiwi/contracts';
+import { listPrompts, renderPromptRef } from '@hirekiwi/prompts';
+import { LOG_EVENTS, logEvent } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import {
   AI_PROCESSING_QUEUES,

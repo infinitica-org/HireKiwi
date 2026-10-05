@@ -1,4 +1,4 @@
-import type { AssessmentConfidenceLevel } from '@smart/contracts';
+import type { AssessmentConfidenceLevel } from '@hirekiwi/contracts';
 
 export type VerificationDecisionOutcome = 'VERIFIED' | 'PROVISIONAL';
 

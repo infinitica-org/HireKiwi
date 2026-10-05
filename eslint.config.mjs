@@ -1,8 +1,8 @@
-import { base } from '@smart/eslint-config/base';
+import { base } from '@hirekiwi/eslint-config/base';
 
 /**
  * Root ESLint config — lints repo-level files only. Each workspace ships its
- * own `eslint.config.mjs` extending @smart/eslint-config.
+ * own `eslint.config.mjs` extending @hirekiwi/eslint-config.
  */
 export default [
   {

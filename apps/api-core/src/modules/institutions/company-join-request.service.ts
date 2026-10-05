@@ -5,7 +5,7 @@ import {
   NotFoundException,
   Optional,
 } from '@nestjs/common';
-import type { CompanyJoinRequestDto } from '@smart/contracts';
+import type { CompanyJoinRequestDto } from '@hirekiwi/contracts';
 import { env } from '../../platform/config/env.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

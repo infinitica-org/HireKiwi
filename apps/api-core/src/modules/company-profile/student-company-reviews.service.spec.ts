@@ -1,4 +1,4 @@
-import { CreateCompanyReviewRequestSchema } from '@smart/contracts';
+import { CreateCompanyReviewRequestSchema } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StudentCompanyReviewsService } from './student-company-reviews.service.js';
 import { IDS, withIdempotencyLedger } from './test-utils.js';

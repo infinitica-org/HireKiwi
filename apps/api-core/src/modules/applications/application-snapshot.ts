@@ -1,5 +1,5 @@
-import type { JobFitSummary, PublicCandidateProfileDto } from '@smart/contracts';
-import { APPLICATION_SNAPSHOT_VERSION } from '@smart/contracts';
+import type { JobFitSummary, PublicCandidateProfileDto } from '@hirekiwi/contracts';
+import { APPLICATION_SNAPSHOT_VERSION } from '@hirekiwi/contracts';
 
 /** Evidence a snapshot relies on. While the application exists, these cannot be deleted. */
 export interface EvidenceRef {

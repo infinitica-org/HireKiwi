@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@smart/api-client';
+import { SmartApiError } from '@hirekiwi/api-client';
 import { api, storeSession } from '../../lib/api';
 import { LoginForm } from './login-form';
 

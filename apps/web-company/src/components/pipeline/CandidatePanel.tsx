@@ -8,9 +8,9 @@ import {
   type EmployerApplicantCard,
   type JoiningOutcome,
   type OfferOutcome,
-} from '@smart/contracts';
-import { SmartApiError } from '@smart/api-client';
-import { Alert, Button, StartConversationDialog } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
+import { Alert, Button, StartConversationDialog } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 
 const OFFER_LABEL: Record<OfferOutcome, string> = {

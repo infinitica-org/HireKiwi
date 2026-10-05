@@ -1,7 +1,7 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { AiCompletionRecordedEventSchema, SMART_TOPICS } from '@smart/contracts';
-import { runKafkaHandler } from '@smart/observability';
+import { AiCompletionRecordedEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../config/env.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { KafkaService } from './kafka.service.js';

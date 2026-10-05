@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { EVIDENCE_USAGE } from '@smart/contracts';
+import { EVIDENCE_USAGE } from '@hirekiwi/contracts';
 import { EvidenceUsageCard } from '../account/EvidenceUsageCard';
 import { EvidenceUsageNote } from './EvidenceUsageNote';
 

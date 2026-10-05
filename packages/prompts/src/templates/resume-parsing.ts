@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ResumeParseDraftSchema } from '@smart/contracts';
+import { ResumeParseDraftSchema } from '@hirekiwi/contracts';
 import type { PromptTemplate } from '../types.js';
 import { INJECTION_GUARD, jsonOnly, untrusted } from '../shared.js';
 

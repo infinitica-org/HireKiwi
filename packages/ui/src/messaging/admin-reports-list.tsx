@@ -6,7 +6,7 @@ import {
   REPORT_TARGET_TYPES,
   type AdminReportRow,
   type ListAdminReportsQuery,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { Flag } from 'lucide-react';
 import { useQuery, useSmartApi } from '../api-provider';
 import { Button } from '../components/button';

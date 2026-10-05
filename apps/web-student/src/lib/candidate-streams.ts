@@ -1,4 +1,4 @@
-import type { TrackCode } from '@smart/contracts';
+import type { TrackCode } from '@hirekiwi/contracts';
 
 /** Onboarding “stream” — broader than a single certification track name in the catalog. */
 export type CandidateStreamId = 'SOFTWARE_ENGINEERING' | 'DATA_OPS' | 'AIML';

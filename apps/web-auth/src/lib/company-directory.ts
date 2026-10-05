@@ -1,5 +1,5 @@
-import { API_PREFIX } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import { API_PREFIX } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { apiClient } from './api';
 
 /**
@@ -8,7 +8,7 @@ import { apiClient } from './api';
  * The api-core endpoints below are not built yet. Until they ship, search
  * reports `available: false` so the wizard falls back to creating a company,
  * and join requests surface the API error. Move these into
- * `@smart/api-client` (with contract schemas) once the backend lands.
+ * `@hirekiwi/api-client` (with contract schemas) once the backend lands.
  *
  *   GET  /api/v1/public/companies/search?q=<text>
  *        -> { items: CompanySearchResult[] }

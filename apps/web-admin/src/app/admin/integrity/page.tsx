@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { FlaggedOrganizationDto, IntegrityQueueItemDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { FlaggedOrganizationDto, IntegrityQueueItemDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   Ban,
   Building2,
@@ -14,10 +14,10 @@ import {
   TriangleAlert,
   X,
 } from 'lucide-react';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '../../../components/admin-tabs';
-import { ConfirmDialog } from '@smart/ui';
+import { ConfirmDialog } from '@hirekiwi/ui';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

@@ -62,7 +62,7 @@ function LoginForm() {
         {/* Title */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
-            SmartKiwi Knowledge Base
+            HireKiwi Knowledge Base
           </h1>
           <p className="text-sm text-slate-400 leading-relaxed">
             Enterprise PRD, Technical Specifications, and Architectural Blueprint.
@@ -143,7 +143,7 @@ function LoginForm() {
         {/* Footer Note */}
         <div className="mt-8 pt-6 border-t border-slate-800/80 text-center">
           <p className="text-xs text-slate-500 leading-normal">
-            Protected by SmartKiwi Role-Based Access Control.
+            Protected by HireKiwi Role-Based Access Control.
             <br />
             Reviewer credentials provisioned by System Architecture Team.
           </p>

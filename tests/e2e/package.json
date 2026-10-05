@@ -1,5 +1,5 @@
 {
-  "name": "@smart/e2e",
+  "name": "@hirekiwi/e2e",
   "version": "0.1.0",
   "private": true,
   "description": "Playwright end-to-end tests. Owner: Satheswaran V.",
@@ -13,8 +13,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
-    "@smart/eslint-config": "workspace:*",
-    "@smart/tsconfig": "workspace:*",
+    "@hirekiwi/eslint-config": "workspace:*",
+    "@hirekiwi/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "rimraf": "6.0.1",

@@ -1,5 +1,5 @@
 {
-  "extends": "@smart/tsconfig/next.json",
+  "extends": "@hirekiwi/tsconfig/next.json",
   "compilerOptions": {
     "jsx": "preserve",
     "paths": { "@/*": ["./src/*"] }

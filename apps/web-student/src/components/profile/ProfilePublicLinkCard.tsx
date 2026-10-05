@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ExternalLink, Link2, Share2, Copy, Check } from 'lucide-react';
-import { useQuery } from '@smart/ui';
+import { useQuery } from '@hirekiwi/ui';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useCurrentUser } from '@/lib/candidate-identity';

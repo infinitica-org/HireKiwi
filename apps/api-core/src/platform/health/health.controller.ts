@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
-import { API_PREFIX, type HealthStatus } from '@smart/contracts';
-import { collectMetrics, METRICS_CONTENT_TYPE } from '@smart/observability';
+import { API_PREFIX, type HealthStatus } from '@hirekiwi/contracts';
+import { collectMetrics, METRICS_CONTENT_TYPE } from '@hirekiwi/observability';
 import { Public } from '../../common/guards/public.decorator.js';
 import { env } from '../config/env.js';
 import { PrismaService } from '../prisma/prisma.service.js';

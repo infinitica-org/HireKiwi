@@ -73,7 +73,7 @@ export const CONTENT = {
       heading: 'Institution Administrator Invitation',
       salutation: `Dear ${s.tpoInvite.fullName},`,
       paragraphs: [
-        `You have been formally invited to administer <strong>${s.tpoInvite.institutionName}</strong>'s placement operations on the SMART platform.`,
+        `You have been formally invited to administer <strong>${s.tpoInvite.institutionName}</strong>'s placement operations on the HireKiwi platform.`,
         `Please use the secure link below to set your password and activate your administrator account.`,
       ],
       infoRows: [
@@ -128,7 +128,7 @@ export const CONTENT = {
       heading: 'Student Account Invitation',
       salutation: `Dear ${s.studentInvite.fullName},`,
       paragraphs: [
-        `You have been invited to join <strong>${s.studentInvite.institutionName}</strong> on the SMART platform as part of ${s.studentInvite.batchName}.`,
+        `You have been invited to join <strong>${s.studentInvite.institutionName}</strong> on the HireKiwi platform as part of ${s.studentInvite.batchName}.`,
         `Please set your password using the secure link below to complete your registration.`,
       ],
       infoRows: [

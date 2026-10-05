@@ -6,7 +6,7 @@ import {
   proficiencyLevelUiLabel,
   type CandidateMatchDto,
   type SkillFitRow,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { potentialFitLabel } from '../../lib/matching-display';
 import { cardClass, chipClass, mutedTextClass, sectionLabelClass } from '../../lib/tpo-ui';
 import { ProficiencyLevelCircles } from './proficiency-level-ui';

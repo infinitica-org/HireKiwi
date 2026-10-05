@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { TransferSkillRow } from '@smart/contracts';
+import type { TransferSkillRow } from '@hirekiwi/contracts';
 
 export interface TransferSkillsDisplayProps {
   transferSkills: TransferSkillRow[];

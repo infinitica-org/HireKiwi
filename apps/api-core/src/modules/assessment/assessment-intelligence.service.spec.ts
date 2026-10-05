@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AssessmentIntelligenceService } from './assessment-intelligence.service.js';
-import { getSkillBlueprint } from '@smart/contracts';
+import { getSkillBlueprint } from '@hirekiwi/contracts';
 
 describe('AssessmentIntelligenceService', () => {
   const service = new AssessmentIntelligenceService();

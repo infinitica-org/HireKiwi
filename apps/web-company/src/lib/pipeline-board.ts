@@ -5,8 +5,8 @@ import {
   canTransition,
   type ApplicationStatus,
   type EmployerApplicantCard,
-} from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+} from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 
 /**
  * Pipeline board logic (Th6-414). Which columns exist and which moves are offered comes from the shared

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Check, ChevronRight, X } from 'lucide-react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import {
   PROFILE_AREA_HREFS,
   PROFILE_AREA_IDS,

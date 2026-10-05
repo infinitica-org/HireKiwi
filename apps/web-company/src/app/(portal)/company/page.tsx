@@ -9,7 +9,7 @@ import {
   COMPANY_INDUSTRIES,
   MAX_ADDITIONAL_LOCATIONS,
   type CompanyProfile,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   Alert,
   ErrorState,
@@ -17,8 +17,8 @@ import {
   FormMessage,
   LoadingState,
   VerifiedBadge,
-} from '@smart/ui';
-import { isSmartApiError } from '@smart/api-client';
+} from '@hirekiwi/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import {
   EMPLOYEE_COUNT_OPTIONS,

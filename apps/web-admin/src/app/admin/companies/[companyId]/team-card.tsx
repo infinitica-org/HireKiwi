@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { describeApiError } from '@smart/api-client';
-import type { CompanyMember } from '@smart/contracts';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { describeApiError } from '@hirekiwi/api-client';
+import type { CompanyMember } from '@hirekiwi/contracts';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 import {
   AdminInput,
   DataTable,

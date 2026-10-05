@@ -1,4 +1,4 @@
-import { SMART_TOPICS, type CredentialVerifiedEvent } from '@smart/contracts';
+import { SMART_TOPICS, type CredentialVerifiedEvent } from '@hirekiwi/contracts';
 import type { KafkaOutboxService } from '../../../platform/kafka/kafka-outbox.service.js';
 
 /**

@@ -80,7 +80,7 @@ That: installs deps → starts data plane → Prisma generate → migrate → se
 $env:Path = "$env:APPDATA\npm;" + $env:Path
 
 pnpm install
-pnpm --filter @smart/contracts build
+pnpm --filter @hirekiwi/contracts build
 
 # Docker data plane only (NOT the Next/API images)
 pnpm infra:up
@@ -130,7 +130,7 @@ pnpm dev:web
 Or one portal:
 
 ```powershell
-pnpm --filter @smart/web-student dev
+pnpm --filter @hirekiwi/web-student dev
 ```
 
 ### Seeded logins (local only)
@@ -208,7 +208,7 @@ Branch / commit / PR rules: `CONTRIBUTING.md` and `.cursor/rules/09-commits-and-
 | `ERR_PNPM_UNSUPPORTED_ENGINE` Got 9.x      | Pull latest; `infra:*`/`db:*` auto-reexec. For installs / permanent fix — §0                    |
 | `/ready` redis down / ioredis `ECONNRESET` | Confirm `REDIS_URL=…6380` and `pnpm infra:up`; don’t use host 6379 on Windows                   |
 | TPO / `:3002` “protocol violation”         | Another process on 3002 (e.g. misconfigured local Redis). Free the port.                        |
-| Frontends unstyled                         | Pull latest (Tailwind `@source` for `@smart/ui`). Restart `pnpm dev:web`. Hard-refresh browser. |
+| Frontends unstyled                         | Pull latest (Tailwind `@source` for `@hirekiwi/ui`). Restart `pnpm dev:web`. Hard-refresh browser. |
 | `/health` 500 / Reflector undefined        | Pull latest API DI `@Inject` fixes; restart `pnpm dev:api`                                      |
 | `EADDRINUSE` on 3000–3004                  | Stop the other Node/Docker process using that port                                              |
 | `pnpm bootstrap` fails on Windows          | Use Git Bash/WSL **or** §3 manual steps                                                         |

@@ -9,7 +9,7 @@ import {
   type SeSkillLibraryResponse,
   type SkillLibraryResponse,
   type TrackDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { passThresholdsFor } from './skill-pass-thresholds.js';
 /** Scalar fields only — never select Unsupported("vector") embedding. */

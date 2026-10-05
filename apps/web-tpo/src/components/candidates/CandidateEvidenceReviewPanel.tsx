@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import type {
   CandidateEvidenceProvenanceResponse,
   EvidenceProvenanceItemDto,
   EvidenceReviewDecision,
   ReviewEvidenceResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api } from '../../lib/api';
 import {
   bentoCompactCardClass,

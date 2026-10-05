@@ -1,7 +1,7 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { SMART_TOPICS, TrackUpdatedEventSchema } from '@smart/contracts';
-import { runKafkaHandler } from '@smart/observability';
+import { SMART_TOPICS, TrackUpdatedEventSchema } from '@hirekiwi/contracts';
+import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../config/env.js';
 import { RedisService } from '../redis/redis.service.js';
 import { KafkaService } from './kafka.service.js';

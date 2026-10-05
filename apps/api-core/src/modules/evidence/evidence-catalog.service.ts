@@ -8,7 +8,7 @@ import {
   type RecommendedSkillsResponse,
   type SkillBlueprintDto,
   type TargetRoleDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 @Injectable()

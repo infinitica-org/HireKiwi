@@ -1,5 +1,5 @@
 /**
- * @smart/prompts — immutable, versioned LLM prompt registry.
+ * @hirekiwi/prompts — immutable, versioned LLM prompt registry.
  *
  * Two rules make this package worth existing:
  *

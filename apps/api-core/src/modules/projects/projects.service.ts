@@ -19,7 +19,7 @@ import {
   type ProjectDocumentDto,
   type ProjectDto,
   type ReplaceProjectResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

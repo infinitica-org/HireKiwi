@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Award, Calendar, CheckCircle2, FileText, Sparkles, Clock } from 'lucide-react';
-import type { CandidateCertificateDto } from '@smart/contracts';
+import type { CandidateCertificateDto } from '@hirekiwi/contracts';
 
 import {
   certificateManageCtaLabel,

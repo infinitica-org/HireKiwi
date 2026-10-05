@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { GetSkillLevelExplanationResponse } from '@smart/contracts';
-import { AiExplanationPanel } from '@smart/ui';
+import type { GetSkillLevelExplanationResponse } from '@hirekiwi/contracts';
+import { AiExplanationPanel } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { friendlyExplanation } from '@/lib/friendly-skill-copy';
 

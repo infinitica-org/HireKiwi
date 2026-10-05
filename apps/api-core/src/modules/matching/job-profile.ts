@@ -4,7 +4,7 @@ import {
   getSkillBlueprint,
   type EmphasisedCapability,
   type SkillRequirement,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   PROFICIENCY_RANK,
   type SkillCapabilityJob,

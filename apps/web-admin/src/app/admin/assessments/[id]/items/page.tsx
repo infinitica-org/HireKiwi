@@ -1,12 +1,12 @@
 'use client';
 
-import type { AdminCutScoreDto, AdminItemDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { AdminCutScoreDto, AdminItemDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { Award, FileQuestion, Send } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Button } from '@smart/ui/button';
-import { Badge } from '@smart/ui/badge';
+import { Button } from '@hirekiwi/ui/button';
+import { Badge } from '@hirekiwi/ui/badge';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

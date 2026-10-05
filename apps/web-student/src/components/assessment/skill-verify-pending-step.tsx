@@ -6,8 +6,8 @@ import type {
   GradeSdeSkillFormResponse,
   SkillVerifyInterviewDto,
   SkillVerifySessionDto,
-} from '@smart/contracts';
-import { Alert, Button } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Alert, Button } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { CompetencyResultsGrid } from './competency-results-grid';
 import { SkillEvidenceContextPanel } from './skill-evidence-context-panel';

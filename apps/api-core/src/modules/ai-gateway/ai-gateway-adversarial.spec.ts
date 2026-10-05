@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type AiCompletionRequest } from '@smart/contracts';
-import { barsL3Template } from '@smart/prompts';
-import { cohensKappa } from '@smart/scoring-engine';
+import { type AiCompletionRequest } from '@hirekiwi/contracts';
+import { barsL3Template } from '@hirekiwi/prompts';
+import { cohensKappa } from '@hirekiwi/scoring-engine';
 import { Effect } from 'effect';
 import { AnthropicAdapter } from './adapters/anthropic.adapter.js';
 import { GoogleAdapter } from './adapters/google.adapter.js';

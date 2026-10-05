@@ -11,10 +11,10 @@ TEST_DATA_USERS="${TEST_DATA_USERS:-200}"
 TEST_DATA_TRACK_CODE="${TEST_DATA_TRACK_CODE:-TECH_FULLSTACK}"
 
 echo "[seed-test-data] Base seed (tracks/levels/items/demo accounts)..."
-pnpm --filter @smart/api-core db:seed
+pnpm --filter @hirekiwi/api-core db:seed
 
 echo "[seed-test-data] $TEST_DATA_USERS load-test student accounts on $TEST_DATA_TRACK_CODE..."
 TEST_DATA_USERS="$TEST_DATA_USERS" TEST_DATA_TRACK_CODE="$TEST_DATA_TRACK_CODE" \
-  pnpm --filter @smart/api-core db:seed:load-test
+  pnpm --filter @hirekiwi/api-core db:seed:load-test
 
 echo "[seed-test-data] Done. Data file: tools/load-tests/src/data/users.json"

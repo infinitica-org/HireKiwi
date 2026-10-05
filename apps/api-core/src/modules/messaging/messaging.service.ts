@@ -18,7 +18,7 @@ import {
   type StartConversationRequest,
   type UnreadCountResponse,
   type DeleteMessageResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';

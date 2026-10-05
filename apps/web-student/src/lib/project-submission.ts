@@ -2,7 +2,7 @@ import {
   CreateProjectRequestSchema,
   type CreateProjectRequest,
   type ProjectDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 import { stackLabelFromSkillCodes } from '@/lib/project-form-skills';
 

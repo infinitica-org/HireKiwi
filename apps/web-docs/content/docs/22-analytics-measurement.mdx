@@ -5,7 +5,7 @@ description: Product analytics telemetry, North Star KPIs, cohort metrics, and e
 
 ## 22.1 Telemetry Architecture
 
-SmartKiwi captures behavioral, operational, and system performance telemetry via Redpanda event streams consumed by ClickHouse and visualized in Grafana:
+HireKiwi captures behavioral, operational, and system performance telemetry via Redpanda event streams consumed by ClickHouse and visualized in Grafana:
 
 ```
 [Web / API Event] ──► [Redpanda: telemetry.events.v1] ──► [ClickHouse OLAP] ──► [Grafana Dashboards]

@@ -27,7 +27,7 @@ import {
   type RoleSkillRow,
   type SkillDemonstrationRow,
   type StudentReadinessSummary,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 const SKILL_NAME_BY_CODE = new Map(SKILL_DEFINITIONS.map((skill) => [skill.code, skill.name]));

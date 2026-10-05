@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import type { FetchGithubProfileResponse } from '@smart/contracts';
+import type { FetchGithubProfileResponse } from '@hirekiwi/contracts';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import type { OnboardingProfileForm } from '@/lib/onboarding-form';
 
@@ -14,7 +14,7 @@ interface SocialVerificationProps {
   ) => void;
 }
 
-// lucide-react dropped brand/logo glyphs; these mirror @smart/ui's
+// lucide-react dropped brand/logo glyphs; these mirror @hirekiwi/ui's
 // candidate-profile-card icons so GitHub/LinkedIn read consistently everywhere.
 function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
   return (

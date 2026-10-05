@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CandidateMatchDto } from '@smart/contracts';
+import type { CandidateMatchDto } from '@hirekiwi/contracts';
 
 import { CandidateSuggestionCard } from './CandidateSuggestionCard';
 

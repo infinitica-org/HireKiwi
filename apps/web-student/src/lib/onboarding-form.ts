@@ -10,8 +10,8 @@ import type {
   SkillDiscovery,
   SocialVerification,
   WorkMode,
-} from '@smart/contracts';
-import { OnboardingStepIdSchema } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import { OnboardingStepIdSchema } from '@hirekiwi/contracts';
 import { SKILL_CODE_TO_NAME } from './skills-catalog';
 
 /** Narrows a free-form persisted string to a valid wizard step id, or undefined. */

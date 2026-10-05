@@ -18,7 +18,7 @@ import {
   type SkillProficiency,
   type SkillRequirement,
   type UpdateEmployerJobRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Queue } from 'bullmq';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';

@@ -6,7 +6,7 @@ import { jsonOnly } from '../shared.js';
  * Candidate gap report narrative.
  *
  * The scores and gaps are already computed deterministically by
- * `@smart/scoring-engine`; this prompt only turns them into something a
+ * `@hirekiwi/scoring-engine`; this prompt only turns them into something a
  * twenty-two-year-old will read and act on. It is given numbers and forbidden
  * from inventing new ones, so the narrative can never disagree with the
  * certificate.

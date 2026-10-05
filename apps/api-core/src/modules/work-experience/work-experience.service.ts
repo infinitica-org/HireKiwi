@@ -37,7 +37,7 @@ import type {
   UpdateWorkExperienceDto,
   WorkExperienceValidationInput,
   WorkExperienceProofReasonCode,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   CreateWorkExperienceSchema,
   CreateWorkExperienceDocumentSchema,
@@ -62,7 +62,7 @@ import {
   isInvalidEmploymentProofClassification,
   INVALID_EMPLOYMENT_PROOF_MESSAGE,
   deriveWorkExperienceNextAction,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

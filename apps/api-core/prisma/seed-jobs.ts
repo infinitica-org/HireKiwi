@@ -1,7 +1,7 @@
 import { loadDotenv } from '../src/platform/config/load-dotenv.js';
 
 loadDotenv();
-import { SKILL_DEFINITIONS } from '@smart/contracts';
+import { SKILL_DEFINITIONS } from '@hirekiwi/contracts';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/index.js';
 

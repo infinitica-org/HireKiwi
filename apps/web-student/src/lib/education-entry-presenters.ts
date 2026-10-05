@@ -1,4 +1,4 @@
-import type { CandidateEducationDto } from '@smart/contracts';
+import type { CandidateEducationDto } from '@hirekiwi/contracts';
 
 const PROGRAM_DISPLAY: Record<string, string> = {
   '10th Standard': 'Secondary (10th)',

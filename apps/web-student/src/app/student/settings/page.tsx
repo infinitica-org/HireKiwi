@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { Database, Eye, MessageSquare, UserRound, type LucideIcon } from 'lucide-react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import { DataRequestsCard } from '@/components/account/DataRequestsCard';
 import { DeactivateAccountCard } from '@/components/account/DeactivateAccountCard';
 import { DiscoverabilityCard } from '@/components/account/DiscoverabilityCard';

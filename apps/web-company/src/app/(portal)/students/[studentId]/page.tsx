@@ -4,7 +4,7 @@ import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Award, Check, Send, ShieldCheck, Sparkles, User } from 'lucide-react';
 import { companyStudentsApi } from '../../../../lib/api';
-import type { CandidateMatchDto } from '@smart/contracts';
+import type { CandidateMatchDto } from '@hirekiwi/contracts';
 import { card, pageStack, primaryButton, secondaryButton, sectionTitle } from '../../../../lib/ui';
 
 export default function CandidateDetailPage({

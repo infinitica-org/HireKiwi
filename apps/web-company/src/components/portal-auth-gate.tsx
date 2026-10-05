@@ -1,8 +1,8 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { PORTAL_ROLES } from '@smart/api-client';
-import { RolesGuard, SessionBootstrap } from '@smart/ui';
+import { PORTAL_ROLES } from '@hirekiwi/api-client';
+import { RolesGuard, SessionBootstrap } from '@hirekiwi/ui';
 import { signOut } from '@/lib/auth';
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';

@@ -1,17 +1,12 @@
----
-title: 'SMART — UI/UX Design Brief'
-description: 'prd-v1 - SMART_UI_Design_Brief'
----
-
 # SMART — UI/UX Design Brief
 
 ### For Product Designers | Companion to the SMART PRD v1.0
 
-| Field          | Detail                                                                                  |
-| -------------- | --------------------------------------------------------------------------------------- |
-| Purpose        | Give designers a screen-by-screen map of every feature, state, and flow needed per role |
-| Companion docs | `SMART_PRD_v1.md`, architecture/process diagrams, dashboard wireframes already shared   |
-| Priority tags  | **[M]** Must-have V1 · **[S]** Should-have V1 · **[V2]** Phase 2 · **[V3]** Phase 3     |
+| Field          | Detail                                                                                   |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| Purpose        | Give designers a screen-by-screen map of every feature, state, and flow needed per role  |
+| Companion docs | `HireKiwi_PRD_v1.md`, architecture/process diagrams, dashboard wireframes already shared |
+| Priority tags  | **[M]** Must-have V1 · **[S]** Should-have V1 · **[V2]** Phase 2 · **[V3]** Phase 3      |
 
 ---
 

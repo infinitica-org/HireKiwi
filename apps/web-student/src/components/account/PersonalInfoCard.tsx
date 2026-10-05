@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@smart/ui';
-import { isSmartApiError } from '@smart/api-client';
-import { UpdatePersonalInfoRequestSchema } from '@smart/contracts';
+import { useQuery, useQueryClient } from '@hirekiwi/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { UpdatePersonalInfoRequestSchema } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import { fieldClass, primaryButtonClass, SettingsCard, StatusMessage } from './account-ui';
 

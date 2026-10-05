@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Plus, ExternalLink, ArrowLeft, Award, FileText } from 'lucide-react';
-import { useQuery } from '@smart/ui';
+import { useQuery } from '@hirekiwi/ui';
 import { PageHeader, Surface, EmptyState } from '@/components/dashboard/ConsoleChrome';
 import { CertificateStatusBadge } from '@/components/certificates/certificate-status-badge';
 import { api } from '@/lib/api';

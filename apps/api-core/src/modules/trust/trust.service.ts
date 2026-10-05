@@ -23,7 +23,7 @@ import type {
   ReverseEnforcementRequestDto,
   SubmitTrustAppealRequestDto,
   SubmitTrustReportRequestDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 @Injectable()
 export class TrustService {

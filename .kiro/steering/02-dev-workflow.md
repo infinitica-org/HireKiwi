@@ -57,7 +57,7 @@ pnpm format:check
 ## Ownership & scope
 
 - Edit paths owned by the active engineer (see `TEAM.md` / `.cursor/kb/ownership.md`).
-- Cross-module types: PR to `@smart/contracts` **first**, wait for merge, then implement.
+- Cross-module types: PR to `@hirekiwi/contracts` **first**, wait for merge, then implement.
 - Tino writes **no** feature code; agents must not invent feature work under his name.
 
 ## Backlog / issues

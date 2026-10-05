@@ -28,7 +28,7 @@ Do not merge into another owner's module without their review. Open a PR.
 
 ## Contract-first
 
-1. Cross-module types live only in `@smart/contracts`.
+1. Cross-module types live only in `@hirekiwi/contracts`.
 2. Consumer proposes schema → Tino merges → implement in parallel against the merged type.
 3. No parallel DTOs. No `any` / `as unknown as` at boundaries.
 4. Every route declares RBAC + rate-limit policy. Unlimited endpoints do not ship.

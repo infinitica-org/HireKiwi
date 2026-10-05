@@ -1,4 +1,4 @@
-import { CreateEmployerJobRequestSchema, SKILL_CODES } from '@smart/contracts';
+import { CreateEmployerJobRequestSchema, SKILL_CODES } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IDS } from '../company-profile/test-utils.js';
 import { EmployerJobsService } from './employer-jobs.service.js';

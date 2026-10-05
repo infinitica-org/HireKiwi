@@ -7,7 +7,7 @@ import type {
   AiUsageSummaryDto,
   InstitutionDto,
   CompanyDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 import { PageHeader } from '@/components/page-header';
 import { InlineAlert, PageStack } from '@/components/admin-ui';

@@ -1,4 +1,4 @@
-import type { ConfidenceNoteDto } from '@smart/contracts';
+import type { ConfidenceNoteDto } from '@hirekiwi/contracts';
 import { Alert } from './alert';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 

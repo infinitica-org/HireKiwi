@@ -1,8 +1,8 @@
-# SmartKiwi (SMART) — Repository Structure & Architecture Reference
+# HireKiwi — Repository Structure & Architecture Reference
 
 > **Status:** Adopted
 > **Maintainer:** System Architect
-> **Purpose:** Authoritative reference for the SmartKiwi monorepo layout, technology stack, and the rationale behind the primary architectural decisions. For backend module boundaries and service topology, see [`SERVICES_VIEW.md`](./SERVICES_VIEW.md). For per-module and per-engineer ownership, see [`TEAM.md`](./TEAM.md). Authoritative living documentation maintained in `@smart/web-docs` (port 3008/3028).
+> **Purpose:** Authoritative reference for the HireKiwi monorepo layout, technology stack, and the rationale behind the primary architectural decisions. For backend module boundaries and service topology, see [`SERVICES_VIEW.md`](./SERVICES_VIEW.md). For per-module and per-engineer ownership, see [`TEAM.md`](./TEAM.md). Authoritative living documentation maintained in `@hirekiwi/web-docs` (port 3008/3028).
 
 ---
 
@@ -127,10 +127,10 @@ smart/
 │
 ├── packages/                       # Shared internal libraries
 │   ├── api-client/                 # Typed HTTP client for the SMART API (contract-validated)
-│   ├── config-eslint/              # Shared ESLint 9 flat config (`@smart/eslint-config`)
-│   ├── config-next/                # Shared Next.js configuration (`@smart/next-config`)
-│   ├── config-tailwind/            # Shared Tailwind CSS 4 theme tokens (`@smart/tailwind-config`)
-│   ├── config-typescript/          # Shared base tsconfig (`@smart/tsconfig`)
+│   ├── config-eslint/              # Shared ESLint 9 flat config (`@hirekiwi/eslint-config`)
+│   ├── config-next/                # Shared Next.js configuration (`@hirekiwi/next-config`)
+│   ├── config-tailwind/            # Shared Tailwind CSS 4 theme tokens (`@hirekiwi/tailwind-config`)
+│   ├── config-typescript/          # Shared base tsconfig (`@hirekiwi/tsconfig`)
 │   ├── contracts/                  # Cross-module contracts: domain enums, DTOs, Zod schemas,
 │   │                               #   Kafka event payloads — the integration boundary
 │   ├── observability/              # Structured logging, PII redaction, correlation IDs,
@@ -152,7 +152,7 @@ smart/
 │   │                               #   definition of done, engineer onboarding
 │   ├── engineering/                # Engineering notes and tracked technical debt
 │   ├── product/                    # Product requirements and roadmap
-│   └── SMART_Blueprint_<Role>.md   # Per-role certification blueprint documents
+│   └── HireKiwi_Blueprint_<Role>.md   # Per-role certification blueprint documents
 │
 ├── tools/                          # Internal tooling
 │   ├── backlog/

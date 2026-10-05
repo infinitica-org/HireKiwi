@@ -3,7 +3,7 @@ import {
   CreateCareerEventSchema,
   DecideCampusAccessRequestSchema,
   UpdateCareerEventSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { withIdempotencyLedger } from '../company-profile/test-utils.js';
 import { parseEventVersion } from './university-events.controller.js';

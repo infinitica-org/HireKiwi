@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 
 type Slide = { title: string; body: string; ctaLabel: string; href: string };
 

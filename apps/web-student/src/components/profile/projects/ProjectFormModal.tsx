@@ -1,7 +1,7 @@
 'use client';
 
-import type { GithubRepoSummary } from '@smart/contracts';
-import { Input } from '@smart/ui';
+import type { GithubRepoSummary } from '@hirekiwi/contracts';
+import { Input } from '@hirekiwi/ui';
 import { GitBranch, Loader2, PenLine, X } from 'lucide-react';
 import { GithubImportPanel } from '@/components/profile/projects/GithubImportPanel';
 import { ProjectSkillsPicker } from '@/components/profile/projects/ProjectSkillsPicker';

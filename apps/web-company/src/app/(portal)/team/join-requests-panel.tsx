@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { isSmartApiError } from '@smart/api-client';
-import type { CompanyJoinRequestDto } from '@smart/contracts';
-import { Alert } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { CompanyJoinRequestDto } from '@hirekiwi/contracts';
+import { Alert } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { input, primaryButton, secondaryButton } from '../../../lib/ui';
 

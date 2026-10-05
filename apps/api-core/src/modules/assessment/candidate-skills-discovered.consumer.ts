@@ -6,8 +6,8 @@ import {
   SKILL_DEFINITIONS,
   SMART_TOPICS,
   type LanguageBreakdownEntry,
-} from '@smart/contracts';
-import { runKafkaHandler } from '@smart/observability';
+} from '@hirekiwi/contracts';
+import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import { KafkaService } from '../../platform/kafka/kafka.service.js';
 import { AssessmentService } from './assessment.service.js';

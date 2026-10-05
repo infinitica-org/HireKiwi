@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import { ApiErrorSchema, isSessionHoldCode } from '@smart/contracts';
+import { ApiErrorSchema, isSessionHoldCode } from '@hirekiwi/contracts';
 import {
   SmartApiError,
   SmartContractViolationError,

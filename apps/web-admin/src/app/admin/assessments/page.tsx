@@ -1,11 +1,11 @@
 'use client';
 
-import type { AdminLevelDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { AdminLevelDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Button } from '@smart/ui/button';
+import { Button } from '@hirekiwi/ui/button';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

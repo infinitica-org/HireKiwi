@@ -1,4 +1,4 @@
-import { ATS_STAGES, type AtsStage, type CandidateApplicationDto } from '@smart/contracts';
+import { ATS_STAGES, type AtsStage, type CandidateApplicationDto } from '@hirekiwi/contracts';
 
 /** Poll interval for CO-T02 stage sync. TanStack Query stops this on unmount. */
 export const MY_APPLICATIONS_POLL_MS = 5_000;

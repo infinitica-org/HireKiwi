@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProjectDto } from '@smart/contracts';
+import type { ProjectDto } from '@hirekiwi/contracts';
 import { Plus } from 'lucide-react';
 import { ProjectCard } from '@/components/profile/projects/ProjectCard';
 import type { StackTagCount } from '@/lib/project-submission';

@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 
 export type IconTone = 'accent' | 'teal' | 'inverse' | 'muted';
 

@@ -7,7 +7,7 @@ import {
   profileHeadlineForUser,
   type AuthenticatedUser,
   type CandidateEducationDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 import { ProfilePhotoEditControl } from '@/components/profile/ProfilePhotoEditControl';
 import {

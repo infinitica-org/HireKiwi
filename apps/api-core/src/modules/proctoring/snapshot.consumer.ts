@@ -6,9 +6,9 @@ import {
   ProctoringSnapshotReadyEventSchema,
   SMART_TOPICS,
   type ProctoringViolationKind,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
-import { runKafkaHandler } from '@smart/observability';
+import { runKafkaHandler } from '@hirekiwi/observability';
 
 import { env } from '../../platform/config/env.js';
 

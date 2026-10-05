@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Briefcase, Clock, MapPin, Pencil, Plus, Search, Users } from 'lucide-react';
 import { companyJobsApi, formatApiError } from '../../../lib/api';
-import type { JobOpeningDto, JobOpeningStatus } from '@smart/contracts';
+import type { JobOpeningDto, JobOpeningStatus } from '@hirekiwi/contracts';
 
 type Filter = 'ALL' | JobOpeningStatus;
 

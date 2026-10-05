@@ -3,7 +3,7 @@
  *
  * One place where every path, its owner, its RBAC roles, its rate-limit policy
  * and its latency budget are declared together. This is what lets the architect
- * audit the whole HTTP surface in one file, and what lets `@smart/api-client`
+ * audit the whole HTTP surface in one file, and what lets `@hirekiwi/api-client`
  * stay in sync without guessing.
  *
  * Adding an endpoint means adding an entry here. An endpoint with no entry has

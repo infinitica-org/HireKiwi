@@ -1,7 +1,7 @@
 import type { DomainCode, TrackCategory, TrackCode, TrackLaunchStatus } from './enums.js';
 
 /**
- * The 10 SMART role tracks and their competency domains A–E.
+ * The 10 HireKiwi role tracks and their competency domains A–E.
  *
  * This registry is the shared reference used by:
  *   - Vedika G  — seeding `tracks` / `competencies` and authoring item banks
@@ -14,7 +14,7 @@ import type { DomainCode, TrackCategory, TrackCode, TrackLaunchStatus } from './
  * Weights are the default `real_world_weight` per domain and MUST sum to 1.0
  * per track. `content-pipeline validate` asserts this in CI.
  *
- * Source: ARCHITECTURE.md §8–9, docs/SMART_Blueprint_*.md
+ * Source: ARCHITECTURE.md §8–9, docs/HireKiwi_Blueprint_*.md
  */
 
 export interface DomainDefinition {
@@ -538,7 +538,7 @@ export const TRACK_DEFINITIONS: readonly TrackDefinition[] = [
 export function getTrackDefinition(code: TrackCode): TrackDefinition {
   const found = TRACK_DEFINITIONS.find((track) => track.code === code);
   if (!found) {
-    throw new Error(`Unknown SMART track code: ${code}`);
+    throw new Error(`Unknown HireKiwi track code: ${code}`);
   }
   return found;
 }

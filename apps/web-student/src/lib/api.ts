@@ -5,8 +5,8 @@ import {
   createSmartApi,
   createRefreshAccessToken,
   getAccessToken,
-} from '@smart/api-client';
-import { TRACK_CODES } from '@smart/contracts';
+} from '@hirekiwi/api-client';
+import { TRACK_CODES } from '@hirekiwi/contracts';
 import { isMockApiEnabled } from './l1-mcq';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';

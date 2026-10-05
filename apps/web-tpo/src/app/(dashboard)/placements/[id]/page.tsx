@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, Button } from '@smart/ui';
+import { Card, Button } from '@hirekiwi/ui';
 import { ArrowLeft, Building2, MapPin, Clock, Briefcase, Zap, CheckCircle2 } from 'lucide-react';
 
 const mockCandidates = [

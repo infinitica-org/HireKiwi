@@ -24,7 +24,7 @@ description: 'Delivery & Engineering Protocols - S6-RM-21-production-checklist'
 | ☐      | Redis + Bull workers running in prod (`qlix-poll`, `qlix-recalibration`, `skill-verify-grade` queues registered).                                                        |
 | ☐      | Deployment workflow + live smoke verified (not CI-green alone).                                                                                                          |
 
-**Last local audit (2026-09-18):** `@smart/api-core` typecheck green; `@smart/contracts` tests green (proctoring checkpoint reclassified ASYNC); defense / proctoring / pending-flow specs green; `skill-verify-exam` heading test aligned to catalog skill names.
+**Last local audit (2026-09-18):** `@hirekiwi/api-core` typecheck green; `@hirekiwi/contracts` tests green (proctoring checkpoint reclassified ASYNC); defense / proctoring / pending-flow specs green; `skill-verify-exam` heading test aligned to catalog skill names.
 
 ---
 
@@ -91,8 +91,8 @@ Document in deploy secrets / Vercel env for `web-student`.
 ### Automated tests (run before merge)
 
 ```bash
-pnpm --filter @smart/api-core test project-defense.service.spec.ts proctoring.service.spec.ts qlix-poll.service.spec.ts project-verify.heuristics.spec.ts
-pnpm --filter @smart/web-student test project-defense
+pnpm --filter @hirekiwi/api-core test project-defense.service.spec.ts proctoring.service.spec.ts qlix-poll.service.spec.ts project-verify.heuristics.spec.ts
+pnpm --filter @hirekiwi/web-student test project-defense
 ```
 
 ---
@@ -116,9 +116,9 @@ pnpm --filter @smart/web-student test project-defense
 | ☐ | Capability inference LLM output coerced (short `evidenceRefs`) — verify pipeline completes after QLIX on cred projects. |
 
 ```bash
-pnpm --filter @smart/api-core test skill-verification skill-verification-pending-flow capability-inference
-pnpm --filter @smart/prompts test capability-inference
-pnpm --filter @smart/web-student test skill-declarations skill-verify
+pnpm --filter @hirekiwi/api-core test skill-verification skill-verification-pending-flow capability-inference
+pnpm --filter @hirekiwi/prompts test capability-inference
+pnpm --filter @hirekiwi/web-student test skill-declarations skill-verify
 ```
 
 ---
@@ -136,7 +136,7 @@ pnpm --filter @smart/web-student test skill-declarations skill-verify
 
 ## 6. Security & abuse
 
-| ☐ | All new/changed routes in `@smart/contracts` `ROUTES` with roles + rate limits. |
+| ☐ | All new/changed routes in `@hirekiwi/contracts` `ROUTES` with roles + rate limits. |
 | ☐ | Defense audio keys scoped to `project-defense/{projectId}/`. |
 | ☐ | `assertAttemptOwner` resolves defense session via `project:defense:session:{id}` Redis key. |
 | ☐ | Skill-verify interview security spec green. |
@@ -146,7 +146,7 @@ pnpm --filter @smart/web-student test skill-declarations skill-verify
 ## 7. Observability
 
 | ☐ | Structured logs on defense complete, QLIX route decision, skill-verify grading failures. |
-| ☐ | Metrics: confirm any new counters from branch registered in `@smart/observability` and scraped in prod. |
+| ☐ | Metrics: confirm any new counters from branch registered in `@hirekiwi/observability` and scraped in prod. |
 | ☐ | AI gateway audit IDs persisted on examiner/grader calls where implemented. |
 
 ---

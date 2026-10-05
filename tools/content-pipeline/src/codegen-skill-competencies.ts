@@ -198,7 +198,7 @@ ${emitCompetencyModel(skill, profile)}
 
   const competencySource = `/**
  * AUTO-GENERATED from tools/content-pipeline/src/skill-registry-data.ts
- * Regenerate: pnpm --filter @smart/content-pipeline codegen:competencies
+ * Regenerate: pnpm --filter @hirekiwi/content-pipeline codegen:competencies
  * DO NOT EDIT MANUALLY.
  */
 import type { SkillBlueprint } from '../domain/evidence/skill-blueprint.js';
@@ -212,7 +212,7 @@ export const SKILL_COMPETENCY_CODES = Object.keys(SKILL_COMPETENCY_INDEX);
 
   const assessmentSource = `/**
  * AUTO-GENERATED from tools/content-pipeline/src/skill-registry-data.ts
- * Regenerate: pnpm --filter @smart/content-pipeline codegen:competencies
+ * Regenerate: pnpm --filter @hirekiwi/content-pipeline codegen:competencies
  * DO NOT EDIT MANUALLY.
  */
 import type { SkillAssessmentSpec } from '../domain/skill-assessment-spec.js';

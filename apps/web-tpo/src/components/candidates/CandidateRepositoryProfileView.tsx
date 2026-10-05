@@ -6,8 +6,8 @@ import {
   proficiencyLevelUiLabel,
   type InstitutionStudentDto,
   type SkillClaimDto,
-} from '@smart/contracts';
-import { VerificationBadge } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { VerificationBadge } from '@hirekiwi/ui';
 import { categoryNameForSkillCode } from '../../lib/skill-taxonomy';
 import { CompetencyBreakdown } from '../competency-breakdown';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SKILL_TAXONOMY_VERSION } from '@smart/contracts';
+import { SKILL_TAXONOMY_VERSION } from '@hirekiwi/contracts';
 import { CatalogController } from '../catalog.controller.js';
 import type { CatalogService } from '../catalog.service.js';
 import type { EvidenceCatalogService } from '../../evidence/evidence-catalog.service.js';

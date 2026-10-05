@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@smart/ui';
+import { useQuery } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 
 export const STUDENT_DASHBOARD_QUERY_KEY = ['me', 'dashboard'] as const;

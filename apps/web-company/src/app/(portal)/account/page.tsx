@@ -6,7 +6,7 @@ import {
   AccountErrorPanel,
   AccountLoadingPanel,
 } from '@/components/account-state-panel';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 
 export default function CompanyAccountPage() {
   const { data, isLoading, isError, error } = useCompanyAccount();

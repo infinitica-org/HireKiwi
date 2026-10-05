@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
-import { isSmartApiError, queryKeys } from '@smart/api-client';
-import type { AuthenticatedUser } from '@smart/contracts';
-import { useQueryClient } from '@smart/ui';
+import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import type { AuthenticatedUser } from '@hirekiwi/contracts';
+import { useQueryClient } from '@hirekiwi/ui';
 
 import { CandidateAvatar } from '@/components/profile/CandidateAvatar';
 import { api } from '@/lib/api';

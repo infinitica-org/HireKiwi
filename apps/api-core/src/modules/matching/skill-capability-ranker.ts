@@ -16,7 +16,7 @@ import {
   type MatchEvidenceSource,
   type PotentialFit,
   type TransferSkillReason,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export const SKILL_CAPABILITY_RANKER_VERSION = 'v1.2.0' as const;
 

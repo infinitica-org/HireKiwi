@@ -13,11 +13,11 @@ import {
   X,
   Plus,
 } from 'lucide-react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '@/lib/api';
 import { skillNameForCode, categoryNameForCode } from '@/lib/skill-declarations';
-import type { SkillClaimDto } from '@smart/contracts';
+import type { SkillClaimDto } from '@hirekiwi/contracts';
 
 // Detect if a skill is under verification (assessment taken but result pending)
 function isUnderVerification(claim: SkillClaimDto | undefined): boolean {

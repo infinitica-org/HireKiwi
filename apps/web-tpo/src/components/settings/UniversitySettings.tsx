@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, Globe, Lock, Plus, Trash2 } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import type { PlacementEmployerSummary, TenantEntitlementsDto } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { PlacementEmployerSummary, TenantEntitlementsDto } from '@hirekiwi/contracts';
 import { StaffManagementWorkspace } from '../staff/StaffManagementWorkspace';
 import { CampusesSection } from './CampusesSection';
 

@@ -28,7 +28,7 @@ import {
   type UpdateCertificateLearningRequest,
   type VoidCandidateCertificateResponse,
   type VoidRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { certRetryAvailableAt } from '../assessment/cert-assessment-state-machine.js';
 import { env } from '../../platform/config/env.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';

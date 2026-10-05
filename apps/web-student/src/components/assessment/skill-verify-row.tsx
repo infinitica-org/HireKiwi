@@ -1,7 +1,7 @@
 'use client';
 
-import { Button, VerificationBadge } from '@smart/ui';
-import { skillFocusOptions, type SkillClaimDto } from '@smart/contracts';
+import { Button, VerificationBadge } from '@hirekiwi/ui';
+import { skillFocusOptions, type SkillClaimDto } from '@hirekiwi/contracts';
 import { formatRetryAt, viewForFocus } from '@/lib/skill-declarations';
 import { nativeOptionClass, nativeSelectClass } from '@/lib/native-select';
 

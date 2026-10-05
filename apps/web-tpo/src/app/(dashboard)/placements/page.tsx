@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { isSmartApiError } from '@smart/api-client';
-import type { JobOpeningDto, JobOpeningStatus } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { JobOpeningDto, JobOpeningStatus } from '@hirekiwi/contracts';
 import {
   Briefcase,
   Building2,

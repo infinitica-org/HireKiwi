@@ -10,8 +10,8 @@ import {
   LoadingState,
   VerifiedBadge,
   getInitials,
-} from '@smart/ui';
-import type { CampusAccessRequestStatus, UniversityEmployerRequestRow } from '@smart/contracts';
+} from '@hirekiwi/ui';
+import type { CampusAccessRequestStatus, UniversityEmployerRequestRow } from '@hirekiwi/contracts';
 import { api } from '../../lib/api';
 import { ReasonConfirmDialog } from './ReasonConfirmDialog';
 

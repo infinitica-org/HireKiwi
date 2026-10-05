@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { BlockedUsersList } from '@smart/ui';
+import { BlockedUsersList } from '@hirekiwi/ui';
 
 /** Th6-427 — Settings → Blocked users. */
 export default function BlockedUsersPage() {

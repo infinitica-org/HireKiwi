@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage, cn } from '@smart/ui';
+import { Avatar, AvatarFallback, AvatarImage, cn } from '@hirekiwi/ui';
 import { initialsOf } from '@/lib/candidate-identity';
 
 export interface CandidateAvatarProps {

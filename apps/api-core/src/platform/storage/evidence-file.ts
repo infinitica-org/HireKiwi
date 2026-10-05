@@ -7,7 +7,7 @@ import {
   fileExtension,
   type EvidenceFileMimeType,
   type EvidenceUploadUrlResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { assertFileClean } from './file-scanner.js';
 import type { StorageService } from './storage.service.js';
 

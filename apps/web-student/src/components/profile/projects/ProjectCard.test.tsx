@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ProjectDto } from '@smart/contracts';
+import type { ProjectDto } from '@hirekiwi/contracts';
 import { ProjectCard } from './ProjectCard';
 
 vi.mock('next/link', () => ({

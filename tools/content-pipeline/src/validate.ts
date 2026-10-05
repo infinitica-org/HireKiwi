@@ -8,7 +8,7 @@ import {
   assertDomainWeightsSumToOne,
   assertInfSeV1MatchesCanonical,
   assertSkillTaxonomyMatchesCanonical,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { ItemAuthoringSchema } from './schema.js';
 
 export const CONTENT_DATA_GLOB = 'data/**/*.json';

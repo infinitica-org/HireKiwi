@@ -11,7 +11,7 @@ description: 'Architecture Decision Records (ADR) - 0009-env-topology'
 
 ## Context
 
-The SMART platform requires high-availability zero-downtime releases, isolated development environments, hardened security, and a future-proof foundation for upcoming migration to AWS. Previous multi-server arrangements introduced coordination overhead, deployment contention, and maintenance sprawl. The infrastructure is unified onto a single dedicated High-End Linux VPS running Ubuntu 24.04 LTS, hosting both Dev and Prod under strict Docker Compose isolation, fronted by Caddy reverse proxy with Blue-Green deployment switching.
+The HireKiwi platform requires high-availability zero-downtime releases, isolated development environments, hardened security, and a future-proof foundation for upcoming migration to AWS. Previous multi-server arrangements introduced coordination overhead, deployment contention, and maintenance sprawl. The infrastructure is unified onto a single dedicated High-End Linux VPS running Ubuntu 24.04 LTS, hosting both Dev and Prod under strict Docker Compose isolation, fronted by Caddy reverse proxy with Blue-Green deployment switching.
 
 ## Decision
 
@@ -54,4 +54,4 @@ The SMART platform requires high-availability zero-downtime releases, isolated d
 
 - Automated Blue-Green deployment orchestrated via `scripts/blue-green-deploy.sh prod`.
 - Dev deployments run via `scripts/deploy-vps.sh dev`.
-- Comprehensive architecture and operational runbooks detailed in [`infra/vps/README.md`](../../infra/vps/README.md), [`docs/delivery/DATABASE.md`](../delivery/DATABASE.md), and `@smart/web-docs`.
+- Comprehensive architecture and operational runbooks detailed in [`infra/vps/README.md`](../../infra/vps/README.md), [`docs/delivery/DATABASE.md`](../delivery/DATABASE.md), and `@hirekiwi/web-docs`.

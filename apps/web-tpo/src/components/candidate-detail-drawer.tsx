@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { X, Info, User } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import type { InstitutionStudentDto, SkillClaimDto } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import { api } from '../lib/api';
 import { CandidateRepositoryProfileView } from './candidates/CandidateRepositoryProfileView';
 import { CandidateEvidenceReviewPanel } from './candidates/CandidateEvidenceReviewPanel';

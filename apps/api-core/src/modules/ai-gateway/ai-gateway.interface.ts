@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { AiModelRole, AiProvider } from '@smart/contracts';
+import type { AiModelRole, AiProvider } from '@hirekiwi/contracts';
 
 export interface ProviderHealthResult {
   readonly provider: AiProvider;

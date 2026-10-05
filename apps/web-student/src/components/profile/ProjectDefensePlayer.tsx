@@ -5,8 +5,8 @@ import type {
   PrepareProjectDefenseResponse,
   ProjectDto,
   StartProjectDefenseResponse,
-} from '@smart/contracts';
-import { Alert } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Alert } from '@hirekiwi/ui';
 import { Loader2 } from 'lucide-react';
 import { ProctoringShell } from '@/components/proctoring/proctoring-shell';
 import { ProjectDefenseInterviewPanel } from '@/components/profile/ProjectDefenseInterviewPanel';

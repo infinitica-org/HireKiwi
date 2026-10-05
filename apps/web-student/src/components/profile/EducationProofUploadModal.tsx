@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState } from 'react';
 import { FileText, Upload, X } from 'lucide-react';
-import type { CandidateEducationDocumentDto } from '@smart/contracts';
+import type { CandidateEducationDocumentDto } from '@hirekiwi/contracts';
 import { EVIDENCE_ACCEPT, EVIDENCE_MAX_MB, validateEvidenceFile } from '@/lib/evidence-upload';
 import {
   profilePrimaryButtonSmClass,

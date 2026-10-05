@@ -1,11 +1,11 @@
 import type { ComponentProps, ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { CircleAlert, Info } from 'lucide-react';
-import { cn } from '@smart/ui';
-import { Input } from '@smart/ui/input';
-import { Label } from '@smart/ui/label';
-import { Alert, AlertTitle } from '@smart/ui/alert';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@smart/ui/table';
+import { cn } from '@hirekiwi/ui';
+import { Input } from '@hirekiwi/ui/input';
+import { Label } from '@hirekiwi/ui/label';
+import { Alert, AlertTitle } from '@hirekiwi/ui/alert';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@hirekiwi/ui/table';
 
 /** Shared 36px/40px control surface — clean rounded-md border, high contrast. */
 export const controlClassName =

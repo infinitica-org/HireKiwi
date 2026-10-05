@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 
 const TABS = [
   { href: '/campus/requests', label: 'Requests' },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { GithubRepoSnapshot } from '@smart/contracts';
+import type { GithubRepoSnapshot } from '@hirekiwi/contracts';
 import {
   collectFlags,
   compositeProjectScore,

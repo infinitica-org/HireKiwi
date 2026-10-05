@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTIVE_TAXONOMY_VERSION } from '@smart/contracts';
+import { ACTIVE_TAXONOMY_VERSION } from '@hirekiwi/contracts';
 import { RuleBasedEncoder } from './rule-based.encoder.js';
 import { SkillDimensionResolver } from './skill-dimension.resolver.js';
 

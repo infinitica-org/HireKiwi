@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import smartTextImg from '@smart/ui/assets/images/Logos/WebP/samrt-text.png';
+import smartTextImg from '@hirekiwi/ui/assets/images/Logos/WebP/samrt-text.png';
 import { studentAppUrl } from '@/lib/portal-urls';
 
 export default function Footer() {

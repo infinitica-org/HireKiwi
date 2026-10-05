@@ -1,6 +1,6 @@
-# Contributing to SmartKiwi (SMART)
+# Contributing to HireKiwi
 
-**New engineer:** begin with [`apps/web-docs/content/docs/delivery/ENGINEER_START_CHECKLIST.mdx`](./apps/web-docs/content/docs/delivery/ENGINEER_START_CHECKLIST.mdx) — access provisioning, environment bootstrap, sign-off, first ticket, and pull-request workflow. Living documentation SSOT: `@smart/web-docs` (port 3008/3028).
+**New engineer:** begin with [`apps/web-docs/content/docs/delivery/ENGINEER_START_CHECKLIST.mdx`](./apps/web-docs/content/docs/delivery/ENGINEER_START_CHECKLIST.mdx) — access provisioning, environment bootstrap, sign-off, first ticket, and pull-request workflow. Living documentation SSOT: `@hirekiwi/web-docs` (port 3008/3028).
 
 Read the following in order before writing code:
 
@@ -19,7 +19,7 @@ Read the following in order before writing code:
 - **Branching policy** is authoritative in [`docs/delivery/BRANCHING.md`](./docs/delivery/BRANCHING.md). The `develop` branch name is deprecated.
 - **Quality gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm format:check` must pass before a pull request is opened. Git hooks are not bypassed (`--no-verify` is not used).
 - **Architecture review is mandatory.** The system architect role does not author feature code and reviews all cross-cutting changes; see [`.github/CODEOWNERS`](./.github/CODEOWNERS).
-- **Contract-first development.** Cross-module types live in `@smart/contracts`. Implementations target a merged contract type; parallel or ad hoc DTOs are not introduced.
+- **Contract-first development.** Cross-module types live in `@hirekiwi/contracts`. Implementations target a merged contract type; parallel or ad hoc DTOs are not introduced.
 - **One owner per path.** A contributor who does not own a path opens a pull request for the owner to review rather than merging into it directly.
 - **No unbounded endpoints.** Every route carries an explicit rate-limit policy and RBAC role set, declared in `packages/contracts/src/http/routes.ts`.
 - **Conventional Commits.** Format: `<type>(<scope>): <summary> (<TICKET>)`, with scopes defined in `commitlint.config.mjs`. Details: [`.cursor/rules/09-commits-and-prs.mdc`](./.cursor/rules/09-commits-and-prs.mdc).

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@smart/api-client';
+import { SmartApiError } from '@hirekiwi/api-client';
 import { emptyOnboardingForm } from '@/lib/onboarding-form';
 import SocialVerification from './SocialVerification';
 

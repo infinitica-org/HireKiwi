@@ -51,7 +51,7 @@ ENV NEXT_PUBLIC_TPO_URL=$NEXT_PUBLIC_TPO_URL
 ENV NEXT_PUBLIC_ADMIN_URL=$NEXT_PUBLIC_ADMIN_URL
 ENV NEXT_PUBLIC_COMPANY_URL=$NEXT_PUBLIC_COMPANY_URL
 
-RUN pnpm --filter @smart/${APP}... build
+RUN pnpm --filter @hirekiwi/${APP}... build
 
 # Some apps don't have public/
 RUN mkdir -p apps/${APP}/public

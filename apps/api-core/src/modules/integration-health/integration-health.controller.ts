@@ -1,6 +1,6 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { API_PREFIX, type IntegrationHealthResponse } from '@smart/contracts';
+import { API_PREFIX, type IntegrationHealthResponse } from '@hirekiwi/contracts';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import { IntegrationHealthService } from './integration-health.service.js';
 

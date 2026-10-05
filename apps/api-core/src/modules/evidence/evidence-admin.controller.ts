@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { API_PREFIX, ResolveEvidenceDisputeRequestSchema } from '@smart/contracts';
+import { API_PREFIX, ResolveEvidenceDisputeRequestSchema } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { TenantScope } from '../../common/decorators/tenant-id.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';

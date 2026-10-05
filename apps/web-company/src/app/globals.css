@@ -1,4 +1,4 @@
-@import '@smart/ui/styles.css';
+@import '@hirekiwi/ui/styles.css';
 
 @source '../**/*.{ts,tsx}';
 @source '../../../../packages/ui/src/**/*.{ts,tsx}';

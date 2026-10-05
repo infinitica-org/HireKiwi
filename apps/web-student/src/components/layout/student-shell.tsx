@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import { StudentSidebar } from './student-sidebar';
 import { StudentTopbar } from './student-topbar';
 import { OnboardingGate } from './OnboardingGate';

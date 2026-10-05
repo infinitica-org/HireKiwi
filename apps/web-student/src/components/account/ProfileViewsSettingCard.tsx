@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@smart/ui';
-import { isSmartApiError } from '@smart/api-client';
+import { useQuery, useQueryClient } from '@hirekiwi/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { STUDENT_DASHBOARD_QUERY_KEY } from '@/lib/use-student-dashboard';
 import { SettingsCard, StatusMessage } from './account-ui';

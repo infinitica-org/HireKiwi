@@ -1,7 +1,7 @@
 'use client';
 
 import { use } from 'react';
-import { ReportedConversationView } from '@smart/ui';
+import { ReportedConversationView } from '@hirekiwi/ui';
 import { PageHeader } from '@/components/page-header';
 import { PageStack } from '@/components/admin-ui';
 import { MessagingProvider } from '@/components/messaging-provider';

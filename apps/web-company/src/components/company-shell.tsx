@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import { CompanySidebar } from './company-sidebar';
 import { CompanyTopbar } from './company-topbar';
 

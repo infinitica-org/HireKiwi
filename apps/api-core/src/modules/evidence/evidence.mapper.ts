@@ -7,7 +7,7 @@ import type {
   SkillClaimEvidenceLinkDto,
   VerificationDecisionDto,
   WorkExperienceResponsibilityDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type {
   EvidenceArtifact,
   EvidenceRecord,

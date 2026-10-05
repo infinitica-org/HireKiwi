@@ -10,7 +10,7 @@ const { listConnections, connect, disconnect, invalidateQueries } = vi.hoisted((
 
 let connections: unknown[] = [];
 
-vi.mock('@smart/ui', () => ({
+vi.mock('@hirekiwi/ui', () => ({
   useQuery: () => ({ data: { connections }, isLoading: false }),
   useQueryClient: () => ({ invalidateQueries }),
 }));

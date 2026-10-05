@@ -20,7 +20,7 @@ import {
   type ListAdminItemsResponse,
   type ListAdminLevelsResponse,
   SMART_TOPICS,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { Prisma, type ItemType } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';

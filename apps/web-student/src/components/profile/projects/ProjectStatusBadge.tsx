@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProjectDto } from '@smart/contracts';
+import type { ProjectDto } from '@hirekiwi/contracts';
 import { AlertCircle, CheckCircle2, Clock, Loader2 } from 'lucide-react';
 import { needsOwnershipInterview, processingStateCopy } from '@/lib/project-submission';
 import {

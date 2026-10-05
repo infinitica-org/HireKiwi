@@ -139,14 +139,14 @@ Types: `feat` · `fix` · `chore` · `docs` · `refactor` · `test` · `perf`
 Before you code:
 
 - [ ] **Schema change?** → discuss with **Vishal V** first; only he runs `prisma migrate`
-- [ ] **Cross-module type?** → PR to `@smart/contracts` **first**; wait for Tino merge, then implement
+- [ ] **Cross-module type?** → PR to `@hirekiwi/contracts` **first**; wait for Tino merge, then implement
 - [ ] **Outside your owned paths?** → PR + module owner review ([`CODEOWNERS`](../../.github/CODEOWNERS))
 
 While coding:
 
 - [ ] Edit only paths you own (or agreed co-change in PR)
 - [ ] Every new route: rate-limit policy + RBAC in `packages/contracts/src/http/routes.ts`
-- [ ] No parallel DTOs — types live in `@smart/contracts`
+- [ ] No parallel DTOs — types live in `@hirekiwi/contracts`
 
 Before commit / PR — all must pass:
 
@@ -199,7 +199,7 @@ gh pr create --base dev \
 | Commit `.env` or secrets                   | Use `.env.example` + local `.env`       |
 | Treat local commits as “done”              | Open PR; no PR = not delivered          |
 | Write feature code as Tino                 | Tino reviews; he does not ship features |
-| Invent DTOs outside contracts              | `@smart/contracts` PR first             |
+| Invent DTOs outside contracts              | `@hirekiwi/contracts` PR first             |
 | Update Zoho item text                      | Edit `backlog.mjs` → `sync-github.mjs`  |
 | Run `prisma migrate dev` (unless Vishal V) | Open issue; Vishal batches migrations   |
 | Skip hooks (`--no-verify`)                 | Fix lint/test failures                  |

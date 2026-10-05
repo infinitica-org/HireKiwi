@@ -48,7 +48,7 @@ AUG 2026                                          SEP 2026
 
 | Sprint       | Window                  | Days | Sprint Goal (one sentence — if this isn't true at review, the sprint failed)                                                                                          |
 | ------------ | ----------------------- | :--: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Sprint 0** | Fri 21 Aug – Sun 23 Aug |  3   | Every one of the 6 engineers can run the full stack locally, and `@smart/contracts` v0.1 is merged and frozen.                                                        |
+| **Sprint 0** | Fri 21 Aug – Sun 23 Aug |  3   | Every one of the 6 engineers can run the full stack locally, and `@hirekiwi/contracts` v0.1 is merged and frozen.                                                        |
 | **Sprint 1** | Mon 24 Aug – Fri 28 Aug |  5   | A student can log in via SSO, be enrolled on a track, and see a real item bank served through a rate-limited API; the AI gateway answers with Gemini failover proven. |
 | **Sprint 2** | Sat 29 Aug – Wed 2 Sep  |  5   | A student can complete L1→L5 end to end and receive a calibrated tier for each level, graded by BARS with κ tracked.                                                  |
 | **Sprint 3** | Thu 3 Sep – Sun 6 Sep   |  4   | A TPO can post a structured JD, get a **rules-ranked** shortlist, and see cohort readiness; a completed track issues a certificate.                                   |
@@ -100,7 +100,7 @@ AUG 2026                                          SEP 2026
 1. One-sentence user-facing statement of value.
 2. Named single owner from `TEAM.md`.
 3. Acceptance criteria as a checklist, each item objectively verifiable.
-4. Contract impact stated: none, or a link to the `@smart/contracts` PR.
+4. Contract impact stated: none, or a link to the `@hirekiwi/contracts` PR.
 5. Estimate in points (1, 2, 3, 5, 8 — an 8 must be split before it enters a sprint).
 6. Dependencies listed by ticket ID, and those dependencies are already `Done` or in the same sprint.
 
@@ -109,7 +109,7 @@ AUG 2026                                          SEP 2026
 Full checklist in [`DEFINITION_OF_DONE.md`](./DEFINITION_OF_DONE.md). Summary — all must be true:
 
 - [ ] Acceptance criteria met and demoed on `dev`.
-- [ ] Types exported through `@smart/contracts`; no `any` at a module boundary.
+- [ ] Types exported through `@hirekiwi/contracts`; no `any` at a module boundary.
 - [ ] Unit tests on logic + integration tests on I/O; `pnpm test` green.
 - [ ] `pnpm lint && pnpm typecheck && pnpm build` green in CI.
 - [ ] Swagger decorators on new endpoints; rate-limit tier and RBAC roles declared.
@@ -127,7 +127,7 @@ Full checklist in [`DEFINITION_OF_DONE.md`](./DEFINITION_OF_DONE.md). Summary �
 | ID       | Ticket                                                                                                                                                      | Owner            | Pts | Pri |
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | :-: | :-: |
 | S0-TN-01 | Monorepo scaffold, workspace graph, `turbo.json`, shared tsconfig/eslint/prettier                                                                           | Tino             |  5  | P0  |
-| S0-TN-02 | `@smart/contracts` v0.1: tier/level/track/role enums, attempt & certificate DTOs, all 8 Kafka event payloads                                                | Tino             |  5  | P0  |
+| S0-TN-02 | `@hirekiwi/contracts` v0.1: tier/level/track/role enums, attempt & certificate DTOs, all 8 Kafka event payloads                                                | Tino             |  5  | P0  |
 | S0-TN-03 | CODEOWNERS, branch protection, PR/issue templates, CI pipeline (lint → typecheck → test → build)                                                            | Tino             |  3  | P0  |
 | S0-TN-04 | ADR-0001…0008 recorded (stack, package manager, contract-first, module boundaries, AI failover, tier authority, migration stewardship, rate-limit strategy) | Tino             |  3  | P1  |
 | S0-VV-01 | `infra/docker/docker-compose.yml`: Postgres 17+pgvector, Redis 7, Redpanda, MinIO, Mailpit, Prometheus, Grafana, Loki — all healthchecked                   | Vishal V         |  5  | P0  |
@@ -135,7 +135,7 @@ Full checklist in [`DEFINITION_OF_DONE.md`](./DEFINITION_OF_DONE.md). Summary �
 | S0-VV-03 | Prisma 7 schema v1 — all 14 tables from `ARCHITECTURE.md` §5 + pgvector column; first migration applied                                                     | Vishal V         |  5  | P0  |
 | S0-VV-04 | `scripts/bootstrap.sh` — one command to a working local env; documented in README                                                                           | Vishal V         |  3  | P0  |
 | S0-SV-01 | `packages/ui` scaffold: Tailwind 4 tokens, dark theme, `Button`/`Card`/`Badge`/`TierBadge`                                                                  | Satheswaran V    |  5  | P0  |
-| S0-SV-02 | Four Next.js 16 apps scaffolded on shared config, consuming `@smart/ui`, rendering a live `/health` probe                                                   | Satheswaran V    |  5  | P0  |
+| S0-SV-02 | Four Next.js 16 apps scaffolded on shared config, consuming `@hirekiwi/ui`, rendering a live `/health` probe                                                   | Satheswaran V    |  5  | P0  |
 | S0-SV-03 | `packages/api-client`: typed fetch wrapper + TanStack Query provider + 401 silent refresh + 429 backoff                                                     | Satheswaran V    |  3  | P1  |
 | S0-VB-01 | `apps/api-core` module skeletons for `assessment`, `certificate`, `webhooks` with owner headers + Swagger tags                                              | Vishal Bharath R |  3  | P0  |
 | S0-VB-02 | `web-verify` + `web-admin` routing shells and layouts                                                                                                       | Vishal Bharath R |  3  | P1  |

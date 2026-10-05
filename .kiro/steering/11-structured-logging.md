@@ -7,9 +7,9 @@ fileMatchPattern: ['apps/api-core/**/*.ts', 'packages/observability/**/*.ts']
 
 ## Rules
 
-1. Use Nest `Logger` or `@smart/observability` `createLogger` / `logEvent` — never `console.log` (bootstrap `console.error` in `main.ts` only).
+1. Use Nest `Logger` or `@hirekiwi/observability` `createLogger` / `logEvent` — never `console.log` (bootstrap `console.error` in `main.ts` only).
 2. Log **objects + message**: `logEvent(logger, 'warn', LOG_EVENTS.REDIS_DEGRADED, { policyKey }, '…')`.
-3. Event names come from `LOG_EVENTS` in `@smart/observability`. Do not invent free-text `event` strings.
+3. Event names come from `LOG_EVENTS` in `@hirekiwi/observability`. Do not invent free-text `event` strings.
 4. Correlation: rely on ALS (`runWithContext` / interceptor). Kafka produce must attach `CORRELATION_KAFKA_HEADER`; consumers use `runKafkaHandler`.
 5. Never log passwords, JWTs, emails, answers, transcripts, or raw Authorization headers — redaction paths exist; still do not put them in `msg`.
 6. Safe fields: `correlationId`, `userId`, `institutionId`, `attemptId`, `trackCode`, `route`, `statusCode`, `durationMs`.

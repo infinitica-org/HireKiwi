@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { attemptsStarted } from '@smart/observability';
+import { attemptsStarted } from '@hirekiwi/observability';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { AssessmentService } from './assessment.service.js';

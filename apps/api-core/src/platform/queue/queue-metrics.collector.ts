@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { getQueueToken } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
-import { queueJobs, queueOldestWaitingSeconds } from '@smart/observability';
+import { queueJobs, queueOldestWaitingSeconds } from '@hirekiwi/observability';
 import { env } from '../config/env.js';
 
 const POLL_MS = 15_000;

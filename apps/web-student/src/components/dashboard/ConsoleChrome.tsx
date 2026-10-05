@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 
 export function PageHeader({
   title,

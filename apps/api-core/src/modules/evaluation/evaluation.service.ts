@@ -45,7 +45,7 @@ import {
   type GradeSdeSkillFormResponse,
   type GradeSkillInterviewResponse,
   type RunSdeSkillFormCodeResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   SDE_SKILL_CODE_RUNNER_PROMPT_REF,
   SDE_SKILL_FORM_CLOSED_PROMPT_REF,
@@ -74,7 +74,7 @@ import {
   type CompetencySlot,
   type SdeV4Format,
   type SdeV4TaskFamily,
-} from '@smart/prompts';
+} from '@hirekiwi/prompts';
 import { coerceLlmJson } from '../ai-gateway/adapters/llm-json-coerce.js';
 import {
   computeSdeV4FormScore,
@@ -84,8 +84,8 @@ import {
   scaleFormCounts,
   competencySlotCountForProficiency,
   evaluateAssessmentIntelligence,
-} from '@smart/scoring-engine';
-import { getSkillDefinition, type SkillBlueprint } from '@smart/contracts';
+} from '@hirekiwi/scoring-engine';
+import { getSkillDefinition, type SkillBlueprint } from '@hirekiwi/contracts';
 import { Effect, Either } from 'effect';
 import { z } from 'zod';
 import { AiGatewayService } from '../ai-gateway/ai-gateway.service.js';

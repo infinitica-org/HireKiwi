@@ -13,7 +13,7 @@ In compliance with enterprise architecture standards, every data mutation inside
 │                                                                                        │
 │  [ Stage 1: Ingestion ]    Next.js Web Applications & External REST Webhooks            │
 │             │                                                                          │
-│  [ Stage 2: Validation ]   Fastify Schema Guards + Zod Contracts (@smart/contracts)    │
+│  [ Stage 2: Validation ]   Fastify Schema Guards + Zod Contracts (@hirekiwi/contracts)    │
 │             │              MIME Type Verification, Rate Limiters, RBAC JWT Claims      │
 │             │                                                                          │
 │  [ Stage 3: Processing ]   Modular Monolith Controllers & Services (apps/api-core)     │
@@ -49,7 +49,7 @@ Data enters via four dedicated presentation channels:
 ### Stage 2: Validation
 
 - **Stateless Guard:** Fastify request interceptors enforce JWT signature validity, user identity, and tenant tenancy.
-- **Contract Enforcement:** All request payloads are validated against immutable Zod schemas defined in `@smart/contracts`. Invalid shapes are rejected at the edge with HTTP 422 before reaching service layers.
+- **Contract Enforcement:** All request payloads are validated against immutable Zod schemas defined in `@hirekiwi/contracts`. Invalid shapes are rejected at the edge with HTTP 422 before reaching service layers.
 - **MIME & Byte Inspection:** File uploads (e.g. Resumes) must pass strict magic-number byte checks (`%PDF-`) with a hard 5MB size limit.
 
 ### Stage 3: Processing
@@ -59,7 +59,7 @@ Data enters via four dedicated presentation channels:
 
 ### Stage 4: Transformation
 
-- Mathematical scoring calculations are executed via `Effect.ts` in `@smart/scoring-engine` to guarantee deterministic, side-effect-free evaluation.
+- Mathematical scoring calculations are executed via `Effect.ts` in `@hirekiwi/scoring-engine` to guarantee deterministic, side-effect-free evaluation.
 - Spoken responses and text submissions are transformed into 1536-dimensional embeddings for vector storage.
 - Certificates are compiled into canonical JSON payloads and signed with HMAC-SHA256.
 

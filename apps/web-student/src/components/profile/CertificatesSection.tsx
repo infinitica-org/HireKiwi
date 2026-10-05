@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Award, Plus, ShieldCheck } from 'lucide-react';
-import { useQuery } from '@smart/ui';
+import { useQuery } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { CertificateEntryCard } from '@/components/profile/CertificateEntryCard';
 import {

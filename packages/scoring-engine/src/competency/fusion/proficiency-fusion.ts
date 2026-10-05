@@ -1,5 +1,5 @@
 import { Effect } from 'effect';
-import { FUSION_RULE_SET_VERSION } from '@smart/contracts';
+import { FUSION_RULE_SET_VERSION } from '@hirekiwi/contracts';
 import type {
   CompetencyStatus,
   CompetencyResult,
@@ -9,7 +9,7 @@ import type {
   CompetencyFusionResult,
   FusionInput,
   EvidenceValidationMetrics,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   determineSupportedProficiency,
   recommendAssessmentNextStep,

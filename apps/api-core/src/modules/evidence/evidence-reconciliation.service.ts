@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { EvidenceRecordDto } from '@smart/contracts';
+import type { EvidenceRecordDto } from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 export interface ReconciliationResult {

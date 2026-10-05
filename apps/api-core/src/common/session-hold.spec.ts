@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SESSION_HOLD_MESSAGE } from '@smart/contracts';
+import { SESSION_HOLD_MESSAGE } from '@hirekiwi/contracts';
 import { COMPANY_UNVERIFIED_MESSAGE, resolveSessionHold } from './session-hold.js';
 
 function companyUser(company: Record<string, unknown> | null, role = 'COMPANY') {

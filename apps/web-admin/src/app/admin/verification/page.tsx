@@ -6,8 +6,8 @@ import type {
   CompanyVerificationReviewDetailDto,
   IntegrityQueueItemDto,
   VerificationQueueItemDto,
-} from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+} from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   AlertTriangle,
   BadgeCheck,
@@ -20,9 +20,9 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent } from '@smart/ui/card';
-import { ConfirmDialog } from '@smart/ui';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent } from '@hirekiwi/ui/card';
+import { ConfirmDialog } from '@hirekiwi/ui';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

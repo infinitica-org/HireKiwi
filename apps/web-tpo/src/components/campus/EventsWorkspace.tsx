@@ -11,13 +11,13 @@ import {
   LoadingState,
   Modal,
   formatEventRange,
-} from '@smart/ui';
+} from '@hirekiwi/ui';
 import type {
   CareerEventDto,
   CareerEventStatus,
   CreateCareerEvent,
   UpdateCareerEvent,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api } from '../../lib/api';
 import { EventForm } from './EventForm';
 

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SignalWeightModelSchema, type SignalWeightModel } from '@smart/contracts';
-import { DEFAULT_SIGNAL_WEIGHT_MODEL, verifySignalWeightModel } from '@smart/scoring-engine';
+import { SignalWeightModelSchema, type SignalWeightModel } from '@hirekiwi/contracts';
+import { DEFAULT_SIGNAL_WEIGHT_MODEL, verifySignalWeightModel } from '@hirekiwi/scoring-engine';
 import { RedisService } from '../../platform/redis/redis.service.js';
 
 const ACTIVE_MODEL_KEY = 'corroboration:signal-weight-model:active';

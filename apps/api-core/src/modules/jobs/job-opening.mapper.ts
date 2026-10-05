@@ -7,7 +7,7 @@ import {
   SkillTaxonomyDomainSchema,
   type JobOpeningAttachedDocument,
   type JobOpeningDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { z } from 'zod';
 
 /**

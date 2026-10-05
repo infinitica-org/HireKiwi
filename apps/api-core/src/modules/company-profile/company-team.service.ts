@@ -6,7 +6,7 @@ import type {
   InviteRecruiterRequest,
   ListCompanyMembersResponse,
   UpdateCompanyMemberRoleRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { BillingService } from '../billing/billing.service.js';

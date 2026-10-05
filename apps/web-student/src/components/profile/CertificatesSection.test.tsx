@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 
 import { CertificatesSection } from '@/components/profile/CertificatesSection';
 
-vi.mock('@smart/ui', async (importOriginal) => {
+vi.mock('@hirekiwi/ui', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
@@ -11,7 +11,7 @@ vi.mock('@smart/ui', async (importOriginal) => {
   };
 });
 
-const { useQuery } = await import('@smart/ui');
+const { useQuery } = await import('@hirekiwi/ui');
 
 describe('CertificatesSection', () => {
   it('renders premium empty state when no certificates', () => {

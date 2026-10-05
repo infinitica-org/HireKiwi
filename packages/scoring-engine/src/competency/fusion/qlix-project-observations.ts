@@ -4,10 +4,10 @@ import type {
   ObservationBundle,
   ProjectVerificationReportDto,
   SkillCompetency,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { projectToObservationBundle } from './source-adapters/project.adapter.js';
 import { maxStatus, proficiencyCapOrdinal } from './status-ordinal.js';
-import type { ProficiencyLevel } from '@smart/contracts';
+import type { ProficiencyLevel } from '@hirekiwi/contracts';
 
 export type QlixProjectCompetencyObservationInput = {
   competencyId: string;

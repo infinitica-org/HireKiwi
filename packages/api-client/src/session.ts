@@ -3,7 +3,7 @@ import {
   AuthTokenResponseSchema,
   UserRoleSchema,
   type UserRole,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 /** Shared browser session key — all SMART portals read/write this. */
 export const ACCESS_TOKEN_KEY = 'smart.accessToken' as const;
@@ -114,7 +114,7 @@ export type PortalOrigins = {
 /**
  * Reads the three portal origin env vars with their shared defaults — was
  * copy-pasted identically across web-student/web-tpo/web-admin/web-auth.
- * `@smart/api-client` is in every portal's `transpilePackages`, so each
+ * `@hirekiwi/api-client` is in every portal's `transpilePackages`, so each
  * app's own Next.js build still inlines these `NEXT_PUBLIC_*` reads at
  * build time, same as if the object were declared locally.
  */

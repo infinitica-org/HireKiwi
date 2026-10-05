@@ -1,7 +1,7 @@
-import type { CandidateResumeFile, CandidateResumeStateResponse } from '@smart/contracts';
-import { CANDIDATE_RESUME_FILES_MAX as contractResumeFilesMax } from '@smart/contracts';
+import type { CandidateResumeFile, CandidateResumeStateResponse } from '@hirekiwi/contracts';
+import { CANDIDATE_RESUME_FILES_MAX as contractResumeFilesMax } from '@hirekiwi/contracts';
 
-/** Keep in sync with `@smart/contracts` — fallback when package dist is stale locally. */
+/** Keep in sync with `@hirekiwi/contracts` — fallback when package dist is stale locally. */
 export const CANDIDATE_RESUME_FILES_MAX = contractResumeFilesMax ?? 1;
 
 export function normalizeResumeFiles(state: CandidateResumeStateResponse): CandidateResumeFile[] {

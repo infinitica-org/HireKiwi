@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { ProjectDefenseOutcomeDto } from '@smart/contracts';
-import { Alert, Button } from '@smart/ui';
+import type { ProjectDefenseOutcomeDto } from '@hirekiwi/contracts';
+import { Alert, Button } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 
 export function ProjectDefenseOutcomePanel({ projectId }: { projectId: string }) {

@@ -1,5 +1,5 @@
 import { HttpException, Injectable, Logger, Optional } from '@nestjs/common';
-import type { AiProvider } from '@smart/contracts';
+import type { AiProvider } from '@hirekiwi/contracts';
 
 export interface CircuitBreakerOptions {
   failureThreshold?: number;

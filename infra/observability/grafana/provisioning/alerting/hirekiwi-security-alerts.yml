@@ -1,5 +1,5 @@
 # S6-VV-126 (#574): security alerts. Delivered by the smart-team contact point and policy
-# provisioned in smart-alerts.yml (S6-VV-125). Runbooks: web-docs delivery/SECURITY_ALERTS.
+# provisioned in hirekiwi-alerts.yml (S6-VV-125). Runbooks: web-docs delivery/SECURITY_ALERTS.
 apiVersion: 1
 
 groups:

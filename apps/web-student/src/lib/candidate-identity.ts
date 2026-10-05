@@ -1,6 +1,6 @@
-import { queryKeys } from '@smart/api-client';
-import type { AuthenticatedUser, TrackDto } from '@smart/contracts';
-import { useQuery } from '@smart/ui';
+import { queryKeys } from '@hirekiwi/api-client';
+import type { AuthenticatedUser, TrackDto } from '@hirekiwi/contracts';
+import { useQuery } from '@hirekiwi/ui';
 import { api } from './api';
 import { headlineRoleForPrimaryTrack } from './candidate-streams';
 

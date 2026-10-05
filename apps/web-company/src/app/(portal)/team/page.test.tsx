@@ -99,7 +99,7 @@ describe('Teammates page (Th6-351/352/353)', () => {
   });
 
   it('shows the server message when the last owner cannot be demoted', async () => {
-    const { SmartApiError } = await import('@smart/api-client');
+    const { SmartApiError } = await import('@hirekiwi/api-client');
     employer.listMembers.mockResolvedValue({ members: [member(OWNER)] });
     employer.changeMemberRole.mockRejectedValue(
       new SmartApiError({
@@ -126,7 +126,7 @@ describe('Teammates page (Th6-351/352/353)', () => {
   });
 
   it('shows the server 422 message for an invite to another domain', async () => {
-    const { SmartApiError } = await import('@smart/api-client');
+    const { SmartApiError } = await import('@hirekiwi/api-client');
     employer.listMembers.mockResolvedValue({ members: [member(OWNER)] });
     employer.inviteRecruiter.mockRejectedValue(
       new SmartApiError({

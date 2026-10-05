@@ -2,8 +2,8 @@
 
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
-import { SmartLogo } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { SmartLogo } from '@hirekiwi/ui';
 import { EyeIcon, EyeOffIcon } from '../../../components/auth-icons';
 import { api } from '../../../lib/api';
 import { LoginShell } from '../../login/login-shell';

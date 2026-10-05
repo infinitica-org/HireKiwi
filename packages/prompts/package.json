@@ -1,5 +1,5 @@
 {
-  "name": "@smart/prompts",
+  "name": "@hirekiwi/prompts",
   "version": "0.1.0",
   "private": true,
   "description": "Immutable, versioned LLM prompt registry with output guardrails. Every AI grade cites the promptRef that produced it. Owner: Ramansh.",
@@ -25,12 +25,12 @@
     "clean": "rimraf dist .turbo *.tsbuildinfo"
   },
   "dependencies": {
-    "@smart/contracts": "workspace:*",
+    "@hirekiwi/contracts": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@smart/eslint-config": "workspace:*",
-    "@smart/tsconfig": "workspace:*",
+    "@hirekiwi/eslint-config": "workspace:*",
+    "@hirekiwi/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "rimraf": "6.0.1",

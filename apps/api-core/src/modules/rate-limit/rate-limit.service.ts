@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { SMART_TOPICS, getRateLimitPolicy, type RateLimitPolicy } from '@smart/contracts';
+import { SMART_TOPICS, getRateLimitPolicy, type RateLimitPolicy } from '@hirekiwi/contracts';
 import {
   LOG_EVENTS,
   logEvent,
   rateLimitRejections,
   rateLimitUtilisation,
-} from '@smart/observability';
+} from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { RedisService } from '../../platform/redis/redis.service.js';

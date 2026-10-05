@@ -46,7 +46,7 @@ import {
   type EvidenceSkillDisputeResponse,
   type ResolveEvidenceDisputeRequest,
   type ResolveEvidenceDisputeResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import type { EvidenceRecordRow } from './evidence-version.snapshot.js';

@@ -1,16 +1,16 @@
 {
   "title": "Role Competency Blueprints",
   "pages": [
-    "smartkiwi-rnd-blueprint",
-    "SMART_Blueprint_AIMLEngineer",
-    "SMART_Blueprint_CloudDevOpsEngineer",
-    "SMART_Blueprint_CybersecurityAnalyst",
-    "SMART_Blueprint_DataAnalyst",
-    "SMART_Blueprint_FullStackDeveloper",
-    "SMART_Blueprint_MBA_BusinessAnalytics",
-    "SMART_Blueprint_MBA_Finance",
-    "SMART_Blueprint_MBA_HR",
-    "SMART_Blueprint_MBA_Marketing",
-    "SMART_Blueprint_MBA_Operations"
+    "hirekiwi-rnd-blueprint",
+    "HireKiwi_Blueprint_AIMLEngineer",
+    "HireKiwi_Blueprint_CloudDevOpsEngineer",
+    "HireKiwi_Blueprint_CybersecurityAnalyst",
+    "HireKiwi_Blueprint_DataAnalyst",
+    "HireKiwi_Blueprint_FullStackDeveloper",
+    "HireKiwi_Blueprint_MBA_BusinessAnalytics",
+    "HireKiwi_Blueprint_MBA_Finance",
+    "HireKiwi_Blueprint_MBA_HR",
+    "HireKiwi_Blueprint_MBA_Marketing",
+    "HireKiwi_Blueprint_MBA_Operations"
   ]
 }

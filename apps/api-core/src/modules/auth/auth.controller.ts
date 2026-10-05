@@ -8,7 +8,7 @@ import {
   RegisterRequestSchema,
   RegisterResponseSchema,
   ResendEmailVerificationRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { Public } from '../../common/guards/public.decorator.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';

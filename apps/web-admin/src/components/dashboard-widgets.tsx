@@ -4,9 +4,9 @@ import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { NumberTicker } from '@smart/ui';
-import { AnimatedCircularProgressBar } from '@smart/ui';
-import { cn } from '@smart/ui';
+import { NumberTicker } from '@hirekiwi/ui';
+import { AnimatedCircularProgressBar } from '@hirekiwi/ui';
+import { cn } from '@hirekiwi/ui';
 import { IconWell, type IconTone } from './page-header';
 
 export function KpiTile({

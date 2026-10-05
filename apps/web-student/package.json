@@ -1,5 +1,5 @@
 {
-  "name": "@smart/web-student",
+  "name": "@hirekiwi/web-student",
   "version": "0.1.0",
   "private": true,
   "description": "Student portal. Owner: Satheswaran V.",
@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "0.10.32",
-    "@smart/api-client": "workspace:*",
-    "@smart/contracts": "workspace:*",
-    "@smart/ui": "workspace:*",
+    "@hirekiwi/api-client": "workspace:*",
+    "@hirekiwi/contracts": "workspace:*",
+    "@hirekiwi/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "gsap": "3.13.0",
     "lucide-react": "catalog:",
@@ -28,10 +28,10 @@
     "simple-icons": "16.33.0"
   },
   "devDependencies": {
-    "@smart/eslint-config": "workspace:*",
-    "@smart/next-config": "workspace:*",
-    "@smart/tailwind-config": "workspace:*",
-    "@smart/tsconfig": "workspace:*",
+    "@hirekiwi/eslint-config": "workspace:*",
+    "@hirekiwi/next-config": "workspace:*",
+    "@hirekiwi/tailwind-config": "workspace:*",
+    "@hirekiwi/tsconfig": "workspace:*",
     "@testing-library/react": "^16.3.2",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

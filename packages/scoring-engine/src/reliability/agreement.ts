@@ -1,5 +1,5 @@
 import { Effect } from 'effect';
-import { COHENS_KAPPA_FLOOR, RELIABILITY_ALPHA_FLOOR } from '@smart/contracts';
+import { COHENS_KAPPA_FLOOR, RELIABILITY_ALPHA_FLOOR } from '@hirekiwi/contracts';
 import { InsufficientSampleError } from '../errors.js';
 import { roundTo, variance } from '../statistics.js';
 

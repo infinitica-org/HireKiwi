@@ -1,7 +1,7 @@
 'use client';
 
 import { use } from 'react';
-import { useQuery } from '@smart/ui';
+import { useQuery } from '@hirekiwi/ui';
 import { CertVerifyPlayer } from '@/components/assessment/cert-verify-player';
 import { PageHeader } from '@/components/dashboard/ConsoleChrome';
 import { api } from '@/lib/api';

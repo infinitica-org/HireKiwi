@@ -1,6 +1,6 @@
 'use client';
 
-import { EVIDENCE_TYPES, EVIDENCE_USAGE } from '@smart/contracts';
+import { EVIDENCE_TYPES, EVIDENCE_USAGE } from '@hirekiwi/contracts';
 import { EvidenceUsageFacts } from '@/components/profile/EvidenceUsageNote';
 import { SettingsCard } from './account-ui';
 

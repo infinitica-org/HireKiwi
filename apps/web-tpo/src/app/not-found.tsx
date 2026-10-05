@@ -1,4 +1,4 @@
-import { NotFoundWall } from '@smart/ui';
+import { NotFoundWall } from '@hirekiwi/ui';
 
 const PORTAL_ORIGINS = {
   student: process.env.NEXT_PUBLIC_STUDENT_URL ?? 'http://localhost:3001',

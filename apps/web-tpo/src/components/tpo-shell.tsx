@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { getAccessToken } from '@smart/api-client';
-import { SessionHoldWall, cn } from '@smart/ui';
+import { getAccessToken } from '@hirekiwi/api-client';
+import { SessionHoldWall, cn } from '@hirekiwi/ui';
 import { TpoSidebar } from './tpo-sidebar';
 import { TpoTopbar } from './tpo-topbar';
 import { api } from '../lib/api';

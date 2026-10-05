@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { ProjectDto } from '@smart/contracts';
+import type { ProjectDto } from '@hirekiwi/contracts';
 import { ExternalLink, GitBranch, MoreVertical, Trash2, X } from 'lucide-react';
 import { ProjectStatusBadge } from '@/components/profile/projects/ProjectStatusBadge';
 import {

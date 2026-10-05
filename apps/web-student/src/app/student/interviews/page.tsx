@@ -16,10 +16,10 @@ import {
   Play,
   Plus,
 } from 'lucide-react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '@/lib/api';
-import type { ProjectDto } from '@smart/contracts';
+import type { ProjectDto } from '@hirekiwi/contracts';
 
 export interface DefenseInterviewSession {
   id: string;

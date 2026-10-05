@@ -1,7 +1,7 @@
 import type { HttpException } from '@nestjs/common';
 import { of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
-import { RATE_LIMIT_HEADERS } from '@smart/contracts';
+import { RATE_LIMIT_HEADERS } from '@hirekiwi/contracts';
 import {
   RateLimitInterceptor,
   matchContractRoute,

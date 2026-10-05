@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, type ReactNode, type SVGProps } from 'react';
-import { isSmartApiError, queryKeys } from '@smart/api-client';
-import { useQuery, useQueryClient } from '@smart/ui';
-import type { ConnectableSignalSourceId, SignalConnectionSummary } from '@smart/contracts';
+import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { useQuery, useQueryClient } from '@hirekiwi/ui';
+import type { ConnectableSignalSourceId, SignalConnectionSummary } from '@hirekiwi/contracts';
 import { CheckCircle2, ExternalLink, Loader2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import {

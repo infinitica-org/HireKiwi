@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
-import type { EvidenceQualityMetrics } from '@smart/contracts';
+import type { EvidenceQualityMetrics } from '@hirekiwi/contracts';
 import { EvidenceValidationIndicator } from './EvidenceValidationIndicator';
 
 /**

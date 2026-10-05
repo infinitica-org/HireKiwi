@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CandidateCertificateDto } from '@smart/contracts';
+import type { CandidateCertificateDto } from '@hirekiwi/contracts';
 
 import {
   certificateManageCtaLabel,

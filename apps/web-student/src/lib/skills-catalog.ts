@@ -5,7 +5,7 @@ import {
   type SkillCategoryId,
   type SkillDefinition,
   proficiencyLevelUiLabel,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export const ALL_SKILLS: readonly SkillDefinition[] = SKILL_DEFINITIONS;
 

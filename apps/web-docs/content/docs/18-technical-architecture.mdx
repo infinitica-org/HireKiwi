@@ -5,7 +5,7 @@ description: System topology, Single High-End VPS deployment, Blue-Green zero-do
 
 ## 18.1 Monolithic Modular Architecture
 
-SmartKiwi is engineered as a clean **Modular Monolith** in TypeScript, maximizing developer velocity and transactional integrity while maintaining strict boundary separation.
+HireKiwi is engineered as a clean **Modular Monolith** in TypeScript, maximizing developer velocity and transactional integrity while maintaining strict boundary separation.
 
 ```
 smart/
@@ -37,7 +37,7 @@ smart/
 
 ## 18.2 Single High-End VPS Hosting Topology
 
-SmartKiwi operates on a dedicated **High-Performance Linux VPS (Ubuntu 24.04 LTS)** hosting both Development and Production environments in isolated Docker Compose projects:
+HireKiwi operates on a dedicated **High-Performance Linux VPS (Ubuntu 24.04 LTS)** hosting both Development and Production environments in isolated Docker Compose projects:
 
 ```
                             Caddy Reverse Proxy (:80 / :443)
@@ -80,7 +80,7 @@ Deployments land via [`scripts/blue-green-deploy.sh`](file:///d:/Work's/Infiniti
 
 ## 18.4 The Cloud-Ready AWS Migration Bridge
 
-SmartKiwi adheres strictly to 12-factor cloud principles. Migrating to AWS in a few months requires **zero lines of code modification**:
+HireKiwi adheres strictly to 12-factor cloud principles. Migrating to AWS in a few months requires **zero lines of code modification**:
 
 | VPS Infrastructure      | AWS Managed Target                            | Application Environment Variable   |
 | :---------------------- | :-------------------------------------------- | :--------------------------------- |

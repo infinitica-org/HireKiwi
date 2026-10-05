@@ -1,5 +1,5 @@
 /**
- * @smart/contracts â€” the SMART integration boundary.
+ * @hirekiwi/contracts â€” the HireKiwi integration boundary.
  *
  * Every cross-module type, every HTTP DTO and every Kafka payload lives here.
  * Nothing in this package imports from an app or another workspace package: it

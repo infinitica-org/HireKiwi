@@ -13,8 +13,8 @@ runs:
     - shell: bash
       run: pnpm install --frozen-lockfile
     - shell: bash
-      run: pnpm --filter @smart/contracts build
+      run: pnpm --filter @hirekiwi/contracts build
     - shell: bash
       env:
         DATABASE_URL: postgresql://smart:smart@127.0.0.1:5432/smart?schema=public
-      run: pnpm --filter @smart/api-core db:generate
+      run: pnpm --filter @hirekiwi/api-core db:generate

@@ -1,4 +1,4 @@
-import { ListAdminReportsQuerySchema } from '@smart/contracts';
+import { ListAdminReportsQuerySchema } from '@hirekiwi/contracts';
 import { describe, expect, it, vi } from 'vitest';
 import { AdminReportsService } from './admin-reports.service.js';
 

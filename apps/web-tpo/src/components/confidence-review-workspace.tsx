@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import { SEND_TO_COMPANY_STAGE } from '@smart/contracts';
-import type { ApplicationConfidenceDto, ApplicationDto, JobOpeningDto } from '@smart/contracts';
-import { Alert, Button } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { SEND_TO_COMPANY_STAGE } from '@hirekiwi/contracts';
+import type { ApplicationConfidenceDto, ApplicationDto, JobOpeningDto } from '@hirekiwi/contracts';
+import { Alert, Button } from '@hirekiwi/ui';
 import { applicationsApi, openingsApi } from '../lib/api';
 import { stageBadgeClass } from '../lib/ats-stage-ui';
 import {

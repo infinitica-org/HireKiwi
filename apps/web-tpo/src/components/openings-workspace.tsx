@@ -3,8 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Briefcase, RefreshCw, Search } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import { JOB_OPENING_STATUSES, type JobOpeningDto, type JobOpeningStatus } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import {
+  JOB_OPENING_STATUSES,
+  type JobOpeningDto,
+  type JobOpeningStatus,
+} from '@hirekiwi/contracts';
 import { openingsApi } from '../lib/api';
 import { labelFor, proficiencyLabelFor, skillNameFor } from '../lib/job-posting';
 import {

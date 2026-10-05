@@ -23,7 +23,7 @@ import type {
   UpdateCompanyOnboardingDraftRequest,
   VerifyCorporateEmailRequest,
   VerifyCorporateEmailResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   CompanyOnboardingSessionDtoSchema,
   CompanyRepresentativeSchema,
@@ -34,7 +34,7 @@ import {
   SubmitCompanyOnboardingResponseSchema,
   SendCorporateEmailVerificationResponseSchema,
   VerifyCorporateEmailResponseSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import {
   EMAIL_QUEUE,

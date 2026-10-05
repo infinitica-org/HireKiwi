@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useCompanyAccount } from '@/lib/use-company-account';
 import { signOut } from '@/lib/auth';
-import { NotificationsMenu, UserMenu } from '@smart/ui';
+import { NotificationsMenu, UserMenu } from '@hirekiwi/ui';
 
 type Breadcrumb = { label: string; href?: string };
 

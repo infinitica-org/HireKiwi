@@ -22,7 +22,7 @@ import {
   SKILL_DEFINITIONS,
   type WorkExperienceDocumentDto,
   type WorkExperienceDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
 import {

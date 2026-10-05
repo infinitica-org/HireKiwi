@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
-import { ThemeProvider } from '@smart/ui/theme-provider';
+import { ThemeProvider } from '@hirekiwi/ui/theme-provider';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {

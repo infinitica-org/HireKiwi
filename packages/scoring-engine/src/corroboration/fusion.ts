@@ -6,7 +6,7 @@ import type {
   TrustWeightedReadoutEntry,
   VectorizedSignal,
   VectorizedSignalEntry,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { roundTo } from '../statistics.js';
 import { resolveSignalWeight } from './default-weights.js';
 import { DEFAULT_CORROBORATION_POLICY, type CorroborationPolicy } from './policy.js';

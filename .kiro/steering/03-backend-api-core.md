@@ -17,7 +17,7 @@ apps/api-core/src/
 
 ## Patterns
 
-- Cross-module I/O via `@smart/contracts` + Kafka — not deep imports of another BC's internals.
+- Cross-module I/O via `@hirekiwi/contracts` + Kafka — not deep imports of another BC's internals.
 - Zod at HTTP boundary; Prisma for persistence; Redis keys always have explicit TTL.
 - Structured pino logs with `traceId`; Prometheus metric on new hot paths.
 - Swagger on every new endpoint; module `README.md` updated; runbook if it can page.

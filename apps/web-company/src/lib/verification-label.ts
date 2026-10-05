@@ -1,4 +1,4 @@
-import type { CompanyPortalAccount } from '@smart/contracts';
+import type { CompanyPortalAccount } from '@hirekiwi/contracts';
 
 export function verificationStatusLabel(
   status: CompanyPortalAccount['companyVerificationStatus'],

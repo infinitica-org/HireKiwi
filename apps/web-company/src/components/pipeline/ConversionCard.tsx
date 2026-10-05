@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ConversionMetricsCard, conversionRangeQuery, type ConversionRange } from '@smart/ui';
+import { ConversionMetricsCard, conversionRangeQuery, type ConversionRange } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 
 /**

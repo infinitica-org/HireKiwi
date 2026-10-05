@@ -3,7 +3,7 @@ import type {
   SkillCompetency,
   ProficiencyRequirement,
   ProficiencyLevel,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export function buildCapabilityGaps(
   profile: readonly CapabilityProfileEntry[],

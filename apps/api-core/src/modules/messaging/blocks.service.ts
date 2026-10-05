@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import type { BlockedUser, ListBlocksResponse } from '@smart/contracts';
+import type { BlockedUser, ListBlocksResponse } from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { ADVISOR_ROLES } from './messaging.constants.js';
 import { pairKeyOf } from './messaging.service.js';

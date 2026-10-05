@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ConversionMetrics } from '@smart/contracts';
+import type { ConversionMetrics } from '@hirekiwi/contracts';
 import {
   ConversionMetricsCard,
   NOT_ENOUGH_CANDIDATES,

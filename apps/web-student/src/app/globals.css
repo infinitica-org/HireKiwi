@@ -1,4 +1,4 @@
-@import '@smart/ui/styles.css';
+@import '@hirekiwi/ui/styles.css';
 
 /* App-local scan so shared UI classes always emit. */
 
@@ -294,7 +294,7 @@
   }
 }
 
-/* Shared @smart/ui Card inside the console — TPO bento radius and hover border. */
+/* Shared @hirekiwi/ui Card inside the console — TPO bento radius and hover border. */
 .student-console [data-slot='card'] {
   border-radius: var(--radius-lg);
   transition:

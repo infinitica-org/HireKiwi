@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert } from '@smart/ui';
+import { Alert } from '@hirekiwi/ui';
 import type { SkillVerifyError } from '@/lib/skill-verify-errors';
 import { SkillVerifyWaitGame } from './skill-verify-wait-game';
 

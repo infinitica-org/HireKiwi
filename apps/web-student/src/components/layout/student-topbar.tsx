@@ -13,7 +13,7 @@ import {
 import { useCurrentUser } from '@/lib/candidate-identity';
 import { NotificationsMenu } from './notifications-menu';
 import { signOut } from '@/lib/auth';
-import { UserMenu } from '@smart/ui';
+import { UserMenu } from '@hirekiwi/ui';
 
 type Breadcrumb = { label: string; href?: string };
 

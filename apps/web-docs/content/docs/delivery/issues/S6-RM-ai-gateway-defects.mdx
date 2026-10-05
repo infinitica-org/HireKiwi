@@ -36,7 +36,7 @@ description: 'issues - S6-RM-ai-gateway-defects'
 
 - **Description:** The automated scoring gate must enforce the Cohen's kappa floor threshold (`0.65`) before permitting AI-based grade assignments.
 - **Impact:** Automated scoring running when inter-rater agreement drops below academic acceptable standards leads to indefensible candidate certifications.
-- **Remediation:** Verified `cohensKappa()` calculation in `@smart/scoring-engine` (`agreement.ts`) strictly sets `meetsThreshold: false` and `automatedScoringAllowed: false` when kappa drops below `0.65`, pausing automated LLM grading and routing evaluations to human raters.
+- **Remediation:** Verified `cohensKappa()` calculation in `@hirekiwi/scoring-engine` (`agreement.ts`) strictly sets `meetsThreshold: false` and `automatedScoringAllowed: false` when kappa drops below `0.65`, pausing automated LLM grading and routing evaluations to human raters.
 - **Verification Status:** Tested & Verified (Adversarial Test 3 passing).
 
 ---

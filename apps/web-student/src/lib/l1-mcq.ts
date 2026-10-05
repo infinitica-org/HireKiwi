@@ -4,8 +4,8 @@ import {
   type DeliverableItemDto,
   type SaveDraftRequest,
   type TrackCode,
-} from '@smart/contracts';
-import { isSmartApiError, SmartNetworkError } from '@smart/api-client';
+} from '@hirekiwi/contracts';
+import { isSmartApiError, SmartNetworkError } from '@hirekiwi/api-client';
 
 export const L1_LEVEL_NUMBER = 1 as const;
 /** Stay under the 10 req/min submit-l1 budget (one save per 6s). */

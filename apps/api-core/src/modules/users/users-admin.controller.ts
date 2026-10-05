@@ -4,7 +4,7 @@ import {
   AssignRoleRequestSchema,
   ListActiveUsersQuerySchema,
   TenantActionReasonSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { RequirePermission } from '../../common/guards/permissions.js';
 import { Roles } from '../../common/guards/roles.decorator.js';

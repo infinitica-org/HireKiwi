@@ -1,4 +1,4 @@
-import { ProctoringViolationKindSchema, type ProctoringViolationKind } from '@smart/contracts';
+import { ProctoringViolationKindSchema, type ProctoringViolationKind } from '@hirekiwi/contracts';
 
 import { env } from '../../platform/config/env.js';
 

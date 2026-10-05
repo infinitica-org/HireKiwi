@@ -6,7 +6,7 @@ const listCredentials = vi.fn();
 const createCredential = vi.fn();
 const uploadCredentialDocument = vi.fn();
 
-vi.mock('@smart/api-client', () => ({
+vi.mock('@hirekiwi/api-client', () => ({
   isSmartApiError: () => false,
 }));
 

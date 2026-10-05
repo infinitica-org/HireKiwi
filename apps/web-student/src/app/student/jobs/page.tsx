@@ -4,8 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Briefcase, Bookmark } from 'lucide-react';
-import type { StudentJobCard } from '@smart/contracts';
-import { Alert, Button, EmptyState, ErrorState, LoadingState } from '@smart/ui';
+import type { StudentJobCard } from '@hirekiwi/contracts';
+import { Alert, Button, EmptyState, ErrorState, LoadingState } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import {
   activeFilters,

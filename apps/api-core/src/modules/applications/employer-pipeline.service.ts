@@ -1,5 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { TransitionApplicationRequest, TransitionApplicationResponse } from '@smart/contracts';
+import type {
+  TransitionApplicationRequest,
+  TransitionApplicationResponse,
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { requireCompanyActor } from '../company-profile/company-access.js';
 import { HiringService } from './hiring.service.js';

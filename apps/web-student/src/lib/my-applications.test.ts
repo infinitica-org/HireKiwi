@@ -1,4 +1,4 @@
-import { ATS_STAGES } from '@smart/contracts';
+import { ATS_STAGES } from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   ATS_PIPELINE_STAGES,

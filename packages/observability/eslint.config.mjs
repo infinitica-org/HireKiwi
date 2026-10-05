@@ -1,4 +1,4 @@
-import { base } from '@smart/eslint-config/base';
+import { base } from '@hirekiwi/eslint-config/base';
 
 /** Observability package — no console; use createLogger / logEvent. */
 export default [

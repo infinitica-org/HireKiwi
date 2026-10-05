@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { StudentReadinessSummarySchema } from '@smart/contracts';
+import { StudentReadinessSummarySchema } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildEvidence,

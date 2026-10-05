@@ -1,4 +1,4 @@
-import type { Question } from '@smart/contracts';
+import type { Question } from '@hirekiwi/contracts';
 import questionBankData from '../data/question-bank-uni-sde.json' with { type: 'json' };
 
 /** Until INF-06 ships native Proficient-tier stems, clone Intermediate items. */

@@ -3,7 +3,7 @@ import {
   AiHealthDtoSchema,
   AiUsageSummaryDtoSchema,
   type AiCompletionRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AnthropicAdapter } from './adapters/anthropic.adapter.js';
 import { GoogleAdapter } from './adapters/google.adapter.js';
 import { OpenRouterAdapter } from './adapters/openrouter.adapter.js';

@@ -4,7 +4,7 @@ import {
   API_PREFIX,
   ResolveTrustReportRequestSchema,
   SubmitTrustReportRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Public } from '../../common/guards/public.decorator.js';
 import { TenantScope } from '../../common/decorators/tenant-id.decorator.js';

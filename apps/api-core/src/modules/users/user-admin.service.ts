@@ -10,7 +10,7 @@ import {
   type AssignRoleRequest,
   type ListActiveUsersQuery,
   type ListActiveUsersResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { UserRole } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

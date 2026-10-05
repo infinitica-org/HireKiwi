@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Button } from '@smart/ui';
+import { Alert, Button } from '@hirekiwi/ui';
 
 export function FullscreenGate({ blocked, onResume }: { blocked: boolean; onResume: () => void }) {
   if (!blocked) return null;

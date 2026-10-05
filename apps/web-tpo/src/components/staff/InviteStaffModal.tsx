@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Mail, User, Building } from 'lucide-react';
-import { Button, FormErrorSummary, FormItem, FormLabel, Input, Modal } from '@smart/ui';
-import type { InviteStaffRequest, StaffRole } from '@smart/contracts';
+import { Button, FormErrorSummary, FormItem, FormLabel, Input, Modal } from '@hirekiwi/ui';
+import type { InviteStaffRequest, StaffRole } from '@hirekiwi/contracts';
 
 export interface InviteStaffModalProps {
   open: boolean;

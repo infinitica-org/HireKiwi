@@ -6,7 +6,7 @@ import {
   MESSAGE_SEARCH_MIN_LENGTH,
   type ConversationSummary,
   type Message,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { useMutation, useQuery, useQueryClient, useSmartApi } from '../api-provider';
 import { Alert } from '../components/alert';
 import { Button } from '../components/button';

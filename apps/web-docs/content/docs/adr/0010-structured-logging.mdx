@@ -12,11 +12,11 @@ description: 'Architecture Decision Records (ADR) - 0010-structured-logging'
 
 ## Context
 
-`@smart/observability` already defined JSON pino, redaction, and AsyncLocalStorage correlation, but `api-core` booted a bare `nestjs-pino` without that contract. Logs lacked consistent fields, forged `x-correlation-id` values could appear as `traceId`, and Loki in the Compose `obs` profile had nothing to scrape.
+`@hirekiwi/observability` already defined JSON pino, redaction, and AsyncLocalStorage correlation, but `api-core` booted a bare `nestjs-pino` without that contract. Logs lacked consistent fields, forged `x-correlation-id` values could appear as `traceId`, and Loki in the Compose `obs` profile had nothing to scrape.
 
 ## Decision
 
-1. **One logger stack:** pino via nestjs-pino, configured only through `buildPinoHttpOptions` / `buildPinoBaseOptions` from `@smart/observability`. No second logging library (Winston, Bunyan, Datadog agent SDK, etc.) in V1.
+1. **One logger stack:** pino via nestjs-pino, configured only through `buildPinoHttpOptions` / `buildPinoBaseOptions` from `@hirekiwi/observability`. No second logging library (Winston, Bunyan, Datadog agent SDK, etc.) in V1.
 2. **Correlation key:** `correlationId` (UUID). HTTP error bodies keep `traceId` as an alias of the same value. Inbound `x-correlation-id` is accepted only if it is a UUID; otherwise mint one.
 3. **Context:** AsyncLocalStorage (`runWithContext`). HTTP interceptor stamps ALS + `request.smartLogContext`. Kafka produce attaches `correlation-id` header; consumers use `runKafkaHandler`.
 4. **Redaction:** central `REDACTED_PATHS` — credentials, assessment content, PII. Do not log answers, transcripts, JWTs, or emails.

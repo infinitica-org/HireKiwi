@@ -4,7 +4,7 @@ import type {
   EvidenceType,
   EvidenceVerificationStatus,
   VerificationMetadata,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export interface RecordCategorizationInput {
   evidenceType: EvidenceType | string;

@@ -1,5 +1,5 @@
-import type { WorkExperienceDto } from '@smart/contracts';
-import { validateWorkExperienceLetterRules } from '@smart/contracts';
+import type { WorkExperienceDto } from '@hirekiwi/contracts';
+import { validateWorkExperienceLetterRules } from '@hirekiwi/contracts';
 
 export const VERIFICATION_STATUS_LABELS: Record<string, string> = {
   SUBMITTED: 'Submitted — Ready for Verification',

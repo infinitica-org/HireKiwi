@@ -3,7 +3,7 @@
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 
 export function ColorSchemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();

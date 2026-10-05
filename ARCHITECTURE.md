@@ -1,8 +1,8 @@
-# SmartKiwi (SMART) — Master Technical Architecture & Product Specification
+# HireKiwi — Master Technical Architecture & Product Specification
 
 > **Version:** v2.2 (Updated Sprint 8 — Oct 2026)
 > **Maintainer:** Infinitica Engineering Team
-> **Purpose:** Single source of truth for SmartKiwi's product vision, microservice architecture, rate limiting specification, AI engine, scoring mechanics, domain taxonomies, placement overlay, public verification, and phased delivery plan. Authoritative living documentation maintained in `@smart/web-docs` (port 3008/3028).
+> **Purpose:** Single source of truth for HireKiwi's product vision, microservice architecture, rate limiting specification, AI engine, scoring mechanics, domain taxonomies, placement overlay, public verification, and phased delivery plan. Authoritative living documentation maintained in `@hirekiwi/web-docs` (port 3008/3028).
 
 > **Sprint 6 Implementation Status (as of 2026-09-29):**
 > The following sections of this document have moved from design to production implementation:
@@ -846,7 +846,7 @@ Taken once by all MBA students: Business Communication, Quantitative Data Interp
 | **US-4.5** | Kong / Edge Gateway Integration & Tuning        | Configure Edge API Gateway rate limits, Cloudflare DDoS rules, and SSL termination.                            | System Architect    | 8 pts  | Critical |
 | **US-4.6** | End-to-End Service Integration                  | Interconnect all microservices, message queues, and caching layers into a unified release candidate build.     | System Architect    | 8 pts  | Critical |
 
-**Sprint 4 Summary:** 6 Stories · 42 Story Points · Deliverable: Feature-complete SMART platform ready for Sprint 5 testing.
+**Sprint 4 Summary:** 6 Stories · 42 Story Points · Deliverable: Feature-complete HireKiwi platform ready for Sprint 5 testing.
 
 ---
 
@@ -949,4 +949,4 @@ groups:
 
 ---
 
-_This document constitutes the authoritative technical reference for the SMART platform architecture, rate limiting specification, Claude AI integration, domain taxonomy, and phased delivery plan._
+_This document constitutes the authoritative technical reference for the HireKiwi platform architecture, rate limiting specification, Claude AI integration, domain taxonomy, and phased delivery plan._

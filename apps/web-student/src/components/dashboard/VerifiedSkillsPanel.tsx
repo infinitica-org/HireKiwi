@@ -4,9 +4,9 @@ import Link from 'next/link';
 
 import { ArrowRight, Award } from 'lucide-react';
 
-import type { SkillClaimDto } from '@smart/contracts';
+import type { SkillClaimDto } from '@hirekiwi/contracts';
 
-import { VerificationBadge } from '@smart/ui';
+import { VerificationBadge } from '@hirekiwi/ui';
 
 import {
   claimToBadgeStatus,

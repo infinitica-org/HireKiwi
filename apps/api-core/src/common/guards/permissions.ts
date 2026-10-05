@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import type { UserRole } from '@smart/contracts';
+import type { UserRole } from '@hirekiwi/contracts';
 
 /**
  * S6-VV-99 — the central permission matrix (Zoho #174).

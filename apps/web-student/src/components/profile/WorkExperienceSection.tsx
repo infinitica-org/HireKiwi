@@ -11,9 +11,9 @@ import {
   type WorkExperienceDto,
   type WorkExperienceDocumentDto,
   type WorkExperienceProofValidationResult,
-} from '@smart/contracts';
-import { isSmartApiError, queryKeys } from '@smart/api-client';
-import { useQuery, useQueryClient } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { useQuery, useQueryClient } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
 import { validateVerifierEmailForEmployerSend } from '@/lib/work-experience-verification-ui';

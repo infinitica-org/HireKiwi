@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Badge, Button, EmptyState, ErrorState, LoadingState } from '@smart/ui';
-import type { UniversityStudentSummary } from '@smart/contracts';
+import { Alert, Badge, Button, EmptyState, ErrorState, LoadingState } from '@hirekiwi/ui';
+import type { UniversityStudentSummary } from '@hirekiwi/contracts';
 import { universityApi } from '../../lib/api';
 import { MessageStudentModal } from './MessageStudentModal';
 import { VerificationBadge } from './StudentReadinessRoster';

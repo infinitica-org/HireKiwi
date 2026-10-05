@@ -1,8 +1,8 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { queryKeys } from '@smart/api-client';
-import type { AuthenticatedUser } from '@smart/contracts';
+import { queryKeys } from '@hirekiwi/api-client';
+import type { AuthenticatedUser } from '@hirekiwi/contracts';
 
 import { ProfilePhotoEditControl } from './ProfilePhotoEditControl';
 

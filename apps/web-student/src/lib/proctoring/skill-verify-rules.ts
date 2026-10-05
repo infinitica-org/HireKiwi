@@ -1,4 +1,4 @@
-import { PROCTORING_WARNING_LIMIT_DEFAULT } from '@smart/contracts';
+import { PROCTORING_WARNING_LIMIT_DEFAULT } from '@hirekiwi/contracts';
 
 export function skillVerifyRuleItems(
   warningLimit = PROCTORING_WARNING_LIMIT_DEFAULT,

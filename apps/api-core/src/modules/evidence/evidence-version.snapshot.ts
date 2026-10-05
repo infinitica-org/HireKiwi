@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { EvidenceRecordDto } from '@smart/contracts';
+import type { EvidenceRecordDto } from '@hirekiwi/contracts';
 import type { EvidenceArtifact, EvidenceRecord } from '../../generated/prisma/index.js';
 import { toEvidenceRecordDto } from './evidence.mapper.js';
 

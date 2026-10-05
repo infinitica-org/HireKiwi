@@ -27,7 +27,7 @@ import type {
   UpgradePlanDto,
   DowngradePlanDto,
   PlanCode,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { env } from '../../platform/config/env.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

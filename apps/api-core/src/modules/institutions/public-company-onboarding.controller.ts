@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import type { Multipart, MultipartFile } from '@fastify/multipart';
 import type { FastifyRequest } from 'fastify';
-import { MAX_COMPANY_VERIFICATION_DOCUMENT_BYTES } from '@smart/contracts';
+import { MAX_COMPANY_VERIFICATION_DOCUMENT_BYTES } from '@hirekiwi/contracts';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   API_PREFIX,
@@ -21,7 +21,7 @@ import {
   StartCompanyOnboardingRequestSchema,
   UpdateCompanyOnboardingDraftRequestSchema,
   VerifyCorporateEmailRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { Public } from '../../common/guards/public.decorator.js';
 import { CompanyOnboardingDocumentService } from './company-onboarding-document.service.js';
 import { CompanyJoinRequestService } from './company-join-request.service.js';

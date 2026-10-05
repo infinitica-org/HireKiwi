@@ -1,4 +1,4 @@
-import type { AiModelRole } from '@smart/contracts';
+import type { AiModelRole } from '@hirekiwi/contracts';
 
 export const OPENROUTER_ROLE_TO_MODEL: Record<AiModelRole, string> = {
   PRIMARY_REASONING: 'anthropic/claude-3.5-sonnet',

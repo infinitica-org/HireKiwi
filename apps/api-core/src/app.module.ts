@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { buildPinoHttpOptions } from '@smart/observability';
+import { buildPinoHttpOptions } from '@hirekiwi/observability';
 import { LoggerModule } from 'nestjs-pino';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter.js';
 import { FeatureFlagGuard } from './common/guards/feature-flag.guard.js';

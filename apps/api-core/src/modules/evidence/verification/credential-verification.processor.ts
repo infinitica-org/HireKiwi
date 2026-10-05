@@ -1,7 +1,7 @@
 import { InjectQueue, Processor } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import type { Job, Queue } from 'bullmq';
-import { withJobSpan } from '@smart/observability';
+import { withJobSpan } from '@hirekiwi/observability';
 import { DlqAwareProcessor } from '../../../platform/queue/async-job.processor.js';
 import {
   CREDENTIAL_VERIFICATION_DLQ,

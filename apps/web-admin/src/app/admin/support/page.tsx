@@ -17,10 +17,10 @@ import type {
   SupportDiagnosticResponse,
   SupportHistoryResponse,
   SupportSessionResponse,
-} from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+} from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

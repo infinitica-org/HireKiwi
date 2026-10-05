@@ -11,7 +11,7 @@ import {
   type ProjectInterviewState,
   type ProjectReviewQueueItemDto,
   type ProjectVerificationReportDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export const REPORT_META_MARK = '\n---smart-verify---\n';
 

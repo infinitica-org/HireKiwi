@@ -6,7 +6,7 @@ import {
   AssignTrustCaseRequestSchema,
   CreateTrustCaseRequestSchema,
   ReverseEnforcementRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { TenantScope } from '../../common/decorators/tenant-id.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';

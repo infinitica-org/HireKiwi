@@ -75,7 +75,7 @@ mis-planned and that's the thing to fix.
 ### How you review (in this order — stop at the first failure)
 
 1. **Boundary** — is this code in the right module? Does it reach into someone else's context?
-2. **Contract** — is every cross-module type in `@smart/contracts`? Was it merged first?
+2. **Contract** — is every cross-module type in `@hirekiwi/contracts`? Was it merged first?
 3. **Definition of Done** — walk the checklist. Reject on the checklist, never on style; style is
    Prettier's job, not yours.
 4. **Failure modes** — what happens on timeout, on 429, on empty result, on a flagged attempt?
@@ -168,7 +168,7 @@ trustworthy enough that a candidate never loses work.
 ```
 packages/ui/**            design system: tokens, theme, primitives, TierBadge, TierTrail,
                           ConfidenceNote, LevelStepper, Timer, CodeEditor, AudioRecorder
-packages/api-client/**    typed client over @smart/contracts + TanStack Query hooks
+packages/api-client/**    typed client over @hirekiwi/contracts + TanStack Query hooks
 apps/web-student/**       L1 MCQ · L2 code · L3 recorder · L4 defense · L5 upload · growth portal
 apps/web-tpo/**           cohort readiness · gap report · shortlist + export · JD upload
 tests/e2e/**              Playwright journeys
@@ -181,8 +181,8 @@ tests/e2e/**              Playwright journeys
 2. **The server is the clock.** Render the countdown, but treat the server's expiry as truth.
    Never let the client decide the attempt is still open.
 3. **WCAG 2.1 AA on the player**, and Lighthouse ≥ 90 on `web-verify` and the student dashboard.
-4. **Zero `any` at the API boundary.** Everything typed from `@smart/contracts` through
-   `@smart/api-client`. If a type is missing, that's a contract PR, not a cast.
+4. **Zero `any` at the API boundary.** Everything typed from `@hirekiwi/contracts` through
+   `@hirekiwi/api-client`. If a type is missing, that's a contract PR, not a cast.
 
 ### Build the design system first, then the apps
 
@@ -193,7 +193,7 @@ are the product's visual identity and they have to be exactly consistent.
 
 ### The 429 contract
 
-`@smart/api-client` must read `Retry-After` and back off. The student assessment endpoints are
+`@hirekiwi/api-client` must read `Retry-After` and back off. The student assessment endpoints are
 throttled at 10 req/min — an autosave loop that ignores 429 will lock a candidate out of their own
 exam. Debounce drafts, coalesce, and surface a calm "saving…" state rather than an error.
 

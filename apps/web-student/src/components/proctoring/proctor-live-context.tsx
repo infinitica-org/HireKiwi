@@ -1,7 +1,10 @@
 'use client';
 
 import { createContext, useContext, type ReactNode, type RefCallback } from 'react';
-import { PROCTORING_WARNING_LIMIT_DEFAULT, type ProctoringViolationKind } from '@smart/contracts';
+import {
+  PROCTORING_WARNING_LIMIT_DEFAULT,
+  type ProctoringViolationKind,
+} from '@hirekiwi/contracts';
 
 export type ProctorLiveValue = {
   cameraEnabled: boolean;

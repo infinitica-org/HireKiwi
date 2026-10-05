@@ -1,4 +1,4 @@
-import type { ProjectVerificationReportDto } from '@smart/contracts';
+import type { ProjectVerificationReportDto } from '@hirekiwi/contracts';
 import { decodeReportMeta as decodeReportMetaFromMapper } from '../evaluation/project-verify.mapper.js';
 
 export interface ProjectWithVerificationRelations {

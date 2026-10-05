@@ -25,7 +25,7 @@ import {
   companyFeedbackApi,
   formatApiError,
 } from '../../../lib/api';
-import type { CandidateMatchDto, JobOpeningDto } from '@smart/contracts';
+import type { CandidateMatchDto, JobOpeningDto } from '@hirekiwi/contracts';
 import {
   card,
   input,

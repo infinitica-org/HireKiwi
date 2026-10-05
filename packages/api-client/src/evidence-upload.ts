@@ -4,7 +4,7 @@ import {
   type EvidenceFileMimeType,
   type EvidenceUploadUrlRequest,
   type EvidenceUploadUrlResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 /** Th6-600 — what the attach endpoints need once the browser has uploaded the file. */
 export interface UploadedEvidenceFile {

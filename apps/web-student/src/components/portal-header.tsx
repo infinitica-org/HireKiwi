@@ -1,6 +1,6 @@
 'use client';
 
-import { SignOutButton, SmartLogo } from '@smart/ui';
+import { SignOutButton, SmartLogo } from '@hirekiwi/ui';
 import { signOut } from '../lib/auth';
 
 export function PortalHeader() {

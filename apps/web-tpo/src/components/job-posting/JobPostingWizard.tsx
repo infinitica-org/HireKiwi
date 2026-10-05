@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   EMPLOYMENT_TYPES,
   PLACEMENT_CITY_OPTIONS,
@@ -9,8 +9,8 @@ import {
   SKILL_PROFICIENCIES,
   type JobOpeningAttachedDocument,
   type SkillProficiency,
-} from '@smart/contracts';
-import { Button } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Button } from '@hirekiwi/ui';
 import { openingsApi } from '../../lib/api';
 import {
   EMPTY_JOB_POSTING_FORM,

@@ -7,7 +7,7 @@ import {
   type SkillEvidenceContext,
   type SkillEvidenceContextItem,
   type WorkExperienceDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   isSkillEvidenceLinkedToProfile,
   profileProjectHref,

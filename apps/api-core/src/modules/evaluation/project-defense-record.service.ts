@@ -5,7 +5,7 @@ import {
   type DefenseTurn,
   type ProjectDefenseGrade,
   type ProjectDefensePersistedRecord,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { StorageService } from '../../platform/storage/storage.service.js';
 
 export function defenseRecordObjectKey(projectId: string): string {

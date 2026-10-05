@@ -1,7 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
-import { registry } from '@smart/observability';
+import { registry } from '@hirekiwi/observability';
 import { IS_PUBLIC_KEY } from './public.decorator.js';
 import { PERMISSIONS_KEY } from './permissions.js';
 import { ROLES_KEY } from './roles.decorator.js';

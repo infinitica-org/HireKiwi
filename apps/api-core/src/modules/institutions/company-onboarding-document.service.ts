@@ -5,14 +5,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { CompanyVerificationDocumentType } from '@smart/contracts';
+import type { CompanyVerificationDocumentType } from '@hirekiwi/contracts';
 import {
   CompanyDocumentUploadMetaSchema,
   CompanyOnboardingVerificationDocumentDtoSchema,
   CompanyVerificationDocumentTypeSchema,
   MAX_COMPANY_VERIFICATION_DOCUMENT_BYTES,
   type CompanyOnboardingVerificationDocumentDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';

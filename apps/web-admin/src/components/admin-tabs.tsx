@@ -1,13 +1,13 @@
 'use client';
 
 import type { ComponentProps } from 'react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import {
   Tabs,
   TabsContent,
   TabsList as BaseTabsList,
   TabsTrigger as BaseTabsTrigger,
-} from '@smart/ui/tabs';
+} from '@hirekiwi/ui/tabs';
 
 /**
  * In-page section tabs styled like the TPO console's `TpoWorkspaceSectionNav`:

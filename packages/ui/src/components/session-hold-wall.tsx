@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import type { AuthenticatedUser } from '@smart/contracts';
+import type { AuthenticatedUser } from '@hirekiwi/contracts';
 import { Button } from './button';
 
 export interface SessionHoldState {

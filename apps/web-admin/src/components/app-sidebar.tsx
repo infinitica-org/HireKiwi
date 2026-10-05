@@ -3,8 +3,8 @@
 import type { ComponentProps } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader } from '@smart/ui/sidebar';
-import textLogo from '@smart/ui/assets/images/Logos/WebP/Text-logo.png';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader } from '@hirekiwi/ui/sidebar';
+import textLogo from '@hirekiwi/ui/assets/images/Logos/WebP/Text-logo.png';
 import { sidebarItems } from '@/navigation/sidebar-items';
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';

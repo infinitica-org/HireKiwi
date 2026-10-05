@@ -1,5 +1,5 @@
 /**
- * @smart/observability — logging, metrics and correlation.
+ * @hirekiwi/observability — logging, metrics and correlation.
  *
  * Three things every SMART service gets for free by importing this package:
  *   1. a JSON logger that cannot accidentally log a JWT, an answer key or an email;

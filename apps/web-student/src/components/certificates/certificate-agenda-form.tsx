@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { TRACK_DEFINITIONS, type TrackCode } from '@smart/contracts';
-import { Button } from '@smart/ui';
+import { TRACK_DEFINITIONS, type TrackCode } from '@hirekiwi/contracts';
+import { Button } from '@hirekiwi/ui';
 
 type Props = {
   certificateId: string;

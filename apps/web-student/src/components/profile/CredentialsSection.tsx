@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, BadgeCheck, Loader2, Plus, ShieldCheck } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   CREDENTIAL_TYPES,
   type CredentialType,
   type ProfessionalCredentialDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CredentialEntryCard } from '@/components/profile/CredentialEntryCard';
 import {
   ProfileBentoEmptyPanel,

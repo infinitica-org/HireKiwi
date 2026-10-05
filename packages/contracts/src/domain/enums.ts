@@ -7,7 +7,7 @@ import { PROFICIENCY_LEVEL_ORDER } from './skill-levels.js';
  *
  * These values appear in the database, in Kafka payloads, in HTTP responses and
  * in the UI. Changing a member is a breaking change for all six engineers —
- * it is a `@smart/contracts` PR with an ADR, reviewed by the architect.
+ * it is a `@hirekiwi/contracts` PR with an ADR, reviewed by the architect.
  *
  * Source of truth: ARCHITECTURE.md §5 (schema), §6 (tier engine), §8–9 (taxonomy).
  * Owner: Tino (System Architect).

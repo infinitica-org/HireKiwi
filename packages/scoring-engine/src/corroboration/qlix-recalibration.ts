@@ -1,4 +1,4 @@
-import type { SignalWeightModel } from '@smart/contracts';
+import type { SignalWeightModel } from '@hirekiwi/contracts';
 import { computeModelChecksum } from './model-integrity.js';
 import { auc, pointBiserial } from './statistics.js';
 

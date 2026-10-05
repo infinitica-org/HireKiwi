@@ -1,4 +1,4 @@
-import type { SkillClaimDto } from '@smart/contracts';
+import type { SkillClaimDto } from '@hirekiwi/contracts';
 
 import {
   isProjectTaggedSkillClaim,

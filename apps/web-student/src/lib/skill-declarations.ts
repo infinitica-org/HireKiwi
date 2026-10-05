@@ -14,7 +14,7 @@ import {
   type SkillClaimStatus,
   proficiencyLevelUiLabel,
   SKILL_PROFICIENCIES,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { canVerifySkills } from './profile-progress';
 
 export const SOFTWARE_IT_DOMAIN_LABEL = 'Software & IT';

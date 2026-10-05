@@ -19,7 +19,7 @@ import {
   EVIDENCE_FILE_MAX_BYTES,
   API_PREFIX,
   type SendManagerEndorsementDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

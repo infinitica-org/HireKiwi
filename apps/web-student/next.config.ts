@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next';
-import { withSmartConfig } from '@smart/next-config';
+import { withSmartConfig } from '@hirekiwi/next-config';
 
 /** Pages that moved from the site root to /student/… — old links keep working via redirects. */
 const STUDENT_SECTIONS = [

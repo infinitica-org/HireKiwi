@@ -1,5 +1,5 @@
 # S6-VV-129 (#585): third-party integration alerts. Delivered by the smart-team contact point and policy
-# provisioned in smart-alerts.yml (S6-VV-125). Runbook: web-docs delivery/INTEGRATION_HEALTH.
+# provisioned in hirekiwi-alerts.yml (S6-VV-125). Runbook: web-docs delivery/INTEGRATION_HEALTH.
 apiVersion: 1
 
 groups:

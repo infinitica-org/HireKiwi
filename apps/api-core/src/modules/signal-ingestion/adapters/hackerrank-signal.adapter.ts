@@ -9,7 +9,7 @@ import {
   ACTIVE_TAXONOMY_VERSION,
   type ConnectSignalSourceRequest,
   type RawSignalEnvelope,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { HackerrankApiClient } from '../clients/hackerrank-api.client.js';
 import { SignalCircuitOpenError } from '../signal-circuit-breaker.js';
 import { assertSafePublicUsername } from '../username.util.js';

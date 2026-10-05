@@ -4,7 +4,7 @@ import {
   CreateDataRequestSchema,
   DeactivateAccountRequestSchema,
   UpdatePersonalInfoRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountService } from './account.service.js';
 

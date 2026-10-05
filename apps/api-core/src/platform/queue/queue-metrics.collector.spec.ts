@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { getQueueToken } from '@nestjs/bullmq';
-import { registry } from '@smart/observability';
+import { registry } from '@hirekiwi/observability';
 import { QueueMetricsCollector } from './queue-metrics.collector.js';
 
 const NOW = Date.parse('2026-10-01T12:00:00.000Z');

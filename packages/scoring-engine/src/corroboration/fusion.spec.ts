@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTIVE_TAXONOMY_VERSION } from '@smart/contracts';
+import { ACTIVE_TAXONOMY_VERSION } from '@hirekiwi/contracts';
 import { DEFAULT_SIGNAL_WEIGHT_MODEL } from './default-weights.js';
 import { fuseSignals } from './fusion.js';
 

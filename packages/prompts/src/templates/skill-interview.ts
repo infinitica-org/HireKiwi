@@ -5,7 +5,7 @@ import {
   SKILL_INTERVIEW_QUESTION_COUNT,
   SkillInterviewProficiencySchema,
   SkillInterviewQuestionSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { PromptTemplate } from '../types.js';
 import { INJECTION_GUARD, jsonOnly, untrusted } from '../shared.js';
 

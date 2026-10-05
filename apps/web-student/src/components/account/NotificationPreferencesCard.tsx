@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@smart/ui';
-import { isSmartApiError } from '@smart/api-client';
+import { useQuery, useQueryClient } from '@hirekiwi/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import type {
   NotificationChannel,
   NotificationKind,
   NotificationPreferencesResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import { SettingsCard, StatusMessage } from './account-ui';
 

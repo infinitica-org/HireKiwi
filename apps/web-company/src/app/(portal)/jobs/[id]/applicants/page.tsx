@@ -11,8 +11,8 @@ import {
   EMPLOYER_APPLICATION_STATUS_LABELS,
   type ApplicantSortKey,
   type ApplicationStatus,
-} from '@smart/contracts';
-import { Alert, Button, EmptyState, ErrorState, LoadingState } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Alert, Button, EmptyState, ErrorState, LoadingState } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { useApplicantMoves } from '@/lib/use-applicant-moves';
 import { CandidatePanel } from '@/components/pipeline/CandidatePanel';

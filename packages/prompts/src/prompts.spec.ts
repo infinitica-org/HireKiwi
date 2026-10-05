@@ -6,7 +6,7 @@ import {
   PROJECT_VERIFY_PROMPT_REF,
   ResumeParseDraftSchema,
   TRACK_CODES,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   InvalidPromptVariablesError,
   MAX_GUARDRAIL_RETRIES,

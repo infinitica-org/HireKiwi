@@ -1,4 +1,4 @@
-@import '@smart/ui/styles.css';
+@import '@hirekiwi/ui/styles.css';
 
 /* App-local scan so shared UI classes always emit. */
 @source '../../../../packages/ui/src/**/*.{ts,tsx}';

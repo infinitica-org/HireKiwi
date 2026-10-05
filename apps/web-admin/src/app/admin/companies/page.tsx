@@ -2,8 +2,8 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
-import type { CompanyDto, InstitutionListStatus } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { CompanyDto, InstitutionListStatus } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   Building2,
   CheckCircle2,
@@ -13,9 +13,9 @@ import {
   ShieldCheck,
   XCircle,
 } from 'lucide-react';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
-import { Textarea } from '@smart/ui/textarea';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
+import { Textarea } from '@hirekiwi/ui/textarea';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

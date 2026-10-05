@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
-import type { CandidateMatchDto, JobOpeningDto } from '@smart/contracts';
+import type { CandidateMatchDto, JobOpeningDto } from '@hirekiwi/contracts';
 
 export type SuggestionExportRow = {
   rank: number;

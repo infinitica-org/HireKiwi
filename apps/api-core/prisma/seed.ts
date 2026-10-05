@@ -9,7 +9,7 @@ import {
   SKILL_CODES,
   SKILL_DEFINITIONS,
   TRACK_DEFINITIONS,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/index.js';
 import { hashPassword } from '../src/modules/auth/auth.service.js';

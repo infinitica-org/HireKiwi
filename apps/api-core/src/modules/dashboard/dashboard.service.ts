@@ -14,7 +14,7 @@ import {
   type ProfileViewSetting,
   type StudentDashboardSummary,
   type UpdateProfileViewSettingRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import {

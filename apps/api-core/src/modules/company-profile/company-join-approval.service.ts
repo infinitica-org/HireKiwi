@@ -3,7 +3,7 @@ import type {
   CompanyJoinRequestDto,
   ListCompanyJoinRequestsResponse,
   RejectCompanyJoinRequestRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { toJoinRequestDto } from '../institutions/company-join-request.service.js';
 import { requireCompanyActor } from './company-access.js';

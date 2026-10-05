@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Flag } from 'lucide-react';
-import { AdminReportsList } from '@smart/ui';
+import { AdminReportsList } from '@hirekiwi/ui';
 import { PageHeader } from '@/components/page-header';
 import { PageStack } from '@/components/admin-ui';
 import { MessagingProvider } from '@/components/messaging-provider';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { buildLoginUrl } from '@smart/api-client';
+import { buildLoginUrl } from '@hirekiwi/api-client';
 
 const authUrl = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';
 

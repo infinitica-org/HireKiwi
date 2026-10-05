@@ -1,5 +1,5 @@
-import { proficiencyLevelNumber, SKILL_PROFICIENCIES } from '@smart/contracts';
-import { cn } from '@smart/ui';
+import { proficiencyLevelNumber, SKILL_PROFICIENCIES } from '@hirekiwi/contracts';
+import { cn } from '@hirekiwi/ui';
 
 /** Student-facing verified depth (green through achieved level). */
 export function ProficiencyLevelCircles({

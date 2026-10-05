@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { SKILL_DEFINITIONS, type CertificateProficiency } from '@smart/contracts';
+import { SKILL_DEFINITIONS, type CertificateProficiency } from '@hirekiwi/contracts';
 import { X } from 'lucide-react';
 import { nativeOptionClass, nativeSelectClass } from '@/lib/native-select';
 import { isUnlistedSkillCode, unlistedSkillCode } from '@/lib/unlisted-skill';

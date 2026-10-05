@@ -9,9 +9,9 @@ import type {
   TenantActionReason,
   TenantEntitlementsDto,
   UpdateCompanyRequest,
-} from '@smart/contracts';
-import { REDIS_TTL_SECONDS } from '@smart/contracts';
-import { cacheOperations } from '@smart/observability';
+} from '@hirekiwi/contracts';
+import { REDIS_TTL_SECONDS } from '@hirekiwi/contracts';
+import { cacheOperations } from '@hirekiwi/observability';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { resolveRecordActors } from './record-actors.js';

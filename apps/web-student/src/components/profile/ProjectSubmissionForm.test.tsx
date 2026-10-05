@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   CandidateOnboardingProfile,
   CandidateOnboardingProfileResponse,
-} from '@smart/contracts';
-import { buildSkillLibraryResponse } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import { buildSkillLibraryResponse } from '@hirekiwi/contracts';
 import { ProjectSubmissionForm } from './ProjectSubmissionForm';
 
 const emptyOnboardingResponse = (): CandidateOnboardingProfileResponse => ({

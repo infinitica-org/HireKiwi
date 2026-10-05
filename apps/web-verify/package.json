@@ -1,5 +1,5 @@
 {
-  "name": "@smart/web-verify",
+  "name": "@hirekiwi/web-verify",
   "version": "0.1.0",
   "private": true,
   "description": "Certificate verification. Owner: Vishal Bharath R.",
@@ -13,19 +13,19 @@
     "clean": "rimraf .next .turbo *.tsbuildinfo"
   },
   "dependencies": {
-    "@smart/api-client": "workspace:*",
-    "@smart/contracts": "workspace:*",
-    "@smart/ui": "workspace:*",
+    "@hirekiwi/api-client": "workspace:*",
+    "@hirekiwi/contracts": "workspace:*",
+    "@hirekiwi/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@smart/eslint-config": "workspace:*",
-    "@smart/next-config": "workspace:*",
-    "@smart/tailwind-config": "workspace:*",
-    "@smart/tsconfig": "workspace:*",
+    "@hirekiwi/eslint-config": "workspace:*",
+    "@hirekiwi/next-config": "workspace:*",
+    "@hirekiwi/tailwind-config": "workspace:*",
+    "@hirekiwi/tsconfig": "workspace:*",
     "@testing-library/react": "^16.3.2",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

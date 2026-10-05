@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Badge, Button, EmptyState, ErrorState, LoadingState } from '@smart/ui';
+import { Alert, Badge, Button, EmptyState, ErrorState, LoadingState } from '@hirekiwi/ui';
 import {
   UniversityVerificationStatusSchema,
   type UniversityRosterRow,
   type UniversityVerificationStatus,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { universityApi } from '../../lib/api';
 import { MessageStudentModal } from './MessageStudentModal';
 

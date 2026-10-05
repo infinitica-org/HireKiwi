@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, MoreHorizontal } from 'lucide-react';
-import type { InstitutionStudentDto, SkillClaimDto } from '@smart/contracts';
+import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import { categoryLabel, categoryNameForSkillCode } from '../../lib/skill-taxonomy';
 import {
   bentoCardClass,

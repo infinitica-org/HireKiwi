@@ -39,7 +39,7 @@ import {
   type PlacementRecordDto,
   type UploadJobOpeningDocumentResponse,
   type UploadJobOpeningLogoResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AuditAccess } from '../../common/decorators/audit-access.decorator.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';

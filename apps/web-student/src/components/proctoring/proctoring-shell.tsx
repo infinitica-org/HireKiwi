@@ -9,7 +9,7 @@ import {
   PROCTORING_WARNING_LIMIT_DEFAULT,
   type ProctoringCheckpointResponse,
   type ProctoringViolationKind,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api } from '../../lib/api';
 import {
   deviceFingerprintHash,

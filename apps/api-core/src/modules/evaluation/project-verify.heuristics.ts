@@ -8,7 +8,7 @@ import {
   type ProjectExclusionReason,
   type ProjectStatus,
   type ProjectVerifyFlag,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export function normalizeProjectText(value: string): string {
   return value.toLowerCase().replace(/\s+/gu, ' ').trim();

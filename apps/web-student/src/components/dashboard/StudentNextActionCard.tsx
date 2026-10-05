@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import type { DashboardNextAction } from '@smart/contracts';
+import type { DashboardNextAction } from '@hirekiwi/contracts';
 
 /** The single recommended next step, or a completion message when there is nothing left to do. */
 export function StudentNextActionCard({ action }: { action: DashboardNextAction | null }) {

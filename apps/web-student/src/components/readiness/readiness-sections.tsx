@@ -15,7 +15,7 @@ import type {
   ReadinessRecommendation,
   ReadinessRole,
   ReadinessSkillDemonstration,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 const IDENTITY_LABEL: Record<IdentityStatus, string> = {
   NOT_STARTED: 'Not started',

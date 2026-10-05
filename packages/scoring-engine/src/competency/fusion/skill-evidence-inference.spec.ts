@@ -1,6 +1,6 @@
 import { Effect } from 'effect';
 import { describe, expect, it } from 'vitest';
-import type { SkillCompetency } from '@smart/contracts';
+import type { SkillCompetency } from '@hirekiwi/contracts';
 import { assessmentToObservationBundle } from './source-adapters/assessment.adapter.js';
 import { runSkillEvidenceFusion } from './skill-evidence-inference.js';
 import { projectBundleFromQlixEvidence } from './qlix-project-observations.js';

@@ -14,7 +14,7 @@ import {
   type CandidateNote,
   type ListCandidateNotesResponse,
   type RecordApplicationOutcomeRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { requireCompanyActor } from '../company-profile/company-access.js';

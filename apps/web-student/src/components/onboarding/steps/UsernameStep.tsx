@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { AtSign, CheckCircle2 } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { ErrorBanner, PrimaryButton, StepHeading, TextInput } from '../wizard-ui';
 

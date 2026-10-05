@@ -1,8 +1,8 @@
 /**
  * Authoritative per-skill competency topics and assessment profiles.
- * Regenerate contracts index: pnpm --filter @smart/content-pipeline codegen:competencies
+ * Regenerate contracts index: pnpm --filter @hirekiwi/content-pipeline codegen:competencies
  */
-import type { SkillCategoryId } from '@smart/contracts';
+import type { SkillCategoryId } from '@hirekiwi/contracts';
 
 export type ProficiencyVerificationOverride = Partial<{
   readonly realWorldApplicationRequired: boolean;

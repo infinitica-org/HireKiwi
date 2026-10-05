@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { registry } from '@smart/observability';
+import { registry } from '@hirekiwi/observability';
 import { countSecurityEvent } from './audit-publisher.service.js';
 
 async function count(labels: Record<string, string>): Promise<number> {

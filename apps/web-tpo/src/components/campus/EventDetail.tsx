@@ -11,9 +11,13 @@ import {
   LoadingState,
   Modal,
   formatEventRange,
-} from '@smart/ui';
-import { SmartApiError } from '@smart/api-client';
-import type { CreateCareerEvent, UniversityEventDetail, UpdateCareerEvent } from '@smart/contracts';
+} from '@hirekiwi/ui';
+import { SmartApiError } from '@hirekiwi/api-client';
+import type {
+  CreateCareerEvent,
+  UniversityEventDetail,
+  UpdateCareerEvent,
+} from '@hirekiwi/contracts';
 import { api } from '../../lib/api';
 import { EVENT_STATUS_VARIANT } from './EventsWorkspace';
 import { EventForm } from './EventForm';

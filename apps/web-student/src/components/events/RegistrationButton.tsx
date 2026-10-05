@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { PublicCareerEvent } from '@smart/contracts';
-import { Alert, Badge, Button } from '@smart/ui';
+import type { PublicCareerEvent } from '@hirekiwi/contracts';
+import { Alert, Badge, Button } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 
 export const EVENTS_KEY = ['campus', 'events'] as const;

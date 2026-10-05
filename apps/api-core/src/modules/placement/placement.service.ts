@@ -26,7 +26,7 @@ import {
   UploadJobOpeningDocumentResponseSchema,
   UploadJobOpeningLogoResponseSchema,
   studentMeetsJobOpeningEligibility,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type {
   ApplicationConfidenceDto,
   ApplicationDto,
@@ -47,7 +47,7 @@ import type {
   ParseOpeningJdResponse,
   RecordOutcomeRequest,
   SkillProficiency,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { ApplicationService } from '../applications/application.service.js';

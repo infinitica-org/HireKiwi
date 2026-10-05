@@ -6,8 +6,8 @@ import type {
   ProficiencyRequirement,
   RecommendedNextStep,
   SkillCompetency,
-} from '@smart/contracts';
-import { PROFICIENCY_LEVEL_ORDER, type ProficiencyLevel } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import { PROFICIENCY_LEVEL_ORDER, type ProficiencyLevel } from '@hirekiwi/contracts';
 
 export type { ProficiencyLevel };
 

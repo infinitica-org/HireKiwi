@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CandidateMatchDto, MatchRunDto, ShortlistDto } from '@smart/contracts';
-import { SmartApiError } from '@smart/api-client';
+import type { CandidateMatchDto, MatchRunDto, ShortlistDto } from '@hirekiwi/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
 import { api, applicationsApi, matchingApi, openingsApi } from '../lib/api';
 import { CandidateSuggestionsWorkspace } from './candidate-suggestions-workspace';
 

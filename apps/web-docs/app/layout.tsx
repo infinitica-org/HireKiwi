@@ -11,10 +11,10 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://docs.becomesmart.online'),
   title: {
     template: '%s | SMART Documentation',
-    default: 'SMART Platform — Architecture & Engineering Documentation',
+    default: 'HireKiwi Platform — Architecture & Engineering Documentation',
   },
   description:
-    'Authoritative system architecture, data models, deployment guides, and API specifications for the SMART platform.',
+    'Authoritative system architecture, data models, deployment guides, and API specifications for the HireKiwi platform.',
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {

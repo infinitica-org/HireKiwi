@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { describeApiError } from '@smart/api-client';
+import { describeApiError } from '@hirekiwi/api-client';
 import {
   COMPANY_SIZE_BANDS,
   COMPANY_SIZE_BAND_LABELS,
   COMPANY_WORK_EMAIL_REQUIRED_MESSAGE,
   isFreeMailDomain,
   type CompanySizeBand,
-} from '@smart/contracts';
-import { SmartLogo } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { SmartLogo } from '@hirekiwi/ui';
 import { api } from '../../../lib/api';
 import { sanitizePhoneInput } from '../../../lib/phone-input';
 import {

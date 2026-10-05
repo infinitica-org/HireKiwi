@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProjectDto, ReplaceProjectResponse } from '@smart/contracts';
+import type { ProjectDto, ReplaceProjectResponse } from '@hirekiwi/contracts';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { replaceStudentProject } from '@/lib/project-replace';

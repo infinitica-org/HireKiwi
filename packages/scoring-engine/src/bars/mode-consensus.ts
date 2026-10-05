@@ -1,4 +1,4 @@
-import type { CertifiableTier } from '@smart/contracts';
+import type { CertifiableTier } from '@hirekiwi/contracts';
 import { modes } from '../statistics.js';
 
 /**

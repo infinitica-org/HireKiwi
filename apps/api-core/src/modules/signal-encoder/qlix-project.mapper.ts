@@ -1,5 +1,5 @@
 import { QlixSmartAssessmentSchema } from '../evaluation/qlix-client.js';
-import type { QlixProjectFusionInput } from '@smart/scoring-engine';
+import type { QlixProjectFusionInput } from '@hirekiwi/scoring-engine';
 
 type QlixCheckResultRow = {
   appliedProficiencyCeiling: string | null;

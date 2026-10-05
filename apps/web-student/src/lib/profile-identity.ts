@@ -1,4 +1,4 @@
-import type { AuthenticatedUser, CandidateEducationDto } from '@smart/contracts';
+import type { AuthenticatedUser, CandidateEducationDto } from '@hirekiwi/contracts';
 
 function primaryEducationEntry(
   education: CandidateEducationDto[],

@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import type { GradeSdeSkillFormResponse } from '@smart/contracts';
-import { Button } from '@smart/ui';
+import type { GradeSdeSkillFormResponse } from '@hirekiwi/contracts';
+import { Button } from '@hirekiwi/ui';
 import { skillNameForCode } from '@/lib/skill-declarations';
 import { type AssessmentResultView } from '@/lib/competency-display';
 

@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
   Input,
-} from '@smart/ui';
+} from '@hirekiwi/ui';
 import { ShieldCheck, AlertTriangle, CheckCircle2, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { api, redirectForRole, storeSession } from '../../../lib/api';
 

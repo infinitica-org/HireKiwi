@@ -4,7 +4,7 @@ import type {
   JobOpeningDto,
   PlacementEmployerSummary,
   SkillClaimDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   applicationCountByEmployerId,
   buildEmployerEngagementRows,

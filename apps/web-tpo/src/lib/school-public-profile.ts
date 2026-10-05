@@ -1,4 +1,4 @@
-import type { TenantEntitlementsDto, TenantVerificationStatus } from '@smart/contracts';
+import type { TenantEntitlementsDto, TenantVerificationStatus } from '@hirekiwi/contracts';
 
 export type SchoolProfileOverrides = {
   tagline?: string;

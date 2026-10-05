@@ -1,4 +1,4 @@
-# @smart/load-tests — performance & stress testing
+# @hirekiwi/load-tests — performance & stress testing
 
 k6-based performance/stress testing for the whole SMART stack: 5 Next.js apps
 (web-student, web-tpo, web-admin, web-verify, web-auth), the NestJS `api-core`

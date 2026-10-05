@@ -2,7 +2,7 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { GUARDS_METADATA, PATH_METADATA, ROUTE_ARGS_METADATA } from '@nestjs/common/constants.js';
-import type { UserRole } from '@smart/contracts';
+import type { UserRole } from '@hirekiwi/contracts';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { TenantId, TenantScope } from './decorators/tenant-id.decorator.js';
 import { PERMISSIONS_KEY, roleHasPermission, type Permission } from './guards/permissions.js';

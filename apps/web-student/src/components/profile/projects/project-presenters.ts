@@ -1,4 +1,4 @@
-import type { ProjectDto } from '@smart/contracts';
+import type { ProjectDto } from '@hirekiwi/contracts';
 
 export function parseStackTags(stack: string): string[] {
   return stack

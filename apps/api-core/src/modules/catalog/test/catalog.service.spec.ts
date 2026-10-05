@@ -7,7 +7,7 @@ import {
   SKILL_DEFINITIONS,
   SKILL_TAXONOMY_VERSION,
   TRACK_DEFINITIONS,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CatalogService } from '../catalog.service.js';
 
 /**

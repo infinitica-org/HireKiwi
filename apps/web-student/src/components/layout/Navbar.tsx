@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Bell, ChevronRight, Menu, UserRound, Zap, Users, Settings } from 'lucide-react';
 import { useCurrentUser } from '@/lib/candidate-identity';
 import { signOut } from '@/lib/auth';
-import { UserMenu } from '@smart/ui';
+import { UserMenu } from '@hirekiwi/ui';
 
 type Breadcrumb = { label: string; href?: string };
 

@@ -1,4 +1,4 @@
-import type { WorkExperienceValidationResult } from '@smart/contracts';
+import type { WorkExperienceValidationResult } from '@hirekiwi/contracts';
 
 /** Matches onboarding URL normalization — Zod requires a valid http(s) URL. */
 export function normalizeOptionalHttpUrl(value: string): string | null {

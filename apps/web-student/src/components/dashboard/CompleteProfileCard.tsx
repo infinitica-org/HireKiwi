@@ -16,8 +16,8 @@ import {
   Link2,
   type LucideIcon,
 } from 'lucide-react';
-import type { DashboardCompletion } from '@smart/contracts';
-import { cn } from '@smart/ui';
+import type { DashboardCompletion } from '@hirekiwi/contracts';
+import { cn } from '@hirekiwi/ui';
 import { initialsOf } from '@/lib/candidate-identity';
 
 type AreaMeta = { title: string; hint: string; href: string; icon: LucideIcon };

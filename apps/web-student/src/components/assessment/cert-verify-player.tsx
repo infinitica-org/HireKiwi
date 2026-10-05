@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert } from '@smart/ui';
+import { Alert } from '@hirekiwi/ui';
 import type {
   CertAgendaPublicItem,
   CertVerifyPrepareDto,
   CertVerifySessionDto,
   GradeCertAgendaResponse,
   SkillVerifySessionDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import { formatRetryAt } from '@/lib/skill-declarations';
 import {

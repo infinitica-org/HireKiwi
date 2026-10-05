@@ -1,16 +1,16 @@
-# @smart/web-landing
+# @hirekiwi/web-landing
 
 Public marketing / landing site (no auth). Owner: Satheswaran V.
 
 ## Local dev
 
 ```powershell
-pnpm --filter @smart/web-landing dev
+pnpm --filter @hirekiwi/web-landing dev
 ```
 
 Open http://localhost:3007
 
-Included in `pnpm dev:web` (`@smart/web-*`).
+Included in `pnpm dev:web` (`@hirekiwi/web-*`).
 
 ## Adding your SMART_Landing_Page code
 

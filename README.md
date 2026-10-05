@@ -1,35 +1,35 @@
-# SmartKiwi (SMART) Intelligent Talent Discovery Platform
+# HireKiwi Intelligent Talent Discovery Platform
 
-**SmartKiwi (SMART)** is an **evidence-backed talent discovery and readiness platform**. Candidates build capability profiles backed by verified active and passive evidence (projects, repositories, work vouchers, spoken BARS simulations, and proctored tasks), assessed against a criterion-referenced multi-tier (Gold / Silver / Bronze) competency grid mapped to real industry job tracks. Certified candidates receive student-controlled, cryptographically signed (HMAC-SHA256), publicly verifiable credentials, and are matched semantically to high-fit employer opportunities via vector intelligence (`pgvector`). SmartKiwi operates across two unified deployment models: embedded in academia as verified placement infrastructure, and embedded in enterprises for internal mobility and workforce readiness.
+**HireKiwi** is an **evidence-backed talent discovery and readiness platform**. Candidates build capability profiles backed by verified active and passive evidence (projects, repositories, work vouchers, spoken BARS simulations, and proctored tasks), assessed against a criterion-referenced multi-tier (Gold / Silver / Bronze) competency grid mapped to real industry job tracks. Certified candidates receive student-controlled, cryptographically signed (HMAC-SHA256), publicly verifiable credentials, and are matched semantically to high-fit employer opportunities via vector intelligence (`pgvector`). HireKiwi operates across two unified deployment models: embedded in academia as verified placement infrastructure, and embedded in enterprises for internal mobility and workforce readiness.
 
-**Vivi** is the unified AI agent persona, proctoring supervisor, and candidate copilot across the SmartKiwi platform.
+**Vivi** is the unified AI agent persona, proctoring supervisor, and candidate copilot across the HireKiwi platform.
 
-Governing references: team charter and ownership — [`TEAM.md`](./TEAM.md); delivery methodology — [`apps/web-docs/content/docs/delivery/AI_DLC_FRAMEWORK.mdx`](./apps/web-docs/content/docs/delivery/AI_DLC_FRAMEWORK.mdx); architecture documentation SSOT — `@smart/web-docs` on port `3008` / `3028`; branching policy — [`apps/web-docs/content/docs/delivery/BRANCHING.mdx`](./apps/web-docs/content/docs/delivery/BRANCHING.mdx).
+Governing references: team charter and ownership — [`TEAM.md`](./TEAM.md); delivery methodology — [`apps/web-docs/content/docs/delivery/AI_DLC_FRAMEWORK.mdx`](./apps/web-docs/content/docs/delivery/AI_DLC_FRAMEWORK.mdx); architecture documentation SSOT — `@hirekiwi/web-docs` on port `3008` / `3028`; branching policy — [`apps/web-docs/content/docs/delivery/BRANCHING.mdx`](./apps/web-docs/content/docs/delivery/BRANCHING.mdx).
 
 **New to the codebase:** begin with [`apps/web-docs/content/docs/delivery/ENGINEER_START_CHECKLIST.mdx`](./apps/web-docs/content/docs/delivery/ENGINEER_START_CHECKLIST.mdx), then [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ## Ecosystem Applications & Architecture
 
-SmartKiwi is composed of **10 applications** running within a Turborepo monorepo:
+HireKiwi is composed of **10 applications** running within a Turborepo monorepo:
 
-| #   | Application Name     | Port | Description                                                  |
-| --- | -------------------- | :--: | ------------------------------------------------------------ |
-| 1   | `@smart/api-core`    | 3000 | Fastify + NestJS Core API (`/health`, `/ready`, `/api/docs`) |
-| 2   | `@smart/web-student` | 3001 | Candidate portal & AI project defense                        |
-| 3   | `@smart/web-tpo`     | 3002 | University / TPO placement cohort & analytics console        |
-| 4   | `@smart/web-admin`   | 3003 | Super admin console & integrity dispute review queue         |
-| 5   | `@smart/web-verify`  | 3004 | Public cryptographic credential verification portal          |
-| 6   | `@smart/web-auth`    | 3005 | Unified authentication, SSO, and invitation flow             |
-| 7   | `@smart/web-company` | 3006 | Employer & recruiter talent search and job management        |
-| 8   | `@smart/web-landing` | 3007 | Public marketing landing & conversion website                |
-| 9   | `@smart/web-docs`    | 3008 | Fumadocs Architecture & Engineering Documentation SSOT       |
-| 10  | `proctoring-cv`      | 8091 | Python CV proctoring sidecar (YuNet / YOLO / head pose)      |
+| #   | Application Name        | Port | Description                                                  |
+| --- | ----------------------- | :--: | ------------------------------------------------------------ |
+| 1   | `@hirekiwi/api-core`    | 3000 | Fastify + NestJS Core API (`/health`, `/ready`, `/api/docs`) |
+| 2   | `@hirekiwi/web-student` | 3001 | Candidate portal & AI project defense                        |
+| 3   | `@hirekiwi/web-tpo`     | 3002 | University / TPO placement cohort & analytics console        |
+| 4   | `@hirekiwi/web-admin`   | 3003 | Super admin console & integrity dispute review queue         |
+| 5   | `@hirekiwi/web-verify`  | 3004 | Public cryptographic credential verification portal          |
+| 6   | `@hirekiwi/web-auth`    | 3005 | Unified authentication, SSO, and invitation flow             |
+| 7   | `@hirekiwi/web-company` | 3006 | Employer & recruiter talent search and job management        |
+| 8   | `@hirekiwi/web-landing` | 3007 | Public marketing landing & conversion website                |
+| 9   | `@hirekiwi/web-docs`    | 3008 | Fumadocs Architecture & Engineering Documentation SSOT       |
+| 10  | `proctoring-cv`         | 8091 | Python CV proctoring sidecar (YuNet / YOLO / head pose)      |
 
 ## Stack
 
 Turborepo + pnpm workspaces. 8 Next.js 16 portals · NestJS 11 / Fastify core · Python CV sidecar · PostgreSQL 16 with **pgvector** · Redis 7 · Redpanda (Kafka) · MinIO (S3) · Mailpit (development SMTP) · Caddy TLS reverse proxy.
 
-Shared packages: `@smart/contracts` (frozen API surface), `@smart/scoring-engine`, `@smart/prompts`, `@smart/observability`, `@smart/api-client`, `@smart/ui`.
+Shared packages: `@hirekiwi/contracts` (frozen API surface), `@hirekiwi/scoring-engine`, `@hirekiwi/prompts`, `@hirekiwi/observability`, `@hirekiwi/api-client`, `@hirekiwi/ui`.
 
 ## Local development
 

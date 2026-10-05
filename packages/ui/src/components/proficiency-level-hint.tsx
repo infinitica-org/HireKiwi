@@ -1,7 +1,7 @@
 'use client';
 
 import { Info } from 'lucide-react';
-import { proficiencyLegendEntries } from '@smart/contracts';
+import { proficiencyLegendEntries } from '@hirekiwi/contracts';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 

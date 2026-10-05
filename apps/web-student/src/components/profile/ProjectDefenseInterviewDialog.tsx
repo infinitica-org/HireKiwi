@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import type { ProjectDto } from '@smart/contracts';
-import { Alert } from '@smart/ui';
+import type { ProjectDto } from '@hirekiwi/contracts';
+import { Alert } from '@hirekiwi/ui';
 import { Mic } from 'lucide-react';
 
 export function projectDefenseInterviewHref(projectId: string): string {

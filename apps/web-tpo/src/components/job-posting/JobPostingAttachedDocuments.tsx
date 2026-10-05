@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
-import type { JobOpeningAttachedDocument } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { JobOpeningAttachedDocument } from '@hirekiwi/contracts';
 import { openingsApi } from '../../lib/api';
 import { errorNoticeClass, mutedTextClass, secondaryButtonSmClass } from '../../lib/tpo-ui';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TRANSFER_SKILL_REASONS } from '@smart/contracts';
+import { TRANSFER_SKILL_REASONS } from '@hirekiwi/contracts';
 
 /**
  * Integration tests for Graph-Based Transfer Skill Detection (Integration B)

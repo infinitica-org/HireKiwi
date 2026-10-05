@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { Languages, Plus, X } from 'lucide-react';
-import type { CandidateLanguageDto } from '@smart/contracts';
-import { queryKeys } from '@smart/api-client';
-import { useQuery, useQueryClient } from '@smart/ui';
+import type { CandidateLanguageDto } from '@hirekiwi/contracts';
+import { queryKeys } from '@hirekiwi/api-client';
+import { useQuery, useQueryClient } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { LanguageEntryCard } from '@/components/profile/LanguageEntryCard';
 import {

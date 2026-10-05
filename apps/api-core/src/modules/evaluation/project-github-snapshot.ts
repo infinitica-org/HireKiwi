@@ -1,4 +1,4 @@
-import type { GithubRepoSnapshot, ProjectGithubSnapshot } from '@smart/contracts';
+import type { GithubRepoSnapshot, ProjectGithubSnapshot } from '@hirekiwi/contracts';
 import type { GithubApiClient } from '../integrations/github/github-api.client.js';
 
 export function parseGithubRepoUrl(

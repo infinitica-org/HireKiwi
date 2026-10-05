@@ -1,5 +1,5 @@
-import { SmartApiError } from '@smart/api-client';
-import type { CompanyProfile } from '@smart/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
+import type { CompanyProfile } from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   createKeyTracker,

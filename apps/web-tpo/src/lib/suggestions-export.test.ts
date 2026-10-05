@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CandidateMatchDto, JobOpeningDto } from '@smart/contracts';
+import type { CandidateMatchDto, JobOpeningDto } from '@hirekiwi/contracts';
 import {
   buildSuggestionsCsv,
   buildSuggestionsPdf,

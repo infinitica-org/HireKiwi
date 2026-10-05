@@ -3,14 +3,14 @@ import {
   ProjectDocumentDtoSchema,
   type EvidenceFileConfirm,
   type EvidenceUploadUrlRequest,
-} from '@smart/contracts';
-import { ListActiveUsersResponseSchema, type ListActiveUsersQuery } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import { ListActiveUsersResponseSchema, type ListActiveUsersQuery } from '@hirekiwi/contracts';
 import {
   ConnectSignalSourceResponseSchema,
   ListSignalConnectionsResponseSchema,
   type ConnectSignalSourceRequest,
   type ConnectableSignalSourceId,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   CampusAccessRequestDtoSchema,
   CareerEventDtoSchema,
@@ -34,7 +34,7 @@ import {
   type UniversityEmployersQuery,
   type UniversityEventsQuery,
   type UpdateCareerEvent,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   ConversionMetricsSchema,
   ListAdminReportsResponseSchema,
@@ -57,7 +57,7 @@ import {
   type SearchMessagesQuery,
   type SendMessageRequest,
   type StartConversationRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   ApplicationOutcomeSchema,
   AssignRecruiterResponseSchema,
@@ -76,7 +76,7 @@ import {
   type ApplyToJobRequest,
   type ListEmployerApplicantsQuery,
   type WithdrawApplicationRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   JobFlagResponseSchema,
   ListSavedJobsResponseSchema,
@@ -86,7 +86,7 @@ import {
   type CreateReportRequest,
   type HideJobRequest,
   type ListStudentJobsQuery,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   CompanyMemberSchema,
   CompanyProfileSchema,
@@ -102,7 +102,7 @@ import {
   type InviteRecruiterRequest,
   type UpdateCompanyMemberRoleRequest,
   type UpdateCompanyProfileRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type {
   AddCertificateSkillsRequest,
   AuditLogSection,
@@ -209,7 +209,7 @@ import type {
   ReplacePaymentMethodDto,
   VerifyPaymentMethodReplacementDto,
   ResolveEvidenceDisputeRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   API_PREFIX,
   CheckoutSessionResponseSchema,
@@ -426,7 +426,7 @@ import {
   ToggleModelVersionResponseSchema,
   ListRegisteredPromptsResponseSchema,
   type CorrectStudentCapabilityRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { z } from 'zod';
 import type { SmartApiClient } from './client.js';
 

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { FileText, Loader2, Sparkles, Upload } from 'lucide-react';
-import type { CredentialType, ProfessionalCredentialDto } from '@smart/contracts';
+import type { CredentialType, ProfessionalCredentialDto } from '@hirekiwi/contracts';
 
 import { CERTIFICATE_CARD_ACCENTS } from '@/lib/certificate-entry-presenters';
 

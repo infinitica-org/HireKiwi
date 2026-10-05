@@ -3,7 +3,7 @@ import {
   MODERATION_CONTEXT_MESSAGES,
   type AdminConversationQuery,
   type AdminConversationView,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 const forbidden = () =>

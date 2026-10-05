@@ -1,4 +1,4 @@
-@import '@smart/ui/styles.css';
+@import '@hirekiwi/ui/styles.css';
 
 @source '../**/*.{ts,tsx}';
 @source '../../../../packages/ui/src/**/*.{ts,tsx}';
@@ -115,7 +115,7 @@ h6,
   }
 }
 
-/* Shared @smart/ui Card inside the console — TPO bento radius and hover border. */
+/* Shared @hirekiwi/ui Card inside the console — TPO bento radius and hover border. */
 .admin-console [data-slot='card'] {
   border-radius: var(--radius-lg);
   transition:

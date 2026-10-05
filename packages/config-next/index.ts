@@ -9,9 +9,9 @@ export function withSmartConfig(config: NextConfig = {}): NextConfig {
     allowedDevOrigins: ['localhost', '127.0.0.1', 'localhost:3001', '127.0.0.1:3001'],
     output: 'standalone',
     transpilePackages: [
-      '@smart/ui',
-      '@smart/api-client',
-      '@smart/contracts',
+      '@hirekiwi/ui',
+      '@hirekiwi/api-client',
+      '@hirekiwi/contracts',
       'motion',
       '@mediapipe/tasks-vision',
     ],

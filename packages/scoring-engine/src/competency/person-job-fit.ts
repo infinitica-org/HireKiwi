@@ -1,4 +1,4 @@
-import type { PersonJobFitScore, SkillImportance } from '@smart/contracts';
+import type { PersonJobFitScore, SkillImportance } from '@hirekiwi/contracts';
 
 export interface RequiredSkillDemand {
   readonly skillCode: string;

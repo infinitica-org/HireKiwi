@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Target, Sparkles, FileCheck, Eye } from 'lucide-react';
-import type { DashboardActivityKind } from '@smart/contracts';
+import type { DashboardActivityKind } from '@hirekiwi/contracts';
 import { CompleteProfileCard } from '@/components/dashboard/CompleteProfileCard';
 import { OpportunityFeed } from '@/components/dashboard/OpportunityFeed';
 import { WelcomeBanner } from '@/components/dashboard/WelcomeBanner';

@@ -4,7 +4,7 @@ import {
   API_PREFIX,
   UpdateNotificationPreferencesRequestSchema,
   type NotificationPreferencesResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';

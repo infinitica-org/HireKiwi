@@ -1,4 +1,4 @@
-import type { CandidateOnboardingDraft, CandidateOnboardingProfile } from '@smart/contracts';
+import type { CandidateOnboardingDraft, CandidateOnboardingProfile } from '@hirekiwi/contracts';
 
 /** Parses a GitHub profile URL or bare username into a login suitable for list-repos. */
 export function extractGithubLoginFromUrl(githubUrl: string): string | null {

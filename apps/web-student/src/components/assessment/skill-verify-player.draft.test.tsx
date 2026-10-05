@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SdeSkillFormResponseItemSchema } from '@smart/contracts';
+import { SdeSkillFormResponseItemSchema } from '@hirekiwi/contracts';
 import { writeSkillVerifyDraft } from '@/lib/skill-verify-draft';
 import type * as ExamModule from './skill-verify-exam';
 import { SKILL_VERIFY_ANSWER_MAX_CHARS } from './skill-verify-exam';

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
-import { CandidateEvidenceProvenanceResponseSchema as _CandidateEvidenceProvenanceResponseSchema } from '@smart/contracts';
+import { CandidateEvidenceProvenanceResponseSchema as _CandidateEvidenceProvenanceResponseSchema } from '@hirekiwi/contracts';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { CredentialDedupService } from '../candidate-certificates/verification/credential-dedup.service.js';
 import { EvidenceService } from './evidence.service.js';

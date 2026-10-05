@@ -34,8 +34,8 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { cn, SidebarLegalLinks } from '@smart/ui';
-import smartLogoImg from '@smart/ui/assets/images/Logos/WebP/Smart-logo.png';
+import { cn, SidebarLegalLinks } from '@hirekiwi/ui';
+import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';
 

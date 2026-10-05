@@ -1,1 +1,1 @@
-export { default } from '@smart/tailwind-config/postcss';
+export { default } from '@hirekiwi/tailwind-config/postcss';

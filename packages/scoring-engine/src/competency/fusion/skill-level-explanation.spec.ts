@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SkillEvidenceInferenceSnapshot } from '@smart/contracts';
+import type { SkillEvidenceInferenceSnapshot } from '@hirekiwi/contracts';
 import {
   buildEmployerSkillInspection,
   buildSkillLevelExplanation,

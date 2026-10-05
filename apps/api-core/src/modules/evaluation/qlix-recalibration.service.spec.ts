@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_SIGNAL_WEIGHT_MODEL } from '@smart/scoring-engine';
+import { DEFAULT_SIGNAL_WEIGHT_MODEL } from '@hirekiwi/scoring-engine';
 import { QlixRecalibrationService } from './qlix-recalibration.service.js';
 
 describe('QlixRecalibrationService', () => {

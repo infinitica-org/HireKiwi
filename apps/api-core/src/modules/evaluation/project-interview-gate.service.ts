@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ProjectInterviewStateSchema, type ProjectInterviewState } from '@smart/contracts';
+import { ProjectInterviewStateSchema, type ProjectInterviewState } from '@hirekiwi/contracts';
 import { RedisService } from '../../platform/redis/redis.service.js';
 
 const STATE_TTL_SECONDS = 60 * 60 * 24 * 90;

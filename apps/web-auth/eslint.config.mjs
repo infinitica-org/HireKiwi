@@ -1,3 +1,3 @@
-import base from '@smart/eslint-config/next';
+import base from '@hirekiwi/eslint-config/next';
 
 export default base;

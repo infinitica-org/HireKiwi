@@ -8,7 +8,7 @@ import {
   EMPLOYER_APPLICATION_STATUS_LABELS,
   type ApplicationStatus,
   type EmployerApplicantCard,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api, companyJobsApi } from '../../../lib/api';
 
 /** Applicant lists are fetched per job; keep the fan-out bounded on this overview. */

@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { AiModelRole } from '@smart/contracts';
+import type { AiModelRole } from '@hirekiwi/contracts';
 
 /**
  * Prompt template types.
