@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 
 export const EDUCATION_MODAL_FIELD =
-  'h-11 w-full min-w-0 rounded-[14px] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3.5 text-sm text-[var(--ds-text)] shadow-sm placeholder:text-[var(--ds-text-subtle)] focus:border-[var(--ds-green)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green-soft)]';
+  'h-11 w-full min-w-0 rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3.5 text-sm text-[var(--ds-text)] shadow-sm placeholder:text-[var(--ds-text-subtle)] focus:border-[var(--ds-green)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green-soft)]';
 
 /** Prominent score entry — full width, easy to read while typing. */
 export const EDUCATION_MODAL_SCORE_INPUT =
-  'h-12 w-full min-w-[8rem] rounded-[14px] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 text-lg font-semibold tabular-nums tracking-tight text-[var(--ds-text)] shadow-sm placeholder:text-[var(--ds-text-subtle)] placeholder:font-normal placeholder:text-base focus:border-[var(--ds-green)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green-soft)]';
+  'h-12 w-full min-w-[8rem] rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 text-lg font-semibold tabular-nums tracking-tight text-[var(--ds-text)] shadow-sm placeholder:text-[var(--ds-text-subtle)] placeholder:font-normal placeholder:text-base focus:border-[var(--ds-green)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green-soft)]';
 
 export function EducationFormField({
   id,

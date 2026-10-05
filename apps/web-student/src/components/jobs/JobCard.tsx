@@ -32,12 +32,12 @@ export function JobCard({ job, onToggleSave, onHide, onReport }: JobCardProps) {
   ].filter(Boolean);
 
   return (
-    <li className="rounded-xl border border-zinc-200/80 bg-white p-4 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
+    <li className="rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              href={`/jobs/${job.id}`}
+              href={`/student/jobs/${job.id}`}
               className="font-heading text-base font-bold text-zinc-950 hover:underline dark:text-white"
             >
               {job.roleTitle}
@@ -81,7 +81,7 @@ export function JobCard({ job, onToggleSave, onHide, onReport }: JobCardProps) {
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {job.applied ? null : (
           <Link
-            href={`/jobs/${job.id}?apply=1`}
+            href={`/student/jobs/${job.id}?apply=1`}
             aria-label={`Apply to ${job.roleTitle}`}
             className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-800"
           >

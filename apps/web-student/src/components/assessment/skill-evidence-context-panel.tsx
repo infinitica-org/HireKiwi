@@ -62,14 +62,14 @@ export function SkillEvidenceContextPanel({
         </ul>
       ) : explicitAssociationEmpty ? (
         <Link
-          href="/profile"
+          href="/student/profile"
           className="mt-2 inline-block text-xs font-semibold text-foreground hover:underline"
         >
           Go to your profile
         </Link>
       ) : (
         <Link
-          href="/profile"
+          href="/student/profile"
           className="mt-2 inline-block text-xs font-semibold text-foreground hover:underline"
         >
           Add projects or work experience on your profile

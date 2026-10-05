@@ -79,7 +79,7 @@ export function StudentProjectInterviewsHub() {
               When a submitted project is ready for a voice ownership interview, it will show up
               here with a link to start.
             </p>
-            <Link href="/assessment" className={profilePrimaryButtonClass}>
+            <Link href="/student/assessment" className={profilePrimaryButtonClass}>
               Go to Assessment
             </Link>
           </div>

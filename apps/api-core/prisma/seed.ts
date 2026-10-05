@@ -329,6 +329,8 @@ async function main(): Promise<void> {
       role: 'COMPANY',
       institutionId: null,
       companyId: company.id,
+      // Without a company role every company permission check (profile, team, applicants) fails.
+      companyRole: 'OWNER' as const,
       primaryTrackId: null,
       passwordHash: devPasswordHash,
     },
@@ -343,6 +345,7 @@ async function main(): Promise<void> {
         fullName: account.fullName,
         role: account.role,
         companyId: account.companyId,
+        companyRole: 'companyRole' in account ? account.companyRole : null,
         institutionId: account.institutionId,
         emailVerified: true,
         failedLoginAttempts: 0,
@@ -356,6 +359,7 @@ async function main(): Promise<void> {
         emailVerified: true,
         institutionId: account.institutionId,
         companyId: account.companyId,
+        companyRole: 'companyRole' in account ? account.companyRole : null,
         primaryTrackId: account.primaryTrackId,
       },
     });

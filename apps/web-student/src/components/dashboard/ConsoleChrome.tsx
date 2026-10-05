@@ -13,8 +13,14 @@ export function PageHeader({
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="max-w-2xl">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl">{title}</h1>
-        {subtitle ? <p className="mt-1 text-sm text-gray-500">{subtitle}</p> : null}
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl dark:text-white">
+          {title}
+        </h1>
+        {subtitle ? (
+          <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm dark:text-zinc-400">
+            {subtitle}
+          </p>
+        ) : null}
       </div>
       {action}
     </div>

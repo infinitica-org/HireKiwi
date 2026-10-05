@@ -46,7 +46,7 @@ export function VerifiedSkillsPanel({ claims }: VerifiedSkillsPanelProps) {
         </div>
 
         <Link
-          href="/profile?section=skills"
+          href="/student/profile?section=skills"
 
           data-tour="manage-skills-link"
 
@@ -70,7 +70,7 @@ export function VerifiedSkillsPanel({ claims }: VerifiedSkillsPanelProps) {
           </p>
 
           <Link
-            href="/profile?section=skills"
+            href="/student/profile?section=skills"
 
             className="mt-5 inline-flex h-10 items-center gap-2 rounded-[9px] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 text-sm font-medium text-[var(--ds-icon)] transition hover:bg-[var(--ds-surface-hover)]"
           >

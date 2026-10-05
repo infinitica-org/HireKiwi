@@ -85,7 +85,7 @@ export function ApplicationsPanel({
           progress.
         </p>
         <Link
-          href="/jobs"
+          href="/student/jobs"
           className="mt-4 inline-flex items-center rounded-md bg-zinc-900 px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800"
         >
           Browse jobs

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import {
   ArrowRight,
   Briefcase,
+  Camera,
   Check,
   CheckCircle2,
   Circle,
@@ -32,6 +33,7 @@ const DASHBOARD_AREA_ICONS: Record<ProfileAreaId, LucideIcon> = {
   projects: FolderKanban,
   certifications: Shield,
   professionalLinks: Link2,
+  profilePhoto: Camera,
 };
 
 interface ProfileProgressPanelProps {
@@ -82,7 +84,7 @@ export function ProfileProgressPanel({
         </div>
         {!loading && isDashboard && areaStatus ? (
           <Link
-            href="/profile"
+            href="/student/profile"
             className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-[var(--ds-text-secondary)] transition hover:text-[var(--ds-text)]"
           >
             {completedCount} of {PROFILE_AREA_IDS.length} sections complete

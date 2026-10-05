@@ -72,7 +72,9 @@ describe('CredentialsSection', () => {
     render(<CredentialsSection />);
     await screen.findByText('No credentials yet');
 
-    fireEvent.click(screen.getByRole('button', { name: /Add your first credential/i }));
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Add credential' }).at(-1) as HTMLElement,
+    );
     fireEvent.change(screen.getByPlaceholderText('e.g. Amazon Web Services'), {
       target: { value: 'Amazon Web Services' },
     });

@@ -1599,7 +1599,7 @@ export class InstitutionsService {
         where: auditWhere,
         include: { actor: { select: { email: true, role: true } } },
         orderBy: { createdAt: 'desc' },
-        take: 8,
+        take: 25, // admin dashboard pages through these 5 at a time
       }),
       this.prisma.companyVerification.count({
         where: {

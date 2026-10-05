@@ -6,6 +6,7 @@ import type {
   SupportSessionResponse,
 } from '@smart/contracts';
 import {
+  API_PREFIX,
   ImpersonateRequestSchema,
   SupportGrantRequestSchema,
   SupportHistoryQuerySchema,
@@ -17,7 +18,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { SupportService } from './support.service.js';
 
-@Controller('admin/support')
+@Controller(`${API_PREFIX}/admin/support`)
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SupportController {
   constructor(@Inject(SupportService) private readonly supportService: SupportService) {}

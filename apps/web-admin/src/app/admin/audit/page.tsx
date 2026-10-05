@@ -5,7 +5,7 @@ import type { AuditLogDto, AuditLogSection } from '@smart/contracts';
 import { Download, Filter, ScrollText } from 'lucide-react';
 import { Button } from '@smart/ui/button';
 import { Card, CardContent } from '@smart/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smart/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/admin-tabs';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@smart/ui/sheet';
 import { PageHeader } from '@/components/page-header';
 import {

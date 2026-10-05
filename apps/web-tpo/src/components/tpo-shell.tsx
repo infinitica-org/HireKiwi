@@ -40,8 +40,8 @@ export function TpoShell({ children }: { children: ReactNode }) {
           )}
         >
           <TpoTopbar onToggleSidebar={handleToggleSidebar} collapsed={collapsed} />
-          <main className="mx-auto w-full max-w-[1440px] flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
-            {children}
+          <main className="tpo-bento-theme w-full flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-white bg-[radial-gradient(ellipse_65%_45%_at_50%_0%,rgba(225,255,160,0.4)_0%,rgba(180,248,220,0.25)_45%,rgba(255,255,255,0)_80%)] bg-no-repeat text-[var(--ds-text)]">
+            <div className="mx-auto min-h-full w-full max-w-[1440px]">{children}</div>
           </main>
         </div>
       </div>

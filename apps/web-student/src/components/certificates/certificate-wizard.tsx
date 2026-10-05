@@ -79,7 +79,7 @@ export function CertificateWizard() {
         const created = await api.candidateCertificates.create(details);
         setCertificate(created);
         setCertificateId(created.certificateId);
-        router.replace(`/certificates/add?id=${created.certificateId}`);
+        router.replace(`/student/certificates/add?id=${created.certificateId}`);
       }
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Failed to save certificate details.');
@@ -192,12 +192,15 @@ export function CertificateWizard() {
   const WizardHeader = () => (
     <div className="mb-6 flex items-center justify-between">
       <Link
-        href="/certificates"
+        href="/student/certificates"
         className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back to My Certificates
       </Link>
-      <Link href="/dashboard" className="text-xs font-medium text-foreground hover:underline">
+      <Link
+        href="/student/dashboard"
+        className="text-xs font-medium text-foreground hover:underline"
+      >
         Skip to Dashboard &rarr;
       </Link>
     </div>

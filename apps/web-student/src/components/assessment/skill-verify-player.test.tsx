@@ -45,7 +45,7 @@ describe('SkillVerifyPlayer', () => {
       expect(screen.getByText('Complete your profile to unlock skill verification.')).toBeDefined();
     });
     expect(screen.getByRole('link', { name: 'Complete your profile' }).getAttribute('href')).toBe(
-      '/profile',
+      '/student/profile',
     );
   });
 });

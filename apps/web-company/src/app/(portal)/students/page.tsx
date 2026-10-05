@@ -393,8 +393,8 @@ export default function SearchStudentsPage() {
 
           {loading ? (
             <div className="space-y-3">
-              <div className="h-32 animate-pulse rounded-xl border border-zinc-200 bg-white" />
-              <div className="h-32 animate-pulse rounded-xl border border-zinc-200 bg-white" />
+              <div className="h-32 animate-pulse rounded-md border border-zinc-200 bg-white" />
+              <div className="h-32 animate-pulse rounded-md border border-zinc-200 bg-white" />
             </div>
           ) : filteredResults.length === 0 ? (
             <div className={`${card} py-12 text-center`}>
@@ -417,7 +417,7 @@ export default function SearchStudentsPage() {
               return (
                 <article
                   key={candidate.studentId}
-                  className="relative rounded-xl border border-zinc-200/80 bg-white p-5 shadow-2xs transition-all hover:border-zinc-300"
+                  className="relative rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs transition-all hover:border-zinc-300"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-1.5">
@@ -459,7 +459,7 @@ export default function SearchStudentsPage() {
                             ? 'Unsave candidate'
                             : 'Save candidate'
                         }
-                        className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-2 text-xs font-semibold transition-colors ${
+                        className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-2 text-xs font-semibold transition-colors ${
                           savedCandidates.includes(candidate.studentId)
                             ? 'border-amber-300 bg-amber-50 text-amber-800'
                             : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
@@ -477,7 +477,7 @@ export default function SearchStudentsPage() {
                         </span>
                       </button>
 
-                      <div className="flex items-center rounded-lg border border-zinc-200 bg-white p-0.5">
+                      <div className="flex items-center rounded-md border border-zinc-200 bg-white p-0.5">
                         <button
                           type="button"
                           onClick={() => handleFeedback(candidate.studentId, 'RELEVANT')}
@@ -506,7 +506,7 @@ export default function SearchStudentsPage() {
 
                       <Link
                         href={`/students/${candidate.studentId}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                        className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
                       >
                         <span>Profile</span>
                         <ExternalLink className="size-3 text-zinc-400" />
@@ -518,7 +518,7 @@ export default function SearchStudentsPage() {
                         disabled={alreadySent}
                         className={
                           alreadySent
-                            ? 'inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs font-semibold text-emerald-700'
+                            ? 'inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs font-semibold text-emerald-700'
                             : `${primaryButton} !py-2 text-xs`
                         }
                       >
@@ -553,7 +553,7 @@ export default function SearchStudentsPage() {
 
                   {/* Expanded Evidence Box */}
                   {isWhyOpen ? (
-                    <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50/70 p-3.5 text-xs text-zinc-700 space-y-2.5 animate-fadeIn">
+                    <div className="mt-3 rounded-md border border-blue-100 bg-blue-50/70 p-3.5 text-xs text-zinc-700 space-y-2.5 animate-fadeIn">
                       <div>
                         <p className="font-semibold text-blue-900">
                           SMART Verified Proof & Match Breakdown:

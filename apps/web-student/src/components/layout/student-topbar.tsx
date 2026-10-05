@@ -2,19 +2,29 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, ChevronRight, UserRound, Zap, Users, Settings, PanelLeft } from 'lucide-react';
+import {
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Globe,
+  Settings,
+  UserRound,
+} from 'lucide-react';
 import { useCurrentUser } from '@/lib/candidate-identity';
+import { NotificationsMenu } from './notifications-menu';
 import { signOut } from '@/lib/auth';
 import { UserMenu } from '@smart/ui';
 
 type Breadcrumb = { label: string; href?: string };
 
 function getStudentBreadcrumbs(pathname: string): Breadcrumb[] {
-  if (pathname === '/' || pathname === '/dashboard') {
+  if (pathname === '/' || pathname === '/student/dashboard') {
     return [{ label: 'Dashboard' }];
   }
 
+  // Pages live under /student/…; the prefix itself is not a breadcrumb.
   const segments = pathname.split('/').filter(Boolean);
+  if (segments[0] === 'student') segments.shift();
   const crumbs: Breadcrumb[] = [];
   const first = segments[0] ?? '';
 
@@ -35,34 +45,36 @@ function getStudentBreadcrumbs(pathname: string): Breadcrumb[] {
 }
 
 export type StudentTopbarProps = {
-  onOpenMobileNav: () => void;
+  onToggleSidebar: () => void;
+  collapsed?: boolean;
 };
 
-export function StudentTopbar({ onOpenMobileNav }: StudentTopbarProps) {
+export function StudentTopbar({ onToggleSidebar, collapsed = true }: StudentTopbarProps) {
   const router = useRouter();
   const { data: user } = useCurrentUser();
 
-  const pathname = usePathname() || '/dashboard';
+  const pathname = usePathname() || '/student/dashboard';
   const breadcrumbs = getStudentBreadcrumbs(pathname);
 
   const studentMenuItems = [
-    { label: 'Profile', icon: UserRound, onClick: () => router.push('/public-profile') },
-    { label: 'Upgrade Plan', icon: Zap, onClick: () => router.push('/profile') },
-    { label: 'Refer Friends', icon: Users, onClick: () => router.push('/profile') },
-    { label: 'Settings', icon: Settings, onClick: () => router.push('/profile') },
+    { label: 'My profile', icon: UserRound, onClick: () => router.push('/student/profile') },
+    { label: 'Public profile', icon: Globe, onClick: () => router.push('/student/public-profile') },
+    { label: 'Settings', icon: Settings, onClick: () => router.push('/student/settings') },
   ];
 
+  const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
+
   return (
-    <header className="sticky top-0 z-40 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white px-6 font-sans antialiased select-none dark:border-zinc-800 dark:bg-[#111111]">
+    <header className="sticky top-0 z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white/80 px-4 font-sans antialiased backdrop-blur-md select-none sm:px-6 dark:border-zinc-800/80 dark:bg-[#111111]/80">
       <div className="flex h-full items-center gap-3">
         <button
           type="button"
-          onClick={onOpenMobileNav}
+          onClick={onToggleSidebar}
           aria-label="Toggle navigation sidebar"
-          title="Toggle sidebar"
-          className="flex size-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="flex size-8 items-center justify-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
-          <PanelLeft className="size-4.5" />
+          <ToggleIcon className="size-4" strokeWidth={1.75} />
         </button>
 
         {/* Dynamic Breadcrumb Navigation */}
@@ -95,15 +107,7 @@ export function StudentTopbar({ onOpenMobileNav }: StudentTopbarProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* 🔔 Notifications Bell Icon */}
-        <button
-          type="button"
-          aria-label="View notifications"
-          className="relative rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-        >
-          <Bell className="size-4" strokeWidth={1.75} />
-          <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-zinc-900" />
-        </button>
+        <NotificationsMenu />
 
         {/* User Profile Menu (Avatar + Name + Email + Chevron trigger + Dropdown) */}
         <UserMenu

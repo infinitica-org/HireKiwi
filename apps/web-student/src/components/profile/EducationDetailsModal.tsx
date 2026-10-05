@@ -130,12 +130,12 @@ export function EducationDetailsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/45 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/45 p-4 font-sans">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="education-details-title"
-        className="font-[family-name:var(--tpo-font-sans)] flex max-h-[min(92vh,880px)] w-full max-w-[720px] flex-col overflow-hidden rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-[0_18px_48px_rgba(15,23,42,0.12)]"
+        className="font-sans flex max-h-[min(92vh,880px)] w-full max-w-[720px] flex-col overflow-hidden rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-[0_18px_48px_rgba(15,23,42,0.12)]"
       >
         <div className="relative shrink-0 border-b border-[var(--ds-border)] px-6 py-4">
           <h3
@@ -163,7 +163,7 @@ export function EducationDetailsModal({
         >
           <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-6 py-5">
             {formError ? (
-              <p className="mb-4 rounded-[14px] border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 {formError}
               </p>
             ) : null}
@@ -400,7 +400,7 @@ export function EducationDetailsModal({
               </label>
 
               {scoreConfig ? (
-                <div className="space-y-4 rounded-[14px] border border-[var(--ds-border-subtle)] bg-[var(--ds-surface-muted)]/60 p-4">
+                <div className="space-y-4 rounded-md border border-[var(--ds-border-subtle)] bg-[var(--ds-surface-muted)]/60 p-4">
                   <div>
                     <p className="text-[14px] font-semibold text-[var(--ds-text)]">
                       Academic scores
@@ -438,7 +438,7 @@ export function EducationDetailsModal({
                       />
                       {scoreConfig.allowUnitChoice ? (
                         <div
-                          className="flex h-12 items-stretch overflow-hidden rounded-[14px] border border-[var(--ds-border)] bg-[var(--ds-surface)] p-1 shadow-sm"
+                          className="flex h-12 items-stretch overflow-hidden rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] p-1 shadow-sm"
                           role="group"
                           aria-label="Score unit"
                         >
@@ -459,7 +459,7 @@ export function EducationDetailsModal({
                                     scoreUnit: option.value,
                                   })
                                 }
-                                className={`flex-1 rounded-[10px] text-sm font-semibold transition ${
+                                className={`flex-1 rounded-md text-sm font-semibold transition ${
                                   active
                                     ? 'bg-[var(--ds-green-soft)] text-[var(--ds-text)] shadow-sm'
                                     : 'text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]'
@@ -471,7 +471,7 @@ export function EducationDetailsModal({
                           })}
                         </div>
                       ) : (
-                        <span className="flex h-12 items-center justify-center rounded-[14px] border border-[var(--ds-border)] bg-[var(--ds-surface)] text-sm font-semibold text-[var(--ds-text-muted)] sm:hidden">
+                        <span className="flex h-12 items-center justify-center rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] text-sm font-semibold text-[var(--ds-text-muted)] sm:hidden">
                           %
                         </span>
                       )}

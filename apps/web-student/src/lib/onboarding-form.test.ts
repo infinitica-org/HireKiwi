@@ -252,17 +252,17 @@ describe('onboarding-form', () => {
     const result = buildCompleteOnboardingRequest(form);
     expect('error' in result).toBe(false);
     if ('error' in result) return;
-    expect(result.skills).toEqual(
-      expect.arrayContaining([
-        { type: 'language', name: 'English', proficiency: 'Fluent' },
-        {
-          type: 'technical',
-          name: 'Git & Version Control',
-          proficiency: 'INTERMEDIATE',
-        },
-        { type: 'technical', name: 'Python', proficiency: 'ADVANCED' },
-        { type: 'technical', name: 'React', proficiency: 'BEGINNER' },
-      ]),
-    );
+    // Th6-600 — spoken languages keep their level; technical skills are catalog codes only, with
+    // no self-rating. A typed name that matches the catalog ("Python") becomes its code; one that
+    // does not ("React" is not a catalog skill) is not sent.
+    expect(result.skills).toEqual([
+      { type: 'language', name: 'English', proficiency: 'Fluent' },
+      {
+        type: 'technical',
+        code: 'VERSION_CONTROL_CODE_COLLABORATION',
+        name: 'Git & Version Control',
+      },
+      { type: 'technical', code: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT', name: 'Python' },
+    ]);
   });
 });

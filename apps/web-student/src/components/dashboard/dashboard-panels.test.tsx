@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { DashboardListPanel } from './DashboardListPanel';
+import { StudentActivityFeedPanel } from './StudentActivityFeedPanel';
 import { StudentNextActionCard } from './StudentNextActionCard';
 
 describe('DashboardListPanel', () => {
@@ -24,7 +25,7 @@ describe('DashboardListPanel', () => {
       <DashboardListPanel
         testId="panel"
         title="Needs your attention"
-        viewAllHref="/profile"
+        viewAllHref="/student/profile"
         viewAllLabel="Open profile"
         total={9}
         items={[
@@ -32,7 +33,7 @@ describe('DashboardListPanel', () => {
             id: 'a',
             title: 'MIT',
             subtitle: 'Attach proof.',
-            href: '/profile?section=education',
+            href: '/student/profile?section=education',
             badge: { label: 'Needs action', tone: 'warning' },
           },
         ]}
@@ -44,10 +45,10 @@ describe('DashboardListPanel', () => {
     expect(screen.getByText('MIT')).toBeTruthy();
     expect(screen.getByText('Needs action')).toBeTruthy();
     expect(screen.getByRole('link', { name: /MIT/ }).getAttribute('href')).toBe(
-      '/profile?section=education',
+      '/student/profile?section=education',
     );
     expect(screen.getByRole('link', { name: /Open profile/ }).getAttribute('href')).toBe(
-      '/profile',
+      '/student/profile',
     );
     expect(screen.getByText('Showing 1 of 9')).toBeTruthy();
     expect(screen.queryByText('Nothing needs your attention')).toBeNull();
@@ -77,14 +78,14 @@ describe('StudentNextActionCard', () => {
           title: 'Add a project',
           description: 'Projects are strong evidence.',
           ctaLabel: 'Add project',
-          href: '/profile?section=projects',
+          href: '/student/profile?section=projects',
         }}
       />,
     );
 
     expect(screen.getByText('Add a project')).toBeTruthy();
     expect(screen.getByRole('link', { name: /Add project/ }).getAttribute('href')).toBe(
-      '/profile?section=projects',
+      '/student/profile?section=projects',
     );
   });
 
@@ -93,5 +94,35 @@ describe('StudentNextActionCard', () => {
 
     expect(screen.getByText('Your profile is complete')).toBeTruthy();
     expect(screen.queryByRole('link')).toBeNull();
+  });
+});
+
+describe('StudentActivityFeedPanel', () => {
+  const activities = Array.from({ length: 12 }, (_, i) => ({
+    id: `a${i + 1}`,
+    icon: 'file' as const,
+    text: `Activity ${i + 1}`,
+  }));
+
+  it('shows five entries per page and pages through the rest', () => {
+    render(<StudentActivityFeedPanel activities={activities} />);
+
+    expect(screen.getByText('Activity 1')).toBeTruthy();
+    expect(screen.getByText('Activity 5')).toBeTruthy();
+    expect(screen.queryByText('Activity 6')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Page 3' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Page 3' }));
+    expect(screen.getByText('Activity 11')).toBeTruthy();
+    expect(screen.getByText('Activity 12')).toBeTruthy();
+    expect(screen.queryByText('Activity 1')).toBeNull();
+    expect((screen.getByRole('button', { name: 'Next page' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it('hides the pager when everything fits on one page', () => {
+    render(<StudentActivityFeedPanel activities={activities.slice(0, 5)} />);
+    expect(screen.queryByRole('navigation', { name: 'Recent activity pages' })).toBeNull();
   });
 });

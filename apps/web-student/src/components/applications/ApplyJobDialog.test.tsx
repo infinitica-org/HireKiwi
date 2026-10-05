@@ -92,7 +92,7 @@ describe('ApplyJobDialog (Th6-387/388/389)', () => {
     expect(screen.getByText('Acme Robotics')).toBeTruthy();
     expect(screen.getByText('What happens next')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'View my application' }).getAttribute('href')).toBe(
-      '/applications',
+      '/student/applications',
     );
   });
 

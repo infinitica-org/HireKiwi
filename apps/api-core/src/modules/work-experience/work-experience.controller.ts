@@ -15,13 +15,18 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Multipart, MultipartFile } from '@fastify/multipart';
 import type { FastifyRequest } from 'fastify';
-import { API_PREFIX, type SendManagerEndorsementDto } from '@smart/contracts';
+import {
+  EVIDENCE_FILE_MAX_BYTES,
+  API_PREFIX,
+  type SendManagerEndorsementDto,
+} from '@smart/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { WorkExperienceService } from './work-experience.service.js';
 
-const WE_PROOF_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+/** Th6-600 — evidence files are capped at 10 MB (a byte over is rejected by the multipart parser). */
+const WE_PROOF_UPLOAD_MAX_BYTES = EVIDENCE_FILE_MAX_BYTES;
 
 @ApiTags('work-experience')
 @Controller(`${API_PREFIX}/users/me/work-experiences`)
@@ -114,6 +119,21 @@ export class WorkExperienceController {
     return this.service.attachDocument(user.sub, id, body);
   }
 
+  @Post(':id/documents/upload-url')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Th6-600 — presigned PUT (15 min) for a PDF/PNG work-experience proof, max 10 MB.',
+  })
+  @ApiResponse({ status: 201, description: 'Presigned upload URL and object key.' })
+  createDocumentUploadUrl(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ) {
+    return this.service.createDocumentUploadUrl(user.sub, id, body);
+  }
+
   @Post(':id/documents/upload')
   @Roles('STUDENT')
   @ApiBearerAuth()
@@ -149,7 +169,7 @@ export class WorkExperienceController {
     } catch {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'The uploaded file exceeds the 5MB limit or could not be read.',
+        message: 'The uploaded file exceeds the 10 MB limit or could not be read.',
         statusCode: 400,
       });
     }
@@ -157,7 +177,7 @@ export class WorkExperienceController {
     if (!fileBuffer) {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'Choose a PDF, JPG, or PNG proof document to upload.',
+        message: 'Choose a PDF or PNG proof document to upload.',
         statusCode: 400,
       });
     }

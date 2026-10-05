@@ -154,7 +154,7 @@ export function SkillVerifyPendingStep({
             <Button
               type="button"
               variant="outline"
-              onClick={() => window.open('/profile', '_self')}
+              onClick={() => window.open('/student/profile', '_self')}
             >
               Open profile
             </Button>

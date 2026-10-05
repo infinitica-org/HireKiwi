@@ -95,6 +95,7 @@ export function useProfileProgress(): UseProfileProgressResult {
     profile: null,
     draft: null,
     onboardingCompleted: true,
+    profilePhotoUrl: null,
   };
   const claims = skillClaimsQuery.data ?? [];
   const education = educationQuery.data ?? [];
@@ -114,6 +115,7 @@ export function useProfileProgress(): UseProfileProgressResult {
         experiences,
         projects,
         certificates,
+        hasProfilePhoto: Boolean(onboarding.profilePhotoUrl),
       };
 
   const failureCount = queryResults.filter((query) => query.isError).length;

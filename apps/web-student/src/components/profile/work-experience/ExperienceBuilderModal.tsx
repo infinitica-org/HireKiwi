@@ -23,6 +23,7 @@ import {
 } from '@/lib/profile-ui-classes';
 import { nativeOptionClass, nativeSelectClass } from '@/lib/native-select';
 import { CATEGORY_OPTIONS, skillsForCategory } from '@/lib/skills-catalog';
+import { EVIDENCE_ACCEPT } from '@/lib/evidence-upload';
 
 export type ModalPendingDocument = {
   localId: string;
@@ -183,16 +184,16 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
   }, [focusVerification]);
 
   const proofHint = isCurrent
-    ? 'Upload your offer letter (PDF, JPG, or PNG, max 5MB).'
+    ? 'Upload your offer letter (PDF or PNG, max 10 MB).'
     : 'Upload offer letter and relieving or experience letter.';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-sans">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="experience-builder-title"
-        className="flex max-h-[90vh] w-full max-w-[720px] flex-col overflow-hidden rounded-[20px] border border-[var(--ds-border)] bg-[var(--ds-surface)] font-[family-name:var(--tpo-font-sans)] shadow-[var(--ds-card-shadow)]"
+        className="flex max-h-[90vh] w-full max-w-[720px] flex-col overflow-hidden rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] font-sans shadow-[var(--ds-card-shadow)]"
       >
         <div className="border-b border-[var(--ds-border)] px-6 py-5">
           <div className="flex items-start justify-between gap-4">
@@ -210,7 +211,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
+              className="rounded-md p-1.5 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -220,7 +221,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
 
         <div ref={scrollPanelRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {error ? (
-            <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+            <div className="mb-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -437,7 +438,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                   </div>
                 ) : null}
                 {skillQuery.trim().length >= 2 ? (
-                  <ul className="mt-1 max-h-36 overflow-y-auto rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)]">
+                  <ul className="mt-1 max-h-36 overflow-y-auto rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)]">
                     {SKILL_DEFINITIONS.filter((skill) => {
                       const q = skillQuery.trim().toLowerCase();
                       return (
@@ -467,7 +468,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
             </FormSection>
 
             <FormSection title="Proof documents *" description={proofHint}>
-              <div className="rounded-xl border border-[var(--ds-border)] p-4">
+              <div className="rounded-md border border-[var(--ds-border)] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs text-[var(--ds-text-muted)]">
                     {isCurrent
@@ -490,7 +491,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                     {savedModalDocs.map((doc) => (
                       <div
                         key={doc.id}
-                        className="flex items-center justify-between gap-2 rounded-xl border border-[var(--ds-border)] px-3 py-2 text-xs"
+                        className="flex items-center justify-between gap-2 rounded-md border border-[var(--ds-border)] px-3 py-2 text-xs"
                       >
                         <span className="truncate font-medium text-[var(--ds-text)]">
                           {DOCUMENT_TYPE_LABELS[doc.documentType] || doc.documentType}:{' '}
@@ -502,7 +503,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                     {modalPendingDocs.map((doc) => (
                       <div
                         key={doc.localId}
-                        className="flex items-center justify-between gap-2 rounded-xl border border-[var(--ds-green)]/30 bg-[var(--ds-green-soft)]/40 px-3 py-2 text-xs"
+                        className="flex items-center justify-between gap-2 rounded-md border border-[var(--ds-green)]/30 bg-[var(--ds-green-soft)]/40 px-3 py-2 text-xs"
                       >
                         <span className="truncate font-medium text-[var(--ds-text)]">
                           {DOCUMENT_TYPE_LABELS[doc.documentType] || doc.documentType}:{' '}
@@ -559,9 +560,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                     <input
                       id="modal-proof-document-file"
                       type="file"
-                      accept="application/pdf,image/jpeg,image/jpg,image/png"
+                      accept={EVIDENCE_ACCEPT}
                       onChange={(event) => setModalNewProofFile(event.target.files?.[0] ?? null)}
-                      className="mt-1.5 block w-full text-xs text-[var(--ds-text-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--ds-green-soft)] file:px-3 file:py-2 file:text-xs file:font-medium file:text-[var(--ds-green)]"
+                      className="mt-1.5 block w-full text-xs text-[var(--ds-text-muted)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--ds-green-soft)] file:px-3 file:py-2 file:text-xs file:font-medium file:text-[var(--ds-green)]"
                     />
                   </div>
                   <button

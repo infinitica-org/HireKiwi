@@ -29,7 +29,7 @@ export function useProfileSection() {
     (id: ProfileSectionId) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set('section', id);
-      router.push(`/profile?${params.toString()}`, { scroll: false });
+      router.push(`/student/profile?${params.toString()}`, { scroll: false });
     },
     [router, searchParams],
   );
@@ -40,7 +40,7 @@ export function useProfileSection() {
     if (!raw || raw !== resolved) {
       const params = new URLSearchParams(searchParams.toString());
       params.set('section', resolved);
-      router.replace(`/profile?${params.toString()}`, { scroll: false });
+      router.replace(`/student/profile?${params.toString()}`, { scroll: false });
     }
   }, [router, searchParams]);
 
@@ -52,7 +52,7 @@ export function useProfileSection() {
     if (mapped && searchParams.get('section') !== mapped) {
       const params = new URLSearchParams(searchParams.toString());
       params.set('section', mapped);
-      router.replace(`/profile?${params.toString()}`, { scroll: false });
+      router.replace(`/student/profile?${params.toString()}`, { scroll: false });
       window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
     }
   }, [router, searchParams]);

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { isSmartApiError, queryKeys } from '@smart/api-client';
 import { useQueryClient } from '@smart/ui';
-import { ExternalLink, Loader2, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Link2, Loader2, ArrowRight, Plus } from 'lucide-react';
 import {
   applyServerDraft,
   buildProfessionalLinksSavePayload,
@@ -15,7 +15,12 @@ import {
   ProfileSectionError,
   ProfileSectionHeader,
 } from '@/components/profile/ProfileSectionChrome';
+import {
+  CodingPlatformIntegrations,
+  IntegrationCard,
+} from '@/components/profile/CodingPlatformIntegrations';
 import { profileSectionMeta } from '@/lib/profile-sections';
+import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
 import { useOnboarding } from '@/lib/use-onboarding';
 import type { FetchGithubProfileResponse } from '@smart/contracts';
 import { AnimatePresence, motion } from 'motion/react';
@@ -67,15 +72,16 @@ const PLATFORMS: PlatformConfig[] = [
     placeholder: 'username',
     defaultDomain: 'https://github.com/',
   },
-  {
-    id: 'linkedin',
-    name: 'LinkedIn',
-    description: 'Connect your professional network and career accomplishments.',
-    icon: LinkedinBrandIcon,
-    prefix: 'linkedin.com/in/',
-    placeholder: 'username',
-    defaultDomain: 'https://linkedin.com/in/',
-  },
+  // LinkedIn card hidden for now — uncomment to show it again.
+  // {
+  //   id: 'linkedin',
+  //   name: 'LinkedIn',
+  //   description: 'Connect your professional network and career accomplishments.',
+  //   icon: LinkedinBrandIcon,
+  //   prefix: 'linkedin.com/in/',
+  //   placeholder: 'username',
+  //   defaultDomain: 'https://linkedin.com/in/',
+  // },
 ];
 
 export function ProfessionalLinksSection() {
@@ -86,6 +92,7 @@ export function ProfessionalLinksSection() {
   const [success, setSuccess] = useState<string | null>(null);
   const [formData, setFormData] = useState<OnboardingProfileForm>(emptyOnboardingForm());
   const meta = profileSectionMeta('links');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const [activeModal, setActiveModal] = useState<PlatformKey | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -294,10 +301,23 @@ export function ProfessionalLinksSection() {
 
   return (
     <section
-      className="flex w-full min-w-0 flex-col gap-6 font-sans select-none"
+      className="flex w-full min-w-0 flex-col gap-3 font-sans select-none"
       aria-label="Professional links"
     >
-      <ProfileSectionHeader title={meta.title} description={meta.description} />
+      <ProfileSectionHeader
+        title={meta.title}
+        description={meta.description}
+        action={
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className={`${profilePrimaryButtonSmClass} justify-center px-4 py-2.5 text-[13px] font-semibold tracking-[-0.01em]`}
+          >
+            <Plus className="size-4" strokeWidth={2} aria-hidden />
+            Add integration
+          </button>
+        }
+      />
 
       {isLoading ? <p className="text-sm text-zinc-500">Loading professional links…</p> : null}
 
@@ -310,92 +330,40 @@ export function ProfessionalLinksSection() {
             </div>
           ) : null}
 
-          {/* Heading */}
-          <div>
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              Showcase your work from:
-            </h3>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Connect your GitHub repository and LinkedIn profile to verify and showcase your
-              achievements to employers.
-            </p>
-          </div>
-
-          {/* Card Grid (Only GitHub and LinkedIn) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-3xl">
+          <div
+            data-testid="integration-cards"
+            className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4"
+          >
             {PLATFORMS.map((platform) => {
               const Icon = platform.icon;
-              const connected = isConnected(platform.id);
-              const verified = isVerified(platform.id);
               const currentUrl = getPlatformValue(platform.id);
-
+              const connected = isConnected(platform.id);
               return (
-                <div
+                <IntegrationCard
                   key={platform.id}
-                  className="flex flex-col justify-between rounded-lg border border-zinc-200/90 bg-white p-6 shadow-2xs transition-all hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#161616]"
-                >
-                  <div>
-                    {/* Top Row: Brand Icon & Action Button */}
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex size-10 items-center justify-center">
-                        <Icon />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenConnect(platform)}
-                        className={`rounded-md border px-4 py-1.5 text-sm font-medium shadow-2xs transition-all ${
-                          connected
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-                            : 'border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50 active:scale-95 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
-                        }`}
-                      >
-                        {verified ? (
-                          <span className="inline-flex items-center gap-1">
-                            <CheckCircle2 className="size-3 text-emerald-600" /> Verified
-                          </span>
-                        ) : connected ? (
-                          'Connected'
-                        ) : (
-                          'Connect'
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Platform Name */}
-                    <h4 className="mt-5 text-base font-bold text-zinc-900 dark:text-white">
-                      {platform.name}
-                    </h4>
-
-                    {/* Description */}
-                    <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                      {platform.description}
-                    </p>
-                  </div>
-
-                  {/* Connected Link preview footer */}
-                  {connected && currentUrl && (
-                    <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
-                      <a
-                        href={currentUrl.startsWith('http') ? currentUrl : `https://${currentUrl}`}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="inline-flex items-center gap-1.5 font-medium text-blue-600 hover:underline dark:text-blue-400 truncate max-w-[180px]"
-                      >
-                        <ExternalLink className="size-3.5 shrink-0" />
-                        <span className="truncate">{currentUrl.replace(/^https?:\/\//, '')}</span>
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenConnect(platform)}
-                        className="text-[11px] text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 font-medium"
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  logo={<Icon />}
+                  name={platform.name}
+                  description={platform.description}
+                  connected={connected}
+                  verified={isVerified(platform.id)}
+                  link={
+                    connected && currentUrl
+                      ? {
+                          href: currentUrl.startsWith('http')
+                            ? currentUrl
+                            : `https://${currentUrl}`,
+                          label: currentUrl.replace(/^https?:\/\//, ''),
+                        }
+                      : null
+                  }
+                  onAction={() => handleOpenConnect(platform)}
+                />
               );
             })}
+            <CodingPlatformIntegrations
+              pickerOpen={pickerOpen}
+              onPickerOpenChange={setPickerOpen}
+            />
           </div>
 
           {/* Test and Automation Bridge */}
@@ -404,12 +372,12 @@ export function ProfessionalLinksSection() {
           {/* Connect Modal (Matching User Screenshot UI) */}
           <AnimatePresence>
             {activeModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 font-sans">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.96, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96, y: 10 }}
-                  className="w-full max-w-[480px] rounded-2xl border border-zinc-200/90 bg-white p-7 sm:p-8 shadow-2xl dark:border-zinc-800 dark:bg-[#161616]"
+                  className="w-full max-w-[480px] rounded-md border border-zinc-200/90 bg-white p-7 sm:p-8 shadow-2xl dark:border-zinc-800 dark:bg-[#161616]"
                 >
                   {(() => {
                     const isGh = activeModal === 'github';
@@ -426,7 +394,7 @@ export function ProfessionalLinksSection() {
                     return (
                       <div>
                         {/* Centered Top Brand Icon */}
-                        <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-zinc-50 border border-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white">
+                        <div className="mx-auto flex size-16 items-center justify-center rounded-md bg-zinc-50 border border-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white">
                           {isGh ? (
                             <GithubBrandIcon className="size-10" />
                           ) : (
@@ -464,7 +432,7 @@ export function ProfessionalLinksSection() {
                                 type="button"
                                 disabled={actionLoading}
                                 onClick={handleFetchGithub}
-                                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-3.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
                               >
                                 {actionLoading ? (
                                   <Loader2 className="size-3.5 animate-spin" />
@@ -482,7 +450,7 @@ export function ProfessionalLinksSection() {
                             )}
 
                             {githubPreview && (
-                              <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
+                              <div className="flex items-center gap-3 rounded-md border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
                                 <img
                                   src={githubPreview.avatarUrl}
                                   alt=""
@@ -500,7 +468,7 @@ export function ProfessionalLinksSection() {
                                 <button
                                   type="button"
                                   onClick={confirmGithubProfile}
-                                  className="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-bold text-white hover:bg-emerald-700"
+                                  className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-bold text-white hover:bg-emerald-700"
                                 >
                                   Confirm
                                 </button>
@@ -516,7 +484,7 @@ export function ProfessionalLinksSection() {
                               type="button"
                               disabled={!inputValue.trim() || actionLoading}
                               onClick={handleVerifyLinkedin}
-                              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[#0a66c2]/30 bg-[#0a66c2]/10 px-3.5 text-xs font-semibold text-[#0a66c2] hover:bg-[#0a66c2]/15 disabled:opacity-50"
+                              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-[#0a66c2]/30 bg-[#0a66c2]/10 px-3.5 text-xs font-semibold text-[#0a66c2] hover:bg-[#0a66c2]/15 disabled:opacity-50"
                             >
                               {actionLoading ? (
                                 <Loader2 className="size-3.5 animate-spin" />
@@ -538,7 +506,7 @@ export function ProfessionalLinksSection() {
                           <button
                             type="button"
                             onClick={() => setActiveModal(null)}
-                            className="rounded-xl border border-zinc-200 bg-white px-6 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                            className="rounded-md border border-zinc-200 bg-white px-6 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
                           >
                             Cancel
                           </button>
@@ -557,7 +525,7 @@ export function ProfessionalLinksSection() {
                               type="button"
                               disabled={saving}
                               onClick={() => handleSaveModal(activeModal)}
-                              className="rounded-xl bg-[#6f8580] px-7 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#5f746f] active:scale-[0.99] disabled:opacity-50 transition"
+                              className="rounded-md bg-[#6f8580] px-7 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#5f746f] active:scale-[0.99] disabled:opacity-50 transition"
                             >
                               {saving ? 'Connecting…' : 'Connect'}
                             </button>

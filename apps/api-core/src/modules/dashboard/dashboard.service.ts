@@ -102,10 +102,10 @@ const NEXT_ACTION_BY_AREA: Record<string, DashboardNextAction> = {
     ctaLabel: 'Add links',
     href: '/profile?section=links',
   },
-  jobPreferences: {
-    title: 'Set your job preferences',
-    description: 'Tell employers where and how you want to work.',
-    ctaLabel: 'Set preferences',
+  profilePhoto: {
+    title: 'Add a profile photo',
+    description: 'A clear photo helps employers recognise you.',
+    ctaLabel: 'Add photo',
     href: '/profile',
   },
 };

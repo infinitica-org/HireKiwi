@@ -37,7 +37,7 @@ export default function CandidateDetailPage({
   if (loading) {
     return (
       <div className={pageStack}>
-        <div className="h-64 animate-pulse rounded-xl border border-zinc-200 bg-white" />
+        <div className="h-64 animate-pulse rounded-md border border-zinc-200 bg-white" />
       </div>
     );
   }
@@ -148,7 +148,7 @@ export default function CandidateDetailPage({
               {candidate.explanation.strongCompetencies.map((comp, idx) => (
                 <div
                   key={idx}
-                  className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-2.5 text-xs text-emerald-900 flex items-start gap-2"
+                  className="rounded-md border border-emerald-100 bg-emerald-50/50 p-2.5 text-xs text-emerald-900 flex items-start gap-2"
                 >
                   <Check className="size-4 text-emerald-600 shrink-0 mt-0.5" />
                   <span>{comp}</span>
@@ -166,7 +166,7 @@ export default function CandidateDetailPage({
                 {candidate.explanation.gapCompetencies.map((gap, idx) => (
                   <div
                     key={idx}
-                    className="rounded-lg border border-amber-100 bg-amber-50/50 p-2 text-xs text-amber-900"
+                    className="rounded-md border border-amber-100 bg-amber-50/50 p-2 text-xs text-amber-900"
                   >
                     ⚠ {gap}
                   </div>
@@ -190,7 +190,7 @@ export default function CandidateDetailPage({
             {candidate.explanation.competencyEvidenceSummaries.map((evidence, idx) => (
               <div
                 key={idx}
-                className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-3 space-y-1.5 text-xs"
+                className="rounded-md border border-zinc-200 bg-zinc-50/50 p-3 space-y-1.5 text-xs"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-zinc-900">{evidence.capabilityLabel}</span>
@@ -238,7 +238,7 @@ export default function CandidateDetailPage({
       ) : null}
 
       {/* Responsible AI Gate */}
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3.5 text-xs text-zinc-600">
+      <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3.5 text-xs text-zinc-600">
         <strong>Governance Notice:</strong> Candidate ratings are calculated strictly from proctored
         evaluations and verified evidence. All hiring and shortlisting decisions remain solely with
         the employer.

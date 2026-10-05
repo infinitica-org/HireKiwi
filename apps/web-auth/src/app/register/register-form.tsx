@@ -115,25 +115,25 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="flex min-h-dvh w-full flex-col justify-between bg-white px-6 py-8 text-[#111827] font-sans sm:px-12 sm:py-10">
+    <div className="flex h-dvh w-full flex-col justify-between overflow-y-auto bg-white px-6 py-4 font-sans text-[#111827] sm:px-12 sm:py-6">
       {/* Top Header Logo */}
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between">
+      <header className="mx-auto flex w-full max-w-5xl shrink-0 items-center justify-between">
         <div className="flex items-center gap-3">
           <SmartLogo tone="on-light" className="h-8 w-auto" />
         </div>
       </header>
 
       {/* Centered Main Form Container */}
-      <main className="mx-auto my-auto w-full max-w-[460px] py-6">
-        <h1 className="text-3xl font-bold tracking-tight text-[#111827] sm:text-[2.25rem]">
+      <main className="mx-auto my-auto w-full max-w-120 shrink-0 py-4">
+        <h1 className="text-2xl font-bold tracking-tight text-[#111827] sm:text-[1.75rem]">
           Create an account
         </h1>
-        <p className="mt-2.5 text-[15px] leading-relaxed text-[#6b7280]">
+        <p className="mt-1 text-sm text-[#6b7280]">
           Build your skill profile. Get discovered by the right employers.
         </p>
 
         {/* Institution Whitelist Notice */}
-        <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 text-xs leading-relaxed text-blue-900">
+        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2 text-xs leading-relaxed text-blue-900">
           <strong className="font-semibold">Note for Students:</strong> You must use your official
           partner university email. Personal email accounts (e.g. Gmail) cannot self-create an
           account.
@@ -142,7 +142,7 @@ export function RegisterForm() {
         {error ? (
           <div
             role="alert"
-            className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm text-red-700"
+            className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
           >
             {error}
           </div>
@@ -151,19 +151,19 @@ export function RegisterForm() {
         {institutionsError ? (
           <div
             role="alert"
-            className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm text-red-700"
+            className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
           >
             Could not load institutions. Refresh the page to try again.
           </div>
         ) : null}
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-5 text-left">
+        <form onSubmit={onSubmit} className="mt-4 space-y-3 text-left">
           {/* First Name & Last Name */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label
                 htmlFor="firstName"
-                className="mb-1.5 block text-sm font-medium text-[#374151]"
+                className="mb-1 block text-[13px] font-medium text-[#374151]"
               >
                 First name <span className="text-red-500">*</span>
               </label>
@@ -176,12 +176,15 @@ export function RegisterForm() {
                 placeholder="Nikhil"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-3 text-sm text-[#111827] placeholder:text-[#9ca3af] transition focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#f0fdf4]"
+                className="w-full rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2.5 text-sm text-[#111827] placeholder:text-[#9ca3af] transition focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#f0fdf4]"
               />
             </div>
 
             <div>
-              <label htmlFor="lastName" className="mb-1.5 block text-sm font-medium text-[#374151]">
+              <label
+                htmlFor="lastName"
+                className="mb-1 block text-[13px] font-medium text-[#374151]"
+              >
                 Last name
               </label>
               <input
@@ -191,61 +194,63 @@ export function RegisterForm() {
                 placeholder="Adam"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-3 text-sm text-[#111827] placeholder:text-[#9ca3af] transition focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#f0fdf4]"
+                className="w-full rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2.5 text-sm text-[#111827] placeholder:text-[#9ca3af] transition focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#f0fdf4]"
               />
             </div>
           </div>
 
-          {/* Mobile Number */}
-          <div>
-            <label
-              htmlFor="phoneNumber"
-              className="mb-1.5 block text-sm font-medium text-[#374151]"
-            >
-              Mobile Number <span className="text-red-500">*</span>
-            </label>
-            <div className="flex rounded-lg border border-[#e5e7eb] bg-white transition focus-within:border-[#0f766e] focus-within:ring-2 focus-within:ring-[#f0fdf4]">
-              <select
-                id="phoneCountryCode"
-                aria-label="Country code"
-                value={phoneCountryCode}
-                onChange={(e) => setPhoneCountryCode(e.target.value)}
-                className="cursor-pointer rounded-l-lg border-r border-[#e5e7eb] bg-transparent py-3 pl-3.5 pr-2 text-sm font-medium text-[#374151] outline-none hover:bg-slate-50"
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* Mobile Number */}
+            <div>
+              <label
+                htmlFor="phoneNumber"
+                className="mb-1 block text-[13px] font-medium text-[#374151]"
               >
-                {COUNTRY_CODES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+                Mobile Number <span className="text-red-500">*</span>
+              </label>
+              <div className="flex rounded-lg border border-[#e5e7eb] bg-white transition focus-within:border-[#0f766e] focus-within:ring-2 focus-within:ring-[#f0fdf4]">
+                <select
+                  id="phoneCountryCode"
+                  aria-label="Country code"
+                  value={phoneCountryCode}
+                  onChange={(e) => setPhoneCountryCode(e.target.value)}
+                  className="cursor-pointer rounded-l-lg border-r border-[#e5e7eb] bg-transparent py-2.5 pl-3.5 pr-2 text-sm font-medium text-[#374151] outline-none hover:bg-slate-50"
+                >
+                  {COUNTRY_CODES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  id="phoneNumber"
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="6381730716"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  className="w-full rounded-r-lg px-3.5 py-2.5 text-sm text-[#111827] placeholder:text-[#9ca3af] outline-none"
+                />
+              </div>
+            </div>
+
+            {/* university Email */}
+            <div>
+              <label htmlFor="email" className="mb-1 block text-[13px] font-medium text-[#374151]">
+                university Email <span className="text-red-500">*</span>
+              </label>
               <input
-                id="phoneNumber"
-                type="tel"
-                inputMode="numeric"
-                placeholder="6381730716"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                className="w-full rounded-r-lg px-3.5 py-3 text-sm text-[#111827] placeholder:text-[#9ca3af] outline-none"
+                id="email"
+                type="email"
+                required
+                aria-label="university Email"
+                autoComplete="email"
+                placeholder="student@university.edu"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2.5 text-sm text-[#111827] placeholder:text-[#9ca3af] transition focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#f0fdf4]"
               />
             </div>
-          </div>
-
-          {/* School Email */}
-          <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-[#374151]">
-              School Email <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              aria-label="School Email"
-              autoComplete="email"
-              placeholder="student@university.edu"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-3 text-sm text-[#111827] placeholder:text-[#9ca3af] transition focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#f0fdf4]"
-            />
           </div>
 
           {/* Institution Selector */}
@@ -253,7 +258,7 @@ export function RegisterForm() {
             <div>
               <label
                 htmlFor="institution"
-                className="mb-1.5 block text-sm font-medium text-[#374151]"
+                className="mb-1 block text-[13px] font-medium text-[#374151]"
               >
                 Institution <span className="text-red-500">*</span>
               </label>
@@ -262,7 +267,7 @@ export function RegisterForm() {
                 required
                 value={institutionId}
                 onChange={(e) => setInstitutionId(e.target.value)}
-                className="w-full cursor-pointer rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-3 text-sm text-[#111827] outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-[#f0fdf4]"
+                className="w-full cursor-pointer rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2.5 text-sm text-[#111827] outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-[#f0fdf4]"
               >
                 {institutions.map((inst) => (
                   <option key={inst.id} value={inst.id}>
@@ -274,9 +279,12 @@ export function RegisterForm() {
           ) : null}
 
           {/* Password & Confirm Password */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-[#374151]">
+              <label
+                htmlFor="password"
+                className="mb-1 block text-[13px] font-medium text-[#374151]"
+              >
                 Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -290,7 +298,7 @@ export function RegisterForm() {
                   placeholder="Min 8 chars"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-[#e5e7eb] bg-white pl-3.5 pr-10 py-3 text-sm text-[#111827] placeholder:text-[#9ca3af] transition focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#f0fdf4]"
+                  className="w-full rounded-lg border border-[#e5e7eb] bg-white pl-3.5 pr-10 py-2.5 text-sm text-[#111827] placeholder:text-[#9ca3af] transition focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#f0fdf4]"
                 />
                 <button
                   type="button"
@@ -306,7 +314,7 @@ export function RegisterForm() {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="mb-1.5 block text-sm font-medium text-[#374151]"
+                className="mb-1 block text-[13px] font-medium text-[#374151]"
               >
                 Confirm password
               </label>
@@ -318,7 +326,7 @@ export function RegisterForm() {
                 placeholder="Confirm"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-3 text-sm text-[#111827] placeholder:text-[#9ca3af] transition focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#f0fdf4]"
+                className="w-full rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2.5 text-sm text-[#111827] placeholder:text-[#9ca3af] transition focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#f0fdf4]"
               />
             </div>
           </div>
@@ -328,7 +336,7 @@ export function RegisterForm() {
             type="submit"
             disabled={loading}
             aria-label="Get started"
-            className="mt-3 flex w-full items-center justify-center rounded-[11px] bg-black py-3.5 px-6 text-base font-semibold text-white shadow-sm transition-colors hover:bg-neutral-800 active:bg-neutral-900 disabled:opacity-70"
+            className="mt-1 flex w-full items-center justify-center rounded-[11px] bg-black px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-neutral-800 active:bg-neutral-900 disabled:opacity-70"
           >
             {loading ? (
               <span className="flex items-center gap-2">
@@ -341,28 +349,25 @@ export function RegisterForm() {
           </button>
 
           {/* Footer Links */}
-          <div className="space-y-2 pt-2 text-center text-sm text-[#6b7280]">
-            <div>
-              Already have an account?{' '}
-              <a href="/login" className="font-semibold text-[#111827] underline hover:text-black">
-                Login
-              </a>
-            </div>
-            <div className="text-xs">
-              Hiring students?{' '}
-              <a
-                href="/company/register"
-                className="font-semibold text-[#111827] underline hover:text-black"
-              >
-                Register as an employer
-              </a>
-            </div>
-          </div>
+          <p className="pt-1 text-center text-[13px] text-[#6b7280]">
+            Already have an account?{' '}
+            <a href="/login" className="font-semibold text-[#111827] underline hover:text-black">
+              Login
+            </a>
+            <span className="mx-2 text-[#d1d5db]">·</span>
+            Hiring?{' '}
+            <a
+              href="/company/register"
+              className="font-semibold text-[#111827] underline hover:text-black"
+            >
+              Register as an employer
+            </a>
+          </p>
         </form>
       </main>
 
       {/* Bottom Page Footer */}
-      <footer className="mx-auto w-full max-w-5xl py-2 text-left text-xs text-[#9ca3af]">
+      <footer className="mx-auto w-full max-w-5xl shrink-0 text-left text-xs text-[#9ca3af]">
         © 2026 All Rights Reserved
       </footer>
     </div>

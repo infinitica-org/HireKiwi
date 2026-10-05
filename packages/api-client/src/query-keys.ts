@@ -23,6 +23,7 @@ export const queryKeys = {
   event: (eventId: string) => ['campus', 'event', eventId] as const,
   /* ------------------------------- identity ------------------------------- */
   me: () => ['me'] as const,
+  signalConnections: () => ['signals', 'connections'] as const,
   onboarding: () => ['me', 'onboarding'] as const,
   myTracks: () => ['me', 'tracks'] as const,
   myNotifications: () => ['me', 'notifications'] as const,

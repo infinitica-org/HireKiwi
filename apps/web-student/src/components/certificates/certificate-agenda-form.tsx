@@ -107,7 +107,7 @@ export function CertificateAgendaForm({
         </Button>
         {hasAgenda ? (
           <Link
-            href={`/certificates/${certificateId}/verify`}
+            href={`/student/certificates/${certificateId}/verify`}
             className="text-sm text-foreground hover:underline"
           >
             Take assessment →

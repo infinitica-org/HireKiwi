@@ -195,7 +195,9 @@ describe('MyApplicationsTracker (Th6-392/393)', () => {
     studentApplications.list.mockResolvedValue({ applications: [] });
     renderTracker();
     expect(await screen.findByText('No applications yet')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Browse jobs' }).getAttribute('href')).toBe('/jobs');
+    expect(screen.getByRole('link', { name: 'Browse jobs' }).getAttribute('href')).toBe(
+      '/student/jobs',
+    );
   });
 
   it('shows an error state and retries', async () => {

@@ -9,7 +9,7 @@ export function BlockedUsersLinkCard() {
       description="People you have blocked can't message you. Review them and unblock anyone."
     >
       <Link
-        href="/settings/blocked"
+        href="/student/settings/blocked"
         className="inline-flex text-sm font-semibold text-zinc-900 underline dark:text-white"
       >
         Manage blocked users

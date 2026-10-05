@@ -3,18 +3,18 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Bell,
   ChevronRight,
   Building2,
   Settings,
-  Search,
-  Zap,
+  CreditCard,
+  UserRound,
   Users,
-  PanelLeft,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from 'lucide-react';
 import { useCompanyAccount } from '@/lib/use-company-account';
 import { signOut } from '@/lib/auth';
-import { UserMenu } from '@smart/ui';
+import { NotificationsMenu, UserMenu } from '@smart/ui';
 
 type Breadcrumb = { label: string; href?: string };
 
@@ -59,10 +59,11 @@ function getCompanyBreadcrumbs(pathname: string): Breadcrumb[] {
 }
 
 export type CompanyTopbarProps = {
-  onOpenMobileNav?: () => void;
+  onToggleSidebar: () => void;
+  collapsed?: boolean;
 };
 
-export function CompanyTopbar({ onOpenMobileNav }: CompanyTopbarProps) {
+export function CompanyTopbar({ onToggleSidebar, collapsed = true }: CompanyTopbarProps) {
   const router = useRouter();
   const pathname = usePathname() || '/';
   const { data: account } = useCompanyAccount();
@@ -72,27 +73,28 @@ export function CompanyTopbar({ onOpenMobileNav }: CompanyTopbarProps) {
   const representativeName = account?.fullName || 'Representative';
 
   const companyMenuItems = [
-    { label: 'Profile', icon: Building2, onClick: () => router.push('/company') },
-    { label: 'Upgrade Plan', icon: Zap, onClick: () => router.push('/billing') },
-    { label: 'Refer Friends', icon: Users, onClick: () => router.push('/team') },
+    { label: 'My account', icon: UserRound, onClick: () => router.push('/account') },
+    { label: 'Company profile', icon: Building2, onClick: () => router.push('/company') },
+    { label: 'Team', icon: Users, onClick: () => router.push('/team') },
+    { label: 'Billing & plan', icon: CreditCard, onClick: () => router.push('/billing') },
     { label: 'Settings', icon: Settings, onClick: () => router.push('/settings') },
   ];
 
+  const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
+
   return (
-    <header className="sticky top-0 z-40 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white/90 px-4 backdrop-blur font-sans antialiased select-none md:px-6">
-      {/* Left: Mobile Trigger & Breadcrumbs */}
+    <header className="sticky top-0 z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur-md font-sans antialiased select-none sm:px-6">
+      {/* Left: Sidebar Toggle & Breadcrumbs */}
       <div className="flex h-full items-center gap-3">
-        {onOpenMobileNav ? (
-          <button
-            type="button"
-            onClick={onOpenMobileNav}
-            aria-label="Toggle navigation sidebar"
-            title="Toggle sidebar"
-            className="flex size-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
-          >
-            <PanelLeft className="size-4.5" />
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label="Toggle navigation sidebar"
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="flex size-8 items-center justify-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+        >
+          <ToggleIcon className="size-4 text-zinc-600" strokeWidth={1.75} />
+        </button>
 
         {/* Dynamic Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="flex items-center">
@@ -125,24 +127,11 @@ export function CompanyTopbar({ onOpenMobileNav }: CompanyTopbarProps) {
 
       {/* Right: Quick Search, Notifications & Account Dropdown */}
       <div className="flex items-center gap-3">
-        {/* Quick Talent Search Button */}
-        <Link
-          href="/students"
-          className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
-        >
-          <Search className="size-3.5 text-zinc-400" />
-          <span>Search candidates...</span>
-        </Link>
-
-        {/* 🔔 Notifications Bell Icon */}
-        <button
-          type="button"
-          aria-label="View notifications"
-          className="relative rounded-lg p-2 text-zinc-600 transition-colors hover:bg-zinc-100"
-        >
-          <Bell className="size-4" strokeWidth={1.75} />
-          <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-emerald-500 ring-2 ring-white" />
-        </button>
+        {/* Notifications: shared bell + pop-up (GET /me/notifications) */}
+        <NotificationsMenu
+          onNavigate={(path) => router.push(path)}
+          emptyHint="New applicants, campus access updates and messages show up here."
+        />
 
         {/* Employer User Avatar Dropdown */}
         <UserMenu

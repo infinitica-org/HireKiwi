@@ -413,13 +413,21 @@ describe('UsersService completeOnboarding', () => {
     const user = studentRow();
     prisma.user.findUnique.mockResolvedValueOnce(user);
     mockCompletedUpdate(prisma, user);
+    // Th6-600 — technical skills are checked against the skill catalog.
+    Object.assign(prisma, {
+      skill: {
+        findMany: vi
+          .fn()
+          .mockResolvedValue([{ code: 'GIT_VERSION_CONTROL' }, { code: 'PYTHON_PROGRAMMING' }]),
+      },
+    });
 
     await service.completeOnboarding(
       user.id,
       minimalCompletion({
         skills: [
-          { type: 'technical', name: 'Git & version control', proficiency: 'INTERMEDIATE' },
-          { type: 'technical', name: 'Python', proficiency: 'ADVANCED' },
+          { type: 'technical', code: 'GIT_VERSION_CONTROL', name: 'Git & version control' },
+          { type: 'technical', code: 'PYTHON_PROGRAMMING', name: 'Python' },
         ],
       }),
     );

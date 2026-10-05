@@ -3,6 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import BasicProfileStep from './BasicProfileStep';
 import { emptyOnboardingForm } from '@/lib/onboarding-form';
 
+const uploadProfilePhoto = vi.fn();
+vi.mock('@/lib/api', () => ({
+  api: { users: { uploadProfilePhoto: (...args: unknown[]) => uploadProfilePhoto(...args) } },
+}));
+
 describe('BasicProfileStep', () => {
   const onContinue = vi.fn();
   const updateField = vi.fn();
@@ -29,6 +34,27 @@ describe('BasicProfileStep', () => {
     expect(screen.getByTestId('last-name-input')).toBeDefined();
     expect(screen.getByTestId('major-study-program-input')).toBeDefined();
     expect(screen.getByTestId('graduation-year-select')).toBeDefined();
+  });
+
+  it('uploads a profile photo and stores its URL on the form', async () => {
+    uploadProfilePhoto.mockResolvedValue({ profilePhotoUrl: 'https://cdn.test/photo.png' });
+    const { container } = render(
+      <BasicProfileStep
+        formData={emptyOnboardingForm()}
+        updateField={updateField}
+        onContinue={onContinue}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /upload photo/i })).toBeDefined();
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['img'], 'me.png', { type: 'image/png' });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(updateField).toHaveBeenCalledWith('profilePhotoUrl', 'https://cdn.test/photo.png');
+    });
+    expect(uploadProfilePhoto).toHaveBeenCalledWith(file, 'me.png');
   });
 
   it('validates required fields before allowing continue', async () => {

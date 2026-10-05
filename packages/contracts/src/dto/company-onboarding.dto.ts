@@ -172,6 +172,25 @@ export type UpdateCompanyOnboardingDraftRequest = z.infer<
   typeof UpdateCompanyOnboardingDraftRequestSchema
 >;
 
+/** S6-VV-107 (#340): a request to join an existing company instead of registering it again. */
+export const COMPANY_JOIN_REQUEST_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const;
+export const CompanyJoinRequestStatusSchema = z.enum(COMPANY_JOIN_REQUEST_STATUSES);
+export type CompanyJoinRequestStatus = z.infer<typeof CompanyJoinRequestStatusSchema>;
+
+export const CompanyJoinRequestDtoSchema = z.object({
+  joinRequestId: UuidSchema,
+  companyId: UuidSchema,
+  companyName: z.string(),
+  email: EmailSchema,
+  fullName: z.string(),
+  status: CompanyJoinRequestStatusSchema,
+  /** Set on REJECTED when the owner gave one. */
+  reason: z.string().nullable(),
+  createdAt: IsoDateTimeSchema,
+  decidedAt: IsoDateTimeSchema.nullable(),
+});
+export type CompanyJoinRequestDto = z.infer<typeof CompanyJoinRequestDtoSchema>;
+
 export const CompanyOnboardingSessionDtoSchema = z.object({
   sessionId: UuidSchema,
   companyId: UuidSchema.nullable(),
@@ -183,6 +202,13 @@ export const CompanyOnboardingSessionDtoSchema = z.object({
   representative: CompanyRepresentativeSchema.partial(),
   verification: CompanyVerificationSchema.partial(),
   documents: z.array(CompanyOnboardingVerificationDocumentDtoSchema),
+  /**
+   * S6-VV-107: once the work email is verified, the approved company on that email's domain, if
+   * any. The wizard then offers "Request to join" instead of registering it again.
+   */
+  joinableCompany: z.object({ companyId: UuidSchema, name: z.string() }).nullable().optional(),
+  /** S6-VV-107: this session's latest join request, so the requester can follow it. */
+  joinRequest: CompanyJoinRequestDtoSchema.nullable().optional(),
   updatedAt: IsoDateTimeSchema,
 });
 export type CompanyOnboardingSessionDto = z.infer<typeof CompanyOnboardingSessionDtoSchema>;

@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import type { ProjectDto } from '@smart/contracts';
-import { ExternalLink, GitBranch, MoreVertical } from 'lucide-react';
+import { ExternalLink, GitBranch, MoreVertical, Trash2, X } from 'lucide-react';
 import { ProjectStatusBadge } from '@/components/profile/projects/ProjectStatusBadge';
 import {
   parseStackTags,
@@ -9,18 +10,39 @@ import {
 } from '@/components/profile/projects/project-presenters';
 import { ProjectDefenseInterviewDialog } from '@/components/profile/ProjectDefenseInterviewDialog';
 import { needsOwnershipInterview, processingStateCopy } from '@/lib/project-submission';
+import { api } from '@/lib/api';
+import { motion, AnimatePresence } from 'motion/react';
 
 type ProjectCardProps = {
   project: ProjectDto;
   onView: (project: ProjectDto) => void;
+  onDelete?: (projectId: string) => void;
 };
 
-export function ProjectCard({ project, onView }: ProjectCardProps) {
+export function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
   const tags = parseStackTags(project.stack);
   const visibleTags = tags.slice(0, 4);
   const hiddenCount = Math.max(0, tags.length - visibleTags.length);
   const summary = projectSummaryText(project);
   const statusCopy = processingStateCopy(project);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteClick = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.projects.delete(project.projectId);
+      setShowDeleteConfirm(false);
+      onDelete?.(project.projectId);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete project');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <article className="flex h-full flex-col rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-5 shadow-[var(--ds-card-shadow)] transition-shadow duration-150 hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
@@ -33,14 +55,25 @@ export function ProjectCard({ project, onView }: ProjectCardProps) {
             <ProjectStatusBadge project={project} />
           </div>
         </div>
-        <button
-          type="button"
-          className="rounded-lg p-1.5 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
-          aria-label={`More actions for ${project.title}`}
-          onClick={() => onView(project)}
-        >
-          <MoreVertical className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            title="Delete this project"
+            className="rounded-lg p-1.5 text-[var(--ds-text-muted)] hover:text-red-600 hover:bg-red-50/20 dark:hover:bg-red-950/20"
+            aria-label={`Delete ${project.title}`}
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className="rounded-lg p-1.5 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
+            aria-label={`More actions for ${project.title}`}
+            onClick={() => onView(project)}
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </div>
       </header>
 
       {summary ? (
@@ -126,6 +159,63 @@ export function ProjectCard({ project, onView }: ProjectCardProps) {
           View project →
         </button>
       </footer>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/50 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="relative w-full max-w-md rounded-md border border-red-200 bg-white p-6 shadow-xl dark:border-red-900 dark:bg-[#161616]"
+            >
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="absolute right-4 top-4 rounded-md p-1 text-zinc-400 hover:bg-zinc-100 disabled:opacity-50 dark:hover:bg-zinc-800"
+              >
+                <X className="size-4" />
+              </button>
+
+              <h2 className="font-heading text-lg font-bold text-zinc-950 dark:text-white">
+                Delete project?
+              </h2>
+              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+                This will permanently delete <span className="font-semibold">{project.title}</span>{' '}
+                and all associated data, including skill mappings and interview records. This action
+                cannot be undone.
+              </p>
+
+              {deleteError && (
+                <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200">
+                  {deleteError}
+                </div>
+              )}
+
+              <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="rounded-md border border-zinc-200 px-4 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  Keep it
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteClick}
+                  disabled={isDeleting}
+                  className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600"
+                >
+                  {isDeleting ? 'Deleting…' : 'Delete project'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </article>
   );
 }

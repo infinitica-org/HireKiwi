@@ -186,7 +186,7 @@ export default function BillingPage() {
         <p className={sectionSubtitle}>Historical receipts and transaction records</p>
 
         {invoices.length === 0 ? (
-          <div className="mt-3 flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-6 py-10 text-center">
+          <div className="mt-3 flex flex-col items-center justify-center rounded-lg border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-6 py-10 text-center">
             <FileText className="size-8 text-zinc-400 mb-2" />
             <p className="text-sm font-semibold text-[var(--ds-text)]">No invoices generated yet</p>
             <p className="mt-1 text-xs text-[var(--ds-text-muted)]">

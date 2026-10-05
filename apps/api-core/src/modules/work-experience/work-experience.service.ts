@@ -64,7 +64,6 @@ import {
   deriveWorkExperienceNextAction,
 } from '@smart/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
-import { assertDataUriClean } from '../../platform/storage/file-scanner.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { OrganizationsService } from '../institutions/organizations.service.js';
@@ -82,6 +81,12 @@ import {
 } from '../../platform/mailer/mailer.types.js';
 import { env } from '../../platform/config/env.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
+import {
+  assertEvidenceFile,
+  createEvidenceUploadUrl,
+  isEvidenceObjectKey,
+  verifyUploadedEvidence,
+} from '../../platform/storage/evidence-file.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { Prisma } from '../../generated/prisma/index.js';
 
@@ -184,12 +189,10 @@ import {
   type WorkExperienceWithEvidenceRelations,
 } from './work-experience-evidence.adapter.js';
 import { z } from 'zod';
-import {
-  isAllowedWorkExperienceProofMimeType,
-  normalizeWorkExperienceProofMimeType,
-} from './work-experience-proof.mime.js';
+import { normalizeWorkExperienceProofMimeType } from './work-experience-proof.mime.js';
 
-const WE_PROOF_MAX_BYTES = 5 * 1024 * 1024;
+/** Th6-600 — every work-experience proof object lives under this storage prefix. */
+export const WORK_EXPERIENCE_PROOF_NAMESPACE = 'work-experience-proofs';
 
 @Injectable()
 export class WorkExperienceService {
@@ -460,7 +463,7 @@ export class WorkExperienceService {
       include: this.evidenceInclude,
       orderBy: { startDate: 'desc' },
     });
-    return list.map((item) => this.mapToDto(item));
+    return Promise.all(list.map((item) => this.signDocuments(this.mapToDto(item))));
   }
 
   async getForStudent(studentId: string, id: string): Promise<WorkExperienceDto> {
@@ -475,7 +478,52 @@ export class WorkExperienceService {
         statusCode: 404,
       });
     }
-    return this.mapToDto(record);
+    return this.signDocuments(this.mapToDto(record));
+  }
+
+  /** Th6-600 — presigned PUT (15 min) for one PDF/PNG proof on an experience the student owns. */
+  async createDocumentUploadUrl(studentId: string, experienceId: string, body: unknown) {
+    const existing = await this.prisma.workExperience.findUnique({ where: { id: experienceId } });
+    if (!existing || existing.studentId !== studentId) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Work experience entry not found.',
+        statusCode: 404,
+      });
+    }
+    return createEvidenceUploadUrl(
+      this.requireStorage(),
+      `${WORK_EXPERIENCE_PROOF_NAMESPACE}/${studentId}/${experienceId}`,
+      body,
+    );
+  }
+
+  private requireStorage(): StorageService {
+    if (!this.storageService) {
+      throw new BadRequestException({
+        error: 'storage_unavailable',
+        message: 'Proof document upload is unavailable.',
+        statusCode: 400,
+      });
+    }
+    return this.storageService;
+  }
+
+  /** Returns the document with its storage key swapped for a 15-minute presigned download URL. */
+  private async signDocument(dto: WorkExperienceDocumentDto): Promise<WorkExperienceDocumentDto> {
+    if (
+      !this.storageService ||
+      !isEvidenceObjectKey(dto.fileUrl, [WORK_EXPERIENCE_PROOF_NAMESPACE])
+    ) {
+      return dto;
+    }
+    return { ...dto, fileUrl: await this.storageService.getSignedDownloadUrl(dto.fileUrl) };
+  }
+
+  private async signDocuments(dto: WorkExperienceDto): Promise<WorkExperienceDto> {
+    if (!dto.documents?.length) return dto;
+    const documents = await Promise.all(dto.documents.map((doc) => this.signDocument(doc)));
+    return { ...dto, documents };
   }
 
   async listStructuredResponsibilities(studentId: string, experienceId: string) {
@@ -846,7 +894,17 @@ export class WorkExperienceService {
     }
 
     this.assertProofFileUrlOrThrow(parsed.data.fileUrl);
-    await assertDataUriClean(parsed.data.fileUrl, parsed.data.fileName);
+    // Th6-600 — `fileUrl` is the object key from createDocumentUploadUrl; verify the real bytes.
+    await verifyUploadedEvidence(
+      this.requireStorage(),
+      `${WORK_EXPERIENCE_PROOF_NAMESPACE}/${studentId}/${id}`,
+      {
+        objectKey: parsed.data.fileUrl,
+        fileName: parsed.data.fileName,
+        mimeType: parsed.data.mimeType,
+        fileSizeBytes: parsed.data.fileSizeBytes,
+      },
+    );
 
     const doc = await this.prisma.workExperienceDocument.create({
       data: {
@@ -868,7 +926,7 @@ export class WorkExperienceService {
     });
 
     const checked = await this.runDocumentAuthenticityCheck(existing, doc.id);
-    return this.mapDocumentToDto(checked);
+    return this.signDocument(this.mapDocumentToDto(checked));
   }
 
   async uploadProofDocument(
@@ -903,25 +961,16 @@ export class WorkExperienceService {
       });
     }
 
-    const normalizedMime = normalizeWorkExperienceProofMimeType(file.fileName, file.mimeType);
-    if (!isAllowedWorkExperienceProofMimeType(normalizedMime)) {
-      throw new BadRequestException({
-        error: 'validation_failed',
-        message: 'Only PDF, JPG, and PNG files are accepted.',
-        statusCode: 400,
-      });
-    }
-    if (file.buffer.byteLength > WE_PROOF_MAX_BYTES) {
-      throw new BadRequestException({
-        error: 'validation_failed',
-        message: 'The proof document must be 5MB or smaller.',
-        statusCode: 400,
-      });
-    }
+    // Th6-600 — PDF/PNG only, ≤ 10 MB, and magic bytes must agree with extension + type (422).
+    const normalizedMime = await assertEvidenceFile({
+      buffer: file.buffer,
+      fileName: file.fileName,
+      mimeType: normalizeWorkExperienceProofMimeType(file.fileName, file.mimeType),
+    });
 
     const objectKey = await this.storageService.upload({
       buffer: file.buffer,
-      namespace: `work-experience-proofs/${studentId}`,
+      namespace: `${WORK_EXPERIENCE_PROOF_NAMESPACE}/${studentId}/${experienceId}`,
       fileName: file.fileName,
       contentType: normalizedMime,
     });
@@ -933,6 +982,7 @@ export class WorkExperienceService {
       fileSizeBytes: file.buffer.byteLength,
       mimeType: normalizedMime,
     });
+    // attachDocument re-reads the object, so the bytes are checked against storage too.
   }
 
   /**

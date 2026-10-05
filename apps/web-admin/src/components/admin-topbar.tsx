@@ -3,7 +3,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { ChevronRight, ScrollText, UserCog, Zap, Settings, PanelLeft } from 'lucide-react';
+import {
+  Activity,
+  ChevronRight,
+  CreditCard,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ScrollText,
+  UserCog,
+} from 'lucide-react';
 import type { AuthenticatedUser } from '@smart/contracts';
 import { SearchDialog } from './search-dialog';
 import { UserMenu } from '@smart/ui';
@@ -42,10 +50,11 @@ function getAdminBreadcrumbs(pathname: string): Breadcrumb[] {
 }
 
 type AdminTopbarProps = {
-  onOpenMobileNav: () => void;
+  onToggleSidebar: () => void;
+  collapsed?: boolean;
 };
 
-export function AdminTopbar({ onOpenMobileNav }: AdminTopbarProps) {
+export function AdminTopbar({ onToggleSidebar, collapsed = true }: AdminTopbarProps) {
   const router = useRouter();
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
 
@@ -66,23 +75,29 @@ export function AdminTopbar({ onOpenMobileNav }: AdminTopbarProps) {
   const breadcrumbs = getAdminBreadcrumbs(pathname);
 
   const adminMenuItems = [
-    { label: 'Profile', icon: UserCog, onClick: () => router.push('/admin/platform-admins') },
-    { label: 'Upgrade Plan', icon: Zap, onClick: () => router.push('/admin') },
-    { label: 'Refer Friends', icon: ScrollText, onClick: () => router.push('/admin/audit') },
-    { label: 'Settings', icon: Settings, onClick: () => router.push('/admin/settings') },
+    {
+      label: 'Platform admins',
+      icon: UserCog,
+      onClick: () => router.push('/admin/platform-admins'),
+    },
+    { label: 'Audit log', icon: ScrollText, onClick: () => router.push('/admin/audit') },
+    { label: 'Plans', icon: CreditCard, onClick: () => router.push('/admin/plans') },
+    { label: 'System health', icon: Activity, onClick: () => router.push('/admin/health') },
   ];
 
+  const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
+
   return (
-    <header className="sticky top-0 z-40 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white px-6 font-sans antialiased select-none">
+    <header className="sticky top-0 z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white/80 px-4 font-sans antialiased backdrop-blur-md select-none sm:px-6">
       <div className="flex h-full items-center gap-3">
         <button
           type="button"
-          onClick={onOpenMobileNav}
+          onClick={onToggleSidebar}
           aria-label="Toggle navigation sidebar"
-          title="Toggle sidebar"
-          className="flex size-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="flex size-8 items-center justify-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
         >
-          <PanelLeft className="size-4.5" />
+          <ToggleIcon className="size-4 text-zinc-600" strokeWidth={1.75} />
         </button>
 
         {/* Dynamic Breadcrumb Navigation */}

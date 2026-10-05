@@ -1,0 +1,172 @@
+---
+title: UI Standards & Design System Specification
+description: Comprehensive UI standards, visual tokens, typography, accessibility requirements (WCAG 2.1 AA), component anatomy, and state standards for the SMART platform.
+---
+
+# UI Standards & Design System Specification
+
+## 1. Executive Summary & Design Tenets
+
+SmartZen (SMART) is an **evidence-backed talent network** platform where verified technical skills are demonstrated through cryptographic artifacts rather than self-reported claims. The user interface across all participant portals must embody precision, trust, accessibility, and high performance.
+
+| Principle | Core Directive | Concrete UI Requirement |
+| :--- | :--- | :--- |
+| **Evidence First, Noise Zero** | Visual distinctions between verified facts and subjective assertions must be absolute. | Verified skills render in Emerald (`#34d399`) with Vivi verification badges; unverified claims render in muted amber with explicit disclaimer tooltips. |
+| **Cognitive Calm in Runners** | Assessment and proctoring environments eliminate all cognitive distractions. | Assessment interfaces hide navigation bars, lateral sidebars, notifications, and external hyperlinks during active sessions. |
+| **Zero Cumulative Layout Shift ($CLS < 0.05$)** | Content loading must never cause button jumping or layout reflows. | Skeleton loaders match the exact bounding boxes and layout grids of final rendered elements. |
+| **Strict Accessibility (WCAG 2.1 AA)** | Every user interface element must accommodate visual, cognitive, and motor diversity. | Minimum text contrast ratio of 4.5:1 (3:1 for large text); keyboard tab indices; ARIA landmarks; visible focus rings. |
+| **Adaptive Workflow Density** | Interface density matches operational context. | Spacious, guided layouts for candidates (`web-student`: 16px base padding); high-density, low-chrome data grids for institutional placement officers (`web-tpo`: 12–14px base). |
+
+---
+
+## 2. Visual Foundation & Design Tokens
+
+SMART relies on a unified token system implemented in `@smart/ui` and `@smart/config-tailwind`.
+
+### 2.1 Surfaces & Color Palette
+
+Interfaces use deep obsidian tones with precise slate borders:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            SEMANTIC COLOR PALETTE                           │
+├──────────────────────┬──────────────────────┬───────────────────────────────┤
+│ Token Name           │ Value / Hex Code     │ Semantic Purpose              │
+├──────────────────────┼──────────────────────┼───────────────────────────────┤
+│ --bg-canvas          │ #090a0f              │ Root app canvas & background  │
+│ --bg-surface         │ #12141c              │ Primary card & drawer body    │
+│ --bg-surface-raised  │ #1a1d29              │ Dialogs, popovers, dropdowns  │
+│ --border-subtle      │ #1e293b (Slate-800)  │ Card outlines & divider lines │
+│ --border-strong      │ #334155 (Slate-700)  │ Active tab edges & inputs     │
+│ --text-primary       │ #f8fafc (Slate-50)   │ Primary titles and data values│
+│ --text-secondary     │ #94a3b8 (Slate-400)  │ Descriptions & table labels   │
+│ --text-muted         │ #64748b (Slate-500)  │ Timestamps & microcopy        │
+│ --accent-brand       │ #6366f1 (Indigo-500) │ Primary buttons & brand CTA   │
+│ --accent-brand-glow  │ rgba(99,102,241,0.2) │ Interactive focus halos       │
+└──────────────────────┴──────────────────────┴───────────────────────────────┘
+```
+
+### 2.2 Criterion-Referenced Competency Tiers
+
+SMART benchmarks candidate capability into calibrated performance bands (`ARCHITECTURE.md §6`):
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       COMPETENCY PERFORMANCE TIERS                          │
+├───────────────┬───────────┬─────────────┬───────────────────────────────────┤
+│ Tier          │ Color Hex │ Tailwind    │ UI Presentation & Meaning         │
+├───────────────┼───────────┼─────────────┼───────────────────────────────────┤
+│ GOLD          │ #fbbf24   │ amber-400   │ Subtle gold radial glow, star     │
+│               │           │             │ icon, "Ready Now"                 │
+├───────────────┼───────────┼─────────────┼───────────────────────────────────┤
+│ SILVER        │ #cbd5e1   │ slate-300   │ Metallic silver sheen, shield,    │
+│               │           │             │ "Needs Supervised Onboarding"     │
+├───────────────┼───────────┼─────────────┼───────────────────────────────────┤
+│ BRONZE        │ #ea580c   │ orange-600  │ Warm copper accent, badge,        │
+│               │           │             │ "Core Knowledge Present"          │
+├───────────────┼───────────┼─────────────┼───────────────────────────────────┤
+│ BELOW_BRONZE  │ #64748b   │ slate-500   │ Neutral outline (INTERNAL ONLY).  │
+│ (Gap State)   │           │             │ Never rendered as a public badge. │
+└───────────────┴───────────┴─────────────┴───────────────────────────────────┘
+```
+
+> [!IMPORTANT]
+> `BELOW_BRONZE` is non-punitive. It must **never** be rendered with a red "Failed" stamp. It renders privately to the candidate as a **Personalized Skill Gap Diagnostic** with targeted remediation steps.
+
+### 2.3 Verification & Authenticity Badges
+
+Evidence verified autonomously by **Vivi** displays cryptographic proof indicators:
+- **Verified Proof Badge:** Emerald-400 (`#34d399`) background tint `rgba(52, 211, 153, 0.1)`, emerald border `#059669`, checkmark icon, and signature inspect drawer.
+- **Verification In Progress:** Cyan-400 (`#22d3ee`) with animated ping/pulse indicator.
+- **Unverified Assertion:** Amber-500 (`#f59e0b`) outline with information tooltip explaining that the claim lacks Git/source verification.
+- **Tamper Warning:** Rose-500 (`#f43f5e`) alert badge indicating HMAC hash signature mismatch.
+
+---
+
+## 3. Typography & Hierarchy
+
+Type is loaded via `@next/font/google`:
+1. **Display & Headings:** `Outfit` (weights: 500, 600, 700) for hero headlines, major KPIs, and portal headings.
+2. **Body & UI Elements:** `Inter` (weights: 400, 500, 600) for controls, inputs, data grids, and descriptions.
+3. **Monospace & Traces:** `JetBrains Mono` (weights: 400, 500) for cryptographic keys, code traces, AST diffs, and proof signatures.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              TYPOGRAPHY TOKENS                              │
+├─────────────┬─────────────┬─────────────┬────────────┬──────────────────────┤
+│ Class       │ Font Size   │ Line Height │ Weight     │ Application Context  │
+├─────────────┼─────────────┼─────────────┼────────────┼──────────────────────┤
+│ text-xs     │ 12px        │ 16px        │ 400 / 500  │ Badges, timestamps   │
+│ text-sm     │ 14px        │ 20px        │ 400 / 500  │ Table cells, inputs  │
+│ text-base   │ 16px        │ 24px        │ 400 / 500  │ Body paragraphs      │
+│ text-lg     │ 18px        │ 28px        │ 500 / 600  │ Card headers, tabs   │
+│ text-xl     │ 20px        │ 28px        │ 600        │ Section titles       │
+│ text-2xl    │ 24px        │ 32px        │ 600 / 700  │ Page titles          │
+│ text-4xl    │ 36px        │ 40px        │ 700        │ Hero statistics/KPIs │
+└─────────────┴─────────────┴─────────────┴────────────┴──────────────────────┘
+```
+
+---
+
+## 4. Component Anatomy & Interaction Patterns
+
+All UI components must be imported from `@smart/ui` to guarantee visual consistency.
+
+### 4.1 Buttons & Interactive Controls
+- **Primary:** Solid Indigo-500, white text, subtle hover lift (`translate-y-[-1px]`) and focus halo.
+- **Secondary:** Surface slate-800 with slate-700 border, slate-200 text.
+- **Ghost:** Transparent background with slate-400 text, brightening to slate-100 on hover.
+- **Destructive:** Crimson-600 background or border. Strictly requires two-step confirmation dialogs before execution.
+- **Loading State:** Disabled pointer events, fixed width/height preservation, and inline circular spinner.
+
+### 4.2 Data Grids & High-Density Tables
+- **Sticky Column Headers:** Fixed header bar (`sticky top-0 bg-[#12141c] z-10`) during scrolling.
+- **Hover Rows:** Subtle highlight (`hover:bg-slate-800/40`) with full row clickability where applicable.
+- **Sorting Indicators:** Column headers display distinct up/down carets showing active sort state.
+- **Empty Cells:** Null or omitted data renders as an explicit em dash (`—`) in muted text, never left blank.
+
+### 4.3 Form Inputs & Accessible Controls
+- **Labels:** Explicit, permanent labels placed above inputs (never replaced with placeholder text).
+- **Focus Rings:** Distinctive 2px indigo-500 outline with zero blur offset.
+- **Error States:** Border changes to rose-500; inline alert icon and assistive text appear below the input linked via `aria-describedby`.
+- **Keyboard Traversal:** Logical sequence matching visual reading order; `Escape` key closes modals, drawers, and select menus.
+
+---
+
+## 5. UI State Management Standards
+
+Every async component must explicitly handle the four fundamental UI lifecycle states:
+
+```
+┌────────────────┐     ┌────────────────┐     ┌────────────────┐     ┌────────────────┐
+│ 1. Loading     │ ──► │ 2. Empty       │ OR  │ 3. Error       │ OR  │ 4. Success     │
+│ Skeleton Cards │     │ Actionable CTA │     │ Boundary + Sentry    │ Fully Rendered │
+└────────────────┘     └────────────────┘     └────────────────┘     └────────────────┘
+```
+
+1. **Skeleton Loaders:**
+   - Shimmer/pulse animation (`animate-pulse`) using `bg-slate-800/60` and `rounded-md`.
+   - Dimensions strictly mirror the exact height, width, and padding of the incoming component to eliminate CLS.
+2. **Actionable Empty States:**
+   - Must include: (a) illustrative monoline SVG icon, (b) clear explanatory sentence ("Why is this empty?"), and (c) an immediate primary CTA button (e.g., _"Connect GitHub Repository"_, _"Create First Campus Drive"_).
+3. **Error Boundaries:**
+   - React error boundaries catch client exceptions and display friendly recovery cards with Sentry error reference codes and two actions: _"Try Again"_ and _"Return to Safety"_.
+
+---
+
+## 6. Motion & Accessibility (WCAG 2.1 AA)
+
+- **Durations:** 150ms for button/hover states; 250ms for modals and drawers; 200ms for page transitions.
+- **Reduced Motion:** All transitions must honor `prefers-reduced-motion: reduce`:
+  ```css
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  ```
+- **Color Contrast:** Foreground text to background contrast exceeds 4.5:1 for normal text and 3:1 for large text.
+- **Screen Reader Support:** Semantic HTML5 elements (`<main>`, `<nav>`, `<header>`, `<article>`), ARIA labels on all icon buttons (`aria-label`), and `role="status"` on dynamic live updates.

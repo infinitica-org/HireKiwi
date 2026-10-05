@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { LightSelect } from '../../ui/LightSelect';
 import type { OnboardingProfileForm } from '@/lib/onboarding-form';
+import { ProfilePhotoPicker } from '../ProfilePhotoPicker';
 import {
   BackButton,
   ErrorBanner,
@@ -68,12 +69,18 @@ export default function BasicProfileStep({
     <div data-testid="basic-profile-step">
       <StepHeading
         title="Basic Profile"
-        subtitle="Tell us your name, field of study and graduation year."
+        subtitle="Add a photo, then tell us your name, field of study and graduation year."
       />
 
       <AnimatePresence>{error ? <ErrorBanner>{error}</ErrorBanner> : null}</AnimatePresence>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <ProfilePhotoPicker
+          fullName={`${formData.firstName} ${formData.lastName}`.trim()}
+          profilePhotoUrl={formData.profilePhotoUrl}
+          onPhotoChange={(url) => updateField('profilePhotoUrl', url)}
+        />
+
         <div>
           <FieldLabel required>First Name</FieldLabel>
           <TextInput

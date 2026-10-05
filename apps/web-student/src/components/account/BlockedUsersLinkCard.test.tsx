@@ -6,6 +6,6 @@ describe('BlockedUsersLinkCard (Th6-427)', () => {
   it('links Settings to the blocked users page', () => {
     render(<BlockedUsersLinkCard />);
     const link = screen.getByRole('link', { name: 'Manage blocked users' });
-    expect(link.getAttribute('href')).toBe('/settings/blocked');
+    expect(link.getAttribute('href')).toBe('/student/settings/blocked');
   });
 });

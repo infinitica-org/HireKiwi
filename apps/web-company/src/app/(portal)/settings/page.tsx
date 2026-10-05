@@ -121,15 +121,17 @@ export default function CompanySettingsPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-[#172033]">Company Settings</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">
+          Company Settings
+        </h1>
+        <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm">
           Manage your organization&apos;s credentials, security, and recurring billing payment
           details.
         </p>
       </div>
 
       {/* Payment Method Card */}
-      <div className="rounded-2xl border border-[var(--ds-border,#e5e7eb)] bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-zinc-200/80 bg-white p-6 shadow-2xs">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-12 items-center justify-center rounded-xl bg-teal-50 text-teal-600 border border-teal-100">

@@ -106,7 +106,7 @@ describe('CompleteCandidateOnboardingRequestSchema (progressive onboarding)', ()
         githubUrl: 'https://github.com/ada',
         skills: [
           { type: 'language', name: 'English', proficiency: 'Fluent' },
-          { type: 'technical', name: 'Git & version control', proficiency: 'INTERMEDIATE' },
+          { type: 'technical', code: 'GIT_VERSION_CONTROL', name: 'Git & version control' },
         ],
         jobPreferences: {
           expectedCtcLakhs: 8,

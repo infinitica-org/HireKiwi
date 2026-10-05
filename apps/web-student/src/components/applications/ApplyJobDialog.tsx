@@ -114,7 +114,7 @@ export function ApplyJobDialog({ open, jobId, onClose }: ApplyJobDialogProps) {
               Close
             </Button>
             <Link
-              href="/applications"
+              href="/student/applications"
               className="inline-flex h-10 items-center rounded-lg bg-zinc-900 px-4 text-sm font-semibold text-white"
             >
               View my application

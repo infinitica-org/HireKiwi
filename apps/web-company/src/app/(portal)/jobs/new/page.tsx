@@ -3,26 +3,41 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { ChipGroup, PageHeader, SkillsEditor, type SkillReq } from '../../../../components/ui';
+import { ArrowLeft, Briefcase, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
+import { ChipGroup, SkillsEditor, type SkillReq } from '../../../../components/ui';
 import { LocationInput } from '../../../../components/location-input';
 import { toRequiredSkills } from '../../../../lib/skill-catalog';
 import { companyJobsApi, formatApiError } from '../../../../lib/api';
 import { getCurrentUser } from '../../../../lib/auth';
-import {
-  card,
-  input,
-  label,
-  pageStack,
-  primaryButton,
-  secondaryButton,
-  sectionSubtitle,
-  sectionTitle,
-  textarea,
-} from '../../../../lib/ui';
+import { input, label, textarea } from '../../../../lib/ui';
 
 const EMPLOYMENT_TYPES = ['Full-time', 'Internship', 'Part-time'] as const;
 const VERIFICATIONS = ['Endorsed experience', 'Certification', 'Project defended'] as const;
+
+const sectionCard =
+  'rounded-md border border-zinc-200/80 bg-white p-6 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]';
+
+function SectionHeading({
+  step,
+  title,
+  description,
+}: {
+  step: number;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="mb-5 flex items-start gap-3 border-b border-zinc-100 pb-4 dark:border-zinc-800">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-xs font-semibold text-white dark:bg-white dark:text-zinc-950">
+        {step}
+      </span>
+      <div>
+        <h2 className="text-base font-semibold text-zinc-950 dark:text-white">{title}</h2>
+        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{description}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function PostJobPage() {
   const router = useRouter();
@@ -83,122 +98,198 @@ export default function PostJobPage() {
   }
 
   return (
-    <div className={pageStack}>
-      <PageHeader
-        title="Post a Job Opening"
-        description="Define competency requirements, desired evidence benchmarks, and role compensation."
-      />
+    <div className="mx-auto w-full max-w-6xl pt-2 pb-28 font-sans">
+      <Link
+        href="/jobs"
+        className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+      >
+        <ArrowLeft className="size-3.5" />
+        Back to jobs
+      </Link>
+      <header className="mt-3 mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl dark:text-white">
+          Post a job
+        </h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          Describe the role, set the skills you need, and choose the proof candidates must show.
+        </p>
+      </header>
 
       {error ? (
-        <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+        <div className="mb-5 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
         </div>
       ) : null}
 
       <form
-        className="space-y-5"
+        id="post-job-form"
+        className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]"
         onSubmit={(event) => {
           event.preventDefault();
           void submit('publish');
         }}
       >
-        <section className={`${card} space-y-5`}>
-          <div>
-            <label htmlFor="job-title" className={label}>
-              Job Title
-            </label>
-            <input
-              id="job-title"
-              value={title}
-              required
-              onChange={(e) => setTitle(e.target.value)}
-              aria-invalid={titleInvalid}
-              placeholder="e.g. Frontend Engineer Intern"
-              className={`${input} ${titleInvalid ? '!border-[var(--co-red)]' : ''}`}
+        <div className="min-w-0 space-y-6">
+          <section className={sectionCard}>
+            <SectionHeading
+              step={1}
+              title="Role basics"
+              description="What the job is, where it is, and what it pays."
             />
-            {titleInvalid ? (
-              <p className="mt-1.5 text-[12px] text-[var(--co-red)]">Job title is required.</p>
-            ) : null}
-          </div>
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="job-title" className={label}>
+                  Job title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  id="job-title"
+                  value={title}
+                  required
+                  onChange={(e) => setTitle(e.target.value)}
+                  aria-invalid={titleInvalid}
+                  placeholder="e.g. Frontend Engineer Intern"
+                  className={`${input} ${titleInvalid ? 'border-rose-500!' : ''}`}
+                />
+                {titleInvalid ? (
+                  <p className="mt-1.5 text-xs text-rose-600">Job title is required.</p>
+                ) : null}
+              </div>
 
-          <div>
-            <span className={label}>Employment Type</span>
-            <ChipGroup options={EMPLOYMENT_TYPES} value={type} onChange={setType} />
-          </div>
+              <div>
+                <span className={label}>Employment type</span>
+                <ChipGroup options={EMPLOYMENT_TYPES} value={type} onChange={setType} />
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="job-location" className={label}>
-                Location / Work Mode
-              </label>
-              <LocationInput
-                id="job-location"
-                value={location}
-                onChange={setLocation}
-                placeholder="e.g. Bengaluru, Remote, or Hybrid"
-                className={input}
-              />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="job-location" className={label}>
+                    Location / work mode
+                  </label>
+                  <LocationInput
+                    id="job-location"
+                    value={location}
+                    onChange={setLocation}
+                    placeholder="e.g. Bengaluru, Remote, or Hybrid"
+                    className={input}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="job-pay" className={label}>
+                    Salary / compensation
+                  </label>
+                  <input
+                    id="job-pay"
+                    value={pay}
+                    onChange={(e) => setPay(e.target.value)}
+                    placeholder="e.g. ₹40,000 / month or ₹8–12 LPA"
+                    className={input}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="job-description" className={label}>
+                  Role scope &amp; responsibilities
+                </label>
+                <textarea
+                  id="job-description"
+                  rows={6}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Outline the projects and technical challenges the candidate will work on…"
+                  className={textarea}
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="job-pay" className={label}>
-                Salary / Compensation Range
-              </label>
-              <input
-                id="job-pay"
-                value={pay}
-                onChange={(e) => setPay(e.target.value)}
-                placeholder="e.g. ₹40,000 / month or ₹8-12 LPA"
-                className={input}
-              />
-            </div>
-          </div>
+          </section>
 
-          <div>
-            <label htmlFor="job-description" className={label}>
-              Role Scope & Responsibilities
-            </label>
-            <textarea
-              id="job-description"
-              rows={5}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Outline what projects and technical challenges the candidate will tackle..."
-              className={textarea}
+          <section className={sectionCard}>
+            <SectionHeading
+              step={2}
+              title="Required skills"
+              description="Candidates are matched on verified benchmark results for these skills."
             />
-          </div>
-        </section>
+            <SkillsEditor skills={skills} onChange={setSkills} />
+          </section>
 
-        <section className={`${card} space-y-5`}>
-          <div>
-            <h2 className={sectionTitle}>Required Skills & Minimum Proficiency</h2>
-            <p className={sectionSubtitle}>
-              Candidates are matched based on verifiable benchmark test results.
+          <section className={sectionCard}>
+            <SectionHeading
+              step={3}
+              title="Proof of competency"
+              description="Validation badges a candidate must have before applying."
+            />
+            <ChipGroup
+              multiple
+              options={VERIFICATIONS}
+              value={verifications}
+              onChange={setVerifications}
+            />
+          </section>
+        </div>
+
+        <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+          <div className={sectionCard}>
+            <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+              Preview
             </p>
-            <div className="mt-3">
-              <SkillsEditor skills={skills} onChange={setSkills} />
+            <div className="mt-3 flex items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 dark:bg-zinc-800">
+                <Briefcase className="size-4.5" strokeWidth={1.75} />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                  {title.trim() || 'Job title'}
+                </p>
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  {location.trim() || 'Remote'} · {type[0] ?? 'Full-time'}
+                </p>
+                {pay.trim() ? (
+                  <p className="mt-0.5 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                    {pay.trim()}
+                  </p>
+                ) : null}
+              </div>
             </div>
+            <dl className="mt-4 grid grid-cols-2 gap-2 text-xs">
+              <div className="rounded-md bg-zinc-50 px-3 py-2 dark:bg-zinc-900/60">
+                <dt className="text-zinc-500">Skills</dt>
+                <dd className="text-base font-semibold tabular-nums text-zinc-950 dark:text-white">
+                  {skills.length}
+                </dd>
+              </div>
+              <div className="rounded-md bg-zinc-50 px-3 py-2 dark:bg-zinc-900/60">
+                <dt className="text-zinc-500">Proof required</dt>
+                <dd className="text-base font-semibold tabular-nums text-zinc-950 dark:text-white">
+                  {verifications.length}
+                </dd>
+              </div>
+            </dl>
           </div>
 
-          <div>
-            <h2 className={sectionTitle}>Required Proof of Competency</h2>
-            <p className={sectionSubtitle}>
-              Select mandatory validation badges required before candidate application.
+          <div className="rounded-md border border-zinc-200/80 bg-zinc-50/70 p-5 text-xs leading-relaxed text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400">
+            <p className="mb-2 flex items-center gap-1.5 font-semibold text-zinc-900 dark:text-white">
+              <Sparkles className="size-3.5" />
+              Tips for a strong post
             </p>
-            <div className="mt-3">
-              <ChipGroup
-                multiple
-                options={VERIFICATIONS}
-                value={verifications}
-                onChange={setVerifications}
-              />
-            </div>
+            <ul className="list-disc space-y-1 pl-4">
+              <li>Use a specific title, e.g. &ldquo;Backend Engineer Intern&rdquo;.</li>
+              <li>Add 3–6 core skills with a realistic minimum level.</li>
+              <li>Share the pay range — posts with pay get more applicants.</li>
+            </ul>
+            <p className="mt-3 flex items-center gap-1.5 text-zinc-500">
+              <ShieldCheck className="size-3.5" />
+              Only verified students can apply.
+            </p>
           </div>
-        </section>
+        </aside>
+      </form>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
+      {/* Sticky action bar */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/80 bg-white/90 backdrop-blur-md dark:border-zinc-800 dark:bg-[#111111]/90">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-end gap-2 px-4 py-3 md:px-8 lg:pl-24">
           <Link
             href="/jobs"
-            className="mr-auto text-[13px] font-semibold text-[var(--ds-text-muted)] hover:text-[var(--ds-text)]"
+            className="mr-auto text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
           >
             Cancel
           </Link>
@@ -206,21 +297,26 @@ export default function PostJobPage() {
             type="button"
             disabled={submitting}
             onClick={() => void submit('draft')}
-            className={secondaryButton}
+            className="rounded-md border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-2xs transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
           >
             Save as draft
           </button>
-          <button type="submit" disabled={submitting} className={primaryButton}>
+          <button
+            type="submit"
+            form="post-job-form"
+            disabled={submitting}
+            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white shadow-2xs transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+          >
             {submitting ? (
               <>
-                <Loader2 className="size-4 animate-spin" /> Publishing...
+                <Loader2 className="size-4 animate-spin" /> Publishing…
               </>
             ) : (
               'Publish job'
             )}
           </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

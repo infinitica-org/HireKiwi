@@ -18,20 +18,39 @@ import {
   readCompanyOnboardingSessionToken,
   writeCompanyOnboardingSessionToken,
 } from '../../../lib/company-onboarding-session';
+import {
+  companyQueryFromEmail,
+  requestToJoinCompany,
+  searchCompanies,
+  type CompanySearchResult,
+} from '../../../lib/company-directory';
 
 const inputClass =
   'w-full h-11 rounded-[11px] border border-[#e5e7eb] bg-white px-3.5 text-sm text-[#111827] placeholder:text-[#9ca3af] transition-[border-color,box-shadow] duration-150 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10';
 
 const labelClass = 'mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#6b7280]';
 
-type Step = 'start' | 'details' | 'email' | 'documents' | 'submit' | 'done';
+type Step =
+  'account' | 'search' | 'join-sent' | 'details' | 'email' | 'documents' | 'submit' | 'done';
+
+type SearchState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'unavailable' }
+  | { status: 'ready'; items: readonly CompanySearchResult[] };
+
+const STAGES = [
+  { label: 'Account', steps: ['account'] },
+  { label: 'Company', steps: ['search', 'details'] },
+  { label: 'Verification', steps: ['join-sent', 'email', 'documents', 'submit', 'done'] },
+] as const satisfies readonly { label: string; steps: readonly Step[] }[];
 
 function errorMessage(err: unknown, fallback: string): string {
   return describeApiError(err, fallback);
 }
 
 export function CompanyRegisterWizard() {
-  const [step, setStep] = useState<Step>('start');
+  const [step, setStep] = useState<Step>('account');
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +59,10 @@ export function CompanyRegisterWizard() {
   const [fullName, setFullName] = useState('');
   const [workEmail, setWorkEmail] = useState('');
   const [website, setWebsite] = useState('https://');
+
+  const [companyQuery, setCompanyQuery] = useState('');
+  const [search, setSearch] = useState<SearchState>({ status: 'idle' });
+  const [joinedCompany, setJoinedCompany] = useState<CompanySearchResult | null>(null);
 
   const [displayName, setDisplayName] = useState('');
   const [legalName, setLegalName] = useState('');
@@ -117,18 +140,54 @@ export function CompanyRegisterWizard() {
     });
   }, [resumeSession]);
 
+  useEffect(() => {
+    if (step !== 'search') return;
+    const query = companyQuery.trim();
+    if (query.length < 2) {
+      setSearch({ status: 'idle' });
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setSearch({ status: 'loading' });
+      searchCompanies(query, controller.signal)
+        .then((outcome) =>
+          setSearch(
+            outcome.available
+              ? { status: 'ready', items: outcome.items }
+              : { status: 'unavailable' },
+          ),
+        )
+        .catch((err: unknown) => {
+          if (controller.signal.aborted) return;
+          setSearch({ status: 'ready', items: [] });
+          setError(errorMessage(err, 'Company search failed. You can still create your company.'));
+        });
+    }, 300);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [step, companyQuery]);
+
   // Only flag a finished address, so the hint doesn't flash while the domain is still being typed.
   const personalEmailError =
     workEmail.includes('@') && workEmail.trim().includes('.') && isFreeMailDomain(workEmail)
       ? COMPANY_WORK_EMAIL_REQUIRED_MESSAGE
       : null;
 
-  async function onStart(event: React.FormEvent) {
+  function onAccount(event: React.FormEvent) {
     event.preventDefault();
     if (isFreeMailDomain(workEmail)) {
       setError(COMPANY_WORK_EMAIL_REQUIRED_MESSAGE);
       return;
     }
+    setError(null);
+    setCompanyQuery((current) => current || companyQueryFromEmail(workEmail));
+    setStep('search');
+  }
+
+  async function onCreateCompany() {
     setLoading(true);
     setError(null);
     try {
@@ -138,9 +197,27 @@ export function CompanyRegisterWizard() {
       });
       writeCompanyOnboardingSessionToken(result.sessionToken);
       setSessionToken(result.sessionToken);
+      if (!displayName && companyQuery.trim()) setDisplayName(companyQuery.trim());
       setStep('details');
     } catch (err) {
       setError(errorMessage(err, 'Could not start registration.'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onRequestJoin(company: CompanySearchResult) {
+    setLoading(true);
+    setError(null);
+    try {
+      await requestToJoinCompany(company.orgId, {
+        fullName: fullName.trim(),
+        workEmail: workEmail.trim(),
+      });
+      setJoinedCompany(company);
+      setStep('join-sent');
+    } catch (err) {
+      setError(errorMessage(err, `Could not send a join request to ${company.displayName}.`));
     } finally {
       setLoading(false);
     }
@@ -268,10 +345,12 @@ export function CompanyRegisterWizard() {
           Register your company
         </h1>
         <p className="mt-2 text-sm text-[#6b7280]">
-          Self-serve onboarding for the SMART company portal. After review, you will receive an
-          invite to set your password.
+          Create your master account, find your company or add it, then verify. After review, you
+          will receive an invite to set your password.
         </p>
       </div>
+
+      <StageIndicator step={step} />
 
       {error ? (
         <p
@@ -282,8 +361,11 @@ export function CompanyRegisterWizard() {
         </p>
       ) : null}
 
-      {step === 'start' ? (
-        <form onSubmit={onStart} className="mt-8 space-y-4">
+      {step === 'account' ? (
+        <form onSubmit={onAccount} className="mt-8 space-y-4">
+          <p className="text-sm text-[#64748b]">
+            This is the master login for your company on SMART. You can invite teammates later.
+          </p>
           <div>
             <label htmlFor="fullName" className={labelClass}>
               Your full name
@@ -316,21 +398,79 @@ export function CompanyRegisterWizard() {
               </p>
             ) : null}
           </div>
-          <div>
-            <label htmlFor="website" className={labelClass}>
-              Company website
-            </label>
-            <input
-              id="website"
-              type="url"
-              required
-              className={inputClass}
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-            />
-          </div>
           <WizardActions loading={loading} primaryLabel="Continue" />
         </form>
+      ) : null}
+
+      {step === 'search' ? (
+        <div className="mt-8 space-y-4">
+          <div>
+            <label htmlFor="companySearch" className={labelClass}>
+              Find your company
+            </label>
+            <input
+              id="companySearch"
+              type="search"
+              autoComplete="organization"
+              placeholder="Company name or website"
+              className={inputClass}
+              value={companyQuery}
+              onChange={(e) => setCompanyQuery(e.target.value)}
+            />
+          </div>
+
+          <CompanySearchResults
+            search={search}
+            loading={loading}
+            onJoin={(company) => void onRequestJoin(company)}
+          />
+
+          <div className="rounded-[11px] border border-dashed border-[#d1d5db] p-4">
+            <p className="text-sm font-semibold text-[#111827]">Company not listed?</p>
+            <p className="mt-1 text-sm text-[#6b7280]">
+              Create it and become its first admin. SMART verifies every new company before it can
+              post jobs.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => void onCreateCompany()}
+                className="rounded-[11px] bg-black px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] disabled:opacity-70"
+              >
+                {loading ? 'Please wait…' : 'Create a new company'}
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => setStep('account')}
+                className="rounded-[11px] border border-[#e5e7eb] bg-white px-5 py-2.5 text-sm font-semibold text-[#111827] shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98]"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {step === 'join-sent' && joinedCompany ? (
+        <VerificationPanel
+          title="Join request sent"
+          items={[
+            { label: 'Master account created', detail: workEmail, state: 'done' },
+            { label: `Request sent to ${joinedCompany.displayName}`, state: 'done' },
+            {
+              label: 'Company admin approval',
+              detail: 'An admin of this company reviews your request.',
+              state: 'current',
+            },
+            {
+              label: 'Portal invite',
+              detail: 'Once approved, we email you a link to set your password.',
+              state: 'todo',
+            },
+          ]}
+        />
       ) : null}
 
       {step === 'details' ? (
@@ -349,6 +489,15 @@ export function CompanyRegisterWizard() {
               className={inputClass}
               value={legalName}
               onChange={(e) => setLegalName(e.target.value)}
+            />
+            <input
+              required
+              type="url"
+              aria-label="Company website"
+              placeholder="Company website (https://…)"
+              className={inputClass}
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
             />
             <input
               required
@@ -551,19 +700,23 @@ export function CompanyRegisterWizard() {
       ) : null}
 
       {step === 'done' ? (
-        <div className="mt-8 space-y-4 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-6 text-sm text-[#334155]">
-          <p className="font-medium text-[#172033]">Application submitted</p>
-          <p>
-            SMART will review your company details. When approved, you will receive a portal invite
-            email to set your password and sign in.
-          </p>
-          <Link
-            href="/company/login"
-            className="inline-block text-black font-semibold underline hover:opacity-80"
-          >
-            Back to sign in
-          </Link>
-        </div>
+        <VerificationPanel
+          title="Application submitted"
+          items={[
+            { label: 'Master account created', detail: workEmail || undefined, state: 'done' },
+            { label: 'Company details and work email verified', state: 'done' },
+            {
+              label: 'SMART verification review',
+              detail: 'Our team checks your company details and documents.',
+              state: 'current',
+            },
+            {
+              label: 'Portal invite',
+              detail: 'When approved, we email you a link to set your password and sign in.',
+              state: 'todo',
+            },
+          ]}
+        />
       ) : null}
 
       <p className="mt-10 text-center text-sm text-[#6b7280]">
@@ -576,6 +729,135 @@ export function CompanyRegisterWizard() {
         </Link>
       </p>
     </section>
+  );
+}
+
+function StageIndicator({ step }: { step: Step }) {
+  const current = STAGES.findIndex((stage) => (stage.steps as readonly Step[]).includes(step));
+  return (
+    <ol className="mt-8 flex items-center gap-2" aria-label="Registration progress">
+      {STAGES.map((stage, index) => {
+        const state = index < current ? 'done' : index === current ? 'current' : 'todo';
+        return (
+          <li key={stage.label} className="flex flex-1 flex-col gap-1.5">
+            <span
+              className={`h-1 rounded-full ${state === 'todo' ? 'bg-[#e5e7eb]' : 'bg-black'}`}
+            />
+            <span
+              aria-current={state === 'current' ? 'step' : undefined}
+              className={`text-xs font-semibold ${state === 'todo' ? 'text-[#9ca3af]' : 'text-[#111827]'}`}
+            >
+              {stage.label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function CompanySearchResults({
+  search,
+  loading,
+  onJoin,
+}: {
+  search: SearchState;
+  loading: boolean;
+  onJoin: (company: CompanySearchResult) => void;
+}) {
+  if (search.status === 'idle') {
+    return <p className="text-sm text-[#6b7280]">Type at least 2 characters to search.</p>;
+  }
+  if (search.status === 'loading') {
+    return <p className="text-sm text-[#6b7280]">Searching…</p>;
+  }
+  if (search.status === 'unavailable') {
+    return (
+      <p className="rounded-[11px] bg-[#f8fafc] px-4 py-3 text-sm text-[#64748b]">
+        Company search isn&apos;t available yet. Create your company below.
+      </p>
+    );
+  }
+  if (search.items.length === 0) {
+    return <p className="text-sm text-[#6b7280]">No companies match that search.</p>;
+  }
+  return (
+    <ul className="divide-y divide-[#e5e7eb] rounded-[11px] border border-[#e5e7eb]">
+      {search.items.map((company) => (
+        <li key={company.orgId} className="flex items-center justify-between gap-3 px-4 py-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-[#111827]">
+              {company.displayName}
+              {company.verified ? (
+                <span className="ml-2 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[11px] font-semibold text-[#047857]">
+                  Verified
+                </span>
+              ) : null}
+            </p>
+            <p className="truncate text-xs text-[#6b7280]">
+              {[company.website, company.city].filter(Boolean).join(' · ')}
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => onJoin(company)}
+            className="shrink-0 rounded-[11px] border border-[#e5e7eb] bg-white px-4 py-2 text-sm font-semibold text-[#111827] shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98] disabled:opacity-70"
+          >
+            Request to join
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function VerificationPanel({
+  title,
+  items,
+}: {
+  title: string;
+  items: { label: string; detail?: string; state: 'done' | 'current' | 'todo' }[];
+}) {
+  return (
+    <div className="mt-8 space-y-5 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-6 text-sm text-[#334155]">
+      <p className="text-base font-semibold text-[#172033]">{title}</p>
+      <ol className="space-y-4">
+        {items.map((item) => (
+          <li key={item.label} className="flex gap-3">
+            <span
+              aria-hidden
+              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                item.state === 'done'
+                  ? 'bg-black text-white'
+                  : item.state === 'current'
+                    ? 'border-2 border-black bg-white'
+                    : 'border border-[#d1d5db] bg-white'
+              }`}
+            >
+              {item.state === 'done' ? '✓' : ''}
+            </span>
+            <div>
+              <p
+                className={item.state === 'todo' ? 'text-[#9ca3af]' : 'font-medium text-[#172033]'}
+              >
+                {item.label}
+                {item.state === 'current' ? (
+                  <span className="ml-2 text-xs font-semibold text-[#b45309]">In progress</span>
+                ) : null}
+              </p>
+              {item.detail ? <p className="mt-0.5 text-[#64748b]">{item.detail}</p> : null}
+            </div>
+          </li>
+        ))}
+      </ol>
+      <Link
+        href="/company/login"
+        className="inline-block font-semibold text-black underline hover:opacity-80"
+      >
+        Back to sign in
+      </Link>
+    </div>
   );
 }
 

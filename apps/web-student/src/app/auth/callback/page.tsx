@@ -47,7 +47,7 @@ function AuthCallbackComponent() {
         if (!user.onboardingCompleted) {
           router.push('/onboarding');
         } else {
-          router.push('/dashboard');
+          router.push('/student/dashboard');
         }
       } catch (e: unknown) {
         console.error(e);

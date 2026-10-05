@@ -53,9 +53,12 @@ function isValidEmailFormat(email: string): boolean {
 }
 
 import { nativeOptionClass, nativeSelectClass } from '@/lib/native-select';
-
-const PROOF_FILE_MAX_BYTES = 5 * 1024 * 1024;
-const PROOF_FILE_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+import {
+  EVIDENCE_ACCEPT,
+  EVIDENCE_HINT,
+  uploadWorkExperienceProof,
+  validateEvidenceFile,
+} from '@/lib/evidence-upload';
 
 type ModalPendingDocument = {
   localId: string;
@@ -63,14 +66,9 @@ type ModalPendingDocument = {
   file: File;
 };
 
+/** Th6-600 — PDF or PNG, 10 MB max; the server re-checks the real bytes. */
 function validateProofFile(file: File): string | null {
-  if (!PROOF_FILE_TYPES.includes(file.type)) {
-    return 'Only PDF, JPG, and PNG proof documents are accepted.';
-  }
-  if (file.size > PROOF_FILE_MAX_BYTES) {
-    return 'The proof document must be 5MB or smaller.';
-  }
-  return null;
+  return validateEvidenceFile(file);
 }
 
 export function WorkExperienceSection() {
@@ -498,12 +496,7 @@ export function WorkExperienceSection() {
 
       if (editingId) {
         for (const doc of allPendingDocs) {
-          await api.users.uploadWorkExperienceProofDocument(
-            editingId,
-            doc.file,
-            doc.file.name,
-            doc.documentType,
-          );
+          await uploadWorkExperienceProof(editingId, doc.documentType, doc.file);
         }
         await api.users.updateWorkExperience(editingId, payload);
       } else {
@@ -511,12 +504,7 @@ export function WorkExperienceSection() {
         savedExperienceId = created.id;
         try {
           for (const doc of allPendingDocs) {
-            await api.users.uploadWorkExperienceProofDocument(
-              created.id,
-              doc.file,
-              doc.file.name,
-              doc.documentType,
-            );
+            await uploadWorkExperienceProof(created.id, doc.documentType, doc.file);
           }
         } catch (uploadErr) {
           try {
@@ -578,11 +566,10 @@ export function WorkExperienceSection() {
     try {
       setUploadingDoc(true);
       setError(null);
-      await api.users.uploadWorkExperienceProofDocument(
+      await uploadWorkExperienceProof(
         docModalExpId,
-        proofFile,
-        proofFile.name,
         docType as WorkExperienceDocumentDto['documentType'],
+        proofFile,
       );
       setDocModalExpId(null);
       setProofFile(null);
@@ -651,7 +638,7 @@ export function WorkExperienceSection() {
         title={meta.title}
         description={meta.description}
         action={
-          !loading && experiences.length > 0 ? (
+          !loading ? (
             <button
               type="button"
               onClick={openAddModal}
@@ -875,14 +862,14 @@ export function WorkExperienceSection() {
                 <input
                   type="file"
                   required
-                  accept="application/pdf,image/jpeg,image/jpg,image/png"
+                  accept={EVIDENCE_ACCEPT}
                   onChange={(event) => {
                     setProofFile(event.target.files?.[0] ?? null);
                   }}
                   className="mt-1 block w-full text-xs text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-foreground/15 file:px-3 file:py-2 file:text-xs file:font-medium file:text-foreground"
                 />
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  PDF, JPG, or PNG up to 5MB. Files are stored securely for AI proof validation.
+                  {EVIDENCE_HINT}. Files are stored securely for AI proof validation.
                 </p>
                 {proofFile ? (
                   <p className="mt-1 text-[11px] text-muted-foreground">

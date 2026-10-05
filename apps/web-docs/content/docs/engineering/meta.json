@@ -1,4 +1,4 @@
 {
   "title": "Engineering Specifications",
-  "pages": ["PRISMA_PROCTORING_SESSION", "TECH_DEBT"]
+  "pages": ["PRISMA_PROCTORING_SESSION", "TECH_DEBT", "UI_STANDARDS", "RBAC_REQUIREMENTS"]
 }

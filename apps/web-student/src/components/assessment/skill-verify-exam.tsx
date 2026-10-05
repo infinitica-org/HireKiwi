@@ -35,6 +35,22 @@ const FORMAT_LABEL: Record<SdeSkillFormFormat, string> = {
   DESIGN_REASONING: 'Design reasoning',
 };
 
+/**
+ * S6-VV-162 (#613 F1): the server rejects the whole save/complete when any one answer is over
+ * this (`SdeSkillFormResponseItemSchema.text`, 8,000), so the inputs stop there and show a counter.
+ */
+export const SKILL_VERIFY_ANSWER_MAX_CHARS = 8_000;
+
+function AnswerLength({ value, tone = 'light' }: { value: string; tone?: 'light' | 'dark' }) {
+  const near = value.length >= SKILL_VERIFY_ANSWER_MAX_CHARS * 0.9;
+  const base = tone === 'dark' ? 'text-white/40' : 'text-[var(--text-secondary)]';
+  return (
+    <p className={`mt-1 text-right text-[11px] ${near ? 'font-semibold text-amber-600' : base}`}>
+      {value.length.toLocaleString()} / {SKILL_VERIFY_ANSWER_MAX_CHARS.toLocaleString()}
+    </p>
+  );
+}
+
 export function skillVerifyTimerProps(session: SkillVerifySessionDto) {
   const duration = session.timeMinutes * 60;
   const expires = Date.parse(session.expiresAt);
@@ -340,12 +356,16 @@ export function SkillVerifyExam({
                   ))}
                 </div>
               ) : (
-                <textarea
-                  className="min-h-40 w-full rounded-md border border-[var(--surface-border)] bg-[var(--surface-muted)] p-3 text-sm text-[var(--text-primary)]"
-                  value={answer?.text ?? ''}
-                  onChange={(event) => onChangeText(item.index, event.target.value)}
-                  aria-label="Written response"
-                />
+                <>
+                  <textarea
+                    className="min-h-40 w-full rounded-md border border-[var(--surface-border)] bg-[var(--surface-muted)] p-3 text-sm text-[var(--text-primary)]"
+                    value={answer?.text ?? ''}
+                    maxLength={SKILL_VERIFY_ANSWER_MAX_CHARS}
+                    onChange={(event) => onChangeText(item.index, event.target.value)}
+                    aria-label="Written response"
+                  />
+                  <AnswerLength value={answer?.text ?? ''} />
+                </>
               )}
             </QuestionCard>
           )}
@@ -689,6 +709,7 @@ function SolutionEditor({
         <textarea
           className="min-h-0 flex-1 resize-none bg-transparent px-3 py-3 font-mono text-sm leading-6 text-[#e5e7eb] outline-none"
           value={value}
+          maxLength={SKILL_VERIFY_ANSWER_MAX_CHARS}
           onChange={(event) => onChange(event.currentTarget.value)}
           onScroll={(event) => {
             if (gutterRef.current) gutterRef.current.scrollTop = event.currentTarget.scrollTop;
@@ -696,6 +717,7 @@ function SolutionEditor({
           onKeyDown={(event) => {
             if (event.key !== 'Tab') return;
             event.preventDefault();
+            if (value.length + 2 > SKILL_VERIFY_ANSWER_MAX_CHARS) return;
             const target = event.currentTarget;
             const start = target.selectionStart;
             const end = target.selectionEnd;
@@ -713,6 +735,9 @@ function SolutionEditor({
           autoCorrect="off"
           autoCapitalize="off"
         />
+      </div>
+      <div className="px-3 pb-1">
+        <AnswerLength value={value} tone="dark" />
       </div>
       {onRun ? (
         <div className="max-h-40 shrink-0 overflow-y-auto border-t border-white/10 px-3 py-2 text-xs text-[#e5e7eb]">

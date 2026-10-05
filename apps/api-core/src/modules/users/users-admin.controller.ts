@@ -1,7 +1,13 @@
-import { Body, Controller, Inject, Param, Post, UseGuards } from '@nestjs/common';
-import { API_PREFIX, AssignRoleRequestSchema, TenantActionReasonSchema } from '@smart/contracts';
+import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  API_PREFIX,
+  AssignRoleRequestSchema,
+  ListActiveUsersQuerySchema,
+  TenantActionReasonSchema,
+} from '@smart/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { RequirePermission } from '../../common/guards/permissions.js';
+import { Roles } from '../../common/guards/roles.decorator.js';
 import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { UserAdminService } from './user-admin.service.js';
@@ -10,6 +16,13 @@ import { UserAdminService } from './user-admin.service.js';
 @UseGuards(TenantScopeGuard)
 export class UsersAdminController {
   constructor(@Inject(UserAdminService) private readonly userAdmin: UserAdminService) {}
+
+  /** Admin dashboard — users signed in right now, filterable by Student / TPO / Company. */
+  @Get('active')
+  @Roles('SUPER_ADMIN')
+  listActive(@Query() query: Record<string, string | undefined>) {
+    return this.userAdmin.listActiveUsers(ListActiveUsersQuerySchema.parse(query));
+  }
 
   @Post(':userId/role')
   @RequirePermission('user.role.assign')

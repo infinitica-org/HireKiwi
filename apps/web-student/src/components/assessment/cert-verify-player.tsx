@@ -193,7 +193,7 @@ export function CertVerifyPlayer({
             setReport(settled.grade);
             return;
           }
-          router.push('/certificates');
+          router.push('/student/certificates');
         } catch (err) {
           setError(skillVerifyErrorFromUnknown(err, 'submit'));
         }
@@ -216,7 +216,7 @@ export function CertVerifyPlayer({
           ) : null}
           <button
             type="button"
-            onClick={() => router.push('/certificates')}
+            onClick={() => router.push('/student/certificates')}
             className="mt-4 rounded-lg bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20"
           >
             Back to Certificates
@@ -268,7 +268,7 @@ export function CertVerifyPlayer({
           </p>
           <button
             type="button"
-            onClick={() => router.push('/certificates')}
+            onClick={() => router.push('/student/certificates')}
             className="rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background"
           >
             Back to Certificates
@@ -305,7 +305,7 @@ export function CertVerifyPlayer({
               return next;
             })
           }
-          onExit={() => router.push('/certificates')}
+          onExit={() => router.push('/student/certificates')}
           onSubmit={complete}
         />
       )}

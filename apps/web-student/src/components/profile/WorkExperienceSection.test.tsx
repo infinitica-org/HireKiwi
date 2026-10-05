@@ -42,6 +42,13 @@ vi.mock('@/lib/api', () => ({
   },
 }));
 
+// Th6-600 — uploads go presigned PUT → attach; keep asserting on the per-file upload spy.
+vi.mock('@/lib/evidence-upload', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  uploadWorkExperienceProof: (experienceId: string, documentType: string, file: File) =>
+    uploadWorkExperienceProofDocument(experienceId, file, file.name, documentType),
+}));
+
 const mockOngoingExp = {
   id: 'exp-1',
   studentId: 'user-1',
@@ -144,7 +151,9 @@ function selectCatalogSkill(skillName: string) {
 async function openAddExperienceModal() {
   listWorkExperiences.mockResolvedValueOnce([]);
   const view = renderWithQueryClient(<WorkExperienceSection />);
-  fireEvent.click(await screen.findByRole('button', { name: /Add your first experience/i }));
+  fireEvent.click(
+    (await screen.findAllByRole('button', { name: 'Add experience' })).at(-1) as HTMLElement,
+  );
   return view;
 }
 
@@ -172,7 +181,9 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     listWorkExperiences.mockResolvedValueOnce([]);
     renderWithQueryClient(<WorkExperienceSection />);
 
-    const addButton = await screen.findByRole('button', { name: /Add your first experience/i });
+    const addButton = (await screen.findAllByRole('button', { name: 'Add experience' })).at(
+      -1,
+    ) as HTMLElement;
     fireEvent.click(addButton);
 
     const currentCheckbox = screen.getByLabelText(/I currently work in this role/i);
@@ -185,7 +196,9 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     listWorkExperiences.mockResolvedValueOnce([]);
     renderWithQueryClient(<WorkExperienceSection />);
 
-    const addButton = await screen.findByRole('button', { name: /Add your first experience/i });
+    const addButton = (await screen.findAllByRole('button', { name: 'Add experience' })).at(
+      -1,
+    ) as HTMLElement;
     fireEvent.click(addButton);
 
     expect(
@@ -574,7 +587,9 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     renderWithQueryClient(<WorkExperienceSection />);
 
     expect(await screen.findByText(/No work experience yet/i)).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Add your first experience/i })).toBeTruthy();
+    expect(
+      screen.getAllByRole('button', { name: 'Add experience' }).at(-1) as HTMLElement,
+    ).toBeTruthy();
   });
 
   it('shows disputed manager endorsement helper and allows resubmit (VER-02)', async () => {

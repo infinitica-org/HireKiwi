@@ -20,6 +20,7 @@ function emptyInput(overrides: Partial<ProfileProgressInput> = {}): ProfileProgr
     experiences: [],
     projects: [],
     certificates: [],
+    hasProfilePhoto: false,
     ...overrides,
   };
 }
@@ -29,14 +30,14 @@ describe('computeProfileCompletion', () => {
     const result = computeProfileCompletion(emptyInput());
     expect(result.percent).toBe(0);
     expect(result.completedAreas).toEqual([]);
-    expect(result.incompleteAreas).toHaveLength(7);
+    expect(result.incompleteAreas).toHaveLength(8);
   });
 
   it('returns 13% when one area is complete', () => {
     const result = computeProfileCompletion(
       emptyInput({ education: [{ id: 'edu_1', institutionName: 'MIT' } as never] }),
     );
-    expect(result.percent).toBe(14);
+    expect(result.percent).toBe(13);
   });
 
   it('returns 50% when four areas are complete', () => {
@@ -48,10 +49,10 @@ describe('computeProfileCompletion', () => {
         projects: [{ projectId: 'prj_1', title: 'App' } as never],
       }),
     );
-    expect(result.percent).toBe(57);
+    expect(result.percent).toBe(50);
   });
 
-  it('returns 100% when all seven areas are complete', () => {
+  it('returns 100% when all eight areas are complete', () => {
     const result = computeProfileCompletion(
       emptyInput({
         skillClaims: [{ claimId: 'clm_1', skillCode: 'REACT', status: 'VERIFIED' } as never],
@@ -60,12 +61,20 @@ describe('computeProfileCompletion', () => {
         experiences: [{ id: 'exp_1', companyName: 'Acme', role: 'Intern' } as never],
         projects: [{ projectId: 'prj_1', title: 'App' } as never],
         certificates: [{ certificateId: 'cert_1', title: 'AWS' } as never],
+        hasProfilePhoto: true,
         onboardingProfile: {
           linkedinUrl: 'https://linkedin.com/in/ada',
         } as never,
       }),
     );
     expect(result.percent).toBe(100);
+  });
+
+  it('counts an uploaded profile photo as a completed area', () => {
+    const result = computeProfileCompletion(emptyInput({ hasProfilePhoto: true }));
+    expect(result.areaStatus.profilePhoto).toBe(true);
+    expect(result.completedAreas).toEqual(['profilePhoto']);
+    expect(result.percent).toBe(13);
   });
 
   it('marks skills complete from skill claims', () => {
@@ -191,7 +200,7 @@ describe('recommendNextAction', () => {
   it('recommends adding skills first when there are no skill claims', () => {
     const action = recommendNextAction(emptyInput());
     expect(action.id).toBe('add-skills');
-    expect(action.href).toBe('/profile?section=skills');
+    expect(action.href).toBe('/student/profile?section=skills');
   });
 
   it('prioritizes profile sections over verifying a DECLARED skill', () => {
@@ -225,13 +234,14 @@ describe('recommendNextAction', () => {
         experiences: [{ id: 'exp_1', companyName: 'Acme', role: 'Dev' } as never],
         projects: [{ projectId: 'prj_1', title: 'App' } as never],
         certificates: [{ certificateId: 'cert_1', title: 'AWS' } as never],
+        hasProfilePhoto: true,
         onboardingProfile: {
           linkedinUrl: 'https://linkedin.com/in/ada',
         } as never,
       }),
     );
     expect(action.id).toBe('verify-skill-clm_react');
-    expect(action.href).toBe('/assessments/skills/clm_react');
+    expect(action.href).toBe('/student/assessments/skills/clm_react');
   });
 
   it('recommends languages after skills are present', () => {
@@ -298,6 +308,7 @@ describe('recommendNextAction', () => {
         experiences: [{ id: 'exp_1', companyName: 'Acme', role: 'Dev' } as never],
         projects: [{ projectId: 'prj_1', title: 'App' } as never],
         certificates: [{ certificateId: 'cert_1', title: 'AWS' } as never],
+        hasProfilePhoto: true,
       }),
     );
     expect(action.id).toBe('add-professional-links');
@@ -312,13 +323,14 @@ describe('recommendNextAction', () => {
         experiences: [{ id: 'exp_1', companyName: 'Acme', role: 'Dev' } as never],
         projects: [{ projectId: 'prj_1', title: 'App' } as never],
         certificates: [{ certificateId: 'cert_1', title: 'AWS' } as never],
+        hasProfilePhoto: true,
         onboardingProfile: {
           linkedinUrl: 'https://linkedin.com/in/ada',
         } as never,
       }),
     );
     expect(action.id).toBe('explore-public-profile');
-    expect(action.href).toBe('/public-profile');
+    expect(action.href).toBe('/student/public-profile');
   });
 });
 

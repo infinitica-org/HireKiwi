@@ -322,7 +322,7 @@ export function ProctoringShell({
       setLockSecondsLeft(left);
       if (left > 0) return;
       window.clearInterval(tick);
-      router.replace('/assessment');
+      router.replace('/student/assessment');
     }, 250);
     return () => window.clearInterval(tick);
   }, [locked, releaseMedia, router]);

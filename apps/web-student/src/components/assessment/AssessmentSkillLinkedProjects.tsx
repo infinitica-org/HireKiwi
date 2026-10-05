@@ -26,7 +26,7 @@ export function AssessmentSkillLinkedProjects({
           No project tagged yet with this skill claim.
         </p>
         <Link
-          href="/profile?section=projects"
+          href="/student/profile?section=projects"
           className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-900 hover:underline dark:text-white"
         >
           Tag project on profile

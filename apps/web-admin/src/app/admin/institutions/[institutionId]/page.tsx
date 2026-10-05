@@ -18,7 +18,7 @@ import { Badge } from '@smart/ui/badge';
 import { Button } from '@smart/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
 import { Switch } from '@smart/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smart/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/admin-tabs';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

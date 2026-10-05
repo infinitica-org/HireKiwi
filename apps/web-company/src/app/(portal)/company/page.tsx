@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, Check, Plus, X } from 'lucide-react';
+import { Building2, Check, Plus, Sparkles, X } from 'lucide-react';
 import {
   COMPANY_ABOUT_MAX_LENGTH,
   COMPANY_EMPLOYEE_COUNT_LABELS,
@@ -18,6 +18,7 @@ import {
   LoadingState,
   VerifiedBadge,
 } from '@smart/ui';
+import { isSmartApiError } from '@smart/api-client';
 import { api } from '@/lib/api';
 import {
   EMPLOYEE_COUNT_OPTIONS,
@@ -33,15 +34,7 @@ import {
 import { buildAboutDraft } from '../../../lib/about-template';
 import { LocationInput } from '../../../components/location-input';
 import { PageHeader } from '../../../components/ui';
-import {
-  card,
-  input,
-  label,
-  pageStack,
-  primaryButton,
-  secondaryButton,
-  textarea,
-} from '../../../lib/ui';
+import { input, label, pageStack, primaryButton, secondaryButton, textarea } from '../../../lib/ui';
 
 export const COMPANY_PROFILE_QUERY_KEY = ['employer', 'company'] as const;
 
@@ -128,7 +121,13 @@ export default function CompanyProfilePage() {
       <div className={pageStack}>
         <ErrorState
           title="Could not load the company profile"
-          message="Check your connection and try again."
+          message={
+            // Show the server's reason (e.g. "not linked to a company", "access deactivated")
+            // instead of always blaming the connection.
+            isSmartApiError(profileQuery.error) && profileQuery.error.statusCode !== 0
+              ? profileQuery.error.message
+              : 'Check your connection and try again.'
+          }
           onRetry={() => void profileQuery.refetch()}
         />
       </div>
@@ -161,7 +160,7 @@ export default function CompanyProfilePage() {
   return (
     <div className={pageStack}>
       <PageHeader
-        title="Company Profile"
+        title="Company profile"
         description="What students see on your public company page."
         actions={
           profile.isVerified ? (
@@ -203,196 +202,238 @@ export default function CompanyProfilePage() {
         </Alert>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <form onSubmit={handleSubmit} className={`${card} space-y-4`} noValidate>
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]"
+      >
+        <div className="min-w-0 space-y-6">
           <FormErrorSummary errors={errors} />
 
-          <Field id="displayName" text="Company name" error={errors.displayName}>
-            <input
-              id="displayName"
-              className={input}
-              value={form.displayName}
-              onChange={(e) => set('displayName', e.target.value)}
-            />
-          </Field>
+          <ProfileSection
+            title="Company basics"
+            description="Your name, logo and the essentials students look for first."
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              {logoPreview ? (
+                // Signed storage URL; not routed through next/image.
+                <img
+                  src={logoPreview}
+                  alt=""
+                  className="size-16 shrink-0 rounded-md border border-zinc-200 object-cover dark:border-zinc-700"
+                />
+              ) : (
+                <span className="flex size-16 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
+                  <Building2 className="size-7" aria-hidden />
+                </span>
+              )}
+              <div className="min-w-0">
+                <label htmlFor="logo" className={label}>
+                  Logo (JPG or PNG, max 2MB)
+                </label>
+                <input
+                  id="logo"
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  disabled={uploadLogo.isPending}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadLogo.mutate(file);
+                  }}
+                  className="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-md file:border file:border-zinc-200 file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-700 hover:file:bg-zinc-50 dark:file:border-zinc-700 dark:file:bg-zinc-800 dark:file:text-zinc-200"
+                />
+                {uploadLogo.isPending ? (
+                  <p className="mt-1 text-xs text-zinc-500">Uploading…</p>
+                ) : null}
+                <FormMessage error={errors.logoFileId} />
+              </div>
+            </div>
 
-          <Field id="logo" text="Logo (JPG or PNG, max 2MB)" error={errors.logoFileId}>
-            <input
-              id="logo"
-              type="file"
-              accept="image/png,image/jpeg"
-              disabled={uploadLogo.isPending}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) uploadLogo.mutate(file);
-              }}
-            />
-          </Field>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field id="industry" text="Industry" error={errors.industry}>
-              <select
-                id="industry"
+            <Field id="displayName" text="Company name" error={errors.displayName}>
+              <input
+                id="displayName"
                 className={input}
-                value={form.industry}
-                onChange={(e) => set('industry', e.target.value)}
-              >
-                <option value="">Select an industry</option>
-                {COMPANY_INDUSTRIES.map((industry) => (
-                  <option key={industry} value={industry}>
-                    {industry}
-                  </option>
-                ))}
-              </select>
+                value={form.displayName}
+                onChange={(e) => set('displayName', e.target.value)}
+              />
             </Field>
-            <Field id="employeeCount" text="Employees" error={errors.employeeCount}>
-              <select
-                id="employeeCount"
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field id="industry" text="Industry" error={errors.industry}>
+                <select
+                  id="industry"
+                  className={input}
+                  value={form.industry}
+                  onChange={(e) => set('industry', e.target.value)}
+                >
+                  <option value="">Select an industry</option>
+                  {COMPANY_INDUSTRIES.map((industry) => (
+                    <option key={industry} value={industry}>
+                      {industry}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field id="employeeCount" text="Employees" error={errors.employeeCount}>
+                <select
+                  id="employeeCount"
+                  className={input}
+                  value={form.employeeCount}
+                  onChange={(e) => set('employeeCount', e.target.value)}
+                >
+                  <option value="">Select a size</option>
+                  {EMPLOYEE_COUNT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+
+            <Field id="website" text="Website" error={errors.website}>
+              <input
+                id="website"
                 className={input}
-                value={form.employeeCount}
-                onChange={(e) => set('employeeCount', e.target.value)}
-              >
-                <option value="">Select a size</option>
-                {EMPLOYEE_COUNT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                placeholder="https://"
+                value={form.website}
+                onChange={(e) => set('website', e.target.value)}
+              />
             </Field>
-          </div>
+          </ProfileSection>
 
-          <Field id="headquarters" text="Headquarters" error={errors.headquarters}>
-            <LocationInput
-              id="headquarters"
-              value={form.headquarters}
-              onChange={(next) => set('headquarters', next)}
-              className={input}
-            />
-          </Field>
+          <ProfileSection title="Locations" description="Where your teams work.">
+            <Field id="headquarters" text="Headquarters" error={errors.headquarters}>
+              <LocationInput
+                id="headquarters"
+                value={form.headquarters}
+                onChange={(next) => set('headquarters', next)}
+                className={input}
+              />
+            </Field>
 
-          <div className="space-y-2">
-            <span className={label}>Additional locations</span>
-            {form.additionalLocations.map((location, index) => (
-              <div key={index} className="flex items-start gap-2">
-                <div className="flex-1">
-                  <LocationInput
-                    value={location}
-                    onChange={(next) =>
+            <div className="space-y-2">
+              <span className={label}>Additional locations</span>
+              {form.additionalLocations.map((location, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <LocationInput
+                      value={location}
+                      onChange={(next) =>
+                        set(
+                          'additionalLocations',
+                          form.additionalLocations.map((l, i) => (i === index ? next : l)),
+                        )
+                      }
+                      className={input}
+                    />
+                    <FormMessage error={errors[`additionalLocations.${index}`]} />
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Remove location ${index + 1}`}
+                    className="flex size-10 shrink-0 items-center justify-center rounded-md border border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-rose-600 dark:border-zinc-700"
+                    onClick={() =>
                       set(
                         'additionalLocations',
-                        form.additionalLocations.map((l, i) => (i === index ? next : l)),
+                        form.additionalLocations.filter((_, i) => i !== index),
                       )
                     }
-                    className={input}
-                  />
-                  <FormMessage error={errors[`additionalLocations.${index}`]} />
+                  >
+                    <X className="size-4" aria-hidden />
+                  </button>
                 </div>
+              ))}
+              {form.additionalLocations.length < MAX_ADDITIONAL_LOCATIONS ? (
                 <button
                   type="button"
-                  aria-label={`Remove location ${index + 1}`}
-                  className={secondaryButton}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300"
+                  onClick={() => set('additionalLocations', [...form.additionalLocations, ''])}
+                >
+                  <Plus className="size-4" aria-hidden /> Add location
+                </button>
+              ) : null}
+            </div>
+          </ProfileSection>
+
+          <ProfileSection
+            title="About & benefits"
+            description="Tell students what it is like to work with you."
+          >
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="about" className={`${label} mb-0`}>
+                  About the company
+                </label>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white"
                   onClick={() =>
                     set(
-                      'additionalLocations',
-                      form.additionalLocations.filter((_, i) => i !== index),
+                      'about',
+                      buildAboutDraft({
+                        name: form.displayName,
+                        industry: form.industry,
+                        size: sizeLabel,
+                        location: form.headquarters,
+                      }),
                     )
                   }
                 >
-                  <X className="size-4" aria-hidden />
+                  <Sparkles className="size-3.5" aria-hidden />
+                  Draft from my details
                 </button>
               </div>
-            ))}
-            {form.additionalLocations.length < MAX_ADDITIONAL_LOCATIONS ? (
-              <button
-                type="button"
-                className={secondaryButton}
-                onClick={() => set('additionalLocations', [...form.additionalLocations, ''])}
-              >
-                <Plus className="size-4" aria-hidden /> Add location
-              </button>
-            ) : null}
-          </div>
-
-          <Field id="website" text="Website" error={errors.website}>
-            <input
-              id="website"
-              className={input}
-              placeholder="https://"
-              value={form.website}
-              onChange={(e) => set('website', e.target.value)}
-            />
-          </Field>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label htmlFor="about" className={label}>
-                About the company
-              </label>
-              <button
-                type="button"
-                className="text-xs font-semibold text-blue-700 hover:underline"
-                onClick={() =>
-                  set(
-                    'about',
-                    buildAboutDraft({
-                      name: form.displayName,
-                      industry: form.industry,
-                      size: sizeLabel,
-                      location: form.headquarters,
-                    }),
-                  )
-                }
-              >
-                Draft from my details
-              </button>
+              <textarea
+                id="about"
+                rows={6}
+                className={textarea}
+                value={form.about}
+                onChange={(e) => set('about', e.target.value)}
+              />
+              <div className="mt-1 flex justify-between text-xs text-zinc-400">
+                <FormMessage error={errors.about} />
+                <span className="ml-auto tabular-nums">
+                  {form.about.length}/{COMPANY_ABOUT_MAX_LENGTH}
+                </span>
+              </div>
             </div>
-            <textarea
-              id="about"
-              rows={5}
-              className={textarea}
-              value={form.about}
-              onChange={(e) => set('about', e.target.value)}
-            />
-            <div className="mt-1 flex justify-between text-xs text-[var(--ds-text-muted)]">
-              <FormMessage error={errors.about} />
-              <span>
-                {form.about.length}/{COMPANY_ABOUT_MAX_LENGTH}
-              </span>
-            </div>
-          </div>
 
-          <Field id="benefits" text="Benefits (one per line)" error={errors.benefits}>
-            <textarea
-              id="benefits"
-              rows={3}
-              className={textarea}
-              value={form.benefitsText}
-              onChange={(e) => set('benefitsText', e.target.value)}
-            />
-          </Field>
+            <Field id="benefits" text="Benefits (one per line)" error={errors.benefits}>
+              <textarea
+                id="benefits"
+                rows={4}
+                className={textarea}
+                placeholder={'Health insurance\nFlexible hours\nLearning budget'}
+                value={form.benefitsText}
+                onChange={(e) => set('benefitsText', e.target.value)}
+              />
+            </Field>
+          </ProfileSection>
 
-          <fieldset className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <legend className={label}>Social links</legend>
-            {SOCIAL_NETWORKS.map((network) => (
-              <Field
-                key={network}
-                id={`social-${network}`}
-                text={network.charAt(0).toUpperCase() + network.slice(1)}
-                error={errors[`socialLinks.${network}`]}
-              >
-                <input
+          <ProfileSection title="Social links" description="Optional. Shown on your public page.">
+            <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <legend className="sr-only">Social links</legend>
+              {SOCIAL_NETWORKS.map((network) => (
+                <Field
+                  key={network}
                   id={`social-${network}`}
-                  className={input}
-                  placeholder="https://"
-                  value={form.social[network]}
-                  onChange={(e) => set('social', { ...form.social, [network]: e.target.value })}
-                />
-              </Field>
-            ))}
-          </fieldset>
+                  text={network.charAt(0).toUpperCase() + network.slice(1)}
+                  error={errors[`socialLinks.${network}`]}
+                >
+                  <input
+                    id={`social-${network}`}
+                    className={input}
+                    placeholder="https://"
+                    value={form.social[network]}
+                    onChange={(e) => set('social', { ...form.social, [network]: e.target.value })}
+                  />
+                </Field>
+              ))}
+            </fieldset>
+          </ProfileSection>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               className={secondaryButton}
@@ -408,44 +449,72 @@ export default function CompanyProfilePage() {
               {save.isPending ? 'Saving…' : 'Save profile'}
             </button>
           </div>
-        </form>
+        </div>
 
-        <aside aria-label="Live preview" className={`${card} h-fit space-y-3 lg:sticky lg:top-4`}>
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--ds-text-muted)]">
-            Live preview
-          </p>
-          <div className="flex items-start gap-3">
+        <aside
+          aria-label="Live preview"
+          className="h-fit overflow-hidden rounded-md border border-zinc-200/80 bg-white shadow-2xs lg:sticky lg:top-4 dark:border-zinc-800 dark:bg-[#161616]"
+        >
+          <div className="h-20 bg-[radial-gradient(ellipse_80%_100%_at_0%_0%,rgba(225,255,160,0.55),transparent_70%),radial-gradient(ellipse_80%_100%_at_100%_100%,rgba(180,248,220,0.55),transparent_70%)] dark:bg-zinc-900" />
+          <div className="-mt-8 px-5 pb-5">
             {logoPreview ? (
               // Signed storage URL; not routed through next/image.
-              <img src={logoPreview} alt="" className="size-14 rounded-xl border object-cover" />
+              <img
+                src={logoPreview}
+                alt=""
+                className="size-16 rounded-md border-4 border-white object-cover shadow-sm dark:border-[#161616]"
+              />
             ) : (
-              <span className="flex size-14 items-center justify-center rounded-xl bg-zinc-950 text-emerald-400">
+              <span className="flex size-16 items-center justify-center rounded-md border-4 border-white bg-zinc-950 text-white shadow-sm dark:border-[#161616]">
                 <Building2 className="size-7" aria-hidden />
               </span>
             )}
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-bold">{preview.form.displayName || 'Company name'}</h2>
-                <VerifiedBadge verified={profile.isVerified} verifiedAt={profile.verifiedAt} />
-              </div>
-              <p className="text-xs text-[var(--ds-text-muted)]">
-                {[preview.form.industry, sizeLabel, preview.form.headquarters]
-                  .filter(Boolean)
-                  .join(' · ') || 'Industry · size · location'}
-              </p>
-            </div>
-          </div>
-          <p className="whitespace-pre-line text-sm leading-relaxed">
-            {preview.form.about || 'Your company description appears here.'}
-          </p>
-          {preview.form.additionalLocations.filter(Boolean).length > 0 ? (
-            <p className="text-xs text-[var(--ds-text-muted)]">
-              Also in: {preview.form.additionalLocations.filter(Boolean).join(', ')}
+            <p className="mt-3 text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+              Live preview
             </p>
-          ) : null}
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
+                {preview.form.displayName || 'Company name'}
+              </h2>
+              <VerifiedBadge verified={profile.isVerified} verifiedAt={profile.verifiedAt} />
+            </div>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              {[preview.form.industry, sizeLabel, preview.form.headquarters]
+                .filter(Boolean)
+                .join(' · ') || 'Industry · size · location'}
+            </p>
+            <p className="mt-4 line-clamp-6 text-sm leading-relaxed whitespace-pre-line text-zinc-600 dark:text-zinc-300">
+              {preview.form.about || 'Your company description appears here.'}
+            </p>
+            {preview.form.additionalLocations.filter(Boolean).length > 0 ? (
+              <p className="mt-3 text-xs text-zinc-500">
+                Also in: {preview.form.additionalLocations.filter(Boolean).join(', ')}
+              </p>
+            ) : null}
+          </div>
         </aside>
-      </div>
+      </form>
     </div>
+  );
+}
+
+function ProfileSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-md border border-zinc-200/80 bg-white p-6 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
+      <div className="mb-5 border-b border-zinc-100 pb-4 dark:border-zinc-800">
+        <h2 className="text-base font-semibold text-zinc-950 dark:text-white">{title}</h2>
+        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{description}</p>
+      </div>
+      <div className="space-y-4">{children}</div>
+    </section>
   );
 }
 
