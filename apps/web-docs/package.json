@@ -7,7 +7,7 @@
     "dev": "next dev --port 3008",
     "build": "next build",
     "start": "next start --port 3008",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint . --max-warnings=0"
   },
   "dependencies": {

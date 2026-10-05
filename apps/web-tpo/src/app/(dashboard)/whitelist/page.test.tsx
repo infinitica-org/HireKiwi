@@ -44,21 +44,21 @@ describe('WhitelistPage', () => {
 
   it('renders upload workspace without candidates sub-nav items', async () => {
     render(<WhitelistPage />);
-    expect(await screen.findByRole('heading', { name: /^Whitelist$/i })).toBeDefined();
+    expect(await screen.findByRole('heading', { name: /^Add Students$/i })).toBeDefined();
     expect(screen.queryByRole('link', { name: /^Candidates Repository$/i })).toBeNull();
   });
 
   it('bulk paste validates and provisions valid emails', async () => {
     render(<WhitelistPage />);
-    await screen.findByRole('heading', { name: /^Whitelist$/i });
-    fireEvent.click(screen.getByRole('button', { name: /Bulk whitelist upload/i }));
+    await screen.findByRole('heading', { name: /^Add Students$/i });
+    fireEvent.click(screen.getByRole('button', { name: /Bulk Upload/i }));
     fireEvent.change(screen.getByPlaceholderText(/student1@psgtech/i), {
       target: { value: 'good@psgtech.ac.in\nbad@other.com' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Validate Emails/i }));
     expect(await screen.findByText('Valid Domain')).toBeDefined();
     expect(screen.getByText('Invalid Domain')).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: /Onboard 1 Valid Candidate/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Onboard 1 Candidate/i }));
     await waitFor(() => {
       expect(api.onboarding.addBatchMember).toHaveBeenCalledWith(
         'batch-1',
@@ -69,14 +69,15 @@ describe('WhitelistPage', () => {
 
   it('submits single candidate upload', async () => {
     render(<WhitelistPage />);
-    await screen.findByRole('heading', { name: /^Whitelist$/i });
+    await screen.findByRole('heading', { name: /^Add Students$/i });
+    fireEvent.click(screen.getByRole('button', { name: /Single Student/i }));
     fireEvent.change(screen.getByPlaceholderText('e.g. Aarav Sharma'), {
       target: { value: 'Aarav Sharma' },
     });
     fireEvent.change(screen.getByPlaceholderText('student@psgtech.ac.in'), {
       target: { value: 'aarav@cs.psgtech.ac.in' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /Onboard Candidate & Send Invitation/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Onboard Candidate$/i }));
     await waitFor(() => {
       expect(api.onboarding.addBatchMember).toHaveBeenCalled();
     });

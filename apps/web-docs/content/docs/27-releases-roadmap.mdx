@@ -5,7 +5,7 @@ description: Strategic evolution from v1.0 MMP Concierge Pilot to v1.3 Enterpris
 
 ## 27.1 Evolution Roadmap: v1.0 to v1.3
 
-SmartZen's product roadmap progresses through four deliberate phases, prioritizing **verification defensibility** and **trust operations** before scaling outward into an automated employer marketplace.
+SmartKiwi's product roadmap progresses through four deliberate phases, prioritizing **verification defensibility** and **trust operations** before scaling outward into an automated employer marketplace.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -103,7 +103,7 @@ During the transition from initial experimental prototypes to the enterprise-gra
 └─────────────────────────┴───────────────────────┴───────────────────────────┘
 ```
 
-1. **Purged Bulk Data Export Endpoints:** All legacy backlog stories requesting CSV or bulk JSON candidate exports were permanently rejected and removed from sprint backlogs. SmartZen provides curated candidate cards and verified dossiers only.
+1. **Purged Bulk Data Export Endpoints:** All legacy backlog stories requesting CSV or bulk JSON candidate exports were permanently rejected and removed from sprint backlogs. SmartKiwi provides curated candidate cards and verified dossiers only.
 2. **Re-engineered Work Experience Verification:** Replaced passive PDF attachment storage with the active 4-state corporate voucher state machine with official domain checks.
 3. **Async Queue Architecture for AI:** Converted synchronous `/evaluate` REST endpoints into asynchronous BullMQ jobs backed by Redis, protecting API responsiveness under peak test concurrency.
 4. **Clean Infrastructure Consolidation:** All legacy scripts referencing `kvm2` and `kvm4` were deleted. Deployments are unified on a Single High-End VPS utilizing automated Caddy Blue-Green zero-downtime container swaps (`scripts/blue-green-deploy.sh`).

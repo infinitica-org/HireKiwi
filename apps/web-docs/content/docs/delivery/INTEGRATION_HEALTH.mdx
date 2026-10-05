@@ -1,0 +1,34 @@
+---
+title: 'SMART — Third-party integration health'
+description: 'Delivery & Engineering Protocols - INTEGRATION_HEALTH'
+---
+
+# SMART — Third-party integration health
+
+> Owner: Vishal V · Ticket: S6-VV-129 (Zoho #585) · Code: `apps/api-core/src/modules/integration-health/`
+
+`/ready` checks only Postgres and Redis, on purpose: a third-party outage must never take the API out of the load
+balancer. Everything else is probed by api-core once a minute with its cheapest call:
+
+| Integration | Probe |
+|---|---|
+| `object_storage` | `HEAD` on the uploads bucket |
+| `smtp` | SMTP `verify` (connect + auth, no mail sent) |
+| `kafka` | producer connection |
+| `ai_anthropic`, `ai_google`, `ai_openrouter` | list one model (free); a provider without an API key is `NOT_CONFIGURED`, not down |
+| `github` | `GET https://api.github.com/rate_limit` (doesn't use the quota) |
+
+Results: `GET /api/v1/admin/health/integrations` (super admin) shows the last status, latency and error per
+integration. Prometheus gets `smart_integration_up{integration}` (configured integrations only) and
+`smart_integration_probe_duration_seconds`. A probe that takes longer than 10 s counts as down.
+
+## integration-down
+An integration has failed its probe for 10 minutes. Open `/admin/health/integrations` for the error, then:
+
+- **object_storage:** uploads and document downloads fail. Check the `minio` service (or the S3 credentials and
+  endpoint in production).
+- **smtp:** emails queue up and retry. Check the relay credentials (`SMTP_*`) and the provider's status page.
+- **kafka:** events go to the outbox and publish once it's back. Check the `redpanda` service.
+- **ai_\***: the AI gateway falls back to the next provider. If every provider is down, scoring waits; an
+  `HTTP 401` means the key was revoked or expired.
+- **github:** project and GitHub-signal verification is delayed. Check githubstatus.com and outbound network.

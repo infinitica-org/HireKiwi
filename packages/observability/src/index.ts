@@ -16,6 +16,7 @@ export * from './pino-http-options.js';
 export * from './kafka-context.js';
 export * from './log-events.js';
 export * from './metrics.js';
+export * from './job-span.js';
 export * from './correlation.js';
 
 export const OBSERVABILITY_VERSION = '0.1.0';

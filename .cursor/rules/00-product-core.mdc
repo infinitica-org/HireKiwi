@@ -1,31 +1,37 @@
 ---
-description: SMART product vision, values, GA target — always on
+description: SmartKiwi (SMART) product vision, values, architecture mandates & AI-DLC — always on
 alwaysApply: true
 ---
 
-# SMART — Product Core
+# SmartKiwi (SMART) — Product Core
 
-**One-liner:** Role-specific readiness certification. Shows who's ready for a job track — and shows its work.
+**One-liner:** Intelligent Talent Discovery Platform. Builds evidence-backed capability profiles from active demonstrations and passive credentials to connect talent with opportunities through explainable, algorithmic matching.
 
-**GA:** 10 September 2026, 18:00 IST. Code freeze 8 Sep 23:59 IST. Sprint 5 = test/harden only (no features).
+**Framework & Methodology:** **AI-DLC (AI-Driven Software Delivery Lifecycle)** — *"The hardest part of AI coding was never generation — it was delivery."*
 
-## Values (product, not marketing)
+**Release Context:** October 2026 (Sprints 7 & 8). Focus on AI pipeline validation, cost-optimized algorithmic matching, Skill Inventory, database hardening, and routing/onboarding stabilization.
 
-1. **Precision over breadth** — certify per specialization track, never a generic score.
-2. **Transparency over authority** — methodology, weights, Angoff cutoffs are inspectable.
-3. **Honesty over inflation** — every report carries a Confidence Note (sample size, α, calibration maturity).
+## Values (Product, Not Marketing)
 
-## Certification model
+1. **Precision over breadth** — Evidence-backed capability inference across canonical ontology levels (1–5), not shallow resume buzzwords.
+2. **Transparency over authority** — Algorithmic requirement weights, cutoff scores, and inspectable match explanations over opaque LLM guessing.
+3. **Honesty over inflation** — Confidence Note on every profile (sample size, Cronbach's α, source verification status, recency decay).
+4. **Reliability over complexity** — Deterministic algorithmic scoring and pgvector similarity before expensive or non-deterministic LLM chains.
 
-- Grid: **5 levels × 3 tiers** (Gold / Silver / Bronze). Below Bronze = no tier.
-- L1 MCQ → L2 sandbox/SQL → L3 spoken BARS → L4 defense → L5 capstone.
-- Student-controlled, publicly verifiable certificate (`web-verify`).
-- North-star metric: **interview/offer conversion for Gold vs cohort baseline**.
+## Evidence & Capability Architecture
 
-## Tracks (V1)
+- **Active Evidence:** L1 MCQ → L2 sandbox/SQL → L3 spoken BARS → L4 defense → L5 capstone.
+- **Passive Evidence:** GitHub, LeetCode, LinkedIn, projects, degree/certifications, verified manager endorsements.
+- **Universal Capability Ontology:** Domains, Competencies, Skills, Tools, Knowledge, Tasks, Roles with ESCO/O*NET crosswalks.
+- **Dual Human Review:** Partnered institution students → College review queue; Independent candidates → SmartKiwi platform review queue.
+- **Verification:** Cryptographic signatures (HMAC-SHA256), canonical verification ID structure (`VK-YYYYMMDD-UUID8`), tamper detection (`web-verify`).
 
-10 tracks: 5 IT + 5 MBA. MBA has shared foundation (~25–30%) + specialization. Validated leads: Finance, Business Analytics.
+## Anti-Hallucination Guardrails
 
-## Doc authority
+- Never invent or call phantom autonomous agents (e.g., legacy "Vivi"). All logic resides in modular services inside `apps/api-core` and shared packages.
+- Never use LLMs directly to generate candidate rankings or numerical scores without deterministic algorithmic scoring formulas.
 
-When docs conflict: **`TEAM.md` + `.github/CODEOWNERS` > `ARCHITECTURE.md` > older `SERVICES_VIEW.md` ownership tables.** Port truth: API `:3000`, web apps `:3001–3004` (README / `env.ts`), not the inverted ports in `ENGINEER_GUIDES`.
+## Doc Authority & Ports
+
+When docs conflict: **`TEAM.md` + `.github/CODEOWNERS` > `@smart/contracts` > `apps/web-docs` (Fumadocs :3006) > `ARCHITECTURE.md`.**
+Ports: API `:3000`, Student `:3001`, TPO `:3002`, Admin `:3003`, Verify `:3004`, Docs `:3006`. PostgreSQL `:5432`, Redis `:6379`, Kafka `:19092`.

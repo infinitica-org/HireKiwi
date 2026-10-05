@@ -4,7 +4,6 @@ import { CorroborationModule } from '../../modules/corroboration/corroboration.m
 import { SignalEncoderModule } from '../../modules/signal-encoder/signal-encoder.module.js';
 import { CertificateModule } from '../../modules/certificate/certificate.module.js';
 import { NotificationsModule } from '../../modules/notifications/notifications.module.js';
-import { WebhooksModule } from '../../modules/webhooks/webhooks.module.js';
 import { AiCompletionRecordedConsumer } from './ai-completion-recorded.consumer.js';
 import { ApplicationStageChangedConsumer } from './application-stage-changed.consumer.js';
 import { AssessmentSubmittedConsumer } from './assessment-submitted.consumer.js';
@@ -14,24 +13,24 @@ import { CandidateSkillsDiscoveredConsumer } from '../../modules/assessment/cand
 import { SignalIngestedEncoderConsumer } from '../../modules/signal-encoder/signal-ingested.encoder-consumer.js';
 import { SkillVerificationCorroborationConsumer } from '../../modules/corroboration/skill-verification-corroboration.consumer.js';
 import { EvalCompletedConsumer } from '../../modules/certificate/eval-completed.consumer.js';
+import { ConsumerInbox } from './consumer-inbox.js';
 import { InvitationSentConsumer } from './invitation-sent.consumer.js';
 import { KafkaOutboxService } from './kafka-outbox.service.js';
 import { KafkaService } from './kafka.service.js';
 import { SkillVerificationCompletedConsumer } from './skill-verification-completed.consumer.js';
 import { TrackUpdatedConsumer } from './track-updated.consumer.js';
-import { WebhookDispatchConsumer } from './webhook-dispatch.consumer.js';
 
 @Global()
 @Module({
   imports: [
     NotificationsModule,
-    WebhooksModule,
     CertificateModule,
     AssessmentModule,
     CorroborationModule,
     SignalEncoderModule,
   ],
   providers: [
+    ConsumerInbox,
     KafkaService,
     KafkaOutboxService,
     AssessmentSubmittedConsumer,
@@ -42,7 +41,6 @@ import { WebhookDispatchConsumer } from './webhook-dispatch.consumer.js';
     AuditRecordedConsumer,
     AiCompletionRecordedConsumer,
     EvalCompletedConsumer,
-    WebhookDispatchConsumer,
     CandidateSkillsDiscoveredConsumer,
     SignalIngestedEncoderConsumer,
     SkillVerificationCorroborationConsumer,

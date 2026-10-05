@@ -303,42 +303,11 @@ const mockFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<
     );
   }
 
-  if (url.includes('/auth/sso/start') && method === 'POST') {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-    return new Response(
-      JSON.stringify({
-        authorizationUrl: `${origin}/auth/callback?code=mock_code&state=mock_state`,
-        state: 'mock_state',
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
-  }
-
   if (url.includes('/users/me/onboarding/linkedin/oauth-url') && method === 'GET') {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
     return new Response(
       JSON.stringify({
         url: `${origin}/onboarding?linkedinVerified=1`,
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
-  }
-
-  if (url.includes('/auth/sso/callback') && method === 'POST') {
-    mockPrimaryTrack = null;
-    mockOnboardingCompleted = false;
-    saveMockOnboardingState();
-    return new Response(
-      JSON.stringify({
-        accessToken: mockStudentAccessToken(),
-        tokenType: 'Bearer',
-        expiresInSeconds: 900,
-        user: mockStudentUser({
-          institutionId: null,
-          institutionName: null,
-          primaryTrack: null,
-          onboardingCompleted: false,
-        }),
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },
     );
@@ -1178,6 +1147,117 @@ const mockFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<
         headers: { 'Content-Type': 'application/json' },
       });
     }
+  }
+
+  if (url.includes('/users/me/skills/') && url.includes('/level-explanation') && method === 'GET') {
+    const match = url.match(/\/skills\/([^/]+)\/level-explanation/);
+    const skillCode = match && match[1] ? match[1] : 'UNKNOWN';
+    const claim = mockSkillClaims.find((c) => c.skillCode === skillCode);
+    const isVerified = claim?.status === 'VERIFIED';
+    const prof = claim?.proficiency ?? 'BEGINNER';
+    const nowIso = new Date().toISOString();
+
+    const responsePayload = {
+      skillCode,
+      skillName: (skillCode || 'Skill')
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, (c) => c.toUpperCase()),
+      claimStatus: claim?.status || 'DECLARED',
+      basis: isVerified ? 'ASSESSMENT_AND_EVIDENCE' : 'NONE',
+      whyThisLevel: isVerified
+        ? `Assessment and linked project evidence were fused to support ${prof.toLowerCase()} proficiency.`
+        : 'Diagnostic assessment pending — complete verification to unlock level progression.',
+      verifiedVsAi: {
+        verified: isVerified
+          ? {
+              proficiency: prof,
+              summary: `Verified on your profile at ${prof.toLowerCase()}.`,
+              source: 'SKILL_CLAIM',
+              claimType: 'VERIFIED_FACT',
+            }
+          : null,
+        assessmentSupported: isVerified
+          ? {
+              proficiency: prof,
+              summary: `Latest assessment supports up to ${prof.toLowerCase()}.`,
+              source: 'ASSESSMENT',
+              claimType: 'VERIFIED_FACT',
+            }
+          : null,
+        evidenceInferred: isVerified
+          ? {
+              proficiency: prof,
+              summary: 'Evidence fusion aligns with verified diagnostic claim.',
+              source: 'FUSION',
+              claimType: 'AI_INFERENCE',
+            }
+          : null,
+        alignment: isVerified ? 'ALIGNED' : 'NO_CONCLUSION',
+        headline: isVerified
+          ? `Verified, assessment, and evidence signals align at ${prof.toLowerCase()}.`
+          : 'No verified, assessed, or inferred level is on file yet.',
+        detail: isVerified
+          ? `Verified on your profile at ${prof.toLowerCase()}. Latest assessment supports up to ${prof.toLowerCase()}.`
+          : 'Complete an assessment or submit project evidence to establish your skill level.',
+      },
+      competencyRows: [
+        {
+          competencyId: '11111111-1111-4111-8111-111111111111',
+          capability: 'Core Problem Solving & Implementation',
+          status: isVerified ? 'DEMONSTRATED' : 'NOT_TESTED',
+          primarySource: 'ASSESSMENT',
+          why: isVerified
+            ? 'Demonstrated during diagnostic verification.'
+            : 'Awaiting verification attempt.',
+        },
+      ],
+      reportRefs: isVerified
+        ? [
+            {
+              kind: 'ASSESSMENT_ATTEMPT',
+              id: '22222222-2222-4222-8222-222222222222',
+              label: 'Skill verification assessment',
+              evaluatedAt: nowIso,
+            },
+          ]
+        : [],
+      freshness: [
+        {
+          evidenceId: '33333333-3333-4333-8333-333333333333',
+          label: 'Skill Diagnostic Assessment',
+          freshnessClass: 'CURRENT',
+          ageDays: 1,
+          maxAgeDays: 365,
+          staleAffectsConfidence: false,
+        },
+      ],
+      confidence: isVerified ? 'HIGH' : 'LOW',
+      confidenceReason: isVerified
+        ? 'Verified via multi-source assessment defense.'
+        : 'Insufficient evidence to rate confidence.',
+      ruleSetVersion: 'v1',
+      computedAt: nowIso,
+    };
+
+    return new Response(JSON.stringify(responsePayload), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (url.includes('/users/me/evidence-skill-disputes') && method === 'POST') {
+    const body = JSON.parse(String(init?.body ?? '{}'));
+    return new Response(
+      JSON.stringify({
+        disputeId: crypto.randomUUID(),
+        skillCode: body.skillCode,
+        reason: body.reason,
+        status: 'PENDING_REVIEW',
+        createdAt: new Date().toISOString(),
+      }),
+      { status: 201, headers: { 'Content-Type': 'application/json' } },
+    );
   }
 
   if (url.includes('/me/applications') && method === 'GET') {

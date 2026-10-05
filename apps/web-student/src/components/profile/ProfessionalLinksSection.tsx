@@ -317,6 +317,7 @@ export function ProfessionalLinksSection() {
             Add integration
           </button>
         }
+        evidenceType="PASSIVE_SIGNAL"
       />
 
       {isLoading ? <p className="text-sm text-zinc-500">Loading professional links…</p> : null}

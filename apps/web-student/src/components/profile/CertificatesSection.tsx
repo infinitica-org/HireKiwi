@@ -37,6 +37,7 @@ export function CertificatesSection() {
     >
       <ProfileSectionHeader
         title={meta.title}
+        evidenceType="CREDENTIAL"
         description="External credentials from AWS, Coursera, Google, and other providers — verified and shown on your public profile."
         action={
           <Link

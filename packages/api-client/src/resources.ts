@@ -91,6 +91,8 @@ import {
   CompanyMemberSchema,
   CompanyProfileSchema,
   ListCompanyMembersResponseSchema,
+  ListCompanyJoinRequestsResponseSchema,
+  type RejectCompanyJoinRequestRequest,
   CompanyReviewSchema,
   ListCompanyReviewsResponseSchema,
   type RespondToReviewRequest,
@@ -161,6 +163,7 @@ import type {
   UpdateProfileVisibilityRequest,
   UpdatePersonalInfoRequest,
   UpdateMessagingPreferenceRequest,
+  UpdateNotificationPreferencesRequest,
   DiscoverabilityPreference,
   DeactivateAccountRequest,
   CreateDataRequest,
@@ -290,11 +293,13 @@ import {
   ListMyCandidateCertificatesResponseSchema,
   ListMyProjectsResponseSchema,
   ListNotificationsResponseSchema,
+  NotificationPreferencesResponseSchema,
   NextItemDtoSchema,
   NotificationDtoSchema,
   SubmitCertificateEndorsementDecisionResponseSchema,
   PublicCandidateProfileDtoSchema,
   CompanyOnboardingSessionDtoSchema,
+  CompanyJoinRequestDtoSchema,
   CompanyOnboardingVerificationDocumentDtoSchema,
   SendCorporateEmailVerificationResponseSchema,
   StartCompanyOnboardingResponseSchema,
@@ -304,7 +309,6 @@ import {
   PublicVerificationDtoSchema,
   RepoLanguagesResponseSchema,
   ReverseGeocodeResponseSchema,
-  SandboxResultDtoSchema,
   SendBatchInvitesResultDtoSchema,
   SkillClaimDtoSchema,
   SkillLibraryResponseSchema,
@@ -338,7 +342,6 @@ import {
   SkillVerifyInterviewDtoSchema,
   SkillVerifyPrepareDtoSchema,
   SkillVerifySessionDtoSchema,
-  SsoStartResponseSchema,
   StudentInviteLinkResponseSchema,
   SubscriptionPlanDtoSchema,
   TenantEntitlementsDtoSchema,
@@ -451,12 +454,6 @@ export function authApi(client: SmartApiClient) {
         schema: RegisterResponseSchema,
         anonymous: true,
       }),
-
-    ssoStart: (body: { provider: string; institutionDomain?: string; redirectUri: string }) =>
-      client.post(prefixed('/auth/sso/start'), body, { schema: SsoStartResponseSchema }),
-
-    ssoCallback: (body: { code: string; state: string }) =>
-      client.post(prefixed('/auth/sso/callback'), body, { schema: AuthTokenResponseSchema }),
 
     /**
      * Refresh sends no body: the refresh token is an HttpOnly cookie, so it is
@@ -1792,32 +1789,12 @@ export function assessmentApi(client: SmartApiClient) {
         timeoutMs: 5_000,
       }),
 
-    compileCode: (body: unknown) =>
-      client.post(prefixed('/assessment/compile-l2'), body, { schema: JobAcceptedSchema }),
-
-    sandboxResult: (jobId: string) =>
-      client.get(prefixed(`/assessment/sandbox/${jobId}`), { schema: SandboxResultDtoSchema }),
-
-    requestAudioUploadUrl: (body: unknown) =>
-      client.post(prefixed('/assessment/l3/upload-url'), body, {
-        schema: z.object({
-          uploadUrl: z.string(),
-          objectKey: z.string(),
-          expiresInSeconds: z.number(),
-        }),
-      }),
-
     // An attempt completes once, so its id is the natural key: a repeat replays the first result.
     complete: (body: { attemptId: string }) =>
       client.post(prefixed('/assessment/complete'), body, {
         schema: CompleteAttemptResponseSchema,
         headers: { 'idempotency-key': `attempt-complete-${body.attemptId}` },
       }),
-
-    reportIntegrityEvent: (body: unknown) =>
-      client
-        .post<void>(prefixed('/assessment/integrity-event'), body, { timeoutMs: 3_000 })
-        .catch(() => undefined),
   };
 }
 
@@ -1911,9 +1888,6 @@ export function certificateApi(client: SmartApiClient) {
 
 export function placementApi(client: SmartApiClient) {
   return {
-    ingestJd: (body: unknown) =>
-      client.post(prefixed('/placement/ingest-jd'), body, { schema: JobAcceptedSchema }),
-
     match: (body: unknown) =>
       client.post(prefixed('/placement/match'), body, { schema: JobAcceptedSchema }),
 
@@ -2141,6 +2115,20 @@ export function notificationsApi(client: SmartApiClient) {
         path: prefixed(`/me/notifications/${notificationId}/read`),
         schema: NotificationDtoSchema,
       }),
+
+    /** S6-VV-121: every kind × channel; mandatory kinds come back enabled and locked. */
+    getPreferences: () =>
+      client.get(prefixed('/me/notification-preferences'), {
+        schema: NotificationPreferencesResponseSchema,
+      }),
+
+    updatePreferences: (body: UpdateNotificationPreferencesRequest) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed('/me/notification-preferences'),
+        body,
+        schema: NotificationPreferencesResponseSchema,
+      }),
   };
 }
 
@@ -2209,6 +2197,14 @@ export function publicApi(client: SmartApiClient) {
         schema: SubmitCompanyOnboardingResponseSchema,
         anonymous: true,
       }),
+
+    /** S6-VV-107: ask to join the approved company on the verified work-email domain. */
+    requestCompanyJoin: (sessionToken: string) =>
+      client.post(
+        companyOnboardingSessionPath(sessionToken, '/join-request'),
+        {},
+        { schema: CompanyJoinRequestDtoSchema, anonymous: true },
+      ),
   };
 }
 
@@ -2590,6 +2586,26 @@ function employerApi(client: SmartApiClient) {
 
     listMembers: () =>
       client.get(prefixed('/employer/members'), { schema: ListCompanyMembersResponseSchema }),
+
+    /** S6-VV-108: pending requests to join the company (owners only). */
+    listJoinRequests: () =>
+      client.get(prefixed('/employer/join-requests'), {
+        schema: ListCompanyJoinRequestsResponseSchema,
+      }),
+
+    approveJoinRequest: (joinRequestId: string) =>
+      client.post(
+        prefixed(`/employer/join-requests/${joinRequestId}/approve`),
+        {},
+        {
+          schema: CompanyJoinRequestDtoSchema,
+        },
+      ),
+
+    rejectJoinRequest: (joinRequestId: string, body: RejectCompanyJoinRequestRequest) =>
+      client.post(prefixed(`/employer/join-requests/${joinRequestId}/reject`), body, {
+        schema: CompanyJoinRequestDtoSchema,
+      }),
 
     inviteRecruiter: (body: InviteRecruiterRequest, idempotencyKey: string) =>
       client.post(prefixed('/employer/invitations'), body, {

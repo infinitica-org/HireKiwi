@@ -6,16 +6,6 @@ import { AnalyticsService } from './analytics.service.js';
 export class AnalyticsController {
   constructor(@Inject(AnalyticsService) private readonly service: AnalyticsService) {}
 
-  @Get('_meta')
-  meta() {
-    return {
-      module: 'analytics',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'active',
-    };
-  }
-
   @Get('correlation')
   correlation(@Query('trackCode') trackCode?: string) {
     const parsed = trackCode ? TrackCodeSchema.parse(trackCode) : undefined;

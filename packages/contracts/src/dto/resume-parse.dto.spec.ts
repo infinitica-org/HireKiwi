@@ -68,18 +68,25 @@ describe('ResumeParseDraftSchema', () => {
 });
 
 describe('CandidateResumeFilesSchema', () => {
-  it(`allows up to ${CANDIDATE_RESUME_FILES_MAX} stored files`, () => {
-    const files = Array.from({ length: CANDIDATE_RESUME_FILES_MAX }, (_, index) => ({
-      fileName: `cv-${index}.pdf`,
-      objectKey: `resumes/u1/cv-${index}.pdf`,
+  it(`allows up to ${CANDIDATE_RESUME_FILES_MAX} stored file`, () => {
+    const files = [
+      {
+        fileName: 'cv-0.pdf',
+        objectKey: 'resumes/u1/cv-0.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 1000,
+        uploadedAt: '2026-09-12T10:00:00.000Z',
+      },
+    ];
+    expect(CandidateResumeFilesSchema.parse(files)).toHaveLength(1);
+    const secondFile = {
+      fileName: 'cv-1.pdf',
+      objectKey: 'resumes/u1/cv-1.pdf',
       mimeType: 'application/pdf',
       fileSizeBytes: 1000,
-      uploadedAt: '2026-09-12T10:00:00.000Z',
-    }));
-    expect(CandidateResumeFilesSchema.parse(files)).toHaveLength(CANDIDATE_RESUME_FILES_MAX);
-    const duplicate = files[0];
-    expect(duplicate).toBeDefined();
-    expect(CandidateResumeFilesSchema.safeParse([...files, duplicate]).success).toBe(false);
+      uploadedAt: '2026-09-12T11:00:00.000Z',
+    };
+    expect(CandidateResumeFilesSchema.safeParse([...files, secondFile]).success).toBe(false);
   });
 });
 

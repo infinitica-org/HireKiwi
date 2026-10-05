@@ -17,18 +17,6 @@ import { SignalIngestionService } from './signal-ingestion.service.js';
 export class SignalIngestionController {
   constructor(@Inject(SignalIngestionService) private readonly service: SignalIngestionService) {}
 
-  @Get('_meta')
-  @Roles('STUDENT')
-  @ApiBearerAuth()
-  meta() {
-    return {
-      module: 'signal-ingestion',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'passive-signal-adapters-v1',
-    };
-  }
-
   @Get('connections')
   @Roles('STUDENT')
   @ApiBearerAuth()

@@ -1,2 +1,2 @@
-export const AUTH_COOKIE = 'smartzen_auth_session';
-export const AUTH_TOKEN = 'smartzen_authenticated_v2';
+export const AUTH_COOKIE = 'smartkiwi_auth_session';
+export const AUTH_TOKEN = 'smartkiwi_authenticated_v2';

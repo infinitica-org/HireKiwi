@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useId } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 
 export interface SelectOption {
@@ -28,6 +28,7 @@ export function CustomSelect({
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -43,11 +44,18 @@ export function CustomSelect({
 
   return (
     <div ref={containerRef} className={`relative inline-block text-left ${className}`}>
+      {/* Exposed as a combobox + listbox so screen readers (and tests) treat it as a select. */}
       <button
         type="button"
+        role="combobox"
         aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-controls={listboxId}
         aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') setIsOpen(false);
+        }}
         className="h-10 w-full inline-flex items-center justify-between gap-2.5 rounded-md border border-zinc-200/90 bg-white px-3.5 text-xs sm:text-sm font-medium text-zinc-800 shadow-2xs transition-all hover:bg-zinc-50 hover:text-zinc-950 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950"
       >
         <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
@@ -59,13 +67,20 @@ export function CustomSelect({
       </button>
 
       {isOpen ? (
-        <div className="absolute left-0 z-50 mt-1.5 max-h-60 w-full min-w-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white p-1 shadow-lg animate-in fade-in-50 zoom-in-95 duration-150">
+        <div
+          id={listboxId}
+          role="listbox"
+          aria-label={ariaLabel}
+          className="absolute left-0 z-50 mt-1.5 max-h-60 w-full min-w-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white p-1 shadow-lg animate-in fade-in-50 zoom-in-95 duration-150"
+        >
           {options.map((opt) => {
             const isSelected = opt.value === value;
             return (
               <button
                 key={opt.value}
                 type="button"
+                role="option"
+                aria-selected={isSelected}
                 onClick={() => {
                   onChange(opt.value);
                   setIsOpen(false);

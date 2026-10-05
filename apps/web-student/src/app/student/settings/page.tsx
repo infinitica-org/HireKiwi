@@ -6,7 +6,9 @@ import { cn } from '@smart/ui';
 import { DataRequestsCard } from '@/components/account/DataRequestsCard';
 import { DeactivateAccountCard } from '@/components/account/DeactivateAccountCard';
 import { DiscoverabilityCard } from '@/components/account/DiscoverabilityCard';
+import { EvidenceUsageCard } from '@/components/account/EvidenceUsageCard';
 import { MessagingPreferenceCard } from '@/components/account/MessagingPreferenceCard';
+import { NotificationPreferencesCard } from '@/components/account/NotificationPreferencesCard';
 import { PersonalInfoCard } from '@/components/account/PersonalInfoCard';
 import { ProfileViewsSettingCard } from '@/components/account/ProfileViewsSettingCard';
 import { VisibilitySettingsCard } from '@/components/public-profile/visibility-settings-card';
@@ -37,15 +39,21 @@ const SECTIONS: SettingsSection[] = [
         <VisibilitySettingsCard />
         <DiscoverabilityCard />
         <ProfileViewsSettingCard />
+        <EvidenceUsageCard />
       </>
     ),
   },
   {
     id: 'messages',
-    label: 'Messages',
-    description: 'Choose whether employers can message you.',
+    label: 'Notifications & messages',
+    description: 'Choose which notifications you get, and whether employers can message you.',
     icon: MessageSquare,
-    content: <MessagingPreferenceCard />,
+    content: (
+      <>
+        <NotificationPreferencesCard />
+        <MessagingPreferenceCard />
+      </>
+    ),
   },
   {
     id: 'data',

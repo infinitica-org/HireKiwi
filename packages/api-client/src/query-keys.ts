@@ -51,7 +51,6 @@ export const queryKeys = {
    * that any accidental caching is at least invalidatable.
    */
   nextItem: (attemptId: string) => ['attempt', attemptId, 'next-item'] as const,
-  sandboxJob: (jobId: string) => ['sandbox', jobId] as const,
   results: (attemptId: string) => ['results', attemptId] as const,
   skillVerifySession: (sessionId: string) => ['skill-verify', sessionId] as const,
 

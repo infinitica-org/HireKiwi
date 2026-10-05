@@ -59,3 +59,15 @@ describe('LoginForm with an unverified email', () => {
     );
   });
 });
+
+describe('LoginForm accessibility (S6-VV-161)', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('gives the email and password inputs accessible names', () => {
+    render(<LoginForm />);
+    expect(screen.getByLabelText('Email').getAttribute('type')).toBe('email');
+    expect(screen.getByLabelText('Password').getAttribute('type')).toBe('password');
+  });
+});

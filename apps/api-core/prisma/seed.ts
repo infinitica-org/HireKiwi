@@ -345,7 +345,7 @@ async function main(): Promise<void> {
         fullName: account.fullName,
         role: account.role,
         companyId: account.companyId,
-        companyRole: 'companyRole' in account ? account.companyRole : null,
+        companyRole: account.companyId ? 'OWNER' : null,
         institutionId: account.institutionId,
         emailVerified: true,
         failedLoginAttempts: 0,
@@ -359,7 +359,9 @@ async function main(): Promise<void> {
         emailVerified: true,
         institutionId: account.institutionId,
         companyId: account.companyId,
-        companyRole: 'companyRole' in account ? account.companyRole : null,
+        // S6-VV-160: the EMP-02 migration backfilled OWNER only for company users that existed
+        // then; a seed run afterwards created this one with no role, so every employer route 403'd.
+        companyRole: account.companyId ? 'OWNER' : null,
         primaryTrackId: account.primaryTrackId,
       },
     });

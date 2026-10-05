@@ -636,6 +636,7 @@ export function WorkExperienceSection() {
     >
       <ProfileSectionHeader
         title={meta.title}
+        evidenceType="WORK_EXPERIENCE"
         description={meta.description}
         action={
           !loading ? (

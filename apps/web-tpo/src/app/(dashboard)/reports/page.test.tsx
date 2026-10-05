@@ -69,9 +69,13 @@ describe('ReportsPage', () => {
   it('renders report sections and data', async () => {
     render(<ReportsPage />);
 
-    expect(await screen.findByText('Verification completion by major')).toBeDefined();
-    expect(screen.getByText('Placement & opportunities matched')).toBeDefined();
-    expect(screen.getByText('Employer engagement by school')).toBeDefined();
+    expect(
+      await screen.findByRole('heading', { name: 'Verification Completion by Major' }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole('heading', { name: 'Employer Engagement by Institution' }),
+    ).toBeDefined();
+    expect(screen.getByText('Applications Matched')).toBeDefined();
     expect(screen.getByText('Comp. Sci')).toBeDefined();
   });
 

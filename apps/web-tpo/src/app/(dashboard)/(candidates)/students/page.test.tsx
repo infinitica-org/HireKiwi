@@ -31,11 +31,12 @@ describe('CandidatesPage', () => {
     expect(await screen.findByRole('searchbox', { name: /Search candidates/i })).toBeDefined();
     expect(screen.getByRole('combobox', { name: /Filter by skill category/i })).toBeDefined();
     expect(screen.getByRole('combobox', { name: /Filter by Skills/i })).toBeDefined();
-    expect(screen.getByRole('combobox', { name: /Filter by Proficiency/i })).toBeDefined();
-    expect(screen.getByRole('option', { name: 'Level 4' })).toBeDefined();
+    const proficiency = screen.getByRole('combobox', { name: /Filter by Proficiency/i });
+    fireEvent.click(proficiency);
+    expect(screen.getByRole('option', { name: /^Level 4/ })).toBeDefined();
     expect(screen.queryByRole('link', { name: /Onboard Candidates/i })).toBeNull();
     expect(screen.queryByRole('link', { name: /Whitelist/i })).toBeNull();
-    expect(await screen.findByRole('heading', { name: /^Students$/i })).toBeDefined();
+    await waitFor(() => expect(document.title).toBe('Students · SMART TPO'));
   });
 
   it('switches to My Assigned Students view and calls listAssignedStudents', async () => {

@@ -19,6 +19,23 @@ import { api } from '@/lib/api';
 import { skillNameForCode, categoryNameForCode } from '@/lib/skill-declarations';
 import type { SkillClaimDto } from '@smart/contracts';
 
+// Detect if a skill is under verification (assessment taken but result pending)
+function isUnderVerification(claim: SkillClaimDto | undefined): boolean {
+  if (!claim) return false;
+  // Under verification if: latestAssessmentResult exists OR verificationInProgress is true
+  return Boolean(claim.latestAssessmentResult || claim.verificationInProgress);
+}
+
+// Get the display status for a skill claim
+function getSkillStatus(
+  claim: SkillClaimDto | undefined,
+): 'DECLARED' | 'UNDER_VERIFICATION' | 'VERIFIED' {
+  if (!claim) return 'DECLARED';
+  if (claim.status === 'VERIFIED') return 'VERIFIED';
+  if (isUnderVerification(claim)) return 'UNDER_VERIFICATION';
+  return 'DECLARED';
+}
+
 export interface AssessmentItem {
   id: string;
   claimId?: string;

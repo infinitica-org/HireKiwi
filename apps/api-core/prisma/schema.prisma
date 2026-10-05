@@ -199,7 +199,7 @@ enum CompanyMode {
 }
 
 /// CO self-onboarding applicant progress — mirrors @smart/contracts CompanyOnboardingStatus.
-/// S6-VV-107 - lifecycle of a request to join an existing company.
+/// S6-VV-107 — lifecycle of a request to join an existing company.
 enum CompanyJoinRequestStatus {
   PENDING
   APPROVED
@@ -308,7 +308,7 @@ enum AtsStage {
   WITHDRAWN
 }
 
-/// S6-VV-121 - delivery channel for notification preferences.
+/// S6-VV-121 — delivery channel for notification preferences.
 enum NotificationChannel {
   IN_APP
   EMAIL
@@ -1040,6 +1040,18 @@ model KafkaOutbox {
   @@map("kafka_outbox")
 }
 
+/// S6-VV-123 (#592) — consumer-side dedupe for at-least-once Kafka delivery: one row per
+/// (consumer group, envelope eventId) handled. Purged by the retention sweep after 14 days.
+model ConsumedEvent {
+  consumerGroup String   @map("consumer_group")
+  eventId       String   @map("event_id") @db.Uuid
+  consumedAt    DateTime @default(now()) @map("consumed_at") @db.Timestamptz(6)
+
+  @@id([consumerGroup, eventId])
+  @@index([consumedAt])
+  @@map("consumed_events")
+}
+
 enum UsernameStatus {
   RESERVED
   ACTIVE
@@ -1273,7 +1285,7 @@ model IdempotencyRecord {
 
 /// Public company self-onboarding session. Raw session tokens are never stored — only sessionTokenHash.
 /// Company row is linked once the tenant exists (typically before submit with verificationStatus=PENDING).
-/// S6-VV-107 (#340) - someone whose verified work email is on an approved company's domain asks
+/// S6-VV-107 (#340) — someone whose verified work email is on an approved company's domain asks
 /// to join it instead of registering it again. An owner approves (an EMP-02 invitation is sent,
 /// S6-VV-108) or rejects it. One PENDING request per (company, email): partial unique index in
 /// the migration.
@@ -1644,6 +1656,9 @@ model JobOpening {
   rawText                  String?            @map("raw_text")
   jdParseStatus            JdParseStatus      @default(PENDING) @map("jd_parse_status")
   parseConfidence          Decimal?           @map("parse_confidence") @db.Decimal(4, 3)
+  /// Gap 3: JD-parse versioning — tracks which JdParseParameters version produced this parse.
+  /// Format: "jd-parse-v1.0", allows future threshold/parameter changes without data loss.
+  jdParseVersion           String?            @map("jd_parse_version")
   parsedAt                 DateTime?          @map("parsed_at") @db.Timestamptz(6)
   parsedRequirements       Json?              @map("parsed_requirements")
   status                   JobOpeningStatus   @default(DRAFT)
@@ -1869,7 +1884,7 @@ model Notification {
   @@map("notifications")
 }
 
-/// S6-VV-121 (#434) - a channel the user turned off (or back on) for one notification kind.
+/// S6-VV-121 (#434) — a channel the user turned off (or back on) for one notification kind.
 /// No row means enabled. ACCOUNT and TRUST_ENFORCEMENT ignore these (mandatory).
 model NotificationPreference {
   userId    String              @map("user_id") @db.Uuid
@@ -3009,6 +3024,8 @@ model DataSubjectRequest {
   resolution       String?
   resolvedById     String?   @map("resolved_by_id") @db.Uuid
 
+  /// S6-VV-159 — plus a partial unique index (migration only; Prisma can't declare it):
+  /// one OPEN/IN_REVIEW request per (user_id, type).
   @@index([userId, type, status])
   @@index([status, createdAt])
   @@map("data_subject_requests")

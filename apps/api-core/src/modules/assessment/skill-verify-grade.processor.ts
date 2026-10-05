@@ -1,6 +1,7 @@
 import { InjectQueue, Processor } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import type { Job, Queue } from 'bullmq';
+import { withJobSpan } from '@smart/observability';
 import { DlqAwareProcessor } from '../../platform/queue/async-job.processor.js';
 import {
   SKILL_VERIFY_GRADE_DLQ,
@@ -25,6 +26,10 @@ export class SkillVerifyGradeProcessor extends DlqAwareProcessor {
   }
 
   async process(job: Job<SkillVerifyGradeJobPayload>): Promise<void> {
-    await this.skillVerify.processQueuedComplete(job.data.sessionId, job.data.userId);
+    await withJobSpan(
+      job,
+      { 'verification.kind': 'skill_verify_grade', 'subject.id': job.data.sessionId },
+      () => this.skillVerify.processQueuedComplete(job.data.sessionId, job.data.userId),
+    );
   }
 }

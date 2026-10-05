@@ -4,6 +4,7 @@ import { SkillCompetencySchema } from './skill-competency.js';
 import { CompetencyStatusSchema } from './competency-status.js';
 import { PROFICIENCY_LEVEL_ORDER } from '../skill-levels.js';
 import { ProficiencyRequirementSchema } from './proficiency-requirements.js';
+import { EvidenceValidationMetricsSchema } from './skill-graph.js';
 
 export const FUSION_RULE_SET_VERSION = 'v1';
 
@@ -101,6 +102,7 @@ export const CompetencyFusionResultSchema = z.object({
   fusionTrace: z.array(FusionTraceEntrySchema).max(50).default([]),
   assessmentComplete: z.boolean(),
   recommendedNextStep: z.enum(['NONE', 'EVIDENCE_VERIFICATION', 'INTERVIEW', 'REMEDIATION']),
+  evidenceValidationMetrics: z.array(EvidenceValidationMetricsSchema).max(10).default([]),
 });
 export type CompetencyFusionResult = z.infer<typeof CompetencyFusionResultSchema>;
 

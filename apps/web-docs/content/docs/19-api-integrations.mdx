@@ -5,7 +5,7 @@ description: Exhaustive REST API specification, endpoint catalogue, request/resp
 
 ## 19.1 API Architecture Standards & Conventions
 
-SmartZen provides a secure, versioned RESTful API exposed through `api.becomesmart.online/v1`:
+SmartKiwi provides a secure, versioned RESTful API exposed through `api.becomesmart.online/v1`:
 
 - **Protocol & Encoding:** HTTPS with mandatory TLS 1.3; UTF-8 JSON payloads (`Content-Type: application/json`).
 - **Authentication:** Stateless JSON Web Tokens (JWT, 15-minute TTL) with HttpOnly refresh cookies; or Bearer API keys (`sk_live_*` for production enterprise access).
@@ -113,7 +113,7 @@ SmartZen provides a secure, versioned RESTful API exposed through `api.becomesma
 Enterprise recruiters receive real-time webhook updates when candidate milestones occur:
 
 - **Event Types:** `candidate.verified`, `application.shortlisted`, `interview.scheduled`, `offer.accepted`.
-- **Payload Verification:** Webhook payloads include an `X-SmartZen-Signature` computed via HMAC-SHA256 using the customer's webhook signing secret.
+- **Payload Verification:** Webhook payloads include an `X-SmartKiwi-Signature` computed via HMAC-SHA256 using the customer's webhook signing secret.
 
 ```json
 {

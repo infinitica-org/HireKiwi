@@ -113,6 +113,9 @@ export function LoginForm() {
           className="mt-2 w-full max-w-[420px] space-y-4 text-center mx-auto"
         >
           <div className="w-full">
+            <label htmlFor="email" className="sr-only">
+              Email
+            </label>
             <input
               id="email"
               type="email"
@@ -126,6 +129,9 @@ export function LoginForm() {
           </div>
 
           <div className="w-full">
+            <label htmlFor="password" className="sr-only">
+              Password
+            </label>
             <div className="relative">
               <input
                 id="password"

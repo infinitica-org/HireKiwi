@@ -51,6 +51,47 @@ export const fileScansTotal = new Counter({
   registers: [registry],
 });
 
+/* -------------------------------- security -------------------------------- */
+
+/**
+ * S6-VV-126 — security-relevant audit events, counted where they are audited
+ * (`AuditPublisherService`). `action` is a fixed allowlist; `reason` is only set
+ * for failed logins, from their closed set of reason codes.
+ */
+export const securityEventsTotal = new Counter({
+  name: 'smart_security_events_total',
+  help: 'Security-relevant audit events by action (and login failure reason).',
+  labelNames: ['action', 'reason'] as const,
+  registers: [registry],
+});
+
+/** S6-VV-126 — requests refused by RolesGuard (role or permission), by route template. */
+export const authzDeniedTotal = new Counter({
+  name: 'smart_authz_denied_total',
+  help: 'Requests refused by the role/permission guard, by route template and caller role.',
+  labelNames: ['route', 'role'] as const,
+  registers: [registry],
+});
+
+/* --------------------------- third-party health --------------------------- */
+
+/** S6-VV-129 — 1 when the last probe of a configured integration succeeded, 0 when it failed. */
+export const integrationUp = new Gauge({
+  name: 'smart_integration_up',
+  help: 'Third-party integration reachable on the last probe (1) or not (0); configured ones only.',
+  labelNames: ['integration'] as const,
+  registers: [registry],
+});
+
+/** S6-VV-129 — how long each integration probe took. */
+export const integrationProbeDuration = new Histogram({
+  name: 'smart_integration_probe_duration_seconds',
+  help: 'Duration of third-party integration health probes.',
+  labelNames: ['integration'] as const,
+  buckets: [0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+  registers: [registry],
+});
+
 /* ------------------------------ rate limiting ----------------------------- */
 
 export const rateLimitRejections = new Counter({
@@ -214,6 +255,33 @@ export const kafkaConsumerLag = new Gauge({
   registers: [registry],
 });
 
+/* ------------------------------ BullMQ queues ------------------------------ */
+
+/** S6-VV-127 — jobs per BullMQ queue (and DLQ) by state, polled every 15 s. */
+export const queueJobs = new Gauge({
+  name: 'smart_queue_jobs',
+  help: 'BullMQ jobs by queue and state (waiting, active, delayed, failed).',
+  labelNames: ['queue', 'state'] as const,
+  registers: [registry],
+});
+
+/** S6-VV-127 — age of the oldest waiting job; a stalled worker shows here before depth does. */
+export const queueOldestWaitingSeconds = new Gauge({
+  name: 'smart_queue_oldest_waiting_seconds',
+  help: 'Age in seconds of the oldest waiting job per BullMQ queue (0 when empty).',
+  labelNames: ['queue'] as const,
+  registers: [registry],
+});
+
+/** S6-VV-128 — BullMQ job run time by queue and outcome (completed / retrying / failed). */
+export const queueJobDuration = new Histogram({
+  name: 'smart_queue_job_duration_seconds',
+  help: 'Background job run time by queue and outcome.',
+  labelNames: ['queue', 'outcome'] as const,
+  buckets: [0.05, 0.25, 1, 5, 15, 60, 300],
+  registers: [registry],
+});
+
 export const cacheOperations = new Counter({
   name: 'smart_cache_operations_total',
   help: 'Redis cache operations by namespace and result.',
@@ -233,13 +301,6 @@ export const quotaExceeded = new Counter({
   name: 'smart_quota_exceeded_total',
   help: 'Actions blocked by a plan quota, by tenant type, plan code and quota dimension.',
   labelNames: ['tenant_type', 'plan_code', 'dimension'] as const,
-  registers: [registry],
-});
-
-export const sandboxExecutions = new Counter({
-  name: 'smart_sandbox_executions_total',
-  help: 'Code sandbox executions by language and outcome.',
-  labelNames: ['language', 'outcome'] as const,
   registers: [registry],
 });
 

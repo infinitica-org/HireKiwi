@@ -7,7 +7,7 @@ x-app-env: &app-env
   REDIS_URL: redis://redis:6379
   KAFKA_BROKERS: redpanda:9092
   JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret-change-me-now!!}
-  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:3006,http://localhost:3007,http://localhost}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:3006,http://localhost:3007,http://localhost:3008,http://localhost}
   S3_ENDPOINT: http://minio:9000
   S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://127.0.0.1:9000}
   S3_REGION: ${S3_REGION:-us-east-1}
@@ -29,6 +29,8 @@ x-app-env: &app-env
   TPO_APP_URL: ${TPO_APP_URL:-http://localhost:3002}
   ADMIN_APP_URL: ${ADMIN_APP_URL:-http://localhost:3003}
   COMPANY_APP_URL: ${COMPANY_APP_URL:-http://localhost:3006}
+  LANDING_APP_URL: ${LANDING_APP_URL:-http://localhost:3007}
+  DOCS_APP_URL: ${DOCS_APP_URL:-http://localhost:3008}
   METRICS_SCRAPE_TOKEN: ${METRICS_SCRAPE_TOKEN:-}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
@@ -484,6 +486,46 @@ services:
       - "127.0.0.1:${COMPANY_PORT:-3006}:3000"
     profiles: ["apps"]
 
+  web-landing:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.web
+      args:
+        APP: web-landing
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
+        NEXT_PUBLIC_AUTH_URL: ${AUTH_APP_URL:-http://localhost:3005}
+        NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
+        NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
+        NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+        NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
+      NEXT_PUBLIC_AUTH_URL: ${AUTH_APP_URL:-http://localhost:3005}
+      NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
+      NEXT_PUBLIC_TPO_URL: ${TPO_APP_URL:-http://localhost:3002}
+      NEXT_PUBLIC_ADMIN_URL: ${ADMIN_APP_URL:-http://localhost:3003}
+      NEXT_PUBLIC_COMPANY_URL: ${COMPANY_APP_URL:-http://localhost:3006}
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:${LANDING_PORT:-3007}:3000"
+    profiles: ["apps"]
+
+  web-docs:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.web
+      args:
+        APP: web-docs
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
+    ports:
+      - "127.0.0.1:${DOCS_PORT:-3008}:3000"
+    profiles: ["apps"]
+
   # S6-VV-97 — nightly encrypted, off-box backup of Postgres + MinIO objects.
   # Idles (smart_backup_enabled 0) until BACKUP_ENABLED=true and the BACKUP_*
   # vars are set; see docs/delivery/BACKUP_RESTORE.md. On demand:
@@ -540,6 +582,8 @@ services:
       VERIFY_HOST: ${VERIFY_HOST:-verify.localhost}
       AUTH_HOST: ${AUTH_HOST:-auth.localhost}
       COMPANY_HOST: ${COMPANY_HOST:-company.localhost}
+      LANDING_HOST: ${LANDING_HOST:-landing.localhost}
+      DOCS_HOST: ${DOCS_HOST:-docs.localhost}
       API_HOST: ${API_HOST:-api.localhost}
       STUDIO_HOST: ${STUDIO_HOST:-studio.localhost}
       DB_HOST: ${DB_HOST:-db.localhost}
@@ -557,6 +601,8 @@ services:
       - web-verify
       - web-auth
       - web-company
+      - web-landing
+      - web-docs
       - prisma-studio
       - adminer
     # Only one stack per host should enable profile `vps` (binds :80/:443).
@@ -569,10 +615,16 @@ services:
     # output (tools/load-tests) push live VU/RPS/latency metrics during a run —
     # see tools/load-tests/README.md. Loopback-only exposure (127.0.0.1 below)
     # keeps this an acceptable local/CI trade-off.
+    # S6-VV-125: api-core rejects metric scrapes without x-metrics-token in production, so the token
+    # is written to a file that prometheus.yml reads (http_headers.files) before Prometheus starts.
+    environment:
+      METRICS_SCRAPE_TOKEN: ${METRICS_SCRAPE_TOKEN:-}
+    entrypoint: ["/bin/sh", "-c"]
     command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.path=/prometheus
-      - --web.enable-remote-write-receiver
+      - >-
+        printf '%s' "$$METRICS_SCRAPE_TOKEN" > /tmp/metrics-token &&
+        exec /bin/prometheus --config.file=/etc/prometheus/prometheus.yml
+        --storage.tsdb.path=/prometheus --web.enable-remote-write-receiver
     volumes:
       - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -594,6 +646,16 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_USERS_DEFAULT_THEME: dark
+      # S6-VV-125: alert delivery (provisioning/alerting). Destination per decision D3; the
+      # defaults send alert email to Mailpit and point the webhook at a discard address.
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@smart.local}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-http://127.0.0.1:9/alert-webhook-not-configured}
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: ${GRAFANA_SMTP_HOST:-mailpit:1025}
+      GF_SMTP_USER: ${GRAFANA_SMTP_USER:-}
+      GF_SMTP_PASSWORD: ${GRAFANA_SMTP_PASSWORD:-}
+      GF_SMTP_FROM_ADDRESS: ${GRAFANA_SMTP_FROM:-alerts@smart.local}
+      GF_SMTP_FROM_NAME: SMART alerts
     ports:
       # Host 3100 (not 3030) — keep Loki on 3101 to avoid collision.
       - "127.0.0.1:${GRAFANA_PORT:-3100}:3000"

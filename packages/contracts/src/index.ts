@@ -49,6 +49,7 @@ export * from './dto/auth.dto.js';
 export * from './dto/company-team.dto.js';
 export * from './dto/company-review.dto.js';
 export * from './dto/student-jobs.dto.js';
+export * from './dto/employer-jobs.dto.js';
 export * from './dto/messaging.dto.js';
 export * from './dto/applications.dto.js';
 export * from './dto/candidate-workflow.dto.js';
@@ -59,7 +60,6 @@ export * from './dto/evaluation.dto.js';
 export * from './dto/cert-agenda.dto.js';
 export * from './dto/candidate-certificate.dto.js';
 export * from './dto/cert-verify.dto.js';
-export * from './dto/cognitive-profile.dto.js';
 export * from './dto/calibration.dto.js';
 export * from './dto/rate-limit.dto.js';
 export * from './dto/certificate.dto.js';
@@ -104,7 +104,6 @@ export * from './dto/capability-inference-review.dto.js';
 export * from './dto/trust.dto.js';
 export * from './dto/support.dto.js';
 export * from './dto/billing.dto.js';
-export * from './dto/interview.dto.js';
 export * from './dto/placement-calendar.dto.js';
 
 /* -------------------------------- events ---------------------------------- */

@@ -17,6 +17,8 @@ export const COMPANY_PERMISSIONS = [
   'company.reviews.respond',
   'company.applicants.view',
   'company.applicants.manage',
+  'company.jobs.view',
+  'company.jobs.manage',
 ] as const;
 export type CompanyPermission = (typeof COMPANY_PERMISSIONS)[number];
 
@@ -30,6 +32,8 @@ export const COMPANY_ROLE_PERMISSIONS: Readonly<
     'company.reviews.respond',
     'company.applicants.view',
     'company.applicants.manage',
+    'company.jobs.view',
+    'company.jobs.manage',
   ],
 };
 

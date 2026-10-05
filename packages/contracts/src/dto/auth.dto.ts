@@ -77,20 +77,6 @@ export const PasswordResetConfirmRequestSchema = z.object({
 });
 export type PasswordResetConfirmRequest = z.infer<typeof PasswordResetConfirmRequestSchema>;
 
-export const SsoStartRequestSchema = z.object({
-  provider: AuthProviderSchema,
-  /** Institutional email domain, e.g. `psgtech.ac.in`. Resolves the SAML/OIDC tenant. */
-  institutionDomain: z.string().max(255).optional(),
-  redirectUri: z.url(),
-});
-export type SsoStartRequest = z.infer<typeof SsoStartRequestSchema>;
-
-export const SsoStartResponseSchema = z.object({
-  authorizationUrl: z.url(),
-  state: z.string(),
-});
-export type SsoStartResponse = z.infer<typeof SsoStartResponseSchema>;
-
 /**
  * Only the 15-minute access token is returned in the body. The refresh token is
  * set as an HttpOnly, Secure, SameSite=Strict cookie and is never readable by

@@ -1,5 +1,7 @@
 export async function GET() {
   try {
+    // Server-side proxy of a third-party script, not a SMART API call; api-client doesn't apply.
+    // eslint-disable-next-line no-restricted-globals
     const res = await fetch(
       'https://cdn-cookieyes.com/client_data/be2546efcbf450059885daed3260170c/script.js',
       { cache: 'no-store' },

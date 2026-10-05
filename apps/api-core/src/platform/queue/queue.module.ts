@@ -3,11 +3,7 @@ import { Global, Module, forwardRef } from '@nestjs/common';
 import { env } from '../config/env.js';
 import { EMAIL_QUEUE } from '../mailer/mailer.types.js';
 import { EvidenceModule } from '../../modules/evidence/evidence.module.js';
-import {
-  AudioEvaluationProcessor,
-  PdfGenerationProcessor,
-  SandboxExecutionProcessor,
-} from './async-job.processor.js';
+import { AudioEvaluationProcessor, PdfGenerationProcessor } from './async-job.processor.js';
 import { RetentionSweepProcessor } from '../retention/retention-sweep.processor.js';
 import { RetentionSweepService } from '../retention/retention-sweep.service.js';
 import { StorageModule } from '../storage/storage.module.js';
@@ -42,15 +38,13 @@ import {
   MATCH_RUN_QUEUE,
   PDF_GENERATION_DLQ,
   PDF_GENERATION_QUEUE,
-  SANDBOX_EXECUTION_DLQ,
-  SANDBOX_EXECUTION_QUEUE,
   BULK_WHITELIST_IMPORT_DLQ,
   BULK_WHITELIST_IMPORT_QUEUE,
 } from './queue.names.js';
+import { QueueMetricsCollector } from './queue-metrics.collector.js';
 
 const queues = [
   { name: EMAIL_QUEUE },
-  { name: SANDBOX_EXECUTION_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: AUDIO_EVALUATION_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: PDF_GENERATION_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: RETENTION_SWEEP_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
@@ -65,7 +59,6 @@ const queues = [
   { name: SKILL_VERIFY_GRADE_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: ASSESSMENT_FORCE_SUBMIT_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: SCORE_RECALCULATION_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
-  { name: SANDBOX_EXECUTION_DLQ },
   { name: AUDIO_EVALUATION_DLQ },
   { name: PDF_GENERATION_DLQ },
   { name: CREDENTIAL_VERIFICATION_DLQ },
@@ -96,12 +89,13 @@ const queues = [
   ],
   providers: [
     EmailProcessor,
-    SandboxExecutionProcessor,
     AudioEvaluationProcessor,
     PdfGenerationProcessor,
     RetentionSweepService,
     RetentionSweepProcessor,
+    { provide: 'QUEUE_NAMES', useValue: queues.map((queue) => queue.name) },
+    QueueMetricsCollector,
   ],
-  exports: [BullModule],
+  exports: [BullModule, QueueMetricsCollector],
 })
 export class QueueModule {}

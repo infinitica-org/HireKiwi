@@ -1,8 +1,8 @@
-# SMART — Repository Structure & Architecture Reference
+# SmartKiwi (SMART) — Repository Structure & Architecture Reference
 
 > **Status:** Adopted
 > **Maintainer:** System Architect
-> **Purpose:** Authoritative reference for the SMART monorepo layout, technology stack, and the rationale behind the primary architectural decisions. For backend module boundaries and service topology, see [`SERVICES_VIEW.md`](./SERVICES_VIEW.md). For per-module and per-engineer ownership, see [`TEAM.md`](./TEAM.md).
+> **Purpose:** Authoritative reference for the SmartKiwi monorepo layout, technology stack, and the rationale behind the primary architectural decisions. For backend module boundaries and service topology, see [`SERVICES_VIEW.md`](./SERVICES_VIEW.md). For per-module and per-engineer ownership, see [`TEAM.md`](./TEAM.md). Authoritative living documentation maintained in `@smart/web-docs` (port 3008/3028).
 
 ---
 
