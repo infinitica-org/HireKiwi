@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Building2, GraduationCap, Briefcase, Share2, CheckCircle2, X, Mail } from 'lucide-react';
-import type { AuthenticatedUser, CandidateEducationDto } from '@smart/contracts';
+import {
+  profileHeadlineForUser,
+  type AuthenticatedUser,
+  type CandidateEducationDto,
+} from '@smart/contracts';
 
 import { ProfilePhotoEditControl } from '@/components/profile/ProfilePhotoEditControl';
 import {
@@ -107,9 +111,6 @@ interface ProfileHeroBannerProps {
 const HERO_AVATAR_CLASS =
   'h-28 w-28 sm:h-32 sm:w-32 shrink-0 rounded-full border-2 border-zinc-100 bg-zinc-100 text-3xl font-extrabold text-zinc-900 shadow-sm dark:border-zinc-800 dark:bg-zinc-800 dark:text-white';
 
-const VERIFIED_BADGE_CLASS =
-  'inline-flex items-center gap-1 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
-
 export function ProfileHeroBanner({
   user,
   education,
@@ -130,6 +131,8 @@ export function ProfileHeroBanner({
   const [copied, setCopied] = useState(false);
 
   const fullName = user?.fullName?.trim() || 'Candidate';
+  // The headline is stored on the student's account; the fallback only covers the first paint.
+  const headline = user?.profileHeadline ?? profileHeadlineForUser(user?.userId ?? fullName);
   const missingAreas = PROFILE_AREA_IDS.filter((id) => areaStatus?.[id] === false);
   const handle = username ?? null;
   const shareUrl = publicLinkUrl ?? '';
@@ -222,19 +225,6 @@ export function ProfileHeroBanner({
                   </span>
                 </span>
               )}
-
-              {linkedinVerified && (
-                <span className={VERIFIED_BADGE_CLASS}>
-                  <CheckCircle2 className="size-3 text-emerald-600" />
-                  LinkedIn Verified
-                </span>
-              )}
-              {githubVerified && (
-                <span className={VERIFIED_BADGE_CLASS}>
-                  <CheckCircle2 className="size-3 text-emerald-600" />
-                  GitHub Verified
-                </span>
-              )}
             </div>
 
             {/* Right (Straight opposite to Name): Share & Edit Profile Buttons */}
@@ -267,8 +257,7 @@ export function ProfileHeroBanner({
 
           {/* Tagline / Bio Quote */}
           <p className="text-xs sm:text-sm font-normal text-zinc-600 dark:text-zinc-300 max-w-2xl leading-relaxed">
-            &ldquo;Motivated student eager to explore new opportunities and apply my skills in a
-            dynamic environment.&rdquo;
+            &ldquo;{headline}&rdquo;
           </p>
 
           {/* Department */}

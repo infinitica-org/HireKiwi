@@ -35,8 +35,8 @@ const SKILL_NAME_BY_CODE = new Map(SKILL_DEFINITIONS.map((skill) => [skill.code,
 
 const FormSection = forwardRef<
   HTMLElement,
-  { title: string; description?: string; children: ReactNode }
->(function FormSection({ title, description, children }, ref) {
+  { title: string; description?: string; required?: boolean; children: ReactNode }
+>(function FormSection({ title, description, required, children }, ref) {
   return (
     <section
       ref={ref}
@@ -45,6 +45,7 @@ const FormSection = forwardRef<
       <div>
         <h4 className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ds-text)]">
           {title}
+          {required ? <span className="text-red-600"> *</span> : null}
         </h4>
         {description ? (
           <p className="mt-0.5 text-xs leading-relaxed text-[var(--ds-text-muted)]">
@@ -231,7 +232,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
             <FormSection title="Role & dates">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className={experienceLabelClass}>Company name *</label>
+                  <label className={experienceLabelClass}>
+                    Company name<span className="text-red-600"> *</span>
+                  </label>
                   <input
                     type="text"
                     required
@@ -242,7 +245,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                   />
                 </div>
                 <div>
-                  <label className={experienceLabelClass}>Role / designation *</label>
+                  <label className={experienceLabelClass}>
+                    Role / designation<span className="text-red-600"> *</span>
+                  </label>
                   <input
                     type="text"
                     required
@@ -255,7 +260,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className={experienceLabelClass}>Employment type *</label>
+                  <label className={experienceLabelClass}>
+                    Employment type<span className="text-red-600"> *</span>
+                  </label>
                   <select
                     value={employmentType}
                     onChange={(event) => setEmploymentType(event.target.value)}
@@ -291,7 +298,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className={experienceLabelClass}>Start date *</label>
+                  <label className={experienceLabelClass}>
+                    Start date<span className="text-red-600"> *</span>
+                  </label>
                   <input
                     type="date"
                     required
@@ -301,7 +310,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                   />
                 </div>
                 <div>
-                  <label className={experienceLabelClass}>End date{!isCurrent ? ' *' : ''}</label>
+                  <label className={experienceLabelClass}>
+                    End date{!isCurrent ? <span className="text-red-600"> *</span> : null}
+                  </label>
                   <input
                     type="date"
                     disabled={isCurrent}
@@ -329,7 +340,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className={experienceLabelClass}>Company website *</label>
+                    <label className={experienceLabelClass}>
+                      Company website<span className="text-red-600"> *</span>
+                    </label>
                     <input
                       type="url"
                       value={companyWebsite}
@@ -339,7 +352,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                     />
                   </div>
                   <div>
-                    <label className={experienceLabelClass}>Company LinkedIn *</label>
+                    <label className={experienceLabelClass}>
+                      Company LinkedIn<span className="text-red-600"> *</span>
+                    </label>
                     <input
                       type="url"
                       value={companyLinkedinUrl}
@@ -357,7 +372,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               description="Pick catalog skills only — free-text tags are not accepted."
             >
               <div>
-                <label className={experienceLabelClass}>Professional domain *</label>
+                <label className={experienceLabelClass}>
+                  Professional domain<span className="text-red-600"> *</span>
+                </label>
                 <input
                   type="text"
                   value={domain}
@@ -367,7 +384,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                 />
               </div>
               <div>
-                <label className={experienceLabelClass}>Responsibilities & accomplishments *</label>
+                <label className={experienceLabelClass}>
+                  Responsibilities & accomplishments<span className="text-red-600"> *</span>
+                </label>
                 <textarea
                   rows={4}
                   value={responsibilities}
@@ -378,7 +397,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               </div>
               <div>
                 <label htmlFor="experience-skill-picker" className={experienceLabelClass}>
-                  Skills from catalog *
+                  Skills from catalog<span className="text-red-600"> *</span>
                 </label>
                 <select
                   id="experience-skill-picker"
@@ -467,7 +486,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               </div>
             </FormSection>
 
-            <FormSection title="Proof documents *" description={proofHint}>
+            <FormSection title="Proof documents" required description={proofHint}>
               <div className="rounded-md border border-[var(--ds-border)] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs text-[var(--ds-text-muted)]">
@@ -579,12 +598,14 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
 
             <FormSection
               ref={verifierSectionRef}
-              title="Employer verification (optional)"
+              title="Employer verification"
               description="Save first, then we can email your manager or HR a secure verification link."
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className={experienceLabelClass}>Verifier name</label>
+                  <label className={experienceLabelClass}>
+                    Verifier name<span className="text-red-600"> *</span>
+                  </label>
                   <input
                     type="text"
                     value={verifierName}
@@ -594,7 +615,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                   />
                 </div>
                 <div>
-                  <label className={experienceLabelClass}>Designation</label>
+                  <label className={experienceLabelClass}>
+                    Designation <span className="text-red-600"> *</span>
+                  </label>
                   <input
                     type="text"
                     value={verifierDesignation}
@@ -605,7 +628,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="verifier-official-email" className={experienceLabelClass}>
-                    Official work email
+                    Official work email<span className="text-red-600"> *</span>
                   </label>
                   <input
                     id="verifier-official-email"

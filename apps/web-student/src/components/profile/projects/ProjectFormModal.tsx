@@ -200,6 +200,9 @@ export function ProjectFormModal({
                   <div className="flex flex-col gap-1.5 text-sm">
                     <label className="font-medium text-[var(--ds-text)]" htmlFor="problem">
                       Problem
+                      <span className="ml-1.5 text-xs font-normal text-[var(--ds-text-muted)]">
+                        (at least 20 characters)
+                      </span>
                     </label>
                     <textarea
                       id="problem"
@@ -218,6 +221,9 @@ export function ProjectFormModal({
                   <div className="flex flex-col gap-1.5 text-sm">
                     <label className="font-medium text-[var(--ds-text)]" htmlFor="approach">
                       Approach
+                      <span className="ml-1.5 text-xs font-normal text-[var(--ds-text-muted)]">
+                        (at least 20 characters)
+                      </span>
                     </label>
                     <textarea
                       id="approach"
@@ -227,6 +233,7 @@ export function ProjectFormModal({
                       disabled={isPending}
                       onChange={(event) => onFieldChange('approach', event.target.value)}
                       className={textareaClass}
+                      aria-invalid={fieldErrors.approach ? true : undefined}
                     />
                     {fieldErrors.approach ? (
                       <span className="text-xs text-red-600">{fieldErrors.approach}</span>
@@ -254,6 +261,9 @@ export function ProjectFormModal({
                   <div className="flex flex-col gap-1.5 text-sm">
                     <label className="font-medium text-[var(--ds-text)]" htmlFor="outcome">
                       Outcome
+                      <span className="ml-1.5 text-xs font-normal text-[var(--ds-text-muted)]">
+                        (at least 20 characters)
+                      </span>
                     </label>
                     <textarea
                       id="outcome"
@@ -263,7 +273,11 @@ export function ProjectFormModal({
                       disabled={isPending}
                       onChange={(event) => onFieldChange('outcome', event.target.value)}
                       className={textareaClass}
+                      aria-invalid={fieldErrors.outcome ? true : undefined}
                     />
+                    {fieldErrors.outcome ? (
+                      <span className="text-xs text-red-600">{fieldErrors.outcome}</span>
+                    ) : null}
                   </div>
                 </div>
               </section>

@@ -32,6 +32,7 @@ import {
   CompleteCandidateOnboardingRequestSchema,
   CURRENT_CONSENT_VERSION,
   DeleteResumeRequestSchema,
+  profileHeadlineForUser,
   SaveCandidateOnboardingDraftRequestSchema,
   SMART_TOPICS,
 } from '@smart/contracts';
@@ -76,6 +77,13 @@ export class UsersService {
         message: 'User not found.',
         statusCode: 404,
       });
+    }
+    // A student gets a headline from the shared list the first time they load their account
+    // (new and existing students alike); it is stored, so it stays the same afterwards.
+    if (user.role === 'STUDENT' && !user.profileHeadline) {
+      const profileHeadline = profileHeadlineForUser(user.id);
+      await this.prisma.user.update({ where: { id: userId }, data: { profileHeadline } });
+      return toAuthenticatedUserWithPhoto(this.storage, { ...user, profileHeadline });
     }
     return toAuthenticatedUserWithPhoto(this.storage, user);
   }

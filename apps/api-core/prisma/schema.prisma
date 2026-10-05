@@ -509,6 +509,8 @@ model User {
   onboardingDetails      Json?                     @map("onboarding_details")
   /// Object storage key for the candidate profile photo (signed URL served at read time).
   profilePhotoObjectKey  String?                   @map("profile_photo_object_key")
+  /// Professional headline shown under the student name; assigned once, then stored here.
+  profileHeadline        String?                   @map("profile_headline")
   dpdpConsentAt          DateTime?                 @map("dpdp_consent_at") @db.Timestamptz(6)
   /// Persistent, non-expiring public-profile share link (lazily minted on first request).
   publicProfileSlug      String?                   @unique @map("public_profile_slug")

@@ -28,6 +28,7 @@ export * from './domain/skill-verification.js';
 export * from './domain/skill-taxonomy.js';
 export * from './domain/skill-taxonomy-management.js';
 export * from './domain/skills.js';
+export * from './domain/profile-headlines.js';
 export * from './domain/skill-dimensions.js';
 export * from './domain/se-skills.js';
 export * from './domain/signal-consent-scopes.js';
