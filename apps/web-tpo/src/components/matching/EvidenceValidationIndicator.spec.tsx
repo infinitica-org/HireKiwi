@@ -27,7 +27,7 @@ describe('EvidenceValidationIndicator Component', () => {
       {
         constructCoverage: 0.85,
         interRaterReliability: 0.94,
-        sourceReliability: 0.9,
+        sourceAuthorityWeight: 0.9,
         recencyDays: 15,
         decayFactor: 0.99,
         compositeValidityScore: 0.906,
@@ -44,7 +44,7 @@ describe('EvidenceValidationIndicator Component', () => {
       {
         constructCoverage: 0.6,
         interRaterReliability: 0.65,
-        sourceReliability: 0.7,
+        sourceAuthorityWeight: 0.7,
         recencyDays: 180,
         decayFactor: 0.8,
         compositeValidityScore: 0.67,
@@ -61,7 +61,7 @@ describe('EvidenceValidationIndicator Component', () => {
       {
         constructCoverage: 0.4,
         interRaterReliability: 0.45,
-        sourceReliability: 0.5,
+        sourceAuthorityWeight: 0.5,
         recencyDays: 365,
         decayFactor: 0.5,
         compositeValidityScore: 0.47,
@@ -78,7 +78,7 @@ describe('EvidenceValidationIndicator Component', () => {
       {
         constructCoverage: 0.8,
         interRaterReliability: 0.92,
-        sourceReliability: 0.9,
+        sourceAuthorityWeight: 0.9,
         recencyDays: 30,
         decayFactor: 0.98,
         compositeValidityScore: 0.895,
@@ -99,7 +99,7 @@ describe('EvidenceValidationIndicator Component', () => {
       {
         constructCoverage: 0.8,
         interRaterReliability: 0.9,
-        sourceReliability: 0.9,
+        sourceAuthorityWeight: 0.9,
         recencyDays: 10,
         decayFactor: 0.99,
         compositeValidityScore: 0.9,
@@ -107,7 +107,7 @@ describe('EvidenceValidationIndicator Component', () => {
       {
         constructCoverage: 0.7,
         interRaterReliability: 0.8,
-        sourceReliability: 0.85,
+        sourceAuthorityWeight: 0.85,
         recencyDays: 90,
         decayFactor: 0.9,
         compositeValidityScore: 0.81,
@@ -124,7 +124,7 @@ describe('EvidenceValidationIndicator Component', () => {
       {
         constructCoverage: 0.8,
         interRaterReliability: 0.9,
-        sourceReliability: 0.9,
+        sourceAuthorityWeight: 0.9,
         recencyDays: 10,
         decayFactor: 0.99,
         compositeValidityScore: 0.9,
@@ -136,47 +136,79 @@ describe('EvidenceValidationIndicator Component', () => {
     expect(screen.getByText(/Based on 1 evidence source/)).toBeDefined();
   });
 
-  it('displays recency in days correctly', () => {
+  it('renders unmeasured fields as not available instead of a value', () => {
     const metrics: EvidenceQualityMetrics[] = [
       {
         constructCoverage: 0.8,
-        interRaterReliability: 0.9,
-        sourceReliability: 0.9,
-        recencyDays: 365,
-        decayFactor: 0.5,
-        compositeValidityScore: 0.8,
+        interRaterReliability: null,
+        sourceAuthorityWeight: 0.9,
+        recencyDays: null,
+        decayFactor: null,
+        compositeValidityScore: 0.85,
       },
     ];
 
     render(<EvidenceValidationIndicator metrics={metrics} compact={false} />);
 
-    expect(screen.getByText(/365 days/)).toBeDefined();
+    expect(screen.getByText('Not available')).toBeDefined();
+    expect(screen.getByText(/Recency: not measured/)).toBeDefined();
+    expect(screen.queryByText(/Decay/)).toBeNull();
   });
 
-  it('calculates decay factor correctly from multiple sources', () => {
+  it('qualifies the badge as partial and names the measured components', () => {
     const metrics: EvidenceQualityMetrics[] = [
       {
-        constructCoverage: 0.8,
-        interRaterReliability: 0.9,
-        sourceReliability: 0.9,
-        recencyDays: 30,
-        decayFactor: 0.98,
-        compositeValidityScore: 0.9,
-      },
-      {
-        constructCoverage: 0.75,
-        interRaterReliability: 0.85,
-        sourceReliability: 0.85,
-        recencyDays: 60,
-        decayFactor: 0.93,
-        compositeValidityScore: 0.835,
+        constructCoverage: 1,
+        interRaterReliability: null,
+        sourceAuthorityWeight: 0.95,
+        recencyDays: null,
+        decayFactor: null,
+        compositeValidityScore: 0.98,
       },
     ];
 
-    render(<EvidenceValidationIndicator metrics={metrics} compact={false} />);
+    const { container } = render(<EvidenceValidationIndicator metrics={metrics} compact={true} />);
+    expect(container.textContent).toContain('High Quality (partial)');
+    expect(container.querySelector('[title]')?.getAttribute('title')).toContain(
+      'Not measured: rater agreement, recency',
+    );
+  });
 
-    // Should display minimum decay factor (0.93)
-    expect(screen.getByText(/Decay: 93%/)).toBeDefined();
+  it('does not mark fully measured metrics as partial', () => {
+    const metrics: EvidenceQualityMetrics[] = [
+      {
+        constructCoverage: 1,
+        interRaterReliability: 0.9,
+        sourceAuthorityWeight: 0.95,
+        recencyDays: 10,
+        decayFactor: 0.99,
+        compositeValidityScore: 0.95,
+      },
+    ];
+
+    const { container } = render(<EvidenceValidationIndicator metrics={metrics} compact={true} />);
+    expect(container.textContent).not.toContain('partial');
+  });
+
+  it('averages only measured rater agreement values', () => {
+    const base = {
+      constructCoverage: 0.8,
+      sourceAuthorityWeight: 0.9,
+      recencyDays: null,
+      decayFactor: null,
+      compositeValidityScore: 0.85,
+    };
+    render(
+      <EvidenceValidationIndicator
+        metrics={[
+          { ...base, interRaterReliability: 0.6 },
+          { ...base, interRaterReliability: null },
+        ]}
+        compact={false}
+      />,
+    );
+
+    expect(screen.getByText('60%')).toBeDefined();
   });
 
   it('handles edge case with perfect scores', () => {
@@ -184,7 +216,7 @@ describe('EvidenceValidationIndicator Component', () => {
       {
         constructCoverage: 1.0,
         interRaterReliability: 1.0,
-        sourceReliability: 1.0,
+        sourceAuthorityWeight: 1.0,
         recencyDays: 0,
         decayFactor: 1.0,
         compositeValidityScore: 1.0,
@@ -208,7 +240,7 @@ describe('EvidenceValidationIndicator Component', () => {
       {
         constructCoverage: 0.0,
         interRaterReliability: 0.0,
-        sourceReliability: 0.0,
+        sourceAuthorityWeight: 0.0,
         recencyDays: 730,
         decayFactor: 0.0,
         compositeValidityScore: 0.0,
@@ -227,7 +259,7 @@ describe('EvidenceValidationIndicator Component', () => {
       {
         constructCoverage: 0.856,
         interRaterReliability: 0.923,
-        sourceReliability: 0.87,
+        sourceAuthorityWeight: 0.87,
         recencyDays: 45,
         decayFactor: 0.975,
         compositeValidityScore: 0.886,
@@ -255,7 +287,7 @@ describe('EvidenceValidationIndicator Component', () => {
             {
               constructCoverage: 0.8,
               interRaterReliability: 0.9,
-              sourceReliability: 0.9,
+              sourceAuthorityWeight: 0.9,
               recencyDays: 30,
               decayFactor: 0.98,
               compositeValidityScore: score,
