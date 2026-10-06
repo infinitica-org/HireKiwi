@@ -20,10 +20,12 @@
     "db:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
     "prisma": "prisma"
   },
   "prisma": {
-    "schema": "prisma/schema.prisma"
+    "schema": "prisma/schema.prisma",
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@fastify/cors": "11.2.0",

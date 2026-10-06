@@ -12,6 +12,6 @@ export default defineConfig({
   datasource: {
     url:
       process.env['DATABASE_URL'] ??
-      'postgresql://credverify:credverify@127.0.0.1:5433/credential_verifier?schema=public',
+      'postgresql://smart:smart@127.0.0.1:5432/credential_verifier?schema=public',
   },
 });
