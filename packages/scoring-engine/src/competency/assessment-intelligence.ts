@@ -7,7 +7,12 @@ import type {
   RecommendedNextStep,
   SkillCompetency,
 } from '@hirekiwi/contracts';
-import { PROFICIENCY_LEVEL_ORDER, type ProficiencyLevel } from '@hirekiwi/contracts';
+import {
+  PROFICIENCY_LEVEL_ORDER,
+  MINIMUM_ITEM_COUNT_BY_ROLE,
+  type ProficiencyLevel,
+} from '@hirekiwi/contracts';
+import { InsufficientItemCoverageError } from '../errors.js';
 
 export type { ProficiencyLevel };
 
@@ -124,6 +129,52 @@ export function rollupItemResultsToCompetencies(input: CompetencyRollupInput): C
       evidence: row.count > 0 ? [`${String(row.count)} assessment item(s)`] : [],
     };
   });
+}
+
+/**
+ * Enforces the item-count floor from MINIMUM_ITEM_COUNT_BY_ROLE (2 per
+ * required competency, 3 per critical one) before a form's results are
+ * trusted for a proficiency decision. This is the guardrail against a
+ * single item deciding a whole competency's status -- the structural defect
+ * that let a 5-item PROFESSIONAL form claim coverage over 6 competencies.
+ * Call this at test-assembly or scoring time, before rollupItemResultsToCompetencies'
+ * output is used to settle a claim.
+ */
+export function assertMinimumItemCoverage(
+  input: CompetencyRollupInput,
+): Effect.Effect<void, InsufficientItemCoverageError> {
+  return Effect.sync(() => {
+    const counts = new Map<string, number>();
+    for (const competency of input.competencyModel) counts.set(competency.competencyId, 0);
+    for (const item of input.items) {
+      for (const competencyId of item.competencyIds) {
+        const current = counts.get(competencyId);
+        if (current !== undefined) counts.set(competencyId, current + 1);
+      }
+    }
+
+    const underCovered = input.competencyModel
+      .map((competency) => {
+        const role = competency.role ?? 'supporting';
+        const required = MINIMUM_ITEM_COUNT_BY_ROLE[role];
+        const itemCount = counts.get(competency.competencyId) ?? 0;
+        return { competencyId: competency.competencyId, role, itemCount, required };
+      })
+      .filter((row) => row.itemCount < row.required);
+
+    return underCovered;
+  }).pipe(
+    Effect.flatMap((underCovered) =>
+      underCovered.length === 0
+        ? Effect.void
+        : Effect.fail(
+            new InsufficientItemCoverageError({
+              underCovered,
+              message: `${String(underCovered.length)} competenc${underCovered.length === 1 ? 'y' : 'ies'} below the minimum item-count floor for its role`,
+            }),
+          ),
+    ),
+  );
 }
 
 export function determineSupportedProficiency(
