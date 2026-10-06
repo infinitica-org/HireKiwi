@@ -14,6 +14,7 @@ out/
 # --- prisma generated client (regenerated via `pnpm db:generate`) ---
 apps/api-core/generated/
 apps/api-core/src/generated/
+apps/credential-verifier/src/generated/
 generated/prisma/
 
 # --- environment & secrets ---
