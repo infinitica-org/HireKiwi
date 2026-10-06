@@ -1,0 +1,233 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = []
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum IssuerTrustStatus {
+  TRUSTED
+  UNVERIFIED
+  BLOCKED
+}
+
+enum CredentialType {
+  PROFESSIONAL_CERTIFICATION
+  COURSE_COMPLETION
+  PROFESSIONAL_CERTIFICATE
+  DIGITAL_BADGE
+  DEGREE
+  LICENSE
+  TRAINING_CREDENTIAL
+  SKILL_CREDENTIAL
+  UNKNOWN
+}
+
+enum VerificationStatus {
+  VERIFIED
+  VERIFIED_WITH_WARNINGS
+  EXPIRED
+  REVOKED
+  SUSPENDED
+  INVALID
+  NOT_FOUND
+  UNVERIFIABLE
+  DOCUMENT_ONLY
+  VERIFICATION_PENDING
+  VERIFICATION_ERROR
+}
+
+enum VerificationLevel {
+  UNVERIFIED
+  DOCUMENT_PARSED
+  ISSUER_RECORD_MATCH
+  CREDENTIAL_PLATFORM_VERIFIED
+  CRYPTOGRAPHICALLY_VERIFIED
+}
+
+enum VerificationMethod {
+  CREDLY
+  OPEN_BADGES
+  W3C_VC
+  ISSUER_VERIFICATION_PAGE
+  USER_MEDIATED_PROFILE
+  DOCUMENT_PARSE
+}
+
+enum IntegrationType {
+  OFFICIAL_API
+  OFFICIAL_PUBLIC_VERIFICATION_ENDPOINT
+  PUBLIC_CREDENTIAL_PLATFORM
+  PUBLIC_ISSUER_VERIFICATION_PAGE
+  USER_MEDIATED
+  UNSUPPORTED
+}
+
+enum CredentialInputType {
+  URL
+  QR_CODE
+  PDF
+  IMAGE
+  JSON_CREDENTIAL
+  ISSUER_AND_ID
+  PASTED_TEXT
+}
+
+enum CheckResult {
+  PASS
+  FAIL
+  SKIP
+  UNKNOWN
+}
+
+enum ConfidenceLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model Issuer {
+  id          String            @id @default(uuid())
+  name        String
+  domain      String?           @unique
+  issuerType  String
+  trustStatus IssuerTrustStatus @default(UNVERIFIED)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  credentials   Credential[]
+  adapters      IssuerAdapter[]
+  trustRegistry TrustRegistryEntry[]
+}
+
+model Subject {
+  id                 String   @id @default(uuid())
+  name               String
+  email              String?
+  externalIdentifier String?
+  createdAt          DateTime @default(now())
+
+  credentials Credential[]
+}
+
+model Achievement {
+  id             String         @id @default(uuid())
+  name           String
+  description    String?
+  credentialType CredentialType
+  level          String?
+  skills         String[]
+  framework      String?
+
+  credentials Credential[]
+}
+
+model Credential {
+  id               String              @id @default(uuid())
+  issuerId         String
+  issuer           Issuer              @relation(fields: [issuerId], references: [id])
+  subjectId        String
+  subject          Subject             @relation(fields: [subjectId], references: [id])
+  achievementId    String
+  achievement      Achievement         @relation(fields: [achievementId], references: [id])
+  credentialType   CredentialType
+  issueDate        DateTime?
+  expirationDate   DateTime?
+  status           VerificationStatus  @default(VERIFICATION_PENDING)
+  source           CredentialInputType
+  sourceIdentifier String? // dedupe key: normalized input value (URL/ID/hash)
+  rawMetadata      Json?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  verifications Verification[]
+
+  @@unique([sourceIdentifier])
+  @@index([issuerId])
+  @@index([status])
+}
+
+model Verification {
+  id                String             @id @default(uuid())
+  credentialId      String
+  credential        Credential         @relation(fields: [credentialId], references: [id])
+  method            VerificationMethod
+  provider          String?
+  verificationLevel VerificationLevel  @default(UNVERIFIED)
+  verifiedAt        DateTime?
+  adapterVersion    String
+  evidenceUrl       String?
+  rawResponse       Json?
+  createdAt         DateTime           @default(now())
+
+  checks   VerificationCheck[]
+  evidence VerificationEvidence[]
+  attempts VerificationAttempt[]
+
+  @@index([credentialId])
+  @@index([verificationLevel])
+}
+
+model VerificationCheck {
+  id             String       @id @default(uuid())
+  verificationId String
+  verification   Verification @relation(fields: [verificationId], references: [id])
+  checkName      String // issuer | credential | subject | status | expiration
+  result         CheckResult
+  detail         String?
+
+  @@index([verificationId])
+}
+
+model VerificationEvidence {
+  id             String       @id @default(uuid())
+  verificationId String
+  verification   Verification @relation(fields: [verificationId], references: [id])
+  evidenceType   String // badge_url | verification_page | qr_source | document | profile_url
+  url            String?
+  fileRef        String?
+  metadata       Json?
+
+  @@index([verificationId])
+}
+
+model VerificationAttempt {
+  id             String       @id @default(uuid())
+  verificationId String
+  verification   Verification @relation(fields: [verificationId], references: [id])
+  attemptedAt    DateTime     @default(now())
+  outcome        String
+  error          String?
+  durationMs     Int?
+
+  @@index([verificationId])
+}
+
+model IssuerAdapter {
+  id              String           @id @default(uuid())
+  issuerId        String?
+  issuer          Issuer?          @relation(fields: [issuerId], references: [id])
+  adapterName     String // 'credly' | 'open-badges' | 'w3c-vc' | 'issuer-page:cisco' | ...
+  integrationType IntegrationType
+  capabilities    Json
+  confidence      ConfidenceLevel?
+  notes           String?
+  updatedAt       DateTime         @default(now()) @updatedAt
+
+  @@index([issuerId])
+}
+
+model TrustRegistryEntry {
+  id           String   @id @default(uuid())
+  issuerId     String?
+  issuer       Issuer?  @relation(fields: [issuerId], references: [id])
+  platformName String? // e.g. "Credly" as a platform, distinct from any one issuer
+  trustLevel   String
+  notes        String?
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  @@index([issuerId])
+}

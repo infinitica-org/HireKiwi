@@ -1,0 +1,63 @@
+{
+  "name": "@hirekiwi/credential-verifier",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone credential verification engine: adapter-based, provider-independent verification of external professional/educational credentials. Owner: Vishal Bharath R.",
+  "type": "commonjs",
+  "scripts": {
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "worker": "tsx watch src/worker.ts",
+    "start:worker": "node dist/worker.js",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "test": "vitest run src",
+    "test:watch": "vitest",
+    "clean": "rimraf dist .turbo *.tsbuildinfo src/generated",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset --force",
+    "db:studio": "prisma studio",
+    "prisma": "prisma"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@fastify/cors": "11.2.0",
+    "@hirekiwi/observability": "workspace:*",
+    "@nestjs/bullmq": "catalog:",
+    "@nestjs/common": "catalog:",
+    "@nestjs/config": "catalog:",
+    "@nestjs/core": "catalog:",
+    "@nestjs/platform-fastify": "catalog:",
+    "@nestjs/swagger": "catalog:",
+    "@nestjs/terminus": "catalog:",
+    "@prisma/adapter-pg": "catalog:",
+    "@prisma/client": "catalog:",
+    "bullmq": "catalog:",
+    "dotenv": "catalog:",
+    "fastify": "catalog:",
+    "ioredis": "catalog:",
+    "nestjs-pino": "catalog:",
+    "pg": "catalog:",
+    "pino": "catalog:",
+    "pino-http": "catalog:",
+    "prisma": "catalog:",
+    "reflect-metadata": "catalog:",
+    "rxjs": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@hirekiwi/tsconfig": "workspace:*",
+    "@nestjs/testing": "catalog:",
+    "@types/node": "catalog:",
+    "@types/pg": "catalog:",
+    "rimraf": "^6.0.1",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
