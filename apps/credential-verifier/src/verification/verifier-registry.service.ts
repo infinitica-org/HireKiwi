@@ -1,20 +1,29 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { CredentialInput, CredentialVerifier } from './types.js';
 import { UnverifiableFallbackAdapter } from './adapters/unverifiable-fallback.adapter.js';
+import { OpenBadgesAdapter } from './adapters/open-badges.adapter.js';
+import { W3cVcAdapter } from './adapters/w3c-vc.adapter.js';
+import { CredlyAdapter } from './adapters/credly.adapter.js';
+import { GenericIssuerVerifierAdapter } from './adapters/generic-issuer-verifier.adapter.js';
 
 /**
  * The only place that knows the full adapter list. The orchestrator asks
  * this for "the right adapter", never imports a provider adapter directly.
  *
- * Stage 5 adds real adapters (Credly, Open Badges, W3C VC, a
- * GenericIssuerVerifier config for Cisco/Linux Foundation). This stage
- * wires the registry + a safe fallback so the pipeline is exercisable
- * end-to-end before any provider-specific code lands.
+ * Order matters: `resolve()` picks the FIRST adapter whose `canHandle` is
+ * true, so OpenBadgesAdapter (narrower: requires the OpenBadgeCredential
+ * type) is registered ahead of W3cVcAdapter (broader: any valid W3C VC) so
+ * a badge-shaped VC is labeled OPEN_BADGES rather than the generic W3C_VC.
  */
 @Injectable()
 export class VerifierRegistryService {
   private readonly logger = new Logger(VerifierRegistryService.name);
-  private readonly adapters: CredentialVerifier[] = [];
+  private readonly adapters: CredentialVerifier[] = [
+    new OpenBadgesAdapter(),
+    new W3cVcAdapter(),
+    new CredlyAdapter(),
+    new GenericIssuerVerifierAdapter(),
+  ];
   private readonly fallback = new UnverifiableFallbackAdapter();
 
   register(adapter: CredentialVerifier): void {

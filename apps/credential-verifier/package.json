@@ -51,6 +51,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@hirekiwi/eslint-config": "workspace:*",
     "@hirekiwi/tsconfig": "workspace:*",
     "@nestjs/testing": "catalog:",
     "@types/node": "catalog:",
