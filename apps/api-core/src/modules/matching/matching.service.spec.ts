@@ -1156,7 +1156,7 @@ describe('Gap 4: Claim confidence propagation through scoring pipeline', () => {
 
       // Student A: high confidence claims
       const highConfidenceStudent = verifiedStudent({
-        id: 'student-high',
+        id: randomUUID(),
         fullName: 'High Confidence Student',
         skills: [
           {
@@ -1170,7 +1170,7 @@ describe('Gap 4: Claim confidence propagation through scoring pipeline', () => {
 
       // Student B: low confidence claims (same proficiency)
       const lowConfidenceStudent = verifiedStudent({
-        id: 'student-low',
+        id: randomUUID(),
         fullName: 'Low Confidence Student',
         skills: [
           {
@@ -1345,7 +1345,7 @@ describe('Gap 5: MatchRun.rankerVersion tracking with scoring-engine version', (
       expect(prisma.matchRun.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            rankerVersion: 'skill-capability-v1.0', // Legacy version
+            rankerVersion: 'v1.2.0', // Legacy version
           }),
         }),
       );
