@@ -156,23 +156,25 @@ export class VerificationOrchestratorService {
       this.resolveVerificationFlags(input.catalogSkillCode, input.supportedProficiency);
 
     const needsDemonstrationEvidence = verificationFlags.realWorldApplicationRequired;
+    const needsVerifiedEvidence = verificationFlags.substantialApplicationRequired;
     const assessmentComplete = input.assessmentComplete ?? true;
 
-    const evidenceLinks = needsDemonstrationEvidence
-      ? await this.prisma.skillClaimEvidenceLink.findMany({
-          where: { claimId: input.claimId },
-          include: {
-            evidence: {
-              select: {
-                evidenceType: true,
-                relatedSkillCodes: true,
-                verificationStatus: true,
-                studentId: true,
+    const evidenceLinks =
+      needsDemonstrationEvidence || needsVerifiedEvidence
+        ? await this.prisma.skillClaimEvidenceLink.findMany({
+            where: { claimId: input.claimId },
+            include: {
+              evidence: {
+                select: {
+                  evidenceType: true,
+                  relatedSkillCodes: true,
+                  verificationStatus: true,
+                  studentId: true,
+                },
               },
             },
-          },
-        })
-      : [];
+          })
+        : [];
 
     const gate = this.evaluateGate({
       targetProficiency: input.targetProficiency,
@@ -217,9 +219,24 @@ export class VerificationOrchestratorService {
       reasons.push(
         evidenceLinks.length > 0
           ? 'Linked evidence must be a verified project or work experience that demonstrates this skill.'
-          : verificationFlags.substantialApplicationRequired
+          : needsVerifiedEvidence
             ? 'Professional verification requires linked project or work evidence.'
             : 'Advanced verification requires linked project or work evidence.',
+      );
+      return {
+        recommendedNextStep: 'EVIDENCE_VERIFICATION',
+        requiresInterview: gate.requiresInterview,
+        requiresEvidence: true,
+        canFinalizeClaim: false,
+        reasons,
+      };
+    }
+
+    // substantialApplicationRequired demands a VERIFIED evidence link, not merely
+    // provisional -- distinct from realWorldApplicationRequired, which accepts either.
+    if (needsVerifiedEvidence && !hasVerifiedEvidence) {
+      reasons.push(
+        'Professional verification requires a verified (not merely provisional) project or work evidence link.',
       );
       return {
         recommendedNextStep: 'EVIDENCE_VERIFICATION',

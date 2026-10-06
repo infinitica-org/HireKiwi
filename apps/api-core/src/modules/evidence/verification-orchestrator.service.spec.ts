@@ -124,6 +124,45 @@ describe('VerificationOrchestratorService', () => {
     expect(result.reasons.some((reason) => reason.includes('provisional'))).toBe(true);
   });
 
+  it('blocks a PROFESSIONAL claim on only provisional evidence (substantialApplicationRequired demands verified)', async () => {
+    const prisma = {
+      skillClaimEvidenceLink: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            evidenceId: 'ev-prov',
+            evidence: {
+              evidenceType: 'PROJECT',
+              relatedSkillCodes: ['SKILL_JS'],
+              verificationStatus: 'PROVISIONAL',
+              studentId: 'stu-1',
+            },
+          },
+        ]),
+      },
+    };
+    const reconciliation = {
+      reconcileForStudent: vi.fn().mockResolvedValue({ reviewRequired: false }),
+    };
+    const service = new VerificationOrchestratorService(prisma as never, reconciliation as never);
+
+    const result = await service.evaluateClaimVerification({
+      studentId: 'stu-1',
+      claimId: 'claim-1',
+      catalogSkillCode: 'SKILL_JS',
+      targetProficiency: 'PROFESSIONAL',
+      supportedProficiency: 'PROFESSIONAL',
+      recommendedNextStep: 'NONE',
+      confidence: 'HIGH',
+      assessmentComplete: true,
+      interviewPassed: true,
+      verificationFlags: PROFESSIONAL_FLAGS,
+    });
+
+    expect(result.canFinalizeClaim).toBe(false);
+    expect(result.recommendedNextStep).toBe('EVIDENCE_VERIFICATION');
+    expect(result.reasons.some((reason) => reason.includes('verified'))).toBe(true);
+  });
+
   it('keeps advanced pending when demonstration evidence is missing', async () => {
     const prisma = {
       skillClaimEvidenceLink: {
