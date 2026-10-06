@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import textLogo from '@smart/ui/assets/images/Logos/WebP/Text-logo.png';
+import textLogo from '@hirekiwi/ui/assets/images/Logos/WebP/Text-logo.png';
 
 import { loginWithPassword } from '../../lib/auth';
 import { formatApiError } from '../../lib/api';

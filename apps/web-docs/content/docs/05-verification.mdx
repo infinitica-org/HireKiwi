@@ -1,0 +1,223 @@
+---
+title: "05. Verification & Trust Engine — Source Protocols & Dual Human Review"
+description: "Modular verification architecture for evidence validation, source protocols, cryptographic proof, and the dual human review accountability model."
+---
+
+## 5.1 The Verification Paradigm in HireKiwi
+
+Verification in HireKiwi is not a static form-checking exercise or an ungrounded autonomous agent. It is driven by a **deterministic, modular Verification Engine** executing structured source-verification protocols orchestrated via BullMQ workers.
+
+In legacy recruitment, candidate claims (resumes, portfolios, listed skills) are accepted on faith or subjected to manual, error-prone background checks weeks after an offer is extended. HireKiwi inverts this model: **unverified claims are never elevated to capability intelligence without source-level verification**.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        SMARTKIWI VERIFICATION & TRUST PIPELINE                          │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                        │
+│  [Candidate Claim / Artifact]                                                          │
+│         │                                                                              │
+│         ▼                                                                              │
+│  ┌──────────────┐     Outbound API / SIS / Git     ┌────────────────────────────────┐  │
+│  │ VERIFICATION │ ───────────────────────────────► │       ORIGINAL DATA SOURCE     │  │
+│  │    ENGINE    │ ◄─────────────────────────────── │  (SIS, GitHub, Corporate, APIs)│  │
+│  │  (BullMQ)    │     Cryptographic Proof Token    └────────────────────────────────┘  │
+│  └──────┬───────┘                                  └────────────────────────────────┘  │
+│         │                                                                              │
+│         ├─────────────► High Confidence (C >= 0.85) ──► [ VERIFIED (HMAC-SHA256) ]     │
+│         │                                                                              │
+│         ├─────────────► Ambiguity / Anomaly (C < 0.65)                                 │
+│         │                     │                                                        │
+│         │                     ▼                                                        │
+│         │        ┌───────────────────────────────┐                                     │
+│         │        │  DUAL HUMAN REVIEW DISPATCH   │                                     │
+│         │        └───────────────┬───────────────┘                                     │
+│         │                        │                                                     │
+│         │         ┌──────────────┴──────────────┐                                      │
+│         │         ▼                             ▼                                      │
+│         │   [College / TPO Queue]      [Platform Review Queue]                         │
+│         │   (Partnered Students)       (Independent Students)                         │
+│         │                                                                              │
+│         └─────────────► Fraud / Plagiarism ──────────► [ REJECTED & FLAGGED ]          │
+│                                                                                        │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+The core doctrine of HireKiwi verification is:
+> **"Verify at the authentic source. Trust zero unverified assertions. Ground every capability in immutable cryptographic provenance."**
+
+---
+
+## 5.2 Verification Engine Architecture
+
+The Verification Engine runs as a dedicated modular service within `apps/api-core/src/modules/assessment` and `work-experience`:
+
+- **Event-Driven Execution:** Runs on distributed BullMQ worker pools responding asynchronously to submission events (`smart.evidence.submitted`).
+- **Sandboxed Outbound Connectors:** Communicates with external identity providers, git hosts, credential authorities, and institutional databases through rate-limited, egress-filtered security sandboxes.
+- **Cryptographic Attestation:** Emits tamper-evident, HMAC-SHA256 signed verification tokens containing canonical `verificationId`, source URI, digest hash, validator timestamp, and calibrated confidence rating.
+- **Standardized Verification ID:** Replaces arbitrary hashes with structured, inspectable identifiers (`VK-YYYYMMDD-UUID8`) resolving to `becomesmart.online/verify/{verificationId}`.
+- **Continuous Provenance Monitoring:** Periodically re-verifies public repositories and credential endpoints to detect post-verification repository deletions, commit re-writes, or certificate revocations.
+
+---
+
+## 5.3 Four Source Verification Protocols
+
+The Verification Engine executes four specialized source-verification protocols corresponding to the primary evidence categories:
+
+```
+                          ┌────────────────────────┐
+                          │   VERIFICATION ENGINE  │
+                          └───────────┬────────────┘
+                                      │
+         ┌────────────────────────────┼────────────────────────────┐
+         │                            │                            │
+         ▼                            ▼                            ▼
+┌─────────────────┐          ┌─────────────────┐          ┌─────────────────┐
+│ 1. ACADEMIC     │          │ 2. CODE & AST   │          │ 3. WORK &       │
+│    SOURCE       │          │    PROVENANCE   │          │    ENDORSEMENT  │
+│    (SIS / ERP)  │          │    (GitHub API) │          │    (Corp Domain)│
+└─────────────────┘          └─────────────────┘          └─────────────────┘
+         │                            │                            │
+         └────────────────────────────┼────────────────────────────┘
+                                      ▼
+                             ┌─────────────────┐
+                             │ 4. CREDENTIAL   │
+                             │    AUTHORITY    │
+                             │    (Credly/AWS) │
+                             └─────────────────┘
+```
+
+### 1. Academic Source Verification Protocol (`UNI-02`, `INTG-01`)
+Verifies student enrollment, academic standing, and departmental affiliation directly at the institutional origin:
+- **Direct SIS/ERP Connector (`INTG-01`):** Interrogates institutional registrar systems (Banner, PeopleSoft, Canvas, or campus ERPs) via secure API or scheduled batch sync.
+- **Whitelisted Domain Assertion (`UNI-02`):** Validates that candidate authentication maps to an approved institutional domain (`@university.edu`) whitelisted by the university administrator (`FR-UNI-02.01`).
+- **Data Integrity Check:** Matches student roll number, graduation year, degree program, and verified CGPA against registrar records without exposing student data to public networks.
+
+### 2. Code Repository & AST Technical Provenance Protocol (`VER-04`, `INTG-02`)
+When a student links a GitHub or GitLab repository to support a software engineering claim:
+- **Authorship Verification (`FR-VER-04.04`):** Connects to GitHub REST and GraphQL APIs. Evaluates git commit author emails against the candidate's verified identity, checking GPG/SSH commit signatures and commit timestamp distribution.
+- **Contribution Ratio Thresholds:** In collaborative repositories, verifies that the candidate authored at least **35% of non-boilerplate commits** and **40% of core business logic lines of code** (`FR-VER-04.03`).
+- **AST Complexity & Scaffolding Analysis (`FR-VER-04.05`):** Parses the Abstract Syntax Tree (AST) of nominated codebases. Calculates Cyclomatic Complexity, Halstead volume, and modular coupling.
+- **Tutorial & Plagiarism Scanners:** Cross-references repository AST fingerprints against known open-source tutorial repositories (e.g., TodoMVC, freeCodeCamp clones) and internal repository indexes. Identical tree structures without attribution trigger immediate rejection.
+- **Queuing for Defense (`FR-VER-04.07`):** Once repository provenance is confirmed, schedules the project for the AI project defense interview (`INT-01`).
+
+### 3. Work Experience & Corporate Endorsement Protocol (`VER-02`)
+To eliminate fraudulent offer letters and falsified internship claims:
+- **Document Categorization (`FR-VER-02.01`):** Inspects uploaded documents. Offer letters and appointment letters are classified as `INVALID_DOCUMENT_TYPE` and rejected; only relieving letters or verified completion certificates are accepted.
+- **Corporate Domain Validation (`FR-VER-02.06`):** Interrogates the endorser's email address against MX records and known corporate domain registries. Public webmail providers (`@gmail.com`, `@yahoo.com`, `@outlook.com`) are mechanically blocked for corporate claims.
+- **Cryptographic Token Dispatch (`FR-VER-02.03`):** Generates a single-use, cryptographically signed verification link with a strict 14-day time-to-live (extended from 7 days per Sprint 6 delivery).
+- **Anti-Collusion & Endorsement Ring Detection (`FR-VER-02.10`):** Analyzes submission metadata (IP subnet, browser fingerprint, timestamp clustering, and cross-endorsement reciprocity) to flag reciprocal collusion rings.
+- **Automatic Invalidation & Recalculation (`FR-VER-02.11`, `FR-VER-02.12`):** If an endorsement is repudiated, verified status is instantly revoked, and an event is published to recompute affected capabilities.
+
+### 4. Credentials & Certification Authority Protocol (`VER-03`)
+Interfaces directly with external certification issuers:
+- **Authority API Interrogation (`FR-VER-03.04`):** Connects to verified issuer APIs (Credly Acclaim API, AWS Certification Registry, Google Cloud Certified Directory, Coursera Partner API) using official credential IDs (`FR-VER-03.03`).
+- **Anomaly Detection (`FR-VER-03.06`):** Detects expired credentials, duplicate submissions across multiple candidate accounts, and mismatched recipient names.
+- **Taxonomy Linking (`FR-VER-03.09`):** Automatically maps validated certifications to corresponding skills in the Universal Capability Ontology with pre-calibrated baseline proficiency ratings.
+
+---
+
+## 5.4 Verification State Machine
+
+Every piece of submitted evidence transitions through a formal state machine:
+
+```
+               ┌────────────────┐
+               │   SUBMITTED    │
+               └───────┬────────┘
+                       │ Event: smart.evidence.submitted
+               ┌───────▼────────┐
+               │   INSPECTING   │
+               └───────┬────────┘
+                       │ Outbound Source Probe Dispatched
+               ┌───────▼────────┐
+               │SOURCE_CONTACTED│
+               └───────┬────────┘
+         ┌─────────────┴─────────────┐
+   Proof Confirmed             Integrity Anomaly / Ambiguity
+         │                                   │
+┌────────▼────────┐                 ┌────────▼────────┐
+│    VERIFIED     │                 │  MANUAL_AUDIT   │
+└────────┬────────┘                 └────────┬────────┘
+         │                                   │
+         │                          ┌────────┴────────┐
+         │                     Human Approves   Human Rejects
+         │                          │                 │
+         │                          ▼                 ▼
+         └──────────────────► [ VERIFIED ]       [ REJECTED ]
+                                                      │
+                                                      ▼
+                                                 [ APPEALED ]
+```
+
+### Verification States:
+1. **`SUBMITTED`:** Candidate uploaded artifact or registered repository claim.
+2. **`INSPECTING`:** Worker claimed BullMQ job and is parsing metadata and AST structures.
+3. **`SOURCE_CONTACTED`:** Dispatched validation requests to authentic external authority (SIS, GitHub API, corporate domain, Credly).
+4. **`VERIFIED`:** Source proof received, cryptographic token validated, HMAC signature emitted.
+5. **`MANUAL_AUDIT`:** Low confidence ($C < 0.65$) or anomaly flagged; escalated to human review queues.
+6. **`REJECTED`:** Source contradicted claim, fraud detected, or endorser repudiated experience.
+7. **`APPEALED`:** Candidate initiated formal dispute with supporting evidence (`FR-INT-01.11`).
+
+---
+
+## 5.5 Dual Human Review Accountability Model (October 2026)
+
+To resolve institutional governance and accountability:
+
+| Student Category | Review Routing | Accountable Reviewer | Escalation Path |
+| --- | --- | --- | --- |
+| **Partnered Institution Students** | College Placement / TPO Queue | College Department Head / TPO Admin | Institutional Super Admin |
+| **Independent Candidates** | Platform Trust & Safety Queue | HireKiwi Trust & Safety Verifier Team | System Architect / Lead Admin |
+
+### Review Protocol & Justification
+- **Mandatory Justification (`FR-ADM-02.01`):** Every manual approval, rejection, or override requires an explicit reason code and explanatory note recorded in the audit log.
+- **7-Day Dispute Window:** Candidates can appeal a rejection within 7 calendar days. If sustained upon secondary review, the profile is automatically re-indexed.
+
+---
+
+## 5.6 Confidence Scoring Engine
+
+In accordance with PRD principles, HireKiwi strictly separates **Skill Proficiency** (1 to 5 scale) from **Evidence Confidence** ($0.00$ to $1.00$).
+
+Evidence Confidence ($C$) is computed using a multi-factor formula:
+
+```text
+Confidence (C) = (w_source * S_source) + (w_crypto * S_crypto) + (w_freshness * S_freshness) + (w_depth * S_depth)
+```
+
+| Weight Factor | Metric | Criteria |
+| :------------ | :----- | :------- |
+| `w_source = 0.40` | **Source Authority (`S_source`)** | SIS/Registrar direct (1.0), Corporate Domain (0.9), Credly API (0.95), Self-hosted Git (0.5). |
+| `w_crypto = 0.25` | **Cryptographic Proof (`S_crypto`)** | GPG-signed commits, HMAC tokens, SAML assertions (1.0); unsigned raw commits (0.4). |
+| `w_freshness = 0.15` | **Temporal Freshness (`S_freshness`)** | Activity within 90 days (1.0), 1 year (0.8), >2 years (0.5). |
+| `w_depth = 0.20` | **Demonstration Depth (`S_depth`)** | Multi-month commit history, passed AI project defense (1.0); single patch (0.3). |
+
+- If `C >= 0.85`: Automatically transitions to `VERIFIED`.
+- If `0.65 <= C < 0.85`: Verified with `SUPPORTED` tag; queued for spot-check.
+- If `C < 0.65`: Automatically routed to `MANUAL_AUDIT` queue for human review.
+
+---
+
+## 5.7 Tamper-Evident Verification Audit Trail
+
+All verification actions append immutable records to PostgreSQL:
+
+```sql
+CREATE TABLE "VerificationAuditLog" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "verificationId" VARCHAR(64) UNIQUE NOT NULL, -- VK-YYYYMMDD-UUID8
+  "evidenceId" UUID NOT NULL REFERENCES "Evidence"("id"),
+  "processor" TEXT NOT NULL DEFAULT 'SYSTEM_VERIFIER',
+  "action" TEXT NOT NULL, -- SOURCE_PROBED | VERIFIED | FLAGGED | OVERRIDDEN | REVOKED
+  "sourceProvider" TEXT NOT NULL, -- GITHUB | UNIVERSITY_SIS | CORPORATE_DOMAIN | CREDLY
+  "previousState" TEXT NOT NULL,
+  "newState" TEXT NOT NULL,
+  "confidenceScore" NUMERIC(4,3) NOT NULL,
+  "rationale" TEXT NOT NULL,
+  "cryptoSignature" TEXT NOT NULL, -- HMAC-SHA256 of payload + timestamp
+  "ipAddress" INET NOT NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+Every verified credential can be publicly resolved and cryptographically checked at `becomesmart.online/verify/{verificationId}`, guaranteeing tamper-evident proof to recruiters.

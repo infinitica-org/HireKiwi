@@ -1,5 +1,5 @@
-import { isSmartApiError, SmartNetworkError } from '@smart/api-client';
-import type { SkillVerifySessionDto } from '@smart/contracts';
+import { isSmartApiError, SmartNetworkError } from '@hirekiwi/api-client';
+import type { SkillVerifySessionDto } from '@hirekiwi/contracts';
 
 export function isSkillVerifyAnswered(
   answer:
@@ -126,6 +126,27 @@ export function skillVerifyErrorFromUnknown(
         kind: 'not_found',
         title: 'Verification not found',
         message: 'This skill verification is no longer available.',
+      };
+    }
+    if (
+      error.code === 'skill_claim_blocked' ||
+      /^Cannot start skill verification/.test(error.message)
+    ) {
+      const reason = /: ([A-Z_]+)\.?$/.exec(error.message)?.[1];
+      const copy: Record<string, string> = {
+        INTER_ATTEMPT_COOLDOWN:
+          'You attempted this skill recently. Please wait for the retry window before taking it again.',
+        LOCKED:
+          'This skill is locked after repeated unsuccessful attempts. Try again once the lock ends.',
+        LOCK_EXPIRED_REDECLARE_REQUIRED:
+          'The lock has ended. Add this skill again from Skills & Competencies to retake it.',
+        ALREADY_VERIFIED: 'This skill is already verified, so there is nothing more to take.',
+        MAX_ATTEMPTS_REACHED: 'You have used all attempts for this skill.',
+      };
+      return {
+        kind: 'forbidden',
+        title: 'Cannot start this verification',
+        message: (reason && copy[reason]) || 'This skill verification cannot be started right now.',
       };
     }
     if (error.statusCode === 403 || error.code === 'forbidden') {

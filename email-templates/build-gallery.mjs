@@ -179,7 +179,7 @@ iframe{display:block; width:100%; border:none; background:#fff;}
     <p class="theme-blurb" id="theme-blurb"></p>
     <div class="inbox-bar">
       <div class="subject" id="inbox-subject"></div>
-      <div class="from">SMART Platform &lt;support@smart.infinitica.com&gt;</div>
+      <div class="from">HireKiwi Platform &lt;support@smart.infinitica.com&gt;</div>
     </div>
     <div class="frame-wrap"><iframe id="frame" title="Email preview" scrolling="no"></iframe></div>
     <details class="source-toggle">

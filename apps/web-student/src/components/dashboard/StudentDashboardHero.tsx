@@ -69,7 +69,7 @@ export function StudentDashboardHero({
 
       <div className="mt-5 flex items-center justify-center gap-3">
         <Link
-          href="/profile"
+          href="/student/profile"
           className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2.5 text-xs font-bold text-white shadow-2xs transition-all hover:bg-zinc-800 hover:scale-[1.01] active:scale-[0.99] dark:bg-white dark:text-zinc-900"
         >
           <UserPlus className="size-3.5" />

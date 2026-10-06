@@ -3,8 +3,8 @@ import {
   type SkillCompetency,
   type CompetencyStatus,
   type TrustTier,
-} from '@smart/contracts';
-import type { ObservationBundle } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import type { ObservationBundle } from '@hirekiwi/contracts';
 
 const DIFFICULTY_ORDER = PROFICIENCY_LEVEL_ORDER;
 

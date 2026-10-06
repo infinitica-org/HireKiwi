@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
-import type { CandidateAcademicScores } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { CandidateAcademicScores } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 
 /**

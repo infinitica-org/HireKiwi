@@ -3,7 +3,7 @@ import type {
   CompanyRepresentative,
   CompanySignupProfile,
   CompanyVerification,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { env } from '../../platform/config/env.js';
 
 export const EMAIL_VERIFICATION_TTL_MINUTES = 15;

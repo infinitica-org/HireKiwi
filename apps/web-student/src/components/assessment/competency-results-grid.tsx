@@ -1,7 +1,7 @@
 'use client';
 
-import type { AssessmentResult } from '@smart/contracts';
-import { Badge } from '@smart/ui';
+import type { AssessmentResult } from '@hirekiwi/contracts';
+import { Badge } from '@hirekiwi/ui';
 import {
   COMPETENCY_STATUS_LABELS,
   competencyLabel,

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { SkillVerifySessionDto } from '@smart/contracts';
+import type { SkillVerifySessionDto } from '@hirekiwi/contracts';
 import { formatSkillVerifyKioskTitle } from '@/lib/skill-declarations';
 import {
   SkillVerifyExam,

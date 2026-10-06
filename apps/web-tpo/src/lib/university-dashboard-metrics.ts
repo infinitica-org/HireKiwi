@@ -1,4 +1,4 @@
-import type { InstitutionStudentDto, SkillClaimDto } from '@smart/contracts';
+import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 
 export type StudentVerificationState = 'Full' | 'Partial' | 'Pending';
 

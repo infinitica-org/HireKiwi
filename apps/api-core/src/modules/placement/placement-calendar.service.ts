@@ -7,7 +7,7 @@ import type {
   PlacementReportExportParamsDto,
   VouchOfferLetterDto,
   VouchOfferLetterResponseDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 @Injectable()

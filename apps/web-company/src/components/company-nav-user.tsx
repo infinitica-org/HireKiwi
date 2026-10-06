@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { EllipsisVertical, LogOut, UserRound } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@smart/ui/avatar';
+import { Avatar, AvatarFallback } from '@hirekiwi/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +10,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@smart/ui/dropdown-menu';
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@smart/ui/sidebar';
-import { getInitials } from '@smart/ui';
+} from '@hirekiwi/ui/dropdown-menu';
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@hirekiwi/ui/sidebar';
+import { getInitials } from '@hirekiwi/ui';
 import { useCompanyAccount } from '@/lib/use-company-account';
 import { signOut } from '@/lib/auth';
 

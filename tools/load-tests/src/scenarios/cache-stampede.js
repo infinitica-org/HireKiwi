@@ -18,7 +18,7 @@
  *
  * Requires distinct seeded accounts — one per VU — so each VU starts its OWN
  * attempt rather than resuming a shared one (which would serialize instead of
- * racing). Run `pnpm --filter @smart/api-core db:seed:load-test` first with
+ * racing). Run `pnpm --filter @hirekiwi/api-core db:seed:load-test` first with
  * TEST_DATA_USERS >= the VU count below. For a genuinely COLD cache (the
  * scenario this is meant to catch — many candidates starting a scheduled exam
  * at the same instant), pick a level that has never been served this run, or

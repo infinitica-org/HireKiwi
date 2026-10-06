@@ -18,7 +18,7 @@ command -v pnpm >/dev/null || die "Install pnpm 11 / Node 22.20 first (see .nvmr
 
 cp -n .env.example .env 2>/dev/null || true
 pnpm install
-pnpm --filter @smart/contracts build
+pnpm --filter @hirekiwi/contracts build
 
 if ! command -v docker >/dev/null; then
   die "Docker is required for bootstrap. Install Docker Desktop, then re-run pnpm bootstrap."
@@ -50,7 +50,7 @@ echo
 echo "Ready."
 echo "  API:      pnpm dev:api          -> http://localhost:3000/health"
 echo "  Swagger:  http://localhost:3000/api/docs"
-echo "  Student:  pnpm --filter @smart/web-student dev"
+echo "  Student:  pnpm --filter @hirekiwi/web-student dev"
 echo "  Login:    student@smart.local / ChangeMe!Dev"
 echo "  Obs:      pnpm infra:obs        -> Prometheus :9090, Grafana :3100, Loki :3101"
 echo "  Verify:   pnpm verify:handover  (API + four portals must be running)"

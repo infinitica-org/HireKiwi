@@ -1,5 +1,5 @@
 import { Controller, Get, Inject } from '@nestjs/common';
-import { API_PREFIX } from '@smart/contracts';
+import { API_PREFIX } from '@hirekiwi/contracts';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import { InstitutionsService } from './institutions.service.js';
 

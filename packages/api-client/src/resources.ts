@@ -1,4 +1,17 @@
 import {
+  EvidenceUploadUrlResponseSchema,
+  ProjectDocumentDtoSchema,
+  type EvidenceFileConfirm,
+  type EvidenceUploadUrlRequest,
+} from '@hirekiwi/contracts';
+import { ListActiveUsersResponseSchema, type ListActiveUsersQuery } from '@hirekiwi/contracts';
+import {
+  ConnectSignalSourceResponseSchema,
+  ListSignalConnectionsResponseSchema,
+  type ConnectSignalSourceRequest,
+  type ConnectableSignalSourceId,
+} from '@hirekiwi/contracts';
+import {
   CampusAccessRequestDtoSchema,
   CareerEventDtoSchema,
   DecideCampusAccessResponseSchema,
@@ -21,7 +34,7 @@ import {
   type UniversityEmployersQuery,
   type UniversityEventsQuery,
   type UpdateCareerEvent,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   ConversionMetricsSchema,
   ListAdminReportsResponseSchema,
@@ -44,7 +57,7 @@ import {
   type SearchMessagesQuery,
   type SendMessageRequest,
   type StartConversationRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   ApplicationOutcomeSchema,
   AssignRecruiterResponseSchema,
@@ -63,7 +76,7 @@ import {
   type ApplyToJobRequest,
   type ListEmployerApplicantsQuery,
   type WithdrawApplicationRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   JobFlagResponseSchema,
   ListSavedJobsResponseSchema,
@@ -73,11 +86,13 @@ import {
   type CreateReportRequest,
   type HideJobRequest,
   type ListStudentJobsQuery,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   CompanyMemberSchema,
   CompanyProfileSchema,
   ListCompanyMembersResponseSchema,
+  ListCompanyJoinRequestsResponseSchema,
+  type RejectCompanyJoinRequestRequest,
   CompanyReviewSchema,
   ListCompanyReviewsResponseSchema,
   type RespondToReviewRequest,
@@ -87,7 +102,7 @@ import {
   type InviteRecruiterRequest,
   type UpdateCompanyMemberRoleRequest,
   type UpdateCompanyProfileRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type {
   AddCertificateSkillsRequest,
   AuditLogSection,
@@ -148,6 +163,7 @@ import type {
   UpdateProfileVisibilityRequest,
   UpdatePersonalInfoRequest,
   UpdateMessagingPreferenceRequest,
+  UpdateNotificationPreferencesRequest,
   DiscoverabilityPreference,
   DeactivateAccountRequest,
   CreateDataRequest,
@@ -193,7 +209,7 @@ import type {
   ReplacePaymentMethodDto,
   VerifyPaymentMethodReplacementDto,
   ResolveEvidenceDisputeRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   API_PREFIX,
   CheckoutSessionResponseSchema,
@@ -259,6 +275,9 @@ import {
   UniversityContactRequestDtoSchema,
   type ConnectPartnerUniversityRequest,
   type RequestUniversityContactRequest,
+  type SetRateLimitOverrideRequest,
+  ListRateLimitPoliciesResponseSchema,
+  RateLimitOverrideDtoSchema,
   PlatformAdminDtoSchema,
   InstitutionStudentDtoSchema,
   IntegrityQueueItemDtoSchema,
@@ -274,11 +293,13 @@ import {
   ListMyCandidateCertificatesResponseSchema,
   ListMyProjectsResponseSchema,
   ListNotificationsResponseSchema,
+  NotificationPreferencesResponseSchema,
   NextItemDtoSchema,
   NotificationDtoSchema,
   SubmitCertificateEndorsementDecisionResponseSchema,
   PublicCandidateProfileDtoSchema,
   CompanyOnboardingSessionDtoSchema,
+  CompanyJoinRequestDtoSchema,
   CompanyOnboardingVerificationDocumentDtoSchema,
   SendCorporateEmailVerificationResponseSchema,
   StartCompanyOnboardingResponseSchema,
@@ -288,7 +309,6 @@ import {
   PublicVerificationDtoSchema,
   RepoLanguagesResponseSchema,
   ReverseGeocodeResponseSchema,
-  SandboxResultDtoSchema,
   SendBatchInvitesResultDtoSchema,
   SkillClaimDtoSchema,
   SkillLibraryResponseSchema,
@@ -322,7 +342,6 @@ import {
   SkillVerifyInterviewDtoSchema,
   SkillVerifyPrepareDtoSchema,
   SkillVerifySessionDtoSchema,
-  SsoStartResponseSchema,
   StudentInviteLinkResponseSchema,
   SubscriptionPlanDtoSchema,
   TenantEntitlementsDtoSchema,
@@ -407,7 +426,7 @@ import {
   ToggleModelVersionResponseSchema,
   ListRegisteredPromptsResponseSchema,
   type CorrectStudentCapabilityRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { z } from 'zod';
 import type { SmartApiClient } from './client.js';
 
@@ -435,12 +454,6 @@ export function authApi(client: SmartApiClient) {
         schema: RegisterResponseSchema,
         anonymous: true,
       }),
-
-    ssoStart: (body: { provider: string; institutionDomain?: string; redirectUri: string }) =>
-      client.post(prefixed('/auth/sso/start'), body, { schema: SsoStartResponseSchema }),
-
-    ssoCallback: (body: { code: string; state: string }) =>
-      client.post(prefixed('/auth/sso/callback'), body, { schema: AuthTokenResponseSchema }),
 
     /**
      * Refresh sends no body: the refresh token is an HttpOnly cookie, so it is
@@ -756,6 +769,12 @@ export function usersApi(client: SmartApiClient) {
 
     deleteEducation: (id: string) => client.delete<void>(prefixed(`/users/me/education/${id}`)),
 
+    /** Th6-600 — presigned PUT URL (15 min) for a PDF/PNG education proof. */
+    createEducationDocumentUploadUrl: (educationId: string, body: EvidenceUploadUrlRequest) =>
+      client.post(prefixed(`/users/me/education/${educationId}/documents/upload-url`), body, {
+        schema: EvidenceUploadUrlResponseSchema,
+      }),
+
     attachEducationDocument: (educationId: string, body: CreateCandidateEducationDocumentDto) =>
       client.post(prefixed(`/users/me/education/${educationId}/documents`), body, {
         schema: CandidateEducationDocumentSchema,
@@ -809,6 +828,12 @@ export function usersApi(client: SmartApiClient) {
 
     deleteWorkExperience: (id: string) =>
       client.delete<void>(prefixed(`/users/me/work-experiences/${id}`)),
+
+    /** Th6-600 — presigned PUT URL (15 min) for a PDF/PNG work-experience proof. */
+    createWorkExperienceDocumentUploadUrl: (id: string, body: EvidenceUploadUrlRequest) =>
+      client.post(prefixed(`/users/me/work-experiences/${id}/documents/upload-url`), body, {
+        schema: EvidenceUploadUrlResponseSchema,
+      }),
 
     attachWorkExperienceDocument: (id: string, body: CreateWorkExperienceDocumentDto) =>
       client.post(prefixed(`/users/me/work-experiences/${id}/documents`), body, {
@@ -1295,6 +1320,15 @@ export function onboardingApi(client: SmartApiClient) {
         schema: AdminCutScoreDtoSchema,
       }),
 
+    publishCutScores: (levelId: string) =>
+      client.post(
+        prefixed(`/admin/levels/${levelId}/cut-scores/publish`),
+        {},
+        {
+          schema: ListAdminCutScoresResponseSchema,
+        },
+      ),
+
     listGradingQueue: (query?: { page?: number; pageSize?: number }) =>
       client.get(prefixed('/admin/grading-queue'), {
         schema: ListGradingQueueResponseSchema,
@@ -1376,6 +1410,13 @@ export function onboardingApi(client: SmartApiClient) {
     listInstitutionAdmins: (institutionId: string) =>
       client.get(prefixed(`/admin/institutions/${institutionId}/admins`), {
         schema: z.array(InstitutionAdminDtoSchema),
+      }),
+
+    /** Admin dashboard — users signed in right now, by Student / TPO / Company. */
+    listActiveUsers: (query: Partial<ListActiveUsersQuery> = {}) =>
+      client.get(prefixed('/admin/users/active'), {
+        query: { group: query.group, page: query.page, pageSize: query.pageSize },
+        schema: ListActiveUsersResponseSchema,
       }),
 
     /** Switch an institution staff member between INSTITUTION_ADMIN and PLACEMENT_STAFF. */
@@ -1748,32 +1789,12 @@ export function assessmentApi(client: SmartApiClient) {
         timeoutMs: 5_000,
       }),
 
-    compileCode: (body: unknown) =>
-      client.post(prefixed('/assessment/compile-l2'), body, { schema: JobAcceptedSchema }),
-
-    sandboxResult: (jobId: string) =>
-      client.get(prefixed(`/assessment/sandbox/${jobId}`), { schema: SandboxResultDtoSchema }),
-
-    requestAudioUploadUrl: (body: unknown) =>
-      client.post(prefixed('/assessment/l3/upload-url'), body, {
-        schema: z.object({
-          uploadUrl: z.string(),
-          objectKey: z.string(),
-          expiresInSeconds: z.number(),
-        }),
-      }),
-
     // An attempt completes once, so its id is the natural key: a repeat replays the first result.
     complete: (body: { attemptId: string }) =>
       client.post(prefixed('/assessment/complete'), body, {
         schema: CompleteAttemptResponseSchema,
         headers: { 'idempotency-key': `attempt-complete-${body.attemptId}` },
       }),
-
-    reportIntegrityEvent: (body: unknown) =>
-      client
-        .post<void>(prefixed('/assessment/integrity-event'), body, { timeoutMs: 3_000 })
-        .catch(() => undefined),
   };
 }
 
@@ -1867,9 +1888,6 @@ export function certificateApi(client: SmartApiClient) {
 
 export function placementApi(client: SmartApiClient) {
   return {
-    ingestJd: (body: unknown) =>
-      client.post(prefixed('/placement/ingest-jd'), body, { schema: JobAcceptedSchema }),
-
     match: (body: unknown) =>
       client.post(prefixed('/placement/match'), body, { schema: JobAcceptedSchema }),
 
@@ -1955,6 +1973,21 @@ export function projectsApi(client: SmartApiClient) {
     get: (projectId: string) =>
       client.get(prefixed(`/projects/${projectId}`), { schema: ProjectDtoSchema }),
 
+    /** Th6-600 — presigned PUT URL (15 min) for a PDF/PNG project evidence file. */
+    createDocumentUploadUrl: (projectId: string, body: EvidenceUploadUrlRequest) =>
+      client.post(prefixed(`/projects/${projectId}/documents/upload-url`), body, {
+        schema: EvidenceUploadUrlResponseSchema,
+      }),
+
+    /** Th6-600 — attach an uploaded evidence file; the server verifies its bytes. */
+    attachDocument: (projectId: string, body: EvidenceFileConfirm) =>
+      client.post(prefixed(`/projects/${projectId}/documents`), body, {
+        schema: ProjectDocumentDtoSchema,
+      }),
+
+    removeDocument: (projectId: string, documentId: string) =>
+      client.delete<void>(prefixed(`/projects/${projectId}/documents/${documentId}`)),
+
     replace: (projectId: string, body: unknown) =>
       client.post(prefixed(`/projects/${projectId}/replace`), body, {
         schema: ReplaceProjectResponseSchema,
@@ -1998,6 +2031,11 @@ export function projectsApi(client: SmartApiClient) {
     appealDefense: (projectId: string, body: unknown) =>
       client.post(prefixed(`/projects/${projectId}/defense/appeal`), body, {
         schema: ProjectDefenseAppealResponseSchema,
+      }),
+
+    delete: (projectId: string) =>
+      client.delete(prefixed(`/projects/${projectId}`), {
+        schema: z.void(),
       }),
   };
 }
@@ -2077,6 +2115,20 @@ export function notificationsApi(client: SmartApiClient) {
         path: prefixed(`/me/notifications/${notificationId}/read`),
         schema: NotificationDtoSchema,
       }),
+
+    /** S6-VV-121: every kind × channel; mandatory kinds come back enabled and locked. */
+    getPreferences: () =>
+      client.get(prefixed('/me/notification-preferences'), {
+        schema: NotificationPreferencesResponseSchema,
+      }),
+
+    updatePreferences: (body: UpdateNotificationPreferencesRequest) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed('/me/notification-preferences'),
+        body,
+        schema: NotificationPreferencesResponseSchema,
+      }),
   };
 }
 
@@ -2145,6 +2197,14 @@ export function publicApi(client: SmartApiClient) {
         schema: SubmitCompanyOnboardingResponseSchema,
         anonymous: true,
       }),
+
+    /** S6-VV-107: ask to join the approved company on the verified work-email domain. */
+    requestCompanyJoin: (sessionToken: string) =>
+      client.post(
+        companyOnboardingSessionPath(sessionToken, '/join-request'),
+        {},
+        { schema: CompanyJoinRequestDtoSchema, anonymous: true },
+      ),
   };
 }
 
@@ -2527,6 +2587,26 @@ function employerApi(client: SmartApiClient) {
     listMembers: () =>
       client.get(prefixed('/employer/members'), { schema: ListCompanyMembersResponseSchema }),
 
+    /** S6-VV-108: pending requests to join the company (owners only). */
+    listJoinRequests: () =>
+      client.get(prefixed('/employer/join-requests'), {
+        schema: ListCompanyJoinRequestsResponseSchema,
+      }),
+
+    approveJoinRequest: (joinRequestId: string) =>
+      client.post(
+        prefixed(`/employer/join-requests/${joinRequestId}/approve`),
+        {},
+        {
+          schema: CompanyJoinRequestDtoSchema,
+        },
+      ),
+
+    rejectJoinRequest: (joinRequestId: string, body: RejectCompanyJoinRequestRequest) =>
+      client.post(prefixed(`/employer/join-requests/${joinRequestId}/reject`), body, {
+        schema: CompanyJoinRequestDtoSchema,
+      }),
+
     inviteRecruiter: (body: InviteRecruiterRequest, idempotencyKey: string) =>
       client.post(prefixed('/employer/invitations'), body, {
         schema: z.object({ invitationId: z.string(), email: z.string() }),
@@ -2857,6 +2937,49 @@ function campusApi(client: SmartApiClient) {
   };
 }
 
+export function rateLimitsApi(client: SmartApiClient) {
+  return {
+    listPolicies: (query?: { institutionId?: string }) =>
+      client.get(prefixed('/admin/rate-limits/policies'), {
+        schema: ListRateLimitPoliciesResponseSchema,
+        query,
+      }),
+
+    setOverride: (institutionId: string, policyKey: string, body: SetRateLimitOverrideRequest) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed(`/admin/rate-limits/overrides/${institutionId}/${policyKey}`),
+        body,
+        schema: RateLimitOverrideDtoSchema,
+      }),
+
+    deleteOverride: (institutionId: string, policyKey: string) =>
+      client.delete(prefixed(`/admin/rate-limits/overrides/${institutionId}/${policyKey}`), {
+        schema: z.object({ success: z.boolean() }),
+      }),
+  };
+}
+
+/** External passive-signal connections (GitHub, HackerRank, LeetCode, LinkedIn, Credly). */
+export function signalsApi(client: SmartApiClient) {
+  return {
+    listConnections: () =>
+      client.get(prefixed('/signals/connections'), {
+        schema: ListSignalConnectionsResponseSchema,
+      }),
+
+    connect: (sourceId: ConnectableSignalSourceId, body: ConnectSignalSourceRequest) =>
+      client.post(prefixed(`/signals/connect/${sourceId}`), body, {
+        schema: ConnectSignalSourceResponseSchema,
+      }),
+
+    disconnect: (sourceId: ConnectableSignalSourceId) =>
+      client.delete(prefixed(`/signals/disconnect/${sourceId}`), {
+        schema: z.object({ ok: z.boolean() }),
+      }),
+  };
+}
+
 export function createSmartApi(client: SmartApiClient) {
   return {
     auth: authApi(client),
@@ -2884,6 +3007,8 @@ export function createSmartApi(client: SmartApiClient) {
     messaging: messagingApi(client),
     campus: campusApi(client),
     adminApplications: adminApplicationsApi(client),
+    rateLimits: rateLimitsApi(client),
+    signals: signalsApi(client),
   };
 }
 

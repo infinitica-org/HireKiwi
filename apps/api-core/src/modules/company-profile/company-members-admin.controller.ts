@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Post } from '@nestjs/common';
-import { API_PREFIX, AssignCompanyOwnerRequestSchema } from '@smart/contracts';
+import { API_PREFIX, AssignCompanyOwnerRequestSchema } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { Roles } from '../../common/guards/roles.decorator.js';

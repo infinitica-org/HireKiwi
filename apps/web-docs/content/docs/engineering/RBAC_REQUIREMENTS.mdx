@@ -1,0 +1,229 @@
+---
+title: RBAC Requirements & Role-Based UI Visibility Specification
+description: Authoritative Role-Based Access Control (RBAC) requirements, portal topology, module-by-module visibility matrix, and legal/operational justifications for UI access across SMART.
+---
+
+# RBAC Requirements & Role-Based UI Visibility Specification
+
+## 1. Executive Summary & Zero-Trust Governance
+
+SmartZen (SMART) enforces zero-trust Role-Based Access Control (RBAC) across all six web applications and backend API routes. Access control is modeled around multi-tenant boundaries, criterion-referenced evaluation integrity, and strict adherence to the **Digital Personal Data Protection (DPDP) Act 2023**.
+
+The architecture ensures that:
+1. **No UI element is accessible without cryptographically verified role membership.**
+2. **Access boundaries are enforced at both the client rendering gate and the API network layer.**
+3. **Every UI visibility or masking rule has an explicit legal, operational, or pedagogical justification.**
+
+---
+
+## 2. Role Taxonomy & Application Topology
+
+User identity is bound to a single canonical `UserRole` (`packages/contracts/src/domain/enums.ts`), supplemented by enterprise tenant roles (`CompanyMemberRole`). Each role maps to a dedicated front-end application shell:
+
+```
+                                  [ web-auth (Port 3000) ]
+                                    Login · SSO · OAuth
+                                             │
+             ┌───────────────────────────────┼───────────────────────────────┐
+             ▼                               ▼                               ▼
+    [ web-student (3001) ]          [ web-tpo (3002) ]              [ web-company (3006) ]
+    Role: STUDENT                   Roles: INSTITUTION_ADMIN        Role: COMPANY
+    Candidate Profile & Locker             PLACEMENT_STAFF          Sub-roles: OWNER, RECRUITER
+             │                               │                               │
+             └───────────────────────────────┼───────────────────────────────┘
+                                             │
+             ┌───────────────────────────────┴───────────────────────────────┐
+             ▼                                                               ▼
+    [ web-admin (3003) ]                                            [ web-verify (3007) ]
+    Roles: SUPER_ADMIN                                              Role: PUBLIC
+           SUPPORT_LEAD, SUPPORT_AGENT                              Unauthenticated Verification
+```
+
+### 2.1 Canonical System Roles
+
+| Role Identifier | Human Role Title | Bounded Context & Responsibility |
+| :--- | :--- | :--- |
+| `STUDENT` | Candidate / Student | Job seeker and talent profile owner. Holds full custody of personal evidence, assessments, consent grants, and job applications. |
+| `INSTITUTION_ADMIN` | TPO Head / Dean | Primary University Training & Placement Officer. Manages campus batch onboarding, placement drives, corporate invitations, and institutional analytics. |
+| `PLACEMENT_STAFF` | Placement Coordinator | University department coordinator or placement assistant. Can review batches, track student interview attendance, and coordinate campus logistics. |
+| `COMPANY` | Enterprise Representative | B2B employer tenant user. Access rights further governed by `CompanyMemberRole`: <br/>• **OWNER**: Full billing, seat allocation, company profile editing, and candidate screening.<br/>• **RECRUITER**: Candidate sourcing, review, interview scheduling, and application management. |
+| `SUPER_ADMIN` | Platform Operator | Global platform administrator. Holds platform-wide configuration access, rate limit overrides, tenant approvals, DSR execution, and audit log inspection. |
+| `SUPPORT_LEAD` | Customer Support Lead | Escalated platform operations, tenant dispute investigation, assisted account recovery, and verification exception handling. |
+| `SUPPORT_AGENT` | Support Specialist | First-line customer support. View-only access to non-sensitive tenant metadata; strictly blocked from viewing raw candidate PII or unmasked telemetry. |
+| `B2B_PARTNER` | API Consumer | Machine-to-machine partner holding an `X-SMART-API-KEY`. Interacts via programmatic REST contracts; has no interactive web UI portal. |
+| `PUBLIC` | Anonymous Visitor | Unauthenticated external user verifying HMAC-SHA256 signed public credentials on `web-verify`. |
+
+---
+
+## 3. Granular UI Visibility & Permission Matrix
+
+The following matrix documents interface visibility, view access, and action capabilities across all major platform modules.
+
+**Legend:**
+- **Full**: Unrestricted view, edit, and execution access.
+- **View**: Read-only display; modification controls are hidden or absent.
+- **Scoped**: Access restricted to assigned tenant, department, or active application scope.
+- **Masked**: Data displayed with PII or commercial details redacted/anonymized.
+- **None**: Interface route and UI chrome completely hidden; HTTP 403 wall on direct navigation.
+
+```
+┌──────────────────────────────────────┬─────────┬──────────────┬──────────────┬──────────────┬──────────────┬─────────────┬────────┐
+│ Platform Feature / UI Module         │ STUDENT │ INST_ADMIN   │ PLACEMENT_ST │ COMP_OWNER   │ COMP_RECRUIT │ SUPER_ADMIN │ PUBLIC │
+├──────────────────────────────────────┼─────────┼──────────────┼──────────────┼──────────────┼──────────────┼─────────────┼────────┤
+│ Candidate Evidence Locker            │ Full    │ Scoped       │ Scoped (View)│ Masked/Cons. │ Masked/Cons. │ Audit (View)│ None   │
+│ Proctored Assessment Runner          │ Full    │ None         │ None         │ None         │ None         │ Audit (View)│ None   │
+│ Private Skill Gap Report             │ Full    │ None         │ None         │ None         │ None         │ None        │ None   │
+│ Public Credential Card & Verification│ View    │ View         │ View         │ View         │ View         │ View        │ View   │
+│ Campus Drive Scheduling & Whitelist  │ View    │ Full         │ Scoped       │ Scoped (View)│ Scoped (View)│ Audit       │ None   │
+│ Student Batch Verification (TPO)     │ None    │ Full         │ Scoped (View)│ None         │ None         │ Audit       │ None   │
+│ Enterprise Candidate Search & Radar  │ None    │ None         │ None         │ Full         │ Full         │ Audit       │ None   │
+│ Unmasked Candidate Contact PII       │ Full    │ Scoped       │ Scoped       │ Consented    │ Consented    │ DSR Only    │ None   │
+│ Employer Seat & Team Management      │ None    │ None         │ None         │ Full         │ View         │ Audit       │ None   │
+│ Employer Invoices & Subscription     │ None    │ None         │ None         │ Full         │ None         │ Audit       │ None   │
+│ Proctoring Video Telemetry & Flags   │ None    │ None         │ None         │ None         │ None         │ Audit (Temp)│ None   │
+│ Platform Global Audit Logs           │ None    │ None         │ None         │ None         │ None         │ Full        │ None   │
+│ DPDP Data Subject Request (DSR) Tool │ None    │ None         │ None         │ None         │ None         │ Full        │ None   │
+│ Platform Rate Limit Overrides        │ None    │ None         │ None         │ None         │ None         │ Full        │ None   │
+└──────────────────────────────────────┴─────────┴──────────────┴──────────────┴──────────────┴──────────────┴─────────────┴────────┘
+```
+
+---
+
+## 4. Justifications for UI Visibility & Access Restrictions
+
+Every access boundary in SMART is justified by explicit legal, operational, and integrity requirements:
+
+### 4.1 Indian DPDP Act 2023 Compliance & Data Minimization
+
+```
+[Candidate Talent Profile]
+            │
+            ▼
+    [Anonymized View] ──(Candidate Grants Consent)──► [Unmasked PII View]
+    • Verified Skill Radar                            • Candidate Legal Name
+    • Criterion Tier (Gold/Silver)                    • Email & Phone Number
+    • Anonymous ID (e.g. #C-9821)                     • College Enrollment ID
+```
+
+1. **Candidate Contact Details (Unmasked PII):**
+   - **Allowed:** `STUDENT` (self), `INSTITUTION_ADMIN` (enrolled college cohort), `COMPANY` (only *after* candidate submits application or accepts an interview request).
+   - **Restricted from:** `PUBLIC`, `COMPANY` (pre-consent talent search), `SUPPORT_AGENT`.
+   - **Justification (DPDP Act §6 & §7):** The Indian DPDP Act strictly mandates consent-backed purpose specification. Employers searching talent pools evaluate skills, tier benchmarks, and code evidence blindly. Personal contact information remains masked until the candidate explicitly opts into communication with that specific employer.
+
+2. **Proctoring Telemetry & WebCam Snapshots:**
+   - **Allowed:** Isolated proctoring audit engine and authorized `SUPER_ADMIN` during active integrity review.
+   - **Restricted from:** `INSTITUTION_ADMIN`, `COMPANY`, `STUDENT`, `SUPPORT_AGENT`.
+   - **Justification (DPDP Act §4 - Data Minimization):** Live proctoring streams are processed ephemerally on the client via WebAssembly. Low-resolution ($320\times 240$) event snapshots are accessible only to authorized integrity systems and are permanently purged after 30 days. Displaying proctoring video streams to college staff or employers violates biometric privacy and student dignity standards.
+
+3. **Zero Government ID Display:**
+   - **Restricted from:** All interfaces.
+   - **Justification:** SMART collects zero Aadhaar numbers, PAN cards, or passport images. Identity is verified exclusively via federated institutional SSO and GitHub OAuth. No UI view exists to store, render, or expose Indian national identity numbers.
+
+4. **Right to Erasure & DSR Interface:**
+   - **Restricted to:** `SUPER_ADMIN` with automated cryptographic logging.
+   - **Justification (DPDP Act §12):** When a candidate invokes account erasure, the request flows into a secure administrative queue. Restricting DSR execution prevents unauthorized accidental purges while guaranteeing legal completion within the statutory 48-hour compliance window.
+
+---
+
+### 4.2 Academic Integrity & Non-Tamperability of Assessment Data
+
+1. **Private Skill Gap Reports:**
+   - **Allowed:** `STUDENT` only.
+   - **Restricted from:** `INSTITUTION_ADMIN`, `COMPANY`, `PUBLIC`.
+   - **Justification:** When a candidate scores `BELOW_BRONZE`, the evaluation engine generates a personalized gap analysis detailing deficient competencies. This report is strictly developmental and private. Exposing gap reports to college administrators or recruiters introduces grading bias and punishes early learners.
+
+2. **Verified Competency Score & Tier Alteration:**
+   - **Restricted from:** `INSTITUTION_ADMIN`, `PLACEMENT_STAFF`, `COMPANY`, `SUPPORT_AGENT`.
+   - **Justification:** University TPOs and company recruiters cannot override or inflate a candidate's verified tier. Assessment scores are generated by deterministic scoring engines and cryptographically signed (`HMAC-SHA256`). If university officials could edit scores, the trust network collapses into conventional unverified resume claims.
+
+---
+
+### 4.3 B2B Multi-Tenancy & Anti-Poaching Isolation
+
+1. **Cross-Institutional Candidate Data:**
+   - **Restricted from:** `INSTITUTION_ADMIN` and `PLACEMENT_STAFF` across other institutions.
+   - **Justification:** Multi-tenant boundaries strictly compartmentalize student records by `institutionId`. College A has zero visibility into College B’s student performance, placement numbers, or salary packages.
+
+2. **Employer Recruiter vs. Owner Permissions (`EMP-02`):**
+   - **Allowed to `OWNER` only:** Company billing details, Razorpay/Stripe payment methods, subscription plan changes, recruiter team seat management (`company.team.manage`).
+   - **Allowed to `RECRUITER`:** Applicant review (`company.applicants.view`), interview status management (`company.applicants.manage`), and review responses (`company.reviews.respond`).
+   - **Justification:** Commercial separation prevents staff recruiters from accessing corporate credit cards, altering commercial tiers, or locking out organization administrators.
+
+---
+
+### 4.4 Operational Safety & Blast-Radius Minimization
+
+1. **Session Revocation & Kill Switches:**
+   - **Restricted to:** `SUPER_ADMIN` holding `@RequirePermission('session.revoke')`.
+   - **Justification:** Immediate termination of user sessions across Redis cluster nodes is an emergency security intervention. Confining this control to Super Admins with two-factor authentication prevents support account takeovers from causing widespread service disruptions.
+
+2. **Support Agent Read-Only Sandboxing:**
+   - **Restricted from:** `SUPPORT_AGENT` is barred from editing user passwords, modifying enterprise balances, or exporting raw database dumps.
+   - **Justification:** Prevents social engineering attacks targeting customer service tiers. Support agents can view ticket logs and tenant status flags to assist users, but must escalate destructive actions to a `SUPPORT_LEAD` or `SUPER_ADMIN`.
+
+---
+
+## 5. Technical Enforcement Architecture
+
+Access control is enforced across three sequential defensive rings:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. EDGE & ROUTE LAYER                                                       │
+│    • Reverse proxy enforces origin routing per portal domain                │
+│    • Public endpoints rate-limited to 20 req/min                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 2. CLIENT PORTAL GATE (Browser-Side @hirekiwi/ui)                              │
+│    • RolesGuard intercepts route navigation before component render         │
+│    • evaluatePortalAccess() verifies JWT payload role claim                 │
+│    • ForbiddenWall (HTTP 403 equivalent) renders if role is unauthorized    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 3. API CONTROLLER & GUARD LAYER (NestJS apps/api-core)                       │
+│    • JwtAuthGuard: Validates cryptographic signature & expiry of bearer token│
+│    • RolesGuard: Enforces @Roles() decorator across endpoints               │
+│    • TenantScopeGuard: Isolates SQL queries to tenant context (WHERE org_id)│
+│    • RequirePermission: Checks granular role permission matrix             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 5.1 Client-Side Gating: `RolesGuard`
+
+Located in `packages/ui/src/roles-guard.tsx`, this component wraps all authenticated Next.js page layouts:
+
+```tsx
+// Example from apps/web-tpo/src/app/providers.tsx
+<RolesGuard
+  allowedRoles={['INSTITUTION_ADMIN', 'PLACEMENT_STAFF']}
+  authAppUrl={process.env.NEXT_PUBLIC_AUTH_URL!}
+  apiBaseUrl={process.env.NEXT_PUBLIC_API_URL!}
+  pathname={pathname}
+  portalOrigins={portalOrigins}
+>
+  {children}
+</RolesGuard>
+```
+
+When an unauthorized role (e.g., a `STUDENT` attempting to access `/campus` on port 3002) hits this gate, the client immediately replaces the view with `<ForbiddenWall />`, supplying a direct link redirecting the user back to their designated portal home (`portalHomeForRole()`).
+
+### 5.2 Fine-Grained In-Component Capability Gating
+
+Within legitimate portals, specific buttons and sub-components are conditionally rendered using centralized permission checkers:
+
+```tsx
+import { companyRoleHasPermission } from '@hirekiwi/contracts';
+
+// In web-company team management panel
+{companyRoleHasPermission(memberRole, 'company.team.manage') && (
+  <Button variant="primary" onClick={handleInviteRecruiter}>
+    Invite Recruiter
+  </Button>
+)}
+```
+
+### 5.3 Server-Side Defense-in-Depth
+
+Client-side gating is strictly an interface usability and information architecture mechanism. The backend NestJS server enforces absolute access control via `@hirekiwi/contracts/src/http/routes.ts`:
+
+- Every single route declares its permitted `roles` array in contracts.
+- Missing roles trigger continuous integration invariant failures (`invariants.spec.ts`).
+- Server-side guards discard incoming request parameters that violate multi-tenant ownership boundaries.

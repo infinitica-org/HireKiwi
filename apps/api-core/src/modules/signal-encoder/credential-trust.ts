@@ -1,4 +1,4 @@
-import type { CertificateProficiency, EvidenceVerificationMethod } from '@smart/contracts';
+import type { CertificateProficiency, EvidenceVerificationMethod } from '@hirekiwi/contracts';
 
 /**
  * Trust normalization for certificate/credential evidence (S6-VV-72).

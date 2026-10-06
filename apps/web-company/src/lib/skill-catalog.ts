@@ -1,4 +1,4 @@
-import { SKILL_DEFINITIONS } from '@smart/contracts';
+import { SKILL_DEFINITIONS } from '@hirekiwi/contracts';
 import type { SkillLevel } from './types';
 
 /** The proficiency levels the API accepts, in ascending order. */

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ExternalLink, Link2, Share2, Copy, Check } from 'lucide-react';
-import { useQuery } from '@smart/ui';
+import { useQuery } from '@hirekiwi/ui';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useCurrentUser } from '@/lib/candidate-identity';
@@ -66,7 +66,7 @@ export function ProfilePublicLinkCard() {
 
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <Link
-          href={link?.url || '/public-profile'}
+          href={link?.url || '/student/public-profile'}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 active:scale-95 transition-all dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"

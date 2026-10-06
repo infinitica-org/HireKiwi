@@ -13,7 +13,7 @@ import {
   type SmartClientOptions,
   createSmartApi,
   type SmartApi,
-} from '@smart/api-client';
+} from '@hirekiwi/api-client';
 
 const SmartApiContext = createContext<SmartApi | null>(null);
 

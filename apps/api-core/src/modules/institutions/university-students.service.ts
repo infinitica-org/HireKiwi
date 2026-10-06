@@ -9,7 +9,7 @@ import type {
   UniversityRosterRow,
   UniversityStudentSummary,
   UniversityVerificationStatus,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

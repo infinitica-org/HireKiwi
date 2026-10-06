@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { GetEmployerSkillInspectionResponse } from '@smart/contracts';
-import { AiExplanationPanel } from '@smart/ui';
+import type { GetEmployerSkillInspectionResponse } from '@hirekiwi/contracts';
+import { AiExplanationPanel } from '@hirekiwi/ui';
 import { matchingApi } from '../../lib/api';
 import { mutedTextClass } from '../../lib/tpo-ui';
 

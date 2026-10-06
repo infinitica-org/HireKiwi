@@ -4,7 +4,7 @@ import {
   EMPLOYER_APPLICATION_STATUS_LABELS,
   type ApplicationStatus,
   type EmployerApplicantCard,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 interface StatusSelectProps {
   applicant: Pick<

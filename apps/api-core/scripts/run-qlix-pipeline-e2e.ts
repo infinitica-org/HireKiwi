@@ -1,6 +1,6 @@
 /**
  * One-shot E2E runner: QLIX verify → capability inference → matching → recalibration.
- * Usage: pnpm --filter @smart/api-core exec tsx scripts/run-qlix-pipeline-e2e.ts
+ * Usage: pnpm --filter @hirekiwi/api-core exec tsx scripts/run-qlix-pipeline-e2e.ts
  */
 import 'reflect-metadata';
 import '../src/platform/config/load-dotenv.bootstrap.js';

@@ -1,4 +1,4 @@
-import type { AuditLogSection, ListAuditLogsQuery } from '@smart/contracts';
+import type { AuditLogSection, ListAuditLogsQuery } from '@hirekiwi/contracts';
 import type { Prisma, UserRole as PrismaUserRole } from '../../generated/prisma/index.js';
 
 /** Groups the raw UserRole enum into the three audit-log tabs the superadmin UI shows. */

@@ -1,21 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { FlaggedOrganizationDto, IntegrityQueueItemDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { FlaggedOrganizationDto, IntegrityQueueItemDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   Ban,
   Building2,
   CheckCircle2,
   CircleCheck,
+  Eye,
   ShieldAlert,
   ShieldCheck,
   TriangleAlert,
+  X,
 } from 'lucide-react';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@smart/ui/tabs';
-import { ConfirmDialog } from '@smart/ui';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '../../../components/admin-tabs';
+import { ConfirmDialog } from '@hirekiwi/ui';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,
@@ -41,7 +43,7 @@ export default function IntegrityPage() {
   const [activeTab, setActiveTab] = useState<'PENDING' | 'ESCALATED' | 'ORGANIZATIONS'>('PENDING');
   const [items, setItems] = useState<IntegrityQueueItemDto[]>([]);
   const [flaggedOrgs, setFlaggedOrgs] = useState<FlaggedOrganizationDto[]>([]);
-  const [_selectedFlag, _setSelectedFlag] = useState<IntegrityQueueItemDto | null>(null);
+  const [selectedFlag, setSelectedFlag] = useState<IntegrityQueueItemDto | null>(null);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -426,7 +428,8 @@ export default function IntegrityPage() {
               />,
               'Candidate',
               'Integrity Flag',
-              'Risk Severity',
+              'Risk & Score',
+              'Attempt Timelines',
               'Anomaly Details',
               'Actions',
             ]}
@@ -473,6 +476,9 @@ export default function IntegrityPage() {
                         <div className="truncate text-[11px] text-zinc-500">
                           {item.studentEmail}
                         </div>
+                        <div className="font-mono text-[10px] text-zinc-400 truncate">
+                          {item.attemptId}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
@@ -484,13 +490,51 @@ export default function IntegrityPage() {
                   </TableCell>
 
                   <TableCell>
-                    <SeverityBadge severity={item.severity} />
+                    <div className="space-y-1">
+                      <SeverityBadge severity={item.severity} />
+                      {typeof item.integrityScore === 'number' ? (
+                        <div className="font-mono text-[11px] font-semibold text-zinc-700">
+                          Score: {item.integrityScore}/100
+                        </div>
+                      ) : null}
+                    </div>
                   </TableCell>
 
                   <TableCell>
-                    <span className="text-xs text-zinc-600 max-w-sm truncate block">
-                      {item.flagReason || 'Proctoring algorithm anomaly detected'}
-                    </span>
+                    <div className="space-y-0.5 text-[11px] text-zinc-600">
+                      <div>
+                        <span className="font-medium text-zinc-800">Started: </span>
+                        {new Date(item.startedAt).toLocaleString()}
+                      </div>
+                      <div>
+                        <span className="font-medium text-zinc-800">Completed: </span>
+                        {item.completedAt
+                          ? new Date(item.completedAt).toLocaleString()
+                          : 'In Progress'}
+                      </div>
+                      {item.latestViolationAt ? (
+                        <div>
+                          <span className="font-semibold text-rose-700">Latest Flag: </span>
+                          {new Date(item.latestViolationAt).toLocaleString()}
+                        </div>
+                      ) : null}
+                    </div>
+                  </TableCell>
+
+                  <TableCell>
+                    <div className="max-w-xs space-y-1">
+                      <span className="text-xs text-zinc-700 truncate block font-medium">
+                        {item.flagReason || 'Proctoring algorithm anomaly detected'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFlag(item)}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-600 hover:text-zinc-900 hover:underline"
+                      >
+                        <Eye className="size-3" />
+                        Inspect Details
+                      </button>
+                    </div>
                   </TableCell>
 
                   <TableCell className="text-right">
@@ -535,6 +579,120 @@ export default function IntegrityPage() {
           </DataTable>
         )}
       </div>
+
+      {/* Anomaly Inspection Modal */}
+      {selectedFlag ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-xl rounded-md border border-zinc-200/90 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-start justify-between border-b border-zinc-200/80 pb-4">
+              <div>
+                <h3 className="font-heading text-base font-bold text-zinc-950">
+                  Anomaly Triage: {selectedFlag.studentName}
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  {selectedFlag.studentEmail} · Attempt: {selectedFlag.attemptId}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedFlag(null)}
+                className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3 rounded-md border border-zinc-200/80 bg-zinc-50 p-3.5">
+                <div>
+                  <span className="text-[11px] font-medium text-zinc-500">Risk Severity</span>
+                  <div className="mt-1">
+                    <SeverityBadge severity={selectedFlag.severity} />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[11px] font-medium text-zinc-500">
+                    Integrity Risk Score
+                  </span>
+                  <div className="mt-1 font-mono text-sm font-bold text-zinc-900">
+                    {typeof selectedFlag.integrityScore === 'number'
+                      ? `${selectedFlag.integrityScore} / 100`
+                      : 'N/A'}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[11px] font-medium text-zinc-500">Attempt Started</span>
+                  <div className="mt-1 font-medium text-zinc-800">
+                    {new Date(selectedFlag.startedAt).toLocaleString()}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[11px] font-medium text-zinc-500">Attempt Completed</span>
+                  <div className="mt-1 font-medium text-zinc-800">
+                    {selectedFlag.completedAt
+                      ? new Date(selectedFlag.completedAt).toLocaleString()
+                      : 'In Progress'}
+                  </div>
+                </div>
+                {selectedFlag.latestViolationAt ? (
+                  <div className="col-span-2 border-t border-zinc-200/60 pt-2">
+                    <span className="text-[11px] font-medium text-rose-700">
+                      Latest Violation Recorded
+                    </span>
+                    <div className="mt-0.5 font-medium text-zinc-900">
+                      {new Date(selectedFlag.latestViolationAt).toLocaleString()}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="rounded-md border border-zinc-200/80 bg-zinc-50 p-3.5">
+                <span className="text-[11px] font-semibold text-zinc-700">
+                  Violation Details / Anomaly Evidence
+                </span>
+                <p className="mt-1 text-xs text-zinc-800">
+                  {selectedFlag.flagReason || 'Proctoring algorithm anomaly detected'}
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedFlag(null)}
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-emerald-700 text-white hover:bg-emerald-800"
+                  onClick={() => {
+                    const item = selectedFlag;
+                    setSelectedFlag(null);
+                    confirmResolve(item, 'CLEAR');
+                  }}
+                >
+                  Dismiss Flag
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    const item = selectedFlag;
+                    setSelectedFlag(null);
+                    confirmResolve(item, 'VOID');
+                  }}
+                >
+                  Suspend & Void
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* High-Risk Action Confirmation Dialog (T24) */}
       {confirmModal ? (

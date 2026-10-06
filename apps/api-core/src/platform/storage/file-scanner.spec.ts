@@ -11,7 +11,7 @@ const { env, inc } = vi.hoisted(() => ({
   inc: vi.fn(),
 }));
 vi.mock('../config/env.js', () => ({ env }));
-vi.mock('@smart/observability', () => ({ fileScansTotal: { inc } }));
+vi.mock('@hirekiwi/observability', () => ({ fileScansTotal: { inc } }));
 
 import { assertDataUriClean, assertFileClean, clamdScan } from './file-scanner.js';
 

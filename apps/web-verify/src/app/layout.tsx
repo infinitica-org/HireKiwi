@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
-import { SMART_HTML_CLASS, SmartLogo } from '@smart/ui';
+import { SMART_HTML_CLASS, SmartLogo } from '@hirekiwi/ui';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
 
         <footer className="mx-auto max-w-6xl border-t border-[var(--surface-border)] px-6 py-8 text-center text-xs text-[var(--text-muted)]">
-          <p>© 2026 SMART Platform. All rights reserved.</p>
+          <p>© 2026 HireKiwi Platform. All rights reserved.</p>
           <p className="mt-1">
             Certified credentials are cryptographically signed with the platform authority key.
           </p>

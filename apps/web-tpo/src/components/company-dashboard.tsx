@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import type { ApplicationDto, JobOpeningDto } from '@smart/contracts';
-import { Alert } from '@smart/ui';
+import type { ApplicationDto, JobOpeningDto } from '@hirekiwi/contracts';
+import { Alert } from '@hirekiwi/ui';
 import { applicationsApi, openingsApi } from '../lib/api';
 import { tpoApiErrorMessage } from '../lib/api-errors';
 import {

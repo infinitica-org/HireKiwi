@@ -6,7 +6,7 @@ import {
   type EmploymentType,
   type JobFitTab,
   type JobWorkMode,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 /**
  * The Jobs page keeps its filter, tab and view state in the URL so a refresh or a shared link shows

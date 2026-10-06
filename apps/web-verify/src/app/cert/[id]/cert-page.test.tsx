@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { notFound } from 'next/navigation';
-import { SmartApiError } from '@smart/api-client';
-import type { PublicVerificationDto } from '@smart/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
+import type { PublicVerificationDto } from '@hirekiwi/contracts';
 import Page from './page';
 
 const mockVerify = vi.fn();

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { CandidateCertificateDto } from '@smart/contracts';
-import { Button } from '@smart/ui';
+import type { CandidateCertificateDto } from '@hirekiwi/contracts';
+import { Button } from '@hirekiwi/ui';
 import { SkillPicker, type CertificateSkillSelection } from './skill-picker';
 import { ToolsPicker } from './tools-picker';
 

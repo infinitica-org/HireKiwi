@@ -1,4 +1,4 @@
-import type { InstitutionStudentDto, SkillClaimDto } from '@smart/contracts';
+import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import { skillCategoryFor } from './skill-taxonomy';
 
 export const DOMAIN_CATEGORY_KEYS = [

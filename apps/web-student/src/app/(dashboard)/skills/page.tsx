@@ -11,7 +11,6 @@ import {
   ChevronUp,
   X,
   Trash2,
-  Check,
   HelpCircle,
   Flag,
 } from 'lucide-react';
@@ -20,11 +19,12 @@ import {
   skillFocusOptions,
   type SkillClaimDto,
   type SkillDefinition,
-} from '@smart/contracts';
-import { cn } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { cn } from '@hirekiwi/ui';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '@/lib/api';
 import { SKILL_VERIFICATION_DIAGNOSTIC_PROFICIENCY } from '@/lib/skill-declarations';
+import { SkillLevelExplanationPanel } from '@/components/assessment/skill-level-explanation-panel';
 
 export type SkillProficiencyLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert' | 'Pro';
 
@@ -58,6 +58,56 @@ function scoreToLevel(score: number): SkillProficiencyLevel {
   if (score === 3) return 'Advanced';
   if (score === 2) return 'Intermediate';
   return 'Beginner';
+}
+
+const ZINC_TONE =
+  'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400';
+
+const CONFIDENCE_CUES: Record<string, { label: string; tone: string }> = {
+  HIGH: {
+    label: 'very sure',
+    tone: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
+  },
+  MEDIUM: {
+    label: 'pretty sure',
+    tone: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+  },
+  LOW: {
+    label: 'still a rough guess',
+    tone: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
+  },
+};
+
+// Detect if a skill is under verification (assessment taken but result pending)
+function isUnderVerification(claim: SkillClaimDto | undefined): boolean {
+  if (!claim) return false;
+  // Under verification if: latestAssessmentResult exists OR verificationInProgress is true
+  return Boolean(claim.latestAssessmentResult || claim.verificationInProgress);
+}
+
+// Get the display status for a skill claim
+function getSkillStatus(
+  claim: SkillClaimDto | undefined,
+): 'DECLARED' | 'UNDER_VERIFICATION' | 'VERIFIED' {
+  if (!claim) return 'DECLARED';
+  if (claim.status === 'VERIFIED') return 'VERIFIED';
+  if (isUnderVerification(claim)) return 'UNDER_VERIFICATION';
+  return 'DECLARED';
+}
+
+// Keeps the level badge honest: the card always carries a lightweight "how
+// sure" signal, so the level is never presented bare.
+function confidenceCue(claim: SkillClaimDto | undefined): { label: string; tone: string } {
+  const assessment = claim?.latestAssessmentResult;
+  const numeric = assessment?.claimConfidence ?? claim?.claimConfidence ?? null;
+  const level =
+    assessment?.confidence ??
+    (numeric !== null ? (numeric >= 0.75 ? 'HIGH' : numeric >= 0.45 ? 'MEDIUM' : 'LOW') : null);
+  const byConfidence = level ? CONFIDENCE_CUES[level] : undefined;
+  if (byConfidence) return byConfidence;
+  if (claim?.status === 'VERIFIED') return { label: 'confirmed', tone: ZINC_TONE };
+  if (claim?.status === 'DECLARED') return { label: 'self-declared', tone: ZINC_TONE };
+  return { label: 'not confirmed yet', tone: ZINC_TONE };
 }
 
 export default function SkillsProfilePage() {
@@ -132,27 +182,26 @@ export default function SkillsProfilePage() {
       if (isVerified) {
         supportingEvidence.push({
           type: 'Project',
-          label: `Automated diagnostic defense evaluated for ${def.name}`,
+          label: `Hands-on challenge completed for ${def.name}`,
           source: 'AI_INFERENCE',
         });
         supportingEvidence.push({
           type: 'Certification',
-          label: `Direct assessment artifact verified on-chain / hash checked`,
+          label: `Skill check result confirmed for ${def.name}`,
           source: 'VERIFIED_FACT',
         });
       }
 
       let holdingBackReason =
-        'No certification or manager endorsement linked — capping below Pro tier.';
+        'No certifications or vouches linked yet — that’s what’s holding back Pro.';
       if (!isVerified) {
-        holdingBackReason =
-          'Diagnostic assessment pending — verify skill test to unlock level progression.';
+        holdingBackReason = 'Take the skill check to start climbing to the next level.';
       }
 
       const improveSuggestions = [
-        'Complete the AI project defense interview linking repository code',
-        'Add a recognized industry certification in your profile',
-        'Request a manager work experience endorsement',
+        'Show what you can do in a quick hands-on challenge',
+        'Add a certification you already have to your profile',
+        'Ask a manager or mentor to vouch for you',
       ];
 
       return {
@@ -227,11 +276,10 @@ export default function SkillsProfilePage() {
           </div>
           <div>
             <h1 className="font-heading text-xl font-bold tracking-tight text-zinc-950 sm:text-2xl dark:text-white">
-              Skills & Competencies
+              Your Skills
             </h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Verified competency levels evaluated by Smart&apos;s readiness model — never
-              self-declared
+              Real skill levels backed by real proof — you don&apos;t get to grade your own homework
             </p>
           </div>
         </div>
@@ -251,9 +299,9 @@ export default function SkillsProfilePage() {
       <div className="rounded-md border border-zinc-200/80 bg-zinc-50/70 p-3.5 text-xs text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-300 flex items-center gap-2">
         <HelpCircle className="size-4 text-zinc-400 shrink-0" />
         <span>
-          <strong className="text-zinc-900 dark:text-white">Note:</strong> Skill levels are decided
-          by Smart&apos;s evaluation model based on submitted code defenses, certifications, and
-          work endorsements — never self-declared.
+          <strong className="text-zinc-900 dark:text-white">Heads-up:</strong> Your levels come from
+          your work, skill checks, certifications, and vouches from people you&apos;ve worked with —
+          never from what you say about yourself.
         </span>
       </div>
 
@@ -290,7 +338,7 @@ export default function SkillsProfilePage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search declared skills..."
+            placeholder="Search your skills..."
             className="w-full rounded-md border border-zinc-200 bg-white py-1.5 pl-8 pr-3 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
           />
         </div>
@@ -309,8 +357,7 @@ export default function SkillsProfilePage() {
               No skills in this category
             </p>
             <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-              Add skills from the catalog to allow Smart to calculate your diagnostic readiness
-              score.
+              Add a few skills from the list and we&apos;ll start leveling you up.
             </p>
             <button
               type="button"
@@ -323,7 +370,10 @@ export default function SkillsProfilePage() {
         ) : (
           filteredSkills.map((item) => {
             const isExpanded = expandedSkillCode === item.definition.code;
-            const isVerified = item.claim?.status === 'VERIFIED';
+            const skillStatus = getSkillStatus(item.claim);
+            const isVerified = skillStatus === 'VERIFIED';
+            const isUnderVerif = skillStatus === 'UNDER_VERIFICATION';
+            const _cue = confidenceCue(item.claim);
 
             return (
               <div
@@ -337,49 +387,78 @@ export default function SkillsProfilePage() {
                       <h3 className="font-heading text-base font-bold text-zinc-950 dark:text-white">
                         {item.definition.name}
                       </h3>
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
-                          isVerified
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                            : 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400',
-                        )}
-                      >
-                        {item.level}
-                      </span>
+                      {isVerified ? (
+                        <>
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
+                              'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
+                            )}
+                          >
+                            {item.level}
+                          </span>
+                          <span
+                            className={cn(
+                              'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
+                              'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
+                            )}
+                          >
+                            Verified
+                          </span>
+                        </>
+                      ) : isUnderVerif ? (
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
+                            'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300',
+                          )}
+                        >
+                          Under Verification
+                        </span>
+                      ) : (
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold',
+                            'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+                          )}
+                        >
+                          Not Verified
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {item.definition.categoryName} · Code:{' '}
-                      <code className="font-mono">{item.definition.code}</code>
+                      {item.definition.categoryName}
                     </p>
 
-                    {/* 5-Segment Level Bar */}
-                    <div className="pt-1">
-                      <div className="flex items-center gap-1.5">
-                        {[1, 2, 3, 4, 5].map((segment) => {
-                          const filled = segment <= item.levelScore;
-                          return (
-                            <div
-                              key={segment}
-                              className={cn(
-                                'h-2 flex-1 rounded-sm transition-all',
-                                filled
-                                  ? 'bg-zinc-900 dark:bg-white'
-                                  : 'bg-zinc-100 dark:bg-zinc-800',
-                              )}
-                            />
-                          );
-                        })}
+                    {/* 5-Segment Level Bar - Only show for verified skills */}
+                    {isVerified && (
+                      <div className="pt-1">
+                        <div className="flex items-center gap-1.5">
+                          {[1, 2, 3, 4, 5].map((segment) => {
+                            const filled = segment <= item.levelScore;
+                            return (
+                              <div
+                                key={segment}
+                                className={cn(
+                                  'h-2 flex-1 rounded-sm transition-all',
+                                  filled
+                                    ? 'bg-zinc-900 dark:bg-white'
+                                    : 'bg-zinc-100 dark:bg-zinc-800',
+                                )}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between text-[10px] text-zinc-400 mt-1">
+                          <span>Beginner</span>
+                          <span>Intermediate</span>
+                          <span>Advanced</span>
+                          <span>Expert</span>
+                          <span>Pro</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between text-[10px] text-zinc-400 mt-1">
-                        <span>Beginner</span>
-                        <span>Intermediate</span>
-                        <span>Advanced</span>
-                        <span>Expert</span>
-                        <span>Pro</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Actions */}
@@ -389,13 +468,17 @@ export default function SkillsProfilePage() {
                       onClick={() => setImproveSkillTarget(item)}
                       className="inline-flex items-center gap-1 rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
                     >
-                      Improve this skill →
+                      {isVerified
+                        ? 'Level up this skill →'
+                        : isUnderVerif
+                          ? 'Assessment in progress →'
+                          : 'Verify Skill →'}
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleRemoveSkill(item.definition.code)}
-                      title="Remove skill"
+                      title="Remove this skill"
                       className="rounded-md border border-zinc-200 p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
                     >
                       <Trash2 className="size-4" />
@@ -423,62 +506,20 @@ export default function SkillsProfilePage() {
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
-                      className="mt-3 space-y-2 rounded-md bg-zinc-50/80 p-3.5 text-xs dark:bg-zinc-900/60"
+                      className="mt-3 space-y-4 rounded-md bg-zinc-50/80 p-4 text-xs dark:bg-zinc-900/60 border border-zinc-200/60 dark:border-zinc-800"
                     >
-                      <div>
-                        <span className="font-bold text-zinc-900 dark:text-white">
-                          Supporting Evidence:
-                        </span>
-                        {item.supportingEvidence.length > 0 ? (
-                          <ul className="mt-1 space-y-1">
-                            {item.supportingEvidence.map((ev, idx) => (
-                              <li
-                                key={idx}
-                                className="flex items-center justify-between gap-1.5 text-zinc-600 dark:text-zinc-300"
-                              >
-                                <div className="flex items-center gap-1.5">
-                                  <Check className="size-3.5 text-emerald-600 shrink-0" />
-                                  <span>{ev.label}</span>
-                                </div>
-                                <span
-                                  className={cn(
-                                    'rounded px-1.5 py-0.5 text-[9px] font-bold tracking-tight uppercase border shrink-0',
-                                    ev.source === 'VERIFIED_FACT'
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-                                      : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
-                                  )}
-                                >
-                                  {ev.source === 'VERIFIED_FACT' ? 'Verified Fact' : 'AI Inference'}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="mt-1 text-zinc-500 italic">
-                            Unrated — add experience or a project using this skill.
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="pt-2 border-t border-zinc-200/60 dark:border-zinc-800">
-                        <span className="font-bold text-zinc-900 dark:text-white">
-                          Holding Back Level:
-                        </span>
-                        <p className="mt-0.5 text-zinc-600 dark:text-zinc-300">
-                          {item.holdingBackReason}
-                        </p>
-                      </div>
+                      <SkillLevelExplanationPanel skillCode={item.definition.code} />
 
                       {/* Evidence Freshness Indicator (I318) */}
-                      <div className="pt-2 border-t border-zinc-200/60 dark:border-zinc-800 flex items-center justify-between">
+                      <div className="pt-3 border-t border-zinc-200/60 dark:border-zinc-800 flex items-center justify-between">
                         <div>
                           <span className="font-bold text-zinc-900 dark:text-white block">
-                            Evidence Freshness:
+                            Is your proof still fresh?
                           </span>
                           <span className="text-[11px] text-zinc-500">
                             {item.hasEvidence
-                              ? 'Evidence active within policy window (valid for 12 months)'
-                              : 'No recent evidence items linked'}
+                              ? 'Yep — your proof counts for the next 12 months.'
+                              : 'Nothing new linked up yet.'}
                           </span>
                         </div>
                         <span
@@ -489,7 +530,7 @@ export default function SkillsProfilePage() {
                               : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
                           )}
                         >
-                          {item.hasEvidence ? 'CURRENT' : 'STALE / MISSING'}
+                          {item.hasEvidence ? 'FRESH' : 'NEEDS AN UPDATE'}
                         </span>
                       </div>
 
@@ -508,7 +549,7 @@ export default function SkillsProfilePage() {
                           className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-amber-600 dark:text-zinc-400 dark:hover:text-amber-400"
                         >
                           <Flag className="size-3" />
-                          <span>Report incorrect evidence mapping</span>
+                          <span>Something look off? Tell us</span>
                         </button>
                       </div>
                     </motion.div>
@@ -539,14 +580,38 @@ export default function SkillsProfilePage() {
               </button>
 
               <h2 className="font-heading text-lg font-bold text-zinc-950 dark:text-white">
-                Improve {improveSkillTarget.definition.name}
+                {improveSkillTarget.claim?.status === 'VERIFIED'
+                  ? `Level up ${improveSkillTarget.definition.name}`
+                  : isUnderVerification(improveSkillTarget.claim)
+                    ? `Verify ${improveSkillTarget.definition.name}`
+                    : `Verify ${improveSkillTarget.definition.name}`}
               </h2>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                To advance from{' '}
-                <span className="font-bold text-zinc-900 dark:text-white">
-                  {improveSkillTarget.level}
-                </span>{' '}
-                to a higher tier, complete any of these actions:
+                {improveSkillTarget.claim?.status === 'VERIFIED' ? (
+                  <>
+                    You&apos;re at{' '}
+                    <span className="font-bold text-zinc-900 dark:text-white">
+                      {improveSkillTarget.level}
+                    </span>
+                    . Do any of these to climb higher:
+                  </>
+                ) : isUnderVerification(improveSkillTarget.claim) ? (
+                  <>
+                    Your assessment for{' '}
+                    <span className="font-bold text-zinc-900 dark:text-white">
+                      {improveSkillTarget.definition.name}
+                    </span>{' '}
+                    is being evaluated. It may take a few moments.
+                  </>
+                ) : (
+                  <>
+                    Take a skill verification to confirm your level for{' '}
+                    <span className="font-bold text-zinc-900 dark:text-white">
+                      {improveSkillTarget.definition.name}
+                    </span>
+                    :
+                  </>
+                )}
               </p>
 
               <div className="mt-4 space-y-2.5">
@@ -563,10 +628,14 @@ export default function SkillsProfilePage() {
 
               <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                 <Link
-                  href="/assessments"
+                  href={
+                    improveSkillTarget.claim?.claimId
+                      ? `/student/assessments/skills/${improveSkillTarget.claim.claimId}`
+                      : '/student/assessments'
+                  }
                   className="rounded-md bg-zinc-900 px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
                 >
-                  Go to Assessments
+                  Take a skill check →
                 </Link>
               </div>
             </motion.div>
@@ -596,8 +665,8 @@ export default function SkillsProfilePage() {
                 Add Skills to Your Profile
               </h2>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Select competencies from the catalog. Smart will automatically calculate and
-                benchmark your proficiency levels.
+                Tick the skills you want to show off — we&apos;ll keep your levels up to date for
+                you.
               </p>
 
               {/* Search and Category Filter */}
@@ -687,7 +756,7 @@ export default function SkillsProfilePage() {
                     onClick={handleSaveBatchSkills}
                     className="rounded-md bg-zinc-900 px-4 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-950"
                   >
-                    {isPending ? 'Saving…' : 'Save Skills'}
+                    {isPending ? 'Adding…' : 'Add skills'}
                   </button>
                 </div>
               </div>
@@ -717,29 +786,29 @@ export default function SkillsProfilePage() {
               <div className="flex items-center gap-2">
                 <Flag className="size-4 text-amber-600" />
                 <h2 className="font-heading text-base font-bold text-zinc-950 dark:text-white">
-                  Report Evidence-to-Skill Mapping
+                  Something look wrong?
                 </h2>
               </div>
               <p className="mt-1 text-xs text-zinc-500">
-                Dispute incorrect automated inference or missing evidence connection for{' '}
-                <strong>{disputeTarget.skillName}</strong>.
+                If the level for <strong>{disputeTarget.skillName}</strong> looks off, or
+                something&apos;s missing, let us know.
               </p>
 
               {disputeSuccess ? (
                 <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                  Dispute logged successfully. It has been queued for reviewer investigation.
+                  Thanks for the flag! Our team will take a look and sort it out.
                 </div>
               ) : (
                 <div className="mt-4 space-y-3">
                   <div>
                     <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
-                      Reason for Dispute (min 8 characters)
+                      What looks off? (at least 8 characters)
                     </label>
                     <textarea
                       rows={3}
                       value={disputeReason}
                       onChange={(e) => setDisputeReason(e.target.value)}
-                      placeholder="Explain why the evidence mapping or level assignment is inaccurate..."
+                      placeholder="Tell us what looks off — for example: this level is too low, here's what I actually did..."
                       className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
                     />
                   </div>
@@ -774,7 +843,7 @@ export default function SkillsProfilePage() {
                           const msg =
                             err && typeof err === 'object' && 'message' in err
                               ? String((err as { message: unknown }).message)
-                              : 'Failed to submit dispute. Please check your reason and try again.';
+                              : "Couldn't send that — check your message and try again.";
                           setDisputeError(msg);
                         } finally {
                           setSubmittingDispute(false);
@@ -782,7 +851,7 @@ export default function SkillsProfilePage() {
                       }}
                       className="rounded-md bg-zinc-900 px-4 py-1.5 text-xs font-bold text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900"
                     >
-                      {submittingDispute ? 'Submitting...' : 'Submit Dispute'}
+                      {submittingDispute ? 'Sending…' : 'Send report'}
                     </button>
                   </div>
                 </div>

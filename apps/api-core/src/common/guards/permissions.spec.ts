@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
-import { API_PREFIX, ROUTES, USER_ROLES } from '@smart/contracts';
+import { API_PREFIX, ROUTES, USER_ROLES } from '@hirekiwi/contracts';
 import { InstitutionsAdminController } from '../../modules/institutions/institutions-admin.controller.js';
 import { AdminSessionsController } from '../../modules/auth/admin-sessions.controller.js';
 import { UsersAdminController } from '../../modules/users/users-admin.controller.js';

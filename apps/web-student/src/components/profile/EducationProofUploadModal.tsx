@@ -2,7 +2,8 @@
 
 import { useId, useRef, useState } from 'react';
 import { FileText, Upload, X } from 'lucide-react';
-import type { CandidateEducationDocumentDto } from '@smart/contracts';
+import type { CandidateEducationDocumentDto } from '@hirekiwi/contracts';
+import { EVIDENCE_ACCEPT, EVIDENCE_MAX_MB, validateEvidenceFile } from '@/lib/evidence-upload';
 import {
   profilePrimaryButtonSmClass,
   profileSecondaryButtonSmClass,
@@ -15,8 +16,8 @@ const DOCUMENT_TYPE_LABELS: Record<CandidateEducationDocumentDto['documentType']
   OTHER: 'Other proof',
 };
 
-const ACCEPT = '.pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg';
-const MAX_MB = 10;
+const ACCEPT = EVIDENCE_ACCEPT;
+const MAX_MB = EVIDENCE_MAX_MB;
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -53,15 +54,10 @@ export function EducationProofUploadModal({
   function pickFile(next: File | undefined) {
     if (!next) return;
     setLocalError(null);
-    const extOk = /\.(pdf|png|jpe?g)$/i.test(next.name);
-    const typeOk = next.type === 'application/pdf' || next.type.startsWith('image/');
-    if (!extOk && !typeOk) {
-      setLocalError('Use a PDF, PNG, or JPG file.');
-      setFile(null);
-      return;
-    }
-    if (next.size > MAX_MB * 1024 * 1024) {
-      setLocalError(`File must be ${MAX_MB} MB or smaller.`);
+    // Th6-600 — PDF or PNG only, 10 MB max (the server re-checks the real bytes).
+    const problem = validateEvidenceFile(next);
+    if (problem) {
+      setLocalError(problem);
       setFile(null);
       return;
     }
@@ -79,7 +75,7 @@ export function EducationProofUploadModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/50 p-4 font-sans"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -89,7 +85,7 @@ export function EducationProofUploadModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="education-proof-title"
-        className="font-[family-name:var(--tpo-font-sans)] flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-[0_18px_48px_rgba(15,23,42,0.14)]"
+        className="font-sans flex w-full max-w-md flex-col overflow-hidden rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-[0_18px_48px_rgba(15,23,42,0.14)]"
       >
         <div className="flex items-start justify-between gap-3 border-b border-[var(--ds-border)] px-5 py-4">
           <div>
@@ -127,7 +123,7 @@ export function EducationProofUploadModal({
               onChange={(event) =>
                 setDocType(event.target.value as CandidateEducationDocumentDto['documentType'])
               }
-              className="h-11 w-full rounded-[14px] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3.5 text-sm text-[var(--ds-text)] focus:border-[var(--ds-green)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green-soft)]"
+              className="h-11 w-full rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3.5 text-sm text-[var(--ds-text)] focus:border-[var(--ds-green)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green-soft)]"
             >
               {Object.entries(DOCUMENT_TYPE_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -172,7 +168,7 @@ export function EducationProofUploadModal({
                 setDragging(false);
                 pickFile(event.dataTransfer.files[0]);
               }}
-              className={`flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-5 text-center transition-colors ${
+              className={`flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-4 py-5 text-center transition-colors ${
                 dragging
                   ? 'border-[var(--ds-green)] bg-[var(--ds-green-soft)]/40'
                   : file
@@ -182,7 +178,7 @@ export function EducationProofUploadModal({
             >
               {file ? (
                 <>
-                  <div className="mb-2 flex size-11 items-center justify-center rounded-xl bg-[var(--ds-surface)] text-[var(--ds-green)] shadow-sm">
+                  <div className="mb-2 flex size-11 items-center justify-center rounded-md bg-[var(--ds-surface)] text-[var(--ds-green)] shadow-sm">
                     <FileText className="size-5" aria-hidden />
                   </div>
                   <p className="max-w-full truncate text-sm font-semibold text-[var(--ds-text)]">
@@ -194,14 +190,14 @@ export function EducationProofUploadModal({
                 </>
               ) : (
                 <>
-                  <div className="mb-2 flex size-11 items-center justify-center rounded-xl bg-[var(--ds-surface)] text-[#2563eb] shadow-sm">
+                  <div className="mb-2 flex size-11 items-center justify-center rounded-md bg-[var(--ds-surface)] text-[#2563eb] shadow-sm">
                     <Upload className="size-5" aria-hidden />
                   </div>
                   <p className="text-sm font-semibold text-[var(--ds-text)]">
                     Drop file here or browse
                   </p>
                   <p className="mt-1 text-[11px] text-[var(--ds-text-muted)]">
-                    PDF, PNG, JPG · max {MAX_MB} MB
+                    PDF or PNG · max {MAX_MB} MB
                   </p>
                 </>
               )}
@@ -209,7 +205,7 @@ export function EducationProofUploadModal({
           </div>
 
           {localError ? (
-            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
               {localError}
             </p>
           ) : null}

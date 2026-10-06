@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ChevronRight, GraduationCap, Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
-import type { AuthenticatedUser } from '@smart/contracts';
-import { UserMenu } from '@smart/ui';
+import type { AuthenticatedUser } from '@hirekiwi/contracts';
+import { UserMenu } from '@hirekiwi/ui';
 import { api } from '../lib/api';
 import { signOut } from '../lib/auth';
 

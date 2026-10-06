@@ -1,4 +1,4 @@
-import type { CompetencyFusionResult, ProficiencyLevel } from '@smart/contracts';
+import type { CompetencyFusionResult, ProficiencyLevel } from '@hirekiwi/contracts';
 import { capProficiency, proficiencyCapOrdinal } from './status-ordinal.js';
 
 function minProficiency(a: ProficiencyLevel, b: ProficiencyLevel): ProficiencyLevel {

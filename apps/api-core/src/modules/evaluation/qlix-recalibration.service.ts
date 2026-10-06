@@ -6,8 +6,8 @@ import {
   proficiencyCeilingToScore,
   type QlixRecalibrationReport,
   type QlixRecalibrationSample,
-} from '@smart/scoring-engine';
-import { qlixRecalibrationRuns, qlixRecalibrationWeightVersion } from '@smart/observability';
+} from '@hirekiwi/scoring-engine';
+import { qlixRecalibrationRuns, qlixRecalibrationWeightVersion } from '@hirekiwi/observability';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { SignalWeightModelStore } from '../corroboration/signal-weight-model.store.js';

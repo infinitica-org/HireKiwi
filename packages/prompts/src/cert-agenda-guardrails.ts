@@ -5,7 +5,7 @@ import {
   CERT_AGENDA_MIN_MAPPED_TOPICS,
   TRACK_DEFINITIONS,
   type TrackCode,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export type CertAgendaGuardFailure = 'sparse_agenda' | 'agenda_drift';
 

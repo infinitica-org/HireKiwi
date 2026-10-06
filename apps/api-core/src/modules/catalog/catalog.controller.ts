@@ -1,5 +1,5 @@
 import { Controller, Get, Inject, Param, Query } from '@nestjs/common';
-import { API_PREFIX } from '@smart/contracts';
+import { API_PREFIX } from '@hirekiwi/contracts';
 import { Public } from '../../common/guards/public.decorator.js';
 import { EvidenceCatalogService } from '../evidence/evidence-catalog.service.js';
 import { CatalogService } from './catalog.service.js';

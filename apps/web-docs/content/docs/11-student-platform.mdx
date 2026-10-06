@@ -1,0 +1,49 @@
+---
+title: 11. Student Platform
+description: Student portal architecture, onboarding, project defense experience, readiness dashboard, and application tracking.
+---
+
+## 11.1 Student Platform Overview
+
+The Student Platform (`app.becomesmart.online`) empowers candidates to curate an unfakeable portfolio of verified achievements, track role-specific readiness, and apply directly to premium opportunities.
+
+```
+[Institutional SSO] ──► [Connect Repos] ──► [Take Project Defense] ──► [Track Readiness] ──► [Apply]
+```
+
+---
+
+## 11.2 Onboarding & Institutional Association
+
+1. **Invitation Acceptance:** Student clicks institutional invite or logs in using campus email (`@campus.edu`).
+2. **Identity Verification:** System queries university tenant records to link degree, department, student ID, and official academic records.
+3. **Target Career Role Selection:** Student designates primary career aspiration (e.g., Full-Stack Web Developer, Cloud Engineer, Data Scientist).
+
+---
+
+## 11.3 The Interactive Readiness Dashboard
+
+The candidate homepage presents an intuitive readiness breakdown:
+
+- **Role Readiness Radar:** Visual polygon chart comparing the candidate's verified competencies against industry benchmark profiles.
+- **Next Best Action:** Dynamic recommendation engine guiding students:
+  - _"Complete an AI Project Defense on repository `e-commerce-api` to unlock Silver Tier in Systems Design."_
+  - _"Verify your Docker containerization skills to increase match fit for Acme Corp's Cloud Engineer opening by +18%."_
+- **Active Verification Vault:** List of all linked GitHub repos, certificates, and assessment sessions with current verification states.
+
+---
+
+## 11.4 Candidate Assessment & Defense Experience
+
+- **Clean, Focused UI:** Minimalist assessment runner built in Next.js, optimized for zero distraction.
+- **Integrated Code Editor:** Monaco-based editor supporting syntax highlighting, test execution, and real-time AST validation.
+- **Proctoring Telemetry Status:** Non-intrusive status pill indicating camera and microphone integrity without obstructive overlays.
+- **Instant BARS Feedback:** Upon completion of a defense session, students receive transparent criteria-level feedback within 60 seconds, highlighting specific architectural strengths and areas for growth.
+
+---
+
+## 11.5 Job Discovery & One-Click Applications
+
+- **Match-Ranked Feed:** Opportunities sorted dynamically by match score ($M(c, j)$).
+- **Transparent Gate Indicators:** Candidates can see exact qualifications (e.g., _"You meet 4 of 4 criteria — 89% Match"_ or _"Locked: Requires Silver Tier in Kubernetes"_).
+- **One-Click Application:** Transmits full verified evidence dossier to the recruiter without requiring repetitive resume file uploads.

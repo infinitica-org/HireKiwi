@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { SignOutButton } from '@smart/ui';
+import { SignOutButton } from '@hirekiwi/ui';
 import { signOut } from '../lib/auth';
 
 export function PortalHeader() {

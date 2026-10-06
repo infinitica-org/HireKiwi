@@ -1,5 +1,5 @@
 {
-  "name": "@smart/api-client",
+  "name": "@hirekiwi/api-client",
   "version": "0.1.0",
   "private": true,
   "description": "Typed HTTP client for the SMART API: contract-validated responses, refresh rotation, 429 backoff, correlation propagation. Owner: Satheswaran V.",
@@ -29,12 +29,12 @@
     "clean": "rimraf dist .turbo *.tsbuildinfo"
   },
   "dependencies": {
-    "@smart/contracts": "workspace:*",
+    "@hirekiwi/contracts": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@smart/eslint-config": "workspace:*",
-    "@smart/tsconfig": "workspace:*",
+    "@hirekiwi/eslint-config": "workspace:*",
+    "@hirekiwi/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "rimraf": "6.0.1",

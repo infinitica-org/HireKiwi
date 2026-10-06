@@ -1,6 +1,6 @@
 'use client';
 
-import { getAccessToken, signOutAndRedirect, storeAccessToken } from '@smart/api-client';
+import { getAccessToken, signOutAndRedirect, storeAccessToken } from '@hirekiwi/api-client';
 import { api } from './api';
 
 const authUrl = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';

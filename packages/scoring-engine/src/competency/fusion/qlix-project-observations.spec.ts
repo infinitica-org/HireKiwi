@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ProjectVerificationReportDto, SkillCompetency } from '@smart/contracts';
+import type { ProjectVerificationReportDto, SkillCompetency } from '@hirekiwi/contracts';
 import {
   mergeProjectObservationBundles,
   normalizeQlixCompetencyStatus,

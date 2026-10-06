@@ -1,11 +1,11 @@
 import type { ComponentProps, ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { CircleAlert, Info } from 'lucide-react';
-import { cn } from '@smart/ui';
-import { Input } from '@smart/ui/input';
-import { Label } from '@smart/ui/label';
-import { Alert, AlertTitle } from '@smart/ui/alert';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@smart/ui/table';
+import { cn } from '@hirekiwi/ui';
+import { Input } from '@hirekiwi/ui/input';
+import { Label } from '@hirekiwi/ui/label';
+import { Alert, AlertTitle } from '@hirekiwi/ui/alert';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@hirekiwi/ui/table';
 
 /** Shared 36px/40px control surface — clean rounded-md border, high contrast. */
 export const controlClassName =
@@ -68,7 +68,7 @@ export function FilterBar({ className, ...props }: Omit<ComponentProps<'div'>, '
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 rounded-md border border-zinc-200/80 bg-white p-3 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900 md:flex-row md:flex-wrap md:items-end',
+        'flex flex-col gap-3 rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs md:flex-row md:flex-wrap md:items-end md:p-5',
         '[&>*:first-child]:min-w-[12rem] [&>*:first-child]:flex-1',
         '[&>*:not(:first-child):not(:last-child)]:min-w-[10rem] md:[&>*:not(:first-child):not(:last-child)]:w-48',
         className,
@@ -90,7 +90,7 @@ export function InlineAlert({ tone = 'info', title }: { tone?: 'info' | 'danger'
   return (
     <Alert
       variant={tone === 'danger' ? 'destructive' : 'default'}
-      className="rounded-md border border-zinc-200/80 shadow-2xs"
+      className="rounded-lg border border-zinc-200/80 shadow-2xs"
     >
       {tone === 'danger' ? <CircleAlert className="size-4" /> : <Info className="size-4" />}
       <AlertTitle className="text-xs font-semibold">{title}</AlertTitle>
@@ -100,9 +100,9 @@ export function InlineAlert({ tone = 'info', title }: { tone?: 'info' | 'danger'
 
 export function EmptyState({ icon: Icon, children }: { icon?: LucideIcon; children: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-zinc-200 bg-white px-6 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/40">
+    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[#e2e8f0] bg-[#f8fafc] px-6 py-12 text-center">
       {Icon ? (
-        <span className="flex size-10 items-center justify-center rounded-md border border-zinc-200/80 bg-zinc-50 text-zinc-600 shadow-2xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className="flex size-10 items-center justify-center rounded-lg bg-[#f1f5f9] text-[#64748b]">
           <Icon className="size-5" strokeWidth={1.75} aria-hidden />
         </span>
       ) : null}
@@ -219,22 +219,22 @@ export function DataTable({
   if (empty) return <EmptyState icon={emptyIcon}>No rows to show.</EmptyState>;
 
   return (
-    <div className="overflow-hidden rounded-md border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-2xs">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-zinc-200/80 bg-zinc-50/75 hover:bg-zinc-50/75 dark:border-zinc-800 dark:bg-zinc-800/60 dark:hover:bg-zinc-800/60">
+            <TableRow className="border-b border-zinc-200/80 bg-zinc-50/60 hover:bg-zinc-50/60">
               {headers.map((header, idx) => (
                 <TableHead
                   key={typeof header === 'string' ? header : idx}
-                  className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                  className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-zinc-500"
                 >
                   {header}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-zinc-100 text-xs dark:divide-zinc-800 [&_tr]:transition-colors [&_tr]:duration-150 [&_tr:hover]:bg-zinc-50/70 dark:[&_tr:hover]:bg-zinc-800/50">
+          <TableBody className="divide-y divide-zinc-100 text-[13px] [&_tr]:transition-colors [&_tr]:duration-150 [&_tr:hover]:bg-zinc-50/70">
             {children}
           </TableBody>
         </Table>

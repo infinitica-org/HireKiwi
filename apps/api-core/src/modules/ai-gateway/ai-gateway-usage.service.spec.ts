@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AiUsageSummaryDtoSchema } from '@smart/contracts';
+import { AiUsageSummaryDtoSchema } from '@hirekiwi/contracts';
 import { AiGatewayUsageService } from './ai-gateway-usage.service.js';
 
 const HOUR_MS = 60 * 60 * 1000;

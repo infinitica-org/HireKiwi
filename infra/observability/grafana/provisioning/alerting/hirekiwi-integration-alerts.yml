@@ -1,0 +1,38 @@
+# S6-VV-129 (#585): third-party integration alerts. Delivered by the smart-team contact point and policy
+# provisioned in hirekiwi-alerts.yml (S6-VV-125). Runbook: web-docs delivery/INTEGRATION_HEALTH.
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: smart-integrations
+    folder: SMART
+    interval: 1m
+    rules:
+      - uid: smart-integration-down
+        title: "Third-party integration down"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: "min by (integration) (smart_integration_up)"
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+          category: integration
+        annotations:
+          summary: "A third-party integration has failed its health probe for 10 minutes (see /admin/health/integrations)."
+          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/INTEGRATION_HEALTH.mdx#integration-down

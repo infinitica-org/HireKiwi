@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Input } from '@smart/ui';
+import { Button, Input } from '@hirekiwi/ui';
 import { Award } from 'lucide-react';
 
 export interface CertificateDetailsPayload {

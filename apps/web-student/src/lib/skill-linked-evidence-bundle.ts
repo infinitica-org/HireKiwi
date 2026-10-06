@@ -3,7 +3,7 @@ import type {
   ProjectDto,
   ProjectSkillMappingDto,
   WorkExperienceDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 import { api } from '@/lib/api';
 import {

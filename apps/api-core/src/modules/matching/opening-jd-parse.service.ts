@@ -7,12 +7,33 @@ import {
   getSkillBlueprint,
   type JdSkillExtractVector,
   type SkillRequirement,
-} from '@smart/contracts';
-import { JD_SKILL_EXTRACT_PROMPT_REF } from '@smart/prompts';
+} from '@hirekiwi/contracts';
+import { JD_SKILL_EXTRACT_PROMPT_REF } from '@hirekiwi/prompts';
 import { z } from 'zod';
 import { AiGatewayService } from '../ai-gateway/ai-gateway.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { extractSkillsOfflineFallback } from './jd-fallback-extractor.js';
+
+/**
+ * Gap 3: JD-Parse Parameters versioning
+ * Allows evolution of parsing thresholds and logic without losing historical reference.
+ * Format: "jd-parse-vX.Y" (X=major, Y=minor)
+ * Update version when changing thresholds or merging logic to enable audit trail.
+ */
+interface JdParseParameters {
+  readonly version: string; // e.g., "jd-parse-v1.0"
+  readonly confidenceThreshold: number; // Minimum confidence to merge parsed skills (was hardcoded 0.6)
+  readonly description?: string;
+}
+
+const JD_PARSE_PARAMETERS_V1: JdParseParameters = {
+  version: 'jd-parse-v1.0',
+  confidenceThreshold: 0.6,
+  description: 'Initial version: confidence >= 0.6 triggers skill merging',
+};
+
+// Future: can add v1.1, v2.0, etc. when thresholds change
+const CURRENT_JD_PARSE_PARAMS = JD_PARSE_PARAMETERS_V1;
 
 const RawJdSkillExtractSchema = z.object({
   requiredSkills: z
@@ -158,12 +179,14 @@ export class OpeningJdParseService {
       data: {
         jdParseStatus: 'PARSED',
         parseConfidence: extracted.parseConfidence,
+        jdParseVersion: CURRENT_JD_PARSE_PARAMS.version,
         parsedAt: new Date(),
         parsedRequirements: extracted as never,
       },
     });
 
-    if (extracted.parseConfidence < 0.6) {
+    // Gap 3: Use versioned parameter instead of hardcoded 0.6
+    if (extracted.parseConfidence < CURRENT_JD_PARSE_PARAMS.confidenceThreshold) {
       return;
     }
 

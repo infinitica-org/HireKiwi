@@ -6,8 +6,8 @@ import type {
   CompanyVerificationReviewDetailDto,
   IntegrityQueueItemDto,
   VerificationQueueItemDto,
-} from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+} from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   AlertTriangle,
   BadgeCheck,
@@ -20,9 +20,9 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent } from '@smart/ui/card';
-import { ConfirmDialog } from '@smart/ui';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent } from '@hirekiwi/ui/card';
+import { ConfirmDialog } from '@hirekiwi/ui';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,
@@ -308,7 +308,7 @@ export default function VerificationPage() {
 
       {/* Verification Pipeline Monitor Metrics */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="flex items-start justify-between gap-3 rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs">
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
               Pending Tenant Verifications
@@ -323,7 +323,7 @@ export default function VerificationPage() {
           </div>
         </div>
 
-        <div className="flex items-start justify-between gap-3 rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs">
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
               Escalated Attempts
@@ -338,7 +338,7 @@ export default function VerificationPage() {
           </div>
         </div>
 
-        <div className="flex items-start justify-between gap-3 rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs">
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
               Pipeline State

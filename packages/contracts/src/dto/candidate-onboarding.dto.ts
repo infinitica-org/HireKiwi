@@ -68,12 +68,51 @@ export const CandidateOnboardingExperienceSchema = z.object({
 });
 export type CandidateOnboardingExperience = z.infer<typeof CandidateOnboardingExperienceSchema>;
 
-export const CandidateOnboardingSkillSchema = z.object({
-  type: z.enum(['technical', 'language']),
+/** Spoken language with the student's stated level (not a verifiable skill). */
+export const CandidateOnboardingLanguageSchema = z.object({
+  type: z.literal('language'),
   name: z.string().min(1).max(80),
   proficiency: z.string().min(1).max(40),
 });
+
+/** Catalog skill code, e.g. `REACT_FRONTEND` — the standardized 10-track competency taxonomy. */
+export const SkillCatalogCodeSchema = z
+  .string()
+  .regex(/^[A-Z][A-Z0-9_]{1,63}$/, 'Choose a skill from the SMART skill catalog.');
+
+/**
+ * Th6-600 — a technical skill is a catalog pick only: no free-text names and no self-rated
+ * proficiency (levels come from verification, not self-assessment). Strict, so a submitted
+ * `proficiency` is rejected rather than silently dropped.
+ */
+export const CandidateOnboardingTechnicalSkillSchema = z
+  .object({
+    type: z.literal('technical'),
+    code: SkillCatalogCodeSchema,
+    /** Catalog display name, carried for readability; the code is authoritative. */
+    name: z.string().min(1).max(80),
+  })
+  .strict();
+
+/** What the client may submit: spoken languages, plus catalog-only technical skills. */
+export const CandidateOnboardingSkillSchema = z.discriminatedUnion('type', [
+  CandidateOnboardingLanguageSchema,
+  CandidateOnboardingTechnicalSkillSchema,
+]);
 export type CandidateOnboardingSkill = z.infer<typeof CandidateOnboardingSkillSchema>;
+
+/**
+ * What may already be stored. Profiles and drafts saved before Th6-600 hold free-text technical
+ * skills with a self-rating; they still load (nothing is deleted), but new writes use the
+ * strict schema above.
+ */
+export const StoredCandidateOnboardingSkillSchema = z.object({
+  type: z.enum(['technical', 'language']),
+  code: z.string().max(64).optional(),
+  name: z.string().min(1).max(80),
+  proficiency: z.string().max(40).optional(),
+});
+export type StoredCandidateOnboardingSkill = z.infer<typeof StoredCandidateOnboardingSkillSchema>;
 
 /**
  * S6-VV-75 — CGPA/10th/12th scores. Denormalized onto `User` (not
@@ -174,6 +213,8 @@ export type CompleteCandidateOnboardingRequest = z.infer<
 >;
 
 export const CandidateOnboardingProfileSchema = CompleteCandidateOnboardingRequestSchema.extend({
+  /** Stored profiles may predate catalog-only skills (Th6-600); read them leniently. */
+  skills: z.array(StoredCandidateOnboardingSkillSchema).max(40).default([]),
   dpdpConsentAt: z.string().datetime(),
   completedAt: z.string().datetime(),
   /** I211 — the consent/terms version in effect when this student accepted. */
@@ -201,7 +242,8 @@ export const CandidateOnboardingDraftSchema = z.object({
   resumeFile: CandidateResumeFileSchema.optional(),
   education: z.array(CandidateOnboardingEducationSchema.partial()).max(20).optional(),
   experiences: z.array(CandidateOnboardingExperienceSchema.partial()).max(30).optional(),
-  skills: z.array(CandidateOnboardingSkillSchema.partial()).max(40).optional(),
+  /** Drafts may predate catalog-only skills (Th6-600); read them leniently. */
+  skills: z.array(StoredCandidateOnboardingSkillSchema.partial()).max(40).optional(),
   jobPreferences: CandidateOnboardingJobPreferencesSchema.partial().optional(),
   academicScores: CandidateAcademicScoresSchema.partial().optional(),
   academicProgram: CandidateAcademicProgramSchema.partial().optional(),
@@ -216,6 +258,9 @@ export type CandidateOnboardingDraft = z.infer<typeof CandidateOnboardingDraftSc
 
 export const SaveCandidateOnboardingDraftRequestSchema = CandidateOnboardingDraftSchema.omit({
   savedAt: true,
+}).extend({
+  /** Th6-600 — new draft writes are catalog-only too. */
+  skills: z.array(CandidateOnboardingSkillSchema).max(40).optional(),
 });
 export type SaveCandidateOnboardingDraftRequest = z.infer<
   typeof SaveCandidateOnboardingDraftRequestSchema

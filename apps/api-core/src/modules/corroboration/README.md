@@ -32,7 +32,7 @@ Playbook §5.5: passive signal is corroborating weight only.
 - Claim/user binding on verification consumer (`claim.studentId === event.userId`)
 - Passive ingest requires `consentScope` on `VectorizedSignal`
 - Outbox debounce for `corroboration.updated` (30s per user)
-- Signed weight model checksum via `@smart/scoring-engine` `verifySignalWeightModel()`
+- Signed weight model checksum via `@hirekiwi/scoring-engine` `verifySignalWeightModel()`
 
 ## Pending (VV migration ticket)
 

@@ -1,4 +1,4 @@
-import { SKILL_DEFINITIONS, ListStudentJobsQuerySchema } from '@smart/contracts';
+import { SKILL_DEFINITIONS, ListStudentJobsQuerySchema } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StudentJobsService, decodeCursor } from './student-jobs.service.js';
 

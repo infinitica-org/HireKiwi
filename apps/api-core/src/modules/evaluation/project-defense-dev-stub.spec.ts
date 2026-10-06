@@ -1,4 +1,4 @@
-import type { ProjectDefenseContext } from '@smart/contracts';
+import type { ProjectDefenseContext } from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   stubExaminerTurn,

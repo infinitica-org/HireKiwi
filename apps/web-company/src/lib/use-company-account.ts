@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import type { CompanyPortalAccount } from '@smart/contracts';
+import type { CompanyPortalAccount } from '@hirekiwi/contracts';
 import { api } from './api';
 
 export const COMPANY_ACCOUNT_QUERY_KEY = ['company', 'account'] as const;

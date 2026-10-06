@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ResumeParseDraftSchema } from '@smart/contracts';
+import { ResumeParseDraftSchema } from '@hirekiwi/contracts';
 import { ResumeParseService, RESUME_PARSE_PROMPT_REF } from './resume-parse.service.js';
 import type { AiGatewayService } from './ai-gateway.service.js';
 

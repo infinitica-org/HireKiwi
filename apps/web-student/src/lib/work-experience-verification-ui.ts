@@ -1,4 +1,4 @@
-import { isDisallowedEndorserEmailDomain } from '@smart/contracts';
+import { isDisallowedEndorserEmailDomain } from '@hirekiwi/contracts';
 
 /** Minimum wait before resending an active employer verification link (client guard). */
 export const WORK_EXPERIENCE_RESEND_COOLDOWN_MS = 5 * 60 * 1000;

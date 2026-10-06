@@ -1,2 +1,2 @@
-import { base } from '@smart/eslint-config/base';
+import { base } from '@hirekiwi/eslint-config/base';
 export default base;

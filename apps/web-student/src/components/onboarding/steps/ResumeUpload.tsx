@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { CheckCircle2, Loader2, AlertCircle, ArrowRight, FileText } from 'lucide-react';
-import type { ResumeParseDraft } from '@smart/contracts';
+import type { ResumeParseDraft } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import { extractResumeRawText } from '@/lib/extract-resume-text';
 

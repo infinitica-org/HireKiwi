@@ -229,4 +229,29 @@ describe('AssessmentService integrity queue (S6-VV-64)', () => {
     const escalated = await service.listIntegrityQueue('ESCALATED');
     expect(escalated.map((i) => i.attemptId)).toEqual([ATTEMPT_ID]);
   });
+
+  it('exposes numeric integrityScore and latestViolationAt on queue items', async () => {
+    prisma._attempts.push(baseAttempt());
+    prisma._events.push({
+      id: 'e1',
+      attemptId: ATTEMPT_ID,
+      detail: { kind: 'LOOKING_AWAY', severity: 'low', classified: 'INTEGRITY' },
+      createdAt: new Date('2026-01-01T00:10:00.000Z'),
+    });
+
+    const [item] = await service.listIntegrityQueue();
+
+    expect(typeof item.integrityScore).toBe('number');
+    expect(item.integrityScore).toBeGreaterThanOrEqual(0);
+    expect(item.latestViolationAt).toBe('2026-01-01T00:10:00.000Z');
+  });
+
+  it('returns null latestViolationAt when no classified violations exist', async () => {
+    prisma._attempts.push(baseAttempt());
+
+    const [item] = await service.listIntegrityQueue();
+
+    expect(item.integrityScore).toBe(0);
+    expect(item.latestViolationAt).toBeNull();
+  });
 });

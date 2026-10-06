@@ -20,14 +20,16 @@ import {
   API_PREFIX,
   DeactivateCompanyMemberRequestSchema,
   InviteRecruiterRequestSchema,
+  RejectCompanyJoinRequestRequestSchema,
   RespondToReviewRequestSchema,
   UpdateCompanyMemberRoleRequestSchema,
   UpdateCompanyProfileRequestSchema,
   UuidSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
+import { CompanyJoinApprovalService } from './company-join-approval.service.js';
 import { CompanyReviewsService } from './company-reviews.service.js';
 import { CompanyProfileService } from './company-profile.service.js';
 import { CompanyTeamService } from './company-team.service.js';
@@ -77,6 +79,7 @@ export class EmployerController {
     @Inject(CompanyProfileService) private readonly profiles: CompanyProfileService,
     @Inject(CompanyTeamService) private readonly team: CompanyTeamService,
     @Inject(CompanyReviewsService) private readonly reviews: CompanyReviewsService,
+    @Inject(CompanyJoinApprovalService) private readonly joinRequests: CompanyJoinApprovalService,
   ) {}
 
   @Get('company')
@@ -173,6 +176,32 @@ export class EmployerController {
       key: IdempotencyService.requireKey(idempotencyKey),
       body: InviteRecruiterRequestSchema.parse(body),
     });
+  }
+
+  @Get('join-requests')
+  @ApiOperation({ summary: 'Pending requests to join my company (S6-VV-108).' })
+  listJoinRequests(@CurrentUser() user: RequestUser) {
+    return this.joinRequests.listPending(user.sub);
+  }
+
+  @Post('join-requests/:joinRequestId/approve')
+  @ApiOperation({ summary: 'Approve a join request: the requester gets a recruiter invitation.' })
+  approveJoinRequest(@CurrentUser() user: RequestUser, @Param('joinRequestId') id: string) {
+    return this.joinRequests.approve(user.sub, uuidParam(id, 'Join request not found.'));
+  }
+
+  @Post('join-requests/:joinRequestId/reject')
+  @ApiOperation({ summary: 'Decline a join request with an optional reason.' })
+  rejectJoinRequest(
+    @CurrentUser() user: RequestUser,
+    @Param('joinRequestId') id: string,
+    @Body() body: unknown,
+  ) {
+    return this.joinRequests.reject(
+      user.sub,
+      uuidParam(id, 'Join request not found.'),
+      RejectCompanyJoinRequestRequestSchema.parse(body ?? {}),
+    );
   }
 
   @Patch('members/:memberId')

@@ -27,6 +27,19 @@ vi.mock('@/lib/api', () => ({
   },
 }));
 
+// Th6-600 — uploads go presigned PUT → attach; the attach call is what this suite asserts on.
+vi.mock('@/lib/evidence-upload', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  uploadEducationProof: (educationId: string, documentType: string, file: File) =>
+    attachEducationDocument(educationId, {
+      documentType,
+      fileUrl: `education-proofs/u/${educationId}/key-${file.name}`,
+      fileName: file.name,
+      fileSizeBytes: file.size,
+      mimeType: file.type,
+    }),
+}));
+
 const mockEduItem = {
   id: 'edu-123',
   studentId: 'user-1',
@@ -68,13 +81,15 @@ describe('EducationSection', () => {
     listEducation.mockResolvedValue([]);
 
     renderWithQueryClient(<EducationSection />);
-    fireEvent.click(await screen.findByRole('button', { name: /Add your first education/i }));
+    fireEvent.click(
+      (await screen.findAllByRole('button', { name: 'Add education' })).at(-1) as HTMLElement,
+    );
 
     const schoolInput = await screen.findByPlaceholderText(/RV College/i);
     fireEvent.change(schoolInput, { target: { value: 'Draft College' } });
     fireEvent.click(screen.getByLabelText('Close'));
 
-    fireEvent.click(screen.getByRole('button', { name: /Add your first education/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add education' }).at(-1) as HTMLElement);
     const schoolAgain = await screen.findByPlaceholderText(/RV College/i);
     expect((schoolAgain as HTMLInputElement).value).toBe('');
   });
@@ -84,7 +99,9 @@ describe('EducationSection', () => {
     createEducation.mockResolvedValueOnce(mockEduItem);
 
     renderWithQueryClient(<EducationSection />);
-    const addButton = await screen.findByRole('button', { name: /Add your first education/i });
+    const addButton = (await screen.findAllByRole('button', { name: 'Add education' })).at(
+      -1,
+    ) as HTMLElement;
     fireEvent.click(addButton);
 
     await screen.findByPlaceholderText(/RV College/i);
@@ -191,7 +208,9 @@ describe('EducationSection', () => {
   });
 
   async function openCreateModalAndFill() {
-    fireEvent.click(await screen.findByRole('button', { name: /Add your first education/i }));
+    fireEvent.click(
+      (await screen.findAllByRole('button', { name: 'Add education' })).at(-1) as HTMLElement,
+    );
     await screen.findByPlaceholderText(/RV College/i);
     fireEvent.change(screen.getByPlaceholderText(/RV College/i), { target: { value: 'MIT' } });
     fireEvent.change(screen.getByLabelText('Program / Degree *'), { target: { value: 'B.Tech' } });
@@ -221,7 +240,9 @@ describe('EducationSection', () => {
   it('does not save when required fields are missing', async () => {
     listEducation.mockResolvedValue([]);
     renderWithQueryClient(<EducationSection />);
-    fireEvent.click(await screen.findByRole('button', { name: /Add your first education/i }));
+    fireEvent.click(
+      (await screen.findAllByRole('button', { name: 'Add education' })).at(-1) as HTMLElement,
+    );
     await screen.findByPlaceholderText(/RV College/i);
 
     fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));

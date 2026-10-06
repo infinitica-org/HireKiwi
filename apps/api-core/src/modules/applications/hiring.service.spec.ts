@@ -3,7 +3,7 @@ import {
   APPLICATION_STATUSES,
   STAGE_FOR_STATUS,
   type ApplicationStatus,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IDS, withIdempotencyLedger } from '../company-profile/test-utils.js';
 import { HiringService } from './hiring.service.js';

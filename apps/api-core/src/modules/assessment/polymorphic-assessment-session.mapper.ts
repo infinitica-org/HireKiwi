@@ -4,7 +4,7 @@ import {
   type PolymorphicAssessmentSessionDto,
   type SharedVerificationStatus,
   type SkillClaimStatus,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 /**
  * Maps domain skill claim status + active session info to the canonical

@@ -15,7 +15,7 @@ import {
   API_PREFIX,
   UniversityMessageStudentRequestSchema,
   UniversityRosterQuerySchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AuditAccess } from '../../common/decorators/audit-access.decorator.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

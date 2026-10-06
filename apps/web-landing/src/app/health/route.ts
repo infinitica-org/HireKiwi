@@ -1,3 +1,3 @@
 export function GET() {
-  return Response.json({ status: 'ok', app: '@smart/web-landing' });
+  return Response.json({ status: 'ok', app: '@hirekiwi/web-landing' });
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { JobOpeningDto } from '@smart/contracts';
+import type { JobOpeningDto } from '@hirekiwi/contracts';
 import { allDriveEvents, buildCalendarMonth, upcomingDriveEvents } from './placement-calendar';
 
 const opening = (overrides: Partial<JobOpeningDto>): JobOpeningDto =>

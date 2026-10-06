@@ -1,7 +1,7 @@
 'use client';
 
 import { X, BarChart3 } from 'lucide-react';
-import type { CandidateMatchDto } from '@smart/contracts';
+import type { CandidateMatchDto } from '@hirekiwi/contracts';
 import { bentoThemeClass } from '../../lib/tpo-dashboard-ui';
 import { CandidateSkillGapPanel } from './CandidateSkillGapPanel';
 

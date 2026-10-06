@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@smart/api-client';
+import { SmartApiError } from '@hirekiwi/api-client';
 import { api, storeSession } from '../../lib/api';
 import { LoginForm } from './login-form';
 
@@ -57,5 +57,17 @@ describe('LoginForm with an unverified email', () => {
         email: 'jane@psgtech.ac.in',
       }),
     );
+  });
+});
+
+describe('LoginForm accessibility (S6-VV-161)', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('gives the email and password inputs accessible names', () => {
+    render(<LoginForm />);
+    expect(screen.getByLabelText('Email').getAttribute('type')).toBe('email');
+    expect(screen.getByLabelText('Password').getAttribute('type')).toBe('password');
   });
 });

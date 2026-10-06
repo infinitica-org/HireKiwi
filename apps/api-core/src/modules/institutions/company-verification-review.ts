@@ -3,13 +3,13 @@ import type {
   CompanyVerificationReviewDetailDto,
   ResolveVerificationRequest,
   VerificationQueueItemDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   CompanyAddressSchema,
   CompanyDuplicateSignalSchema,
   CompanyVerificationReviewDetailDtoSchema,
   type CompanyDuplicateSignal,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { z } from 'zod';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { env } from '../../platform/config/env.js';

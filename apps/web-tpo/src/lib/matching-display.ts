@@ -1,4 +1,4 @@
-import type { PotentialFit } from '@smart/contracts';
+import type { PotentialFit } from '@hirekiwi/contracts';
 
 /** TPO-facing labels for ranker `potentialFit` bands (not certification tiers). */
 export function potentialFitLabel(band: PotentialFit): string {

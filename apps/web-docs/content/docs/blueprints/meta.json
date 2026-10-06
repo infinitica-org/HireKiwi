@@ -1,0 +1,16 @@
+{
+  "title": "Role Competency Blueprints",
+  "pages": [
+    "hirekiwi-rnd-blueprint",
+    "HireKiwi_Blueprint_AIMLEngineer",
+    "HireKiwi_Blueprint_CloudDevOpsEngineer",
+    "HireKiwi_Blueprint_CybersecurityAnalyst",
+    "HireKiwi_Blueprint_DataAnalyst",
+    "HireKiwi_Blueprint_FullStackDeveloper",
+    "HireKiwi_Blueprint_MBA_BusinessAnalytics",
+    "HireKiwi_Blueprint_MBA_Finance",
+    "HireKiwi_Blueprint_MBA_HR",
+    "HireKiwi_Blueprint_MBA_Marketing",
+    "HireKiwi_Blueprint_MBA_Operations"
+  ]
+}

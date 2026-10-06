@@ -6,8 +6,8 @@ import {
   UniversityEmployerRequestsQuerySchema,
   UniversityEmployersQuerySchema,
   UpdateCareerEventSchema,
-} from '@smart/contracts';
-import type { CreateCareerEvent } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import type { CreateCareerEvent } from '@hirekiwi/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient } from '../../generated/prisma/index.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

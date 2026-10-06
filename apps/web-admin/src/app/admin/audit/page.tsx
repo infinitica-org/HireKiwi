@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { AuditLogDto, AuditLogSection } from '@smart/contracts';
+import type { AuditLogDto, AuditLogSection } from '@hirekiwi/contracts';
 import { Download, Filter, ScrollText } from 'lucide-react';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent } from '@smart/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smart/ui/tabs';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@smart/ui/sheet';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent } from '@hirekiwi/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/admin-tabs';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@hirekiwi/ui/sheet';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

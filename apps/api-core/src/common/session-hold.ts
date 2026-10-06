@@ -1,5 +1,5 @@
 import { ForbiddenException } from '@nestjs/common';
-import { SESSION_HOLD_MESSAGE, type SessionHoldCode } from '@smart/contracts';
+import { SESSION_HOLD_MESSAGE, type SessionHoldCode } from '@hirekiwi/contracts';
 
 export type SessionHold = { code: SessionHoldCode; message: string };
 

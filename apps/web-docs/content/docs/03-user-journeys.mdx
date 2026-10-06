@@ -1,0 +1,202 @@
+---
+title: 03. User & Customer Journeys
+description: End-to-end multi-role state transitions, screen workflows, assessment state machines, and feedback loops across Candidate, TPO, and Recruiter personas.
+---
+
+## 3.1 Multi-Role User Journey Architecture
+
+HireKiwi orchestrates synchronized journeys across four primary personas: **Candidate (Student)**, **University Placement Officer (TPO)**, **Corporate Recruiter**, and **Platform Super Admin**. The workflows converge upon the **Verified Evidence Dossier**, transforming speculative student claims into cryptographic, verifiable competence proofs.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       MULTI-ROLE CONVERGENCE WORKFLOW                       │
+├────────────────────┬────────────────────┬───────────────────────────────────┤
+│ CANDIDATE JOURNEY  │ UNIVERSITY (TPO)   │ CORPORATE RECRUITER               │
+├────────────────────┼────────────────────┼───────────────────────────────────┤
+│ 1. Campus SSO Claim│ 1. Roster Batch CSV│ 1. Verify Entity (GSTIN)          │
+│        ▼           │        ▼           │        ▼                          │
+│ 2. Evidence Ingest │ 2. Cohort Analytics│ 2. Post Requisition & BARS Floors │
+│    (GitHub + Work) │    (Gold/Silver %) │        ▼                          │
+│        ▼           │        ▼           │ 3. Receive Curated Shortlist      │
+│ 3. Proctored Exam  │ 3. Configure Drive │    (No Bulk Resume Scraping)      │
+│    & Code Defense  │    & Skill Floors  │        ▼                          │
+│        ▼           │        ▼           │ 4. Inspect Verified Evidence      │
+│ 4. Cryptographic   │ 4. Algorithmic     │    (Code AST + Video Defense)     │
+│    Credential      │    Ranked Match    │        ▼                          │
+│        ▼           │        ▼           │ 5. Technical Interview            │
+│ 5. 1-Click Apply   │ 5. Dispatch Drive  │        ▼                          │
+│    & Placement     │    Shortlists      │ 6. Offer & BARS Feedback Loop     │
+└────────────────────┴────────────────────┴───────────────────────────────────┘
+```
+
+---
+
+## 3.2 Candidate Journey & Assessment State Machine
+
+### 1. Account Claiming & Taxonomy Selection
+
+1. **Invitation Receipt:** Student receives an automated email to their `@university.edu` address containing an enrollment claim token.
+2. **SAML / OIDC Authentication:** Student authenticates through their campus portal. The platform binds the user's permanent `studentId`, department, and graduation year to their identity.
+3. **Domain Lock:** The student's primary domain is locked based on institutional enrollment (e.g., _Computer Science & Engineering_ -> _Software Engineering & Cloud_).
+4. **Skill Declaration:** Student selects up to 5 target competencies from the curated domain pool (e.g., _Node.js Backend Concurrency_, _PostgreSQL Query Optimization_, _Distributed Caching_).
+
+### 2. Evidence Ingestion & Autonomous Source Verification (Vivi Agent)
+
+1. **GitHub Connection:** Student links their GitHub account via OAuth with read-only repository permissions (`INTG-02`).
+2. **Repository Nomination:** Student nominates up to 3 original repositories showcasing production-quality architecture (`VER-04`).
+3. **Autonomous Source Verification by Vivi (BullMQ Async Agent):**
+   - **Code Provenance & Author Verification:** Vivi queries GitHub APIs to match commit author emails against student identities, evaluating GPG cryptographic signatures and commit timestamp entropy.
+   - **Boilerplate & Fork Detection:** Vivi scans repository fork ancestry and AST hashes, mechanically flagging code cloned from public tutorial repositories (e.g., TodoMVC, freeCodeCamp scaffolding).
+   - **AST Complexity Analysis:** Vivi runs Abstract Syntax Tree parsers to calculate Cyclomatic Complexity, Halstead metrics, and core logic contribution ratio ($>35\%$ non-boilerplate commits, $>40\%$ core logic).
+   - **Defense Queuing:** Upon successful source verification, Vivi queues the project for the AI project defense interview (`FR-VER-04.07`).
+
+### 3. Assessment & Proctored Code Defense State Machine
+
+```
+               ┌────────────────┐
+               │    ENROLLED    │
+               └───────┬────────┘
+                       │ Starts Assessment
+                       ▼
+               ┌────────────────┐
+         ┌─────┤   L1 TESTING   │◄──── (Reconnection within 5 min)
+         │     └───────┬────────┘
+         │             │ Passed L1 MCQ (Score >= 75%)
+         │             ▼
+         │     ┌────────────────┐
+         │     │ L2 CODE DEFENSE│
+         │     └───────┬────────┘
+         │             │ Evaluated by BARS Rubric
+         │             ▼
+    Failed L1 / L2     ├──────────────────────────┐
+         │             │ Passed (BARS >= 3.0)     │
+         │             ▼                          ▼
+         │     ┌────────────────┐        ┌────────────────┐
+         └────►│LOCKED_COOLDOWN │        │VERIFIED_BADGE  │
+               │ (14-Day Timer) │        │ (HMAC-SHA256)  │
+               └───────┬────────┘        └────────────────┘
+                       │ Cooldown Expires
+                       ▼
+               ┌────────────────┐
+               │ ELIGIBLE_RETEST│
+               └────────────────┘
+```
+
+#### Detailed Examination Lifecycle:
+
+- **Pre-Flight Device Check:** WebRTC camera, microphone, and browser full-screen permissions are verified. MediaPipe CV initializes face mesh tracking.
+- **L1 Knowledge Screening:** Candidate answers 20 adaptive multiple-choice questions in 25 minutes. Questions are randomized, copy-paste is disabled, and window-blur triggers an anomaly alert.
+- **L2 Interactive Code Defense:** A 15-minute proctored session examining the student's submitted GitHub code:
+  - System presents candidate's own code snippets.
+  - Interactive audio/text prompts require the candidate to explain architectural choices, analyze failure points, and propose refactoring steps.
+  - Client-side MediaPipe tracks facial presence and gaze anomalies.
+- **BARS Rubric Evaluation:** The LLM grading worker scores answers against structured Behavioral Anchored Rating Scales $[1.0 - 5.0]$, validating output via Zod contracts.
+
+### 4. Work-Experience Endorsement Protocol (Vivi Agent & VER-02)
+
+For claimed industry internships and work experience, Vivi executes an **autonomous source verification protocol** (`VER-02`):
+
+1. **Document Upload:** Candidate submits relieving or internship completion certificate (`FR-VER-02.01`). Offer letters are automatically classified as `INVALID_DOCUMENT_TYPE` and rejected.
+2. **Official Domain Email Validation:** Candidate provides direct manager or HR email. Vivi validates the corporate email domain (`FR-VER-02.06`), mechanically rejecting public webmail providers (`@gmail.com`, `@yahoo.com`, `@outlook.com`).
+3. **Cryptographic Endorsement Dispatch:** Vivi dispatches a cryptographically signed, single-use expiring token link ($72$-hour TTL) to the corporate verifier (`FR-VER-02.03`).
+4. **Structured Attestation:** Verifier confirms dates, role title, primary technologies, and performance rating (`YES`, `NO`, `PARTIAL_DISCREPANCY`).
+5. **Anti-Fraud & Ring Detection:** Vivi monitors IP addresses, user agents, and reciprocity networks to detect circular endorsement fraud rings (`FR-VER-02.10`). If invalidated, Vivi automatically recalculates affected skill proficiencies (`FR-VER-02.12`).
+6. **Cadence & Expiry:** Automated reminder sent within rate limits (`FR-VER-02.08`). If unanswered after 72 hours, status moves to `VERIFICATION_EXPIRED`, allowing the candidate to trigger a clean restart with updated contact details.
+
+### 5. Cooldown & Remedial Loop
+
+- If a candidate achieves BARS $< 3.0$ or triggers an unresolvable integrity infraction ($> 3$ proctoring anomalies), the competency enters `LOCKED_COOLDOWN`.
+- The system renders a diagnostic report highlighting specific conceptual gaps (e.g., _"Deficit identified in database indexing and transaction isolation"_).
+- A strict 14-day cooldown timer is enforced via Redis/BullMQ. Candidates cannot bypass this cooldown, preventing brute-force assessment gaming.
+
+---
+
+## 3.3 University (TPO) Placement Journey
+
+### 1. Institutional Setup & Roster Ingestion
+
+1. TPO logs in via institutional Microsoft Entra ID SSO.
+2. TPO uploads student roster spreadsheet (CSV) containing registration numbers, departmental branches, CGPA, and institutional emails.
+3. The platform generates sandboxed student accounts and dispatches automated invitation links.
+
+### 2. Readiness Cohort Analytics
+
+- TPO accesses real-time department analytics displaying verified skill distribution:
+  - **Gold Tier:** Ready for premium product engineering roles (BARS >= 4.5).
+  - **Silver Tier:** Ready for core software engineering roles (BARS >= 3.5).
+  - **Bronze Tier:** Ready for graduate engineering trainee roles (BARS >= 2.5).
+  - **Remedial / In-Progress:** Enrolled students requiring skill development.
+- TPO identifies curriculum deficits across departments and recommends targeted practice modules.
+
+### 3. Hiring Drive Management & Shortlist Dispatch
+
+1. **Requisition Receipt:** Corporate recruiter submits a placement drive requisition for _Associate Software Engineer_ (e.g., 20 openings, CTC 12-16 LPA, Minimum Silver Tier in Node.js & PostgreSQL).
+2. **Campus Filtering:** TPO attaches institutional criteria (e.g., Minimum CGPA 7.0, Maximum 1 active backlog).
+3. **Algorithmic Shortlist Generation:** System executes pgvector cosine ranking combined with deterministic eligibility filters, producing an explainable ranking of qualified students.
+4. **Shortlist Approval:** TPO reviews candidate profiles, verifies academic clearance, and dispatches the curated shortlist to the corporate partner with a single click.
+
+### 4. Accreditation & Placement Reporting
+
+- When students accept official offers, TPO registers the placement in the system.
+- System generates tamper-evident placement reports for NIRF, NAAC, and NBA audits with cryptographically verified credential links.
+
+---
+
+## 3.4 Corporate Recruiter Journey
+
+### 1. Enterprise Onboarding & Compliance Verification
+
+1. Recruiter registers using corporate email domain and provides company GSTIN/CIN.
+2. System performs automated domain verification and GST registry validation before provisioning enterprise recruiter seats.
+
+### 2. Requisition Publishing & Competency Thresholds
+
+1. Recruiter creates a Job Description, specifying required core competencies.
+2. Rather than using subjective keywords, the recruiter selects standardized BARS minimum competency levels:
+   - _Backend Systems:_ Level 4 (Advanced Concurrency & Performance Tuning).
+   - _Database Architecture:_ Level 3 (Indexing, Query Plans, Schema Normalization).
+3. Recruiter specifies campus hiring targets and dispatches drive requests to partner university TPOs.
+
+### 3. Candidate Dossier Evaluation (No Bulk Resume Mining)
+
+1. Recruiter receives the TPO-approved shortlist.
+2. Instead of standard text resumes, recruiter inspects the **Verified Candidate Dossier**:
+   - Cryptographically signed HMAC-SHA256 competency badge with source verification provenance from Vivi.
+   - GitHub AST metrics (verified author lines of code, original commit history verified at source).
+   - Summarized competency evidence and rubric criteria ratings (interview recordings remain restricted per privacy safeguards `FR-INT-01.13`).
+   - Corporate work-experience endorsement confirmation verified at corporate email domain.
+
+### 4. Interview Pipeline & Closed-Loop ML Calibration
+
+1. Recruiter advances candidates through ATS stages (`SHORTLISTED`, `TECHNICAL_INTERVIEW`, `OFFER_EXTENDED`, `HIRED`).
+2. **Post-Interview Calibration:** Following the technical interview, the recruiter completes a 60-second rubric check:
+   - _"Did candidate demonstrate Level 4 capability in Backend Concurrency as predicted?"_ (`EXCEEDED`, `CONFIRMED`, `OVERESTIMATED`).
+3. This feedback is fed asynchronously into the scoring calibration pipeline, refining ML weights for future cohorts.
+
+---
+
+## 3.5 Edge Cases & Fault Recovery Workflows
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       RECOVERY & EXCEPTION HANDLING                         │
+├─────────────────────────┬───────────────────────────────────────────────────┤
+│ EVENT                   │ PLATFORM RESOLUTION STRATEGY                      │
+├─────────────────────────┼───────────────────────────────────────────────────┤
+│ Network Drop during     │ Client stores unanswered draft in IndexedDB.      │
+│ Assessment              │ Reconnection recovers session state from Redis.   │
+│                         │ Server timer runs authoritatively in BullMQ.      │
+├─────────────────────────┼───────────────────────────────────────────────────┤
+│ Browser Crash / Accidental│ Server reserves remaining time budget.          │
+│ Tab Close               │ Candidate can re-enter within 5 minutes.          │
+│                         │ Background timer does NOT pause (anti-cheat).     │
+├─────────────────────────┼───────────────────────────────────────────────────┤
+│ False-Positive Webcam   │ Anomaly flagged but test is NOT aborted.          │
+│ Flag (Lighting drop)    │ Flag queued for TPO / Admin human-in-loop review. │
+│                         │ Candidate receives appeal window post-test.       │
+├─────────────────────────┼───────────────────────────────────────────────────┤
+│ Corporate Verifier Email│ Auto-reminder dispatched at 6 hours.              │
+│ Bounces / No Response   │ State moves to VERIFICATION_EXPIRED at 48 hours.  │
+│                         │ Candidate prompted to provide alternate HR lead.  │
+└─────────────────────────┴───────────────────────────────────────────────────┘
+```

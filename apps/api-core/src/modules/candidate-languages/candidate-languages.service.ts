@@ -5,12 +5,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { CandidateLanguageDto } from '@smart/contracts';
+import type { CandidateLanguageDto } from '@hirekiwi/contracts';
 import {
   CandidateLanguageSchema,
   CreateCandidateLanguageSchema,
   UpdateCandidateLanguageSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 @Injectable()

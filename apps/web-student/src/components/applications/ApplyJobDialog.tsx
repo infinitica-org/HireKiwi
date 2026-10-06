@@ -4,9 +4,9 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import { COVER_NOTE_MAX_LENGTH, type ApplyToJobResponse } from '@smart/contracts';
-import { Button, ErrorState, FormMessage, LoadingState, Modal } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { COVER_NOTE_MAX_LENGTH, type ApplyToJobResponse } from '@hirekiwi/contracts';
+import { Button, ErrorState, FormMessage, LoadingState, Modal } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { formatAppliedOn } from '@/lib/my-applications';
 import { STUDENT_JOBS_KEY } from '../jobs/job-cache';
@@ -114,7 +114,7 @@ export function ApplyJobDialog({ open, jobId, onClose }: ApplyJobDialogProps) {
               Close
             </Button>
             <Link
-              href="/applications"
+              href="/student/applications"
               className="inline-flex h-10 items-center rounded-lg bg-zinc-900 px-4 text-sm font-semibold text-white"
             >
               View my application

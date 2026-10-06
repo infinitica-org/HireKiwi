@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { JobRequirementRow, JobRequirementStatus } from '@smart/contracts';
+import type { JobRequirementRow, JobRequirementStatus } from '@hirekiwi/contracts';
 
 const STATUS_LABEL: Record<JobRequirementStatus, string> = {
   MET: 'Met',

@@ -7,8 +7,8 @@ import {
   clearAccessToken,
   createRefreshAccessToken,
   getAccessToken,
-} from '@smart/api-client';
-import { SessionHoldWall, SmartApiProvider } from '@smart/ui';
+} from '@hirekiwi/api-client';
+import { SessionHoldWall, SmartApiProvider } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { signOut } from '@/lib/auth';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SmartLogo } from '@smart/ui';
+import { SmartLogo } from '@hirekiwi/ui';
 import { api } from '../../lib/api';
 import { LoginShell } from '../login/login-shell';
 

@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { isSmartApiError } from '@smart/api-client';
-import textLogo from '@smart/ui/assets/images/Logos/WebP/Text-logo.png';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import textLogo from '@hirekiwi/ui/assets/images/Logos/WebP/Text-logo.png';
 import { api, redirectForRole, storeSession } from '../../../lib/api';
 
 export default function EmployerLoginPage() {

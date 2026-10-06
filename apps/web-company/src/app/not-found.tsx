@@ -1,5 +1,5 @@
-import { resolvePortalOriginsFromEnv } from '@smart/api-client';
-import { NotFoundWall } from '@smart/ui';
+import { resolvePortalOriginsFromEnv } from '@hirekiwi/api-client';
+import { NotFoundWall } from '@hirekiwi/ui';
 
 const PORTAL_ORIGINS = resolvePortalOriginsFromEnv();
 

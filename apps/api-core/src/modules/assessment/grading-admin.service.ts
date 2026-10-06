@@ -11,7 +11,7 @@ import {
   UuidSchema,
   type ListGradingQueueResponse,
   type ManualGradeResponseResult,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   Prisma,
   type AttemptStatus,

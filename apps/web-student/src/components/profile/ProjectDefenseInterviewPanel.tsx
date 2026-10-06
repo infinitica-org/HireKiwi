@@ -6,8 +6,8 @@ import type {
   ProjectDefenseSttMode,
   ProjectDto,
   StartProjectDefenseResponse,
-} from '@smart/contracts';
-import { Alert, Badge, Button, Timer } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Alert, Badge, Button, Timer } from '@hirekiwi/ui';
 import { Bot, CheckCircle2, Loader2, Mic, ShieldCheck, User, Volume2 } from 'lucide-react';
 import {
   AssessmentSessionShell,
@@ -18,7 +18,7 @@ import { CameraIntegrityDock } from '@/components/proctoring/camera-integrity-do
 import { useProctorLive } from '@/components/proctoring/proctor-live-context';
 import { isFaceAlignmentKind } from '@/lib/proctoring/live-webcam';
 import { projectDefenseTimerProps } from '@/lib/project-defense-timer';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { api } from '../../lib/api';
 import { uploadDefenseTurnAudio } from '../../lib/project-defense-audio-upload';
 import { resolveDefenseClosingAnnouncement } from '../../lib/project-defense-closing';

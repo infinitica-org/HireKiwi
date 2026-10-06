@@ -1,29 +1,25 @@
-import type { Metadata } from 'next';
-import { Caveat, Inter, Kalam, Manrope, Montserrat } from 'next/font/google';
+import Script from 'next/script';
+import { Manrope } from 'next/font/google';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SmoothScroll from '@/components/SmoothScroll';
+import { DemoModalProvider } from '@/context/DemoModalContext';
+import DemoModalLazy from '@/components/DemoModalLazy';
+import { jsonLd, rootMetadata } from '@/lib/seo';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
-const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope', display: 'swap' });
-const montserrat = Montserrat({
+// Manrope is the only face the landing pages render; next/font self-hosts it,
+// preloads the latin subset and sizes the fallback to avoid layout shift.
+const manrope = Manrope({
   subsets: ['latin'],
-  variable: '--font-montserrat',
+  variable: '--font-manrope',
   display: 'swap',
-});
-const heroHand = Caveat({ subsets: ['latin'], variable: '--font-hero-hand', display: 'swap' });
-const heroMarker = Kalam({
-  subsets: ['latin'],
-  weight: ['700'],
-  variable: '--font-hero-marker',
-  display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
 });
 
-export const metadata: Metadata = {
-  title: 'SMART — AI-Powered Talent Intelligence Platform',
-  description: 'Immersive talent intelligence platform powered by AI.',
-};
+export const metadata = rootMetadata();
+export { viewport } from '@/lib/seo';
 
 export default function RootLayout({
   children,
@@ -31,17 +27,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${manrope.variable} ${montserrat.variable} ${heroHand.variable} ${heroMarker.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang="en" className={manrope.variable} suppressHydrationWarning>
+      <head>
+        {/* CookieYes Banner */}
+        <Script
+          id="cookieyes"
+          src={
+            process.env.NODE_ENV === 'development'
+              ? '/api/cookieyes'
+              : 'https://cdn-cookieyes.com/client_data/be2546efcbf450059885daed3260170c/script.js'
+          }
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className="bg-white text-slate-900 antialiased" suppressHydrationWarning>
-        <SmoothScroll>
-          <Navbar />
-          {children}
-          <Footer />
-        </SmoothScroll>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd()).replace(/</g, '\\u003c') }}
+        />
+        <DemoModalProvider>
+          <SmoothScroll>
+            <Navbar />
+            {children}
+            <Footer />
+          </SmoothScroll>
+          <DemoModalLazy />
+        </DemoModalProvider>
       </body>
     </html>
   );

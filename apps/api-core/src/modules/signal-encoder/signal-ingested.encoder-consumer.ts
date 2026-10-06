@@ -5,8 +5,8 @@ import {
   SignalIngestedEventSchema,
   SMART_TOPICS,
   type RawSignalEnvelope,
-} from '@smart/contracts';
-import { runKafkaHandler } from '@smart/observability';
+} from '@hirekiwi/contracts';
+import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { KafkaService } from '../../platform/kafka/kafka.service.js';

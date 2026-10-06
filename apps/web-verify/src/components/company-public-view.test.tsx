@@ -1,4 +1,4 @@
-import type { CompanyProfile } from '@smart/contracts';
+import type { CompanyProfile } from '@hirekiwi/contracts';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { CompanyPublicView } from './company-public-view';

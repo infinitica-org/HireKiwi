@@ -1,4 +1,4 @@
-import type { PublicCompetencyEvidenceSummary } from '@smart/contracts';
+import type { PublicCompetencyEvidenceSummary } from '@hirekiwi/contracts';
 
 export function mapStudentCapabilitiesToSummaries(
   rows: ReadonlyArray<{

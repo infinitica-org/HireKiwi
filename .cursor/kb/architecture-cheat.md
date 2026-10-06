@@ -14,7 +14,7 @@ Canonical: `ARCHITECTURE.md`, `REPOSITORY_STRUCTURE.md`, `README.md`.
 | Events         | Redpanda (Kafka API)                                   |
 | Object store   | MinIO local / R2 prod                                  |
 | AI             | Claude primary · Gemini failover via `ai-gateway` only |
-| Scoring math   | Effect.ts in `@smart/scoring-engine`                   |
+| Scoring math   | Effect.ts in `@hirekiwi/scoring-engine`                |
 
 ## Local ports (truth)
 
@@ -40,7 +40,7 @@ Canonical: `ARCHITECTURE.md`, `REPOSITORY_STRUCTURE.md`, `README.md`.
 
 ## Shared packages
 
-`@smart/contracts` (frozen API) · `scoring-engine` · `prompts` · `observability` · `api-client` · `ui`
+`@hirekiwi/contracts` (frozen API) · `scoring-engine` · `prompts` · `observability` · `api-client` · `ui`
 
 ## Auth model
 

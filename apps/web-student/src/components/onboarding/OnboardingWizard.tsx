@@ -200,7 +200,7 @@ export default function OnboardingWizard() {
             firstName={formData.firstName}
             onFinished={() => {
               markTourAutostart();
-              router.push('/dashboard');
+              router.push('/student/dashboard');
             }}
           />
         )}

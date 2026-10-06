@@ -1,10 +1,10 @@
-import type * as SmartContracts from '@smart/contracts';
+import type * as SmartContracts from '@hirekiwi/contracts';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { openingsApi } from '../../lib/api';
 import { JobPostingWizard } from './JobPostingWizard';
 
-vi.mock('@smart/contracts', async (importOriginal) => {
+vi.mock('@hirekiwi/contracts', async (importOriginal) => {
   const actual = (await importOriginal()) as typeof SmartContracts;
   const testSkill = actual.SKILL_DEFINITIONS.find(
     (skill) => skill.code === 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',

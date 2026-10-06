@@ -5,7 +5,7 @@ import {
   ListTpoShortlistQuerySchema,
   ShortlistDtoSchema,
   type ShortlistDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { FastifyReply } from 'fastify';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';

@@ -1,4 +1,4 @@
-@import '@smart/ui/styles.css';
+@import '@hirekiwi/ui/styles.css';
 
 /*
  * TPO console surfaces. Neutral scale is ported from the student profile
@@ -57,14 +57,14 @@ body {
   --tpo-accent-border: #99f6e4;
 
   /*
-   * Manrope via @smart/ui/styles.css as primary UI/table font.
+   * Manrope via @hirekiwi/ui/styles.css as primary UI/table font.
    */
   --tpo-font-sans:
     'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue',
     system-ui, sans-serif;
 }
 
-/* App-local scan so Magic UI / dashboard classes in @smart/ui always emit. */
+/* App-local scan so Magic UI / dashboard classes in @hirekiwi/ui always emit. */
 @source '../../../../packages/ui/src/**/*.{ts,tsx}';
 
 /* --- Cabinet Grotesk (Variable) --- */

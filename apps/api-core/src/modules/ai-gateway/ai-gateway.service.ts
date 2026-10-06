@@ -5,10 +5,14 @@ import {
   type AiCompletionResponse,
   type AiHealthDto,
   type AiProvider,
-} from '@smart/contracts';
-import { listPrompts, renderPromptRef } from '@smart/prompts';
-import { LOG_EVENTS, logEvent } from '@smart/observability';
+} from '@hirekiwi/contracts';
+import { listPrompts, renderPromptRef } from '@hirekiwi/prompts';
+import { LOG_EVENTS, logEvent } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
+import {
+  AI_PROCESSING_QUEUES,
+  QueueMetricsCollector,
+} from '../../platform/queue/queue-metrics.collector.js';
 import { AnthropicAdapter } from './adapters/anthropic.adapter.js';
 import { GoogleAdapter } from './adapters/google.adapter.js';
 import { OpenRouterAdapter } from './adapters/openrouter.adapter.js';
@@ -36,6 +40,9 @@ export class AiGatewayService {
     @Optional()
     @Inject(AiGatewayUsageService)
     private readonly usage?: AiGatewayUsageService,
+    @Optional()
+    @Inject(QueueMetricsCollector)
+    private readonly queueMetrics?: QueueMetricsCollector,
   ) {}
 
   getAdapter(provider: AiProvider): AiProviderAdapter {
@@ -120,28 +127,30 @@ export class AiGatewayService {
           latencyMs: openrouterHealth.latencyMs,
         },
       ],
-      // tokenBucket/queueDepth remain placeholders: they describe *live*
-      // rate-limiter and queue state, not historical completions, and
-      // nothing in the codebase currently instruments either one (see
-      // PR description). `ai_evaluation_audits` — the table this method now
-      // reads for monthlySpendUsd — has no queue or in-flight-request data
-      // to derive them from without new instrumentation, which is out of
-      // scope here.
+      // tokenBucket is still a placeholder: nothing instruments the live rate limiter yet.
+      // queueDepth is live (S6-VV-127): unfinished jobs per AI/verification queue.
       tokenBucket: {
         requestsRemaining: 200,
         tokensRemaining: 10_000,
         windowResetsAt: resetDate,
       },
-      queueDepth: {
-        P1_REALTIME: 0,
-        P2_ASYNC_EVAL: 0,
-        P3_BATCH: 0,
-      },
+      queueDepth: this.aiQueueDepth(),
       automatedScoringPaused: false,
       pauseReason: null,
       monthlySpendUsd,
       monthlyCeilingUsd: env.AI_MONTHLY_CEILING_USD,
     };
+  }
+
+  /** Waiting + active + delayed jobs per AI-processing queue, from the last metrics poll. */
+  private aiQueueDepth(): Record<string, number> {
+    const snapshot = this.queueMetrics?.snapshot();
+    return Object.fromEntries(
+      AI_PROCESSING_QUEUES.map((queue) => {
+        const counts = snapshot?.get(queue)?.counts;
+        return [queue, counts ? counts.waiting + counts.active + counts.delayed : 0];
+      }),
+    );
   }
 
   async complete(request: AiCompletionRequest): Promise<AiCompletionResponse> {

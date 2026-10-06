@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { StartConversationDialog } from '@smart/ui';
+import { StartConversationDialog } from '@hirekiwi/ui';
 import { MessagingProvider } from './messaging-provider';
 
 /**

@@ -9,6 +9,7 @@ import {
   type DegreeDetailsFormSlice,
 } from '@/lib/education-degree-details';
 import { EDUCATION_MODAL_FIELD } from '@/components/profile/education-details-modal-ui';
+import { EVIDENCE_ACCEPT, EVIDENCE_HINT } from '@/lib/evidence-upload';
 
 interface EducationDegreeDetailsSectionProps {
   program: string;
@@ -230,7 +231,7 @@ export function EducationDegreeDetailsSection({
         <input
           ref={fileRef}
           type="file"
-          accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+          accept={EVIDENCE_ACCEPT}
           className="sr-only"
           onChange={(e) => onProofFile(e.target.files?.[0] ?? null)}
         />
@@ -252,7 +253,7 @@ export function EducationDegreeDetailsSection({
                 {values.courseProofFile?.name ?? 'Attach marksheet or consolidated transcript'}
               </span>
               <span className="block text-[11px] text-[var(--ds-text-muted)]">
-                PDF or image · saved with this entry
+                {EVIDENCE_HINT} · saved with this entry
               </span>
             </span>
           </span>

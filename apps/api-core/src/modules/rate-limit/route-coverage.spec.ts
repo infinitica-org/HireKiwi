@@ -2,7 +2,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { API_PREFIX, ALL_RATE_LIMIT_POLICIES, ROUTES, getRateLimitPolicy } from '@smart/contracts';
+import {
+  API_PREFIX,
+  ALL_RATE_LIMIT_POLICIES,
+  ROUTES,
+  getRateLimitPolicy,
+} from '@hirekiwi/contracts';
 import { matchContractRoute } from '../../common/interceptors/rate-limit.interceptor.js';
 
 /**

@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, BadgeCheck, Loader2, Plus, ShieldCheck } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   CREDENTIAL_TYPES,
   type CredentialType,
   type ProfessionalCredentialDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CredentialEntryCard } from '@/components/profile/CredentialEntryCard';
 import {
   ProfileBentoEmptyPanel,
@@ -169,9 +169,10 @@ export function CredentialsSection() {
     >
       <ProfileSectionHeader
         title={meta.title}
+        evidenceType="CREDENTIAL"
         description={meta.description}
         action={
-          !loading && (credentials.length > 0 || showForm) ? (
+          !loading ? (
             <button
               type="button"
               onClick={() => {
@@ -296,7 +297,7 @@ export function CredentialsSection() {
               className={`${profilePrimaryButtonSmClass} justify-center px-5 py-2.5 text-[13px]`}
             >
               <Plus className="size-4" strokeWidth={2} aria-hidden />
-              Add your first credential
+              Add credential
             </button>
           }
         />

@@ -1,6 +1,7 @@
 import { InjectQueue, Processor } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import type { Job, Queue } from 'bullmq';
+import { withJobSpan } from '@hirekiwi/observability';
 import { DlqAwareProcessor } from '../../platform/queue/async-job.processor.js';
 import { QLIX_POLL_DLQ, QLIX_POLL_QUEUE } from '../../platform/queue/queue.names.js';
 import { QlixPollService, type QlixPollJobPayload } from './qlix-poll.service.js';
@@ -17,6 +18,10 @@ export class QlixPollProcessor extends DlqAwareProcessor {
   }
 
   async process(job: Job<QlixPollJobPayload>): Promise<void> {
-    await this.pollService.handlePoll(job.data);
+    await withJobSpan(
+      job,
+      { 'verification.kind': 'qlix_poll', 'subject.id': job.data.projectId },
+      () => this.pollService.handlePoll(job.data),
+    );
   }
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { PlacementEmployerDetail, PlacementRecordDto } from '@smart/contracts';
+import type { PlacementEmployerDetail, PlacementRecordDto } from '@hirekiwi/contracts';
 import { employersApi, placementOutcomesApi } from '../../../../../lib/api';
 import { tpoApiErrorMessage } from '../../../../../lib/api-errors';
 import { computeCompanyPlacementStats } from '../../../../../lib/company-placement-stats';

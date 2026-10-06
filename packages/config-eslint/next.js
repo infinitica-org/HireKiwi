@@ -21,13 +21,13 @@ export const next = tseslint.config(...base, {
     // Next portals may read NEXT_PUBLIC_* (and other public env) via process.env.
     // The Nest-only process.env ban must not apply here.
     'no-restricted-properties': 'off',
-    // Raw fetch bypasses @smart/api-client, which owns auth refresh and 429 backoff.
+    // Raw fetch bypasses @hirekiwi/api-client, which owns auth refresh and 429 backoff.
     'no-restricted-globals': [
       'error',
       {
         name: 'fetch',
         message:
-          'Use @smart/api-client instead of raw fetch — it owns silent token refresh and Retry-After backoff.',
+          'Use @hirekiwi/api-client instead of raw fetch — it owns silent token refresh and Retry-After backoff.',
       },
     ],
   },

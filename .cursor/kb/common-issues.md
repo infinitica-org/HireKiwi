@@ -16,7 +16,7 @@ rg -n '^<<<<<<<|^>>>>>>>' --glob '!**/node_modules/**'
 
 Org billing: failed card or spending limit. Hosted jobs never run. See `docs/delivery/GITHUB_ACTIONS_FREE.md`. Local: `bash scripts/ci-local.sh`.
 
-## Seed / kvm2 login
+## Seed / VPS login
 
 Seeded users are only `admin@smart.local`, `tpo@smart.local`, `student@smart.local` — password `ChangeMe!Dev`. Run seed as `deploy` (`~/smart`), not `root` (`/root/smart` does not exist).
 

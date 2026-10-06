@@ -60,6 +60,7 @@ Thumbs.db
 .windsurf/
 .agents/
 skills-lock.json
+graphify-out/
 
 # --- Cursor: personal agent context (team .cursor/rules + .cursor/kb stay tracked) ---
 .cursor/local/**
@@ -80,8 +81,10 @@ Smart_PRD_v1_Internal/**
 !Smart_PRD_v1_Internal/README.md
 
 # --- VPS server env copies (local reference only, never commit) ---
-kvm2-dev.env.txt
-kvm4-prod.env.txt
+vps-dev.env.txt
+vps-prod.env.txt
+00.txt
+SMART KNOWLEDGE.txt
 
 # --- k6 run output (tools/load-tests) ---
 tools/load-tests/summary-*.json

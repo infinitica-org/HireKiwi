@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SKILL_MAX_ATTEMPTS } from '@smart/contracts';
+import { SKILL_MAX_ATTEMPTS } from '@hirekiwi/contracts';
 import {
   applyCertAssessmentTransition,
   certRetryAvailableAt,

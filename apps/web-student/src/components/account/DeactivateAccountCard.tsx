@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { signOut } from '@/lib/auth';
 import { fieldClass, SettingsCard, StatusMessage } from './account-ui';

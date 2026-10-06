@@ -16,6 +16,7 @@ function emptyInput(overrides: Partial<ProfileProgressInput> = {}): ProfileProgr
     experiences: [],
     projects: [],
     certificates: [],
+    hasProfilePhoto: false,
     ...overrides,
   };
 }
@@ -28,6 +29,7 @@ function completeInput(): ProfileProgressInput {
     experiences: [{ id: 'exp_1', companyName: 'Acme', role: 'Intern' } as never],
     projects: [{ projectId: 'prj_1', title: 'App' } as never],
     certificates: [{ certificateId: 'cert_1', title: 'AWS' } as never],
+    hasProfilePhoto: true,
     onboardingProfile: {
       linkedinUrl: 'https://linkedin.com/in/ada',
       jobPreferences: {
@@ -63,7 +65,7 @@ describe('isProfileCompleteForSkillVerification', () => {
     expect(computeProfileCompletion(emptyInput()).percent).toBe(0);
   });
 
-  it('returns true once profile reaches the unlock threshold (one of eight areas)', () => {
+  it('returns true once profile reaches the unlock threshold (one of nine areas)', () => {
     const input = emptyInput({
       skillClaims: [{ claimId: 'clm_1', skillCode: 'REACT', status: 'VERIFIED' } as never],
     });
@@ -71,7 +73,7 @@ describe('isProfileCompleteForSkillVerification', () => {
     expect(computeProfileCompletion(input).percent).toBe(13);
   });
 
-  it('returns true at 50% profile completion (four of eight areas)', () => {
+  it('returns true at 44% profile completion (four of nine areas)', () => {
     const input = emptyInput({
       skillClaims: [{ claimId: 'clm_1', skillCode: 'REACT', status: 'VERIFIED' } as never],
       languages: [{ id: 'lang_1', language: 'English', proficiency: 'FLUENT' } as never],
@@ -82,7 +84,23 @@ describe('isProfileCompleteForSkillVerification', () => {
     expect(computeProfileCompletion(input).percent).toBe(50);
   });
 
-  it('returns true when all eight areas are complete', () => {
+  it('returns true when all nine areas are complete', () => {
     expect(isProfileCompleteForSkillVerification(completeInput())).toBe(true);
+    expect(computeProfileCompletion(completeInput()).percent).toBe(100);
+  });
+});
+
+describe('profile photo area', () => {
+  it('counts an uploaded profile photo as a completed area', () => {
+    const result = computeProfileCompletion(emptyInput({ hasProfilePhoto: true }));
+    expect(result.areaStatus.profilePhoto).toBe(true);
+    expect(result.completedAreas).toEqual(['profilePhoto']);
+    expect(result.percent).toBe(13);
+  });
+
+  it('keeps a complete profile below 100% without a photo', () => {
+    const result = computeProfileCompletion({ ...completeInput(), hasProfilePhoto: false });
+    expect(result.incompleteAreas).toEqual(['profilePhoto']);
+    expect(result.percent).toBe(88);
   });
 });

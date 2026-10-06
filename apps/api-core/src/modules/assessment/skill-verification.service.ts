@@ -54,12 +54,12 @@ import {
   type SkillProficiency,
   type SkillVerifyPrepareDto,
   type SkillVerifySessionDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   claimProficiencyFromDemonstrated,
   hasDemonstratedProficiency,
 } from './verified-proficiency.js';
-import type { CompetencyFusionResult, ProficiencyLevel } from '@smart/contracts';
+import type { CompetencyFusionResult, ProficiencyLevel } from '@hirekiwi/contracts';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { env } from '../../platform/config/env.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
@@ -77,7 +77,7 @@ import { applySkillClaimTransition, type SkillClaimEvent } from './skill-claim-s
 import { buildSkillPolymorphicSession } from './polymorphic-assessment-session.mapper.js';
 import { SKILL_VERIFY_GRADE_QUEUE } from '../../platform/queue/queue.names.js';
 import type { SkillVerifyGradeJobPayload } from './skill-verify-grade.processor.js';
-import { resolveDemonstratedProficiencyForFinalize } from '@smart/scoring-engine';
+import { resolveDemonstratedProficiencyForFinalize } from '@hirekiwi/scoring-engine';
 
 /** Max LLM regens after the first cached question set for a pending verification session. */
 const SKILL_VERIFY_INTERVIEW_MAX_REGENERATIONS = 2;

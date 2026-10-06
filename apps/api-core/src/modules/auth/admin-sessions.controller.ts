@@ -3,7 +3,7 @@ import {
   API_PREFIX,
   ListActiveSessionsQuerySchema,
   TenantActionReasonSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { RequirePermission } from '../../common/guards/permissions.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

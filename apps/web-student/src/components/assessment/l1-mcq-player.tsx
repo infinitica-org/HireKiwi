@@ -10,13 +10,13 @@ import {
   ProgressIndicator,
   QuestionCard,
   Timer,
-} from '@smart/ui';
+} from '@hirekiwi/ui';
 import type {
   AttemptSessionDto,
   CompleteAttemptResponse,
   DeliverableItemDto,
   NextItemDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api } from '../../lib/api';
 import {
   buildMcqDraftPayload,

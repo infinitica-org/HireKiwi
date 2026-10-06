@@ -10,6 +10,33 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+vi.mock('@/lib/api', () => ({
+  api: {
+    certificates: {
+      verify: vi.fn().mockImplementation(async (id: string) => {
+        if (id === '00000000-0000-0000-0000-000000000000') {
+          const err = new Error('Not found') as Error & { statusCode?: number; code?: string };
+          err.statusCode = 404;
+          err.code = 'not_found';
+          throw err;
+        }
+        return {
+          certificateId: id,
+          candidateName: 'Harish Kumar',
+          trackName: 'Full Stack Engineering',
+          issuedDate: '2026-09-29',
+          highestLevelCleared: 3,
+          headlineTier: 'GOLD',
+          headlineTierLabel: 'Ready Now',
+          tierTrail: [],
+          signatureValid: true,
+          status: 'ISSUED',
+        };
+      }),
+    },
+  },
+}));
+
 describe('Certificate Verification Page Audit & Security', () => {
   const validUuid = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d';
   const nonExistentUuid = '00000000-0000-0000-0000-000000000000';
@@ -27,7 +54,7 @@ describe('Certificate Verification Page Audit & Security', () => {
 
     render(jsx);
 
-    expect(screen.getByText(/Signature Validated/i)).toBeDefined();
+    expect(screen.getByText(/Cryptographically Verified Credential/i)).toBeDefined();
     expect(screen.getByText(/Harish Kumar/i)).toBeDefined();
   });
 
@@ -40,7 +67,7 @@ describe('Certificate Verification Page Audit & Security', () => {
 
     const jsx = await Page({
       params: Promise.resolve({ id: validUuid }),
-      searchParams: Promise.resolve({ sig: tamperedSig }),
+      searchParams: Promise.resolve({ sig: validSig, hash: tamperedSig }),
     });
 
     render(jsx);

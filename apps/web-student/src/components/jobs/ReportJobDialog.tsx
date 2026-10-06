@@ -2,9 +2,9 @@
 
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { isSmartApiError } from '@smart/api-client';
-import { CreateReportRequestSchema, REPORT_REASONS, type ReportReason } from '@smart/contracts';
-import { Button, FormMessage, Modal } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { CreateReportRequestSchema, REPORT_REASONS, type ReportReason } from '@hirekiwi/contracts';
+import { Button, FormMessage, Modal } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { STUDENT_JOBS_KEY } from './job-cache';
 

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import type { ActiveSessionDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { ActiveSessionDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { LogOut, ShieldX } from 'lucide-react';
-import { Button } from '@smart/ui/button';
+import { Button } from '@hirekiwi/ui/button';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

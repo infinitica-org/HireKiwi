@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { PhotoCropDialog } from '@/components/profile/PhotoCropDialog';
 import { CandidateAvatar } from '@/components/profile/CandidateAvatar';
 import { PROFILE_PHOTO_ACCEPT, validateProfilePhotoFile } from '@/lib/profile-photo';
 
@@ -21,15 +22,23 @@ export function ProfilePhotoPicker({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSelect = async (file: File | undefined) => {
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // Picking a file opens the crop dialog; only the adjusted square is uploaded.
+  const handleSelect = (file: File | undefined) => {
+    if (inputRef.current) inputRef.current.value = '';
     if (!file) return;
     const validationError = validateProfilePhotoFile(file);
     if (validationError) {
       setError(validationError);
       return;
     }
-
     setError(null);
+    setPendingFile(file);
+  };
+
+  const uploadCropped = async (file: File) => {
+    setPendingFile(null);
     setUploading(true);
     try {
       const response = await api.users.uploadProfilePhoto(file, file.name);
@@ -75,7 +84,12 @@ export function ProfilePhotoPicker({
         type="file"
         accept={PROFILE_PHOTO_ACCEPT}
         className="hidden"
-        onChange={(event) => void handleSelect(event.target.files?.[0])}
+        onChange={(event) => handleSelect(event.target.files?.[0])}
+      />
+      <PhotoCropDialog
+        file={pendingFile}
+        onCancel={() => setPendingFile(null)}
+        onConfirm={(cropped) => void uploadCropped(cropped)}
       />
     </div>
   );

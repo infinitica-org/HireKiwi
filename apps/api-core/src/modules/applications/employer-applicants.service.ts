@@ -16,7 +16,7 @@ import {
   type EmployerApplicantCard,
   type ListEmployerApplicantsQuery,
   type ListEmployerApplicantsResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { requireCompanyActor } from '../company-profile/company-access.js';
 import { scoreOpeningForStudent } from '../matching/opening-fit.js';

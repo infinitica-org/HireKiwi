@@ -1,5 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react';
-import type { Tier } from '@smart/contracts';
+import type { Tier } from '@hirekiwi/contracts';
 import {
   Mail,
   Phone,

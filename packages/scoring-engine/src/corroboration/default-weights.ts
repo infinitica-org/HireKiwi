@@ -1,4 +1,4 @@
-import type { SignalSourceId, SignalWeightModel } from '@smart/contracts';
+import type { SignalSourceId, SignalWeightModel } from '@hirekiwi/contracts';
 import { computeModelChecksum } from './model-integrity.js';
 
 /**

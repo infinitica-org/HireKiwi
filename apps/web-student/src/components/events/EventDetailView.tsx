@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Alert, ErrorState, LoadingState, formatEventTime } from '@smart/ui';
-import { SmartApiError } from '@smart/api-client';
+import { Alert, ErrorState, LoadingState, formatEventTime } from '@hirekiwi/ui';
+import { SmartApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { EVENTS_KEY, RegistrationButton } from './RegistrationButton';
 
@@ -36,7 +36,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
   const event = query.data;
   return (
     <div className="space-y-4">
-      <Link href="/events" className="text-sm text-zinc-600 hover:underline">
+      <Link href="/student/events" className="text-sm text-zinc-600 hover:underline">
         ← All events
       </Link>
       {event.cancelled ? (

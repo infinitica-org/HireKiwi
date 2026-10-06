@@ -3,7 +3,7 @@ import type {
   AdminReportRow,
   ListAdminReportsQuery,
   ListAdminReportsResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { decodeCursor, encodeCursor } from './messaging.service.js';
 

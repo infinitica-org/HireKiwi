@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { SMART_TOPICS } from '@smart/contracts';
+import { SMART_TOPICS } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 import { ROLES_KEY } from '../../common/guards/roles.decorator.js';
@@ -49,6 +49,7 @@ function projectRow(overrides: Record<string, unknown> = {}) {
 
 function setup() {
   const prisma = {
+    projectDocument: { findMany: vi.fn().mockResolvedValue([]) },
     project: {
       create: vi.fn().mockResolvedValue(projectRow()),
       findUnique: vi.fn().mockResolvedValue(projectRow()),
@@ -69,6 +70,7 @@ function setup() {
       interviewStatus: 'NOT_REQUIRED',
       interviewCompletedAt: null,
     }),
+    markVerifyComplete: vi.fn().mockResolvedValue(undefined),
   };
   const auditPublisher = { record: vi.fn().mockResolvedValue(undefined) };
   const service = new ProjectsService(
@@ -112,8 +114,8 @@ describe('CN-T08 project submission', () => {
     expect(outbox.enqueueEnvelope).not.toHaveBeenCalled();
   });
 
-  it('persists the template, queues smart.project.submitted, and returns SUBMITTED', async () => {
-    const { service, prisma, outbox, verifyRunner } = setup();
+  it('persists the template, queues smart.project.submitted, and marks interview-eligible', async () => {
+    const { service, prisma, outbox, verifyRunner, interviewGate } = setup();
     const dto = await service.create(studentId, template);
 
     expect(prisma.project.create).toHaveBeenCalledWith({
@@ -133,9 +135,9 @@ describe('CN-T08 project submission', () => {
       source: 'platform',
       data: { projectId, studentId },
     });
+    expect(interviewGate.markVerifyComplete).toHaveBeenCalledWith(projectId);
     expect(verifyRunner.runForProject).toHaveBeenCalledWith(projectId, studentId);
     expect(dto.status).toBe('SUBMITTED');
-    expect(dto.interviewStatus).toBe('NOT_REQUIRED');
   });
 
   it('returns the owned project for processing polls', async () => {

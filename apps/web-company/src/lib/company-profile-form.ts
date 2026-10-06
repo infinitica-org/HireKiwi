@@ -3,8 +3,8 @@ import {
   UpdateCompanyProfileRequestSchema,
   type CompanyProfile,
   type UpdateCompanyProfileRequest,
-} from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+} from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 
 export const SOCIAL_NETWORKS = ['linkedin', 'twitter', 'facebook', 'instagram', 'youtube'] as const;
 export type SocialNetwork = (typeof SOCIAL_NETWORKS)[number];

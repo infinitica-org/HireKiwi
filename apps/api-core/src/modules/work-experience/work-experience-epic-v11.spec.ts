@@ -4,7 +4,7 @@ import {
   isInvalidEmploymentProofClassification,
   isDisallowedEndorserEmailDomain,
   deriveWorkExperienceNextAction,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 describe('Epic WORK-EX-01 (S6-VB-01) — Work Experience Verification Specs', () => {
   describe('WE-T01: Company Metadata Capture & Domain Rules', () => {

@@ -56,7 +56,8 @@ describe('BatchesWorkspace', () => {
     await screen.findByRole('heading', { level: 3, name: 'North MBA 2026' });
     const filter = await screen.findByRole('combobox', { name: /Filter batches by campus/i });
 
-    fireEvent.change(filter, { target: { value: 'c-north' } });
+    fireEvent.click(filter);
+    fireEvent.click(screen.getByRole('option', { name: 'North campus' }));
 
     expect(screen.queryByRole('heading', { level: 3, name: 'Batch 2025–2026' })).toBeNull();
     expect(screen.getByRole('heading', { level: 3, name: 'North MBA 2026' })).toBeDefined();

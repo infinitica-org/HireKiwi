@@ -13,8 +13,8 @@ import {
   Field,
   controlButtonClassName,
 } from '@/components/admin-ui';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 import { api } from '@/lib/api';
 
 const PROFICIENCY_OPTIONS = [

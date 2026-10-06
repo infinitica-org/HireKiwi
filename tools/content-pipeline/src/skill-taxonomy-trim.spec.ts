@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { SKILL_CODES, SKILL_DEFINITIONS } from '@smart/contracts';
+import { SKILL_CODES, SKILL_DEFINITIONS } from '@hirekiwi/contracts';
 
 const REMOVED = [
   'DISTRIBUTED_SYSTEMS_DESIGN',

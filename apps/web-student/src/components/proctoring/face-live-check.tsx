@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
-import { Alert, Button } from '@smart/ui';
+import { Alert, Button } from '@hirekiwi/ui';
 import {
   FACE_CUTOUT,
   captureVideoFrame,

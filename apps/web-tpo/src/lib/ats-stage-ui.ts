@@ -1,4 +1,4 @@
-import { ATS_STAGES, type AtsStage } from '@smart/contracts';
+import { ATS_STAGES, type AtsStage } from '@hirekiwi/contracts';
 
 /**
  * Single source of ATS stage presentation for the placement console. Labels are

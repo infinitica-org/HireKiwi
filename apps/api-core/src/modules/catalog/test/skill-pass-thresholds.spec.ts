@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TRACK_DEFINITIONS } from '@smart/contracts';
+import { TRACK_DEFINITIONS } from '@hirekiwi/contracts';
 import {
   passThresholdsFor,
   TECH_FULLSTACK_SKILL_PASS_THRESHOLDS,

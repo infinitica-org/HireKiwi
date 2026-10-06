@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Inject, Param, Patch, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { API_PREFIX } from '@smart/contracts';
+import { API_PREFIX } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Public } from '../../common/guards/public.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

@@ -1,27 +1,27 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
-  Award,
-  FileCheck,
-  FileText,
-  LayoutDashboard,
-  MessageSquare,
-  Gauge,
+  Brain,
+  BriefcaseBusiness,
+  CircleUserRound,
+  ClipboardCheck,
+  Compass,
+  House,
+  MessagesSquare,
+  NotebookPen,
   Settings,
-  Sparkles,
-  Target,
-  CalendarDays,
-  User,
   Video,
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { cn, useUnreadMessageCount } from '@smart/ui';
-import smartLogoImg from '@smart/ui/assets/images/Logos/WebP/Smart-logo.png';
+import { cn, useUnreadMessageCount, SidebarLegalLinks } from '@hirekiwi/ui';
+import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
+
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';
 
 interface NavItem {
   name: string;
@@ -29,32 +29,67 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-const mainNavItems: NavItem[] = [
-  { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Matches', href: '/matches', icon: Target },
-  { name: 'Opportunities', href: '/opportunities', icon: Sparkles },
-  { name: 'Events', href: '/events', icon: CalendarDays },
-  { name: 'Messages', href: '/messages', icon: MessageSquare },
-  { name: 'My profile', href: '/profile', icon: User },
-  { name: 'Skills', href: '/skills', icon: Award },
-  { name: 'Readiness', href: '/readiness', icon: Gauge },
-  { name: 'Settings', href: '/settings', icon: Settings },
+// Pages live under /student/… (root paths redirect there), so link and match on the real paths.
+const navItems: NavItem[] = [
+  { name: 'Home', href: '/student/dashboard', icon: House },
+  { name: 'Messages', href: '/student/messages', icon: MessagesSquare },
+  { name: 'Jobs', href: '/student/matches', icon: BriefcaseBusiness },
+  { name: 'Opportunities', href: '/student/opportunities', icon: Compass },
+  { name: 'My profile', href: '/student/profile', icon: CircleUserRound },
+  { name: 'Skills', href: '/student/skills', icon: Brain },
+  { name: 'Endorsement tracking', href: '/student/applications', icon: ClipboardCheck },
+  { name: 'Assessments', href: '/student/assessments', icon: NotebookPen },
+  { name: 'Interviews', href: '/student/interviews', icon: Video },
 ];
 
-const verificationNavItems: NavItem[] = [
-  { name: 'Endorsement tracking', href: '/applications', icon: FileCheck },
-  { name: 'Assessments', href: '/assessments', icon: FileText },
-  { name: 'Interviews', href: '/interviews', icon: Video },
-];
+const settingsItem: NavItem = { name: 'Settings', href: '/student/settings', icon: Settings };
+
+function isItemActive(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** Same nav item chrome as the TPO console sidebar (tpo-sidebar.tsx). */
+function navItemClass(isExpanded: boolean, isActive: boolean) {
+  return cn(
+    'group relative flex items-center rounded-md transition-all duration-200 ease-out hover:translate-x-0.5 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:translate-x-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900',
+    isExpanded ? 'w-full gap-3 px-3 py-2 text-sm font-medium' : 'size-10 justify-center',
+    isActive
+      ? 'bg-zinc-100 font-semibold text-zinc-900 shadow-2xs dark:bg-zinc-800 dark:text-white'
+      : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-white',
+  );
+}
+
+function NavIcon({ icon: Icon, isActive }: { icon: LucideIcon; isActive: boolean }) {
+  return (
+    <Icon
+      className={cn(
+        'size-4.5 shrink-0 transition-all duration-200 group-hover:scale-110 motion-reduce:transition-none',
+        isActive
+          ? 'stroke-[2.2] text-zinc-900 dark:text-white'
+          : 'text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300',
+      )}
+    />
+  );
+}
 
 export type StudentSidebarProps = {
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
+  collapsed?: boolean;
 };
 
-export function StudentSidebar({ mobileOpen, onMobileOpenChange }: StudentSidebarProps) {
+export function StudentSidebar({
+  mobileOpen,
+  onMobileOpenChange,
+  collapsed = true,
+}: StudentSidebarProps) {
   const pathname = usePathname();
   const unreadMessages = useUnreadMessageCount();
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Mobile drawer always shows labels; on desktop the rail expands on hover or when pinned open.
+  const isExpanded = mobileOpen || !collapsed || isHovered;
+  const closeMobileNav = () => onMobileOpenChange(false);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -74,7 +109,7 @@ export function StudentSidebar({ mobileOpen, onMobileOpenChange }: StudentSideba
           type="button"
           aria-label="Close navigation menu"
           className="fixed inset-0 z-40 bg-slate-900/40 lg:hidden"
-          onClick={() => onMobileOpenChange(false)}
+          onClick={closeMobileNav}
         />
       ) : null}
 
@@ -82,135 +117,117 @@ export function StudentSidebar({ mobileOpen, onMobileOpenChange }: StudentSideba
         role={mobileOpen ? 'dialog' : undefined}
         aria-modal={mobileOpen ? 'true' : undefined}
         aria-label="Student console sidebar"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200/80 bg-white font-sans shadow-xl transition-transform duration-200 select-none lg:z-30 lg:translate-x-0 lg:shadow-none',
+          'fixed inset-y-0 left-0 z-50 flex flex-col justify-between border-r border-zinc-200/80 bg-white font-sans transition-all duration-300 ease-in-out select-none dark:border-zinc-800 dark:bg-[#111111] lg:translate-x-0',
+          isExpanded ? 'w-64 items-start' : 'w-16 items-center',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
-        <div className="flex h-14 shrink-0 items-center justify-between px-4">
+        {/* Logo row — aligns with the h-14 topbar */}
+        <div
+          className={cn(
+            'flex h-14 w-full shrink-0 items-center border-b border-zinc-200/80 transition-all duration-200 dark:border-zinc-800/80',
+            isExpanded ? 'justify-between px-3.5' : 'justify-center px-0',
+          )}
+        >
           <Link
-            href="/dashboard"
-            className="flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+            href="/student/dashboard"
             aria-label="SMART home"
+            title="SMART"
+            className="flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
           >
             <Image
               src={smartLogoImg}
               alt="SMART logo"
-              width={32}
-              height={32}
+              width={28}
+              height={28}
               priority
-              className="h-8 w-8 shrink-0 object-contain"
+              className="h-7 w-7 shrink-0 object-contain"
             />
           </Link>
+
+          {mobileOpen ? (
+            <button
+              type="button"
+              aria-label="Close menu"
+              className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 lg:hidden"
+              onClick={closeMobileNav}
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
         </div>
 
-        <button
-          type="button"
-          aria-label="Close menu"
-          className="absolute right-3 top-3.5 rounded-lg p-1 text-zinc-500 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 lg:hidden"
-          onClick={() => onMobileOpenChange(false)}
-        >
-          <X className="size-5" />
-        </button>
-
         <nav
-          className="flex-1 overflow-y-auto overscroll-contain bg-white px-3 py-4 space-y-6"
+          className="w-full flex-1 overflow-y-auto overscroll-contain px-2 py-3"
           aria-label="Student console"
         >
-          <ul className="space-y-1.5">
-            {mainNavItems.map((item) => {
-              const basePath = item.href.split('?')[0] || item.href;
-              const isActive =
-                pathname === item.href ||
-                (item.href !== '/dashboard' && pathname.startsWith(basePath));
-              const Icon = item.icon;
+          <ul className="space-y-1">
+            {navItems.map((item) => {
+              const isActive = isItemActive(pathname, item.href);
+              const showUnread = item.href === '/student/messages' && unreadMessages > 0;
               return (
-                <li key={item.name}>
+                <li
+                  key={item.href}
+                  className={cn('flex', isExpanded ? 'w-full' : 'justify-center')}
+                >
                   <Link
                     href={item.href}
-                    onClick={() => onMobileOpenChange(false)}
+                    onClick={closeMobileNav}
                     aria-current={isActive ? 'page' : undefined}
-                    className={cn(
-                      'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900',
-                      isActive
-                        ? 'bg-zinc-100 font-bold text-zinc-900'
-                        : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900',
-                    )}
+                    title={item.name}
+                    className={navItemClass(isExpanded, isActive)}
                   >
-                    <Icon
-                      className={cn(
-                        'size-5 shrink-0 transition-colors',
-                        isActive
-                          ? 'stroke-[2.2] text-zinc-900'
-                          : 'text-zinc-400 group-hover:text-zinc-600',
-                      )}
-                    />
-                    <span className="truncate">{item.name}</span>
-                    {item.href === '/messages' && unreadMessages > 0 ? (
-                      <span
-                        aria-label={`${unreadMessages} unread messages`}
-                        className="ml-auto rounded-full bg-emerald-600 px-1.5 text-[11px] font-semibold text-white"
-                      >
-                        {unreadMessages > 99 ? '99+' : unreadMessages}
-                      </span>
+                    <NavIcon icon={item.icon} isActive={isActive} />
+                    {isExpanded ? <span className="truncate">{item.name}</span> : null}
+                    {showUnread ? (
+                      isExpanded ? (
+                        <span
+                          aria-label={`${unreadMessages} unread messages`}
+                          className="ml-auto rounded-full bg-emerald-600 px-1.5 text-[11px] font-semibold text-white"
+                        >
+                          {unreadMessages > 99 ? '99+' : unreadMessages}
+                        </span>
+                      ) : (
+                        <span
+                          aria-label={`${unreadMessages} unread messages`}
+                          className="absolute top-1.5 right-1.5 size-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#111111]"
+                        />
+                      )
                     ) : null}
                   </Link>
                 </li>
               );
             })}
           </ul>
-
-          <div>
-            <div className="px-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase mb-2">
-              Verification
-            </div>
-            <ul className="space-y-1.5">
-              {verificationNavItems.map((item) => {
-                const basePath = item.href.split('?')[0] || item.href;
-                const isActive = pathname.startsWith(basePath);
-                const Icon = item.icon;
-                return (
-                  <li key={item.name}>
-                    <Link
-                      href={item.href}
-                      onClick={() => onMobileOpenChange(false)}
-                      aria-current={isActive ? 'page' : undefined}
-                      className={cn(
-                        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900',
-                        isActive
-                          ? 'bg-zinc-100 font-bold text-zinc-900'
-                          : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900',
-                      )}
-                    >
-                      <Icon
-                        className={cn(
-                          'size-5 shrink-0 transition-colors',
-                          isActive
-                            ? 'stroke-[2.2] text-zinc-900'
-                            : 'text-zinc-400 group-hover:text-zinc-600',
-                        )}
-                      />
-                      <span className="truncate">{item.name}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
         </nav>
 
-        <div className="shrink-0 border-t border-slate-100 px-4 py-3 space-y-2">
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold text-slate-900">Verification</span>
-              <span className="text-xs font-bold text-emerald-600">33%</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mb-2">Profile strength verified</p>
-            <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
-              <div className="h-full rounded-full bg-emerald-500 w-[33%]" />
-            </div>
-          </div>
-          <div className="text-[11px] font-medium text-slate-400 px-1">Privacy Policy · Terms</div>
+        {/* Bottom stack: verification progress, Settings, legal links */}
+        <div
+          className={cn(
+            'flex w-full shrink-0 flex-col gap-2 border-t border-zinc-200/80 py-3 dark:border-zinc-800/80',
+            isExpanded ? 'px-2' : 'items-center px-1.5',
+          )}
+        >
+          {(() => {
+            const isActive = isItemActive(pathname, settingsItem.href);
+            return (
+              <Link
+                href={settingsItem.href}
+                onClick={closeMobileNav}
+                aria-current={isActive ? 'page' : undefined}
+                title={settingsItem.name}
+                className={navItemClass(isExpanded, isActive)}
+              >
+                <NavIcon icon={settingsItem.icon} isActive={isActive} />
+                {isExpanded ? <span className="truncate">{settingsItem.name}</span> : null}
+              </Link>
+            );
+          })()}
+
+          <SidebarLegalLinks authUrl={AUTH_URL} expanded={isExpanded} />
         </div>
       </aside>
     </>

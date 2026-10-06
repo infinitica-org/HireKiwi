@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "SMART Platform — base",
+  "display": "HireKiwi Platform — base",
   "compilerOptions": {
     "target": "ES2023",
     "lib": ["ES2023"],

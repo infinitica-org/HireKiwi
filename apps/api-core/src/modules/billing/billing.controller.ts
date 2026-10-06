@@ -22,7 +22,7 @@ import {
   type EmployerSubscriptionDto,
   type EmployerInvoiceDto,
   type CompanyQuotaOverviewDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { FastifyRequest } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

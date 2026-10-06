@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ProjectDto } from '@smart/contracts';
+import type { ProjectDto } from '@hirekiwi/contracts';
 import { ProjectCard } from './ProjectCard';
 
 vi.mock('next/link', () => ({
@@ -54,7 +54,7 @@ describe('ProjectCard', () => {
 
     const start = screen.getByRole('link', { name: /start interview/i });
     expect(start.getAttribute('href')).toBe(
-      '/profile/projects/7cf5e6c9-621d-4dae-a94b-0053f952d890/defense',
+      '/student/profile/projects/7cf5e6c9-621d-4dae-a94b-0053f952d890/defense',
     );
   });
 });

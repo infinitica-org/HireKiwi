@@ -1,0 +1,107 @@
+---
+title: 16. AI & Machine Learning
+description: Autonomous AI agents ecosystem featuring Vivi, multi-model proxy architecture, prompt schemas, BARS rubric evaluation pipelines, and calibration standards.
+---
+
+## 16.1 AI Architecture & Multi-Model Proxy
+
+HireKiwi routes all generative AI evaluations through an enterprise proxy layer enforcing cost caps, retry backoffs, circuit breaking, and deterministic JSON schemas:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        API-CORE EVALUATION CLIENT                      │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                       OPENROUTER RESILIENCE PROXY                      │
+│ ┌───────────────────────────────────┐ ┌──────────────────────────────┐ │
+│ │ Primary: Claude 3.5 Sonnet / GPT-4o│ │ Secondary: Mistral Large     │ │
+│ └───────────────────────────────────┘ └──────────────────────────────┘ │
+│ ┌───────────────────────────────────┐ ┌──────────────────────────────┐ │
+│ │ 12s Timeout & Circuit Breaking    │ │ Structured JSON Schema Lock  │ │
+│ └───────────────────────────────────┘ └──────────────────────────────┘ │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                    ZOD CONTRACT SCHEMA ENFORCEMENT                     │
+│ Validates criteria, evidence citations, score bounds before persistence│
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 16.2 Intelligence Pipeline & Deep Learning Architecture
+
+HireKiwi structures AI intelligence into clean, modular pipeline stages operating under strict deterministic validation and cost controls:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                     SMARTKIWI INTELLIGENCE PIPELINE                     │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│   ┌──────────────────────────────────────────────────────────────┐     │
+│   │ 1. SOURCE VERIFICATION ENGINE (BullMQ Workers)               │     │
+│   │ • Interrogates authentic external data sources at origin     │     │
+│   │ • Ingests SIS/ERP, GitHub AST, Corporate Domains, Credly APIs│     │
+│   │ • Detects fraud rings, repository plagiarism & collisions   │     │
+│   │ • Emits cryptographic HMAC-SHA256 source proof attestations  │     │
+│   └──────────────────────────────┬───────────────────────────────┘     │
+│                                  │ Emits Verified Evidence DAG         │
+│                                  ▼                                     │
+│   ┌──────────────────────────────────────────────────────────────┐     │
+│   │ 2. AI PROJECT DEFENSE & EVALUATION RUNNER                    │     │
+│   │ • Conducts interactive, dynamic AI project defense interviews│     │
+│   │ • Generates follow-up probes grounded in candidate code AST  │     │
+│   │ • Claude 5 Sonnet with automated Gemini 2.5 Flash failover   │     │
+│   └──────────────────────────────┬───────────────────────────────┘     │
+│                                  │ Emits Structured Telemetry & Rubrics│
+│                                  ▼                                     │
+│   ┌──────────────────────────────────────────────────────────────┐     │
+│   │ 3. 4D TELEMETRY & CAPABILITY INFERENCE ENGINE                │     │
+│   │ • Validates multi-dimensional proctoring & attempt telemetry │     │
+│   │ • Evaluates Behaviorally Anchored Rating Scales (BARS 1 to 5)│     │
+│   │ • Calibrates uncertainty; separates confidence from level   │     │
+│   └──────────────────────────────┬───────────────────────────────┘     │
+│                                  │ Emits Calibrated Capability Profile │
+│                                  ▼                                     │
+│   ┌──────────────────────────────────────────────────────────────┐     │
+│   │ 4. DETERMINISTIC ALGORITHMIC MATCHING ENGINE                 │     │
+│   │ • Hard SQL filters + Weighted requirement scoring formulas   │     │
+│   │ • pgvector HNSW cosine similarity on capability embeddings   │     │
+│   │ • Zero LLM hallucination in candidate ranking & scoring      │     │
+│   │ • Batch-normalized percentiles across candidate cohorts      │     │
+│   └──────────────────────────────────────────────────────────────┘     │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### Deep Learning Validation & Cryptographic Firewall:
+Downstream scoring and matching modules are strictly prohibited from consuming unverified candidate claims or raw, unvalidated telemetry. The Verification Engine acts as the **cryptographic firewall**: only evidence nodes verified at source and validated through deterministic schema locks enter the capability inference vector store.
+
+---
+
+## 16.3 Prompt Architecture & Schema Validation
+
+Prompts are stored as versioned, immutable templates in `apps/api-core/src/modules/evaluation/prompts/`:
+
+- **System Persona:** Strict psychometric and software engineering evaluator. Prohibited from generating subjective conversational filler.
+- **Input Injection:** Sanitized repository code snippets, commit messages, and candidate response transcripts. All PII (candidate name, gender, college name, photo) is stripped prior to LLM injection.
+- **Output Constraint:** Structured JSON strictly adhering to Zod contract DTOs (`packages/contracts/src/dto/evaluation.dto.ts`). Unparseable or malformed responses are mechanically rejected before database write.
+
+---
+
+## 16.4 Confidence Calibration & Uncertainty Quantification
+
+In accordance with PRD requirement `FR-INT-01.07` and principle 6.2, every agent output carries an explicit Confidence Score $C \in [0.00, 1.00]$:
+
+1. **Token Logprob Entropy:** Low entropy in generated BARS tier assignments indicates high model certainty.
+2. **Citation Groundedness:** Every proficiency rating must quote verbatim code snippets from the candidate's repository or verbatim quotes from the interview transcript.
+3. **Automated Escalation (`FR-INT-01.12`):** When confidence drops below $0.65$, the case is automatically dispatched to the human Verifier Operations Queue (`ADM-02`).
+
+---
+
+## 16.5 Model Versioning, Benchmarking & Safety Guardrails
+
+- **Semantic Versioning:** Every model inference record stores prompt version (e.g., `prompt-code-defense-v2.1.4`), model ID, temperature, and rubric release.
+- **500-Sample Golden Dataset:** Nightly automated CI pipelines execute synthetic evaluation runs against a curated 500-sample golden dataset to detect prompt drift or model degradation before production deployment.
+- **Responsible AI Boundary (`SEC-02.06` & `SEC-02.09`):** Facial-expression inference, emotion detection, and personality profiling are mechanically prohibited. The platform never makes autonomous hiring decisions; evaluation outputs serve as decision-support evidence for human employers.

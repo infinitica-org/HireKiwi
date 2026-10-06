@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { TRACK_DEFINITIONS, assertDomainWeightsSumToOne } from '@smart/contracts';
+import { TRACK_DEFINITIONS, assertDomainWeightsSumToOne } from '@hirekiwi/contracts';
 import { runValidate } from './validate.js';
 
 const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'data');

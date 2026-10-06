@@ -2,7 +2,7 @@ import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import { Catch, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import { ZodError } from 'zod';
-import { getContext, LOG_EVENTS, logEvent } from '@smart/observability';
+import { getContext, LOG_EVENTS, logEvent } from '@hirekiwi/observability';
 import type { RequestWithLogContext } from '../interceptors/observability.interceptor.js';
 
 @Catch()

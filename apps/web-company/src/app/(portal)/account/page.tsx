@@ -6,7 +6,7 @@ import {
   AccountErrorPanel,
   AccountLoadingPanel,
 } from '@/components/account-state-panel';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 
 export default function CompanyAccountPage() {
   const { data, isLoading, isError, error } = useCompanyAccount();
@@ -14,7 +14,9 @@ export default function CompanyAccountPage() {
   if (isLoading) {
     return (
       <div>
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-[#172033]">Account</h1>
+        <h1 className="mb-6 text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">
+          Account
+        </h1>
         <AccountLoadingPanel />
       </div>
     );
@@ -25,7 +27,9 @@ export default function CompanyAccountPage() {
       error instanceof Error ? error.message : 'Something went wrong while loading your account.';
     return (
       <div>
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-[#172033]">Account</h1>
+        <h1 className="mb-6 text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">
+          Account
+        </h1>
         <AccountErrorPanel message={message} />
       </div>
     );
@@ -33,7 +37,7 @@ export default function CompanyAccountPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-[#172033]">Account</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">Account</h1>
       <Card className="border-border/70 bg-white">
         <CardHeader>
           <CardTitle>Signed-in representative</CardTitle>

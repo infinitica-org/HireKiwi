@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { SkillLevelExplanationService } from './skill-level-explanation.service.js';
 
-vi.mock('@smart/contracts', async (importOriginal) => {
+vi.mock('@hirekiwi/contracts', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,

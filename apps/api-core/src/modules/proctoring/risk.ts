@@ -1,4 +1,4 @@
-import type { ProctoringSeverity, ProctoringViolationKind } from '@smart/contracts';
+import type { ProctoringSeverity, ProctoringViolationKind } from '@hirekiwi/contracts';
 
 const WEIGHT: Record<ProctoringSeverity, number> = { low: 1, medium: 3, high: 7 };
 

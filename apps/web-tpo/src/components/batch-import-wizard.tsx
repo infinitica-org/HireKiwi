@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   API_PREFIX,
   BatchImportMappingSchema,
@@ -11,8 +11,8 @@ import {
   type BatchImportMapping,
   type BatchImportResultDto,
   type BulkWhitelistProgressDto,
-} from '@smart/contracts';
-import { Alert, Button } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Alert, Button } from '@hirekiwi/ui';
 import { api, apiClient } from '../lib/api';
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -517,7 +517,6 @@ export function BatchImportWizard({
                   variant="outline"
                   onClick={() => void downloadErrorReport()}
                   disabled={busy}
-                  isLoading={busy}
                 >
                   Download Import-Errors-Report.xlsx
                 </Button>

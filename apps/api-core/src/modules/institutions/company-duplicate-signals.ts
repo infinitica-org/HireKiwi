@@ -1,4 +1,4 @@
-import type { CompanyDuplicateSignal } from '@smart/contracts';
+import type { CompanyDuplicateSignal } from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import type { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { extractDomain, normalizeCompanyName } from '../work-experience/company-name.util.js';

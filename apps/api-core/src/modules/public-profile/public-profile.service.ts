@@ -5,7 +5,7 @@ import {
   SKILL_DEFINITIONS,
   type PublicCandidateProfileDto,
   type PublicProfileLinkResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { env } from '../../platform/config/env.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

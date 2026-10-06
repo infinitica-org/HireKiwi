@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PROJECT_VERIFY_PROMPT_REF } from '@smart/contracts';
+import { PROJECT_VERIFY_PROMPT_REF } from '@hirekiwi/contracts';
 import {
   encodeReportExplanation,
   placeholderSnapshot,

@@ -7,8 +7,8 @@ import {
   getAccessToken,
   resolvePortalOriginsFromEnv,
   storeAccessToken,
-} from '@smart/api-client';
-import { RolesGuard, SessionBootstrap } from '@smart/ui';
+} from '@hirekiwi/api-client';
+import { RolesGuard, SessionBootstrap } from '@hirekiwi/ui';
 import { signOut } from '../lib/auth';
 
 const MOCK_DEV_TPO_TOKEN =

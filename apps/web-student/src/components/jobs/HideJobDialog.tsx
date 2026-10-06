@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Modal } from '@smart/ui';
+import { Button, Modal } from '@hirekiwi/ui';
 
 const REASONS = ['Not relevant to me', 'Wrong location', 'Not the right level', 'Other'] as const;
 

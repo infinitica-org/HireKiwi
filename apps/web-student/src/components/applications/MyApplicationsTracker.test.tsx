@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SmartApiError } from '@smart/api-client';
-import type { StudentApplicationCard, StudentApplicationDetail } from '@smart/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
+import type { StudentApplicationCard, StudentApplicationDetail } from '@hirekiwi/contracts';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MyApplicationsTracker } from './MyApplicationsTracker';
@@ -195,7 +195,9 @@ describe('MyApplicationsTracker (Th6-392/393)', () => {
     studentApplications.list.mockResolvedValue({ applications: [] });
     renderTracker();
     expect(await screen.findByText('No applications yet')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Browse jobs' }).getAttribute('href')).toBe('/jobs');
+    expect(screen.getByRole('link', { name: 'Browse jobs' }).getAttribute('href')).toBe(
+      '/student/jobs',
+    );
   });
 
   it('shows an error state and retries', async () => {

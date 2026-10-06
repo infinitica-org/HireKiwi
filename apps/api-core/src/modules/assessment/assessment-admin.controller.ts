@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Inject, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { API_PREFIX } from '@smart/contracts';
+import { API_PREFIX } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
@@ -82,5 +82,12 @@ export class AssessmentAdminController {
     @Body() body: unknown,
   ) {
     return this.service.upsertCutScore(user.sub, levelId, body);
+  }
+
+  @Post('levels/:levelId/cut-scores/publish')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Publish cut scores for a level and emit track updated event (T11).' })
+  publishCutScores(@CurrentUser() user: RequestUser, @Param('levelId') levelId: string) {
+    return this.service.publishCutScores(user.sub, levelId);
   }
 }

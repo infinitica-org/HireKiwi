@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { SkillClaimDto } from '@smart/contracts';
+import type { SkillClaimDto } from '@hirekiwi/contracts';
 import { SkillVerifyRow } from './skill-verify-row';
 
 function claim(overrides: Partial<SkillClaimDto> = {}): SkillClaimDto {

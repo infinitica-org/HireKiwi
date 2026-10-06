@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import type { BillingInterval } from '@smart/contracts';
+import type { BillingInterval } from '@hirekiwi/contracts';
 import { env } from '../../../platform/config/env.js';
 
 export interface CreateProviderSubscriptionInput {

@@ -3,7 +3,7 @@ import {
   CompanyRepresentativeSchema,
   CompanySignupProfileSchema,
   CompanyVerificationSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import { incompleteSubmissionError } from './company-onboarding-submit-issues.js';
 

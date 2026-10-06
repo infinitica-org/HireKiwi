@@ -9,7 +9,7 @@ import {
   type LeetcodeTagStat,
   type SkillDimensionRefDto,
   type VectorizedSignalEntry,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   GITHUB_LANGUAGE_MAPPING,
   SELF_SELECTED_SKILL_CONFIDENCE,

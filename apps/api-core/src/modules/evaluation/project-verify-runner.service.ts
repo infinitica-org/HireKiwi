@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PROJECT_VERIFY_PROMPT_REF } from '@smart/contracts';
+import { PROJECT_VERIFY_PROMPT_REF } from '@hirekiwi/contracts';
 import { env } from '../../platform/config/env.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { GithubApiClient } from '../integrations/github/github-api.client.js';

@@ -5,7 +5,7 @@ import {
   type AiCompletionResponse,
   type AiHealthDto,
   type AiUsageSummaryDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { Public } from '../../common/guards/public.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import { AiGatewayService } from './ai-gateway.service.js';
@@ -59,16 +59,6 @@ export class AiGatewayController {
   @Roles('SUPER_ADMIN')
   adminToggleModel(@Body() body: unknown) {
     return this.service.toggleModelVersion(body);
-  }
-
-  @Get(`${API_PREFIX}/ai-gateway/_meta`)
-  meta() {
-    return {
-      module: 'ai-gateway',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'active',
-    };
   }
 
   @Post(`${API_PREFIX}/ai-gateway/complete`)

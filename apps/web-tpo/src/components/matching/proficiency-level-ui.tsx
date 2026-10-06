@@ -1,7 +1,7 @@
 'use client';
 
-import { ProficiencyLevelHint } from '@smart/ui';
-import { SKILL_PROFICIENCIES } from '@smart/contracts';
+import { ProficiencyLevelHint } from '@hirekiwi/ui';
+import { SKILL_PROFICIENCIES } from '@hirekiwi/contracts';
 
 export { ProficiencyLevelHint };
 

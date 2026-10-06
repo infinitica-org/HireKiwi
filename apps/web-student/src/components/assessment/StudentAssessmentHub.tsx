@@ -2,24 +2,39 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   FileText,
   CheckCircle2,
   ArrowRight,
-  ArrowLeft,
   BookOpen,
   Clock,
-  AlertTriangle,
   RotateCcw,
-  Check,
   X,
   Plus,
 } from 'lucide-react';
-import { cn } from '@smart/ui';
+import { cn } from '@hirekiwi/ui';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '@/lib/api';
 import { skillNameForCode, categoryNameForCode } from '@/lib/skill-declarations';
-import type { SkillClaimDto } from '@smart/contracts';
+import type { SkillClaimDto } from '@hirekiwi/contracts';
+
+// Detect if a skill is under verification (assessment taken but result pending)
+function isUnderVerification(claim: SkillClaimDto | undefined): boolean {
+  if (!claim) return false;
+  // Under verification if: latestAssessmentResult exists OR verificationInProgress is true
+  return Boolean(claim.latestAssessmentResult || claim.verificationInProgress);
+}
+
+// Get the display status for a skill claim
+function getSkillStatus(
+  claim: SkillClaimDto | undefined,
+): 'DECLARED' | 'UNDER_VERIFICATION' | 'VERIFIED' {
+  if (!claim) return 'DECLARED';
+  if (claim.status === 'VERIFIED') return 'VERIFIED';
+  if (isUnderVerification(claim)) return 'UNDER_VERIFICATION';
+  return 'DECLARED';
+}
 
 export interface AssessmentItem {
   id: string;
@@ -30,6 +45,7 @@ export interface AssessmentItem {
   provider: string;
   estimatedTime: string;
   status: 'PENDING' | 'COMPLETED';
+  skillStatus?: 'DECLARED' | 'UNDER_VERIFICATION' | 'VERIFIED';
   proficiency?: string;
   result?: {
     passed: boolean;
@@ -38,33 +54,16 @@ export interface AssessmentItem {
     topicBreakdown: { topic: string; score: number }[];
     retakeAvailableDays?: number;
   };
-  questions: {
-    questionText: string;
-    codeSnippet?: string;
-    options: string[];
-    correctIndex: number;
-  }[];
 }
 
 export function StudentAssessmentHub() {
+  const router = useRouter();
   const [skillClaims, setSkillClaims] = useState<SkillClaimDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'PENDING' | 'COMPLETED'>('PENDING');
 
-  // Active testing session state
-  const [activeTest, setActiveTest] = useState<AssessmentItem | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
-  const [timerSeconds, setTimerSeconds] = useState<number>(900); // 15 mins
-  const [testCompletedResult, setTestCompletedResult] = useState<AssessmentItem['result'] | null>(
-    null,
-  );
-
   // View Result Detail Modal
   const [viewResultTarget, setViewResultTarget] = useState<AssessmentItem | null>(null);
-
-  // Anti-cheat tab switch listener
-  const [tabSwitchWarning, setTabSwitchWarning] = useState(false);
 
   const loadClaims = async () => {
     setLoading(true);
@@ -82,9 +81,27 @@ export function StudentAssessmentHub() {
     loadClaims();
   }, []);
 
+  function isUnderVerification(claim: SkillClaimDto | undefined): boolean {
+    if (!claim) return false;
+    return Boolean(
+      (claim as unknown as { latestAssessmentResult?: unknown }).latestAssessmentResult ||
+      (claim as unknown as { verificationInProgress?: boolean }).verificationInProgress,
+    );
+  }
+
+  function getSkillStatus(
+    claim: SkillClaimDto | undefined,
+  ): 'DECLARED' | 'UNDER_VERIFICATION' | 'VERIFIED' {
+    if (!claim) return 'DECLARED';
+    if (claim.status === 'VERIFIED') return 'VERIFIED';
+    if (isUnderVerification(claim)) return 'UNDER_VERIFICATION';
+    return 'DECLARED';
+  }
+
   const assessments: AssessmentItem[] = useMemo(() => {
     return skillClaims.map((claim) => {
       const isVerified = claim.status === 'VERIFIED';
+      const skillStatus = getSkillStatus(claim);
       const name = `${skillNameForCode(claim.skillCode)} Diagnostic Assessment`;
       const provider = `Smart Evaluation Engine · ${categoryNameForCode(claim.skillCode)}`;
 
@@ -97,6 +114,7 @@ export function StudentAssessmentHub() {
         provider,
         estimatedTime: '~15 min',
         status: isVerified ? 'COMPLETED' : 'PENDING',
+        skillStatus,
         proficiency: claim.proficiency,
         result: isVerified
           ? {
@@ -110,325 +128,29 @@ export function StudentAssessmentHub() {
               ],
             }
           : undefined,
-        questions: [
-          {
-            questionText: `Which architectural pattern is recommended for optimizing scalability and maintainability in ${skillNameForCode(claim.skillCode)}?`,
-            options: [
-              'Separation of concerns with decoupled domain services and idempotent interfaces.',
-              'Global state mutation across untracked listeners.',
-              'Monolithic coupled procedural scripting.',
-              'Disabling concurrency and relying on synchronous blocking loops.',
-            ],
-            correctIndex: 0,
-          },
-          {
-            questionText:
-              'How should edge errors and asynchronous failures be trapped in production pipelines?',
-            options: [
-              'Structured error boundaries with telemetry logging and fallback handlers.',
-              'Ignoring rejected promises in background threads.',
-              'Suppressing error codes from client responses.',
-              'Exiting the process on every uncaught warning.',
-            ],
-            correctIndex: 0,
-          },
-        ],
       };
     });
   }, [skillClaims]);
 
-  useEffect(() => {
-    if (!activeTest) return;
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setTabSwitchWarning(true);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [activeTest]);
-
-  // Timer countdown
-  useEffect(() => {
-    if (!activeTest || testCompletedResult) return;
-    const interval = setInterval(() => {
-      setTimerSeconds((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [activeTest, testCompletedResult]);
-
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
   const handleStartTest = (item: AssessmentItem) => {
-    setActiveTest(item);
-    setCurrentQuestionIndex(0);
-    setSelectedAnswers({});
-    setTimerSeconds(900);
-    setTestCompletedResult(null);
-    setTabSwitchWarning(false);
-  };
-
-  const handleSelectOption = (optIndex: number) => {
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [currentQuestionIndex]: optIndex,
-    }));
-  };
-
-  const handleSubmitTest = async () => {
-    if (!activeTest) return;
-
-    const questions = activeTest.questions;
-    let correct = 0;
-    questions.forEach((q, idx) => {
-      if (selectedAnswers[idx] === q.correctIndex) {
-        correct++;
-      }
-    });
-
-    const score = Math.max(Math.round((correct / (questions.length || 1)) * 100), 88);
-    const passed = score >= 70;
-
-    const resultData: AssessmentItem['result'] = {
-      passed,
-      scorePercent: score,
-      completionDate: 'Just now',
-      topicBreakdown: [
-        { topic: 'Theoretical Principles', score: score + 2 > 100 ? 100 : score + 2 },
-        { topic: 'Application Architecture', score: score - 1 },
-        { topic: 'Reliability & Error Handling', score: score },
-      ],
-      retakeAvailableDays: passed ? undefined : 7,
-    };
-
-    setTestCompletedResult(resultData);
-
-    // If passed, update claim in local state and live API
-    if (passed && activeTest.claimId) {
-      setSkillClaims((prev) =>
-        prev.map((c) => (c.claimId === activeTest.claimId ? { ...c, status: 'VERIFIED' } : c)),
-      );
-      try {
-        await (
-          api.assessment as Record<string, ((...args: unknown[]) => Promise<unknown>) | undefined>
-        ).submitL1DiagnosticResult?.(activeTest.claimId, {
-          score,
-          passed: true,
-        });
-      } catch {
-        // Handled
-      }
+    if (item.claimId) {
+      router.push(`/student/assessments/skills/${item.claimId}`);
     }
   };
 
   const pendingList = assessments.filter((a) => a.status === 'PENDING');
   const completedList = assessments.filter((a) => a.status === 'COMPLETED');
 
-  // If in active test taking screen
-  if (activeTest) {
-    const questions = activeTest.questions;
-    const currentQ = questions[currentQuestionIndex] ??
-      questions[0] ?? {
-        questionText: 'Diagnostic assessment in progress…',
-        options: ['Option A', 'Option B', 'Option C', 'Option D'],
-        correctIndex: 0,
-      };
-
-    return (
-      <div className="mx-auto w-full max-w-3xl space-y-6 pb-16 pt-4 font-sans select-none">
-        {/* Results Screen */}
-        {testCompletedResult ? (
-          <div className="rounded-md border border-zinc-200/80 bg-white p-8 text-center shadow-xl dark:border-zinc-800 dark:bg-[#161616]">
-            {/* Score Ring */}
-            <div
-              className={cn(
-                'mx-auto flex size-20 items-center justify-center rounded-full border-4 text-xl font-extrabold mb-4',
-                testCompletedResult.passed
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                  : 'border-rose-500 bg-rose-50 text-rose-800 dark:bg-rose-950 dark:text-rose-300',
-              )}
-            >
-              {testCompletedResult.scorePercent}%
-            </div>
-
-            <h2 className="font-heading text-2xl font-bold text-zinc-950 dark:text-white">
-              {testCompletedResult.passed ? '✓ Assessment Passed!' : '✗ Assessment Not Passed'}
-            </h2>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{activeTest.name}</p>
-
-            {/* Topic Breakdown */}
-            <div className="mt-6 text-left space-y-3 rounded-md border border-zinc-100 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/60">
-              <p className="font-bold text-xs text-zinc-900 dark:text-white uppercase tracking-wider">
-                Topic Performance Breakdown
-              </p>
-              {testCompletedResult.topicBreakdown.map((topic, idx) => (
-                <div key={idx} className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-zinc-700 dark:text-zinc-300 font-medium">
-                      {topic.topic}
-                    </span>
-                    <span className="font-bold text-zinc-900 dark:text-white">{topic.score}%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-zinc-200 rounded-full overflow-hidden dark:bg-zinc-800">
-                    <div
-                      className="h-full bg-zinc-900 rounded-full dark:bg-white"
-                      style={{ width: `${topic.score}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Actions */}
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTest(null);
-                  setActiveTab('COMPLETED');
-                }}
-                className="rounded-md bg-zinc-900 px-5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
-              >
-                Back to Assessments
-              </button>
-
-              {!testCompletedResult.passed && testCompletedResult.retakeAvailableDays && (
-                <span className="text-xs text-zinc-400">
-                  Retake available in {testCompletedResult.retakeAvailableDays} days
-                </span>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* Active Question Flow */
-          <div className="rounded-md border border-zinc-200/80 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-[#161616]">
-            {/* Anti-cheat tab switch warning banner */}
-            <div className="flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200 mb-5">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="size-4 text-amber-600 shrink-0" />
-                <span className="font-bold">
-                  Anti-cheat active: Don&apos;t switch tabs during the assessment session.
-                </span>
-              </div>
-              {tabSwitchWarning && (
-                <span className="text-rose-600 font-bold">Warning: Tab unfocused detected!</span>
-              )}
-            </div>
-
-            {/* Top Bar: Question Counter & Timer */}
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800">
-              <div>
-                <span className="font-bold text-zinc-900 text-sm dark:text-white">
-                  Question {currentQuestionIndex + 1} of {questions.length}
-                </span>
-                <p className="text-[11px] text-zinc-500">{activeTest.name}</p>
-              </div>
-
-              <div className="flex items-center gap-1.5 rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-mono font-bold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
-                <Clock className="size-3.5 text-zinc-500" />
-                <span>{formatTimer(timerSeconds)}</span>
-              </div>
-            </div>
-
-            {/* Question Text */}
-            <div className="mt-5 space-y-4 text-xs">
-              <p className="text-sm font-semibold text-zinc-900 dark:text-white leading-relaxed">
-                {currentQ.questionText}
-              </p>
-
-              {currentQ.codeSnippet && (
-                <pre className="rounded-md bg-zinc-950 p-3 text-emerald-400 font-mono text-[11px] overflow-x-auto">
-                  <code>{currentQ.codeSnippet}</code>
-                </pre>
-              )}
-
-              {/* Radio Options */}
-              <div className="space-y-2 pt-2">
-                {currentQ.options.map((opt, optIdx) => {
-                  const isChecked = selectedAnswers[currentQuestionIndex] === optIdx;
-                  return (
-                    <label
-                      key={optIdx}
-                      className={cn(
-                        'flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-all',
-                        isChecked
-                          ? 'border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900 dark:border-white dark:bg-zinc-900/80 dark:ring-white'
-                          : 'border-zinc-200 hover:bg-zinc-50/50 dark:border-zinc-800 dark:hover:bg-zinc-900/40',
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name={`question-${currentQuestionIndex}`}
-                        checked={isChecked}
-                        onChange={() => handleSelectOption(optIdx)}
-                        className="mt-0.5 accent-zinc-900"
-                      />
-                      <span className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-medium">
-                        {opt}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Navigation & Submit Buttons */}
-            <div className="mt-8 flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-zinc-800">
-              <button
-                type="button"
-                disabled={currentQuestionIndex === 0}
-                onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
-                className="inline-flex items-center gap-1 rounded-md border border-zinc-200 px-4 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300"
-              >
-                <ArrowLeft className="size-3.5" />
-                Previous
-              </button>
-
-              {currentQuestionIndex === questions.length - 1 ? (
-                <button
-                  type="button"
-                  onClick={handleSubmitTest}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
-                >
-                  Submit Assessment
-                  <Check className="size-3.5" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-4 py-2 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
-                >
-                  Next
-                  <ArrowRight className="size-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6 pb-16 pt-2 font-sans select-none">
       {/* 🚀 Header */}
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200/80 pb-5 dark:border-zinc-800">
+      <section className="flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3.5">
-          <div className="flex size-11 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-900 shadow-2xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
-            <FileText className="size-6 stroke-[1.75]" />
-          </div>
           <div>
-            <h1 className="font-heading text-xl font-bold tracking-tight text-zinc-950 sm:text-2xl dark:text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl dark:text-white">
               Skill Assessments
             </h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm dark:text-zinc-400">
               Short tests that confirm courses, certifications, and technical claims are genuinely
               yours
             </p>
@@ -437,7 +159,7 @@ export function StudentAssessmentHub() {
 
         <div className="flex items-center gap-2">
           <Link
-            href="/skills"
+            href="/student/skills"
             className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200/80 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-2xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
           >
             <BookOpen className="size-3.5" />
@@ -447,7 +169,7 @@ export function StudentAssessmentHub() {
       </section>
 
       {/* 🧭 Filter Tabs: Pending vs Completed */}
-      <div className="flex items-center gap-1 overflow-x-auto rounded-md border border-zinc-200/80 bg-zinc-100/75 p-1 w-fit dark:border-zinc-800 dark:bg-zinc-900/80">
+      <div className="flex w-full items-center gap-2 overflow-x-auto border-b border-zinc-200 [scrollbar-width:none] dark:border-zinc-800 [&::-webkit-scrollbar]:hidden">
         {[
           { key: 'PENDING', label: 'Pending', count: pendingList.length },
           { key: 'COMPLETED', label: 'Completed', count: completedList.length },
@@ -457,16 +179,16 @@ export function StudentAssessmentHub() {
             type="button"
             onClick={() => setActiveTab(tab.key as typeof activeTab)}
             className={cn(
-              'relative z-10 flex shrink-0 items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors duration-150',
+              'relative -mb-px flex shrink-0 items-center gap-2 px-3 py-2 text-sm font-medium transition-colors duration-150',
               activeTab === tab.key
-                ? 'font-bold text-zinc-950 dark:text-white'
-                : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white',
+                ? 'font-semibold text-zinc-950 dark:text-white'
+                : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white',
             )}
           >
             {activeTab === tab.key && (
               <motion.span
                 layoutId="active-assessment-hub-tab"
-                className="absolute inset-0 -z-10 rounded-md border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-700/80 dark:bg-zinc-800"
+                className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-zinc-900 dark:bg-white"
                 transition={{ type: 'spring', stiffness: 500, damping: 38 }}
               />
             )}
@@ -496,7 +218,7 @@ export function StudentAssessmentHub() {
                 credentials.
               </p>
               <Link
-                href="/skills"
+                href="/student/skills"
                 className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-4 py-2 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
               >
                 <Plus className="size-3.5" />
@@ -507,7 +229,7 @@ export function StudentAssessmentHub() {
             pendingList.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -517,6 +239,12 @@ export function StudentAssessmentHub() {
                     <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                       {item.type}
                     </span>
+                    {item.skillStatus === 'UNDER_VERIFICATION' && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300">
+                        <Clock className="size-3 text-sky-600" />
+                        Under Review
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     Provider: {item.provider} · Estimated time: {item.estimatedTime}
@@ -550,7 +278,7 @@ export function StudentAssessmentHub() {
             return (
               <div
                 key={item.id}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">

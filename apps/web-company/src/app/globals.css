@@ -1,4 +1,4 @@
-@import '@smart/ui/styles.css';
+@import '@hirekiwi/ui/styles.css';
 
 @source '../**/*.{ts,tsx}';
 @source '../../../../packages/ui/src/**/*.{ts,tsx}';
@@ -47,8 +47,31 @@ body {
   color: var(--ds-text);
 }
 
+/*
+ * Same console look as the TPO portal (apps/web-tpo/src/app/globals.css):
+ * Manrope UI type, white canvas, soft lime/mint glow behind the workspace.
+ */
+.company-console {
+  font-family:
+    'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue',
+    system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.company-bento {
+  background-color: #ffffff;
+  background-image: radial-gradient(
+    ellipse 65% 45% at 50% 0%,
+    rgba(225, 255, 160, 0.4) 0%,
+    rgba(180, 248, 220, 0.25) 45%,
+    rgba(255, 255, 255, 0) 80%
+  );
+  background-repeat: no-repeat;
+}
+
 @layer components {
   .company-canvas {
-    background-color: #f8fafc;
+    background-color: var(--ds-canvas);
   }
 }

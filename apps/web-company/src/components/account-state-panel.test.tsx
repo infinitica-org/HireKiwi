@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { OverviewHero } from './account-state-panel';
-import type { CompanyPortalAccount } from '@smart/contracts';
+import type { CompanyPortalAccount } from '@hirekiwi/contracts';
 
 const account: CompanyPortalAccount = {
   userId: '123e4567-e89b-12d3-a456-426614174000',

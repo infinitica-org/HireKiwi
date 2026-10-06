@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import { SMART_TOPICS } from '@smart/contracts';
+import { SMART_TOPICS } from '@hirekiwi/contracts';
 import { ApplicationStageChangedConsumer } from './application-stage-changed.consumer.js';
 
 const applicationId = randomUUID();

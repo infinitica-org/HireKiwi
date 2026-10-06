@@ -1,4 +1,4 @@
-import type { CandidateOnboardingDraft, CandidateOnboardingProfile } from '@smart/contracts';
+import type { CandidateOnboardingDraft, CandidateOnboardingProfile } from '@hirekiwi/contracts';
 
 export const PROFILE_AREA_IDS = [
   'skills',
@@ -8,7 +8,7 @@ export const PROFILE_AREA_IDS = [
   'projects',
   'certifications',
   'professionalLinks',
-  'jobPreferences',
+  'profilePhoto',
 ] as const;
 
 export type ProfileAreaId = (typeof PROFILE_AREA_IDS)[number];
@@ -25,6 +25,7 @@ export interface ProfileProgressInput {
   experiences: ReadonlyArray<unknown>;
   projects: ReadonlyArray<unknown>;
   certificates: ReadonlyArray<unknown>;
+  hasProfilePhoto: boolean;
 }
 
 export interface ProfileProgressResult {
@@ -39,13 +40,6 @@ function onboardingSkills(
   draft: CandidateOnboardingDraft | null,
 ) {
   return profile?.skills ?? draft?.skills ?? [];
-}
-
-function jobPreferencesFromOnboarding(
-  profile: CandidateOnboardingProfile | null,
-  draft: CandidateOnboardingDraft | null,
-) {
-  return profile?.jobPreferences ?? draft?.jobPreferences ?? null;
 }
 
 function urlFromOnboarding(
@@ -90,16 +84,8 @@ export function isProfessionalLinksAreaComplete(input: ProfileProgressInput): bo
   return linkedin.length > 0 || github.length > 0;
 }
 
-export function isJobPreferencesAreaComplete(input: ProfileProgressInput): boolean {
-  const prefs = jobPreferencesFromOnboarding(input.onboardingProfile, input.onboardingDraft);
-  if (!prefs) return false;
-  const hasExpected =
-    prefs.expectedCtcLakhs !== undefined &&
-    prefs.expectedCtcLakhs !== null &&
-    Number(prefs.expectedCtcLakhs) > 0;
-  const hasLocation = Boolean(prefs.currentLocation?.trim());
-  const hasPreferred = (prefs.preferredLocations?.length ?? 0) > 0;
-  return hasExpected && hasLocation && hasPreferred;
+export function isProfilePhotoAreaComplete(input: ProfileProgressInput): boolean {
+  return input.hasProfilePhoto;
 }
 
 export function computeAreaStatus(input: ProfileProgressInput): Record<ProfileAreaId, boolean> {
@@ -111,7 +97,7 @@ export function computeAreaStatus(input: ProfileProgressInput): Record<ProfileAr
     projects: isProjectsAreaComplete(input),
     certifications: isCertificationsAreaComplete(input),
     professionalLinks: isProfessionalLinksAreaComplete(input),
-    jobPreferences: isJobPreferencesAreaComplete(input),
+    profilePhoto: isProfilePhotoAreaComplete(input),
   };
 }
 

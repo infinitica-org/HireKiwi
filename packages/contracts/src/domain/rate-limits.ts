@@ -191,24 +191,6 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     onViolation: 'INTEGRITY_LOG',
   },
   {
-    key: 'assessment.compileL2',
-    scope: 'USER',
-    limit: 10,
-    windowSeconds: 60,
-    burst: 2,
-    redisKey: 'rl:l2_compile:{id}',
-    rationale: 'Protects the Docker sandbox pool from CPU and memory exhaustion.',
-  },
-  {
-    key: 'assessment.evaluateL3L4',
-    scope: 'USER',
-    limit: 5,
-    windowSeconds: 60,
-    burst: 2,
-    redisKey: 'rl:l3_eval:{id}',
-    rationale: 'High-cost LLM audio/defense evaluation; caps spend per candidate.',
-  },
-  {
     key: 'evaluation.projectDefense',
     scope: 'USER',
     limit: 24,
@@ -375,15 +357,6 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     rationale: 'Claim status writes are frequent during verification.',
   },
   {
-    key: 'certificate.issue',
-    scope: 'USER',
-    limit: 10,
-    windowSeconds: 60,
-    burst: 3,
-    redisKey: 'rl:cert_issue:{id}',
-    rationale: 'Issuance enqueues a Puppeteer PDF render; caps queue flooding.',
-  },
-  {
     key: 'projects.submit',
     scope: 'USER',
     limit: 8,
@@ -439,16 +412,6 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     redisKey: 'rl:proctor:media:{id}',
     rationale:
       'Onboarding consent/precheck/enroll/liveness plus checkpoints; face-check retries must not 429 mid-setup.',
-  },
-  {
-    key: 'evaluation.cognitiveProfile',
-    scope: 'USER',
-    limit: 8,
-    windowSeconds: 60,
-    burst: 2,
-    redisKey: 'rl:cognitive_profile:user:{id}',
-    rationale:
-      'SE-T04 narrative spend is P3_BATCH; cap refreshes so one student cannot drain the batch lane.',
   },
   {
     key: 'corroboration.read',

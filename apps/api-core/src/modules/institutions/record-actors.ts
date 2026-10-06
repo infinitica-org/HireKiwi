@@ -1,4 +1,4 @@
-import type { RecordActorDto } from '@smart/contracts';
+import type { RecordActorDto } from '@hirekiwi/contracts';
 import type { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 /**

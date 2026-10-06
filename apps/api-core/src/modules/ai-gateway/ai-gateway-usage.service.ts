@@ -4,7 +4,7 @@ import type {
   AiUsageSummaryDto,
   AiUsageWindow,
   ListAiAuditLogsResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 const ALL_PROVIDERS: readonly AiProvider[] = ['ANTHROPIC', 'GOOGLE', 'OPENROUTER'];

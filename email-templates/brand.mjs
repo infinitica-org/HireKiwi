@@ -3,7 +3,7 @@
 
 export const BRAND = {
   name: 'SMART',
-  fullName: 'SMART Platform',
+  fullName: 'HireKiwi Platform',
   tagline: 'Skill Mapping & Readiness Tracker',
   supportEmail: 'support@smart.infinitica.com',
   company: 'Infinitica Technologies Pvt. Ltd.',

@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { API_PREFIX } from '@smart/contracts';
+import { API_PREFIX } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
@@ -60,10 +60,28 @@ export class CandidateEducationController {
     return this.service.delete(user.sub, id);
   }
 
+  @Post(':id/documents/upload-url')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Th6-600 — presigned PUT (15 min) for a PDF/PNG education proof, max 10 MB.',
+  })
+  @ApiResponse({ status: 201, description: 'Presigned upload URL and object key.' })
+  createDocumentUploadUrl(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ) {
+    return this.service.createDocumentUploadUrl(user.sub, id, body);
+  }
+
   @Post(':id/documents')
   @Roles('STUDENT')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Attach proof document metadata to a candidate education record.' })
+  @ApiOperation({
+    summary:
+      'Attach an uploaded proof (object key) to a candidate education record. Rejects with 422 when the file bytes, extension and type disagree.',
+  })
   @ApiResponse({ status: 201, description: 'Education proof document attached.' })
   attachDocument(@CurrentUser() user: RequestUser, @Param('id') id: string, @Body() body: unknown) {
     return this.service.attachDocument(user.sub, id, body);

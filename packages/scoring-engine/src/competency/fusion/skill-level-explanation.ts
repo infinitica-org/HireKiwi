@@ -11,7 +11,7 @@ import {
   type SkillLevelExplanationBasis,
   type EmployerSkillConfidenceIndicator,
   type EmployerSkillInspection,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export type FreshnessInputRow = {
   evidenceId: string;

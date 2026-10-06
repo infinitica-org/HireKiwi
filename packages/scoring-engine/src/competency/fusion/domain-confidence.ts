@@ -5,7 +5,7 @@ import type {
   CompetencyResult,
   ProficiencyLevel,
   ProficiencyRequirement,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 const DOMAIN_VETO_CAP: 'LOW' | 'MEDIUM' | 'HIGH' = 'MEDIUM';
 

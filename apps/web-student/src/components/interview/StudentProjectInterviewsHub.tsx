@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Mic } from 'lucide-react';
-import type { ProjectDto } from '@smart/contracts';
-import { Alert } from '@smart/ui';
+import type { ProjectDto } from '@hirekiwi/contracts';
+import { Alert } from '@hirekiwi/ui';
 
 import { projectDefenseInterviewHref } from '@/components/profile/ProjectDefenseInterviewDialog';
 import { api } from '@/lib/api';
@@ -79,7 +79,7 @@ export function StudentProjectInterviewsHub() {
               When a submitted project is ready for a voice ownership interview, it will show up
               here with a link to start.
             </p>
-            <Link href="/assessment" className={profilePrimaryButtonClass}>
+            <Link href="/student/assessment" className={profilePrimaryButtonClass}>
               Go to Assessment
             </Link>
           </div>

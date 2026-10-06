@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Plus, ArrowRight, Clock, Eye, ArrowUpDown, Search } from 'lucide-react';
-import type { InstitutionStudentDto, SkillClaimDto } from '@smart/contracts';
+import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import {
   buildUniversityRosterRows,
   computeUniversityDashboardMetrics,

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { AdverseImpactReportDto, CorrelationReportDto, TrackCode } from '@smart/contracts';
+import type { AdverseImpactReportDto, CorrelationReportDto, TrackCode } from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 @Injectable()

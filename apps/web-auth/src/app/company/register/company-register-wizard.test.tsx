@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { COMPANY_SIZE_BANDS, COMPANY_WORK_EMAIL_REQUIRED_MESSAGE } from '@smart/contracts';
-import { SmartApiError } from '@smart/api-client';
+import { COMPANY_SIZE_BANDS, COMPANY_WORK_EMAIL_REQUIRED_MESSAGE } from '@hirekiwi/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
 
 const getSession = vi.fn();
 const updateDraft = vi.fn();
@@ -17,6 +17,14 @@ vi.mock('../../../lib/api', () => ({
       sendCompanyOnboardingEmailVerification: (...a: unknown[]) => sendVerification(...a),
     },
   },
+}));
+const searchCompanies = vi.fn();
+const requestToJoinCompany = vi.fn();
+
+vi.mock('../../../lib/company-directory', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  searchCompanies: (...a: unknown[]) => searchCompanies(...a),
+  requestToJoinCompany: (...a: unknown[]) => requestToJoinCompany(...a),
 }));
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -44,6 +52,8 @@ beforeEach(() => {
   updateDraft.mockReset();
   sendVerification.mockReset();
   startOnboarding.mockReset();
+  searchCompanies.mockReset();
+  requestToJoinCompany.mockReset();
 });
 afterEach(() => {
   cleanup();
@@ -128,5 +138,55 @@ describe('CompanyRegisterWizard start step', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe(COMPANY_WORK_EMAIL_REQUIRED_MESSAGE);
     expect(startOnboarding).not.toHaveBeenCalled();
+  });
+});
+
+async function openSearchStep() {
+  render(<CompanyRegisterWizard />);
+  fireEvent.change(await screen.findByLabelText('Your full name'), { target: { value: 'Ada' } });
+  const email = screen.getByLabelText('Work email');
+  fireEvent.change(email, { target: { value: 'ada@acme.example' } });
+  const form = email.closest('form');
+  if (!form) throw new Error('form missing');
+  fireEvent.submit(form);
+  return screen.findByLabelText('Find your company');
+}
+
+describe('CompanyRegisterWizard company search step', () => {
+  it('searches using the work email domain and sends a join request', async () => {
+    searchCompanies.mockResolvedValue({
+      available: true,
+      items: [
+        { orgId: 'org-1', displayName: 'Acme', website: null, city: 'Chennai', verified: true },
+      ],
+    });
+    requestToJoinCompany.mockResolvedValue(undefined);
+
+    const input = (await openSearchStep()) as HTMLInputElement;
+    expect(input.value).toBe('acme');
+    fireEvent.click(await screen.findByRole('button', { name: 'Request to join' }));
+
+    expect(await screen.findByText('Join request sent')).toBeTruthy();
+    expect(searchCompanies.mock.calls[0]?.[0]).toBe('acme');
+    expect(requestToJoinCompany).toHaveBeenCalledWith('org-1', {
+      fullName: 'Ada',
+      workEmail: 'ada@acme.example',
+    });
+    expect(startOnboarding).not.toHaveBeenCalled();
+  });
+
+  it('falls back to creating a company when search is unavailable', async () => {
+    searchCompanies.mockResolvedValue({ available: false });
+    startOnboarding.mockResolvedValue({ sessionToken: 'new-token' });
+
+    await openSearchStep();
+    expect(await screen.findByText(/search isn.t available yet/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Create a new company' }));
+
+    expect(await screen.findByLabelText('Company website')).toBeTruthy();
+    expect(startOnboarding).toHaveBeenCalledWith({
+      representative: { fullName: 'Ada', workEmail: 'ada@acme.example' },
+      website: undefined,
+    });
   });
 });

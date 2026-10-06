@@ -11,8 +11,8 @@ import {
   type SkillEvidenceContext,
   type SkillEvidenceContextItem,
   type VerificationDecisionOutcome,
-} from '@smart/contracts';
-import { resolveVerificationDecision } from '@smart/scoring-engine';
+} from '@hirekiwi/contracts';
+import { resolveVerificationDecision } from '@hirekiwi/scoring-engine';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { EvidenceReconciliationService } from './evidence-reconciliation.service.js';
 

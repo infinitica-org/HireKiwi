@@ -9,7 +9,7 @@ import {
   validateWorkExperienceLetterRules,
   type WorkExperienceDocumentDto,
   type WorkExperienceDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 import {
   DOCUMENT_TYPE_LABELS,
@@ -23,6 +23,7 @@ import {
 } from '@/lib/profile-ui-classes';
 import { nativeOptionClass, nativeSelectClass } from '@/lib/native-select';
 import { CATEGORY_OPTIONS, skillsForCategory } from '@/lib/skills-catalog';
+import { EVIDENCE_ACCEPT } from '@/lib/evidence-upload';
 
 export type ModalPendingDocument = {
   localId: string;
@@ -34,8 +35,8 @@ const SKILL_NAME_BY_CODE = new Map(SKILL_DEFINITIONS.map((skill) => [skill.code,
 
 const FormSection = forwardRef<
   HTMLElement,
-  { title: string; description?: string; children: ReactNode }
->(function FormSection({ title, description, children }, ref) {
+  { title: string; description?: string; required?: boolean; children: ReactNode }
+>(function FormSection({ title, description, required, children }, ref) {
   return (
     <section
       ref={ref}
@@ -44,6 +45,7 @@ const FormSection = forwardRef<
       <div>
         <h4 className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ds-text)]">
           {title}
+          {required ? <span className="text-red-600"> *</span> : null}
         </h4>
         {description ? (
           <p className="mt-0.5 text-xs leading-relaxed text-[var(--ds-text-muted)]">
@@ -183,16 +185,16 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
   }, [focusVerification]);
 
   const proofHint = isCurrent
-    ? 'Upload your offer letter (PDF, JPG, or PNG, max 5MB).'
+    ? 'Upload your offer letter (PDF or PNG, max 10 MB).'
     : 'Upload offer letter and relieving or experience letter.';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-sans">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="experience-builder-title"
-        className="flex max-h-[90vh] w-full max-w-[720px] flex-col overflow-hidden rounded-[20px] border border-[var(--ds-border)] bg-[var(--ds-surface)] font-[family-name:var(--tpo-font-sans)] shadow-[var(--ds-card-shadow)]"
+        className="flex max-h-[90vh] w-full max-w-[720px] flex-col overflow-hidden rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] font-sans shadow-[var(--ds-card-shadow)]"
       >
         <div className="border-b border-[var(--ds-border)] px-6 py-5">
           <div className="flex items-start justify-between gap-4">
@@ -210,7 +212,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
+              className="rounded-md p-1.5 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -220,7 +222,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
 
         <div ref={scrollPanelRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {error ? (
-            <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+            <div className="mb-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -230,7 +232,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
             <FormSection title="Role & dates">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className={experienceLabelClass}>Company name *</label>
+                  <label className={experienceLabelClass}>
+                    Company name<span className="text-red-600"> *</span>
+                  </label>
                   <input
                     type="text"
                     required
@@ -241,7 +245,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                   />
                 </div>
                 <div>
-                  <label className={experienceLabelClass}>Role / designation *</label>
+                  <label className={experienceLabelClass}>
+                    Role / designation<span className="text-red-600"> *</span>
+                  </label>
                   <input
                     type="text"
                     required
@@ -254,7 +260,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className={experienceLabelClass}>Employment type *</label>
+                  <label className={experienceLabelClass}>
+                    Employment type<span className="text-red-600"> *</span>
+                  </label>
                   <select
                     value={employmentType}
                     onChange={(event) => setEmploymentType(event.target.value)}
@@ -290,7 +298,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className={experienceLabelClass}>Start date *</label>
+                  <label className={experienceLabelClass}>
+                    Start date<span className="text-red-600"> *</span>
+                  </label>
                   <input
                     type="date"
                     required
@@ -300,7 +310,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                   />
                 </div>
                 <div>
-                  <label className={experienceLabelClass}>End date{!isCurrent ? ' *' : ''}</label>
+                  <label className={experienceLabelClass}>
+                    End date{!isCurrent ? <span className="text-red-600"> *</span> : null}
+                  </label>
                   <input
                     type="date"
                     disabled={isCurrent}
@@ -328,7 +340,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className={experienceLabelClass}>Company website *</label>
+                    <label className={experienceLabelClass}>
+                      Company website<span className="text-red-600"> *</span>
+                    </label>
                     <input
                       type="url"
                       value={companyWebsite}
@@ -338,7 +352,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                     />
                   </div>
                   <div>
-                    <label className={experienceLabelClass}>Company LinkedIn *</label>
+                    <label className={experienceLabelClass}>
+                      Company LinkedIn<span className="text-red-600"> *</span>
+                    </label>
                     <input
                       type="url"
                       value={companyLinkedinUrl}
@@ -356,7 +372,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               description="Pick catalog skills only — free-text tags are not accepted."
             >
               <div>
-                <label className={experienceLabelClass}>Professional domain *</label>
+                <label className={experienceLabelClass}>
+                  Professional domain<span className="text-red-600"> *</span>
+                </label>
                 <input
                   type="text"
                   value={domain}
@@ -366,7 +384,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                 />
               </div>
               <div>
-                <label className={experienceLabelClass}>Responsibilities & accomplishments *</label>
+                <label className={experienceLabelClass}>
+                  Responsibilities & accomplishments<span className="text-red-600"> *</span>
+                </label>
                 <textarea
                   rows={4}
                   value={responsibilities}
@@ -377,7 +397,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               </div>
               <div>
                 <label htmlFor="experience-skill-picker" className={experienceLabelClass}>
-                  Skills from catalog *
+                  Skills from catalog<span className="text-red-600"> *</span>
                 </label>
                 <select
                   id="experience-skill-picker"
@@ -437,7 +457,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                   </div>
                 ) : null}
                 {skillQuery.trim().length >= 2 ? (
-                  <ul className="mt-1 max-h-36 overflow-y-auto rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)]">
+                  <ul className="mt-1 max-h-36 overflow-y-auto rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)]">
                     {SKILL_DEFINITIONS.filter((skill) => {
                       const q = skillQuery.trim().toLowerCase();
                       return (
@@ -466,8 +486,8 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
               </div>
             </FormSection>
 
-            <FormSection title="Proof documents *" description={proofHint}>
-              <div className="rounded-xl border border-[var(--ds-border)] p-4">
+            <FormSection title="Proof documents" required description={proofHint}>
+              <div className="rounded-md border border-[var(--ds-border)] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs text-[var(--ds-text-muted)]">
                     {isCurrent
@@ -490,7 +510,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                     {savedModalDocs.map((doc) => (
                       <div
                         key={doc.id}
-                        className="flex items-center justify-between gap-2 rounded-xl border border-[var(--ds-border)] px-3 py-2 text-xs"
+                        className="flex items-center justify-between gap-2 rounded-md border border-[var(--ds-border)] px-3 py-2 text-xs"
                       >
                         <span className="truncate font-medium text-[var(--ds-text)]">
                           {DOCUMENT_TYPE_LABELS[doc.documentType] || doc.documentType}:{' '}
@@ -502,7 +522,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                     {modalPendingDocs.map((doc) => (
                       <div
                         key={doc.localId}
-                        className="flex items-center justify-between gap-2 rounded-xl border border-[var(--ds-green)]/30 bg-[var(--ds-green-soft)]/40 px-3 py-2 text-xs"
+                        className="flex items-center justify-between gap-2 rounded-md border border-[var(--ds-green)]/30 bg-[var(--ds-green-soft)]/40 px-3 py-2 text-xs"
                       >
                         <span className="truncate font-medium text-[var(--ds-text)]">
                           {DOCUMENT_TYPE_LABELS[doc.documentType] || doc.documentType}:{' '}
@@ -559,9 +579,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                     <input
                       id="modal-proof-document-file"
                       type="file"
-                      accept="application/pdf,image/jpeg,image/jpg,image/png"
+                      accept={EVIDENCE_ACCEPT}
                       onChange={(event) => setModalNewProofFile(event.target.files?.[0] ?? null)}
-                      className="mt-1.5 block w-full text-xs text-[var(--ds-text-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--ds-green-soft)] file:px-3 file:py-2 file:text-xs file:font-medium file:text-[var(--ds-green)]"
+                      className="mt-1.5 block w-full text-xs text-[var(--ds-text-muted)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--ds-green-soft)] file:px-3 file:py-2 file:text-xs file:font-medium file:text-[var(--ds-green)]"
                     />
                   </div>
                   <button
@@ -578,12 +598,14 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
 
             <FormSection
               ref={verifierSectionRef}
-              title="Employer verification (optional)"
+              title="Employer verification"
               description="Save first, then we can email your manager or HR a secure verification link."
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className={experienceLabelClass}>Verifier name</label>
+                  <label className={experienceLabelClass}>
+                    Verifier name<span className="text-red-600"> *</span>
+                  </label>
                   <input
                     type="text"
                     value={verifierName}
@@ -593,7 +615,9 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                   />
                 </div>
                 <div>
-                  <label className={experienceLabelClass}>Designation</label>
+                  <label className={experienceLabelClass}>
+                    Designation <span className="text-red-600"> *</span>
+                  </label>
                   <input
                     type="text"
                     value={verifierDesignation}
@@ -604,7 +628,7 @@ export function ExperienceBuilderModal(props: ExperienceBuilderModalProps) {
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="verifier-official-email" className={experienceLabelClass}>
-                    Official work email
+                    Official work email<span className="text-red-600"> *</span>
                   </label>
                   <input
                     id="verifier-official-email"

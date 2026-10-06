@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { isSmartApiError } from '@smart/api-client';
-import { ErrorState } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { ErrorState } from '@hirekiwi/ui';
 import { CompanyPublicView } from '../../../components/company-public-view';
 import { api } from '../../../lib/api';
 

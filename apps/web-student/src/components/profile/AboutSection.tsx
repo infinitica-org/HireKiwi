@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { FileText, Loader2, Pencil, UserRound } from 'lucide-react';
-import { isSmartApiError, queryKeys } from '@smart/api-client';
-import { useQueryClient } from '@smart/ui';
+import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { useQueryClient } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import {
   profileHeadingClass,

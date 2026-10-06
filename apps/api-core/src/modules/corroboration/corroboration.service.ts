@@ -19,8 +19,8 @@ import {
   type CorroborationReviewFlag,
   type PassiveSignalSourceId,
   type VectorizedSignal,
-} from '@smart/contracts';
-import { fuseSignals, verifySignalWeightModel } from '@smart/scoring-engine';
+} from '@hirekiwi/contracts';
+import { fuseSignals, verifySignalWeightModel } from '@hirekiwi/scoring-engine';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

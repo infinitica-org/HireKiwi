@@ -1,4 +1,4 @@
-import { SKILL_DEFINITIONS } from '@smart/contracts';
+import { SKILL_DEFINITIONS } from '@hirekiwi/contracts';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SkillReq } from '../lib/skill-catalog';

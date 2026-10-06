@@ -1,4 +1,4 @@
-@import '@smart/ui/styles.css';
+@import '@hirekiwi/ui/styles.css';
 
 /* App-local scan so shared UI classes always emit. */
 
@@ -292,4 +292,27 @@
       'kern' 1,
       'liga' 1;
   }
+}
+
+/* Shared @hirekiwi/ui Card inside the console — TPO bento radius and hover border. */
+.student-console [data-slot='card'] {
+  border-radius: var(--radius-lg);
+  transition:
+    border-color 200ms,
+    box-shadow 200ms;
+}
+
+.student-console [data-slot='card']:hover {
+  border-color: var(--color-zinc-300);
+}
+
+/* Profile pages: neutral zinc in place of the teal accent (#0f9f8f / #0d8a7c). */
+.profile-neutral-accent {
+  --ds-green: var(--color-zinc-900);
+  --ds-green-hover: var(--color-zinc-700);
+}
+
+.dark .profile-neutral-accent {
+  --ds-green: var(--color-zinc-100);
+  --ds-green-hover: var(--color-zinc-300);
 }

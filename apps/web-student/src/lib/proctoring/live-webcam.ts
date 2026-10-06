@@ -1,4 +1,4 @@
-import type { ProctoringViolationKind } from '@smart/contracts';
+import type { ProctoringViolationKind } from '@hirekiwi/contracts';
 import { captureVideoFrame, ovalBrightness, type NormalizedFaceBox } from './face-check';
 import {
   estimateHeadPoseFromVideo,

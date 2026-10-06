@@ -15,8 +15,8 @@ import type {
   SupportHistoryQuery,
   SupportHistoryResponse,
   SupportSessionResponse,
-} from '@smart/contracts';
-import { SUPPORT_TICKET_ID_REGEX } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import { SUPPORT_TICKET_ID_REGEX } from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { MATCH_NARRATIVE_PROMPT_REF, MatchNarrativeOutputSchema } from '@smart/prompts';
+import { MATCH_NARRATIVE_PROMPT_REF, MatchNarrativeOutputSchema } from '@hirekiwi/prompts';
 import { AiGatewayService } from '../ai-gateway/ai-gateway.service.js';
 
 export interface MatchNarrativeInput {

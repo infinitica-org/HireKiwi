@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { SdeOpenBatchGradeSchema } from '@smart/prompts';
+import type { SdeOpenBatchGradeSchema } from '@hirekiwi/prompts';
 
 export type OpenBatchGradeParsed = z.infer<typeof SdeOpenBatchGradeSchema>;
 

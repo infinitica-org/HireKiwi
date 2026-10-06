@@ -1,0 +1,58 @@
+---
+title: Anti-Cheating & Proctoring Architecture
+description: Server-authoritative timer, BullMQ force-submit processor, and Python CV sidecar.
+---
+
+# Anti-Cheating & Proctoring Architecture
+
+Assessment integrity is maintained through a combination of server-authoritative state machines and lightweight periodic computer vision telemetry.
+
+---
+
+## 1. Server-Authoritative Assessment Timer (ADR-0016)
+
+Client-side timers are treated strictly as visual UI affordances. The backend has sole authority over attempt duration:
+
+```
+[ POST /api/v1/assessment/start ]
+                 │
+                 ├──▶ Writes attempt to PostgreSQL (status: IN_PROGRESS)
+                 ├──▶ Initializes attempt in Redis: session:assessment:{attempt_id}
+                 └──▶ Enqueues Delayed Job to BullMQ (bull:queue:assessment_force_submit)
+                             │
+                             ▼ (Server Timer Ticking)
+                      [ DEADLINE REACHED ]
+                             │
+                             ▼
+                 [ AssessmentForceSubmitProcessor ]
+                 ├── Checks if attempt is already SUBMITTED (race condition guard)
+                 ├── Locks attempt atomically in Redis (SET NX EX)
+                 ├── Updates PostgreSQL status: SUBMITTED (force_submitted_at = now())
+                 └── Publishes smart.assessment.submitted to Kafka event bus
+```
+
+If a candidate disconnects, alters their local clock, or keeps the tab open past the allocated time, the delayed job automatically closes the attempt on the server.
+
+---
+
+## 2. Proctoring CV Sidecar (`apps/proctoring-cv`)
+
+Per [ADR-0014](file:///d:/Work's/Infinitica/smart/docs/adr/0014-proctoring-sidecar.md), continuous high-bandwidth video streaming is replaced by an asynchronous snapshot architecture:
+
+1. **Periodic Snapshot Capture:** The candidate's client uploads a webcam frame every 30–60 seconds to Cloudflare R2 / MinIO via pre-signed URLs.
+2. **Event Dispatch:** `api-core` publishes a Kafka event (`smart.proctoring.snapshot.ready`).
+3. **Computer Vision Inference:** The Python sidecar processes frames via MediaPipe and OpenCV:
+   - **Multi-Face Detection:** Flags occurrences where additional individuals enter the frame.
+   - **Gaze Angle Analysis:** Detects persistent head rotation away from the assessment screen.
+   - **Biometric Consistency:** Verifies the subject matches the initial onboarding baseline embedding.
+4. **Audit Logging:** Violations are recorded in the `IntegrityEvent` table with precise timestamps and severity ratings. If warnings exceed `warning_limit` (default: 15), the attempt is flagged for manual TPO audit.
+
+---
+
+## 3. Statutory DPDP Privacy Governance
+
+In compliance with Sections 5 and 6 of the Indian **Digital Personal Data Protection Act (DPDP Act), 2023**:
+
+- **Explicit Consent:** A mandatory consent modal is displayed before camera hardware initialization.
+- **Data Minimization:** No continuous audio or video recordings are stored; only periodic, downsampled telemetry snapshots.
+- **Automated Purging:** All proctoring snapshots stored in object storage are automatically deleted within **30 days** of certificate issuance.

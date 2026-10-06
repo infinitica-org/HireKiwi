@@ -1,3 +1,3 @@
-import { next } from '@smart/eslint-config/next';
+import { next } from '@hirekiwi/eslint-config/next';
 
 export default next;

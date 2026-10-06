@@ -14,7 +14,7 @@ import {
   ApplyToJobRequestSchema,
   UuidSchema,
   WithdrawApplicationRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

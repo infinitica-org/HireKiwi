@@ -151,46 +151,6 @@ export const SaveDraftResponseSchema = z.object({
 });
 export type SaveDraftResponse = z.infer<typeof SaveDraftResponseSchema>;
 
-/* ------------------------ sandbox execution (L2) -------------------------- */
-
-export const RunSandboxRequestSchema = z.object({
-  attemptId: UuidSchema,
-  itemId: UuidSchema,
-  language: z.enum(['node', 'python', 'postgres']),
-  source: z.string().max(100_000),
-});
-export type RunSandboxRequest = z.infer<typeof RunSandboxRequestSchema>;
-
-/** Resource caps are fixed by ARCHITECTURE.md §13.2 — 256 MB, 1 CPU, 5 s. */
-export const SANDBOX_LIMITS = {
-  memoryMb: 256,
-  cpuCores: 1,
-  timeoutSeconds: 5,
-  networkEnabled: false,
-  maxOutputBytes: 64 * 1024,
-} as const;
-
-export const SandboxResultDtoSchema = z.object({
-  jobId: z.string(),
-  status: z.enum(['QUEUED', 'RUNNING', 'PASSED', 'FAILED', 'TIMEOUT', 'ERROR']),
-  stdout: z.string().max(65_536),
-  stderr: z.string().max(65_536),
-  exitCode: z.number().int().nullable(),
-  durationMs: z.number().int().nonnegative(),
-  /** Only non-hidden test cases are reported back to the candidate. */
-  testResults: z.array(
-    z.object({
-      id: z.string(),
-      passed: z.boolean(),
-      expected: z.string().optional(),
-      actual: z.string().optional(),
-    }),
-  ),
-  passedCount: z.number().int(),
-  totalCount: z.number().int(),
-});
-export type SandboxResultDto = z.infer<typeof SandboxResultDtoSchema>;
-
 /* ------------------------------- completion -------------------------------- */
 
 export const CompleteAttemptRequestSchema = z.object({

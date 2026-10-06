@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import type { JobOpeningDto } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { JobOpeningDto } from '@hirekiwi/contracts';
 import { TpoBentoPageHeader } from './tpo-bento/TpoBentoPageHeader';
 import { openingsApi } from '../lib/api';
 import {

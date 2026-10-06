@@ -1,5 +1,8 @@
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
-import { CandidateOnboardingDraftSchema, CandidateOnboardingProfileSchema } from '@smart/contracts';
+import {
+  CandidateOnboardingDraftSchema,
+  CandidateOnboardingProfileSchema,
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import {
   PROFILE_SKILL_VERIFICATION_UNLOCK_PERCENT,
@@ -40,7 +43,11 @@ export class ProfileCompletionService {
       await Promise.all([
         this.prisma.user.findUnique({
           where: { id: userId },
-          select: { onboardingCompleted: true, onboardingDetails: true },
+          select: {
+            onboardingCompleted: true,
+            onboardingDetails: true,
+            profilePhotoObjectKey: true,
+          },
         }),
         this.prisma.skillClaim.findMany({
           where: { studentId: userId },
@@ -71,6 +78,7 @@ export class ProfileCompletionService {
       experiences,
       projects,
       certificates,
+      hasProfilePhoto: Boolean(user?.profilePhotoObjectKey),
     };
   }
 }

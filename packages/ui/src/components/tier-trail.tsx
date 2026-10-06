@@ -1,4 +1,4 @@
-import type { Tier } from '@smart/contracts';
+import type { Tier } from '@hirekiwi/contracts';
 import { TierBadge } from './badge';
 import { cn } from '../lib/cn';
 

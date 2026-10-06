@@ -8,25 +8,25 @@ Owner: Satheswaran V.
 2. Database seeded: `pnpm db:seed`
 3. Apps running:
    - `pnpm dev:api` → `:3000`
-   - `pnpm --filter @smart/web-auth dev` → `:3005`
-   - `pnpm --filter @smart/web-student dev` → `:3001`
-   - `pnpm --filter @smart/web-tpo dev` → `:3002`
-   - `pnpm --filter @smart/web-verify dev` → `:3004`
+   - `pnpm --filter @hirekiwi/web-auth dev` → `:3005`
+   - `pnpm --filter @hirekiwi/web-student dev` → `:3001`
+   - `pnpm --filter @hirekiwi/web-tpo dev` → `:3002`
+   - `pnpm --filter @hirekiwi/web-verify dev` → `:3004`
 
 Default credentials (from seed): `student@smart.local` / `tpo@smart.local` — password `ChangeMe!Dev`.
 
 ## Run
 
 ```bash
-pnpm --filter @smart/e2e exec playwright install chromium
+pnpm --filter @hirekiwi/e2e exec playwright install chromium
 pnpm e2e
 ```
 
 Headed / debug:
 
 ```bash
-pnpm --filter @smart/e2e test:headed
-pnpm --filter @smart/e2e test:ui
+pnpm --filter @hirekiwi/e2e test:headed
+pnpm --filter @hirekiwi/e2e test:ui
 ```
 
 ## Work experience verification spec
@@ -53,4 +53,4 @@ They are API-level (Playwright `request` + Mailpit) except the web-auth login st
 Each spec sends its own made-up `X-Forwarded-For` (the API trusts the proxy header), so one spec's rate-limit hits never throttle another.
 Every run creates new users and companies with unique emails; nothing needs cleaning up between runs.
 
-> Videos (`retain-on-failure`) need Playwright's ffmpeg: `pnpm --filter @smart/e2e exec playwright install ffmpeg`.
+> Videos (`retain-on-failure`) need Playwright's ffmpeg: `pnpm --filter @hirekiwi/e2e exec playwright install ffmpeg`.

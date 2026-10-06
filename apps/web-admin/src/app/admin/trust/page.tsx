@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { TrustCaseDto, TrustAppealDto, TrustReportDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { TrustCaseDto, TrustAppealDto, TrustReportDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   AlertTriangle,
   Ban,
@@ -15,10 +15,10 @@ import {
   UserCheck,
   UserX,
 } from 'lucide-react';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@smart/ui/tabs';
-import { ConfirmDialog } from '@smart/ui';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '../../../components/admin-tabs';
+import { ConfirmDialog } from '@hirekiwi/ui';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

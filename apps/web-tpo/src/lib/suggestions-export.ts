@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
-import type { CandidateMatchDto, JobOpeningDto } from '@smart/contracts';
+import type { CandidateMatchDto, JobOpeningDto } from '@hirekiwi/contracts';
 
 export type SuggestionExportRow = {
   rank: number;
@@ -91,7 +91,7 @@ export function buildSuggestionsPdf(opening: JobOpeningDto, rows: SuggestionExpo
   doc.text('SMART', 10, 9.5);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.text('Role-Specific Readiness Certification Platform', 30, 9.5);
+  doc.text('Intellectual Talent Network & Readiness Certification', 30, 9.5);
 
   doc.setTextColor(SMART_DARK);
   doc.setFont('helvetica', 'bold');

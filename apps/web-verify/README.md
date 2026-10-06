@@ -12,4 +12,4 @@ This is the public-facing, anonymous lookup and verification portal for SMART ce
 ## Layout Structure
 
 - **Root Layout (`src/app/layout.tsx`)**: Integrates the **Public Chrome Layout**. Renders the generic trust logo header and signed verification info footers. Dark-theme default.
-- **UI Primitives**: Extends design variables and layouts by consuming `@smart/ui` components locally (`Button`, `Card`, `TierBadge`, `LevelStepper`, `Input`, `Alert`) with zero direct dependencies.
+- **UI Primitives**: Extends design variables and layouts by consuming `@hirekiwi/ui` components locally (`Button`, `Card`, `TierBadge`, `LevelStepper`, `Input`, `Alert`) with zero direct dependencies.

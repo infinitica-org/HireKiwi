@@ -107,7 +107,7 @@ describe('ApplicationStageEventRepository is append-only (Th6-418)', () => {
   });
 
   it('has no API to edit or delete a stage event (no such route in the contracts)', async () => {
-    const { ROUTES } = await import('@smart/contracts');
+    const { ROUTES } = await import('@hirekiwi/contracts');
     const eventRoutes = ROUTES.filter((route) => /stage-events|stage_events/.test(route.path));
     expect(eventRoutes).toEqual([]);
   });

@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { InstitutionStudentDto, SkillClaimDto } from '@smart/contracts';
+import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import { CandidateRepositoryProfileView } from './CandidateRepositoryProfileView';
 
 const baseCandidate: InstitutionStudentDto = {

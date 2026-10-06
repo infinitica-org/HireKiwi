@@ -19,9 +19,11 @@ import {
   type ListAdminCutScoresResponse,
   type ListAdminItemsResponse,
   type ListAdminLevelsResponse,
-} from '@smart/contracts';
+  SMART_TOPICS,
+} from '@hirekiwi/contracts';
 import { Prisma, type ItemType } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
+import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 const ACTIVE_ATTEMPT_STATUSES = ['IN_PROGRESS', 'SUBMITTED', 'EVALUATING'] as const;
@@ -47,6 +49,7 @@ export class AssessmentAdminService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
+    @Inject(KafkaOutboxService) private readonly outbox: KafkaOutboxService,
   ) {}
 
   async listLevels(): Promise<ListAdminLevelsResponse> {
@@ -413,6 +416,94 @@ export class AssessmentAdminService {
     });
 
     return this.toCutScoreDto(row);
+  }
+
+  async publishCutScores(actorId: string, levelId: string): Promise<ListAdminCutScoresResponse> {
+    const id = UuidSchema.parse(levelId);
+    const level = await this.prisma.level.findUnique({
+      where: { id },
+      include: { track: true },
+    });
+    if (!level) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Level not found.',
+        statusCode: 404,
+      });
+    }
+
+    const cutScores = await this.prisma.cutScore.findMany({
+      where: { levelId: id },
+      orderBy: { tier: 'asc' },
+    });
+
+    const gold = cutScores.find((c) => c.tier === 'GOLD');
+    const silver = cutScores.find((c) => c.tier === 'SILVER');
+    const bronze = cutScores.find((c) => c.tier === 'BRONZE');
+
+    if (!gold || !silver || !bronze) {
+      throw new BadRequestException({
+        error: 'incomplete_cut_scores',
+        message: 'All three tiers (GOLD, SILVER, BRONZE) must be configured before publishing.',
+        statusCode: 400,
+      });
+    }
+
+    const goldMean = num(gold.mean);
+    const silverMean = num(silver.mean);
+    const bronzeMean = num(bronze.mean);
+
+    if (goldMean <= silverMean || silverMean <= bronzeMean) {
+      throw new BadRequestException({
+        error: 'invalid_cut_scores',
+        message: 'Cut score means must strictly satisfy GOLD > SILVER > BRONZE.',
+        statusCode: 400,
+      });
+    }
+
+    await this.prisma.cutScore.updateMany({
+      where: { levelId: id },
+      data: { published: true },
+    });
+
+    await this.auditPublisher.record({
+      actorId,
+      action: 'admin.cut_score.published',
+      resourceType: 'CutScore',
+      resourceId: id,
+      reasonCode: null,
+      metadata: {
+        levelId: id,
+        trackCode: level.track.code,
+        levelNumber: level.levelNumber,
+        gold: { mean: goldMean, sd: num(gold.sd) },
+        silver: { mean: silverMean, sd: num(silver.sd) },
+        bronze: { mean: bronzeMean, sd: num(bronze.sd) },
+      },
+    });
+
+    await this.outbox.enqueueEnvelope({
+      topic: SMART_TOPICS.trackUpdated,
+      partitionKey: level.track.code,
+      eventType: 'smart.track.updated',
+      source: 'assessment',
+      data: {
+        trackCode: level.track.code,
+        changeKind: 'CUT_SCORES_PUBLISHED',
+        affectedLevels: [level.levelNumber],
+        invalidateKeys: [
+          `cut_scores:track:${level.track.id}`,
+          `cut_scores:track:${level.track.code}`,
+          `cut_scores:level:${id}`,
+        ],
+      },
+    });
+
+    const updatedRows = await this.prisma.cutScore.findMany({
+      where: { levelId: id },
+      orderBy: { tier: 'asc' },
+    });
+    return { cutScores: updatedRows.map((row) => this.toCutScoreDto(row)) };
   }
 
   private async assertTrackExists(trackId: string): Promise<void> {

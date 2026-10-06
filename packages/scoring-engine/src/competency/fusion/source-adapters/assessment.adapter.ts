@@ -1,5 +1,5 @@
-import type { SkillCompetency, CompetencyResult } from '@smart/contracts';
-import type { ObservationBundle, Observation } from '@smart/contracts';
+import type { SkillCompetency, CompetencyResult } from '@hirekiwi/contracts';
+import type { ObservationBundle, Observation } from '@hirekiwi/contracts';
 
 export function assessmentToObservationBundle(input: {
   competencyResults: readonly CompetencyResult[];

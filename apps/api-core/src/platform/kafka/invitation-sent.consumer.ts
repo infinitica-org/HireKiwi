@@ -1,7 +1,7 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { InvitationSentEventSchema, SMART_TOPICS } from '@smart/contracts';
-import { runKafkaHandler } from '@smart/observability';
+import { InvitationSentEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { runKafkaHandler } from '@hirekiwi/observability';
 import type { EmailTemplateName } from '../mailer/mailer.types.js';
 import { env } from '../config/env.js';
 import { NotificationsService } from '../../modules/notifications/notifications.service.js';

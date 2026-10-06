@@ -4,7 +4,7 @@ import type {
   CreateCampusRequest,
   ListCampusesQuery,
   UpdateCampusRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 

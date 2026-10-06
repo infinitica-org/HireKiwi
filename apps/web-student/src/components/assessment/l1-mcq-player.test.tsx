@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AttemptSessionDto, DeliverableItemDto, NextItemDto } from '@smart/contracts';
+import type { AttemptSessionDto, DeliverableItemDto, NextItemDto } from '@hirekiwi/contracts';
 import { L1McqPlayer, L1McqQuestion } from './l1-mcq-player';
 
 const sessionMock = vi.fn();
@@ -156,7 +156,7 @@ describe('L1McqPlayer', () => {
   });
 
   it('surfaces 404 empty-bank and 429 errors', async () => {
-    const { SmartApiError } = await import('@smart/api-client');
+    const { SmartApiError } = await import('@hirekiwi/api-client');
     sessionMock.mockRejectedValue(
       new SmartApiError({
         error: 'not_found',

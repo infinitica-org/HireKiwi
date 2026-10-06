@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { InstitutionStudentDto } from '@smart/contracts';
+import type { InstitutionStudentDto } from '@hirekiwi/contracts';
 import { CandidateDetailDrawer } from './candidate-detail-drawer';
 
 const candidate: InstitutionStudentDto = {

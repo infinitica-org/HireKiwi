@@ -5,8 +5,8 @@ import {
   AssessmentPerformanceVectorSchema,
   SkillVerificationCompletedEventSchema,
   SMART_TOPICS,
-} from '@smart/contracts';
-import { runKafkaHandler } from '@smart/observability';
+} from '@hirekiwi/contracts';
+import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import { KafkaService } from '../../platform/kafka/kafka.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

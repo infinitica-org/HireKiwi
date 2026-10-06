@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Upload, FileCheck, Link as LinkIcon, AlertCircle } from 'lucide-react';
-import { Button, Input } from '@smart/ui';
+import { Button, Input } from '@hirekiwi/ui';
 
 const ACCEPTED = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
 const MAX_BYTES = 10 * 1024 * 1024;

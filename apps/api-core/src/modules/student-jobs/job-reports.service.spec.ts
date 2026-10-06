@@ -1,4 +1,4 @@
-import { CreateReportRequestSchema, REPORT_ESCALATION_THRESHOLD } from '@smart/contracts';
+import { CreateReportRequestSchema, REPORT_ESCALATION_THRESHOLD } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { withIdempotencyLedger } from '../company-profile/test-utils.js';
 import { JobReportsService } from './job-reports.service.js';

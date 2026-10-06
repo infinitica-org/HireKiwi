@@ -25,7 +25,7 @@ import {
   RepoLanguagesRequestSchema,
   ReverseGeocodeRequestSchema,
   DeleteResumeRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { FastifyReply } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Public } from '../../common/guards/public.decorator.js';

@@ -13,6 +13,11 @@ import {
   InvalidStudentProofFileUrlError,
 } from './work-experience-proof-url.util.js';
 
+vi.mock('../../platform/storage/file-scanner.js', () => ({
+  assertFileClean: vi.fn().mockResolvedValue(undefined),
+  assertDataUriClean: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe('WorkExperienceService', () => {
   let prisma: any;
   let auditPublisher: any;
@@ -157,6 +162,9 @@ describe('WorkExperienceService', () => {
 
     storage = {
       upload: vi.fn().mockResolvedValue('work-experience-proofs/student/uuid-offer.pdf'),
+      getObjectBuffer: vi.fn(),
+      deleteObject: vi.fn().mockResolvedValue(undefined),
+      getSignedDownloadUrl: vi.fn().mockResolvedValue('https://storage.test/signed'),
     };
 
     notifications = {
@@ -1000,7 +1008,10 @@ describe('WorkExperienceService', () => {
       const docId = randomUUID();
       const letterText =
         'Acme Corporation letterhead. Jane Doe served as Engineer. Signed by HR Manager.';
-      const dataUri = `data:text/plain;base64,${Buffer.from(letterText).toString('base64')}`;
+      // Th6-600 — proofs are uploaded objects; the server re-reads and verifies the PDF bytes.
+      const pdfBytes = Buffer.from(`%PDF-1.4\n${letterText}`);
+      const dataUri = `work-experience-proofs/${mockStudentId}/${expId}/abc-letter.pdf`;
+      storage.getObjectBuffer.mockResolvedValue(pdfBytes);
 
       prisma.workExperience.findUnique.mockResolvedValueOnce({
         id: expId,
@@ -1073,7 +1084,7 @@ describe('WorkExperienceService', () => {
         documentType: 'EXPERIENCE_LETTER',
         fileUrl: dataUri,
         fileName: 'letter.pdf',
-        fileSizeBytes: 2048,
+        fileSizeBytes: pdfBytes.byteLength,
         mimeType: 'application/pdf',
       });
 
@@ -1129,6 +1140,12 @@ describe('WorkExperienceService', () => {
     it('uploads file to object storage then attaches document metadata', async () => {
       const expId = randomUUID();
       const docId = randomUUID();
+      // Th6-600 — real PDF magic bytes; the stored object is re-read and verified on attach.
+      const offerPdf = Buffer.from('%PDF-1.4\nOffer letter body for Jane Doe at Acme.');
+      storage.upload.mockResolvedValueOnce(
+        `work-experience-proofs/${mockStudentId}/${expId}/uuid-offer.pdf`,
+      );
+      storage.getObjectBuffer.mockResolvedValue(offerPdf);
 
       prisma.workExperience.findUnique.mockResolvedValue({
         id: expId,
@@ -1201,7 +1218,7 @@ describe('WorkExperienceService', () => {
         mockStudentId,
         expId,
         {
-          buffer: Buffer.from('Offer letter body for Jane Doe at Acme.'),
+          buffer: offerPdf,
           fileName: 'offer.pdf',
           mimeType: 'application/pdf',
         },
@@ -1210,11 +1227,12 @@ describe('WorkExperienceService', () => {
 
       expect(storage.upload).toHaveBeenCalledWith(
         expect.objectContaining({
-          namespace: `work-experience-proofs/${mockStudentId}`,
+          namespace: `work-experience-proofs/${mockStudentId}/${expId}`,
           fileName: 'offer.pdf',
         }),
       );
-      expect(result.fileUrl).toBe('work-experience-proofs/student/uuid-offer.pdf');
+      // Th6-600 — the client gets a 15-minute presigned download link, not the raw key.
+      expect(result.fileUrl).toBe('https://storage.test/signed');
     });
   });
 
@@ -2769,7 +2787,7 @@ describe('WorkExperienceService', () => {
               expiresAtFormatted: '14 days',
             }),
           }),
-          { jobId: `manager-invite:${endorsementId}` },
+          { jobId: `manager-invite-${endorsementId}` },
         );
         expect(emailQueue.add).toHaveBeenNthCalledWith(
           2,
@@ -2777,7 +2795,7 @@ describe('WorkExperienceService', () => {
           expect.objectContaining({ endorsementId }),
           expect.objectContaining({
             delay: TTL_7D,
-            jobId: `manager-reminder:${endorsementId}`,
+            jobId: `manager-reminder-${endorsementId}`,
           }),
         );
         expect(emailQueue.add).toHaveBeenNthCalledWith(
@@ -2786,7 +2804,7 @@ describe('WorkExperienceService', () => {
           { endorsementId, experienceId },
           expect.objectContaining({
             delay: TTL_14D,
-            jobId: `manager-expire:${endorsementId}`,
+            jobId: `manager-expire-${endorsementId}`,
           }),
         );
         const auditMetadata = auditPublisher.record.mock.calls[0]?.[0]?.metadata;

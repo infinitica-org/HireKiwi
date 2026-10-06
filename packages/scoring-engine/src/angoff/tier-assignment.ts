@@ -1,5 +1,5 @@
 import { Effect } from 'effect';
-import type { Tier } from '@smart/contracts';
+import type { Tier } from '@hirekiwi/contracts';
 import { InvalidScoreError } from '../errors.js';
 import { formatConfidenceBand, isWithinConfidenceBand, type CutScoreSet } from './cut-scores.js';
 import { roundTo } from '../statistics.js';

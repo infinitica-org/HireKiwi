@@ -1,10 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { getSkillBlueprint, getSkillDefinition, type ProficiencyLevel } from '@smart/contracts';
+import { getSkillBlueprint, getSkillDefinition, type ProficiencyLevel } from '@hirekiwi/contracts';
 import {
   CAPABILITY_INFERENCE_PROMPT_REF,
   CapabilityInferenceOutputSchema,
   capabilityInferenceTemplate,
-} from '@smart/prompts';
+} from '@hirekiwi/prompts';
 import { AiGatewayService } from '../ai-gateway/ai-gateway.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { QlixClient, QlixSmartAssessmentSchema, type QlixSmartAssessment } from './qlix-client.js';

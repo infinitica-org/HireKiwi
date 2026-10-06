@@ -12,7 +12,7 @@ import {
   Clock,
   School,
 } from 'lucide-react';
-import type { CandidateEducationDto } from '@smart/contracts';
+import type { CandidateEducationDto } from '@hirekiwi/contracts';
 import { parseEducationDisplay } from '@/lib/education-entry-presenters';
 
 interface EducationEntryCardProps {
@@ -40,7 +40,7 @@ export function EducationEntryCard({
   const isPending = !isVerified && !isRejected;
 
   return (
-    <article className="overflow-hidden rounded-md border border-zinc-200/80 bg-white shadow-2xs font-sans select-none dark:border-zinc-800 dark:bg-[#161616]">
+    <article className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-2xs font-sans select-none dark:border-zinc-800 dark:bg-[#161616]">
       {/* Card Header */}
       <div className="flex items-start justify-between gap-3 border-b border-zinc-100 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-[#161616]">
         <div className="flex items-start gap-3 min-w-0">
@@ -120,7 +120,7 @@ export function EducationEntryCard({
       {/* Bento Metric Tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-zinc-50/50 dark:bg-zinc-900/30">
         {/* Tile 1: Duration */}
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Duration
           </span>
@@ -131,7 +131,7 @@ export function EducationEntryCard({
         </div>
 
         {/* Tile 2: Result */}
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Grading Scale
           </span>
@@ -142,7 +142,7 @@ export function EducationEntryCard({
         </div>
 
         {/* Tile 3: Final Score */}
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Final Score
           </span>
@@ -154,7 +154,7 @@ export function EducationEntryCard({
         </div>
 
         {/* Tile 4: Documents & Proof */}
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Verification Documents
           </span>

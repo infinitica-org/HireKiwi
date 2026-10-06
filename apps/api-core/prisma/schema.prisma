@@ -199,6 +199,13 @@ enum CompanyMode {
 }
 
 /// CO self-onboarding applicant progress — mirrors @smart/contracts CompanyOnboardingStatus.
+/// S6-VV-107 — lifecycle of a request to join an existing company.
+enum CompanyJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum CompanyOnboardingStatus {
   DRAFT
   EMAIL_VERIFICATION_PENDING
@@ -299,6 +306,12 @@ enum AtsStage {
   HIRED
   REJECTED
   WITHDRAWN
+}
+
+/// S6-VV-121 — delivery channel for notification preferences.
+enum NotificationChannel {
+  IN_APP
+  EMAIL
 }
 
 enum NotificationKind {
@@ -496,6 +509,8 @@ model User {
   onboardingDetails      Json?                     @map("onboarding_details")
   /// Object storage key for the candidate profile photo (signed URL served at read time).
   profilePhotoObjectKey  String?                   @map("profile_photo_object_key")
+  /// Professional headline shown under the student name; assigned once, then stored here.
+  profileHeadline        String?                   @map("profile_headline")
   dpdpConsentAt          DateTime?                 @map("dpdp_consent_at") @db.Timestamptz(6)
   /// Persistent, non-expiring public-profile share link (lazily minted on first request).
   publicProfileSlug      String?                   @unique @map("public_profile_slug")
@@ -565,6 +580,7 @@ model User {
   jobOpeningsCreated                   JobOpening[]                  @relation("JobOpeningCreatedBy")
   matchRunsRequested                   MatchRun[]                    @relation("MatchRunRequestedBy")
   notifications                        Notification[]
+  notificationPreferences              NotificationPreference[]
   workExperiences                      WorkExperience[]
   candidateCertificates                CandidateCertificate[]
   candidateEducations                  CandidateEducation[]
@@ -1024,6 +1040,18 @@ model KafkaOutbox {
   @@map("kafka_outbox")
 }
 
+/// S6-VV-123 (#592) — consumer-side dedupe for at-least-once Kafka delivery: one row per
+/// (consumer group, envelope eventId) handled. Purged by the retention sweep after 14 days.
+model ConsumedEvent {
+  consumerGroup String   @map("consumer_group")
+  eventId       String   @map("event_id") @db.Uuid
+  consumedAt    DateTime @default(now()) @map("consumed_at") @db.Timestamptz(6)
+
+  @@id([consumerGroup, eventId])
+  @@index([consumedAt])
+  @@map("consumed_events")
+}
+
 enum UsernameStatus {
   RESERVED
   ACTIVE
@@ -1101,6 +1129,7 @@ model Company {
   enterpriseContract    EnterpriseContract?
   profile               CompanyProfile?
   reviews               CompanyReview[]
+  joinRequests          CompanyJoinRequest[]
   campusAccessRequests  CampusAccessRequest[]
   campusAccess          UniversityEmployerAccess[]
 
@@ -1256,6 +1285,30 @@ model IdempotencyRecord {
 
 /// Public company self-onboarding session. Raw session tokens are never stored — only sessionTokenHash.
 /// Company row is linked once the tenant exists (typically before submit with verificationStatus=PENDING).
+/// S6-VV-107 (#340) — someone whose verified work email is on an approved company's domain asks
+/// to join it instead of registering it again. An owner approves (an EMP-02 invitation is sent,
+/// S6-VV-108) or rejects it. One PENDING request per (company, email): partial unique index in
+/// the migration.
+model CompanyJoinRequest {
+  id           String                   @id @default(uuid()) @db.Uuid
+  companyId    String                   @map("company_id") @db.Uuid
+  company      Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  /// The onboarding session that verified `email`; the requester's status page reads it back.
+  sessionId    String                   @map("session_id") @db.Uuid
+  email        String
+  fullName     String                   @map("full_name")
+  status       CompanyJoinRequestStatus @default(PENDING)
+  decidedById  String?                  @map("decided_by_id") @db.Uuid
+  decidedAt    DateTime?                @map("decided_at") @db.Timestamptz(6)
+  reason       String?
+  invitationId String?                  @map("invitation_id") @db.Uuid
+  createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([companyId, status])
+  @@index([sessionId])
+  @@map("company_join_requests")
+}
+
 model CompanyOnboardingSession {
   id                         String                  @id @default(uuid()) @db.Uuid
   companyId                  String?                 @map("company_id") @db.Uuid
@@ -1455,10 +1508,28 @@ model Project {
   report              ProjectVerificationReport?
   qlixCheckResult     QlixCheckResult?
   studentCapabilities StudentCapability[]
+  /// Th6-600 - PDF/PNG evidence files (object keys) attached to the project.
+  documents           ProjectDocument[]
 
   @@index([studentId, status])
   @@index([studentId, isActive])
   @@map("projects")
+}
+
+/// Th6-600 - evidence file attached to a project. `fileUrl` holds the storage object key;
+/// the API swaps it for a 15-minute presigned download URL.
+model ProjectDocument {
+  id            String   @id @default(uuid()) @db.Uuid
+  projectId     String   @map("project_id") @db.Uuid
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileUrl       String   @map("file_url")
+  fileName      String   @map("file_name")
+  fileSizeBytes Int      @map("file_size_bytes")
+  mimeType      String   @map("mime_type")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([projectId])
+  @@map("project_documents")
 }
 
 model QlixCheckResult {
@@ -1585,6 +1656,9 @@ model JobOpening {
   rawText                  String?            @map("raw_text")
   jdParseStatus            JdParseStatus      @default(PENDING) @map("jd_parse_status")
   parseConfidence          Decimal?           @map("parse_confidence") @db.Decimal(4, 3)
+  /// Gap 3: JD-parse versioning — tracks which JdParseParameters version produced this parse.
+  /// Format: "jd-parse-v1.0", allows future threshold/parameter changes without data loss.
+  jdParseVersion           String?            @map("jd_parse_version")
   parsedAt                 DateTime?          @map("parsed_at") @db.Timestamptz(6)
   parsedRequirements       Json?              @map("parsed_requirements")
   status                   JobOpeningStatus   @default(DRAFT)
@@ -1808,6 +1882,20 @@ model Notification {
   @@index([userId, readAt])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+/// S6-VV-121 (#434) — a channel the user turned off (or back on) for one notification kind.
+/// No row means enabled. ACCOUNT and TRUST_ENFORCEMENT ignore these (mandatory).
+model NotificationPreference {
+  userId    String              @map("user_id") @db.Uuid
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      NotificationKind
+  channel   NotificationChannel
+  enabled   Boolean
+  updatedAt DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@id([userId, kind, channel])
+  @@map("notification_preferences")
 }
 
 model CognitiveProfile {
@@ -2936,6 +3024,8 @@ model DataSubjectRequest {
   resolution       String?
   resolvedById     String?   @map("resolved_by_id") @db.Uuid
 
+  /// S6-VV-159 — plus a partial unique index (migration only; Prisma can't declare it):
+  /// one OPEN/IN_REVIEW request per (user_id, type).
   @@index([userId, type, status])
   @@index([status, createdAt])
   @@map("data_subject_requests")

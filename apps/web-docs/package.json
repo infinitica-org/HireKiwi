@@ -1,0 +1,38 @@
+{
+  "name": "@hirekiwi/web-docs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SMART Architectural & Engineering Documentation Portal. Powered by Fumadocs.",
+  "scripts": {
+    "dev": "next dev --port 3008",
+    "build": "next build",
+    "start": "next start --port 3008",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint . --max-warnings=0"
+  },
+  "dependencies": {
+    "@hirekiwi/ui": "workspace:*",
+    "fumadocs-core": "16.15.17",
+    "fumadocs-mdx": "15.4.5",
+    "fumadocs-ui": "npm:@fumadocs/base-ui@16.15.17",
+    "lucide-react": "^1.33.0",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@hirekiwi/eslint-config": "workspace:*",
+    "@hirekiwi/next-config": "workspace:*",
+    "@hirekiwi/tailwind-config": "workspace:*",
+    "@hirekiwi/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "catalog:",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "eslint": "catalog:",
+    "postcss": "^8.5.28",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  }
+}

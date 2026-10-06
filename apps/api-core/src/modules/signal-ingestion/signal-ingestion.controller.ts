@@ -6,7 +6,7 @@ import {
   ConnectSignalSourceRequestSchema,
   RefreshSignalsRequestSchema,
   SelectRepositoriesRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
@@ -16,18 +16,6 @@ import { SignalIngestionService } from './signal-ingestion.service.js';
 @Controller(`${API_PREFIX}/signals`)
 export class SignalIngestionController {
   constructor(@Inject(SignalIngestionService) private readonly service: SignalIngestionService) {}
-
-  @Get('_meta')
-  @Roles('STUDENT')
-  @ApiBearerAuth()
-  meta() {
-    return {
-      module: 'signal-ingestion',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'passive-signal-adapters-v1',
-    };
-  }
 
   @Get('connections')
   @Roles('STUDENT')

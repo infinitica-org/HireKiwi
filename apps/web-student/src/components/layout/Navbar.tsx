@@ -5,16 +5,18 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Bell, ChevronRight, Menu, UserRound, Zap, Users, Settings } from 'lucide-react';
 import { useCurrentUser } from '@/lib/candidate-identity';
 import { signOut } from '@/lib/auth';
-import { UserMenu } from '@smart/ui';
+import { UserMenu } from '@hirekiwi/ui';
 
 type Breadcrumb = { label: string; href?: string };
 
 function getStudentBreadcrumbs(pathname: string): Breadcrumb[] {
-  if (pathname === '/' || pathname === '/dashboard') {
+  if (pathname === '/' || pathname === '/student/dashboard') {
     return [{ label: 'Dashboard' }];
   }
 
+  // Pages live under /student/…; the prefix itself is not a breadcrumb.
   const segments = pathname.split('/').filter(Boolean);
+  if (segments[0] === 'student') segments.shift();
   const crumbs: Breadcrumb[] = [];
   const first = segments[0] ?? '';
 
@@ -42,14 +44,14 @@ export function StudentTopbar({ onOpenMobileNav = () => {} }: StudentTopbarProps
   const router = useRouter();
   const { data: user } = useCurrentUser();
 
-  const pathname = usePathname() || '/dashboard';
+  const pathname = usePathname() || '/student/dashboard';
   const breadcrumbs = getStudentBreadcrumbs(pathname);
 
   const studentMenuItems = [
-    { label: 'Profile', icon: UserRound, onClick: () => router.push('/public-profile') },
-    { label: 'Upgrade Plan', icon: Zap, onClick: () => router.push('/profile') },
-    { label: 'Refer Friends', icon: Users, onClick: () => router.push('/profile') },
-    { label: 'Settings', icon: Settings, onClick: () => router.push('/profile') },
+    { label: 'Profile', icon: UserRound, onClick: () => router.push('/student/public-profile') },
+    { label: 'Upgrade Plan', icon: Zap, onClick: () => router.push('/student/profile') },
+    { label: 'Refer Friends', icon: Users, onClick: () => router.push('/student/profile') },
+    { label: 'Settings', icon: Settings, onClick: () => router.push('/student/profile') },
   ];
 
   return (

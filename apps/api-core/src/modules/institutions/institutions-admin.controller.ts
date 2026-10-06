@@ -24,7 +24,7 @@ import {
   UpdatePlanPriceRequestSchema,
   ViewCandidateRequestSchema,
   GetAdminDashboardQuerySchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import { RequirePermission } from '../../common/guards/permissions.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';

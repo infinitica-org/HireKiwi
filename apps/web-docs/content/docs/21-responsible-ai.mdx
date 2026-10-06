@@ -1,0 +1,27 @@
+---
+title: 21. Responsible AI & Governance
+description: Ethical AI standards, bias mitigation, protected demographic attribute masking, and human override rights.
+---
+
+## 21.1 Responsible AI Principles
+
+HireKiwi deploys artificial intelligence exclusively as an **evaluative assistant**, never as an unconstrained autonomous hiring decision-maker:
+
+1. **Human-in-the-Loop Supremacy:** AI models calculate BARS rubric tiers and generate match rankings, but final hiring, shortlisting, and candidate rejection decisions remain strictly under human control.
+2. **Protected Attribute Masking:** Demographic attributes (gender, caste, religion, home state, physical appearance) are mechanically stripped from all prompt contexts provided to LLM evaluators.
+3. **Auditability & Determinism:** LLM evaluation outputs are logged alongside prompt hashes, token temperatures ($T=0.1$ for deterministic scoring), and verbatim code citations.
+
+---
+
+## 21.2 Algorithmic Bias Mitigation & Fairness Auditing
+
+- **Disparate Impact Testing:** Evaluation prompt versions are audited across diverse regional student cohorts to verify that the Selection Rate ratio satisfies the Equal Employment Opportunity Commission (EEOC) Four-Fifths Rule ($\ge 0.80$).
+- **Prompt Groundedness Verification:** The evaluator must justify any score deduction by citing an exact line of code or specific transcript utterance. Generalized deductions (e.g., _"Candidate did not sound confident"_) are automatically flagged and rejected by the Zod schema validator.
+
+---
+
+## 21.3 Candidate Right to Explanation & Appeals
+
+- Any student whose assessment score results in a tier downgrade receives a full criteria breakdown within their portal.
+- Students retain the unconditional right to challenge an automated evaluation within 7 days.
+- Challenges trigger a senior human faculty review of the raw code defense session. If the human auditor overrules the model, the override is permanently recorded in model calibration metrics.

@@ -1,7 +1,7 @@
 import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { dbQueryDuration, LOG_EVENTS, logEvent } from '@smart/observability';
+import { dbQueryDuration, LOG_EVENTS, logEvent } from '@hirekiwi/observability';
 import { PrismaClient } from '../../generated/prisma/index.js';
 import { env } from '../config/env.js';
 

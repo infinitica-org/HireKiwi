@@ -1,4 +1,4 @@
-import { NotFoundWall } from '@smart/ui';
+import { NotFoundWall } from '@hirekiwi/ui';
 
 const PORTAL_ORIGINS = {
   student: process.env.NEXT_PUBLIC_STUDENT_URL ?? 'http://localhost:3001',
@@ -8,5 +8,5 @@ const PORTAL_ORIGINS = {
 };
 
 export default function NotFound() {
-  return <NotFoundWall homeHref="/dashboard" portalOrigins={PORTAL_ORIGINS} />;
+  return <NotFoundWall homeHref="/student/dashboard" portalOrigins={PORTAL_ORIGINS} />;
 }

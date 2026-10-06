@@ -1,7 +1,7 @@
 'use client';
 
-import type { CompanyPortalAccount } from '@smart/contracts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import type { CompanyPortalAccount } from '@hirekiwi/contracts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 import { verificationStatusLabel } from '@/lib/verification-label';
 
 export function AccountLoadingPanel() {

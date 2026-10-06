@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type AiCompletionRequest } from '@smart/contracts';
-import { barsL3Template } from '@smart/prompts';
-import { cohensKappa } from '@smart/scoring-engine';
+import { type AiCompletionRequest } from '@hirekiwi/contracts';
+import { barsL3Template } from '@hirekiwi/prompts';
+import { cohensKappa } from '@hirekiwi/scoring-engine';
 import { Effect } from 'effect';
 import { AnthropicAdapter } from './adapters/anthropic.adapter.js';
 import { GoogleAdapter } from './adapters/google.adapter.js';
@@ -103,7 +103,9 @@ describe("Peer Audit: Ramansh's AI Gateway & Reliability Controls", () => {
 
       // 1. Candidate request must not be dropped
       expect(response).toBeDefined();
-      expect(response.auditId).toBe(AUDIT_ID);
+      // Audits are published through the outbox and persisted by the consumer, so the synchronous
+      // response carries no audit id (AiGatewayAuditService.record).
+      expect(response.auditId).toBeNull();
       expect(response.model).toBe('gemini-2.5-pro');
 
       // 2. Fallback provider must be GOOGLE (Gemini)

@@ -21,7 +21,7 @@ describe('profile-sections', () => {
   });
 
   it('builds stable profile URLs', () => {
-    expect(profileSectionHref('education')).toBe('/profile?section=education');
+    expect(profileSectionHref('education')).toBe('/student/profile?section=education');
   });
 
   it('returns metadata for each subsection', () => {

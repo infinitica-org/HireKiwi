@@ -4,7 +4,7 @@ import {
   ParseResumeResponseSchema,
   ResumeParseDraftSchema,
   type ParseResumeResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AiGatewayService } from './ai-gateway.service.js';
 
 export const RESUME_PARSE_PROMPT_REF = 'resume-parse@1' as const;

@@ -3,7 +3,7 @@ import {
   type ApplicationDto,
   type AtsStage,
   type JobOpeningDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 /** CO-T02 kanban column labeled "Applied / New Matches". */
 export const NEW_MATCH_STAGE = 'APPLIED' as const satisfies AtsStage;

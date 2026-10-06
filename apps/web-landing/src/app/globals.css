@@ -3,7 +3,7 @@
 @source '../components/**/*.{ts,tsx}';
 
 @theme {
-  --color-bg: #131313;
+ 
   --color-surface: #ffffff;
   --color-surface-dark: #3a302e;
   --color-ink: #111111;
@@ -62,6 +62,43 @@ body {
 .font-hero-marker {
   font-family: var(--font-hero-marker), 'Comic Sans MS', cursive;
   font-weight: 700;
+}
+
+/* Above-the-fold entrance animations. Pure CSS so hero content paints (and
+   counts for LCP) before JS hydrates; motion's `initial` kept it at opacity 0
+   until hydration. */
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(var(--enter-y, 20px));
+  }
+}
+
+@keyframes enter-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.animate-enter {
+  animation: enter-up 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Headlines are the LCP element: slide in without fading so they count as
+   painted on the first frame. */
+@keyframes enter-slide {
+  from {
+    transform: translateY(var(--enter-y, 20px));
+  }
+}
+
+.animate-enter-lcp {
+  animation: enter-slide 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-enter-scale {
+  animation: enter-scale 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .reveal {

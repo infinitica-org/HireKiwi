@@ -1,14 +1,14 @@
-import type { EvidenceRecordDto } from '@smart/contracts';
+import type { EvidenceRecordDto } from '@hirekiwi/contracts';
 import { profileSectionHref } from '@/lib/profile-sections';
 
 export function profileProjectHref(projectId: string): string {
   const params = new URLSearchParams({ section: 'projects', project: projectId });
-  return `/profile?${params.toString()}`;
+  return `/student/profile?${params.toString()}`;
 }
 
 export function profileWorkExperienceHref(experienceId: string): string {
   const params = new URLSearchParams({ section: 'experience', experience: experienceId });
-  return `/profile?${params.toString()}`;
+  return `/student/profile?${params.toString()}`;
 }
 
 function readPayload(record: EvidenceRecordDto): Record<string, unknown> | undefined {

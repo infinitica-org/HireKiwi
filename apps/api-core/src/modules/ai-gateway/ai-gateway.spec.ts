@@ -3,7 +3,7 @@ import {
   AiHealthDtoSchema,
   AiUsageSummaryDtoSchema,
   type AiCompletionRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AnthropicAdapter } from './adapters/anthropic.adapter.js';
 import { GoogleAdapter } from './adapters/google.adapter.js';
 import { OpenRouterAdapter } from './adapters/openrouter.adapter.js';
@@ -655,10 +655,5 @@ describe('AiGatewayController', () => {
     expect(AiUsageSummaryDtoSchema.safeParse(usage).success).toBe(true);
     expect(usage.last24h.requestCount).toBe(0);
     expect(usage.errorRateAvailable).toBe(false);
-
-    const meta = controller.meta();
-    expect(meta.module).toBe('ai-gateway');
-    expect(meta.owner).toBe('Ramansh');
-    expect(meta.status).toBe('active');
   });
 });

@@ -7,18 +7,18 @@ import {
   LevelNumberSchema,
   TrackCodeSchema,
   WeightSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 /**
  * Item authoring schema — the shape a content author commits as reviewed Git
  * JSON under `tools/content-pipeline/data/**\/*.json` (07-content-data.mdc).
  *
- * This mirrors `ItemInternalDto` from `@smart/contracts` (minus the
+ * This mirrors `ItemInternalDto` from `@hirekiwi/contracts` (minus the
  * server-managed `activeFlag`/`exposureCount`) plus the placement fields
  * (`trackCode`, `levelNumber`) an authored item needs before it has a
  * database-assigned `competencyId` relation. Reuses the shared enums so this
  * stays aligned with the catalog DTOs without editing the architect-owned
- * `@smart/contracts` package.
+ * `@hirekiwi/contracts` package.
  */
 export const ItemAuthoringSchema = z
   .object({

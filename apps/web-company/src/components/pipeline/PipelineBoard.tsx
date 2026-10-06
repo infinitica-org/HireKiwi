@@ -17,7 +17,7 @@ import {
   EMPLOYER_APPLICATION_STATUS_LABELS,
   type ApplicationStatus,
   type EmployerApplicantCard,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { BOARD_COLUMNS, canDrop, dropTargets, groupByStatus } from '@/lib/pipeline-board';
 
 const BAND_LABEL = { STRONG: 'Strong fit', MODERATE: 'Good fit', STRETCH: 'Stretch' } as const;

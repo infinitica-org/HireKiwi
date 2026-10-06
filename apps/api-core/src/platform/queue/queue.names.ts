@@ -1,4 +1,3 @@
-export const SANDBOX_EXECUTION_QUEUE = 'sandbox_execution' as const;
 export const AUDIO_EVALUATION_QUEUE = 'audio_evaluation' as const;
 export const PDF_GENERATION_QUEUE = 'pdf_generation' as const;
 /** S6-VV-118 — replaces the old `audit_log_purge` queue. */
@@ -17,7 +16,6 @@ export const DSR_ERASURE_QUEUE = 'dsr_erasure' as const;
 /** Th6-I606 — background processing for bulk CSV/XLSX whitelist uploads. */
 export const BULK_WHITELIST_IMPORT_QUEUE = 'bulk_whitelist_import' as const;
 
-export const SANDBOX_EXECUTION_DLQ = 'sandbox_execution.dlq' as const;
 export const AUDIO_EVALUATION_DLQ = 'audio_evaluation.dlq' as const;
 export const PDF_GENERATION_DLQ = 'pdf_generation.dlq' as const;
 export const CREDENTIAL_VERIFICATION_DLQ = 'credential_verification.dlq' as const;

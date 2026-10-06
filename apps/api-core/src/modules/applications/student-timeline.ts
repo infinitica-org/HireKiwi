@@ -3,7 +3,7 @@ import {
   toApplicationStatus,
   type AtsStage,
   type StudentApplicationDetail,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 /** The only fields of a stage event the student timeline is allowed to see. */
 export const STUDENT_TIMELINE_EVENT_SELECT = { toStage: true, createdAt: true } as const;

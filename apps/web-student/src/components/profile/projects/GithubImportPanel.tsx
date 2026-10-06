@@ -1,6 +1,6 @@
 'use client';
 
-import type { GithubRepoSummary } from '@smart/contracts';
+import type { GithubRepoSummary } from '@hirekiwi/contracts';
 import { GitBranch, Loader2 } from 'lucide-react';
 import { formatRepoUpdatedAt } from '@/components/profile/projects/project-presenters';
 import {
@@ -62,8 +62,8 @@ export function GithubImportPanel({
         <div className="mt-1 flex flex-col gap-2">
           {!githubLogin ? (
             <p className="text-xs text-[var(--ds-text-muted)]">
-              Add your GitHub URL under Profile → Professional Links, click Save links, then try
-              again — or add project details manually.
+              Add your GitHub URL under Profile → Integrations, click Save links, then try again —
+              or add project details manually.
             </p>
           ) : reposLoading ? (
             <p className="flex items-center gap-2 text-xs text-[var(--ds-text-muted)]">

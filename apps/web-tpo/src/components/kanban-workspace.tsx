@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { Columns3, Inbox } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   TrackCodeSchema,
   type ApplicationDto,
   type AtsStage,
   type JobOpeningDto,
   type TrackCode,
-} from '@smart/contracts';
-import { Alert } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Alert } from '@hirekiwi/ui';
 import { applicationsApi, openingsApi, placementOutcomesApi } from '../lib/api';
 import { ATS_STAGE_ORDER } from '../lib/ats-stage-ui';
 import {

@@ -2,9 +2,10 @@
 
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, LogOut } from 'lucide-react';
 import { motion } from 'motion/react';
-import textLogo from '@smart/ui/assets/images/Logos/WebP/Text-logo.png';
+import { signOut } from '@/lib/auth';
+import smartLogo from '@hirekiwi/ui/assets/images/Logos/WebP/smart-logo-text.jpg';
 
 /** Light-themed primitives for the candidate onboarding wizard. */
 
@@ -153,19 +154,28 @@ export const stepMotionProps = {
 
 export function WizardPage({ children }: { children: ReactNode }) {
   return (
-    <div className="h-dvh max-h-dvh w-full bg-white text-[#111827] font-sans flex flex-col justify-between overflow-y-auto px-6 py-4 sm:px-12 sm:py-6">
+    <div className="h-dvh max-h-dvh w-full bg-white bg-[radial-gradient(ellipse_65%_45%_at_50%_0%,rgba(225,255,160,0.4)_0%,rgba(180,248,220,0.25)_45%,rgba(255,255,255,0)_80%)] bg-no-repeat text-[#111827] font-sans flex flex-col justify-between overflow-y-auto px-6 py-4 sm:px-12 sm:py-6">
       {/* Top Header Logo */}
       <header className="w-full max-w-5xl mx-auto flex items-center justify-between shrink-0 mb-2 sm:mb-4">
-        <div className="flex items-center gap-3">
+        {/* The source image is a square with wide margins: crop to the mark + wordmark (~3:1). */}
+        <div className="relative h-9 w-[108px] overflow-hidden sm:h-10 sm:w-[120px]">
           <Image
-            src={textLogo}
+            src={smartLogo}
             alt="SMART"
-            width={110}
-            height={30}
-            className="h-7 sm:h-8 w-auto object-contain"
+            fill
+            sizes="120px"
+            className="scale-[1.4] object-cover mix-blend-multiply"
             priority
           />
         </div>
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white/80 px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-2xs transition-colors hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+        >
+          <LogOut className="size-4" aria-hidden />
+          Log out
+        </button>
       </header>
 
       {/* Main Container */}

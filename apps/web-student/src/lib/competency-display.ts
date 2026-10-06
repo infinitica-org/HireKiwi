@@ -5,7 +5,7 @@ import {
   type AssessmentResult,
   type CompetencyStatus,
   type SkillEvidenceContext,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export const COMPETENCY_STATUS_LABELS: Record<CompetencyStatus, string> = {
   DEMONSTRATED: 'Demonstrated',

@@ -6,7 +6,7 @@ import type {
   ApplicationStatus,
   EmployerApplicantCard,
   ListEmployerApplicantsResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import { describeMoveFailure, moveApplicant, type MoveFailure } from '@/lib/pipeline-board';
 

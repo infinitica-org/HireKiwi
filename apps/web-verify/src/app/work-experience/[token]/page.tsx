@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react';
 import type {
   EmployerVerificationDecision,
   GetWorkExperienceVerificationResponseDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 
 interface PageProps {

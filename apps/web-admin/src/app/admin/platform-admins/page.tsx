@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import type { PlatformAdminDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { PlatformAdminDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { CheckCircle2, Plus, RotateCcw, ShieldPlus, UserCog, X } from 'lucide-react';
-import { Button } from '@smart/ui/button';
+import { Button } from '@hirekiwi/ui/button';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

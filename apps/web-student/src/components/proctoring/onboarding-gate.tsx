@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { Camera, ClipboardList } from 'lucide-react';
-import { Button, Card, CardDescription, CardHeader, CardTitle } from '@smart/ui';
+import { Button, Card, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui';
 import { api } from '../../lib/api';
 import {
   requestProctoringMedia,

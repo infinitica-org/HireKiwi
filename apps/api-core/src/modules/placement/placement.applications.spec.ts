@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
-import { SMART_TOPICS } from '@smart/contracts';
+import { SMART_TOPICS } from '@hirekiwi/contracts';
 import { ROLES_KEY } from '../../common/guards/roles.decorator.js';
 import { PlacementController } from './placement.controller.js';
 import { ApplicationService } from '../applications/application.service.js';

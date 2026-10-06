@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { openingsApi } from '../../lib/api';
 import type { JobPostingCompanyLogo } from '../../lib/job-posting';
 import { errorNoticeClass, mutedTextClass, secondaryButtonSmClass } from '../../lib/tpo-ui';

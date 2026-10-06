@@ -9,7 +9,7 @@ const mockSkills = [
 
 const mockProjects = [
   {
-    title: 'SMART Platform',
+    title: 'HireKiwi Platform',
     description: 'An advanced AI certification system.',
     stack: ['React', 'TypeScript', 'Tailwind'],
     loomUrl: 'https://www.loom.com/share/1234567890abcdef',
@@ -64,7 +64,7 @@ describe('CandidateProfileCard', () => {
       />,
     );
 
-    expect(screen.getByText('SMART Platform')).toBeDefined();
+    expect(screen.getByText('HireKiwi Platform')).toBeDefined();
     expect(screen.getByText('An advanced AI certification system.')).toBeDefined();
     expect(screen.getAllByText('React').length).toBeGreaterThan(0);
     expect(screen.getAllByText('TypeScript').length).toBeGreaterThan(0);
@@ -73,7 +73,7 @@ describe('CandidateProfileCard', () => {
     expect(screen.getByText('Repository')).toBeDefined();
 
     // Check iframe video embed
-    const iframe = screen.getByTitle('Project video: SMART Platform') as HTMLIFrameElement;
+    const iframe = screen.getByTitle('Project video: HireKiwi Platform') as HTMLIFrameElement;
     expect(iframe).toBeDefined();
     expect(iframe.src).toBe('https://www.loom.com/embed/1234567890abcdef');
   });

@@ -1,0 +1,58 @@
+---
+title: 'SMART — Security alerts and runbooks'
+description: 'Delivery & Engineering Protocols - SECURITY_ALERTS'
+---
+
+# SMART — Security alerts and runbooks
+
+> Owner: Vishal V · Ticket: S6-VV-126 (security-critical failures, Zoho #574) · Rules: `infra/observability/grafana/provisioning/alerting/hirekiwi-security-alerts.yml`
+
+Security alerts carry `category=security` and go through the same **smart-team** contact point as the platform
+alerts (S6-VV-125). They read two metrics:
+
+- `smart_security_events_total{action, reason}`, counted where the event is audited (`AuditPublisherService`) for
+  `auth.login_failed` (with its reason), `auth.account_locked`, `auth.refresh_reuse_detected`,
+  `support.access_granted` and `user.role_changed`.
+- `smart_authz_denied_total{route, role}`, counted when the role/permission guard refuses a request.
+
+For every alert, the audit log is the source of truth: `/admin/audit-logs?action=<action>` lists who, what and when.
+
+## Critical
+
+### refresh-reuse
+A revoked refresh token was used again. SMART already revoked the whole token family, so the attacker and the real
+user are both signed out. Find the user in the audit log (`auth.refresh_reuse_detected`), check their recent logins
+and IPs, and contact them if it wasn't a stale tab. Repeated hits on one account mean the token store or a device is
+compromised.
+
+### login-failure-burst
+More than 50 failed logins in 10 minutes. Split by reason in Grafana (`sum by (reason)`): mostly `unknown_email`
+means credential stuffing against a list; mostly `bad_password` on few accounts means targeted guessing (lockouts
+will follow). Check the rate limiter is rejecting (`smart_rate_limit_rejections_total`) and block the source at Caddy
+if one range dominates.
+
+### infected-upload
+The malware scanner rejected a file. The upload was refused and nothing was stored. Find the uploader from the
+logs at that time and check whether their other uploads or account look abusive.
+
+## Warning
+
+### lockouts
+More than 5 accounts locked in 15 minutes. Usually the tail of a login-failure burst; if it isn't, check whether a
+client (an old app build, a bad integration) is retrying with wrong credentials.
+
+### authz-denied-spike
+More than 100 refused requests in 10 minutes. Group by `route` and `role`: one role hammering admin routes is
+probing; many roles on one route after a deploy is a permissions bug in that release.
+
+### scanner-errors
+The scanner errored on several uploads. Uploads fail closed while it's down, so users can't upload documents. Check
+the `clamav` service and its signature updates.
+
+### support-access
+A support agent got time-limited access to a user account. Confirm the grant matches a support ticket (`ticketId`
+in the audit row). Unexplained grants go to the security owner.
+
+### role-change
+An institution staff role changed. Confirm the actor and reason in the audit log; an unexpected promotion to admin
+is an incident.

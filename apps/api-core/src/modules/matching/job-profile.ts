@@ -4,7 +4,7 @@ import {
   getSkillBlueprint,
   type EmphasisedCapability,
   type SkillRequirement,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   PROFICIENCY_RANK,
   type SkillCapabilityJob,
@@ -27,6 +27,7 @@ function toRequiredSkill(requirement: SkillRequirement): SkillCapabilityRequired
     name: skillNameByCode.get(requirement.skillCode) ?? requirement.skillCode,
     minRank: proficiencyRank(requirement.minProficiency),
     minProficiency: requirement.minProficiency,
+    importance: requirement.importance,
   };
 }
 

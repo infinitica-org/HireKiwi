@@ -12,6 +12,9 @@ const employer = vi.hoisted(() => ({
   changeMemberRole: vi.fn(),
   deactivateMember: vi.fn(),
   reactivateMember: vi.fn(),
+  listJoinRequests: vi.fn(),
+  approveJoinRequest: vi.fn(),
+  rejectJoinRequest: vi.fn(),
 }));
 const account = vi.hoisted(() => ({ userId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }));
 
@@ -43,6 +46,7 @@ describe('Teammates page (Th6-351/352/353)', () => {
   beforeEach(() => {
     account.userId = OWNER;
     Object.values(employer).forEach((fn) => fn.mockReset());
+    employer.listJoinRequests.mockResolvedValue({ requests: [] });
   });
   afterEach(cleanup);
 
@@ -95,7 +99,7 @@ describe('Teammates page (Th6-351/352/353)', () => {
   });
 
   it('shows the server message when the last owner cannot be demoted', async () => {
-    const { SmartApiError } = await import('@smart/api-client');
+    const { SmartApiError } = await import('@hirekiwi/api-client');
     employer.listMembers.mockResolvedValue({ members: [member(OWNER)] });
     employer.changeMemberRole.mockRejectedValue(
       new SmartApiError({
@@ -122,7 +126,7 @@ describe('Teammates page (Th6-351/352/353)', () => {
   });
 
   it('shows the server 422 message for an invite to another domain', async () => {
-    const { SmartApiError } = await import('@smart/api-client');
+    const { SmartApiError } = await import('@hirekiwi/api-client');
     employer.listMembers.mockResolvedValue({ members: [member(OWNER)] });
     employer.inviteRecruiter.mockRejectedValue(
       new SmartApiError({
@@ -137,5 +141,70 @@ describe('Teammates page (Th6-351/352/353)', () => {
     fireEvent.change(screen.getByLabelText('Work email'), { target: { value: 'sam@gmail.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send invite' }));
     expect(await screen.findByText('Invitee email must be on acme.test.')).toBeTruthy();
+  });
+});
+
+describe('Teammates page join requests (S6-VV-108)', () => {
+  const request = {
+    joinRequestId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    companyId: 'c-1',
+    companyName: 'Acme',
+    email: 'riya@acme.test',
+    fullName: 'Riya Rao',
+    status: 'PENDING',
+    reason: null,
+    createdAt: '2026-10-01T00:00:00.000Z',
+    decidedAt: null,
+  };
+
+  beforeEach(() => {
+    account.userId = OWNER;
+    Object.values(employer).forEach((fn) => fn.mockReset());
+    employer.listMembers.mockResolvedValue({ members: [member(OWNER)] });
+  });
+  afterEach(cleanup);
+
+  it('lets an owner approve a pending request', async () => {
+    employer.listJoinRequests
+      .mockResolvedValueOnce({ requests: [request] })
+      .mockResolvedValue({ requests: [] });
+    employer.approveJoinRequest.mockResolvedValue({ ...request, status: 'APPROVED' });
+    renderPage();
+
+    expect(await screen.findByText('Requests to join (1)')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+    await waitFor(() =>
+      expect(employer.approveJoinRequest).toHaveBeenCalledWith(request.joinRequestId),
+    );
+    await waitFor(() => expect(screen.queryByText('Requests to join (1)')).toBeNull());
+  });
+
+  it('declines with the reason the owner typed', async () => {
+    employer.listJoinRequests.mockResolvedValue({ requests: [request] });
+    employer.rejectJoinRequest.mockResolvedValue({ ...request, status: 'REJECTED' });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Decline' }));
+    fireEvent.change(screen.getByLabelText(/Reason shown to Riya Rao/), {
+      target: { value: 'Not on our team.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Decline request' }));
+
+    await waitFor(() =>
+      expect(employer.rejectJoinRequest).toHaveBeenCalledWith(request.joinRequestId, {
+        reason: 'Not on our team.',
+      }),
+    );
+  });
+
+  it('shows nothing to a recruiter', async () => {
+    account.userId = RECRUITER;
+    employer.listMembers.mockResolvedValue({ members: [member(OWNER), member(RECRUITER)] });
+    employer.listJoinRequests.mockResolvedValue({ requests: [request] });
+    renderPage();
+    expect(await screen.findByText('Olivia Owner')).toBeTruthy();
+    expect(screen.queryByText(/Requests to join/)).toBeNull();
+    expect(employer.listJoinRequests).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,66 @@
+---
+title: 'SMART — Alerts and runbooks'
+description: 'Delivery & Engineering Protocols - ALERTS'
+---
+
+# SMART — Alerts and runbooks
+
+> Owner: Vishal V · Tickets: S6-VV-125 (critical failures, Zoho #581) · Rules: `infra/observability/grafana/provisioning/alerting/hirekiwi-alerts.yml`
+
+Grafana evaluates every rule once a minute against Prometheus and sends to the **smart-team** contact point:
+email to `ALERT_EMAIL_TO` and a POST to `ALERT_WEBHOOK_URL` (Slack or Zoho Cliq incoming webhook). Critical
+alerts repeat hourly until resolved, warnings every 12 hours. The rules are provisioned from files, so edit the YAML
+in a PR rather than in the Grafana UI. Each alert's `runbook_url` points at its section below.
+
+**Set up once per environment:** `METRICS_SCRAPE_TOKEN` (shared by api-core and Prometheus), `ALERT_EMAIL_TO`,
+`ALERT_WEBHOOK_URL`, and `GRAFANA_SMTP_*` for a real mail relay. Without them, alert email goes to Mailpit.
+
+## Critical
+
+### api-not-scraped
+`up{job="smart-api"} < 1` for 2 minutes. Either api-core is down, or it rejects Prometheus's scrape.
+1. `curl -fsS https://<host>/api/v1/health` — if that fails, it's an outage: check `docker compose ps api` and the API logs in Loki.
+2. If health is fine, the scrape is rejected: `METRICS_SCRAPE_TOKEN` must be identical for the `api` and `prometheus` services. Recreate Prometheus after changing it.
+
+### api-5xx-ratio
+More than 2% of requests return 5xx for 5 minutes. Open **SMART API metrics** to find the route, then the logs for
+`event="http.unhandled_error"` on that route. A recent deploy is the usual cause: roll back first, debug second.
+
+### postgres-down
+`pg_up < 1`. Check `docker compose ps postgres pgbouncer`, disk space (see **disk-usage**) and the Postgres logs.
+Everything that writes is failing while this fires.
+
+### redis-down
+`redis_up < 1`. Queues, rate limits and sessions depend on Redis. Restart the `redis` service; BullMQ jobs resume on
+their own once it's back.
+
+### backup-stale
+Backups are enabled and the last successful run is more than 26 hours old. Check the `backup` service logs and
+`smart_backup_last_failure_timestamp_seconds`, then run a backup by hand (see **Backups**). Don't leave this
+overnight: until it clears, a disk loss loses data.
+
+## Warning
+
+### api-p95-latency
+p95 above 1.5 s for 10 minutes. Look at **p95 latency by route** and at Postgres (slow queries, connections). If one
+route dominates, it's a query or an N+1; if all routes are slow, look at the host (CPU, memory).
+
+### disk-usage
+The root filesystem is more than 85% full. Usual suspects: Docker images (`docker system df`), Loki and Prometheus
+data, and local backup files. Prune old images first.
+
+### kafka-lag
+A consumer group is more than 1,000 messages behind for 10 minutes. Check that the worker is running and look for
+repeated handler errors (they land in `<topic>.dlq`).
+
+### scoring-paused
+Automated scoring paused itself because inter-rater agreement dropped below its threshold. Submissions wait for human
+review. Calibration needs to look at it; this is not an outage.
+
+### ai-queue-stalled
+A job in an AI-processing queue has waited more than 15 minutes. Check the worker process and the AI provider
+health on the admin AI page; a provider outage with every fallback failing looks like this.
+
+### dlq-growing
+Jobs used up their retries and were dead-lettered in the last 30 minutes. The **AI processing** row on the platform
+overview shows which queue. Find the job's error in the logs, fix the cause, then replay the job.

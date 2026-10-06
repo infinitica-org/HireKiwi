@@ -1,5 +1,5 @@
 import { ForbiddenException } from '@nestjs/common';
-import { REVIEW_RESPONSE_MAX_LENGTH, RespondToReviewRequestSchema } from '@smart/contracts';
+import { REVIEW_RESPONSE_MAX_LENGTH, RespondToReviewRequestSchema } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CompanyReviewsService } from './company-reviews.service.js';
 import { IDS, withIdempotencyLedger } from './test-utils.js';

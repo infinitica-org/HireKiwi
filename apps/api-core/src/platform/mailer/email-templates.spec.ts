@@ -27,7 +27,7 @@ describe('renderEmailTemplate', () => {
   it('renders platform-admin-invite with platform-wide wording, not TPO copy', () => {
     const platformAdmin = renderEmailTemplate('platform-admin-invite', {
       fullName: 'Backup Admin',
-      institutionName: 'SMART Platform',
+      institutionName: 'HireKiwi Platform',
       inviteUrl: 'http://localhost:3005/invite/token',
     });
 

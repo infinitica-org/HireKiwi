@@ -1,5 +1,5 @@
-import { queryKeys } from '@smart/api-client';
-import { useQuery } from '@smart/ui';
+import { queryKeys } from '@hirekiwi/api-client';
+import { useQuery } from '@hirekiwi/ui';
 import { api } from './api';
 
 /** The signed-in candidate's institution plan — resolved flags plus candidate capacity. */

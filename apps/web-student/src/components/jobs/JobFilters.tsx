@@ -6,7 +6,7 @@ import {
   JOB_WORK_MODES,
   type EmploymentType,
   type JobWorkMode,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   EMPLOYMENT_TYPE_LABELS,
   WORK_MODE_LABELS,

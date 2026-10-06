@@ -1,4 +1,4 @@
-import { getSkillDefinition, type ProjectDto } from '@smart/contracts';
+import { getSkillDefinition, type ProjectDto } from '@hirekiwi/contracts';
 import { parseStackTags } from '@/components/profile/projects/project-presenters';
 
 /** When project skill-mapping UI is unused, infer linkage from stack tags vs catalog skill name. */

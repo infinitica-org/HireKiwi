@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { JdThresholdVectorSchema, TRACK_CODES } from '@smart/contracts';
+import { JdThresholdVectorSchema, TRACK_CODES } from '@hirekiwi/contracts';
 import type { PromptTemplate } from '../types.js';
 import { INJECTION_GUARD, jsonOnly, untrusted } from '../shared.js';
 

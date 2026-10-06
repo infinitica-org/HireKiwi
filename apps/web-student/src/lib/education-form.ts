@@ -1,4 +1,4 @@
-import type { CandidateDegreeDetailsDto, CandidateEducationDto } from '@smart/contracts';
+import type { CandidateDegreeDetailsDto, CandidateEducationDto } from '@hirekiwi/contracts';
 
 import {
   buildDegreeDetailsPayload,

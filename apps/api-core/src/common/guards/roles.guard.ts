@@ -2,7 +2,8 @@ import type { CanActivate, ExecutionContext } from '@nestjs/common';
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
-import type { UserRole } from '@smart/contracts';
+import type { UserRole } from '@hirekiwi/contracts';
+import { authzDeniedTotal } from '@hirekiwi/observability';
 import { IS_PUBLIC_KEY } from './public.decorator.js';
 import { PERMISSIONS_KEY, roleHasPermission, type Permission } from './permissions.js';
 import { ROLES_KEY } from './roles.decorator.js';
@@ -43,13 +44,18 @@ export class RolesGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<FastifyRequest & { user?: RequestUser }>();
     const role = request.user?.role as UserRole | undefined;
-    if (!role) throw forbidden();
-    if (requiredRoles?.length && !requiredRoles.includes(role)) throw forbidden();
+    // S6-VV-126: count every refusal by route template (bounded), so probing shows up as a spike.
+    const deny = (): ForbiddenException => {
+      authzDeniedTotal.inc({ route: request.routeOptions?.url ?? 'unknown', role: role ?? 'none' });
+      return forbidden();
+    };
+    if (!role) throw deny();
+    if (requiredRoles?.length && !requiredRoles.includes(role)) throw deny();
     if (
       requiredPermissions?.length &&
       !requiredPermissions.every((permission) => roleHasPermission(role, permission))
     ) {
-      throw forbidden();
+      throw deny();
     }
     return true;
   }

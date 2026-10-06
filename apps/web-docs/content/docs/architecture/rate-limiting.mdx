@@ -1,0 +1,50 @@
+---
+title: Rate Limiting & Performance SLAs
+description: Redis sliding-window rate limiting architecture, concurrency targets, and latency budgets.
+---
+
+# Rate Limiting & Performance SLAs
+
+SMART is engineered for a season-scale target of **1,000,000 active candidates** and a peak concurrency of **50,000 active test-takers** during coordinated university placement drives.
+
+To protect backend databases, LLM token budgets, and worker threads from resource exhaustion, rate limiting is applied across multiple architectural tiers.
+
+---
+
+## Rate Limiting Architecture
+
+Rate limiting is governed by [ADR-0008](file:///d:/Work's/Infinitica/smart/docs/adr/0008-rate-limit-strategy.md) using a Redis sliding-window log algorithm executed via atomic Lua scripts.
+
+| Layer                     | Mechanism               | Scope                            | Limit                          |
+| :------------------------ | :---------------------- | :------------------------------- | :----------------------------- |
+| **Edge Gateway**          | Cloudflare WAF / Kong   | Public Unauthenticated IP        | 20 req/min                     |
+| **Public Verification**   | Redis Sliding Window    | `/api/v1/verify/:certificate_id` | 30 req/min per IP              |
+| **Candidate Assessments** | Attempt Token Bucket    | `/api/v1/assessment/submit-l1`   | 10 submissions/min             |
+| **LLM Inference**         | User Budget Counter     | `/api/v1/assessment/evaluate-*`  | 8,000 prompt tokens / attempt  |
+| **Institutional TPO**     | Organization Key Bucket | `/api/v1/tpo/*`                  | 300 req/min per college domain |
+
+---
+
+## Production Latency SLAs
+
+| Endpoint Type              | Example Operation                       | Execution Mode            | Target p95 SLA |
+| :------------------------- | :-------------------------------------- | :------------------------ | :------------- |
+| **Authentication**         | `POST /api/v1/auth/login`               | Synchronous               | < 150 ms       |
+| **Session Hydration**      | `POST /api/v1/auth/refresh`             | Synchronous               | < 100 ms       |
+| **Item Delivery**          | `GET /api/v1/assessment/next-item`      | Synchronous (Redis Cache) | < 50 ms        |
+| **Answer Draft**           | `POST /api/v1/assessment/submit-l1`     | Synchronous               | < 30 ms        |
+| **Public Verification**    | `GET /api/v1/verify/:id`                | Synchronous               | < 50 ms        |
+| **Sandbox Execution**      | `POST /api/v1/assessment/compile-l2`    | Asynchronous (BullMQ)     | 1.0 – 3.0 s    |
+| **Spoken BARS Evaluation** | `POST /api/v1/assessment/eval-l3`       | Asynchronous (AI Gateway) | 3.0 – 8.0 s    |
+| **PDF Generation**         | `POST /api/v1/certificate/generate-pdf` | Asynchronous (BullMQ)     | 2.0 – 5.0 s    |
+
+---
+
+## Observability & Prometheus Metrics
+
+Per [ADR-0015](file:///d:/Work's/Infinitica/smart/docs/adr/0015-perf-testing-observability.md), `apps/api-core` exposes Prometheus metrics scraped on port 3000:
+
+- `smart_cache_operations_total`: Hit/miss ratios for item bank cache-aside reads.
+- `smart_db_query_duration_seconds`: Prisma query execution durations across all models.
+- `smart_kafka_events_consumed_total`: Throughput across Redpanda event consumers.
+- `smart_kafka_consumer_lag_messages`: Consumer group lag alerts for async workers.

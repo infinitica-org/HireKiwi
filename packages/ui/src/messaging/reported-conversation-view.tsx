@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ADMIN_ACCESS_REASON_MIN_LENGTH } from '@smart/contracts';
+import { ADMIN_ACCESS_REASON_MIN_LENGTH } from '@hirekiwi/contracts';
 import { useQuery, useSmartApi } from '../api-provider';
 import { Alert } from '../components/alert';
 import { Button } from '../components/button';

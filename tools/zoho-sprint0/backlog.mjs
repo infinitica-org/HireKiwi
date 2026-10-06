@@ -20,7 +20,7 @@ export const EPICS = [
     name: 'E0 — Repo, Contracts & Governance',
     owner: 'Tino',
     color: '#64748b',
-    desc: 'Monorepo scaffold, @smart/contracts v0.1, CI/CODEOWNERS, ADRs. Owner: Tino.',
+    desc: 'Monorepo scaffold, @hirekiwi/contracts v0.1, CI/CODEOWNERS, ADRs. Owner: Tino.',
   },
   {
     key: 'E0V',
@@ -67,21 +67,21 @@ const DOD_ALL = [
 ];
 
 const DOD_BACKEND = [
-  'Types/DTOs in @smart/contracts if cross-module; Zod validation at boundary',
+  'Types/DTOs in @hirekiwi/contracts if cross-module; Zod validation at boundary',
   'Unit + integration tests (DB/Redis/Kafka stubbed as needed)',
   'Module README updated if new surface area',
   'No secrets in code',
 ];
 
 const DOD_FRONTEND = [
-  'Typed via @smart/api-client or @smart/ui tokens — no raw fetch in apps',
+  'Typed via @hirekiwi/api-client or @hirekiwi/ui tokens — no raw fetch in apps',
   'Component renders without console errors',
 ];
 
 const DOD_INFRA = ['Documented in LOCAL_DEV.md or README', 'Healthchecks pass in docker compose'];
 
 const DOD_CONTRACTS = [
-  'Breaking changes versioned in @smart/contracts',
+  'Breaking changes versioned in @hirekiwi/contracts',
   'Kafka payloads match ARCHITECTURE event names',
 ];
 
@@ -151,7 +151,7 @@ export const STORIES = [
     id: 'S0-TN-02',
     epic: 'E0T',
     github: 0,
-    title: '@smart/contracts v0.1: enums, attempt/certificate DTOs, 8 Kafka event payloads',
+    title: '@hirekiwi/contracts v0.1: enums, attempt/certificate DTOs, 8 Kafka event payloads',
     owner: 'Tino',
     handle: '@brittytino',
     points: 5,
@@ -169,7 +169,7 @@ export const STORIES = [
       'Package builds and is consumed by api-core',
     ],
     failureModes: ['Drift between event names and ARCHITECTURE §events'],
-    demoScript: 'import from @smart/contracts in api-core; pnpm typecheck green.',
+    demoScript: 'import from @hirekiwi/contracts in api-core; pnpm typecheck green.',
     subtasks: ['Enum modules', 'DTO + Zod pairs', 'Kafka payload types', 'v0.1 tag'],
   }),
   story({
@@ -353,7 +353,7 @@ export const STORIES = [
     id: 'S0-SV-02',
     epic: 'E0S',
     github: 0,
-    title: 'Four Next.js 16 apps on shared config, @smart/ui, live /health probe',
+    title: 'Four Next.js 16 apps on shared config, @hirekiwi/ui, live /health probe',
     owner: 'Satheswaran V',
     handle: '@Satheshwaran26',
     points: 5,
@@ -367,7 +367,7 @@ export const STORIES = [
     acceptanceCriteria: [
       'web-student, web-tpo, web-admin, web-verify scaffolded',
       'Shared Next config from packages',
-      'Each app consumes @smart/ui',
+      'Each app consumes @hirekiwi/ui',
       'Each renders /health or home probe on :3001–3004',
     ],
     failureModes: ['Port collision with api-core documented'],
@@ -386,7 +386,7 @@ export const STORIES = [
     area: 'area:frontend',
     type: 'frontend',
     userValue: 'Frontend never uses raw fetch — typed client with auth and rate-limit handling.',
-    contractImpact: 'Consumes @smart/contracts DTOs',
+    contractImpact: 'Consumes @hirekiwi/contracts DTOs',
     blockedBy: ['S0-TN-02'],
     blocks: ['S1-SV-01'],
     acceptanceCriteria: [
@@ -448,7 +448,7 @@ export const STORIES = [
       'web-verify layout with public chrome',
       'web-admin layout with sidebar nav',
       'Routing structure documented',
-      'Uses @smart/ui primitives',
+      'Uses @hirekiwi/ui primitives',
     ],
     failureModes: ['Layout shift on navigation'],
     demoScript: 'Admin sidebar renders; verify landing page loads.',

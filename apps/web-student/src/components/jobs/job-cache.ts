@@ -1,4 +1,4 @@
-import type { StudentJobCard } from '@smart/contracts';
+import type { StudentJobCard } from '@hirekiwi/contracts';
 
 /** Every Jobs-page query lives under this key, so one call can snapshot or refresh them all. */
 export const STUDENT_JOBS_KEY = ['student-jobs'] as const;

@@ -100,6 +100,21 @@ export const AiCompletionResponseSchema = z.object({
 });
 export type AiCompletionResponse = z.infer<typeof AiCompletionResponseSchema>;
 
+/** S6-VV-129 (#585): third-party integrations probed every minute (admin view). */
+export const INTEGRATION_STATUSES = ['UP', 'DOWN', 'NOT_CONFIGURED'] as const;
+export const IntegrationHealthSchema = z.object({
+  integration: z.string(),
+  status: z.enum(INTEGRATION_STATUSES),
+  latencyMs: z.number().int().nullable(),
+  message: z.string().nullable(),
+  checkedAt: IsoDateTimeSchema.nullable(),
+});
+export type IntegrationHealth = z.infer<typeof IntegrationHealthSchema>;
+export const IntegrationHealthResponseSchema = z.object({
+  integrations: z.array(IntegrationHealthSchema),
+});
+export type IntegrationHealthResponse = z.infer<typeof IntegrationHealthResponseSchema>;
+
 export const AiHealthDtoSchema = z.object({
   providers: z.array(
     z.object({

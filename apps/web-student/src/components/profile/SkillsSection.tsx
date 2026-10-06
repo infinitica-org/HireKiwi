@@ -7,8 +7,8 @@ import {
   skillFocusOptions,
   type SkillCategoryId,
   type SkillClaimDto,
-} from '@smart/contracts';
-import { Alert } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Alert } from '@hirekiwi/ui';
 
 import { api } from '@/lib/api';
 import { SKILL_VERIFICATION_DIAGNOSTIC_PROFICIENCY } from '@/lib/skill-declarations';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { SkillClaimDto } from '@smart/contracts';
+import type { SkillClaimDto } from '@hirekiwi/contracts';
 
 import {
   SKILL_PROFICIENCY_DISCOVERY_COPY,

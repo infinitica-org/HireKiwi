@@ -33,7 +33,7 @@ export const EPICS = [
     name: 'E2 — Experience Layer: Student Portal',
     owner: 'Satheswaran V',
     color: '#7c3aed',
-    desc: 'Student auth UI, dashboard shell, @smart/ui v1 components. Owner: Satheswaran V.',
+    desc: 'Student auth UI, dashboard shell, @hirekiwi/ui v1 components. Owner: Satheswaran V.',
   },
   {
     key: 'E3',
@@ -66,7 +66,7 @@ const DOD_ALL = [
 ];
 
 const DOD_BACKEND = [
-  'Types/DTOs in @smart/contracts if cross-module; Zod validation at boundary',
+  'Types/DTOs in @hirekiwi/contracts if cross-module; Zod validation at boundary',
   'Unit + integration tests (DB/Redis/Kafka stubbed as needed)',
   'RBAC + rate-limit tier declared; Swagger on new endpoints',
   'Structured logs with traceId; Prometheus metric for new path',
@@ -74,7 +74,7 @@ const DOD_BACKEND = [
 ];
 
 const DOD_FRONTEND = [
-  'Typed via @smart/api-client — no raw fetch',
+  'Typed via @hirekiwi/api-client — no raw fetch',
   'Component tests or story where applicable',
   'WCAG considerations for interactive flows',
 ];
@@ -110,7 +110,7 @@ export const STORIES = [
     type: 'backend',
     userValue:
       'Students and staff get secure sessions with short-lived access tokens and safe refresh rotation.',
-    contractImpact: 'Auth DTOs in @smart/contracts — merge contract PR first if changed.',
+    contractImpact: 'Auth DTOs in @hirekiwi/contracts — merge contract PR first if changed.',
     blockedBy: [],
     blocks: ['S1-VV-02', 'S1-VV-07', 'S1-SV-01'],
     acceptanceCriteria: [
@@ -148,7 +148,7 @@ export const STORIES = [
     area: 'area:backend',
     type: 'backend',
     userValue: 'Every endpoint enforces role-based access with no implicitly public routes.',
-    contractImpact: 'Role enum in @smart/contracts',
+    contractImpact: 'Role enum in @hirekiwi/contracts',
     blockedBy: ['S1-VV-01'],
     blocks: ['S1-VV-03', 'S1-VV-04', 'S1-VV-06', 'S1-VB-01'],
     acceptanceCriteria: [
@@ -212,7 +212,7 @@ export const STORIES = [
     area: 'area:backend',
     type: 'backend',
     userValue: 'API stays stable under abuse; clients get standard rate-limit headers.',
-    contractImpact: 'RATE_LIMIT_HEADERS + 429 body in @smart/contracts',
+    contractImpact: 'RATE_LIMIT_HEADERS + 429 body in @hirekiwi/contracts',
     blockedBy: ['S1-VV-02'],
     blocks: ['S1-VV-05', 'S1-VB-02'],
     acceptanceCriteria: [
@@ -245,7 +245,7 @@ export const STORIES = [
     area: 'area:backend',
     type: 'backend',
     userValue: 'Every endpoint has an explicit limit tier — no unlimited routes.',
-    contractImpact: 'ROUTES rateLimit keys in @smart/contracts',
+    contractImpact: 'ROUTES rateLimit keys in @hirekiwi/contracts',
     blockedBy: ['S1-VV-04'],
     blocks: [],
     acceptanceCriteria: [
@@ -303,7 +303,7 @@ export const STORIES = [
     area: 'area:backend',
     type: 'backend',
     userValue: 'Reliable async events across modules with outbox and dead-letter handling.',
-    contractImpact: 'All 8 Kafka payloads in @smart/contracts',
+    contractImpact: 'All 8 Kafka payloads in @hirekiwi/contracts',
     blockedBy: ['S1-VV-01'],
     blocks: [],
     acceptanceCriteria: [
@@ -348,7 +348,7 @@ export const STORIES = [
       'Login page + SSO buttons',
       'Institution picker component',
       'Enrollment wizard steps',
-      'Wire @smart/api-client hooks',
+      'Wire @hirekiwi/api-client hooks',
       'E2E smoke (manual checklist)',
     ],
   }),
@@ -394,11 +394,11 @@ export const STORIES = [
     area: 'area:frontend',
     type: 'frontend',
     userValue: 'Shared UI primitives for assessment experience across apps.',
-    contractImpact: 'Tier/level types from @smart/contracts',
+    contractImpact: 'Tier/level types from @hirekiwi/contracts',
     blockedBy: [],
     blocks: ['S1-SV-02'],
     acceptanceCriteria: [
-      'Six components exported from @smart/ui',
+      'Six components exported from @hirekiwi/ui',
       'Tailwind tokens consistent with design system',
       'Timer shell server-authoritative ready',
       'Storybook or visual test for each component',

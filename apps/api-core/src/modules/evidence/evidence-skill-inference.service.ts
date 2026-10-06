@@ -14,13 +14,13 @@ import {
   type AssessmentResult,
   type ProficiencyLevel,
   type SkillEvidenceInferenceSnapshot,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   assessmentToObservationBundle,
   projectBundleFromQlixEvidence,
   runSkillEvidenceFusion,
-} from '@smart/scoring-engine';
-import { CAPABILITY_INFERENCE_PROMPT_REF } from '@smart/prompts';
+} from '@hirekiwi/scoring-engine';
+import { CAPABILITY_INFERENCE_PROMPT_REF } from '@hirekiwi/prompts';
 import { QlixSmartAssessmentSchema } from '../evaluation/qlix-client.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { RedisService } from '../../platform/redis/redis.service.js';

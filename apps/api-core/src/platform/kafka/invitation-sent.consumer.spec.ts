@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { InvitationSentEventSchema, SMART_TOPICS } from '@smart/contracts';
+import { InvitationSentEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
 
 describe('InvitationSentEventSchema', () => {
   it('accepts company-portal-invite activation payloads', () => {

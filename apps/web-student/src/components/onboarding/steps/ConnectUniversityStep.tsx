@@ -14,8 +14,8 @@ import {
 import type {
   PartnerUniversityOptionDto,
   StudentInstitutionPartnershipStatusDto,
-} from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+} from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { ErrorBanner, PrimaryButton, StepHeading, TextInput } from '../wizard-ui';
 

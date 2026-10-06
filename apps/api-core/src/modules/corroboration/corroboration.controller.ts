@@ -1,6 +1,6 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { API_PREFIX } from '@smart/contracts';
+import { API_PREFIX } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
@@ -10,18 +10,6 @@ import { CorroborationService } from './corroboration.service.js';
 @Controller(`${API_PREFIX}/corroboration`)
 export class CorroborationController {
   constructor(@Inject(CorroborationService) private readonly service: CorroborationService) {}
-
-  @Get('_meta')
-  @Roles('STUDENT')
-  @ApiBearerAuth()
-  meta() {
-    return {
-      module: 'corroboration',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'passive-signal-fusion-v1',
-    };
-  }
 
   @Get('me')
   @Roles('STUDENT')

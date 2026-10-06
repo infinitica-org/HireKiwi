@@ -3,7 +3,7 @@ import {
   REPORT_ESCALATION_THRESHOLD,
   type CreateReportRequest,
   type Report,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { IdempotencyService } from '../company-profile/idempotency.service.js';

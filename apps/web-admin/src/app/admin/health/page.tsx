@@ -6,11 +6,11 @@ import type {
   AiUsageSummaryDto,
   AiUsageWindow,
   VerificationEventDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { GitBranch, HeartPulse, RefreshCw, ServerCrash, Timer } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@smart/ui/card';
-import { Button } from '@smart/ui/button';
-import { Progress } from '@smart/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@hirekiwi/ui/card';
+import { Button } from '@hirekiwi/ui/button';
+import { Progress } from '@hirekiwi/ui/progress';
 
 import { PageHeader } from '@/components/page-header';
 import {
@@ -45,7 +45,7 @@ function UsageWindowCard({ title, window }: { title: string; window?: AiUsageWin
   const fallbackRate = window?.fallbackRate ?? 0;
 
   return (
-    <Card className="rounded-md border border-zinc-200/80 bg-white shadow-2xs">
+    <Card className="rounded-lg border border-zinc-200/80 bg-white shadow-2xs">
       <CardHeader className="pb-3 border-b border-zinc-100">
         <CardTitle className="flex items-center justify-between gap-2 text-sm font-bold text-zinc-900">
           <span>{title}</span>
@@ -157,17 +157,17 @@ export default function MonitoringPage() {
 
       {loading ? (
         <div className="space-y-4">
-          <div className="h-28 animate-pulse rounded-md border border-zinc-200/80 bg-white" />
+          <div className="h-28 animate-pulse rounded-lg border border-zinc-200/80 bg-white" />
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="h-32 animate-pulse rounded-md border border-zinc-200/80 bg-white" />
-            <div className="h-32 animate-pulse rounded-md border border-zinc-200/80 bg-white" />
-            <div className="h-32 animate-pulse rounded-md border border-zinc-200/80 bg-white" />
+            <div className="h-32 animate-pulse rounded-lg border border-zinc-200/80 bg-white" />
+            <div className="h-32 animate-pulse rounded-lg border border-zinc-200/80 bg-white" />
+            <div className="h-32 animate-pulse rounded-lg border border-zinc-200/80 bg-white" />
           </div>
         </div>
       ) : (
         <>
           {/* Scoring & Spend Ceiling */}
-          <div className="rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs">
+          <div className="rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-100 pb-3">
               <div>
                 <h3 className="font-heading text-sm font-bold tracking-tight text-zinc-900">
@@ -232,7 +232,7 @@ export default function MonitoringPage() {
                   return (
                     <div
                       key={provider.provider}
-                      className="rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs"
+                      className="rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs"
                     >
                       <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5">
                         <span className="font-bold text-sm text-zinc-900">{provider.provider}</span>

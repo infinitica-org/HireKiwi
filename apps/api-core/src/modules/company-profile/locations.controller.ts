@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { API_PREFIX, LocationSearchQuerySchema } from '@smart/contracts';
+import { API_PREFIX, LocationSearchQuerySchema } from '@hirekiwi/contracts';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import { LocationSearchService } from './location-search.service.js';
 

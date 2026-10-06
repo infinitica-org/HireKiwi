@@ -3,7 +3,7 @@ import type {
   JobOpeningDto,
   PlacementEmployerSummary,
   SkillClaimDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { verificationStateForStudent } from './university-dashboard-metrics';
 
 export type VerificationByMajorRow = {

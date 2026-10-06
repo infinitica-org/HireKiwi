@@ -1,6 +1,6 @@
 import type { HTMLAttributes } from 'react';
-import type { Tier } from '@smart/contracts';
-import { TIER_LABEL } from '@smart/contracts';
+import type { Tier } from '@hirekiwi/contracts';
+import { TIER_LABEL } from '@hirekiwi/contracts';
 import { cn } from '../lib/cn';
 
 /**

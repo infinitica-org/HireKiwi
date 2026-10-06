@@ -1,4 +1,4 @@
-import type { JobOpeningDto } from '@smart/contracts';
+import type { JobOpeningDto } from '@hirekiwi/contracts';
 
 export type CampusCompanyRow = {
   companyName: string;

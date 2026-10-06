@@ -6,7 +6,7 @@
  *   - Base taxonomy seed: `pnpm db:seed`
  *
  * Usage:
- *   pnpm --filter @smart/api-core match:e2e
+ *   pnpm --filter @hirekiwi/api-core match:e2e
  */
 import 'reflect-metadata';
 import '../src/platform/config/load-dotenv.bootstrap.js';

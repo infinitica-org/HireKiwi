@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { Building2 } from 'lucide-react';
-import type { TenantEntitlementsDto } from '@smart/contracts';
+import type { TenantEntitlementsDto } from '@hirekiwi/contracts';
 import { TpoBentoPageHeader } from '../tpo-bento/TpoBentoPageHeader';
 import { api, employersApi } from '../../lib/api';
 import {

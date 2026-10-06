@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
-import { SessionBootstrap, SMART_HTML_CLASS } from '@smart/ui';
+import { SessionBootstrap, SMART_HTML_CLASS } from '@hirekiwi/ui';
 import './globals.css';
 
 export const metadata: Metadata = {

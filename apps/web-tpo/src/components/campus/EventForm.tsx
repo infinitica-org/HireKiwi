@@ -8,15 +8,15 @@ import {
   listTimeZones,
   utcToZonedLocal,
   zonedLocalToUtcIso,
-} from '@smart/ui';
+} from '@hirekiwi/ui';
 import {
   CreateCareerEventSchema,
   type CareerEventAudience,
   type CareerEventDto,
   type CreateCareerEvent,
   type UpdateCareerEvent,
-} from '@smart/contracts';
-import { SmartApiError } from '@smart/api-client';
+} from '@hirekiwi/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
 
 const AUDIENCE_LABEL: Record<CareerEventAudience, string> = {
   STUDENTS: 'Students only',

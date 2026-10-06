@@ -3,7 +3,7 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import {
   UniversityMessageStudentRequestSchema,
   UniversityRosterQuerySchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { describe, expect, it, vi } from 'vitest';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import {

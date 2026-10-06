@@ -1,4 +1,4 @@
-import { ListConversationsQuerySchema } from '@smart/contracts';
+import { ListConversationsQuerySchema } from '@hirekiwi/contracts';
 import { describe, expect, it, vi } from 'vitest';
 import type { ContactRulesService } from './contact-rules.service.js';
 import { MessagingService } from './messaging.service.js';

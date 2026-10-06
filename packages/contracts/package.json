@@ -1,5 +1,5 @@
 {
-  "name": "@smart/contracts",
+  "name": "@hirekiwi/contracts",
   "version": "0.1.0",
   "private": true,
   "description": "SMART cross-module contract: domain enums, DTOs and Kafka event payloads. THE integration boundary — architect-owned.",
@@ -28,8 +28,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@smart/eslint-config": "workspace:*",
-    "@smart/tsconfig": "workspace:*",
+    "@hirekiwi/eslint-config": "workspace:*",
+    "@hirekiwi/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "rimraf": "6.0.1",

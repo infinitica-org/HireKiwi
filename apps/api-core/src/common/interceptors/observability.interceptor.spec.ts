@@ -2,7 +2,7 @@ import type { CallHandler, ExecutionContext } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
-import { CORRELATION_HEADER, getContext, isValidCorrelationId } from '@smart/observability';
+import { CORRELATION_HEADER, getContext, isValidCorrelationId } from '@hirekiwi/observability';
 import { ObservabilityInterceptor } from './observability.interceptor.js';
 
 function mockContext(opts: {

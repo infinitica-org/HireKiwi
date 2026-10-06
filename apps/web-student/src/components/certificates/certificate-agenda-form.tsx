@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { TRACK_DEFINITIONS, type TrackCode } from '@smart/contracts';
-import { Button } from '@smart/ui';
+import { TRACK_DEFINITIONS, type TrackCode } from '@hirekiwi/contracts';
+import { Button } from '@hirekiwi/ui';
 
 type Props = {
   certificateId: string;
@@ -107,7 +107,7 @@ export function CertificateAgendaForm({
         </Button>
         {hasAgenda ? (
           <Link
-            href={`/certificates/${certificateId}/verify`}
+            href={`/student/certificates/${certificateId}/verify`}
             className="text-sm text-foreground hover:underline"
           >
             Take assessment →

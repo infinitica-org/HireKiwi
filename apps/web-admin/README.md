@@ -27,4 +27,4 @@ The UI follows the Studio Admin shell: collapsible Lucide sidebar, sticky header
 
 - Root layout: theme provider, tooltip provider, auth gate. No sidebar on `/auth/*`.
 - `/admin/layout.tsx`: `SessionHoldWall` + collapsible sidebar + header.
-- Local shadcn kit lives in `src/components/ui`. `@smart/ui` is used only for auth walls.
+- Local shadcn kit lives in `src/components/ui`. `@hirekiwi/ui` is used only for auth walls.

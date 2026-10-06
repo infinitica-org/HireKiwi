@@ -5,7 +5,7 @@ import {
   getSkillDefinition,
   proficiencyLevelUiLabel,
   type AssessmentResult,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 function competencyLabel(skillCode: string, competencyId: string): string {
   const def = getSkillDefinition(skillCode);

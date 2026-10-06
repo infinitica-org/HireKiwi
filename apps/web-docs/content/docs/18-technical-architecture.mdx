@@ -1,0 +1,92 @@
+---
+title: 18. Technical Architecture
+description: System topology, Single High-End VPS deployment, Blue-Green zero-downtime engine, and the AWS migration bridge.
+---
+
+## 18.1 Monolithic Modular Architecture
+
+HireKiwi is engineered as a clean **Modular Monolith** in TypeScript, maximizing developer velocity and transactional integrity while maintaining strict boundary separation.
+
+```
+smart/
+├── apps/
+│   ├── api-core/       # Fastify + NestJS Modular Backend API Core (Port 3000)
+│   ├── web-student/    # Next.js 16 Student Assessment & Profile Portal (Port 3001)
+│   ├── web-tpo/        # Next.js 16 University / TPO Cohort Portal (Port 3002)
+│   ├── web-admin/      # Next.js 16 Super Admin & Review Console (Port 3003)
+│   ├── web-verify/     # Next.js 16 Public Verification & Credential Portal (Port 3004)
+│   ├── web-auth/       # Next.js 16 Unified Auth & Invitation Portal (Port 3005)
+│   ├── web-company/    # Next.js 16 Employer / Recruiter Company Portal (Port 3006)
+│   ├── web-landing/    # Next.js 16 Public Marketing Landing Site (Port 3007)
+│   ├── web-docs/       # Fumadocs Documentation SSOT (Port 3008)
+│   └── proctoring-cv/  # Python CV Proctoring Sidecar (YuNet/YOLO) (Port 8091)
+├── packages/
+│   ├── contracts/      # Authoritative Zod DTOs & Domain Invariants
+│   ├── scoring-engine/ # Evidence fusion, BARS scoring, and PJF matching
+│   ├── prompts/        # Vivi AI prompts & system personas
+│   ├── observability/  # OpenTelemetry & Pino logging utilities
+│   ├── api-client/     # Typed API client SDK for web applications
+│   ├── ui/             # Shared Tailwind Design System Components
+│   └── config-*/       # Shared Next, Tailwind, TypeScript, ESLint presets
+└── infra/
+    ├── docker/         # Docker Compose Multi-Slot Topology
+    └── vps/            # Caddy Reverse Proxy & VPS Provisioning
+```
+
+---
+
+## 18.2 Single High-End VPS Hosting Topology
+
+HireKiwi operates on a dedicated **High-Performance Linux VPS (Ubuntu 24.04 LTS)** hosting both Development and Production environments in isolated Docker Compose projects:
+
+```
+                            Caddy Reverse Proxy (:80 / :443)
+                      ┌─────────────────────┼─────────────────────┐
+                      │                     │                     │
+              [PROD ACTIVE SLOT]    [PROD INACTIVE SLOT]     [DEV ISOLATED]
+              Blue Slot (3000-3008) Green Slot (3010-3018)   Slot (3020-3028)
+                      │                     │                     │
+                      └──────────────┬──────┴─────────────────────┘
+                                     │
+             Internal Localhost-Bound Infrastructure (127.0.0.1 / Bridge)
+              • PgBouncer / PostgreSQL (5432)  • Redis (6379)
+              • Redpanda Kafka (19092)          • MinIO S3 (9000)
+```
+
+### Port Mapping Matrix (10 Apps + Data Plane)
+
+| Slot / Project        | API Core                        | Web Applications (`web-*`)                      | CV Sidecar | Environment Binding                       |
+| :-------------------- | :------------------------------ | :---------------------------------------------- | :--------- | :---------------------------------------- |
+| **Prod Blue Slot**    | `3000`                          | `3001`–`3008` (Student, TPO, Admin, Verify, Auth, Company, Landing, Docs) | `8091`     | `becomesmart.online` (via Caddy upstream) |
+| **Prod Green Slot**   | `3010`                          | `3011`–`3018` (Standby mirrors)                 | `8092`     | Standby / deploy target during releases   |
+| **Dev Isolated Slot** | `3020`                          | `3021`–`3028` (Dev mirrors)                     | `8093`     | `dev.becomesmart.online`                  |
+| **Internal Data**     | `5432`, `6432`, `6379`, `19092`, `9000` | Bound strictly to `127.0.0.1` (SSH Tunnel only) |
+
+---
+
+## 18.3 Automated Blue-Green Zero-Downtime Engine
+
+Deployments land via [`scripts/blue-green-deploy.sh`](file:///d:/Work's/Infinitica/smart/scripts/blue-green-deploy.sh):
+
+1. **State Inspection:** Script identifies currently active production color from `.deploy_state_prod`.
+2. **Target Inactive Slot:** Prepares candidate environment file (e.g., `.env.prod.green`).
+3. **Sequential Build:** Builds containers one-by-one to prevent CPU and RAM thrashing.
+4. **Prisma Migrations:** Applies forward-compatible Prisma migrations straight to PostgreSQL via `DATABASE_URL`.
+5. **Health Probes:** Polls `/health` and `/ready` endpoints up to 30 times (60s ceiling).
+6. **Caddy Upstream Hot Reload:** Reloads Caddy configuration in < 50ms with zero dropped TCP connections.
+7. **Standby Teardown:** Gracefully stops previous color containers after traffic stabilizes.
+
+---
+
+## 18.4 The Cloud-Ready AWS Migration Bridge
+
+HireKiwi adheres strictly to 12-factor cloud principles. Migrating to AWS in a few months requires **zero lines of code modification**:
+
+| VPS Infrastructure      | AWS Managed Target                            | Application Environment Variable   |
+| :---------------------- | :-------------------------------------------- | :--------------------------------- |
+| PostgreSQL + pgvector   | **AWS RDS PostgreSQL (Multi-AZ)**             | `DATABASE_URL`                     |
+| PgBouncer Container     | **AWS RDS Proxy**                             | `POOLED_DATABASE_URL`              |
+| Redis Sentinel          | **AWS ElastiCache for Redis (Cluster Mode)**  | `REDIS_URL`                        |
+| Redpanda Message Broker | **AWS Managed Streaming for Kafka (MSK)**     | `KAFKA_BROKERS`                    |
+| MinIO Object Storage    | **Amazon Simple Storage Service (S3)**        | `S3_BUCKET`, `AWS_REGION`          |
+| Caddy Reverse Proxy     | **AWS Application Load Balancer (ALB) + ECS** | Native target group health routing |

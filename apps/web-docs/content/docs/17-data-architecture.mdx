@@ -1,0 +1,74 @@
+---
+title: 17. Data & Information Architecture
+description: Domain entity relationships, PostgreSQL schemas, pgvector embeddings, and data lifecycle management.
+---
+
+## 17.1 Entity Relationship Architecture
+
+HireKiwi models data across seven primary relational clusters in PostgreSQL 16:
+
+```
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+│  Organization   │ ────► │      User       │ ────► │CandidateProfile │
+│ (University/Co) │       │ (Auth / RBAC)   │       │ (Talent Record) │
+└─────────────────┘       └─────────────────┘       └────────┬────────┘
+                                                             │
+                                  ┌──────────────────────────┼──────────────────────────┐
+                                  │                          │                          │
+                                  ▼                          ▼                          ▼
+                        ┌───────────────────┐      ┌───────────────────┐      ┌───────────────────┐
+                        │     Evidence      │      │ CandidateSkill    │      │  JobApplication   │
+                        │ (Active / Passive)│      │ (BARS Tier Level) │      │  (Pipeline State) │
+                        └─────────┬─────────┘      └───────────────────┘      └─────────▲─────────┘
+                                  │                                                     │
+                                  ▼                                                     │
+                        ┌───────────────────┐                         ┌─────────────────┴─┐
+                        │ VerificationAudit │                         │    JobOpening     │
+                        │ (Cryptographic)   │                         │  (Requirements)   │
+                        └───────────────────┘                         └───────────────────┘
+```
+
+---
+
+## 17.2 Core Schema Definitions
+
+### Evidence & Verification
+
+```sql
+CREATE TABLE "Evidence" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "candidateId" UUID NOT NULL REFERENCES "CandidateProfile"("id") ON DELETE CASCADE,
+  "type" TEXT NOT NULL, -- REPO | CERTIFICATE | DEFENSE_SESSION
+  "sourceUrl" TEXT NOT NULL,
+  "provenanceHash" VARCHAR(64) NOT NULL,
+  "confidenceScore" NUMERIC(3,2) NOT NULL DEFAULT 0.50,
+  "status" TEXT NOT NULL DEFAULT 'PENDING',
+  "metadata" JSONB NOT NULL DEFAULT '{}'::jsonb,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+### Vector Embeddings for Semantic Matching
+
+```sql
+-- Enables cosine distance index via pgvector
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE "CandidateEmbedding" (
+  "candidateId" UUID PRIMARY KEY REFERENCES "CandidateProfile"("id") ON DELETE CASCADE,
+  "embedding" vector(1536) NOT NULL,
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX "idx_candidate_vector_hnsw" ON "CandidateEmbedding"
+USING hnsw (embedding vector_cosine_ops)
+WITH (m = 16, ef_construction = 64);
+```
+
+---
+
+## 17.3 Data Lifecycle & DPDP Purge Automation
+
+- **Transactional Data (Profiles, Applications, Offers):** Retained indefinitely as permanent academic and professional records.
+- **Proctoring Telemetry Snapshots:** Stored in MinIO object buckets with an automated 30-day lifecycle expiration policy.
+- **BullMQ TTL Cleaner:** Runs nightly at `02:00 UTC` to permanently purge expired video snapshots and facial telemetry vectors from disk.

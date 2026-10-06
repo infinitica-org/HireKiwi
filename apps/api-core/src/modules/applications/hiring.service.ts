@@ -18,7 +18,7 @@ import {
   type ApplicationStatus,
   type AtsStage,
   type TransitionApplicationResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

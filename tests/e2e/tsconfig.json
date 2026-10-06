@@ -1,5 +1,5 @@
 {
-  "extends": "@smart/tsconfig/base.json",
+  "extends": "@hirekiwi/tsconfig/base.json",
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",

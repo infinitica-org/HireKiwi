@@ -4,7 +4,7 @@ import {
   COMPANY_VERIFICATION_DOCUMENT_REVIEW_STATUSES,
   COMPANY_VERIFICATION_DOCUMENT_TYPES,
   USER_ROLES,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   CompanyOnboardingStatus,
   CompanyVerificationDocumentReviewStatus,
@@ -13,7 +13,7 @@ import {
 } from '../../generated/prisma/index.js';
 
 /**
- * Guards Prisma enum parity with @smart/contracts (Phase 1 / Phase 2 boundary).
+ * Guards Prisma enum parity with @hirekiwi/contracts (Phase 1 / Phase 2 boundary).
  */
 describe('company onboarding Prisma enums vs contracts', () => {
   it('CompanyOnboardingStatus matches COMPANY_ONBOARDING_STATUSES', () => {

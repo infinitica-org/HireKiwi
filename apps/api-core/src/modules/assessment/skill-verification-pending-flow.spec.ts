@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { AssessmentResult, GradeSdeSkillFormResponse } from '@smart/contracts';
-import { withSkillVerificationPending } from '@smart/contracts';
+import type { AssessmentResult, GradeSdeSkillFormResponse } from '@hirekiwi/contracts';
+import { withSkillVerificationPending } from '@hirekiwi/contracts';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { SkillVerificationService } from './skill-verification.service.js';
 

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { WorkExperienceProofExtractedDataSchema } from '@smart/contracts';
+import { WorkExperienceProofExtractedDataSchema } from '@hirekiwi/contracts';
 import type { PromptTemplate } from '../types.js';
 import { INJECTION_GUARD, jsonOnly, untrusted } from '../shared.js';
 

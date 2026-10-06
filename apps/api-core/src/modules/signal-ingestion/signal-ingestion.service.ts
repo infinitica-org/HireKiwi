@@ -13,7 +13,7 @@ import {
   type ListSignalConnectionsResponse,
   type RefreshSignalsRequest,
   type RefreshSignalsResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { RedisService } from '../../platform/redis/redis.service.js';

@@ -1,6 +1,6 @@
 import { Body, Controller, Headers, Inject, NotFoundException, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { API_PREFIX, TransitionApplicationRequestSchema, UuidSchema } from '@smart/contracts';
+import { API_PREFIX, TransitionApplicationRequestSchema, UuidSchema } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

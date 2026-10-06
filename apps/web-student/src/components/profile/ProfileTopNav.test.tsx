@@ -35,8 +35,8 @@ describe('ProfileTopNav', () => {
     render(<ProfileTopNav activeSection="experience" onSelect={vi.fn()} />);
     const experience = screen.getByRole('button', { name: 'Work Experience' });
     expect(experience.textContent).toContain('Experience');
-    expect(screen.getByRole('button', { name: 'Professional Links' }).textContent).toContain(
-      'Links',
+    expect(screen.getByRole('button', { name: 'Integrations' }).textContent).toContain(
+      'Integrations',
     );
   });
 });

@@ -5,8 +5,8 @@ import {
   MARK_WEIGHTS,
   type CutScore,
   type MarkWeightedItemType,
-} from '@smart/scoring-engine';
-import type { CertifiableTier } from '@smart/contracts';
+} from '@hirekiwi/scoring-engine';
+import type { CertifiableTier } from '@hirekiwi/contracts';
 import { Effect, Either } from 'effect';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

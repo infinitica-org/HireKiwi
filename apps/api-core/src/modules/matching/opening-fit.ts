@@ -6,7 +6,7 @@
  * `computePotentialFit` uses (>= 1 STRONG, >= 0.5 MODERATE, else STRETCH), applied to how fully the
  * student meets the opening's required skills. The UI shows this band; it never recomputes it.
  */
-import { SKILL_DEFINITIONS, type JobFitBand } from '@smart/contracts';
+import { SKILL_DEFINITIONS, type JobFitBand } from '@hirekiwi/contracts';
 import {
   PROFICIENCY_RANK,
   scoreCandidate,

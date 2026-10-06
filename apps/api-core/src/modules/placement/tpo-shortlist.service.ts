@@ -4,7 +4,7 @@ import type {
   ExportTpoShortlistQuery,
   ListTpoShortlistQuery,
   ShortlistDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 
 interface StudentMock {

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import type { EvidenceVerificationMethod } from '@smart/contracts';
+import type { EvidenceVerificationMethod } from '@hirekiwi/contracts';
 import type { Prisma } from '../../../generated/prisma/index.js';
 import { KafkaOutboxService } from '../../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../../platform/prisma/prisma.service.js';

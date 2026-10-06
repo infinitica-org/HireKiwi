@@ -82,6 +82,16 @@ export class StorageService implements OnModuleInit {
     if (env.S3_ENCRYPTION === 'required') await assertBucketEncrypted(this.client, env.S3_BUCKET);
   }
 
+  /** S6-VV-129: the cheapest object-store call (HEAD on the bucket), for integration health. */
+  async isReachable(): Promise<boolean> {
+    try {
+      await this.client.send(new HeadBucketCommand({ Bucket: env.S3_BUCKET }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   private async ensureBucket(): Promise<void> {
     try {
       await this.client.send(new HeadBucketCommand({ Bucket: env.S3_BUCKET }));

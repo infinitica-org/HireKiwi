@@ -1,0 +1,100 @@
+---
+title: 09. Matching & Talent Intelligence
+description: The hybrid matching engine, pgvector cosine similarity, hard eligibility filters, and explainable match scoring.
+---
+
+## 9.1 The Hybrid Matching Architecture
+
+Matching talent to opportunities requires balancing **unambiguous prerequisites** (e.g., minimum CGPA, specific graduation year, mandatory on-site location) with **semantic technical depth** (e.g., capability in high-throughput caching).
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        CANDIDATE TALENT POOL                           │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                    STAGE 1: HARD ELIGIBILITY GATES                     │
+│  Deterministic SQL / Relational Filters:                               │
+│  • Degree & Branch (e.g., B.Tech CS/IT)                                │
+│  • Graduation Batch (e.g., 2026 Batch)                                 │
+│  • Minimum Academic CGPA (e.g., >= 7.50)                              │
+│  • Minimum Verified Competency Floor (e.g., Backend Tier >= Silver)   │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ (N candidates survive)
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                  STAGE 2: SEMANTIC VECTOR EMBEDDINGS                   │
+│  PostgreSQL pgvector (HNSW Index):                                     │
+│  • Cosine Similarity between Job Profile Vector & Candidate Vector     │
+│  • Captures latent technical proficiency and project complexity        │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                   STAGE 3: EXPLAINABLE MATCH COMPOSITE                 │
+│  Final Match Score = 0.40 (Vector) + 0.35 (Coverage) + 0.25 (BARS Tier)│
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 9.2 The Mathematical Match Formula
+
+The final match score `M(c, j) in [0, 100]` between candidate `c` and job `j` is calculated as:
+
+```text
+M(c, j) = 100 * [ (w_v * CosineSim(v_c, v_j)) + (w_c * Coverage(S_c, S_j)) + (w_b * TierScore(T_c)) ]
+```
+
+- `CosineSim(v_c, v_j)`: Cosine similarity between candidate capability embedding and job description embedding.
+- `Coverage(S_c, S_j)`: Exact requirement coverage ratio across required technical skills.
+- `TierScore(T_c)`: Bonus multiplier for verified BARS tiers (Gold = 1.0, Silver = 0.7, Bronze = 0.4, Unverified = 0.1).
+- Default weights: `w_v = 0.40`, `w_c = 0.35`, `w_b = 0.25`.
+
+---
+
+## 9.3 Deterministic Regex Fallback Engine
+
+If OpenAI/OpenRouter embedding services experience latency or downtime, the matching engine automatically degrades to the **Deterministic Taxonomy Regex Engine**:
+
+- Evaluates candidate skills against the canonical taxonomy graph.
+- Employs token distance scoring and exact string matching without vector similarity.
+- Guarantees that placement drives never stall due to external AI provider outages.
+
+---
+
+## 9.4 Batch Normalization & Dynamic Profile Re-indexing (October 2026 Mandate)
+
+Per the 03 October 2026 architecture review, student-to-job matching addresses two critical operational dynamics:
+
+### 1. Batch Score Normalization Across Cohorts
+When running matching across varied evaluation cohorts (different colleges, time windows, or assessment forms), raw match scores can drift due to slight variance in assessment difficulty or cohort size. HireKiwi implements a **z-score batch normalization layer**:
+- Computes mean ($\mu_B$) and standard deviation ($\sigma_B$) of raw requirement match scores within each processing batch.
+- Normalizes scores across batches to maintain a consistent percentile scale ($0$ to $100$).
+- Guarantees that a 85% match score represents identical relative readiness across any recruiting drive or cohort.
+
+### 2. Event-Driven Dynamic Profile Updates
+In real campus placement and talent discovery environments:
+- Newly registered candidates appear after the initial matching pass has completed.
+- Students advance to higher proficiency tiers (Level 1–5) by completing coursework or assessments.
+- Students prepare for assessments to actively bridge identified requirement gaps.
+
+**Delta Re-indexing Pipeline:**
+Instead of expensive, high-latency re-runs of the entire student database, HireKiwi listens to Kafka domain events:
+- `smart.eval.completed` (Assessment finished or tier upgraded)
+- `smart.user.updated` (Profile, resume, or verification state changed)
+
+An asynchronous BullMQ worker intercepts the event, retrieves active job openings that match the candidate's track, computes delta requirement coverage, and updates the cached match records in Redis within **`<200 ms`**.
+
+---
+
+## 9.5 Transparent Match Explanation
+
+Black-box match scores undermine recruiter trust. Every HireKiwi recommendation includes an inspectable, evidence-grounded **Match Breakdown Card**:
+
+```
+Match Score: 89% (High Fit — Batch Normalized)
+────────────────────────────────────────────────────────────
+✓ Requirement Match (100%): All 4 required skills present (NestJS, Postgres, Redis, Docker).
+✓ Verified Tier Bonus (+15%): Candidate holds verified Level 4 (Gold) in Relational Database Architecture.
+⚠ Skill Gap Noted: Job specifies Kafka; candidate's verified message queue evidence is RabbitMQ (Transferable ontology similarity: 82%).
+ℹ Recommended Next Assessment: "Distributed Event Streaming with Kafka" (Potential match boost: +8%).
+```

@@ -21,7 +21,7 @@ import {
   SendMessageRequestSchema,
   StartConversationRequestSchema,
   UuidSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { NotFoundException } from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';

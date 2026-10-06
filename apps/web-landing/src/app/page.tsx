@@ -1,16 +1,17 @@
 import Hero from '@/components/Hero';
-import ByTheNumbers from '@/components/ByTheNumbers';
-import Problem from '@/components/Problem';
-import Audiences from '@/components/Audiences';
+import AudienceTabs from '@/components/AudienceTabs';
+// import Problem from '@/components/Problem';
 import ClosingCTA from '@/components/ClosingCTA';
+import { pageMetadata } from '@/lib/seo';
+
+export const metadata = pageMetadata('home');
 
 export default function LandingPage() {
   return (
     <main>
       <Hero />
-      <ByTheNumbers />
-      <Problem />
-      <Audiences />
+      <AudienceTabs />
+      {/* <Problem /> */}
       <ClosingCTA />
     </main>
   );

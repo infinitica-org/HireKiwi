@@ -3,7 +3,7 @@ import {
   REDIS_TTL_SECONDS,
   type LeetcodeSolvedCounts,
   type LeetcodeTagStat,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { z } from 'zod';
 import { RedisService } from '../../../platform/redis/redis.service.js';
 import { SignalCircuitBreaker } from '../signal-circuit-breaker.js';

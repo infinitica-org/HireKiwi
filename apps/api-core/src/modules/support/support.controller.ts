@@ -4,12 +4,13 @@ import type {
   SupportGrantResponse,
   SupportHistoryResponse,
   SupportSessionResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
+  API_PREFIX,
   ImpersonateRequestSchema,
   SupportGrantRequestSchema,
   SupportHistoryQuerySchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
@@ -17,7 +18,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { SupportService } from './support.service.js';
 
-@Controller('admin/support')
+@Controller(`${API_PREFIX}/admin/support`)
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SupportController {
   constructor(@Inject(SupportService) private readonly supportService: SupportService) {}

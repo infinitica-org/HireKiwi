@@ -14,7 +14,7 @@ import {
   CreateCampusRequestSchema,
   ListCampusesQuerySchema,
   UpdateCampusRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';

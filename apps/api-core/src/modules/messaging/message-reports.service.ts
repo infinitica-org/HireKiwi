@@ -8,7 +8,7 @@ import {
   MODERATION_CONTEXT_MESSAGES,
   type CreateReportRequest,
   type Report,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { IdempotencyService } from '../company-profile/idempotency.service.js';
 import { MESSAGE_MODERATION_RETENTION_DAYS } from './messaging.constants.js';

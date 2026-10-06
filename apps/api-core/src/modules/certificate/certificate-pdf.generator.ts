@@ -25,7 +25,7 @@ export async function generateCertificatePdfBuffer(data: CertificatePdfData): Pr
         margins: { top: 40, bottom: 40, left: 50, right: 50 },
         info: {
           Title: `SMART Readiness Certificate - ${data.candidateName}`,
-          Author: 'SMART Platform Certification Authority',
+          Author: 'HireKiwi Platform Certification Authority',
           Subject: `${data.trackName} Readiness Credential`,
         },
       });
@@ -60,7 +60,7 @@ export async function generateCertificatePdfBuffer(data: CertificatePdfData): Pr
         .fontSize(10)
         .font('Helvetica')
         .fillColor('#64748b')
-        .text('ROLE-SPECIFIC READINESS CERTIFICATION', 60, 88);
+        .text('INTELLECTUAL TALENT NETWORK · READINESS CERTIFICATION', 60, 88);
 
       // Certificate Title
       doc

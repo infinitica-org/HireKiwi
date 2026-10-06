@@ -31,7 +31,7 @@ create_label "area:frontend" "5319e7" "Web apps / UI"
 create_label "area:ai" "7057ff" "AI gateway / evaluation"
 create_label "area:data" "006b75" "Catalog / calibration / analytics"
 create_label "area:infra" "e99695" "Docker / CI / VPS"
-create_label "area:contracts" "fbca04" "@smart/contracts"
+create_label "area:contracts" "fbca04" "@hirekiwi/contracts"
 for s in 0 1 2 3 4 5; do
   create_label "sprint-$s" "ededed" "Sprint $s"
 done

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
-import type { PlacementEmployerSummary } from '@smart/contracts';
-import { PLACEMENT_CITY_OPTIONS } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { PlacementEmployerSummary } from '@hirekiwi/contracts';
+import { PLACEMENT_CITY_OPTIONS } from '@hirekiwi/contracts';
 import { employersApi } from '../../lib/api';
 import { candidatesControlClass } from '../../lib/tpo-dashboard-ui';
 import {

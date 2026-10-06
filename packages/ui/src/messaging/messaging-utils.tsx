@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { SmartApiError } from '@smart/api-client';
+import { SmartApiError } from '@hirekiwi/api-client';
 import { useQuery, useSmartApi } from '../api-provider';
 
 /** Th6-422 — client polling interval. TODO: replace polling with a socket subscription. */

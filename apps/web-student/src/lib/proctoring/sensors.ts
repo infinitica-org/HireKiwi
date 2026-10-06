@@ -1,4 +1,4 @@
-import type { ProctoringViolationKind } from '@smart/contracts';
+import type { ProctoringViolationKind } from '@hirekiwi/contracts';
 
 const DEVTOOLS_KEYS = new Set(['i', 'j', 'c', 'k']);
 

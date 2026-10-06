@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SmartLogo } from '@smart/ui';
+import { SmartLogo } from '@hirekiwi/ui';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy · SMART',
-  description: 'Privacy Policy governing your data and information on the SMART platform.',
+  description: 'Privacy Policy governing your data and information on the HireKiwi platform.',
 };
 
 export default function PrivacyPage() {
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
               At <strong>SMART</strong> (&quot;SMART&quot;, &quot;we&quot;, &quot;us&quot;, or
               &quot;our&quot;), we respect your privacy and are committed to protecting your
               personal information. This Privacy Policy explains how we collect, use, disclose, and
-              safeguard your information when you access or use the SMART platform.
+              safeguard your information when you access or use the HireKiwi platform.
             </p>
 
             <hr className="my-8 border-slate-100" />
@@ -51,8 +51,8 @@ export default function PrivacyPage() {
             <p>We may collect information including:</p>
             <ul className="list-disc space-y-1.5 pl-6">
               <li>
-                <strong>Account Information:</strong> Name, school/personal email, password hash,
-                and contact details.
+                <strong>Account Information:</strong> Name, university/personal email, password
+                hash, and contact details.
               </li>
               <li>
                 <strong>Candidate Profile Data:</strong> Education history, skills, certifications,

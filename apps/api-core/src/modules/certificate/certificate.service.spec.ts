@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EvalCompletedEvent } from '@smart/contracts';
-import { SMART_TOPICS } from '@smart/contracts';
+import type { EvalCompletedEvent } from '@hirekiwi/contracts';
+import { SMART_TOPICS } from '@hirekiwi/contracts';
 import { CertificateService } from './certificate.service.js';
 import type { PrismaService } from '../../platform/prisma/prisma.service.js';
 import type { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';

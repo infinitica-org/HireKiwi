@@ -3,9 +3,9 @@
 import { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Star } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import { CreateCompanyReviewRequestSchema } from '@smart/contracts';
-import { Button, FormMessage, Modal } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { CreateCompanyReviewRequestSchema } from '@hirekiwi/contracts';
+import { Button, FormMessage, Modal } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 
 interface ReviewCompanyDialogProps {

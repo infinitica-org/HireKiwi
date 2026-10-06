@@ -1,5 +1,5 @@
 import { Effect } from 'effect';
-import type { ItemType } from '@smart/contracts';
+import type { ItemType } from '@hirekiwi/contracts';
 import { InvalidScoreError, InvalidWeightsError } from '../errors.js';
 import { roundTo, sum } from '../statistics.js';
 

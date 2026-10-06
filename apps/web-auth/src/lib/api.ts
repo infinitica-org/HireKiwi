@@ -8,8 +8,8 @@ import {
   resolvePortalOriginsFromEnv,
   returnToForRole,
   storeAccessToken,
-} from '@smart/api-client';
-import type { AuthenticatedUser } from '@smart/contracts';
+} from '@hirekiwi/api-client';
+import type { AuthenticatedUser } from '@hirekiwi/contracts';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 const portalOrigins = resolvePortalOriginsFromEnv();

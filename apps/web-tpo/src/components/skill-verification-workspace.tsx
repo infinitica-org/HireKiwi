@@ -13,7 +13,7 @@ import {
   BookOpen,
   Lock,
 } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   SKILL_CATEGORY_IDS,
   SKILL_CATEGORIES,
@@ -23,8 +23,8 @@ import {
   type InstitutionStudentDto,
   type SkillCategoryId,
   type SkillClaimDto,
-} from '@smart/contracts';
-import { Badge, Button, Card } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Badge, Button, Card } from '@hirekiwi/ui';
 import { api } from '../lib/api';
 import { CompetencyBreakdown } from './competency-breakdown';
 

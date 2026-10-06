@@ -4,9 +4,9 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Briefcase, MapPin } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import type { StudentApplicationCard } from '@smart/contracts';
-import { Alert, ConfirmDialog, ErrorState, LoadingState, VerifiedBadge, cn } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { StudentApplicationCard } from '@hirekiwi/contracts';
+import { Alert, ConfirmDialog, ErrorState, LoadingState, VerifiedBadge, cn } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { formatAppliedOn } from '@/lib/my-applications';
 import { ApplicationStatusBar, ApplicationTimeline } from './ApplicationStatusTimeline';
@@ -85,7 +85,7 @@ export function ApplicationsPanel({
           progress.
         </p>
         <Link
-          href="/jobs"
+          href="/student/jobs"
           className="mt-4 inline-flex items-center rounded-md bg-zinc-900 px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800"
         >
           Browse jobs

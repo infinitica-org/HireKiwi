@@ -1,4 +1,4 @@
-import { SmartApiClient, createSmartApi } from '@smart/api-client';
+import { SmartApiClient, createSmartApi } from '@hirekiwi/api-client';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 

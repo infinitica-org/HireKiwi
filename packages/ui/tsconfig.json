@@ -1,5 +1,5 @@
 {
-  "extends": "@smart/tsconfig/react-library.json",
+  "extends": "@hirekiwi/tsconfig/react-library.json",
   "compilerOptions": {
     "noEmit": true,
     "incremental": false,

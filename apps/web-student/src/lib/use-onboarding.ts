@@ -1,7 +1,7 @@
 'use client';
 
-import { queryKeys } from '@smart/api-client';
-import { useQuery } from '@smart/ui';
+import { queryKeys } from '@hirekiwi/api-client';
+import { useQuery } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 
 /** Shared onboarding payload — dedupes parallel profile-section fetches. */

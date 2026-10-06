@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { SKILL_DEFINITIONS } from '@smart/contracts';
+import { SKILL_DEFINITIONS } from '@hirekiwi/contracts';
 
 import { SkillsSection } from './SkillsSection';
 

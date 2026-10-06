@@ -1,4 +1,4 @@
-import type { EventRegistrationStatus } from '@smart/contracts';
+import type { EventRegistrationStatus } from '@hirekiwi/contracts';
 import { createNotices, writeAudit, type Db } from './campus-shared.js';
 
 /** Registrations that still count toward attendance and receive event notices. */

@@ -24,6 +24,7 @@ describe('S6-VV-118 retention sweep', () => {
       emailVerificationToken: table(1),
       passwordResetToken: table(1),
       refreshToken: table(1),
+      consumedEvent: table(4),
       integrityEvent: table(9),
       user: table(2),
       dataSubjectRequest: {

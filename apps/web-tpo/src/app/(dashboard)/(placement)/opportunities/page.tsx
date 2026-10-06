@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ClipboardList, Search } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import { ATS_STAGES, type ApplicationDto, type AtsStage } from '@smart/contracts';
-import { Alert } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { ATS_STAGES, type ApplicationDto, type AtsStage } from '@hirekiwi/contracts';
+import { Alert } from '@hirekiwi/ui';
 import { applicationsApi, openingsApi } from '@/lib/api';
 import { stageBadgeClass, stageLabel } from '@/lib/ats-stage-ui';
 import {

@@ -6,10 +6,10 @@ import {
   type AssessmentResult,
   type SkillBlueprint,
   type SkillProficiency,
-} from '@smart/contracts';
-import { evaluateAssessmentIntelligence, type VerificationMode } from '@smart/scoring-engine';
+} from '@hirekiwi/contracts';
+import { evaluateAssessmentIntelligence, type VerificationMode } from '@hirekiwi/scoring-engine';
 import { Effect } from 'effect';
-import type { GradeSdeSkillFormResponse } from '@smart/contracts';
+import type { GradeSdeSkillFormResponse } from '@hirekiwi/contracts';
 
 @Injectable()
 export class AssessmentIntelligenceService {

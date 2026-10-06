@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Archive, Layers, Plus, RotateCcw, Star } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import type { CampusDto, UpdateCampusRequest } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { CampusDto, UpdateCampusRequest } from '@hirekiwi/contracts';
 import { api } from '../../lib/api';
 import {
   bentoCardClass,

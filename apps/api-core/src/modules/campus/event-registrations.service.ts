@@ -5,7 +5,7 @@ import type {
   PublicCareerEvent,
   PublicCareerEventsResponse,
   StudentEventsQuery,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

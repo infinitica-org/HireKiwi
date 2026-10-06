@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { isSmartApiError } from '@smart/api-client';
-import type { FeatureFlagDto, FeatureFlagOverrideDto, SubscriptionPlanDto } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type {
+  FeatureFlagDto,
+  FeatureFlagOverrideDto,
+  SubscriptionPlanDto,
+} from '@hirekiwi/contracts';
 import { CreditCard } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
-import { Switch } from '@smart/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smart/ui/tabs';
-import { Badge } from '@smart/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
+import { Switch } from '@hirekiwi/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/admin-tabs';
+import { Badge } from '@hirekiwi/ui/badge';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

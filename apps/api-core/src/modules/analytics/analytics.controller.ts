@@ -1,20 +1,10 @@
 import { Controller, Get, Inject, Query } from '@nestjs/common';
-import { API_PREFIX, TrackCodeSchema } from '@smart/contracts';
+import { API_PREFIX, TrackCodeSchema } from '@hirekiwi/contracts';
 import { AnalyticsService } from './analytics.service.js';
 
 @Controller(`${API_PREFIX}/analytics`)
 export class AnalyticsController {
   constructor(@Inject(AnalyticsService) private readonly service: AnalyticsService) {}
-
-  @Get('_meta')
-  meta() {
-    return {
-      module: 'analytics',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'active',
-    };
-  }
 
   @Get('correlation')
   correlation(@Query('trackCode') trackCode?: string) {

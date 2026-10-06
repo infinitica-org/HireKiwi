@@ -1,4 +1,4 @@
-import type { CandidateCertificateStatus } from '@smart/contracts';
+import type { CandidateCertificateStatus } from '@hirekiwi/contracts';
 
 const STATUS_COPY: Record<CandidateCertificateStatus, { label: string; className: string }> = {
   DECLARED: { label: 'Not started', className: 'border-border bg-muted/50 text-muted-foreground' },

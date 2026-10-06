@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowRight, TrendingUp } from 'lucide-react';
-import { CONVERSION_MIN_SAMPLE, type ConversionMetrics } from '@smart/contracts';
+import { CONVERSION_MIN_SAMPLE, type ConversionMetrics } from '@hirekiwi/contracts';
 import { cn } from '../lib/cn';
 import { EmptyState, ErrorState, LoadingState } from './common-states';
 

@@ -2,13 +2,15 @@ import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
 import { PortalAuthGate } from '../components/portal-auth-gate';
-import { ThemeProvider } from '@smart/ui/theme-provider';
-import { Toaster } from '@smart/ui/sonner';
-import { TooltipProvider } from '@smart/ui/tooltip';
+import { ThemeProvider } from '@hirekiwi/ui/theme-provider';
+import { Toaster } from '@hirekiwi/ui/sonner';
+import { TooltipProvider } from '@hirekiwi/ui/tooltip';
 
 export const metadata: Metadata = {
   title: 'Platform admin · SMART',
   description: 'Integrity queue, AI health, cut scores.',
+  // Authenticated portal: keep out of search indexes (Th6-598).
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -10,8 +10,8 @@ import type {
   SkillDiscovery,
   SocialVerification,
   WorkMode,
-} from '@smart/contracts';
-import { OnboardingStepIdSchema } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import { OnboardingStepIdSchema } from '@hirekiwi/contracts';
 import { SKILL_CODE_TO_NAME } from './skills-catalog';
 
 /** Narrows a free-form persisted string to a valid wizard step id, or undefined. */
@@ -200,30 +200,35 @@ export function applyServerDraft(
 ): OnboardingProfileForm {
   if (!draft) return form;
 
-  const validSkills = (draft.skills ?? []).filter(
-    (s): s is { type: 'technical' | 'language'; name: string; proficiency: string } =>
-      Boolean(s.type && s.name?.trim() && s.proficiency?.trim()),
-  );
-  const languages = validSkills
-    .filter((s) => s.type === 'language')
+  const draftSkills = draft.skills ?? [];
+  const languages = draftSkills
+    .filter(
+      (s): s is { type: 'language'; name: string; proficiency: string } =>
+        s.type === 'language' && Boolean(s.name?.trim() && s.proficiency?.trim()),
+    )
     .map((s) => ({ id: crypto.randomUUID(), language: s.name, proficiency: s.proficiency }));
 
   // Split technical entries back into the mandatory catalog-skill map (exact
   // name match) vs. the free-form language/framework picks bucket. The two
   // multi-item skill families can't be told apart once flattened server-side,
   // so both land in `codingProficiencies` on reload.
-  const technical = validSkills.filter((s) => s.type === 'technical');
+  // Th6-600 — technical skills are catalog codes. Drafts saved before that carry a free-text
+  // name + self-rating: names that match the catalog become codes; the rest stay in
+  // `codingProficiencies` (kept, not deleted) but are no longer submitted as skills.
+  const technical = draftSkills.filter((s) => s.type === 'technical' && (s.code || s.name?.trim()));
   const catalogSkills: Record<string, string> = {};
   const codingProficiencies: { id: string; language: string; proficiency: string }[] = [];
   for (const entry of technical) {
-    const code = NAME_TO_SKILL_CODE.get(entry.name.toLowerCase());
+    const code =
+      (entry.code && SKILL_CODE_TO_NAME.has(entry.code) ? entry.code : undefined) ??
+      NAME_TO_SKILL_CODE.get((entry.name ?? '').toLowerCase());
     if (code) {
-      catalogSkills[code] = entry.proficiency;
-    } else {
+      catalogSkills[code] = '';
+    } else if (entry.name?.trim()) {
       codingProficiencies.push({
         id: crypto.randomUUID(),
         language: entry.name,
-        proficiency: entry.proficiency,
+        proficiency: entry.proficiency ?? '',
       });
     }
   }
@@ -281,54 +286,42 @@ export function applyServerDraft(
   };
 }
 
-/** Builds the flat `skills[]` array sent to the server from every skill source in the form. */
+/**
+ * Builds the `skills[]` array sent to the server. Spoken languages keep their stated level.
+ * Th6-600 — technical skills are catalog codes only (no free text, no self-rating): explicit
+ * catalog picks, plus any typed/resume-parsed name that matches a catalog skill.
+ */
 function buildSkillsPayload(
   form: OnboardingProfileForm,
 ): CompleteCandidateOnboardingRequest['skills'] {
-  return [
-    ...form.languages
-      .filter((l) => l.language.trim() && l.proficiency.trim())
-      .map((l) => ({
-        type: 'language' as const,
-        name: l.language.trim(),
-        proficiency: l.proficiency.trim(),
-      })),
-    ...Object.entries(form.catalogSkills)
-      .filter(([, proficiency]) => proficiency.trim())
-      .map(([code, proficiency]) => ({
-        type: 'technical' as const,
-        name: SKILL_CODE_TO_NAME.get(code) ?? code,
-        proficiency: proficiency.trim(),
-      })),
-    ...form.codingProficiencies
-      .filter((l) => l.language.trim() && l.proficiency.trim())
-      .map((l) => ({
-        type: 'technical' as const,
-        name: l.language.trim(),
-        proficiency: l.proficiency.trim(),
-      })),
-    ...form.frontendFrameworks
-      .filter((f) => f.framework.trim() && f.proficiency.trim())
-      .map((f) => ({
-        type: 'technical' as const,
-        name: f.framework.trim(),
-        proficiency: f.proficiency.trim(),
-      })),
-    ...form.backendFrameworks
-      .filter((f) => f.framework.trim() && f.proficiency.trim())
-      .map((f) => ({
-        type: 'technical' as const,
-        name: f.framework.trim(),
-        proficiency: f.proficiency.trim(),
-      })),
-    ...form.frameworkProficiencies
-      .filter((f) => f.framework.trim() && f.proficiency.trim())
-      .map((f) => ({
-        type: 'technical' as const,
-        name: f.framework.trim(),
-        proficiency: f.proficiency.trim(),
-      })),
+  const languages = form.languages
+    .filter((l) => l.language.trim() && l.proficiency.trim())
+    .map((l) => ({
+      type: 'language' as const,
+      name: l.language.trim(),
+      proficiency: l.proficiency.trim(),
+    }));
+
+  const codes = new Set(
+    Object.keys(form.catalogSkills).filter((code) => SKILL_CODE_TO_NAME.has(code)),
+  );
+  const typedNames = [
+    ...form.codingProficiencies.map((l) => l.language),
+    ...form.frontendFrameworks.map((f) => f.framework),
+    ...form.backendFrameworks.map((f) => f.framework),
+    ...form.frameworkProficiencies.map((f) => f.framework),
   ];
+  for (const name of typedNames) {
+    const code = NAME_TO_SKILL_CODE.get(name.trim().toLowerCase());
+    if (code) codes.add(code);
+  }
+  const technical = [...codes].map((code) => ({
+    type: 'technical' as const,
+    code,
+    name: SKILL_CODE_TO_NAME.get(code) ?? code,
+  }));
+
+  return [...languages, ...technical];
 }
 
 /** All three fields are optional — omit any that were left blank or don't parse as numbers. */

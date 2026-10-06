@@ -13,7 +13,7 @@ import {
   ResolveProjectReviewRequestSchema,
   ResolveProjectReviewResponseSchema,
   UuidSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { ProjectDefenseRecordService } from './project-defense-record.service.js';
 import {

@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Badge, Button, EmptyState, ErrorState, LoadingState, formatEventRange } from '@smart/ui';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  formatEventRange,
+} from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { EVENTS_KEY, RegistrationButton } from './RegistrationButton';
 
@@ -47,7 +54,7 @@ export function EventsList() {
             <div className="min-w-0 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <Link
-                  href={`/events/${event.id}`}
+                  href={`/student/events/${event.id}`}
                   className="font-semibold text-zinc-900 hover:underline"
                 >
                   {event.title}

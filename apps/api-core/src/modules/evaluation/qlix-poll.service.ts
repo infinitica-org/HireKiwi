@@ -5,7 +5,7 @@ import {
   PROJECT_VERIFY_PROMPT_REF,
   SMART_TOPICS,
   type ProjectGithubSnapshot,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Queue } from 'bullmq';
 import { env } from '../../platform/config/env.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';

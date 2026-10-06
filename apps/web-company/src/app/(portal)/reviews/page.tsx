@@ -3,9 +3,9 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Star } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
-import { REVIEW_RESPONSE_MAX_LENGTH, type CompanyReview } from '@smart/contracts';
-import { EmptyState, ErrorState, FormMessage, LoadingState } from '@smart/ui';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { REVIEW_RESPONSE_MAX_LENGTH, type CompanyReview } from '@hirekiwi/contracts';
+import { EmptyState, ErrorState, FormMessage, LoadingState } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { createKeyTracker, fieldErrorsFromError } from '@/lib/company-profile-form';
 import { Badge, Modal, PageHeader } from '../../../components/ui';

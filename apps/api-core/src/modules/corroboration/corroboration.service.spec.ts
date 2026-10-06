@@ -1,7 +1,7 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
-import { ACTIVE_TAXONOMY_VERSION } from '@smart/contracts';
-import { DEFAULT_SIGNAL_WEIGHT_MODEL } from '@smart/scoring-engine';
+import { ACTIVE_TAXONOMY_VERSION } from '@hirekiwi/contracts';
+import { DEFAULT_SIGNAL_WEIGHT_MODEL } from '@hirekiwi/scoring-engine';
 import { CorroborationService } from './corroboration.service.js';
 import type { CorroborationRedisStore } from './corroboration-redis.store.js';
 

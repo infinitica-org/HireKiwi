@@ -63,7 +63,7 @@ contributes product code; a sprint plan that does so is mis-scoped and must be c
 
 1. **Mandatory reviewer on architect-owned paths only** — `packages/contracts/`, `.github/workflows/`, `.github/CODEOWNERS`, `ARCHITECTURE.md`, `docs/adr/`, `docs/delivery/`, build-graph files (`turbo.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`). No change to these paths merges without Tino's approval. Feature PRs touching only module-owned paths (`apps/api-core/src/modules/*`, `apps/web-*`, `packages/ui`, etc.) are reviewed and merged by the module owner — Tino's review is not required.
 2. **Release gate** — Tino is the mandatory reviewer and merger of all promotion pull requests: `dev → qa` and `qa → main`. This is the architectural checkpoint for an entire sprint's worth of work.
-3. **Contract change control** — every change to `@smart/contracts` requires a pull request with an ADR link, a migration note, and notification to all affected owners within the same pull request body.
+3. **Contract change control** — every change to `@hirekiwi/contracts` requires a pull request with an ADR link, a migration note, and notification to all affected owners within the same pull request body.
 4. **Daily Architecture Review Board (17:00 IST)** — thirty minutes. Purpose: triage flagged PRs (those touching architect-owned paths or tagged `area:contracts`), unblock cross-module design questions, and review any PR an engineer has escalated. Feature PRs in module-owned paths are not tabled here unless there is a design question.
 5. **Definition of Done enforcement** — per `docs/delivery/DEFINITION_OF_DONE.md`. Rejections are made on the basis of the Definition of Done, not subjective preference.
 6. **Cross-module integration correctness** — Kafka topic contracts, SLA budgets, the rate-limit matrix, and the RBAC matrix.
@@ -113,7 +113,7 @@ officers.
 | Path                     | Deliverable                                                                                                                                                                                                               |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/ui/**`         | Design system on Tailwind 4 + shadcn/ui: tokens, theme, primitives, `TierBadge`, `TierTrail`, `ConfidenceNote`, `LevelStepper`, charts. Every application consumes this; no app-local component duplication is permitted. |
-| `packages/api-client/**` | Typed fetch client generated against `@smart/contracts`, TanStack Query hooks, silent-refresh interceptor, 429/`Retry-After` handling.                                                                                    |
+| `packages/api-client/**` | Typed fetch client generated against `@hirekiwi/contracts`, TanStack Query hooks, silent-refresh interceptor, 429/`Retry-After` handling.                                                                                 |
 | `apps/web-student/**`    | Assessment player (L1 MCQ, L2 code editor, L3 recorder, L4 defense chat, L5 upload), Zustand attempt store, timer/auto-submit, growth & gap-report portal.                                                                |
 | `apps/web-tpo/**`        | Cohort readiness dashboard, Gold/Silver/Bronze distribution, gap report, shortlist table with CSV/PDF export, JD upload UI.                                                                                               |
 
@@ -246,7 +246,7 @@ and Cronbach's α ≥ 0.70 is recorded in the database.
 ### 3.3 Kafka Topic Ownership
 
 Each topic has exactly one producer-owner. Any team member may consume a topic. Modifying a
-payload schema requires a pull request against `@smart/contracts`, reviewed by Tino and every
+payload schema requires a pull request against `@hirekiwi/contracts`, reviewed by Tino and every
 listed consumer of that topic.
 
 | Topic                                                     | Producer-owner   | Consumers                                                   |
@@ -268,7 +268,7 @@ listed consumer of that topic.
 
 Cross-module work always originates in `packages/contracts`, never in an implementation.
 
-1. The consumer opens a pull request adding or changing the Zod schema and type in `@smart/contracts`.
+1. The consumer opens a pull request adding or changing the Zod schema and type in `@hirekiwi/contracts`.
 2. Tino reviews and merges it, typically within the same working day, at the Architecture Review Board.
 3. Producer and consumer then implement in parallel against the merged type.
 
@@ -351,7 +351,7 @@ for architecture and review rather than feature delivery.
 An owner of a module is accountable for all six of the following obligations. None is optional.
 
 1. **It works** — the happy path, plus the failure modes named in the owner's non-negotiables.
-2. **It is typed** — the public surface is exported through `@smart/contracts`; no `any` at boundaries.
+2. **It is typed** — the public surface is exported through `@hirekiwi/contracts`; no `any` at boundaries.
 3. **It is tested** — unit tests on logic, integration tests on I/O, at least 80% coverage on the owner's module by Sprint 5.
 4. **It is observable** — structured logs with `traceId`, Prometheus counters/histograms, and a Grafana panel.
 5. **It is documented** — Swagger decorators on every endpoint, a README in the module's folder, and a runbook in `docs/runbooks/` for anything capable of paging an on-call engineer.

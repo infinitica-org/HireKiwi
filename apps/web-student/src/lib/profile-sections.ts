@@ -1,14 +1,14 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  Award,
   Briefcase,
-  FileText,
-  FolderKanban,
+  CodeXml,
+  FileUser,
+  FolderGit2,
   GraduationCap,
+  IdCard,
   Languages,
-  Link2,
-  Shield,
-  BadgeCheck,
-  Sparkles,
+  Plug,
 } from 'lucide-react';
 
 import type { ProfileAreaId } from '@/lib/profile-progress';
@@ -34,11 +34,14 @@ export function isProfileSectionId(value: string | null | undefined): value is P
 }
 
 export function profileSectionHref(section: ProfileSectionId): string {
-  return `/profile?section=${section}`;
+  return `/student/profile?section=${section}`;
 }
 
-/** Maps completion checklist areas to subsection URLs (not business logic). */
-export const PROFILE_AREA_TO_SECTION: Record<ProfileAreaId, ProfileSectionId> = {
+/** Maps completion checklist areas to subsection URLs (not business logic). The profile photo has no subsection. */
+export const PROFILE_AREA_TO_SECTION: Record<
+  Exclude<ProfileAreaId, 'profilePhoto'>,
+  ProfileSectionId
+> = {
   skills: 'skills',
   languages: 'languages',
   education: 'education',
@@ -85,7 +88,7 @@ export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
       {
         id: 'projects',
         label: 'Projects',
-        icon: FolderKanban,
+        icon: FolderGit2,
         title: 'Projects',
         description: 'Submit projects with evidence for verification and your public profile.',
       },
@@ -97,14 +100,14 @@ export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
       {
         id: 'certifications',
         label: 'Certifications',
-        icon: Shield,
+        icon: Award,
         title: 'Certifications',
         description: 'Professional certifications and verified credentials on your profile.',
       },
       {
         id: 'credentials',
         label: 'Credentials',
-        icon: BadgeCheck,
+        icon: IdCard,
         title: 'Professional credentials',
         description:
           'Upload and verify professional licenses, IDs, and other credential documents.',
@@ -119,7 +122,7 @@ export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
       {
         id: 'skills',
         label: 'Skills',
-        icon: Sparkles,
+        icon: CodeXml,
         title: 'Skills',
         description:
           'Select skills from the SMART catalog to assess and build verified credentials.',
@@ -131,10 +134,9 @@ export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
     items: [
       {
         id: 'links',
-        label: 'Professional Links',
-        navLabel: 'Links',
-        icon: Link2,
-        title: 'Professional Links',
+        label: 'Integrations',
+        icon: Plug,
+        title: 'Integrations',
         description: 'LinkedIn and GitHub help employers learn more about you.',
       },
     ],
@@ -145,7 +147,7 @@ export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
       {
         id: 'resume',
         label: 'Resume',
-        icon: FileText,
+        icon: FileUser,
         title: 'Resume',
         description: 'Upload your resume — SMART can parse it to help pre-fill profile details.',
       },

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { CERT_AGENDA_PROMPT_REF, type TrackCode } from '@smart/contracts';
+import { CERT_AGENDA_PROMPT_REF, type TrackCode } from '@hirekiwi/contracts';
 import {
   agendaGuardFailure,
   alignAgendaToSyllabus,

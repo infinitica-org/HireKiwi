@@ -1,6 +1,6 @@
 import { connect } from 'node:net';
 import { Logger, ServiceUnavailableException, UnprocessableEntityException } from '@nestjs/common';
-import { fileScansTotal } from '@smart/observability';
+import { fileScansTotal } from '@hirekiwi/observability';
 import { env } from '../config/env.js';
 
 export type ScanResult = { clean: true } | { clean: false; signature: string };

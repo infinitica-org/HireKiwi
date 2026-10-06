@@ -8,9 +8,9 @@ import {
   type EmployerApplicantCard,
   type JoiningOutcome,
   type OfferOutcome,
-} from '@smart/contracts';
-import { SmartApiError } from '@smart/api-client';
-import { Alert, Button, StartConversationDialog } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
+import { Alert, Button, StartConversationDialog } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 
 const OFFER_LABEL: Record<OfferOutcome, string> = {
@@ -94,7 +94,7 @@ export function CandidatePanel({
   return (
     <section
       aria-label={`Details for ${applicant.candidateName}`}
-      className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm"
+      className="rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs"
     >
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold">{applicant.candidateName}</h2>

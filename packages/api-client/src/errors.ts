@@ -1,4 +1,4 @@
-import type { ApiError, ApiErrorCode } from '@smart/contracts';
+import type { ApiError, ApiErrorCode } from '@hirekiwi/contracts';
 
 /**
  * Client-side error types.
@@ -78,7 +78,7 @@ export class SmartContractViolationError extends Error {
     readonly issues: unknown,
   ) {
     super(
-      `Response from ${route} did not match its contract. The API and @smart/contracts ` +
+      `Response from ${route} did not match its contract. The API and @hirekiwi/contracts ` +
         `are out of sync — check the contract version before working around this. ` +
         `Issues: ${JSON.stringify(issues)}`,
     );

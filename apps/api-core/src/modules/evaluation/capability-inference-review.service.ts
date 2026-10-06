@@ -4,7 +4,7 @@ import {
   CorrectStudentCapabilityResponseSchema,
   ListCapabilityInferenceReviewQueueResponseSchema,
   UuidSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { EvidenceSkillInferenceService } from '../evidence/evidence-skill-inference.service.js';
 

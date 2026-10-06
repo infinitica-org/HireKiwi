@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { WorkExperienceDocumentDto } from '@smart/contracts';
+import type { WorkExperienceDocumentDto } from '@hirekiwi/contracts';
 import { summarizeWorkExperienceDocumentCheck } from './work-experience-document-check';
 
 function doc(

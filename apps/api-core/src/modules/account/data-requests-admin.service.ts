@@ -6,7 +6,7 @@ import {
   DSR_SLA_FIRST_RESPONSE_DAYS,
   type AdminDataRequestDto,
   type ListAdminDataRequestsQuery,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { env } from '../../platform/config/env.js';

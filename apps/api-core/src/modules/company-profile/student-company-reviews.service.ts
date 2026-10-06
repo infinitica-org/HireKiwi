@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { CompanyReview, CreateCompanyReviewRequest } from '@smart/contracts';
+import type { CompanyReview, CreateCompanyReviewRequest } from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { IdempotencyService } from './idempotency.service.js';

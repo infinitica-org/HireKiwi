@@ -13,7 +13,7 @@ import {
   takeAssessmentBlockMessage,
   viewForFocus,
 } from './skill-declarations';
-import type { SkillClaimDto } from '@smart/contracts';
+import type { SkillClaimDto } from '@hirekiwi/contracts';
 
 function claim(overrides: Partial<SkillClaimDto> = {}): SkillClaimDto {
   return {

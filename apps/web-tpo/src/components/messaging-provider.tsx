@@ -6,8 +6,8 @@ import {
   clearAccessToken,
   createRefreshAccessToken,
   getAccessToken,
-} from '@smart/api-client';
-import { SmartApiProvider } from '@smart/ui';
+} from '@hirekiwi/api-client';
+import { SmartApiProvider } from '@hirekiwi/ui';
 import { api } from '../lib/api';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -20,7 +20,7 @@ const onUnauthorized = () => {
   window.location.href = buildLoginUrl(authUrl, window.location.href);
 };
 
-/** Gives the shared messaging UI (`@smart/ui`) its API client and query cache inside web-tpo. */
+/** Gives the shared messaging UI (`@hirekiwi/ui`) its API client and query cache inside web-tpo. */
 export function MessagingProvider({ children }: { children: ReactNode }) {
   return (
     <SmartApiProvider

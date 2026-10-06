@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { buildPinoHttpOptions } from '@smart/observability';
+import { buildPinoHttpOptions } from '@hirekiwi/observability';
 import { LoggerModule } from 'nestjs-pino';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter.js';
 import { FeatureFlagGuard } from './common/guards/feature-flag.guard.js';
@@ -15,11 +15,11 @@ import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module.js';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
 import { AssessmentModule } from './modules/assessment/assessment.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
-import { CalibrationModule } from './modules/calibration/calibration.module.js';
 import { CandidateCertificatesModule } from './modules/candidate-certificates/candidate-certificates.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
 import { ApplicationsModule } from './modules/applications/applications.module.js';
 import { MessagingModule } from './modules/messaging/messaging.module.js';
+import { JobsModule } from './modules/jobs/jobs.module.js';
 import { StudentJobsModule } from './modules/student-jobs/student-jobs.module.js';
 import { CompanyProfileModule } from './modules/company-profile/company-profile.module.js';
 import { CertificateModule } from './modules/certificate/certificate.module.js';
@@ -30,7 +30,6 @@ import { EvaluationModule } from './modules/evaluation/evaluation.module.js';
 import { SignalEncoderModule } from './modules/signal-encoder/signal-encoder.module.js';
 import { InstitutionsModule } from './modules/institutions/institutions.module.js';
 import { CampusModule } from './modules/campus/campus.module.js';
-import { InterviewsModule } from './modules/interviews/interviews.module.js';
 import { MatchingModule } from './modules/matching/matching.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { PlacementModule } from './modules/placement/placement.module.js';
@@ -38,20 +37,19 @@ import { ProctoringModule } from './modules/proctoring/proctoring.module.js';
 import { ProjectsModule } from './modules/projects/projects.module.js';
 import { PublicProfileModule } from './modules/public-profile/public-profile.module.js';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module.js';
-import { SandboxModule } from './modules/sandbox/sandbox.module.js';
 import { UsernameModule } from './modules/username/username.module.js';
 import { AccountModule } from './modules/account/account.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { ReadinessModule } from './modules/readiness/readiness.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { WorkExperienceModule } from './modules/work-experience/work-experience.module.js';
-import { WebhooksModule } from './modules/webhooks/webhooks.module.js';
 import { TrustModule } from './modules/trust/trust.module.js';
 import { BillingModule } from './modules/billing/billing.module.js';
 import { ConfigModule } from './platform/config/config.module.js';
 import { AuditModule } from './platform/audit/audit.module.js';
 import { env } from './platform/config/env.js';
 import { HealthModule } from './platform/health/health.module.js';
+import { IntegrationHealthModule } from './modules/integration-health/integration-health.module.js';
 import { KafkaModule } from './platform/kafka/kafka.module.js';
 import { MailerModule } from './platform/mailer/mailer.module.js';
 import { PrismaModule } from './platform/prisma/prisma.module.js';
@@ -79,12 +77,14 @@ import { StorageModule } from './platform/storage/storage.module.js';
     MailerModule,
     QueueModule,
     HealthModule,
+    IntegrationHealthModule,
     RateLimitModule,
     AuthModule,
     UsersModule,
     UsernameModule,
     AccountModule,
     CompanyProfileModule,
+    JobsModule,
     StudentJobsModule,
     ApplicationsModule,
     MessagingModule,
@@ -93,17 +93,14 @@ import { StorageModule } from './platform/storage/storage.module.js';
     WorkExperienceModule,
     InstitutionsModule,
     CampusModule,
-    InterviewsModule,
     CatalogModule,
     AssessmentModule,
-    SandboxModule,
     EvaluationModule,
     CorroborationModule,
     EvidenceModule,
     SignalIngestionModule,
     SignalEncoderModule,
     AiGatewayModule,
-    CalibrationModule,
     CandidateCertificatesModule,
     CertificateModule,
     MatchingModule,
@@ -113,7 +110,6 @@ import { StorageModule } from './platform/storage/storage.module.js';
     ProjectsModule,
     PublicProfileModule,
     AnalyticsModule,
-    WebhooksModule,
     TrustModule,
     SupportModule,
     BillingModule,

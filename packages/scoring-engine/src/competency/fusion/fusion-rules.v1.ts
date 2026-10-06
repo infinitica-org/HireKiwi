@@ -1,10 +1,10 @@
-import { FUSION_RULE_SET_VERSION } from '@smart/contracts';
+import { FUSION_RULE_SET_VERSION } from '@hirekiwi/contracts';
 import type {
   ProficiencyLevel,
   SkillCompetency,
   CompetencyStatus,
   TrustTier,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { difficultyIndex } from './admissibility.js';
 
 export { FUSION_RULE_SET_VERSION };

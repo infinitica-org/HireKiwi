@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState, type ReactNode } from 'react';
-import { MESSAGE_MAX_LENGTH, type StartConversationRequest } from '@smart/contracts';
-import { SmartApiError } from '@smart/api-client';
+import { MESSAGE_MAX_LENGTH, type StartConversationRequest } from '@hirekiwi/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
 import { useMutation, useSmartApi } from '../api-provider';
 import { Alert } from '../components/alert';
 import { Button } from '../components/button';

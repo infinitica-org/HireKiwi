@@ -1,4 +1,4 @@
-import type { StudentJobCard } from '@smart/contracts';
+import type { StudentJobCard } from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import { patchCachedJob } from './job-cache';
 

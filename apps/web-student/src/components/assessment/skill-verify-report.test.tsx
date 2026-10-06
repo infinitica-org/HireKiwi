@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import type { GradeSdeSkillFormResponse } from '@smart/contracts';
+import type { GradeSdeSkillFormResponse } from '@hirekiwi/contracts';
 
 import type { AssessmentResultView } from '@/lib/competency-display';
 
@@ -147,7 +147,7 @@ describe('SkillVerifyReport', () => {
     expect(screen.getByRole('button', { name: /back to skills/i })).toBeDefined();
 
     expect(screen.getByRole('link', { name: /view assessments/i }).getAttribute('href')).toBe(
-      '/assessment',
+      '/student/assessment',
     );
 
     fireEvent.click(screen.getByRole('button', { name: /back to skills/i }));

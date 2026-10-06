@@ -2,8 +2,8 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
-import type { InstitutionDto, InstitutionListStatus, PlanCode } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { InstitutionDto, InstitutionListStatus, PlanCode } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   Check,
   CheckCircle2,
@@ -14,8 +14,8 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,
@@ -273,7 +273,7 @@ export default function InstitutionsPage() {
           <DataTable
             headers={[
               '',
-              'School & Domain',
+              'University & Domain',
               'Enrolled Students',
               'Pending Invites',
               'Status',
@@ -498,7 +498,7 @@ export default function InstitutionsPage() {
           <CardContent>
             <form onSubmit={onCreate}>
               <FormGrid>
-                <Field label="University / School Name">
+                <Field label="University Name">
                   <AdminInput value={name} onChange={(e) => setName(e.target.value)} required />
                 </Field>
                 <Field label="Domain Whitelist">

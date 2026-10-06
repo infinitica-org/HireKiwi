@@ -10,7 +10,7 @@ import {
   Loader2,
   UserSearch,
 } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import {
   SKILL_DEFINITIONS,
   type BatchDto,
@@ -18,7 +18,7 @@ import {
   type JobOpeningDto,
   type MatchMethod,
   type ShortlistDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { api, applicationsApi, openingsApi } from '../lib/api';
 import {
   buildSuggestionsCsv,

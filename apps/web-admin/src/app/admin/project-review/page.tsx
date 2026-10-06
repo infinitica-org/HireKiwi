@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { ProjectReviewDetailDto, ProjectReviewQueueItemDto } from '@smart/contracts';
-import { isSmartApiError } from '@smart/api-client';
+import type { ProjectReviewDetailDto, ProjectReviewQueueItemDto } from '@hirekiwi/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { ClipboardList } from 'lucide-react';
-import { Button } from '@smart/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@smart/ui/card';
+import { Button } from '@hirekiwi/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 import { PageHeader } from '@/components/page-header';
 import {
   AdminInput,

@@ -1,5 +1,5 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
-import type { CreateBlockedWordRequest, ListBlockedWordsResponse } from '@smart/contracts';
+import type { CreateBlockedWordRequest, ListBlockedWordsResponse } from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 

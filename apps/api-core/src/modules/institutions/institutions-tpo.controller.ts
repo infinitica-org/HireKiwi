@@ -26,7 +26,7 @@ import {
   ListInstitutionStudentsQuerySchema,
   TenantActionReasonSchema,
   UpdateBatchRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Multipart, MultipartFile } from '@fastify/multipart';
 import { RequireFlag } from '../../common/guards/feature-flag.decorator.js';

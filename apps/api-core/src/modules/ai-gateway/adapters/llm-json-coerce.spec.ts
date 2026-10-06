@@ -3,7 +3,7 @@ import {
   SdeSkillFormClosedOutputSchema,
   SdeSkillFormOpenOutputSchema,
   SdeSkillFormOpenOutputSchemaV3,
-} from '@smart/prompts';
+} from '@hirekiwi/prompts';
 import { coerceLlmJson } from './llm-json-coerce.js';
 
 describe('coerceLlmJson', () => {

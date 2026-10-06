@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@smart/api-client';
-import type { ApplicationDto, JobOpeningDto } from '@smart/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
+import type { ApplicationDto, JobOpeningDto } from '@hirekiwi/contracts';
 import { applicationsApi, openingsApi } from '../lib/api';
 import { CompanyDashboard } from './company-dashboard';
 

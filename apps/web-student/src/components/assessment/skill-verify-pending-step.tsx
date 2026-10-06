@@ -6,8 +6,8 @@ import type {
   GradeSdeSkillFormResponse,
   SkillVerifyInterviewDto,
   SkillVerifySessionDto,
-} from '@smart/contracts';
-import { Alert, Button } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Alert, Button } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { CompetencyResultsGrid } from './competency-results-grid';
 import { SkillEvidenceContextPanel } from './skill-evidence-context-panel';
@@ -154,7 +154,7 @@ export function SkillVerifyPendingStep({
             <Button
               type="button"
               variant="outline"
-              onClick={() => window.open('/profile', '_self')}
+              onClick={() => window.open('/student/profile', '_self')}
             >
               Open profile
             </Button>

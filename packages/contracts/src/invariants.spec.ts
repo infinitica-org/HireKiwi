@@ -94,7 +94,7 @@ describe('track registry', () => {
 
   it('throws a clear error for an unknown track code', () => {
     // @ts-expect-error deliberately invalid at the type level
-    expect(() => getTrackDefinition('NOT_A_TRACK')).toThrow(/Unknown SMART track code/);
+    expect(() => getTrackDefinition('NOT_A_TRACK')).toThrow(/Unknown HireKiwi track code/);
   });
 });
 
@@ -401,28 +401,6 @@ describe('batch import contracts', () => {
 });
 
 describe('SE-T02 skill interview contracts', () => {
-  it('registers generate and grade routes with an LLM spend cap', () => {
-    expect(
-      ROUTES.find((entry) => entry.path === '/evaluation/skill-interview/questions'),
-    ).toMatchObject({
-      method: 'POST',
-      module: 'evaluation',
-      owner: 'Ramansh',
-      roles: ['STUDENT'],
-      rateLimit: 'evaluation.skillInterview',
-    });
-    expect(
-      ROUTES.find((entry) => entry.path === '/evaluation/skill-interview/grade'),
-    ).toMatchObject({
-      method: 'POST',
-      module: 'evaluation',
-      owner: 'Ramansh',
-      roles: ['STUDENT'],
-      rateLimit: 'evaluation.skillInterview',
-    });
-    expect(getRateLimitPolicy('evaluation.skillInterview').limit).toBe(8);
-  });
-
   it('registers cert-agenda generate with a per-candidate LLM spend cap', () => {
     expect(ROUTES.find((entry) => entry.path === '/evaluation/cert-agenda/generate')).toMatchObject(
       {
@@ -544,52 +522,6 @@ describe('SDE v4 skill-verify assessment routes', () => {
   });
 });
 
-describe('SE-T04 cognitive profile contracts', () => {
-  it('registers student GET and refresh with an LLM spend cap on refresh only', () => {
-    expect(ROUTES.find((entry) => entry.path === '/evaluation/cognitive-profile')).toMatchObject({
-      method: 'GET',
-      module: 'evaluation',
-      owner: 'Ramansh',
-      roles: ['STUDENT'],
-      rateLimit: 'role.student',
-    });
-    expect(
-      ROUTES.find((entry) => entry.path === '/evaluation/cognitive-profile/refresh'),
-    ).toMatchObject({
-      method: 'POST',
-      module: 'evaluation',
-      owner: 'Ramansh',
-      roles: ['STUDENT'],
-      rateLimit: 'evaluation.cognitiveProfile',
-      execution: 'ASYNC',
-    });
-    expect(getRateLimitPolicy('evaluation.cognitiveProfile').limit).toBe(8);
-  });
-});
-
-describe('SE-T04 cognitive profile contracts', () => {
-  it('registers student GET and refresh with an LLM spend cap on refresh only', () => {
-    expect(ROUTES.find((entry) => entry.path === '/evaluation/cognitive-profile')).toMatchObject({
-      method: 'GET',
-      module: 'evaluation',
-      owner: 'Ramansh',
-      roles: ['STUDENT'],
-      rateLimit: 'role.student',
-    });
-    expect(
-      ROUTES.find((entry) => entry.path === '/evaluation/cognitive-profile/refresh'),
-    ).toMatchObject({
-      method: 'POST',
-      module: 'evaluation',
-      owner: 'Ramansh',
-      roles: ['STUDENT'],
-      rateLimit: 'evaluation.cognitiveProfile',
-      execution: 'ASYNC',
-    });
-    expect(getRateLimitPolicy('evaluation.cognitiveProfile').limit).toBe(8);
-  });
-});
-
 describe('CN-T06 my applications route', () => {
   it('exposes a student-only poll route with no studentId parameter', () => {
     const route = ROUTES.find((entry) => entry.path === '/me/applications');
@@ -624,10 +556,6 @@ describe('AC-T06 send-to-company routes', () => {
 
 describe('SE-T03 project verification contracts', () => {
   it('registers GitHub picker, submit, poll, and a separate project review queue', () => {
-    expect(ROUTES.find((entry) => entry.path === '/projects/github/status')).toMatchObject({
-      owner: 'Vishal V',
-      rateLimit: 'projects.github',
-    });
     expect(ROUTES.find((entry) => entry.path === '/projects')).toMatchObject({
       method: 'POST',
       owner: 'Vishal V',

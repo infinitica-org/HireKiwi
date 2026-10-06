@@ -26,7 +26,7 @@ export const nest = tseslint.config(
       '@typescript-eslint/no-unsafe-declaration-merging': 'off',
       // Nest DI relies on parameter properties in constructors.
       'no-useless-constructor': 'off',
-      // Structured logging via Nest Logger / @smart/observability only.
+      // Structured logging via Nest Logger / @hirekiwi/observability only.
       'no-console': 'error',
       'no-restricted-properties': [
         'error',
@@ -34,7 +34,7 @@ export const nest = tseslint.config(
           object: 'process',
           property: 'env',
           message:
-            'Read configuration from the validated config service (@smart/api-core platform/config/env.ts) — not process.env directly. See DEFINITION_OF_DONE.md §5.',
+            'Read configuration from the validated config service (@hirekiwi/api-core platform/config/env.ts) — not process.env directly. See DEFINITION_OF_DONE.md §5.',
         },
       ],
     },

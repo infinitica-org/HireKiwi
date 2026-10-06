@@ -4,7 +4,7 @@ import {
   CreateDataRequestSchema,
   DeactivateAccountRequestSchema,
   UpdatePersonalInfoRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountService } from './account.service.js';
 
@@ -295,6 +295,17 @@ describe('AccountService (STU-02)', () => {
         service.createDataRequest(userId, { type: 'CORRECTION', details: 'Fix my name spelling.' }),
       ).rejects.toBeInstanceOf(ConflictException);
       expect(prisma.dataSubjectRequest.create).not.toHaveBeenCalled();
+    });
+
+    it('answers 409 when a concurrent create wins the open-request index (S6-VV-159)', async () => {
+      prisma.dataSubjectRequest.findFirst.mockResolvedValue(null);
+      prisma.dataSubjectRequest.create.mockRejectedValueOnce(
+        Object.assign(new Error('Unique constraint failed'), { code: 'P2002' }),
+      );
+      await expect(
+        service.createDataRequest(userId, { type: 'DELETION', details: 'Please delete my data.' }),
+      ).rejects.toMatchObject({ response: { error: 'data_request_already_open' }, status: 409 });
+      expect(auditPublisher.record).not.toHaveBeenCalled();
     });
 
     it('validates that details are long enough', () => {

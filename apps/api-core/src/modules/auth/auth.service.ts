@@ -30,7 +30,7 @@ import {
   type RegisterRequest,
   type RegisterStudentRequest,
   type SelectableInstitutionDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { env } from '../../platform/config/env.js';
@@ -718,6 +718,7 @@ export function toAuthenticatedUser(user: {
   primaryTrack: { code: string } | null;
   secondaryTrack: { code: string } | null;
   profilePhotoObjectKey?: string | null;
+  profileHeadline?: string | null;
   cgpa?: Decimalish | null;
   sscPercentage?: Decimalish | null;
   hscPercentage?: Decimalish | null;
@@ -756,6 +757,7 @@ export function toAuthenticatedUser(user: {
     // Non-students skip candidate onboarding; students require the server flag.
     onboardingCompleted: user.role === 'STUDENT' ? Boolean(user.onboardingCompleted) : true,
     profilePhotoUrl: null,
+    profileHeadline: user.profileHeadline ?? null,
     cgpa: nullableDecimal(user.cgpa),
     sscPercentage: nullableDecimal(user.sscPercentage),
     hscPercentage: nullableDecimal(user.hscPercentage),

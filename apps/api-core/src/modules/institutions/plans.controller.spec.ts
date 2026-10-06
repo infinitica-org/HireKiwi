@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Reflector } from '@nestjs/core';
-import type { SubscriptionPlanDto } from '@smart/contracts';
+import type { SubscriptionPlanDto } from '@hirekiwi/contracts';
 import { PlansController } from './plans.controller.js';
 import type { InstitutionsService } from './institutions.service.js';
 import { ROLES_KEY } from '../../common/guards/roles.decorator.js';

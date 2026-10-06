@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { ConfirmDialog, type ConfirmDialogVariant } from '@smart/ui';
-import { CAMPUS_ACCESS_REASON_MIN } from '@smart/contracts';
+import { ConfirmDialog, type ConfirmDialogVariant } from '@hirekiwi/ui';
+import { CAMPUS_ACCESS_REASON_MIN } from '@hirekiwi/contracts';
 
 /**
  * A ConfirmDialog that also collects a reason (Deny, Revoke, Cancel event). The reason must be at least

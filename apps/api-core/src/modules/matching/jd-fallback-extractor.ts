@@ -10,7 +10,7 @@ import {
   type SkillProficiency,
   type SkillRequirement,
   type TrackCode,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 /**
  * Keyword-to-proficiency indicators for heuristic JD extraction.

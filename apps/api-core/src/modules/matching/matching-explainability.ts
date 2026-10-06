@@ -1,4 +1,4 @@
-import { getSkillBlueprint } from '@smart/contracts';
+import { getSkillBlueprint } from '@hirekiwi/contracts';
 import { QlixSmartAssessmentSchema } from '../evaluation/qlix-client.js';
 
 export type RulesExplainability = {

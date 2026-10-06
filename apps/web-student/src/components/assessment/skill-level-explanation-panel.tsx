@@ -1,9 +1,43 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { GetSkillLevelExplanationResponse } from '@smart/contracts';
-import { AiExplanationPanel } from '@smart/ui';
+import type { GetSkillLevelExplanationResponse } from '@hirekiwi/contracts';
+import { AiExplanationPanel } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
+import { friendlyExplanation } from '@/lib/friendly-skill-copy';
+
+const BASIS_LABELS: Record<string, string> = {
+  NONE: 'nothing yet',
+  ASSESSMENT_ONLY: 'your skill checks',
+  EVIDENCE_ONLY: 'your projects',
+  ASSESSMENT_AND_EVIDENCE: 'skill checks + projects',
+};
+
+const CONFIDENCE_LABELS: Record<string, string> = {
+  HIGH: 'very sure',
+  MEDIUM: 'pretty sure',
+  LOW: 'still a rough guess',
+};
+
+const LEVEL_LABELS: Record<string, string> = {
+  BEGINNER: 'Beginner',
+  INTERMEDIATE: 'Intermediate',
+  PROFICIENT: 'Proficient',
+  ADVANCED: 'Advanced',
+  PROFESSIONAL: 'Professional',
+};
+
+const FRESHNESS_LABELS: Record<string, string> = {
+  CURRENT: 'fresh',
+  RECENT: 'recent',
+  STALE: 'getting old',
+  EXPIRED: 'too old to count',
+};
+
+function levelLabel(value: string | null | undefined): string {
+  if (!value) return 'No level yet';
+  return LEVEL_LABELS[value] ?? value;
+}
 
 export function SkillLevelExplanationPanel({ skillCode }: { skillCode: string }) {
   const [data, setData] = useState<GetSkillLevelExplanationResponse | null>(null);
@@ -20,7 +54,7 @@ export function SkillLevelExplanationPanel({ skillCode }: { skillCode: string })
         if (!cancelled) setData(res);
       })
       .catch(() => {
-        if (!cancelled) setError('We could not load the level explanation right now.');
+        if (!cancelled) setError("Couldn't load this just now — please try again.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -33,7 +67,7 @@ export function SkillLevelExplanationPanel({ skillCode }: { skillCode: string })
   if (loading) {
     return (
       <p className="text-sm text-[var(--text-muted)]" role="status">
-        Loading why this level applies…
+        Finding out why this is your level…
       </p>
     );
   }
@@ -47,9 +81,9 @@ export function SkillLevelExplanationPanel({ skillCode }: { skillCode: string })
   }
 
   const conclusions = [
-    { key: 'verified', label: 'Verified record', value: data.verifiedVsAi.verified },
-    { key: 'assessment', label: 'Assessment', value: data.verifiedVsAi.assessmentSupported },
-    { key: 'inferred', label: 'AI inference', value: data.verifiedVsAi.evidenceInferred },
+    { key: 'verified', label: 'Your profile', value: data.verifiedVsAi.verified },
+    { key: 'assessment', label: 'Your skill check', value: data.verifiedVsAi.assessmentSupported },
+    { key: 'inferred', label: 'Your projects', value: data.verifiedVsAi.evidenceInferred },
   ].filter(
     (entry): entry is { key: string; label: string; value: NonNullable<typeof entry.value> } =>
       entry.value != null,
@@ -63,22 +97,24 @@ export function SkillLevelExplanationPanel({ skillCode }: { skillCode: string })
     >
       <AiExplanationPanel
         title="Why this level"
-        explanation={data.whyThisLevel}
+        explanation={friendlyExplanation(data.whyThisLevel)}
         tone={
           data.verifiedVsAi.alignment === 'INFERENCE_DIVERGES_FROM_VERIFIED' ? 'warning' : 'info'
         }
       />
 
       <div className="rounded-[var(--radius-card)] border border-[var(--surface-border)] bg-[var(--surface)] p-4 text-sm">
-        <p className="font-medium text-[var(--text-primary)]">{data.verifiedVsAi.headline}</p>
+        <p className="font-medium text-[var(--text-primary)]">
+          {friendlyExplanation(data.verifiedVsAi.headline)}
+        </p>
         {data.verifiedVsAi.detail ? (
           <p className="mt-2 leading-relaxed text-[var(--text-muted)]">
-            {data.verifiedVsAi.detail}
+            {friendlyExplanation(data.verifiedVsAi.detail)}
           </p>
         ) : null}
         <p className="mt-3 text-xs text-[var(--text-muted)]">
-          Basis: {data.basis.replaceAll('_', ' ').toLowerCase()} · Confidence:{' '}
-          {data.confidence.toLowerCase()}
+          Based on: {BASIS_LABELS[data.basis] ?? data.basis} · How sure we are:{' '}
+          {CONFIDENCE_LABELS[data.confidence] ?? data.confidence.toLowerCase()}
         </p>
       </div>
 
@@ -96,11 +132,11 @@ export function SkillLevelExplanationPanel({ skillCode }: { skillCode: string })
                       : 'bg-purple-50 text-purple-700',
                   ].join(' ')}
                 >
-                  {entry.value.claimType === 'VERIFIED_FACT' ? 'Verified fact' : 'AI inference'}
+                  {entry.value.claimType === 'VERIFIED_FACT' ? 'Confirmed' : 'Best guess'}
                 </span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {entry.value.proficiency ?? 'No level'} · {entry.value.summary}
+                {levelLabel(entry.value.proficiency)} · {friendlyExplanation(entry.value.summary)}
               </p>
             </li>
           ))}
@@ -109,7 +145,7 @@ export function SkillLevelExplanationPanel({ skillCode }: { skillCode: string })
 
       {data.reportRefs.length > 0 ? (
         <div className="text-xs text-muted-foreground" data-testid="report-refs">
-          <p className="font-medium text-foreground">Supporting records</p>
+          <p className="font-medium text-foreground">What we looked at</p>
           <ul className="mt-1 list-disc pl-4">
             {data.reportRefs.slice(0, 6).map((ref) => (
               <li key={`${ref.kind}-${ref.id}`}>
@@ -129,7 +165,7 @@ export function SkillLevelExplanationPanel({ skillCode }: { skillCode: string })
               className="rounded-lg border border-border bg-muted/40 px-3 py-2"
             >
               <p className="font-medium text-foreground">{row.capability}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{row.why}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{friendlyExplanation(row.why)}</p>
             </li>
           ))}
         </ul>
@@ -137,12 +173,13 @@ export function SkillLevelExplanationPanel({ skillCode }: { skillCode: string })
 
       {data.freshness.length > 0 ? (
         <div className="text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">Evidence freshness</p>
+          <p className="font-medium text-foreground">How fresh your proof is</p>
           <ul className="mt-1 list-disc pl-4">
             {data.freshness.slice(0, 4).map((row) => (
               <li key={row.evidenceId}>
-                {row.label}: {row.freshnessClass.toLowerCase()}
-                {row.staleAffectsConfidence ? ' (may reduce confidence)' : ''}
+                {row.label} —{' '}
+                {FRESHNESS_LABELS[row.freshnessClass] ?? row.freshnessClass.toLowerCase()}
+                {row.staleAffectsConfidence ? ' (this can make us less sure)' : ''}
               </li>
             ))}
           </ul>

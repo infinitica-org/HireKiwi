@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, MapPin } from 'lucide-react';
-import { isSmartApiError, queryKeys } from '@smart/api-client';
-import { useQueryClient } from '@smart/ui';
+import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { useQueryClient } from '@hirekiwi/ui';
 import { LightSelect } from '@/components/ui/LightSelect';
 import { CITY_OPTIONS } from '@/lib/onboarding-form';
 import { api } from '@/lib/api';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { AuthenticatedUser, InstitutionStudentDto, SkillClaimDto } from '@smart/contracts';
+import type { AuthenticatedUser, InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import { UniversityDashboard } from '../../components/dashboard/UniversityDashboard';
 import { api } from '../../lib/api';
 import { countInstitutionPlacementApplications } from '../../lib/placement-application-count';

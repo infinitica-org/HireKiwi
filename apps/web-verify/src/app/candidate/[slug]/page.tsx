@@ -1,9 +1,9 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { isSmartApiError } from '@smart/api-client';
-import { TierBadge } from '@smart/ui';
-import type { PublicCandidateProfileDto } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { TierBadge } from '@hirekiwi/ui';
+import type { PublicCandidateProfileDto } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 
 /** web-verify has no icon library dependency — small inline SVGs match its existing pages. */

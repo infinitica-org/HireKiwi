@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { JobOpeningDto } from '@smart/contracts';
+import type { JobOpeningDto } from '@hirekiwi/contracts';
 import { aggregateCampusCompanies } from './company-repository';
 
 function opening(overrides: Partial<JobOpeningDto>): JobOpeningDto {

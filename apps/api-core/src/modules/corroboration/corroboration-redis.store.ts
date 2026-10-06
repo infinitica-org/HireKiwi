@@ -6,7 +6,7 @@ import {
   type CorroborationReviewFlag,
   type CorroborationSnapshot,
   type VectorizedSignal,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { RedisService } from '../../platform/redis/redis.service.js';
 
 const SNAPSHOT_TTL_SECONDS = 7_776_000; // 90 days

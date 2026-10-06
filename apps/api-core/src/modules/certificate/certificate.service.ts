@@ -9,8 +9,8 @@ import type {
   Tier,
   CertifiableTier,
   TrackCode,
-} from '@smart/contracts';
-import { CertificateIssuedDataSchema, SMART_TOPICS } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import { CertificateIssuedDataSchema, SMART_TOPICS } from '@hirekiwi/contracts';
 import { env } from '../../platform/config/env.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';

@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 
 import { CertificatesSection } from '@/components/profile/CertificatesSection';
 
-vi.mock('@smart/ui', async (importOriginal) => {
+vi.mock('@hirekiwi/ui', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
@@ -11,7 +11,7 @@ vi.mock('@smart/ui', async (importOriginal) => {
   };
 });
 
-const { useQuery } = await import('@smart/ui');
+const { useQuery } = await import('@hirekiwi/ui');
 
 describe('CertificatesSection', () => {
   it('renders premium empty state when no certificates', () => {
@@ -77,7 +77,7 @@ describe('CertificatesSection', () => {
     expect(screen.getByText('SQL')).toBeTruthy();
     const manageLink = screen.getByRole('link', { name: 'View details' });
     expect(manageLink.getAttribute('href')).toBe(
-      '/certificates/add?id=00000000-0000-4000-8000-000000000001',
+      '/student/certificates/add?id=00000000-0000-4000-8000-000000000001',
     );
   });
 
@@ -129,6 +129,6 @@ describe('CertificatesSection', () => {
 
     const links = screen.getAllByRole('link', { name: /Add (your first )?certificate/i });
     expect(links.length).toBeGreaterThanOrEqual(2);
-    for (const link of links) expect(link.getAttribute('href')).toBe('/certificates/add');
+    for (const link of links) expect(link.getAttribute('href')).toBe('/student/certificates/add');
   });
 });

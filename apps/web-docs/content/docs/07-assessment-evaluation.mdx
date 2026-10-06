@@ -1,0 +1,84 @@
+---
+title: 07. Assessment & AI Evaluation
+description: Assessment lifecycle, AI project defense orchestration, BARS scoring rubrics, and model evaluation governance.
+---
+
+## 7.1 Assessment Framework Architecture
+
+HireKiwi assessments are designed to measure **applied engineering comprehension** rather than rote memorization or trivial algorithmic puzzles.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                   SERVER-AUTHORITATIVE TIMING (BullMQ)                 │
+│ Session start, deadline, and submission windows locked on Redis backend│
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                  PROCTORING TELEMETRY (Python CV Sidecar)              │
+│  MediaPipe Face Presence │ Multiple Face Alert │ Tab-Switch Telemetry  │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                 DYNAMIC CODE DEFENSE ORCHESTRATION                     │
+│  AST Code Probe Generator │ Audio Transcription │ Rubric Evaluator     │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 7.2 The AI Project Defense Engine
+
+Traditional technical interviews require expensive senior engineering hours. HireKiwi automates the **initial architectural defense** with deep LLM orchestration:
+
+1. **Repository Ingestion:** Candidate designates a production repository.
+2. **Context Window Assembly:** System selects three high-complexity functions, recent refactor commits, and architectural boundaries.
+3. **Dynamic Probe Generation:** The system prompts the LLM to generate targeted questions:
+   - _"Explain why you implemented this custom rate-limiter middleware instead of using Redis token buckets."_
+   - _"In file `auth.service.ts` line 84, what vulnerability exists if the JWT expiration is bypassed?"_
+4. **Candidate Defense:** Candidate responds verbally or via structured code edits.
+5. **Scoring against BARS Rubric:** The transcript is parsed against strict criteria (Correctness, Depth of Architectural Trade-offs, Edge Case Awareness).
+
+---
+
+## 7.3 BARS Evaluation Rubric Standards
+
+Every prompt evaluation must adhere to structured JSON output conforming to `@hirekiwi/contracts/src/dto/evaluation.dto.ts`:
+
+```json
+{
+  "rubricId": "BARS-SYS-DESIGN-V2",
+  "assignedTier": "GOLD",
+  "score": 0.88,
+  "confidence": 0.94,
+  "criteriaEvaluations": [
+    {
+      "criterion": "Architectural Trade-off Articulation",
+      "levelAchieved": "GOLD",
+      "evidenceCitation": "Candidate correctly explained that Redis sorted sets provide O(log(N)+M) complexity for sliding window queries, outperforming B-Tree scans."
+    },
+    {
+      "criterion": "Fault Tolerance & Error Recovery",
+      "levelAchieved": "SILVER",
+      "evidenceCitation": "Candidate identified retry backoff but omitted circuit breaking for external HTTP downstream dependencies."
+    }
+  ]
+}
+```
+
+---
+
+## 7.4 Anti-Cheat & Assessment Integrity
+
+- **Server-Authoritative Clock:** Assessment duration is enforced via BullMQ delayed jobs on Redis. Modifying client laptop clocks has zero effect on session termination.
+- **MediaPipe Facial Landmark Tracking:** Evaluates candidate presence, gaze angle deviations, and flags presence of secondary individuals in frame.
+- **DPDP Act 2023 Compliance:** Video snapshots are downsampled to $320\times 240$ grayscale, stored in private MinIO buckets with 30-day automated TTL expiration jobs, and purged completely. Raw video is never stored.
+
+---
+
+## 7.5 AI Evaluation Governance & Golden Dataset
+
+To prevent prompt drift and scoring hallucination:
+
+- **The 500-Sample Golden Dataset:** A curated repository of 500 human-assessed candidate code defenses across all engineering disciplines.
+- **Promotion Gate:** Any change to evaluation prompts or underlying models (e.g., GPT-4o, Claude 3.5 Sonnet) must execute against the Golden Dataset.
+- **Statistical Requirement:** The Pearson correlation coefficient ($r$) against human senior engineering judges must exceed $0.85$ ($r > 0.85$), and false-positive Gold ratings must remain strictly below $2.0\%$.

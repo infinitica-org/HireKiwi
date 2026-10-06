@@ -7,7 +7,7 @@ import type {
   AiUsageSummaryDto,
   InstitutionDto,
   CompanyDto,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 import { PageHeader } from '@/components/page-header';
 import { InlineAlert, PageStack } from '@/components/admin-ui';
@@ -79,7 +79,7 @@ export default function AnalyticsPage() {
       {/* KPI Cards from DB */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Registered Students */}
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
               Active Candidates
@@ -99,7 +99,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Card 2: Partner Universities */}
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
               Partner Universities
@@ -119,7 +119,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Card 3: Hiring Employers */}
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
               Hiring Employers
@@ -139,7 +139,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Card 4: AI Evaluations */}
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-4 shadow-2xs">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-4 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
               AI Evaluations (24h)
@@ -162,7 +162,7 @@ export default function AnalyticsPage() {
       {/* Main Grid: Plan Distribution & Verification Pipeline Breakdown */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Plan Capacity & Tier Breakdown */}
-        <div className="rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs lg:col-span-2">
+        <div className="rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs lg:col-span-2">
           <div className="flex items-start justify-between border-b border-zinc-100 pb-4">
             <div>
               <h3 className="font-heading text-sm font-bold tracking-tight text-zinc-900">
@@ -230,7 +230,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Database Health Summary */}
-        <div className="flex flex-col justify-between rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs">
+        <div className="flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs">
           <div>
             <div className="border-b border-zinc-100 pb-4">
               <h3 className="font-heading text-sm font-bold tracking-tight text-zinc-900">

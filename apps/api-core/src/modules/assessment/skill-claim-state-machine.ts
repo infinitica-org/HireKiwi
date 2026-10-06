@@ -4,7 +4,7 @@ import {
   SKILL_REFRESH_DAYS,
   type SkillClaimStatus,
   type SkillProficiency,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 /**
  * SE-T01 skill-claim state machine (ADR 0013 + contracts).
@@ -13,7 +13,7 @@ import {
  * UI labels (In verification, Demoted, Verified-Beginner, Cooldown) are derived,
  * never stored as extra enum values.
  *
- * Time math is isolated here. Durations come from `@smart/contracts` only.
+ * Time math is isolated here. Durations come from `@hirekiwi/contracts` only.
  * Refresh uses 24-hour multiples of SKILL_REFRESH_DAYS (not Skill.cooldownDays /
  * validityDays). Civil-calendar / timezone rules are pending product clarification.
  *

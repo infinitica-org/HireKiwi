@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Download, ShieldCheck, Users, Briefcase, ClipboardList } from 'lucide-react';
-import type { InstitutionStudentDto, JobOpeningDto, SkillClaimDto } from '@smart/contracts';
+import type { InstitutionStudentDto, JobOpeningDto, SkillClaimDto } from '@hirekiwi/contracts';
 import { api, employersApi, openingsApi } from '../../lib/api';
 import { countInstitutionPlacementApplications } from '../../lib/placement-application-count';
 import {

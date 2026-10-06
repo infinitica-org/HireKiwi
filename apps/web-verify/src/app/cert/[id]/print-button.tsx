@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@smart/ui';
+import { Button } from '@hirekiwi/ui';
 
 export function PrintButton() {
   return (

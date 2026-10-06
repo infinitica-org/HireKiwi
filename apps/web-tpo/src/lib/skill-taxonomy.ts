@@ -1,4 +1,4 @@
-import { SKILL_CATEGORIES, SKILL_DEFINITIONS, type SkillCategoryId } from '@smart/contracts';
+import { SKILL_CATEGORIES, SKILL_DEFINITIONS, type SkillCategoryId } from '@hirekiwi/contracts';
 
 export function skillNameFor(code: string): string {
   return SKILL_DEFINITIONS.find((skill) => skill.code === code)?.name ?? code;

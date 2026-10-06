@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { KafkaOutboxService } from './kafka-outbox.service.js';
-import { SMART_TOPICS } from '@smart/contracts';
+import { SMART_TOPICS } from '@hirekiwi/contracts';
 
 describe('KafkaOutboxService', () => {
   it('writes assessment.submitted to the outbox table', async () => {

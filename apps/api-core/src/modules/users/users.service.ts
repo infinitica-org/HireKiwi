@@ -6,7 +6,6 @@ import {
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import type {
   CandidateResumeFile,
@@ -14,7 +13,7 @@ import type {
   DeleteResumeResponse,
   UploadProfilePhotoResponse,
   UploadResumeResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type {
   AuthenticatedUser,
   CandidateOnboardingProfileResponse,
@@ -22,7 +21,7 @@ import type {
   CompleteCandidateOnboardingRequest,
   EnrollTrackRequest,
   LinkedinVerification,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import {
   CandidateOnboardingDraftSchema,
   CandidateOnboardingProfileSchema,
@@ -32,9 +31,10 @@ import {
   CompleteCandidateOnboardingRequestSchema,
   CURRENT_CONSENT_VERSION,
   DeleteResumeRequestSchema,
+  profileHeadlineForUser,
   SaveCandidateOnboardingDraftRequestSchema,
   SMART_TOPICS,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
@@ -76,6 +76,13 @@ export class UsersService {
         message: 'User not found.',
         statusCode: 404,
       });
+    }
+    // A student gets a headline from the shared list the first time they load their account
+    // (new and existing students alike); it is stored, so it stays the same afterwards.
+    if (user.role === 'STUDENT' && !user.profileHeadline) {
+      const profileHeadline = profileHeadlineForUser(user.id);
+      await this.prisma.user.update({ where: { id: userId }, data: { profileHeadline } });
+      return toAuthenticatedUserWithPhoto(this.storage, { ...user, profileHeadline });
     }
     return toAuthenticatedUserWithPhoto(this.storage, user);
   }
@@ -184,6 +191,7 @@ export class UsersService {
         details: parsed.error.flatten(),
       });
     }
+    await this.assertCatalogSkills(parsed.data.skills ?? []);
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== 'STUDENT') {
@@ -261,10 +269,19 @@ export class UsersService {
   private readResumeFiles(details: Record<string, unknown>): CandidateResumeFile[] {
     const parsedArray = CandidateResumeFilesSchema.safeParse(details.resumeFiles);
     if (parsedArray.success && parsedArray.data.length > 0) {
-      return parsedArray.data;
+      return parsedArray.data.slice(0, CANDIDATE_RESUME_FILES_MAX);
     }
     const single = CandidateResumeFileSchema.safeParse(details.resumeFile);
-    return single.success ? [single.data] : [];
+    if (single.success) {
+      return [single.data];
+    }
+    if (Array.isArray(details.resumeFiles) && details.resumeFiles.length > 0) {
+      const first = CandidateResumeFileSchema.safeParse(details.resumeFiles[0]);
+      if (first.success) {
+        return [first.data];
+      }
+    }
+    return [];
   }
 
   async getResumeState(userId: string): Promise<CandidateResumeStateResponse> {
@@ -314,6 +331,14 @@ export class UsersService {
       });
     }
 
+    const existing =
+      user.onboardingDetails && typeof user.onboardingDetails === 'object'
+        ? (user.onboardingDetails as Record<string, unknown>)
+        : {};
+    const currentFiles = this.readResumeFiles(existing);
+    const oldObjectKey = currentFiles[0]?.objectKey;
+
+    // Failure-safe: upload new object before altering DB state
     const objectKey = await this.storage.upload({
       buffer: file.buffer,
       namespace: `resumes/${userId}`,
@@ -330,20 +355,8 @@ export class UsersService {
       lastParsedAt: null,
     });
 
-    const existing =
-      user.onboardingDetails && typeof user.onboardingDetails === 'object'
-        ? (user.onboardingDetails as Record<string, unknown>)
-        : {};
-    const currentFiles = this.readResumeFiles(existing);
-    if (currentFiles.length >= CANDIDATE_RESUME_FILES_MAX) {
-      throw new UnprocessableEntityException({
-        error: 'resume_limit_reached',
-        message: `You can store up to ${CANDIDATE_RESUME_FILES_MAX} resume files. Remove one before uploading another.`,
-        statusCode: 422,
-      });
-    }
-
-    const resumeFiles = [resumeFile, ...currentFiles];
+    // Single resume rule: replacing any existing resume entry
+    const resumeFiles = [resumeFile];
     const merged = this.mergeProgressiveProfileDetails(existing, {
       resumeFile,
       resumeFiles,
@@ -353,6 +366,15 @@ export class UsersService {
       where: { id: userId },
       data: { onboardingDetails: merged as Prisma.InputJsonValue },
     });
+
+    // Best-effort cleanup of replaced storage object after DB update commits
+    if (oldObjectKey && oldObjectKey !== objectKey) {
+      try {
+        await this.storage.deleteObject(oldObjectKey);
+      } catch {
+        // Non-blocking: DB update is already authoritative
+      }
+    }
 
     return { resumeFile, resumeFiles };
   }
@@ -394,6 +416,12 @@ export class UsersService {
       where: { id: userId },
       data: { onboardingDetails: merged as Prisma.InputJsonValue },
     });
+
+    try {
+      await this.storage.deleteObject(objectKey);
+    } catch {
+      // Non-blocking
+    }
 
     return { resumeFiles };
   }
@@ -488,6 +516,35 @@ export class UsersService {
     });
   }
 
+  /**
+   * Th6-600 — technical skills must be real entries of the 10-track skill catalog. The schema
+   * already rejects free text and self-ratings; this rejects codes that are well-formed but unknown.
+   */
+  private async assertCatalogSkills(
+    skills: ReadonlyArray<{ type: 'technical' | 'language'; code?: string }>,
+  ): Promise<void> {
+    const codes = [
+      ...new Set(
+        skills.flatMap((skill) => (skill.type === 'technical' && skill.code ? [skill.code] : [])),
+      ),
+    ];
+    if (codes.length === 0) return;
+    const known = await this.prisma.skill.findMany({
+      where: { code: { in: codes } },
+      select: { code: true },
+    });
+    const knownCodes = new Set(known.map((row) => row.code));
+    const unknown = codes.filter((code) => !knownCodes.has(code));
+    if (unknown.length > 0) {
+      throw new BadRequestException({
+        error: 'validation_error',
+        message: 'Choose skills from the SMART skill catalog.',
+        statusCode: 400,
+        details: { unknownSkillCodes: unknown },
+      });
+    }
+  }
+
   async completeOnboarding(userId: string, body: unknown): Promise<AuthenticatedUser> {
     const parsed = CompleteCandidateOnboardingRequestSchema.safeParse(body);
     if (!parsed.success) {
@@ -500,6 +557,7 @@ export class UsersService {
     }
 
     const request: CompleteCandidateOnboardingRequest = parsed.data;
+    await this.assertCatalogSkills(request.skills);
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== 'STUDENT') {
       throw new ForbiddenException({

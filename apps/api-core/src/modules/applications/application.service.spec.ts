@@ -1,4 +1,4 @@
-import { SKILL_DEFINITIONS, ApplyToJobRequestSchema } from '@smart/contracts';
+import { SKILL_DEFINITIONS, ApplyToJobRequestSchema } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { withIdempotencyLedger } from '../company-profile/test-utils.js';
 import { ApplicationService } from './application.service.js';

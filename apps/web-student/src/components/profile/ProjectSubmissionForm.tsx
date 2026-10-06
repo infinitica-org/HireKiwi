@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { isSmartApiError } from '@smart/api-client';
-import type { GithubRepoSummary, ProjectDto } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import type { GithubRepoSummary, ProjectDto } from '@hirekiwi/contracts';
 import { AlertCircle, CheckCircle2, GitBranch, Plus, X } from 'lucide-react';
 import { ProjectDetailModal } from '@/components/profile/projects/ProjectDetailModal';
 import { ProjectEmptyState } from '@/components/profile/projects/ProjectEmptyState';
@@ -34,6 +34,7 @@ import {
   topStackTags,
   type ProjectFormFields,
 } from '../../lib/project-submission';
+import { uploadProjectEvidence } from '@/lib/evidence-upload';
 
 const POLL_MS = 4_000;
 const README_PREFILL_MAX_CHARS = 7_800;
@@ -43,6 +44,7 @@ export function ProjectSubmissionForm() {
   const highlightProjectId = searchParams.get('project');
   const canSubmitProjects = useFeatureFlag('project_verification');
   const [fields, setFields] = useState<ProjectFormFields>(EMPTY_PROJECT_FORM);
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ProjectFormFields, string>>>(
     {},
   );
@@ -95,6 +97,11 @@ export function ProjectSubmissionForm() {
       .then((full) => setDetailProject(full))
       .catch(() => undefined)
       .finally(() => setDetailLoading(false));
+  }, []);
+
+  const handleProjectDeleted = useCallback((projectId: string) => {
+    setProjects((prev) => (prev ?? []).filter((p) => p.projectId !== projectId));
+    setDetailProject(null);
   }, []);
 
   useEffect(() => {
@@ -262,12 +269,25 @@ export function ProjectSubmissionForm() {
               specificContribution: contribution,
             })),
           );
+          // Th6-600 — upload queued evidence files (presigned PUT, then server-verified attach).
+          let withDocs = created;
+          if (evidenceFiles.length > 0) {
+            const documents = [...(created.documents ?? [])];
+            try {
+              for (const file of evidenceFiles) {
+                documents.push(await uploadProjectEvidence(created.projectId, file));
+              }
+            } finally {
+              withDocs = { ...created, documents };
+            }
+          }
           setProjects((prev) =>
-            (prev ?? []).some((p) => p.projectId === created.projectId)
+            (prev ?? []).some((p) => p.projectId === withDocs.projectId)
               ? prev
-              : [created, ...(prev ?? [])],
+              : [withDocs, ...(prev ?? [])],
           );
-          setJustSubmitted(created);
+          setJustSubmitted(withDocs);
+          setEvidenceFiles([]);
           setFields(EMPTY_PROJECT_FORM);
           setFormOpen(false);
           setWizardStep('choose');
@@ -302,9 +322,10 @@ export function ProjectSubmissionForm() {
     >
       <ProfileSectionHeader
         title={meta.title}
+        evidenceType="PROJECT"
         description={meta.description}
         action={
-          canSubmitProjects && displayProjects.length > 0 ? (
+          canSubmitProjects ? (
             <button
               type="button"
               onClick={() => openForm()}
@@ -374,6 +395,7 @@ export function ProjectSubmissionForm() {
           topStack={topStack}
           canSubmit={canSubmitProjects}
           onView={viewProject}
+          onDelete={handleProjectDeleted}
           onAdd={() => openForm()}
         />
       ) : null}
@@ -411,6 +433,8 @@ export function ProjectSubmissionForm() {
         onFieldChange={setField}
         onSkillCodesChange={setSkillCodes}
         onSubmit={submit}
+        evidenceFiles={evidenceFiles}
+        onEvidenceFilesChange={setEvidenceFiles}
         onChooseGithub={() => {
           setWizardStep('github-list');
           loadReposIfNeeded();

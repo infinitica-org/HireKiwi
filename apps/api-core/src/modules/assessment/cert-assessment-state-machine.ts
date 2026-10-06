@@ -2,7 +2,7 @@ import {
   SKILL_INTER_ATTEMPT_COOLDOWN_HOURS,
   SKILL_MAX_ATTEMPTS,
   SKILL_REFRESH_DAYS,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { addInterAttemptCooldown, addSkillRefreshPeriod } from './skill-claim-state-machine.js';
 
 export type CertAssessmentSnapshot = {

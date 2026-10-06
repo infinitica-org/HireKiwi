@@ -6,7 +6,7 @@ import {
   getSessionRole,
   portalHomeForRole,
   type PortalOrigins,
-} from '@smart/api-client';
+} from '@hirekiwi/api-client';
 import { Card, CardDescription, CardHeader, CardTitle } from './card';
 import { Button, type ButtonVariant } from './button';
 

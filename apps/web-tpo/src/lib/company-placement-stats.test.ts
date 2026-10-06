@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PlacementRecordDto } from '@smart/contracts';
+import type { PlacementRecordDto } from '@hirekiwi/contracts';
 import { computeCompanyPlacementStats } from './company-placement-stats';
 
 const record = (overrides: Partial<PlacementRecordDto>): PlacementRecordDto => ({

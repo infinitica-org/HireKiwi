@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import type { SkillClaimDto } from '@smart/contracts';
-import { queryKeys } from '@smart/api-client';
-import { useQuery } from '@smart/ui';
+import type { SkillClaimDto } from '@hirekiwi/contracts';
+import { queryKeys } from '@hirekiwi/api-client';
+import { useQuery } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import {
   computeProfileCompletion,
@@ -95,6 +95,7 @@ export function useProfileProgress(): UseProfileProgressResult {
     profile: null,
     draft: null,
     onboardingCompleted: true,
+    profilePhotoUrl: null,
   };
   const claims = skillClaimsQuery.data ?? [];
   const education = educationQuery.data ?? [];
@@ -114,6 +115,7 @@ export function useProfileProgress(): UseProfileProgressResult {
         experiences,
         projects,
         certificates,
+        hasProfilePhoto: Boolean(onboarding.profilePhotoUrl),
       };
 
   const failureCount = queryResults.filter((query) => query.isError).length;

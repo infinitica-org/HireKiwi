@@ -1,4 +1,4 @@
-import type { EvidenceReviewDecision, EvidenceVerificationStatus } from '@smart/contracts';
+import type { EvidenceReviewDecision, EvidenceVerificationStatus } from '@hirekiwi/contracts';
 
 export const REVIEW_AUDIT_ACTIONS: Record<EvidenceReviewDecision, string> = {
   ACCEPTED: 'EVIDENCE_REVIEW_ACCEPTED',

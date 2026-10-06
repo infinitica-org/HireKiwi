@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Card, CardDescription, CardHeader, CardTitle, Input } from '@smart/ui';
+import { Button, Card, CardDescription, CardHeader, CardTitle, Input } from '@hirekiwi/ui';
 
 export default function Page() {
   const router = useRouter();

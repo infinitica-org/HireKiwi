@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Inject, Param, Post, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
-import { API_PREFIX, type SubmitManagerEndorsementDto } from '@smart/contracts';
+import { API_PREFIX, type SubmitManagerEndorsementDto } from '@hirekiwi/contracts';
 import { Public } from '../../common/guards/public.decorator.js';
 import { WorkExperienceService } from './work-experience.service.js';
 

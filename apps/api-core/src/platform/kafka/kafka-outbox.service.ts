@@ -7,8 +7,8 @@ import {
   SMART_TOPICS,
   type VerificationEventDto,
   type VerificationEventStatus,
-} from '@smart/contracts';
-import { getContext } from '@smart/observability';
+} from '@hirekiwi/contracts';
+import { getContext } from '@hirekiwi/observability';
 import { env } from '../config/env.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { KafkaService } from './kafka.service.js';

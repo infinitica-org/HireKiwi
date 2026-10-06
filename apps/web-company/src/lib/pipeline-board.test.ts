@@ -1,5 +1,5 @@
-import { SmartApiError } from '@smart/api-client';
-import { APPLICATION_STATUSES, type EmployerApplicantCard } from '@smart/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
+import { APPLICATION_STATUSES, type EmployerApplicantCard } from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   BOARD_COLUMNS,

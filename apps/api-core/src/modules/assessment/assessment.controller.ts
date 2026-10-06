@@ -36,7 +36,7 @@ import {
   type SkillVerifyPrepareDto,
   type SkillVerifySessionDto,
   SKILL_PROFICIENCIES,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { FastifyRequest } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
@@ -59,16 +59,6 @@ export class AssessmentController {
     private readonly certVerify: CertVerificationAssessmentService,
     @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
   ) {}
-
-  @Get('_meta')
-  meta() {
-    return {
-      module: 'assessment',
-      owner: this.service.owner,
-      purpose: this.service.purpose,
-      status: 'active',
-    };
-  }
 
   @Get('skill-claims')
   @Roles('STUDENT', 'INSTITUTION_ADMIN', 'PLACEMENT_STAFF')

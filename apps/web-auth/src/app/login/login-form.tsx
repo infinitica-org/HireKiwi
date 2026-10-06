@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { isSmartApiError } from '@smart/api-client';
-import { EMAIL_NOT_VERIFIED_ERROR } from '@smart/contracts';
+import { isSmartApiError } from '@hirekiwi/api-client';
+import { EMAIL_NOT_VERIFIED_ERROR } from '@hirekiwi/contracts';
 import { EyeIcon, EyeOffIcon } from '../../components/auth-icons';
 import { ResendVerification } from '../../components/resend-verification';
 import { api, redirectForRole, storeSession } from '../../lib/api';
@@ -50,7 +50,7 @@ export function LoginForm() {
   }
 
   return (
-    <section className="flex h-full w-full flex-col items-center justify-between text-center">
+    <section className="flex w-full flex-1 flex-col items-center justify-between text-center">
       <div className="my-auto flex w-full flex-col items-center justify-center pt-14 ">
         <img src="/icon.png" alt="SMART" className="mx-auto h-11 w-11 object-contain" />
 
@@ -73,7 +73,9 @@ export function LoginForm() {
           <button
             type="button"
             onClick={() => {
-              alert('Google authentication will redirect to your school single sign-on provider.');
+              alert(
+                'Google authentication will redirect to your university single sign-on provider.',
+              );
             }}
             className="flex h-11 w-full items-center justify-center gap-3 rounded-md border border-[#e5e7eb] bg-white px-4 text-md font-semibold text-[#111827]  transition hover:bg-slate-50 active:scale-[0.99]"
           >
@@ -111,6 +113,9 @@ export function LoginForm() {
           className="mt-2 w-full max-w-[420px] space-y-4 text-center mx-auto"
         >
           <div className="w-full">
+            <label htmlFor="email" className="sr-only">
+              Email
+            </label>
             <input
               id="email"
               type="email"
@@ -124,6 +129,9 @@ export function LoginForm() {
           </div>
 
           <div className="w-full">
+            <label htmlFor="password" className="sr-only">
+              Password
+            </label>
             <div className="relative">
               <input
                 id="password"
@@ -169,7 +177,7 @@ export function LoginForm() {
       </div>
 
       {/* Footer Legal Disclaimer */}
-      <footer className="mx-auto mt-auto pt-6 max-w-5xl text-center text-[12px] leading-relaxed text-neutral-400 px-4">
+      <footer className="mx-auto mt-auto w-full max-w-2xl px-4 pt-6 text-center text-[12px] leading-relaxed text-neutral-400">
         By continuing, you agree to our{' '}
         <Link
           href="/terms"

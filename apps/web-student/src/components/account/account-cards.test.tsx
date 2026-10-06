@@ -6,8 +6,12 @@ import { DataRequestsCard } from './DataRequestsCard';
 import { DeactivateAccountCard } from './DeactivateAccountCard';
 import { DiscoverabilityCard } from './DiscoverabilityCard';
 import { MessagingPreferenceCard } from './MessagingPreferenceCard';
+import { NotificationPreferencesCard } from './NotificationPreferencesCard';
 import { PersonalInfoCard } from './PersonalInfoCard';
 
+const { notifications } = vi.hoisted(() => ({
+  notifications: { getPreferences: vi.fn(), updatePreferences: vi.fn() },
+}));
 const { users, signOut } = vi.hoisted(() => ({
   users: {
     getPersonalInfo: vi.fn(),
@@ -24,7 +28,7 @@ const { users, signOut } = vi.hoisted(() => ({
   signOut: vi.fn(),
 }));
 
-vi.mock('@/lib/api', () => ({ api: { users } }));
+vi.mock('@/lib/api', () => ({ api: { users, notifications } }));
 vi.mock('@/lib/auth', () => ({ signOut: () => signOut() }));
 
 function renderWithClient(ui: ReactNode) {
@@ -34,6 +38,7 @@ function renderWithClient(ui: ReactNode) {
 
 beforeEach(() => {
   Object.values(users).forEach((fn) => fn.mockReset());
+  Object.values(notifications).forEach((fn) => fn.mockReset());
   signOut.mockReset().mockResolvedValue(undefined);
 });
 
@@ -160,6 +165,42 @@ describe('DiscoverabilityCard (S6-VV-113)', () => {
     await waitFor(() =>
       expect(users.updateDiscoverability).toHaveBeenCalledWith({ discoverableToEmployers: false }),
     );
+  });
+});
+
+describe('NotificationPreferencesCard (S6-VV-121)', () => {
+  const matrix = (emailOpportunity: boolean) => ({
+    preferences: [
+      { kind: 'OPPORTUNITY', channel: 'IN_APP', enabled: true, mandatory: false },
+      { kind: 'OPPORTUNITY', channel: 'EMAIL', enabled: emailOpportunity, mandatory: false },
+      { kind: 'ACCOUNT', channel: 'IN_APP', enabled: true, mandatory: true },
+      { kind: 'ACCOUNT', channel: 'EMAIL', enabled: true, mandatory: true },
+    ],
+  });
+
+  it('turns opportunity emails off and shows the saved state', async () => {
+    notifications.getPreferences.mockResolvedValue(matrix(true));
+    notifications.updatePreferences.mockResolvedValue(matrix(false));
+    renderWithClient(<NotificationPreferencesCard />);
+
+    const toggle = await screen.findByRole('switch', {
+      name: 'Opportunities from employers: Email',
+    });
+    await waitFor(() => expect(toggle.getAttribute('aria-checked')).toBe('true'));
+    fireEvent.click(toggle);
+
+    await waitFor(() => expect(toggle.getAttribute('aria-checked')).toBe('false'));
+    expect(notifications.updatePreferences).toHaveBeenCalledWith({
+      preferences: [{ kind: 'OPPORTUNITY', channel: 'EMAIL', enabled: false }],
+    });
+  });
+
+  it('locks the account and privacy switches on', async () => {
+    notifications.getPreferences.mockResolvedValue(matrix(true));
+    renderWithClient(<NotificationPreferencesCard />);
+    const locked = await screen.findByRole('switch', { name: 'Account and privacy: Email' });
+    await waitFor(() => expect((locked as HTMLButtonElement).disabled).toBe(true));
+    expect(locked.getAttribute('aria-checked')).toBe('true');
   });
 });
 

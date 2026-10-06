@@ -2,7 +2,7 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { GUARDS_METADATA, PATH_METADATA, ROUTE_ARGS_METADATA } from '@nestjs/common/constants.js';
-import type { UserRole } from '@smart/contracts';
+import type { UserRole } from '@hirekiwi/contracts';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { TenantId, TenantScope } from './decorators/tenant-id.decorator.js';
 import { PERMISSIONS_KEY, roleHasPermission, type Permission } from './guards/permissions.js';
@@ -34,9 +34,6 @@ const ALLOWED: Record<string, string> = {
   'CorroborationAdminController.listReviewFlags': 'filterFlagsForActor keeps actor.inst flags',
   'CorroborationAdminController.resolveReviewFlag': 'assertActorCanAccessFlag checks actor.inst',
   'EvidenceController.createDecision': "keyed to the caller's own id as studentId",
-  'InterviewsController.listScorecards':
-    'KNOWN GAP: in-memory scorecard stub, nothing persisted; must be scoped when it moves to the DB',
-  'InterviewsController.listSlots': "filtered by the caller's own institution/company id",
   'MessagingController.block': SELF,
   'MessagingController.list': SELF,
   'MessagingController.listBlocks': SELF,

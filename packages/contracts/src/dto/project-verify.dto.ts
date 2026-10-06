@@ -184,6 +184,18 @@ export const ProjectVerificationReportDtoSchema = z.object({
 });
 export type ProjectVerificationReportDto = z.infer<typeof ProjectVerificationReportDtoSchema>;
 
+/** Th6-600 — a PDF/PNG evidence file attached to a project. `fileUrl` is a 15-minute presigned link. */
+export const ProjectDocumentDtoSchema = z.object({
+  id: UuidSchema,
+  projectId: UuidSchema,
+  fileUrl: z.string().min(1),
+  fileName: z.string().min(1),
+  fileSizeBytes: z.number().int().positive(),
+  mimeType: z.string().min(1),
+  createdAt: IsoDateTimeSchema,
+});
+export type ProjectDocumentDto = z.infer<typeof ProjectDocumentDtoSchema>;
+
 export const ProjectDtoSchema = z.object({
   projectId: UuidSchema,
   studentId: UuidSchema,
@@ -207,6 +219,8 @@ export const ProjectDtoSchema = z.object({
   interviewStatus: ProjectInterviewStatusSchema,
   interviewCompletedAt: IsoDateTimeSchema.nullable(),
   exclusionReason: ProjectExclusionReasonSchema.nullable().optional(),
+  /** Th6-600 — evidence files. Omitted by older servers. */
+  documents: z.array(ProjectDocumentDtoSchema).optional(),
 });
 export type ProjectDto = z.infer<typeof ProjectDtoSchema>;
 

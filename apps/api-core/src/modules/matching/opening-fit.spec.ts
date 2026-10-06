@@ -1,4 +1,4 @@
-import { SKILL_DEFINITIONS } from '@smart/contracts';
+import { SKILL_DEFINITIONS } from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import { fitBandFor, scoreOpeningForStudent } from './opening-fit.js';
 

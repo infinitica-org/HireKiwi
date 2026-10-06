@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Injectable } from '@nestjs/common';
-import type { AiModelRole, AiProvider } from '@smart/contracts';
+import type { AiModelRole, AiProvider } from '@hirekiwi/contracts';
 import { env } from '../../../platform/config/env.js';
 import type {
   AiProviderAdapter,

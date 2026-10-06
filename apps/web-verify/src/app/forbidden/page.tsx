@@ -1,4 +1,4 @@
-import { ForbiddenWall } from '@smart/ui';
+import { ForbiddenWall } from '@hirekiwi/ui';
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';
 

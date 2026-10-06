@@ -3,7 +3,7 @@ import {
   ReplaceProjectRequestSchema,
   ReplaceProjectResponseSchema,
   type ReplaceProjectResponse,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { apiClient } from './api';
 
 export async function replaceStudentProject(

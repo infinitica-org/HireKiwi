@@ -5,9 +5,9 @@ import {
   INSTITUTION_STAFF_ROLES,
   type InstitutionAdminDto,
   type InstitutionStaffRole,
-} from '@smart/contracts';
-import { describeApiError } from '@smart/api-client';
-import { Button } from '@smart/ui/button';
+} from '@hirekiwi/contracts';
+import { describeApiError } from '@hirekiwi/api-client';
+import { Button } from '@hirekiwi/ui/button';
 import {
   AdminInput,
   DataTable,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import type { GetManagerEndorsementSurveyDto } from '@smart/contracts';
+import type { GetManagerEndorsementSurveyDto } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 
 interface PageProps {

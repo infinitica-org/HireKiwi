@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { toApplicationStatus, type ActorType, type AtsStage } from '@smart/contracts';
+import { toApplicationStatus, type ActorType, type AtsStage } from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 

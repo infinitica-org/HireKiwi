@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProjectDto, ProjectSkillMappingDto } from '@smart/contracts';
+import type { ProjectDto, ProjectSkillMappingDto } from '@hirekiwi/contracts';
 
 import {
   linkedEvidenceContextForSkill,

@@ -3,7 +3,7 @@ import type {
   ConnectableSignalSourceId,
   SignalConnectionStatus,
   SignalConnectionSummary,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { RedisService } from '../../platform/redis/redis.service.js';
 
 export interface StoredSignalConnection {

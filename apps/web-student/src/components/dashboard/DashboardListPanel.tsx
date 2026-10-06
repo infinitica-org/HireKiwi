@@ -91,7 +91,7 @@ export function DashboardListPanel({
   return (
     <section
       data-testid={testId}
-      className="flex flex-col rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]"
+      className="flex flex-col rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]"
     >
       <div className="flex items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800">
         <h3 className="font-heading text-base font-bold tracking-tight text-zinc-900 dark:text-white">

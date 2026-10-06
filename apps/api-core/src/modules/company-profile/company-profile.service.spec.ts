@@ -1,5 +1,5 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { COMPANY_ABOUT_MAX_LENGTH, UpdateCompanyProfileRequestSchema } from '@smart/contracts';
+import { COMPANY_ABOUT_MAX_LENGTH, UpdateCompanyProfileRequestSchema } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CompanyProfileService } from './company-profile.service.js';
 import { parseIfMatch } from './employer.controller.js';

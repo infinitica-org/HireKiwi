@@ -8,15 +8,15 @@ import {
   getAccessToken,
   PORTAL_ROLES,
   resolvePortalOriginsFromEnv,
-} from '@smart/api-client';
-import { RolesGuard, SessionBootstrap, SessionHoldWall, SmartApiProvider } from '@smart/ui';
+} from '@hirekiwi/api-client';
+import { RolesGuard, SessionBootstrap, SessionHoldWall, SmartApiProvider } from '@hirekiwi/ui';
 import { api } from '../lib/api';
 import { signOut } from '../lib/auth';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 const authUrl = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';
 const PORTAL_ORIGINS = resolvePortalOriginsFromEnv();
-const PUBLIC_PATHS = ['/login', '/auth', '/design-system'] as const;
+const PUBLIC_PATHS = ['/login', '/auth'] as const;
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

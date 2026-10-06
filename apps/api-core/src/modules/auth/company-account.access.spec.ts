@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROUTES } from '@smart/contracts';
+import { ROUTES } from '@hirekiwi/contracts';
 
 const COMPANY_PORTAL_ROLES = ['COMPANY'] as const;
 

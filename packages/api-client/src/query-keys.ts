@@ -23,6 +23,7 @@ export const queryKeys = {
   event: (eventId: string) => ['campus', 'event', eventId] as const,
   /* ------------------------------- identity ------------------------------- */
   me: () => ['me'] as const,
+  signalConnections: () => ['signals', 'connections'] as const,
   onboarding: () => ['me', 'onboarding'] as const,
   myTracks: () => ['me', 'tracks'] as const,
   myNotifications: () => ['me', 'notifications'] as const,
@@ -50,7 +51,6 @@ export const queryKeys = {
    * that any accidental caching is at least invalidatable.
    */
   nextItem: (attemptId: string) => ['attempt', attemptId, 'next-item'] as const,
-  sandboxJob: (jobId: string) => ['sandbox', jobId] as const,
   results: (attemptId: string) => ['results', attemptId] as const,
   skillVerifySession: (sessionId: string) => ['skill-verify', sessionId] as const,
 

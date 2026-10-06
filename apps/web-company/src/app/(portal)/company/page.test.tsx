@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SmartApiError } from '@smart/api-client';
-import type { CompanyProfile } from '@smart/contracts';
+import { SmartApiError } from '@hirekiwi/api-client';
+import type { CompanyProfile } from '@hirekiwi/contracts';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CompanyProfilePage from './page';

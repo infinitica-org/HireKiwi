@@ -5,9 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { X } from 'lucide-react';
-import { cn } from '@smart/ui';
+import { cn, SidebarLegalLinks } from '@hirekiwi/ui';
 
-import smartLogoImg from '@smart/ui/assets/images/Logos/WebP/Smart-logo.png';
+import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
 import { isNavLinkActive, isPlacementTopNavActive } from '../lib/tpo-nav';
 import {
   LayoutDashboard,
@@ -17,9 +17,10 @@ import {
   BarChart3,
   Handshake,
   Settings,
-  Shield,
   type LucideIcon,
 } from 'lucide-react';
+
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';
 
 interface NavItem {
   name: string;
@@ -101,7 +102,7 @@ export function TpoSidebar({ mobileOpen, onMobileOpenChange, collapsed = true }:
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex flex-col justify-between border-r border-zinc-200/80 bg-white font-sans transition-all duration-300 ease-in-out select-none dark:border-zinc-800 dark:bg-[#111111] lg:translate-x-0',
-          isExpanded ? 'w-64 items-start shadow-2xl lg:shadow-xl' : 'w-16 items-center shadow-none',
+          isExpanded ? 'w-64 items-start' : 'w-16 items-center',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
@@ -161,7 +162,7 @@ export function TpoSidebar({ mobileOpen, onMobileOpenChange, collapsed = true }:
                     aria-current={isActive ? 'page' : undefined}
                     title={item.name}
                     className={cn(
-                      'flex items-center rounded-md transition-all group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900',
+                      'flex items-center rounded-md transition-all duration-200 ease-out hover:translate-x-0.5 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:translate-x-0 group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900',
                       !isExpanded
                         ? 'size-10 justify-center'
                         : 'w-full gap-3 px-3 py-2 text-sm font-medium',
@@ -172,7 +173,7 @@ export function TpoSidebar({ mobileOpen, onMobileOpenChange, collapsed = true }:
                   >
                     <Icon
                       className={cn(
-                        'size-4.5 shrink-0 transition-colors',
+                        'size-4.5 shrink-0 transition-all duration-200 group-hover:scale-110 motion-reduce:transition-none',
                         isActive
                           ? 'stroke-[2.2] text-zinc-900 dark:text-white'
                           : 'text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300',
@@ -199,7 +200,7 @@ export function TpoSidebar({ mobileOpen, onMobileOpenChange, collapsed = true }:
             aria-current={pathname.startsWith('/settings') ? 'page' : undefined}
             title="Settings"
             className={cn(
-              'flex items-center rounded-md transition-all group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900',
+              'flex items-center rounded-md transition-all duration-200 ease-out hover:translate-x-0.5 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:translate-x-0 group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900',
               !isExpanded ? 'size-10 justify-center' : 'w-full gap-3 px-3 py-2 text-sm font-medium',
               pathname.startsWith('/settings')
                 ? 'bg-zinc-100 text-zinc-900 font-semibold dark:bg-zinc-800 dark:text-white shadow-2xs'
@@ -208,7 +209,7 @@ export function TpoSidebar({ mobileOpen, onMobileOpenChange, collapsed = true }:
           >
             <Settings
               className={cn(
-                'size-4.5 shrink-0 transition-colors',
+                'size-4.5 shrink-0 transition-all duration-200 group-hover:scale-110 motion-reduce:transition-none',
                 pathname.startsWith('/settings')
                   ? 'stroke-[2.2] text-zinc-900 dark:text-white'
                   : 'text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300',
@@ -217,29 +218,7 @@ export function TpoSidebar({ mobileOpen, onMobileOpenChange, collapsed = true }:
             {isExpanded && <span className="truncate">Settings</span>}
           </Link>
 
-          <Link
-            href="/privacy"
-            onClick={() => onMobileOpenChange(false)}
-            aria-current={pathname.startsWith('/privacy') ? 'page' : undefined}
-            title="Privacy Policy & Terms"
-            className={cn(
-              'flex items-center rounded-md transition-all group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900',
-              !isExpanded ? 'size-10 justify-center' : 'w-full gap-3 px-3 py-2 text-sm font-medium',
-              pathname.startsWith('/privacy')
-                ? 'bg-zinc-100 text-zinc-900 font-semibold dark:bg-zinc-800 dark:text-white shadow-2xs'
-                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-white',
-            )}
-          >
-            <Shield
-              className={cn(
-                'size-4.5 shrink-0 transition-colors',
-                pathname.startsWith('/privacy')
-                  ? 'stroke-[2.2] text-zinc-900 dark:text-white'
-                  : 'text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300',
-              )}
-            />
-            {isExpanded && <span className="truncate">Privacy & Terms</span>}
-          </Link>
+          <SidebarLegalLinks authUrl={AUTH_URL} expanded={isExpanded} />
         </div>
       </aside>
     </>

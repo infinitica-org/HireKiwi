@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@smart/api-client';
-import type { PublicCareerEvent } from '@smart/contracts';
-import { Alert, EmptyState, ErrorState, LoadingState, formatEventRange } from '@smart/ui';
+import { queryKeys } from '@hirekiwi/api-client';
+import type { PublicCareerEvent } from '@hirekiwi/contracts';
+import { Alert, EmptyState, ErrorState, LoadingState, formatEventRange } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { Badge, PageHeader } from '../../../components/ui';
 import { card, pageStack, primaryButton, secondaryButton } from '../../../lib/ui';

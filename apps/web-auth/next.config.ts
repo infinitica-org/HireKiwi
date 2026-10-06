@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next';
-import { withSmartConfig } from '@smart/next-config';
+import { withSmartConfig } from '@hirekiwi/next-config';
 
 const config: NextConfig = {};
 

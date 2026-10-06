@@ -16,8 +16,8 @@ import {
   AlertCircle,
   Info,
 } from 'lucide-react';
-import type { WorkExperienceDto } from '@smart/contracts';
-import { cn, useQuery } from '@smart/ui';
+import type { WorkExperienceDto } from '@hirekiwi/contracts';
+import { cn, useQuery } from '@hirekiwi/ui';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '../../lib/api';
 import { MY_APPLICATIONS_POLL_MS } from '../../lib/my-applications';
@@ -201,16 +201,13 @@ export function MyApplicationsTracker({
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6 pb-16 pt-2 font-sans select-none">
       {/* 🚀 Top Page Header */}
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200/80 pb-5 dark:border-zinc-800">
+      <section className="flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3.5">
-          <div className="flex size-11 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-900 shadow-2xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
-            <ShieldCheck className="size-6 stroke-[1.75]" />
-          </div>
           <div>
-            <h1 className="font-heading text-xl font-bold tracking-tight text-zinc-950 sm:text-2xl dark:text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl dark:text-white">
               Endorsement Tracking & Applications
             </h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm dark:text-zinc-400">
               Manage supervisor work experience verifications and live ATS placement stages
             </p>
           </div>
@@ -255,21 +252,21 @@ export function MyApplicationsTracker({
       </div>
 
       {/* Primary Section Tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto rounded-md border border-zinc-200/80 bg-zinc-100/75 p-1 dark:border-zinc-800 dark:bg-zinc-900/80">
+      <div className="flex w-full items-center gap-2 overflow-x-auto border-b border-zinc-200 [scrollbar-width:none] dark:border-zinc-800 [&::-webkit-scrollbar]:hidden">
         <button
           type="button"
           onClick={() => setActiveTab('endorsements')}
           className={cn(
-            'relative z-10 flex items-center gap-2 rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors duration-150',
+            'relative -mb-px flex shrink-0 items-center gap-2 px-3 py-2 text-sm font-medium transition-colors duration-150',
             activeTab === 'endorsements'
-              ? 'font-bold text-zinc-950 dark:text-white'
-              : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white',
+              ? 'font-semibold text-zinc-950 dark:text-white'
+              : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white',
           )}
         >
           {activeTab === 'endorsements' && (
             <motion.span
               layoutId="active-apps-tab"
-              className="absolute inset-0 -z-10 rounded-md border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-700/80 dark:bg-zinc-800"
+              className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-zinc-900 dark:bg-white"
               transition={{ type: 'spring', stiffness: 500, damping: 38 }}
             />
           )}
@@ -284,16 +281,16 @@ export function MyApplicationsTracker({
           type="button"
           onClick={() => setActiveTab('applications')}
           className={cn(
-            'relative z-10 flex items-center gap-2 rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors duration-150',
+            'relative -mb-px flex shrink-0 items-center gap-2 px-3 py-2 text-sm font-medium transition-colors duration-150',
             activeTab === 'applications'
-              ? 'font-bold text-zinc-950 dark:text-white'
-              : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white',
+              ? 'font-semibold text-zinc-950 dark:text-white'
+              : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white',
           )}
         >
           {activeTab === 'applications' && (
             <motion.span
               layoutId="active-apps-tab"
-              className="absolute inset-0 -z-10 rounded-md border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-700/80 dark:bg-zinc-800"
+              className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-zinc-900 dark:bg-white"
               transition={{ type: 'spring', stiffness: 500, damping: 38 }}
             />
           )}
@@ -329,7 +326,7 @@ export function MyApplicationsTracker({
             )}
           </div>
 
-          <div className="rounded-md border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
+          <div className="rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
             {experiencesLoading ? (
               <div className="py-12 text-center text-xs text-zinc-400">
                 Loading endorsement records…
@@ -354,7 +351,7 @@ export function MyApplicationsTracker({
                 </button>
               </div>
             ) : (
-              <div className="overflow-hidden rounded-md border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">
                 <table className="w-full text-left text-[13px] font-sans">
                   <thead>
                     <tr className="border-b border-zinc-200/80 bg-zinc-50/70 text-left text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-400">

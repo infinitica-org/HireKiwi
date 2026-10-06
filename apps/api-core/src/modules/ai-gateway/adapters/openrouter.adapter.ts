@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AiProvider } from '@smart/contracts';
+import type { AiProvider } from '@hirekiwi/contracts';
 import { env } from '../../../platform/config/env.js';
 import type {
   AiProviderAdapter,
@@ -100,7 +100,7 @@ export class OpenRouterAdapter implements AiProviderAdapter {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
         'HTTP-Referer': 'https://smart.infinitica.io',
-        'X-Title': 'SMART Platform',
+        'X-Title': 'HireKiwi Platform',
       },
       body: JSON.stringify(
         openRouterChatPayload({

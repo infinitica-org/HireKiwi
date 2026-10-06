@@ -1,4 +1,4 @@
-import type { JobOpeningAttachedDocument, SkillProficiency } from '@smart/contracts';
+import type { JobOpeningAttachedDocument, SkillProficiency } from '@hirekiwi/contracts';
 import {
   labelFor,
   proficiencyLabelFor,

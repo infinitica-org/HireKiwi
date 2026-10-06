@@ -59,6 +59,7 @@ function mockStorage() {
     getSignedDownloadUrl: vi
       .fn()
       .mockResolvedValue('https://storage.example/profile-photos/user-id/photo.jpg'),
+    deleteObject: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -413,13 +414,21 @@ describe('UsersService completeOnboarding', () => {
     const user = studentRow();
     prisma.user.findUnique.mockResolvedValueOnce(user);
     mockCompletedUpdate(prisma, user);
+    // Th6-600 — technical skills are checked against the skill catalog.
+    Object.assign(prisma, {
+      skill: {
+        findMany: vi
+          .fn()
+          .mockResolvedValue([{ code: 'GIT_VERSION_CONTROL' }, { code: 'PYTHON_PROGRAMMING' }]),
+      },
+    });
 
     await service.completeOnboarding(
       user.id,
       minimalCompletion({
         skills: [
-          { type: 'technical', name: 'Git & version control', proficiency: 'INTERMEDIATE' },
-          { type: 'technical', name: 'Python', proficiency: 'ADVANCED' },
+          { type: 'technical', code: 'GIT_VERSION_CONTROL', name: 'Git & version control' },
+          { type: 'technical', code: 'PYTHON_PROGRAMMING', name: 'Python' },
         ],
       }),
     );
@@ -803,5 +812,205 @@ describe('UsersService saveOnboardingDraft', () => {
         }),
       }),
     );
+  });
+
+  describe('UsersService resume operations', () => {
+    it('uploads initial resume for student without existing resume', async () => {
+      const user = studentRow({ onboardingDetails: {} });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/resume.pdf`);
+
+      const file = {
+        buffer: Buffer.from('PDF content mock'),
+        fileName: 'resume.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const result = await service.uploadResume(user.id, file);
+
+      expect(result.resumeFile.fileName).toBe('resume.pdf');
+      expect(result.resumeFiles).toHaveLength(1);
+      expect(result.resumeFiles[0]?.fileName).toBe('resume.pdf');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: user.id },
+        data: {
+          onboardingDetails: expect.objectContaining({
+            resumeFile: expect.objectContaining({ fileName: 'resume.pdf' }),
+            resumeFiles: [expect.objectContaining({ fileName: 'resume.pdf' })],
+          }),
+        },
+      });
+    });
+
+    it('replaces existing resume with newly uploaded resume and maintains max 1 active resume', async () => {
+      const oldResume = {
+        fileName: 'old-cv.pdf',
+        objectKey: 'resumes/u1/old-key.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 1024,
+        uploadedAt: '2026-09-01T10:00:00.000Z',
+        lastParsedAt: null,
+      };
+      const user = studentRow({
+        onboardingDetails: {
+          resumeFile: oldResume,
+          resumeFiles: [oldResume],
+        },
+      });
+
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/new-cv.pdf`);
+
+      const file = {
+        buffer: Buffer.from('New PDF content'),
+        fileName: 'new-cv.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const result = await service.uploadResume(user.id, file);
+
+      expect(result.resumeFile.fileName).toBe('new-cv.pdf');
+      expect(result.resumeFiles).toHaveLength(1);
+      expect(result.resumeFiles[0]?.fileName).toBe('new-cv.pdf');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: user.id },
+        data: {
+          onboardingDetails: expect.objectContaining({
+            resumeFile: expect.objectContaining({ fileName: 'new-cv.pdf' }),
+            resumeFiles: [expect.objectContaining({ fileName: 'new-cv.pdf' })],
+          }),
+        },
+      });
+
+      expect(storage.deleteObject).toHaveBeenCalledWith('resumes/u1/old-key.pdf');
+    });
+
+    it('rejects upload from non-student user', async () => {
+      const user = studentRow({ role: 'COMPANY' });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const file = {
+        buffer: Buffer.from('PDF content'),
+        fileName: 'resume.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await expect(service.uploadResume(user.id, file)).rejects.toThrow();
+    });
+
+    it('rejects invalid file types', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const file = {
+        buffer: Buffer.from('MZ executable header'),
+        fileName: 'malicious.exe',
+        mimeType: 'application/x-msdownload',
+      };
+
+      await expect(service.uploadResume(user.id, file)).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects files exceeding 5MB', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const file = {
+        buffer: Buffer.alloc(6 * 1024 * 1024),
+        fileName: 'large.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await expect(service.uploadResume(user.id, file)).rejects.toThrow(BadRequestException);
+    });
+
+    it('preserves existing database state if storage upload fails', async () => {
+      const oldResume = {
+        fileName: 'existing.pdf',
+        objectKey: 'resumes/u1/existing.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 1024,
+        uploadedAt: '2026-09-01T10:00:00.000Z',
+        lastParsedAt: null,
+      };
+      const user = studentRow({
+        onboardingDetails: {
+          resumeFile: oldResume,
+          resumeFiles: [oldResume],
+        },
+      });
+
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      storage.upload.mockRejectedValueOnce(new Error('S3 connection timed out'));
+
+      const file = {
+        buffer: Buffer.from('New content'),
+        fileName: 'new.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await expect(service.uploadResume(user.id, file)).rejects.toThrow('S3 connection timed out');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('reads resume state for student', async () => {
+      const sampleResume = {
+        fileName: 'my-resume.pdf',
+        objectKey: 'resumes/u1/my-resume.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 1024,
+        uploadedAt: '2026-09-01T10:00:00.000Z',
+        lastParsedAt: null,
+      };
+      const user = studentRow({
+        onboardingDetails: {
+          resumeFile: sampleResume,
+          resumeFiles: [sampleResume],
+        },
+      });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const state = await service.getResumeState(user.id);
+      expect(state.resumeFile?.fileName).toBe('my-resume.pdf');
+      expect(state.resumeFiles).toHaveLength(1);
+    });
+
+    it('deletes stored resume and updates user record', async () => {
+      const sampleResume = {
+        fileName: 'my-resume.pdf',
+        objectKey: 'resumes/u1/my-resume.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 1024,
+        uploadedAt: '2026-09-01T10:00:00.000Z',
+        lastParsedAt: null,
+      };
+      const user = studentRow({
+        onboardingDetails: {
+          resumeFile: sampleResume,
+          resumeFiles: [sampleResume],
+        },
+      });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+
+      const result = await service.deleteResume(user.id, {
+        objectKey: 'resumes/u1/my-resume.pdf',
+      });
+
+      expect(result.resumeFiles).toEqual([]);
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: user.id },
+        data: {
+          onboardingDetails: expect.not.objectContaining({
+            resumeFile: expect.anything(),
+          }),
+        },
+      });
+      expect(storage.deleteObject).toHaveBeenCalledWith('resumes/u1/my-resume.pdf');
+    });
   });
 });

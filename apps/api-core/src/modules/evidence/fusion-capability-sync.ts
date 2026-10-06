@@ -2,7 +2,7 @@ import type {
   CompetencyStatus,
   ProficiencyLevel,
   SkillEvidenceInferenceSnapshot,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export const FUSION_CAPABILITY_MODEL_PREFIX = 'fusion:' as const;
 

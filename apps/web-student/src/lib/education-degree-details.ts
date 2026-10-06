@@ -1,4 +1,4 @@
-import type { CandidateDegreeDetailsDto, CandidateEducationDto } from '@smart/contracts';
+import type { CandidateDegreeDetailsDto, CandidateEducationDto } from '@hirekiwi/contracts';
 import { programLevelForDegree } from './education-form-program';
 
 export const DEFAULT_SEMESTERS_PER_YEAR = 2;

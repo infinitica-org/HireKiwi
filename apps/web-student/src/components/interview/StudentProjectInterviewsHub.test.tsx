@@ -46,7 +46,7 @@ describe('StudentProjectInterviewsHub', () => {
 
     expect(await screen.findByRole('heading', { name: 'Capstone CRM' })).toBeDefined();
     expect(screen.getByRole('link', { name: /Start interview/i }).getAttribute('href')).toBe(
-      '/profile/projects/proj-1/defense',
+      '/student/profile/projects/proj-1/defense',
     );
   });
 });

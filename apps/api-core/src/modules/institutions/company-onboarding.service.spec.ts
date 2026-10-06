@@ -11,7 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('node:dns/promises', () => ({
   resolveMx: vi.fn().mockResolvedValue([{ exchange: 'mx.example.net', priority: 10 }]),
 }));
-import type { CompanySignupProfile, CompanyVerification } from '@smart/contracts';
+import type { CompanySignupProfile, CompanyVerification } from '@hirekiwi/contracts';
 import { hashOnboardingSecret } from './company-onboarding.util.js';
 import { CompanyOnboardingService } from './company-onboarding.service.js';
 

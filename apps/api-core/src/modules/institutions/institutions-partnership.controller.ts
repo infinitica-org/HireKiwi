@@ -4,7 +4,7 @@ import {
   API_PREFIX,
   ActivatePartnershipAccountRequestSchema,
   CreatePartnershipRequestSchema,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import { Public } from '../../common/guards/public.decorator.js';
 import { InstitutionsService } from './institutions.service.js';
 

@@ -17,7 +17,7 @@ import {
   AddBatchMemberRequestSchema,
   INSTITUTION_STAFF_ROLES,
   SMART_ORG_PROVISIONED_ACTION,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type {
   ActivatePartnershipAccountRequest,
   ActivatePartnershipAccountResponse,
@@ -83,12 +83,12 @@ import type {
   BulkResolveCompanyVerificationsRequest,
   BulkOperationResult,
   BulkWhitelistProgressDto,
-} from '@smart/contracts';
-import { BulkWhitelistProgressDtoSchema, REDIS_TTL_SECONDS } from '@smart/contracts';
+} from '@hirekiwi/contracts';
+import { BulkWhitelistProgressDtoSchema, REDIS_TTL_SECONDS } from '@hirekiwi/contracts';
 import { BULK_WHITELIST_IMPORT_QUEUE } from '../../platform/queue/queue.names.js';
 import type { Prisma } from '../../generated/prisma/index.js';
 import ExcelJS from 'exceljs';
-import { batchImportRows, cacheOperations, quotaExceeded } from '@smart/observability';
+import { batchImportRows, cacheOperations, quotaExceeded } from '@hirekiwi/observability';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import {
   EMAIL_QUEUE,
@@ -1599,7 +1599,7 @@ export class InstitutionsService {
         where: auditWhere,
         include: { actor: { select: { email: true, role: true } } },
         orderBy: { createdAt: 'desc' },
-        take: 8,
+        take: 25, // admin dashboard pages through these 5 at a time
       }),
       this.prisma.companyVerification.count({
         where: {

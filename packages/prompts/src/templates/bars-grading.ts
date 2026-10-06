@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BarsGradeSchema } from '@smart/contracts';
+import { BarsGradeSchema } from '@hirekiwi/contracts';
 import type { PromptTemplate } from '../types.js';
 import {
   INJECTION_GUARD,

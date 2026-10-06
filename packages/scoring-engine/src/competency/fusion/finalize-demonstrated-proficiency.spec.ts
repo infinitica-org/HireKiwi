@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CompetencyFusionResult } from '@smart/contracts';
+import type { CompetencyFusionResult } from '@hirekiwi/contracts';
 import {
   fusionRequiresProficiencyDowngrade,
   resolveDemonstratedProficiencyForFinalize,

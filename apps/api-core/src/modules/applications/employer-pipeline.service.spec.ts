@@ -1,4 +1,4 @@
-import { TransitionApplicationRequestSchema } from '@smart/contracts';
+import { TransitionApplicationRequestSchema } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IDS } from '../company-profile/test-utils.js';
 import { EmployerPipelineService } from './employer-pipeline.service.js';

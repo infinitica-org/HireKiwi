@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { API_PREFIX, SubmitCertificateEndorsementDecisionRequestSchema } from '@smart/contracts';
+import { API_PREFIX, SubmitCertificateEndorsementDecisionRequestSchema } from '@hirekiwi/contracts';
 import { Public } from '../../common/guards/public.decorator.js';
 import { CandidateCertificatesService } from './candidate-certificates.service.js';
 

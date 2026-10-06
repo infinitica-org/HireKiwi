@@ -1,0 +1,59 @@
+---
+title: 10. Employer Platform
+description: Employer onboarding, verified job publishing, talent search, pipeline management, and hiring analytics.
+---
+
+## 10.1 Employer Platform Overview
+
+The Employer Platform (`company.becomesmart.online`) provides talent acquisition teams with direct access to pre-verified candidate dossiers, eliminating resume screening and initial technical rounds.
+
+```
+[Onboarding & Domain Verify] ──► [Post Verified Requisition] ──► [Search Talent Graph] ──► [Manage Pipeline]
+```
+
+---
+
+## 10.2 Employer Verification & Trust Verification
+
+To protect student privacy and prevent fraudulent recruiter accounts:
+
+- **Corporate Domain Validation:** Registration requires a business email domain (free webmail like Gmail/Yahoo rejected).
+- **Corporate Identity Verification:** Automated lookup via Ministry of Corporate Affairs (MCA) / CIN directory or Dun & Bradstreet API.
+- **TPO Partnership Approval:** For campus-exclusive drives, the university placement officer must explicitly authorize the employer tenant.
+
+---
+
+## 10.3 Requisition Authoring & Verification Thresholds
+
+When creating a job requisition, employers define technical criteria using HireKiwi taxonomy:
+
+- **Role Title & Compensation:** e.g., Associate Backend Engineer (CTC: 12–16 LPA).
+- **Mandatory Hard Gates:** Minimum CGPA ($7.0$), graduation year ($2026$), approved engineering branches.
+- **Competency Floors:** e.g., Requires minimum **Silver Tier** in `API Architecture` and **Bronze Tier** in `Container Orchestration`.
+- **Application Mode:** Direct Application, Automated Cohort Shortlist, or Campus Placement Drive slot.
+
+---
+
+## 10.4 The Verified Talent Search Interface
+
+Recruiters can bypass job postings entirely and query the global talent graph:
+
+- **Natural Language Semantic Search:** _"Find candidates who built microservices with Redis queues and have verified Gold tier in PostgreSQL."_
+- **Facet Filters:** Filter by verified BARS tiers, university location, graduation year, and availability.
+- **Instant Candidate Dossier:** Click any candidate to inspect verified GitHub pull requests, test code coverage metrics, and summarized competency rubric evaluations verified at the source by Vivi (interview recordings remain restricted per privacy safeguards `FR-INT-01.13`).
+
+---
+
+## 10.5 Applicant Tracking & Candidate Pipeline (APP-02)
+
+The candidate pipeline is organized into six standardized operational stages (`FR-APP-02.01`):
+
+```
+[APPLIED] ──► [REVIEWING] ──► [INTERVIEWING] ──► [OFFERED] ──► [HIRED]
+    │              │                │                │
+    ▼              ▼                ▼                ▼
+[REJECTED]     [REJECTED]       [REJECTED]       [REJECTED / DECLINED]
+```
+
+- **Bulk Actions:** Export shortlisted candidates to enterprise ATS (Greenhouse, Lever, Darwinbox) via webhook.
+- **Hiring Outcome Feedback:** Upon hiring or rejecting a candidate, the recruiter records technical feedback to calibrate future talent matching models.

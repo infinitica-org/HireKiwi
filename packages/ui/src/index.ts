@@ -1,13 +1,13 @@
 /**
- * @smart/ui — SMART design system.
+ * @hirekiwi/ui — HireKiwi design system.
  *
  * Consumed as source via Next `transpilePackages`. Do not add a runtime build
  * step here; the four web apps compile this with their own bundler.
  *
- * Shadcn primitives live under subpaths (`@smart/ui/button`, `@smart/ui/sidebar`)
+ * Shadcn primitives live under subpaths (`@hirekiwi/ui/button`, `@hirekiwi/ui/sidebar`)
  * so they do not collide with the SMART Button / Card / Alert used by existing
  * portals. Shared theme + `bg-background` / `text-foreground` tokens ship via
- * `@smart/ui/styles.css`.
+ * `@hirekiwi/ui/styles.css`.
  *
  * Owner: Satheswaran V.
  */
@@ -26,8 +26,9 @@ export {
   BrandLoadingScreen,
   type BrandLoadingScreenProps,
 } from './components/brand-loading-screen';
+export const HIREKIWI_HTML_CLASS = 'dark';
 /** Apply on `<html>` in every portal so class-based `dark:` utilities match the product theme. */
-export const SMART_HTML_CLASS = 'dark';
+export const SMART_HTML_CLASS = HIREKIWI_HTML_CLASS;
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './components/button';
 export {
   TierBadge,
@@ -52,6 +53,7 @@ export {
   verifiedTooltip,
   type VerifiedBadgeProps,
 } from './components/verified-badge';
+export { SidebarLegalLinks, type SidebarLegalLinksProps } from './components/sidebar-legal-links';
 export { StatusBadge, type WorkflowStatus, type StatusBadgeProps } from './components/status-badge';
 export { Modal, type ModalSize, type ModalProps } from './components/modal';
 export {
@@ -98,12 +100,17 @@ export {
 } from './components/common-states';
 export * from './navigation/role-nav-config';
 export {
+  HireKiwiLogo,
   SmartLogo,
+  type HireKiwiLogoKind,
   type SmartLogoKind,
+  type HireKiwiLogoProps,
   type SmartLogoProps,
+  type HireKiwiLogoTone,
   type SmartLogoTone,
+  HIREKIWI_MARK_TEAL,
   SMART_MARK_TEAL,
-} from './components/smart-logo';
+} from './components/hirekiwi-logo';
 export { SignOutButton, type SignOutButtonProps } from './components/sign-out-button';
 export { SessionBootstrap } from './session-bootstrap';
 export { SessionHoldWall } from './components/session-hold-wall';
@@ -208,6 +215,7 @@ export const UI_VERSION = '0.1.0';
 
 /* COM-01 — direct messaging (Th6-422 to Th6-430). */
 export { MessagesWorkspace, type MessagesWorkspaceProps } from './messaging/messages-workspace';
+export { NotificationsMenu, type NotificationsMenuProps } from './notifications/notifications-menu';
 export {
   StartConversationDialog,
   type StartConversationDialogProps,

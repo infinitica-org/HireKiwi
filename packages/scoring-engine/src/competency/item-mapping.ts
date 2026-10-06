@@ -2,7 +2,7 @@ import {
   PROFICIENCY_LEVEL_ORDER,
   type ProficiencyLevel,
   type SkillCompetency,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 
 export type SdeFormStage = 'DIAGNOSTIC' | 'FULL';
 export type SdeFormFormat = 'MCQ' | 'TRACE' | 'CODING' | 'SCENARIO' | 'DEBUG' | 'DESIGN_REASONING';

@@ -1,8 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Badge, Button, EmptyState, ErrorState, LoadingState, getInitials } from '@smart/ui';
-import type { CampusEmployerStatus, UniversityEmployerRow } from '@smart/contracts';
+import {
+  Alert,
+  Badge,
+  Button,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  getInitials,
+} from '@hirekiwi/ui';
+import type { CampusEmployerStatus, UniversityEmployerRow } from '@hirekiwi/contracts';
 import { api } from '../../lib/api';
 import { ReasonConfirmDialog } from './ReasonConfirmDialog';
 

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { SignalWeightModel } from '@smart/contracts';
+import type { SignalWeightModel } from '@hirekiwi/contracts';
 
 type ChecksumInput = Pick<SignalWeightModel, 'modelVersion' | 'weightsBySourceAndDimension'>;
 

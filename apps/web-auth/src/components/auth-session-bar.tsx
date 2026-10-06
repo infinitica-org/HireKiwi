@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getAccessToken } from '@smart/api-client';
-import { SignOutButton } from '@smart/ui';
+import { getAccessToken } from '@hirekiwi/api-client';
+import { SignOutButton } from '@hirekiwi/ui';
 import { signOut } from '../lib/auth';
 
 export function AuthSessionBar() {

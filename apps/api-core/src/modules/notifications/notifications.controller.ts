@@ -1,6 +1,10 @@
 import { Controller, Get, Inject, Param, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { API_PREFIX, type ListNotificationsResponse, type NotificationDto } from '@smart/contracts';
+import {
+  API_PREFIX,
+  type ListNotificationsResponse,
+  type NotificationDto,
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { NotificationsService } from './notifications.service.js';

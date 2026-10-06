@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ResumeParseDraftSchema } from '@smart/contracts';
+import { ResumeParseDraftSchema } from '@hirekiwi/contracts';
 import { coerceGoogleStructuredOutput } from './google.output-coerce.js';
 
 describe('coerceGoogleStructuredOutput', () => {

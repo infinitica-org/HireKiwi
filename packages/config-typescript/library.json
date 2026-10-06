@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "SMART shared library",
+  "display": "HireKiwi shared library",
   "extends": "./base.json",
   "compilerOptions": {
     "module": "NodeNext",

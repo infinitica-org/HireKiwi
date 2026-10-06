@@ -19,9 +19,9 @@ import {
   X,
   Plus,
 } from 'lucide-react';
-import { isSmartApiError } from '@smart/api-client';
+import { isSmartApiError } from '@hirekiwi/api-client';
 import { CustomSelect } from '../ui/CustomSelect';
-import type { BatchDto, BatchMemberDto } from '@smart/contracts';
+import type { BatchDto, BatchMemberDto } from '@hirekiwi/contracts';
 import { BatchImportWizard } from '../batch-import-wizard';
 import { api } from '../../lib/api';
 import { validateInstitutionEmail } from '../../lib/domain-validation';

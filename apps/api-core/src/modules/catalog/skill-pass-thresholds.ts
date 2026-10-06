@@ -1,4 +1,4 @@
-import type { SkillPassThresholdsDto } from '@smart/contracts';
+import type { SkillPassThresholdsDto } from '@hirekiwi/contracts';
 
 /**
  * INF-05: PRD v1 §7.3 example bars (configurable per skill, not a second cert grid).

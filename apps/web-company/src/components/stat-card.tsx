@@ -19,15 +19,15 @@ export function StatCard({
   return (
     <div className={`${card} flex items-center gap-4`}>
       <span
-        className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${iconWrap[accent]}`}
+        className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${iconWrap[accent]}`}
       >
-        <Icon className="size-5" strokeWidth={1.75} />
+        <Icon className="size-4.5" strokeWidth={1.5} />
       </span>
       <div className="min-w-0">
-        <p className="text-2xl font-semibold tracking-tight text-[var(--ds-text)] sm:text-3xl">
+        <p className="font-heading text-2xl font-extrabold leading-none tracking-tight text-zinc-900 sm:text-3xl">
           {value}
         </p>
-        <p className="mt-0.5 text-sm font-medium text-[var(--ds-text-muted)]">{label}</p>
+        <p className="mt-1 text-xs font-semibold text-zinc-500">{label}</p>
       </div>
     </div>
   );

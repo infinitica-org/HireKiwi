@@ -11,8 +11,8 @@ import {
   EMPLOYER_APPLICATION_STATUS_LABELS,
   type ApplicantSortKey,
   type ApplicationStatus,
-} from '@smart/contracts';
-import { Alert, Button, EmptyState, ErrorState, LoadingState } from '@smart/ui';
+} from '@hirekiwi/contracts';
+import { Alert, Button, EmptyState, ErrorState, LoadingState } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { useApplicantMoves } from '@/lib/use-applicant-moves';
 import { CandidatePanel } from '@/components/pipeline/CandidatePanel';
@@ -21,6 +21,9 @@ import { StatusSelect } from '@/components/pipeline/StatusSelect';
 import { PageHeader } from '../../../../../components/ui';
 import {
   pageStack,
+  segmentOff,
+  segmentOn,
+  segmentedShell,
   table,
   tableCell,
   tableHeadCell,
@@ -88,7 +91,7 @@ export default function JobApplicantsPage() {
       />
 
       <div className="flex flex-wrap items-end gap-3">
-        <div role="tablist" aria-label="View" className="flex gap-2">
+        <div role="tablist" aria-label="View" className={segmentedShell}>
           {(['list', 'board'] as const).map((option) => (
             <button
               key={option}
@@ -96,7 +99,7 @@ export default function JobApplicantsPage() {
               role="tab"
               aria-selected={view === option}
               onClick={() => setView(option)}
-              className={`rounded-full px-3 py-1.5 text-sm font-semibold ${view === option ? 'bg-zinc-900 text-white' : 'bg-zinc-100'}`}
+              className={view === option ? segmentOn : segmentOff}
             >
               {option === 'list' ? 'List' : 'Pipeline board'}
             </button>

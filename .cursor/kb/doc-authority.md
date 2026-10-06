@@ -1,26 +1,29 @@
-# Document authority
+# Document Authority
 
 When sources disagree, use this order:
 
-1. **`.github/CODEOWNERS`** + **`TEAM.md`** — who owns what (mechanical + human)
-2. **`packages/contracts/**`** — API/event/rate-limit shapes actually enforced in code
-3. **`ARCHITECTURE.md`** — system design, SLAs, schema narrative, rate-limit rationale
-4. **`docs/delivery/*`** — calendar, DoD, engineer guides (process)
-5. **`docs/product/prd-v1/`** — frozen MMP product pack (Product Owner, 28 Aug 2026). Story and `[M]` scope. Does **not** override TEAM.md or contracts. Improvements via ADR, not in-place PRD edits. Architect map: `docs/delivery/PRD_V1_ARCHITECT_REVIEW.md`
-   - **V1 ship lock (1 Sep 2026):** [`docs/SMART_Platform_Playbook.md`](../../docs/SMART_Platform_Playbook.md) + [`docs/SMART_V1_Launch_Roadmap.md`](../../docs/SMART_V1_Launch_Roadmap.md) + [ADR 0013](../../docs/adr/0013-v1-retry-and-credentials.md). Retry = 1 reattempt / 35-day refresh. Licenses on the profile. These win over older playbook 3-strike text and PRD §7.3 cooldown examples.
-6. **`tools/zoho-sprint*/backlog.mjs`** — sprint ticket AC/DoD/subtasks (synced to GitHub Issues)
-7. **`README.md`** — local ports and bootstrap (prefer over guide tables if they conflict)
-8. Older narrative docs (`SERVICES_VIEW.md` ownership tables, blueprint marketing copy) — **historical**; do not override TEAM.md
+1. **`.github/CODEOWNERS`** + **`TEAM.md`** — who owns what (mechanical + human).
+2. **`packages/contracts/**`** — API/event/rate-limit shapes actually enforced in code.
+3. **`apps/web-docs/content/docs/delivery/AI_DLC_FRAMEWORK.mdx`** — AI-DLC delivery doctrine ("The Hardest Part of AI Coding Was Never Generation — It Was Delivery").
+4. **`apps/web-docs/content/docs/blueprints/hirekiwi-rnd-blueprint.mdx`** — R&D objectives, architecture decisions, and readiness criteria.
+5. **Minutes of Meeting (MoM 03/10/2026)** / **`apps/web-docs/content/docs/delivery/MOM_2026_10_03_TECHNICAL_REVIEW.mdx`** — latest technical and product decisions.
+6. **`apps/web-docs/content/docs/delivery/OCTOBER_2026_SPRINT_PLAN.mdx`** — active October 2026 sprint plan and weekly deliverables.
+7. **`ARCHITECTURE.md`** — system design, SLAs, schema narrative, rate-limit rationale.
+8. **`apps/web-docs/content/docs/*`** — Single Source of Truth (Fumadocs portal on :3006).
+9. **`tools/zoho-sprint*/backlog.mjs`** — sprint ticket AC/DoD/subtasks (synced to GitHub Issues).
+10. **`README.md`** — local ports and bootstrap.
+11. Older narrative docs with legacy working titles ("SmartZen", "Vivi", "HireKiwi") — **superseded/historical**; do not hallucinate autonomous agents or use deprecated names.
 
-## Known drift (logged 2026-08-21)
+## Known Architecture Truths (October 2026)
 
-| Topic                    | Wrong / stale                                               | Prefer                                                                                          |
-| ------------------------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Auth / sandbox ownership | `SERVICES_VIEW` assigns auth→Satheeswaran, sandbox→Tino     | TEAM: **Vishal V** owns auth + sandbox                                                          |
-| Local ports              | `ENGINEER_GUIDES` table (student:3000, api:4000)            | README + `env.ts`: **API 3000**, webs **3001–3004**                                             |
-| Nest/Next versions       | Some docs say Nest 10 / Next 14                             | README: Nest **11** / Next **16**                                                               |
-| Sprint count             | ARCHITECTURE says 5 sprints                                 | AGILE_PLAN: **6** (S0–S5) in 21 days                                                            |
-| Auth vendor              | Occasional "Clerk" mentions                                 | Dual JWT + SSO (OAuth/SAML, no Supabase) — implement per contracts/TEAM                         |
-| Matching owner           | Product Owner assigned VV; CODEOWNERS `matching/` = Ramansh | **ADR 0012:** VV implements rules ranker via PR to `matching`; RM reviews. Git owner unchanged. |
-
-Update this file when you discover new conflicts.
+| Topic                     | Deprecated / Hallucinated        | Authoritative Truth                                                                                                        |
+| ------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Product Name**          | "SmartZen" / "HireKiwi"          | **HireKiwi Intelligent Talent Discovery Platform**                                                                         |
+| **Delivery Framework**    | OpenSpec (static markdown)       | **AI-DLC (AI-Driven Software Delivery Lifecycle)** with machine-actionable MCP tickets                                     |
+| **Verification Agent**    | "Vivi Autonomous Agent"          | Modular Ingestion & Verification Engine (`apps/api-core`, BullMQ workers, cryptographic HMAC-SHA256, human verifier queue) |
+| **Matching Engine**       | Generative LLM scoring / ranking | **Algorithmic hybrid matcher** (hard SQL filters + weighted requirement scoring + `pgvector` HNSW cosine similarity)       |
+| **Review Accountability** | Ambiguous review queue           | **Partnered students:** College review queue; **Independent students:** Platform review queue                              |
+| **Job ID Format**         | 32-bit integer                   | **Incremental structured Job ID format** (`JOB-YYYY-NNNNNN`)                                                               |
+| **Mobile Number**         | Multiple accounts per mobile     | **1 Mobile Number = 1 Account** strictly enforced                                                                          |
+| **Telemetry Validation**  | Raw model ingestion              | **4D telemetry validation & deep learning pipeline checks**                                                                |
+| **Matching Recompute**    | Full-cohort re-run               | **Event-driven delta re-indexing** upon student registration or proficiency upgrade                                        |

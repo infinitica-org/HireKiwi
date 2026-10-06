@@ -13,7 +13,7 @@
 import { randomUUID } from 'node:crypto';
 import { NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
-import { UpdatePlanPriceRequestSchema, SubscriptionPlanDtoSchema } from '@smart/contracts';
+import { UpdatePlanPriceRequestSchema, SubscriptionPlanDtoSchema } from '@hirekiwi/contracts';
 import { InstitutionsService } from './institutions.service.js';
 
 const noopRedis = { get: vi.fn(), setex: vi.fn(), del: vi.fn() };

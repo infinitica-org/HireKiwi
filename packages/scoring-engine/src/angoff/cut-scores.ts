@@ -1,5 +1,5 @@
 import { Effect } from 'effect';
-import type { CertifiableTier } from '@smart/contracts';
+import type { CertifiableTier } from '@hirekiwi/contracts';
 import { InsufficientPanelError, NonMonotonicCutScoresError } from '../errors.js';
 import { mean, roundTo, standardDeviation } from '../statistics.js';
 

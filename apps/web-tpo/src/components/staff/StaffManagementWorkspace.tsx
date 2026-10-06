@@ -12,8 +12,8 @@ import {
   LoadingState,
   Modal,
   StatusBadge,
-} from '@smart/ui';
-import type { InviteStaffRequest, StaffMemberDto, StaffRole } from '@smart/contracts';
+} from '@hirekiwi/ui';
+import type { InviteStaffRequest, StaffMemberDto, StaffRole } from '@hirekiwi/contracts';
 import { staffApi } from '../../lib/api';
 import { InviteStaffModal } from './InviteStaffModal';
 

@@ -1,13 +1,14 @@
 'use client';
 
-import type { GithubRepoSummary } from '@smart/contracts';
-import { Input } from '@smart/ui';
+import type { GithubRepoSummary } from '@hirekiwi/contracts';
+import { Input } from '@hirekiwi/ui';
 import { GitBranch, Loader2, PenLine, X } from 'lucide-react';
 import { GithubImportPanel } from '@/components/profile/projects/GithubImportPanel';
 import { ProjectSkillsPicker } from '@/components/profile/projects/ProjectSkillsPicker';
 import type { ProjectSkillOption } from '@/lib/project-form-skills';
 import type { ProjectFormFields } from '@/lib/project-submission';
 import { profilePrimaryButtonClass, profileSecondaryButtonSmClass } from '@/lib/profile-ui-classes';
+import { EvidenceFilesPicker } from '@/components/profile/EvidenceFilesPicker';
 
 export type ProjectWizardStep = 'choose' | 'github-list' | 'github-importing' | 'manual';
 
@@ -28,6 +29,9 @@ type ProjectFormModalProps = {
   onFieldChange: (key: keyof ProjectFormFields, value: string) => void;
   onSkillCodesChange: (codes: string[]) => void;
   onSubmit: () => void;
+  /** Th6-600 — PDF/PNG evidence files queued for upload after the project is created. */
+  evidenceFiles?: File[];
+  onEvidenceFilesChange?: (files: File[]) => void;
   onChooseGithub: () => void;
   onChooseManual: () => void;
   onBackToChoose: () => void;
@@ -36,7 +40,7 @@ type ProjectFormModalProps = {
 };
 
 const textareaClass =
-  'rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2 text-sm text-[var(--ds-text)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green)]/30';
+  'rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2 text-sm text-[var(--ds-text)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green)]/30';
 
 export function ProjectFormModal({
   open,
@@ -55,6 +59,8 @@ export function ProjectFormModal({
   onFieldChange,
   onSkillCodesChange,
   onSubmit,
+  evidenceFiles = [],
+  onEvidenceFilesChange,
   onChooseGithub,
   onChooseManual,
   onBackToChoose,
@@ -67,7 +73,7 @@ export function ProjectFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center font-sans"
       role="presentation"
       onClick={onClose}
     >
@@ -75,7 +81,7 @@ export function ProjectFormModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="project-form-title"
-        className="max-h-[min(92dvh,880px)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-xl"
+        className="max-h-[min(92dvh,880px)] w-full max-w-2xl overflow-y-auto rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <header className="sticky top-0 z-[1] flex items-start justify-between gap-3 border-b border-[var(--ds-border-subtle)] bg-[var(--ds-surface)] px-6 py-4">
@@ -96,7 +102,7 @@ export function ProjectFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
+            className="rounded-md p-2 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
             aria-label="Close add project dialog"
           >
             <X className="h-5 w-5" />
@@ -109,7 +115,7 @@ export function ProjectFormModal({
               <button
                 type="button"
                 onClick={onChooseGithub}
-                className="flex flex-col items-start gap-2 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-hover)]/30 p-4 text-left transition hover:border-[var(--ds-green)]/40 hover:bg-[var(--ds-green-soft)]/20"
+                className="flex flex-col items-start gap-2 rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface-hover)]/30 p-4 text-left transition hover:border-[var(--ds-green)]/40 hover:bg-[var(--ds-green-soft)]/20"
               >
                 <GitBranch className="size-5 text-[var(--ds-green)]" aria-hidden="true" />
                 <span className="text-sm font-semibold text-[var(--ds-text)]">
@@ -122,7 +128,7 @@ export function ProjectFormModal({
               <button
                 type="button"
                 onClick={onChooseManual}
-                className="flex flex-col items-start gap-2 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-hover)]/30 p-4 text-left transition hover:border-[var(--ds-green)]/40 hover:bg-[var(--ds-green-soft)]/20"
+                className="flex flex-col items-start gap-2 rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface-hover)]/30 p-4 text-left transition hover:border-[var(--ds-green)]/40 hover:bg-[var(--ds-green-soft)]/20"
               >
                 <PenLine className="size-5 text-[var(--ds-green)]" aria-hidden="true" />
                 <span className="text-sm font-semibold text-[var(--ds-text)]">Add manually</span>
@@ -160,7 +166,7 @@ export function ProjectFormModal({
 
           {wizardStep === 'github-importing' ? (
             <div
-              className="flex flex-col items-center justify-center gap-3 rounded-xl border border-[var(--ds-border-subtle)] bg-[var(--ds-surface-muted)]/60 px-6 py-12 text-center"
+              className="flex flex-col items-center justify-center gap-3 rounded-md border border-[var(--ds-border-subtle)] bg-[var(--ds-surface-muted)]/60 px-6 py-12 text-center"
               aria-live="polite"
             >
               <Loader2 className="size-8 animate-spin text-[var(--ds-green)]" aria-hidden="true" />
@@ -194,6 +200,9 @@ export function ProjectFormModal({
                   <div className="flex flex-col gap-1.5 text-sm">
                     <label className="font-medium text-[var(--ds-text)]" htmlFor="problem">
                       Problem
+                      <span className="ml-1.5 text-xs font-normal text-[var(--ds-text-muted)]">
+                        (at least 20 characters)
+                      </span>
                     </label>
                     <textarea
                       id="problem"
@@ -212,6 +221,9 @@ export function ProjectFormModal({
                   <div className="flex flex-col gap-1.5 text-sm">
                     <label className="font-medium text-[var(--ds-text)]" htmlFor="approach">
                       Approach
+                      <span className="ml-1.5 text-xs font-normal text-[var(--ds-text-muted)]">
+                        (at least 20 characters)
+                      </span>
                     </label>
                     <textarea
                       id="approach"
@@ -221,6 +233,7 @@ export function ProjectFormModal({
                       disabled={isPending}
                       onChange={(event) => onFieldChange('approach', event.target.value)}
                       className={textareaClass}
+                      aria-invalid={fieldErrors.approach ? true : undefined}
                     />
                     {fieldErrors.approach ? (
                       <span className="text-xs text-red-600">{fieldErrors.approach}</span>
@@ -248,6 +261,9 @@ export function ProjectFormModal({
                   <div className="flex flex-col gap-1.5 text-sm">
                     <label className="font-medium text-[var(--ds-text)]" htmlFor="outcome">
                       Outcome
+                      <span className="ml-1.5 text-xs font-normal text-[var(--ds-text-muted)]">
+                        (at least 20 characters)
+                      </span>
                     </label>
                     <textarea
                       id="outcome"
@@ -257,7 +273,11 @@ export function ProjectFormModal({
                       disabled={isPending}
                       onChange={(event) => onFieldChange('outcome', event.target.value)}
                       className={textareaClass}
+                      aria-invalid={fieldErrors.outcome ? true : undefined}
                     />
+                    {fieldErrors.outcome ? (
+                      <span className="text-xs text-red-600">{fieldErrors.outcome}</span>
+                    ) : null}
                   </div>
                 </div>
               </section>
@@ -290,6 +310,13 @@ export function ProjectFormModal({
                     disabled={isPending}
                     onChange={(event) => onFieldChange('liveUrl', event.target.value)}
                   />
+                  {onEvidenceFilesChange ? (
+                    <EvidenceFilesPicker
+                      files={evidenceFiles}
+                      onChange={onEvidenceFilesChange}
+                      disabled={isPending}
+                    />
+                  ) : null}
                 </div>
               </section>
             </>

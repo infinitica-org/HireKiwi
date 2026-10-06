@@ -3,7 +3,7 @@ import type {
   CompanyReview,
   ListCompanyReviewsResponse,
   RespondToReviewRequest,
-} from '@smart/contracts';
+} from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { requireCompanyActor } from './company-access.js';

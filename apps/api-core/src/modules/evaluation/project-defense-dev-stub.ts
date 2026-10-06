@@ -1,4 +1,4 @@
-import type { ProjectDefenseContext, ProjectDefenseSessionDto } from '@smart/contracts';
+import type { ProjectDefenseContext, ProjectDefenseSessionDto } from '@hirekiwi/contracts';
 import {
   candidateDeniedProjectOwnership,
   resolveInterviewFinalTurn,
