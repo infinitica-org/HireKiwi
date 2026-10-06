@@ -53,12 +53,13 @@ export const tpoCredentials = {
   password: str('TEST_TPO_PASSWORD', credentials.password),
 };
 
-/** Platform admin and employer accounts — same seed, used by the dashboards scenario. */
+/** Platform admin account — same seed, used by the dashboards scenario. */
 export const adminCredentials = {
   username: str('TEST_ADMIN_USERNAME', 'admin@smart.local'),
   password: str('TEST_ADMIN_PASSWORD', credentials.password),
 };
 
+/** Employer account — same seed, used by the dashboards and employer candidate-search scenarios. */
 export const companyCredentials = {
   username: str('TEST_COMPANY_USERNAME', 'company@smart.local'),
   password: str('TEST_COMPANY_PASSWORD', credentials.password),

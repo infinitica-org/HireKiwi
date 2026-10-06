@@ -13,15 +13,25 @@
  */
 import { trafficMix } from '../config/index.js';
 import { browsingScenario } from '../scenarios/browsing.js';
-import { searchScenario } from '../scenarios/catalog-search.js';
+import { employerCandidateSearchScenario, searchScenario } from '../scenarios/catalog-search.js';
 import { apiReadsScenario } from '../scenarios/api.js';
 import { writesScenario } from '../scenarios/writes.js';
 import { businessFlowScenario } from '../scenarios/business-flow.js';
 import { pickUser } from './data.js';
 
+/**
+ * S6-VV-132 (#587): the "search" bucket now covers both real search endpoints — split evenly
+ * so the employer candidate search (its own, stricter threshold) gets steady coverage in the
+ * mixed run instead of needing a separate standalone script.
+ */
+function runSearchBucket() {
+  if (Math.random() < 0.5) return searchScenario();
+  return employerCandidateSearchScenario();
+}
+
 const WEIGHTED_SCENARIOS = [
   ['browsing', trafficMix.browsing, () => browsingScenario()],
-  ['search', trafficMix.search, () => searchScenario()],
+  ['search', trafficMix.search, () => runSearchBucket()],
   ['api_reads', trafficMix.apiReads, (user) => apiReadsScenario(user)],
   ['writes', trafficMix.writes, (user) => writesScenario(user)],
   ['business_flow', trafficMix.businessFlow, (user) => businessFlowScenario(user)],
