@@ -24,6 +24,11 @@ export const THRESHOLD_VALUES = {
   writesP95: ms('THRESHOLD_WRITES_P95_MS', 200),
   /** S6-VV-131 (#586): the "dashboard loads within budget" target is INTERACTIVE, same as apiP95. */
   dashboardP95: ms('THRESHOLD_DASHBOARD_P95_MS', 500),
+  /**
+   * S6-VV-132 (#587): employer candidate search is INTERACTIVE (500ms), not the 300ms
+   * `searchP95` above — that bucket was set for the cheaper TPO roster/catalog filter.
+   */
+  employerSearchP95: ms('THRESHOLD_EMPLOYER_SEARCH_P95_MS', 500),
 };
 
 /**
@@ -76,5 +81,6 @@ export function buildThresholds(opts = {}) {
     business_flow_duration: wrap([`p(95)<${t.businessFlowP95}`]),
     business_flow_errors: wrap(['rate<0.02']),
     ...buildDashboardThresholds(opts),
+    'http_req_duration{name:search_employer_candidates}': wrap([`p(95)<${t.employerSearchP95}`]),
   };
 }

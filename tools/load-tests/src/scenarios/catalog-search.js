@@ -11,7 +11,7 @@
  * therefore TPO-role and authenticated, not anonymous.
  */
 import { sleep } from 'k6';
-import { API_PREFIX, tpoCredentials, urls } from '../config/index.js';
+import { API_PREFIX, companyCredentials, tpoCredentials, urls } from '../config/index.js';
 import { login } from '../helpers/auth.js';
 import { timedGet, thinkTime } from '../helpers/http.js';
 import { searchLatency } from '../helpers/metrics.js';
@@ -27,5 +27,25 @@ export function searchScenario() {
   timedGet(`${urls.api}${API_PREFIX}/tpo/students${qs}`, searchLatency, 'search_tpo_students', {
     headers: { Authorization: `Bearer ${session.accessToken}` },
   });
+  sleep(thinkTime());
+}
+
+/**
+ * S6-VV-132 (#587): employer-facing candidate search, `GET /placement/students/search`
+ * (matching.service.ts searchStudents — multidimensional filters, not the TPO roster's plain
+ * name/term filter above). Its own named request so it gets its own threshold
+ * (employerSearchP95 in config/thresholds.js) instead of sharing search_latency with the
+ * cheaper TPO query.
+ */
+export function employerCandidateSearchScenario() {
+  const session = login(companyCredentials.username, companyCredentials.password);
+  if (!session) return;
+
+  timedGet(
+    `${urls.api}${API_PREFIX}/placement/students/search`,
+    searchLatency,
+    'search_employer_candidates',
+    { headers: { Authorization: `Bearer ${session.accessToken}` } },
+  );
   sleep(thinkTime());
 }
