@@ -79,6 +79,8 @@ export const CandidateCertificateDtoSchema = z.object({
   issueDate: z.string().nullable().optional(),
   expiryDate: z.string().nullable().optional(),
   verificationUrl: z.string().nullable(),
+  /** Badge picture read from a verified Credly link; null when there is none. */
+  previewImageUrl: z.string().nullable().optional(),
   verificationMethod: CertificateVerificationMethodSchema.nullable(),
   certificateFileUrl: z.string().nullable(),
   certificateFileName: z.string().nullable(),

@@ -8,6 +8,7 @@ import { ListActiveUsersResponseSchema, type ListActiveUsersQuery } from '@hirek
 import {
   ConnectSignalSourceResponseSchema,
   ListSignalConnectionsResponseSchema,
+  SignalProfilePreviewSchema,
   type ConnectSignalSourceRequest,
   type ConnectableSignalSourceId,
 } from '@hirekiwi/contracts';
@@ -2972,6 +2973,14 @@ export function signalsApi(client: SmartApiClient) {
       client.post(prefixed(`/signals/connect/${sourceId}`), body, {
         schema: ConnectSignalSourceResponseSchema,
       }),
+
+    /** Check a username and get its public profile (name, photo) before connecting. */
+    lookup: (sourceId: ConnectableSignalSourceId, username: string) =>
+      client.post(
+        prefixed(`/signals/lookup/${sourceId}`),
+        { username },
+        { schema: SignalProfilePreviewSchema },
+      ),
 
     disconnect: (sourceId: ConnectableSignalSourceId) =>
       client.delete(prefixed(`/signals/disconnect/${sourceId}`), {

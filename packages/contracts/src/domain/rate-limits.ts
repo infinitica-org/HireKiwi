@@ -459,6 +459,15 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     rationale: 'S6-VB-01 connect/disconnect external signal sources.',
   },
   {
+    key: 'signals.lookup',
+    scope: 'USER',
+    limit: 30,
+    windowSeconds: 60,
+    burst: 5,
+    redisKey: 'rl:signals:lookup:user:{id}',
+    rationale: 'Check a username and show its public profile before connecting.',
+  },
+  {
     key: 'read.adminQueue',
     scope: 'USER',
     limit: 60,

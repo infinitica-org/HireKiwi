@@ -104,6 +104,90 @@ export function getSessionRole(): UserRole | null {
   return decodeAccessTokenRole(token);
 }
 
+/** Seconds-precision `iat` claim of an access token, in ms; null when unreadable. */
+function accessTokenIssuedAtMs(accessToken: string): number | null {
+  const payload = accessToken.split('.')[1];
+  if (!payload) return null;
+  try {
+    const iat = (JSON.parse(utf8FromBase64Url(payload)) as { iat?: unknown }).iat;
+    return typeof iat === 'number' && Number.isFinite(iat) ? iat * 1_000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/** localStorage is shared by every tab of an origin; sessionStorage is per tab. */
+function sharedAccessToken(): string | null {
+  try {
+    return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Web Lock name: one refresh at a time across all tabs of an origin. */
+export const REFRESH_LOCK_NAME = 'smart.auth.refresh' as const;
+/** A token minted this recently by another tab is reused instead of refreshing again. */
+export const REFRESH_REUSE_WINDOW_MS = 30_000;
+/** Longest a tab waits for another tab's refresh before refreshing on its own. */
+export const REFRESH_LOCK_WAIT_MS = 10_000;
+
+/**
+ * Th6-614 - run a token refresh at most once across ALL tabs of this origin.
+ *
+ * `SmartApiClient` already single-flights refresh inside one tab, but five tabs opened with the
+ * same stale token each rotated the refresh cookie on their own. Tabs now queue on a Web Lock;
+ * the first one refreshes and stores the new token in localStorage, and every tab behind it adopts
+ * that token instead of calling the API again. Without the Web Locks API (or if the lock holder
+ * hangs) this degrades to the old behaviour: a plain refresh.
+ *
+ * `reuseRecent` also reuses a token minted in the last 30 s. Use it for the portal's boot-time
+ * session check only: a 401-triggered refresh must never hand back the token that just failed.
+ */
+export async function refreshAcrossTabs(
+  refresh: () => Promise<string | null>,
+  options: { reuseRecent?: boolean } = {},
+): Promise<string | null> {
+  if (!hasBrowserStorage()) return refresh();
+  const before = sharedAccessToken();
+
+  const run = async (): Promise<string | null> => {
+    const current = sharedAccessToken();
+    if (current) {
+      const issuedAt = accessTokenIssuedAtMs(current);
+      const rotatedByAnotherTab = current !== before;
+      const recent =
+        options.reuseRecent === true &&
+        issuedAt !== null &&
+        Date.now() - issuedAt < REFRESH_REUSE_WINDOW_MS;
+      if (rotatedByAnotherTab || recent) {
+        // Another tab already refreshed; take its token into this tab.
+        window.sessionStorage.setItem(ACCESS_TOKEN_KEY, current);
+        return current;
+      }
+    }
+    return refresh();
+  };
+
+  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
+  if (!locks) return run();
+  try {
+    return await locks.request(
+      REFRESH_LOCK_NAME,
+      { signal: AbortSignal.timeout(REFRESH_LOCK_WAIT_MS) },
+      run,
+    );
+  } catch (error) {
+    if (
+      error instanceof DOMException &&
+      (error.name === 'AbortError' || error.name === 'TimeoutError')
+    ) {
+      return refresh();
+    }
+    throw error;
+  }
+}
+
 export type PortalOrigins = {
   student: string;
   tpo: string;
@@ -303,7 +387,9 @@ let reconcileInFlight: Promise<string | null> | null = null;
  */
 export function reconcileAccessTokenFromCookie(apiBaseUrl: string): Promise<string | null> {
   if (!hasBrowserStorage()) return Promise.resolve(null);
-  reconcileInFlight ??= reconcileOnce(apiBaseUrl).finally(() => {
+  reconcileInFlight ??= refreshAcrossTabs(() => reconcileOnce(apiBaseUrl), {
+    reuseRecent: true,
+  }).finally(() => {
     reconcileInFlight = null;
   });
   return reconcileInFlight;
@@ -334,13 +420,14 @@ async function reconcileOnce(apiBaseUrl: string): Promise<string | null> {
  * Hook for SmartApiClient: rotate the access token using the HttpOnly refresh cookie.
  */
 export function createRefreshAccessToken(refresh: () => Promise<{ accessToken: string }>) {
-  return async (): Promise<string | null> => {
-    try {
-      const result = await refresh();
-      storeAccessToken(result.accessToken);
-      return result.accessToken;
-    } catch {
-      return null;
-    }
-  };
+  return (): Promise<string | null> =>
+    refreshAcrossTabs(async () => {
+      try {
+        const result = await refresh();
+        storeAccessToken(result.accessToken);
+        return result.accessToken;
+      } catch {
+        return null;
+      }
+    });
 }
