@@ -9,6 +9,7 @@ import {
   ACTIVE_TAXONOMY_VERSION,
   type ConnectSignalSourceRequest,
   type RawSignalEnvelope,
+  type SignalProfilePreview,
 } from '@hirekiwi/contracts';
 import { HackerrankApiClient } from '../clients/hackerrank-api.client.js';
 import { SignalCircuitOpenError } from '../signal-circuit-breaker.js';
@@ -51,6 +52,41 @@ export class HackerrankSignalAdapter implements SignalSourceAdapter {
       });
     }
     return { externalAccountId: username, consentScope: CONSENT_SCOPE };
+  }
+
+  async lookupProfile(rawUsername: string): Promise<SignalProfilePreview> {
+    const username = assertSafePublicUsername(rawUsername, 'username');
+    let found;
+    try {
+      found = await this.client.lookupProfile(username);
+    } catch (error) {
+      throw new ServiceUnavailableException({
+        error: 'hackerrank_unavailable',
+        message:
+          error instanceof SignalCircuitOpenError
+            ? 'HackerRank is temporarily unavailable. Try again later.'
+            : 'Could not reach HackerRank right now. Try again in a moment.',
+        statusCode: 503,
+      });
+    }
+    if (!found) {
+      throw new NotFoundException({
+        error: 'hackerrank_user_not_found',
+        message: `No public HackerRank profile found for "${username}".`,
+        statusCode: 404,
+      });
+    }
+    const facts = [found.level ? `Level ${found.level}` : null, found.country].filter(
+      (part): part is string => Boolean(part),
+    );
+    return {
+      sourceId: 'HACKERRANK',
+      username: found.username,
+      displayName: found.displayName,
+      avatarUrl: found.avatarUrl,
+      profileUrl: `https://www.hackerrank.com/profile/${encodeURIComponent(found.username)}`,
+      summary: facts.length > 0 ? facts.join(' · ') : null,
+    };
   }
 
   async fetchRaw(ctx: AdapterFetchContext): Promise<RawSignalEnvelope> {

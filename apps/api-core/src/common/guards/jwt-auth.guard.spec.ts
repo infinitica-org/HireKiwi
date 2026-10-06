@@ -65,3 +65,44 @@ describe('JwtAuthGuard', () => {
     );
   });
 });
+
+describe('JwtAuthGuard session revocation (Th6-614)', () => {
+  const privateReflector = { getAllAndOverride: vi.fn(() => false) };
+  const user: RequestUser = { sub: 'u1', role: 'STUDENT', inst: null, fam: 'family-1' };
+
+  function guardWith(redisGet: ReturnType<typeof vi.fn>) {
+    const jwt = { verify: vi.fn(() => user) };
+    return new JwtAuthGuard(jwt as never, privateReflector as never, { get: redisGet } as never);
+  }
+
+  it('rejects a token whose session was revoked, with 401 session_revoked', async () => {
+    const get = vi.fn(async () => '1');
+    const guard = guardWith(get);
+    await expect(guard.canActivate(contextWithAuth('Bearer access.jwt'))).rejects.toMatchObject({
+      response: { error: 'session_revoked', statusCode: 401 },
+    });
+    expect(get).toHaveBeenCalledWith('auth:revoked-family:family-1');
+  });
+
+  it('lets a token through when its session is not revoked', async () => {
+    const guard = guardWith(vi.fn(async () => null));
+    expect(await guard.canActivate(contextWithAuth('Bearer access.jwt'))).toBe(true);
+  });
+
+  it('lets the request through when the revocation lookup fails (Redis down)', async () => {
+    const guard = guardWith(
+      vi.fn(async () => {
+        throw new Error('redis down');
+      }),
+    );
+    expect(await guard.canActivate(contextWithAuth('Bearer access.jwt'))).toBe(true);
+  });
+
+  it('skips the lookup for tokens with no session claim', async () => {
+    const get = vi.fn(async () => '1');
+    const jwt = { verify: vi.fn(() => ({ sub: 'u1', role: 'STUDENT', inst: null })) };
+    const guard = new JwtAuthGuard(jwt as never, privateReflector as never, { get } as never);
+    expect(await guard.canActivate(contextWithAuth('Bearer access.jwt'))).toBe(true);
+    expect(get).not.toHaveBeenCalled();
+  });
+});
