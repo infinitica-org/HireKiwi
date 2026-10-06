@@ -38,7 +38,8 @@ export function WelcomeBanner() {
     return () => window.clearInterval(timer);
   }, [index]);
 
-  const slide = SLIDES[index] ?? SLIDES[0]!;
+  const slide = SLIDES[index] ?? SLIDES[0];
+  if (!slide) return null;
 
   return (
     <section
