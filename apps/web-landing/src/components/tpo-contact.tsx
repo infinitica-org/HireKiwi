@@ -65,7 +65,8 @@ export function NeatSelect({
     if (!el || !isOpen) return;
 
     function handleWheel(e: WheelEvent) {
-      const { scrollTop, scrollHeight, clientHeight } = el!;
+      if (!el) return;
+      const { scrollTop, scrollHeight, clientHeight } = el;
       const deltaY = e.deltaY;
       const isScrollingDown = deltaY > 0;
       const isScrollingUp = deltaY < 0;
