@@ -39,6 +39,7 @@ x-app-env: &app-env
   PROCTORING_FULL: ${PROCTORING_FULL:-true}
   PROCTORING_CV_URL: ${PROCTORING_CV_URL:-http://proctoring-cv:8091}
   PROCTORING_CV_PROVIDER: ${PROCTORING_CV_PROVIDER:-stub}
+  CREDENTIAL_VERIFIER_URL: ${CREDENTIAL_VERIFIER_URL:-http://credential-verifier:3100}
   # Opt-in: unset by default. Set to http://tempo:4318 (only meaningful with
   # the `obs` profile also up) to export traces; see infra/observability/README.md.
   OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
@@ -98,6 +99,14 @@ services:
   # candidate assessment session state (session:assessment:{attempt_id})
   # changes continuously; without this, a crash between snapshots could lose
   # several minutes of an in-progress attempt instead of at most ~1s.
+  #
+  # maxmemory-policy noeviction (was volatile-lru): this instance is now also
+  # BullMQ's broker (credential-verifier's VERIFICATION_QUEUE, and api-core's
+  # own queues). BullMQ job data has no TTL, so volatile-lru could silently
+  # evict in-flight/queued jobs under memory pressure — a write failing
+  # loudly (OOM command not allowed) is far better than a job disappearing
+  # with no error anywhere. If maxmemory is hit in practice, raise
+  # REDIS_MAXMEMORY rather than reintroducing eviction.
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -107,7 +116,7 @@ services:
         "--maxmemory",
         "${REDIS_MAXMEMORY:-512mb}",
         "--maxmemory-policy",
-        "volatile-lru",
+        "noeviction",
         "--appendonly",
         "yes",
         "--appendfsync",
@@ -304,6 +313,65 @@ services:
           "node",
           "-e",
           "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 25s
+    profiles: ["apps"]
+
+  # One-shot: creates the credential-verifier's own database on the shared
+  # postgres instance. The postgres image only auto-creates POSTGRES_DB
+  # ("smart") on first boot — every other service's database is provisioned
+  # here, idempotently (checks pg_database first), same pattern as minio-init.
+  credential-verifier-db-init:
+    image: postgres:16-alpine
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-smart}
+    entrypoint: >
+      /bin/sh -c "
+      psql -h postgres -U smart -d smart -tc \"SELECT 1 FROM pg_database WHERE datname = 'credential_verifier'\" | grep -q 1 ||
+      psql -h postgres -U smart -d smart -c \"CREATE DATABASE credential_verifier OWNER smart\"
+      "
+    profiles: ["apps"]
+
+  # Standalone credential verification engine (apps/credential-verifier) —
+  # adapter-based verification of external credentials (Credly, Open Badges,
+  # W3C VC, issuer pages). Runs HTTP + its BullMQ worker in one process
+  # (same pattern as `api`: a separate `worker.ts` entrypoint exists for
+  # local dev flexibility, but nothing here runs it as a second container).
+  credential-verifier:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.credential-verifier
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      HOST: 0.0.0.0
+      PORT: "3100"
+      DATABASE_URL: postgresql://smart:${POSTGRES_PASSWORD:-smart}@postgres:5432/credential_verifier?schema=public
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3004,http://localhost}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      credential-verifier-db-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${CREDENTIAL_VERIFIER_PORT:-3100}:3100"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3100/api/docs-json').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 20s
       timeout: 5s

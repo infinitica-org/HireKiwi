@@ -136,11 +136,11 @@ const EnvSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   SPEECH_WHISPER_MODEL: z.string().default('whisper-1'),
 
-  CREDLY_API_KEY: z.string().optional(),
-  ACCREDIBLE_API_KEY: z.string().optional(),
-  AWS_CERT_API_KEY: z.string().optional(),
-  GOOGLE_CERT_API_KEY: z.string().optional(),
-  MICROSOFT_CERT_API_KEY: z.string().optional(),
+  // Standalone credential verification engine (apps/credential-verifier) —
+  // replaces the old per-issuer *_API_KEY vars, which drove fake adapters
+  // that stamped VERIFIED whenever a key happened to be set, with no real
+  // issuer call. See candidate-certificates/verification/credential-verifier-client.ts.
+  CREDENTIAL_VERIFIER_URL: z.string().default('http://127.0.0.1:3100'),
 
   PROCTORING_FULL: z
     .enum(['true', 'false'])
