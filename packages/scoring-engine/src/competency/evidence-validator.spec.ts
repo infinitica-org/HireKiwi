@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  computeCompositeValidityScore,
   computeInterRaterReliability,
   computeRecencyDecay,
   validateEvidenceMetrics,
@@ -17,6 +18,11 @@ describe('Evidence Validation Psychometric Tests', () => {
 
     const highDisagreement = computeInterRaterReliability([1, 5]);
     expect(highDisagreement).toBeLessThan(0.3);
+  });
+
+  it('reports reliability as unknown (null), not perfect, for fewer than 2 ratings', () => {
+    expect(computeInterRaterReliability([])).toBeNull();
+    expect(computeInterRaterReliability([5])).toBeNull();
   });
 
   it('computes exponential recency decay correctly across half-lives', () => {
@@ -45,10 +51,67 @@ describe('Evidence Validation Psychometric Tests', () => {
 
     expect(metrics.constructCoverage).toBe(0.8);
     expect(metrics.interRaterReliability).toBeGreaterThan(0.9);
-    expect(metrics.sourceReliability).toBe(0.9);
+    expect(metrics.sourceAuthorityWeight).toBe(0.9);
     expect(metrics.decayFactor).toBeGreaterThan(0.7);
     expect(metrics.compositeValidityScore).toBeGreaterThan(0.7);
     expect(metrics.compositeValidityScore).toBeLessThanOrEqual(1.0);
+  });
+
+  const base = {
+    evidenceId: 'ev-unknown',
+    evidenceType: 'PROJECT' as const,
+    methodType: 'PROJECT_WORK',
+    testedCompetencyCount: 4,
+    totalConstructCompetencyCount: 5,
+    sourceAuthorityWeight: 0.9,
+    ageDays: 0,
+  };
+
+  it('reports null reliability and renormalises the composite when ratings are absent', () => {
+    const metrics = validateEvidenceMetrics(base);
+    expect(metrics.interRaterReliability).toBeNull();
+    // (0.35*0.8 + 0.2*0.9 + 0.2*1) / 0.75
+    expect(metrics.compositeValidityScore).toBeCloseTo(0.88, 3);
+  });
+
+  it('treats a single rater the same as absent ratings', () => {
+    const single = validateEvidenceMetrics({ ...base, raterRatings: [5] });
+    expect(single.interRaterReliability).toBeNull();
+    expect(single.compositeValidityScore).toBe(
+      validateEvidenceMetrics(base).compositeValidityScore,
+    );
+  });
+
+  it('does not let unknown reliability outscore known high reliability', () => {
+    const known = validateEvidenceMetrics({ ...base, raterRatings: [4, 4, 4] });
+    expect(known.interRaterReliability).toBe(1);
+    expect(known.compositeValidityScore).toBeGreaterThanOrEqual(
+      validateEvidenceMetrics(base).compositeValidityScore,
+    );
+  });
+});
+
+describe('computeCompositeValidityScore', () => {
+  it('uses the 0.35/0.25/0.2/0.2 weights when every component is known', () => {
+    expect(
+      computeCompositeValidityScore({
+        constructCoverage: 1,
+        interRaterReliability: 0,
+        sourceAuthorityWeight: 1,
+        decayFactor: 1,
+      }),
+    ).toBeCloseTo(0.75, 6);
+  });
+
+  it('returns null when no component is known', () => {
+    expect(
+      computeCompositeValidityScore({
+        constructCoverage: null,
+        interRaterReliability: null,
+        sourceAuthorityWeight: null,
+        decayFactor: null,
+      }),
+    ).toBeNull();
   });
 });
 

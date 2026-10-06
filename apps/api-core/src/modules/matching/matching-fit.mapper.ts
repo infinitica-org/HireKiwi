@@ -10,88 +10,65 @@ import {
   type PublicCompetencyEvidenceSummary,
   type VerifiedSkillSummary,
 } from '@hirekiwi/contracts';
+import { computeCompositeValidityScore } from '@hirekiwi/scoring-engine';
 import type { SkillCapabilityScore } from './skill-capability-ranker.js';
 
 const skillNameByCode = new Map(SKILL_DEFINITIONS.map((skill) => [skill.code, skill.name]));
 
 /**
- * Aggregates evidence quality metrics from capability fit rows.
- * Computes psychometric validity across all evidence sources in a candidate's match.
+ * Declared policy weights per evidence source type (authority, not a measured reliability
+ * coefficient). Unknown source types fall back to the INFERRED weight.
  */
-function aggregateEvidenceMetrics(capabilityFit: readonly unknown[]): EvidenceQualityMetrics[] {
-  // If no capability fit data with evidence, return empty
+const INFERRED_AUTHORITY_WEIGHT = 0.7;
+const SOURCE_AUTHORITY_WEIGHTS: Record<string, number> = {
+  ASSESSMENT: 0.95,
+  PROJECT: 0.85,
+  INFERRED: INFERRED_AUTHORITY_WEIGHT,
+};
+
+/**
+ * Summarises the evidence behind a candidate's capability fit using only what the match
+ * pipeline actually knows. Rater agreement, recency and decay are not available here, so they
+ * are reported as null (not measured) rather than synthesised; the composite is renormalised
+ * over the known components via the scoring-engine's single definition.
+ */
+export function aggregateEvidenceMetrics(
+  capabilityFit: readonly unknown[],
+): EvidenceQualityMetrics[] {
   if (!capabilityFit || capabilityFit.length === 0) {
     return [];
   }
 
-  // Extract evidence from capability fit rows
-  // Each row has hitScore (0-1) which reflects confidence in evidence
   const evidenceSources = capabilityFit
-    .filter((row: unknown): row is { evidenceSource: string; hitScore?: number } => {
-      const r = row as Record<string, unknown>;
-      return typeof r.evidenceSource === 'string' && r.evidenceSource !== 'NONE';
-    })
-    .map((row) => ({
-      hitScore: row.hitScore ?? 0.5,
-      source: row.evidenceSource,
-    }));
+    .map((row) => (row as Record<string, unknown>).evidenceSource)
+    .filter((source): source is string => typeof source === 'string' && source !== 'NONE');
 
   if (evidenceSources.length === 0) {
     return [];
   }
 
-  // Aggregate metrics across all evidence sources
-  // constructCoverage: Portion of required competencies covered by evidence
-  const constructCoverage = Math.min(
-    1,
-    (capabilityFit.filter((row: unknown): row is { hitScore?: number } => {
-      const r = row as Record<string, unknown>;
-      return typeof r.hitScore === 'number' && r.hitScore >= 0.5;
-    }).length || 1) / capabilityFit.length,
-  );
+  // Share of the candidate's capability-fit rows that are backed by any evidence at all.
+  const constructCoverage = evidenceSources.length / capabilityFit.length;
+  const sourceAuthorityWeight =
+    evidenceSources.reduce(
+      (sum, source) => sum + (SOURCE_AUTHORITY_WEIGHTS[source] ?? INFERRED_AUTHORITY_WEIGHT),
+      0,
+    ) / evidenceSources.length;
 
-  // interRaterReliability: Consistency of evidence assessment (simulated from hit scores)
-  const scores = capabilityFit.map((row: unknown): number => {
-    const r = row as Record<string, unknown>;
-    return typeof r.hitScore === 'number' ? r.hitScore : 0.5;
-  });
-  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const variance =
-    scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;
-  const stdDev = Math.sqrt(variance);
-  const interRaterReliability = Math.max(0, 1 - stdDev / 2); // Higher consistency = higher reliability
-
-  // sourceReliability: Based on evidence type (ASSESSMENT=0.95, INFERRED=0.70, PROJECT=0.85)
-  const sourceWeights: Record<string, number> = {
-    ASSESSMENT: 0.95,
-    PROJECT: 0.85,
-    INFERRED: 0.7,
-    NONE: 0,
-  };
-  const sourceReliability =
-    evidenceSources.reduce((sum, e) => sum + (sourceWeights[e.source] ?? 0.7), 0) /
-    evidenceSources.length;
-
-  // recencyDays: Assume assessment/project evidence is recent (0-30 days)
-  const recencyDays = 15; // Default recent evidence
-
-  // decayFactor: Quality retention over time (1.0 = no decay for recent evidence)
-  const decayFactor = Math.max(0.5, 1.0 - recencyDays / 365);
-
-  // compositeValidityScore: Weighted combination of all factors
-  const compositeValidityScore =
-    constructCoverage * 0.25 +
-    interRaterReliability * 0.25 +
-    sourceReliability * 0.35 +
-    decayFactor * 0.15;
+  const compositeValidityScore = computeCompositeValidityScore({
+    constructCoverage,
+    interRaterReliability: null,
+    sourceAuthorityWeight,
+    decayFactor: null,
+  }) as number;
 
   return [
     {
       constructCoverage: Math.round(constructCoverage * 100) / 100,
-      interRaterReliability: Math.round(interRaterReliability * 100) / 100,
-      sourceReliability: Math.round(sourceReliability * 100) / 100,
-      recencyDays,
-      decayFactor: Math.round(decayFactor * 100) / 100,
+      interRaterReliability: null,
+      sourceAuthorityWeight: Math.round(sourceAuthorityWeight * 100) / 100,
+      recencyDays: null,
+      decayFactor: null,
       compositeValidityScore: Math.round(compositeValidityScore * 100) / 100,
     },
   ];
