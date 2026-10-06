@@ -126,7 +126,7 @@ export class UsersController {
   @Post('me/resume')
   @Roles('STUDENT')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Upload or replace the candidate resume file (PDF/DOCX/TXT, max 5MB).' })
+  @ApiOperation({ summary: 'Upload candidate resume file (PDF only, max 5MB).' })
   async uploadResume(@CurrentUser() user: RequestUser, @Req() request: FastifyRequest) {
     const partsIter = (
       request as FastifyRequest & { parts: (opts?: unknown) => AsyncIterableIterator<Multipart> }
@@ -148,7 +148,7 @@ export class UsersController {
     } catch {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'The uploaded file exceeds the 5MB limit or could not be read.',
+        message: 'Resume must be 5 MB or smaller.',
         statusCode: 400,
       });
     }
@@ -156,7 +156,7 @@ export class UsersController {
     if (!fileBuffer) {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'Choose a PDF, DOCX, DOC, or TXT resume to upload.',
+        message: 'Only PDF resumes are allowed.',
         statusCode: 400,
       });
     }
