@@ -69,7 +69,7 @@ const LOGO_TINTS = [
 function tintFor(name: string): string {
   let hash = 0;
   for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return LOGO_TINTS[hash % LOGO_TINTS.length]!;
+  return LOGO_TINTS[hash % LOGO_TINTS.length] as string;
 }
 
 function timeAgo(iso: string, now = Date.now()): string {

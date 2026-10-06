@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used by the KPI grid below while it is commented out
 import Link from 'next/link';
 import { Target, Sparkles, FileCheck, Eye } from 'lucide-react';
 import type { DashboardActivityKind } from '@hirekiwi/contracts';
@@ -49,6 +50,7 @@ export default function DashboardPage() {
   );
 
   const profileViews = summary?.profileViews;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- KPI grid is temporarily commented out in the JSX
   const kpis = [
     {
       label: 'Top matches',

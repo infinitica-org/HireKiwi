@@ -2,7 +2,6 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Briefcase,
   Building2,
-  CalendarDays,
   GraduationCap,
   LayoutDashboard,
   MessageSquare,

@@ -63,9 +63,10 @@ export function NeatSelect({
   useEffect(() => {
     const el = scrollableRef.current;
     if (!el || !isOpen) return;
+    const scrollEl: HTMLDivElement = el;
 
     function handleWheel(e: WheelEvent) {
-      const { scrollTop, scrollHeight, clientHeight } = el!;
+      const { scrollTop, scrollHeight, clientHeight } = scrollEl;
       const deltaY = e.deltaY;
       const isScrollingDown = deltaY > 0;
       const isScrollingUp = deltaY < 0;

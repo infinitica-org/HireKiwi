@@ -8,7 +8,6 @@ import { CredentialsSection } from '@/components/profile/CredentialsSection';
 import { EducationSection } from '@/components/profile/EducationSection';
 import { LanguagesSection } from '@/components/profile/LanguagesSection';
 import { ProfessionalLinksSection } from '@/components/profile/ProfessionalLinksSection';
-import { RecruiterPreviewButton } from '@/components/profile/RecruiterPreviewButton';
 import { ProfileHeroBanner } from '@/components/profile/ProfileHeroBanner';
 import { ProfileTopNav } from '@/components/profile/ProfileTopNav';
 import { ProfileSurface } from '@/components/profile/ProfileSurface';
