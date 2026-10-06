@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQueryClient } from '@hirekiwi/ui';
-import { Link2, Loader2, ArrowRight, Plus } from 'lucide-react';
+import { Loader2, ArrowRight, Plus } from 'lucide-react';
 import {
   applyServerDraft,
   buildProfessionalLinksSavePayload,

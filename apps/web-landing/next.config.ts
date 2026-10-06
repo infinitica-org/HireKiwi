@@ -3,6 +3,11 @@ import { withSmartConfig } from '@hirekiwi/next-config';
 
 const config: NextConfig = {
   allowedDevOrigins: ['localhost', '127.0.0.1', 'localhost:3007', '127.0.0.1:3007'],
+  // withSmartConfig defaults to 'standalone' for the Docker/VPS deployment (started with
+  // `node server.js`, not `next start`). 'standalone' is incompatible with `next start` and
+  // breaks static chunk serving (seen as 500s and bogus console errors) — exactly the command
+  // the landing-lighthouse CI job and Vercel builds use. Same pattern as web-docs (S8-ARCH-03).
+  ...((process.env.VERCEL === '1' || process.env.CI === 'true') && { output: undefined }),
   transpilePackages: [
     '@hirekiwi/ui',
     '@hirekiwi/api-client',

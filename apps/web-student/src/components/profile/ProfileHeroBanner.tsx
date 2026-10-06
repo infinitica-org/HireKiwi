@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Building2, GraduationCap, Briefcase, Share2, CheckCircle2, X, Mail } from 'lucide-react';
+import { Building2, GraduationCap, Briefcase, Share2, X, Mail } from 'lucide-react';
 import {
   profileHeadlineForUser,
   type AuthenticatedUser,
@@ -114,8 +114,8 @@ const HERO_AVATAR_CLASS =
 export function ProfileHeroBanner({
   user,
   education,
-  linkedinVerified,
-  githubVerified,
+  linkedinVerified: _linkedinVerified,
+  githubVerified: _githubVerified,
   percent = null,
   areaStatus,
   username = null,
