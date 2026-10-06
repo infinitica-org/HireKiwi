@@ -1,5 +1,5 @@
-import Script from 'next/script';
 import { Manrope } from 'next/font/google';
+import CookieYesScript from '@/components/CookieYesScript';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SmoothScroll from '@/components/SmoothScroll';
@@ -29,16 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={manrope.variable} suppressHydrationWarning>
       <head>
-        {/* CookieYes Banner */}
-        <Script
-          id="cookieyes"
-          src={
-            process.env.NODE_ENV === 'development'
-              ? '/api/cookieyes'
-              : 'https://cdn-cookieyes.com/client_data/be2546efcbf450059885daed3260170c/script.js'
-          }
-          strategy="beforeInteractive"
-        />
+        <CookieYesScript />
       </head>
       <body className="bg-white text-slate-900 antialiased" suppressHydrationWarning>
         <script
