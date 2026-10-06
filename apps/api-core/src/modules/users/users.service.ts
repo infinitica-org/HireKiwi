@@ -1,9 +1,12 @@
 import {
   BadRequestException,
   ForbiddenException,
+  HttpException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -32,37 +35,40 @@ import {
   CURRENT_CONSENT_VERSION,
   DeleteResumeRequestSchema,
   profileHeadlineForUser,
+  RESUME_MAX_FILE_SIZE_BYTES,
+  RESUME_VALIDATION_MESSAGES,
   SaveCandidateOnboardingDraftRequestSchema,
   SMART_TOPICS,
+  validateResumeDocumentText,
 } from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
+import { env } from '../../platform/config/env.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
 import { AuthService, hashPassword, verifyPassword } from '../auth/auth.service.js';
+import { ResumeParseService } from '../ai-gateway/resume-parse.service.js';
+import { validateAndExtractPdfResume } from './pdf-validator.js';
 import {
   isAllowedProfilePhotoMimeType,
   normalizeProfilePhotoMimeType,
 } from './profile-photo.mime.js';
 import { resolveProfilePhotoUrl, toAuthenticatedUserWithPhoto } from './profile-photo.util.js';
 const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024;
-const RESUME_MIME_TYPES = new Set([
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'text/plain',
-]);
-const MAX_RESUME_BYTES = 5 * 1024 * 1024;
+const MAX_RESUME_BYTES = RESUME_MAX_FILE_SIZE_BYTES;
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AuthService) private readonly auth: AuthService,
     @Inject(KafkaOutboxService) private readonly outbox: KafkaOutboxService,
     @Inject(StorageService) private readonly storage: StorageService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
+    @Optional() @Inject(ResumeParseService) private readonly resumeParse?: ResumeParseService,
   ) {}
 
   async getMe(userId: string): Promise<AuthenticatedUser> {
@@ -315,47 +321,162 @@ export class UsersService {
       });
     }
 
-    const extOk = /\.(pdf|docx?|txt)$/i.test(file.fileName);
-    if (!RESUME_MIME_TYPES.has(file.mimeType) && !extOk) {
+    const existing =
+      user.onboardingDetails && typeof user.onboardingDetails === 'object'
+        ? (user.onboardingDetails as Record<string, unknown>)
+        : {};
+    const currentFiles = this.readResumeFiles(existing);
+    if (currentFiles.length > 0) {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'Only PDF, DOCX, DOC, and TXT files are accepted.',
+        message: RESUME_VALIDATION_MESSAGES.REMOVE_EXISTING_FIRST,
+        statusCode: 400,
+      });
+    }
+
+    const extOk = /\.pdf$/i.test(file.fileName);
+    if (!extOk) {
+      throw new BadRequestException({
+        error: 'validation_failed',
+        message: RESUME_VALIDATION_MESSAGES.ONLY_PDF_ALLOWED,
         statusCode: 400,
       });
     }
     if (file.buffer.byteLength > MAX_RESUME_BYTES) {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'The resume must be 5MB or smaller.',
+        message: RESUME_VALIDATION_MESSAGES.MAX_SIZE_EXCEEDED,
         statusCode: 400,
       });
     }
 
-    const existing =
-      user.onboardingDetails && typeof user.onboardingDetails === 'object'
-        ? (user.onboardingDetails as Record<string, unknown>)
-        : {};
-    const currentFiles = this.readResumeFiles(existing);
-    const oldObjectKey = currentFiles[0]?.objectKey;
+    const pdfValidation = validateAndExtractPdfResume(file.buffer);
+    if (!pdfValidation.valid) {
+      throw new BadRequestException({
+        error: 'validation_failed',
+        message: pdfValidation.error ?? RESUME_VALIDATION_MESSAGES.CORRUPTED_OR_UNREADABLE,
+        statusCode: 400,
+      });
+    }
 
-    // Failure-safe: upload new object before altering DB state
-    const objectKey = await this.storage.upload({
-      buffer: file.buffer,
-      namespace: `resumes/${userId}`,
-      fileName: file.fileName,
-      contentType: file.mimeType,
-    });
+    // Semantic resume validation.
+    //
+    // Layer A — Fast heuristic pre-filter (no AI call, no network).
+    //   The heuristic only REJECTS when there is strong positive evidence
+    //   that the document is a non-resume (certificate, invoice, etc.) AND
+    //   virtually no positive resume signals.  It never rejects a document
+    //   merely because some expected section is missing.
+    //
+    // Layer B — AI classification via ResumeParseService (resume-parse@1).
+    //   Called only when the fast filter did not already reject.
+    //   CRITICAL: provider/infrastructure failure MUST NOT produce
+    //   RESUME_VALIDATION_MESSAGES.NOT_A_RESUME — those are different
+    //   conditions.  An infrastructure failure returns a 422 so the UI can
+    //   say "couldn't validate right now, please try again."
+    const extractedText = pdfValidation.extractedText ?? '';
+
+    // Safe development logging for PDF extraction and classification
+    if (env.NODE_ENV !== 'production') {
+      const detectedSignals = [
+        'experience',
+        'education',
+        'skills',
+        'projects',
+        'summary',
+        'certifications',
+        'languages',
+        'contact',
+      ].filter((section) => new RegExp(`\\b${section}\\b`, 'i').test(extractedText));
+
+      this.logger?.log(
+        `[ResumeUpload Diagnostic] file="${file.fileName}" mime="${file.mimeType}" sizeBytes=${file.buffer.byteLength} textLen=${extractedText.length} preview="${extractedText.slice(0, 500).replace(/\s+/g, ' ')}" detectedSignals=[${detectedSignals.join(', ')}]`,
+      );
+    }
+
+    // Layer A: keyword heuristic only rejects on strong non-resume evidence.
+    const heuristicResult = validateResumeDocumentText(extractedText);
+    if (!heuristicResult.isValid) {
+      if (env.NODE_ENV !== 'production') {
+        this.logger?.warn(
+          `[ResumeUpload Diagnostic] Rejected at Layer A (heuristic): ${heuristicResult.error}`,
+        );
+      }
+      throw new BadRequestException({
+        error: 'validation_failed',
+        message: heuristicResult.error ?? RESUME_VALIDATION_MESSAGES.NOT_A_RESUME,
+        statusCode: 400,
+      });
+    }
+
+    // Layer B: AI classification (optional — only if service is wired up).
+    if (this.resumeParse && extractedText.trim().length >= 40) {
+      let parseResult: Awaited<ReturnType<typeof this.resumeParse.parse>>;
+      try {
+        parseResult = await this.resumeParse.parse({ rawText: extractedText });
+      } catch {
+        // Provider/infrastructure error — cannot complete semantic validation.
+        // Do NOT convert this into NOT_A_RESUME; surface as a service error
+        // so the UI can show "couldn't validate right now, please try again."
+        throw new ServiceUnavailableException({
+          error: 'validation_service_unavailable',
+          message: "We couldn't validate this resume right now. Please try again in a few moments.",
+          statusCode: 503,
+        });
+      }
+
+      if (parseResult.status === 'PARSED' && parseResult.draft) {
+        const draft = parseResult.draft;
+        // Only reject when AI has a valid parse result AND finds no resume
+        // structure at all AND has very low confidence.  A partial result
+        // (some sections missing) is NOT a rejection — real resumes can omit
+        // any section.
+        const hasCoreResumeSections =
+          draft.education.length > 0 ||
+          draft.experiences.length > 0 ||
+          draft.skills.length > 0 ||
+          Boolean(draft.basicInfo?.firstName) ||
+          Boolean(draft.basicInfo?.summary);
+        if (!hasCoreResumeSections && draft.parseConfidence < 0.25) {
+          throw new BadRequestException({
+            error: 'validation_failed',
+            message: RESUME_VALIDATION_MESSAGES.NOT_A_RESUME,
+            statusCode: 400,
+          });
+        }
+      }
+      // parseResult.status === 'FAILED' means the AI gateway failed closed
+      // (schema error, timeout, etc.) — this is NOT evidence that the file
+      // is not a resume.  Continue to save the file.
+    }
+
+    // Upload object to storage
+    let objectKey: string;
+    try {
+      objectKey = await this.storage.upload({
+        buffer: file.buffer,
+        namespace: `resumes/${userId}`,
+        fileName: file.fileName,
+        contentType: 'application/pdf',
+      });
+    } catch (storageError) {
+      if (storageError instanceof HttpException) throw storageError;
+      throw new ServiceUnavailableException({
+        error: 'storage_unavailable',
+        message:
+          'Resume storage is unavailable. Check that object storage (MinIO) is running, then try again.',
+        statusCode: 503,
+      });
+    }
 
     const resumeFile = CandidateResumeFileSchema.parse({
       fileName: file.fileName,
       objectKey,
-      mimeType: file.mimeType,
+      mimeType: 'application/pdf',
       fileSizeBytes: file.buffer.byteLength,
       uploadedAt: new Date().toISOString(),
       lastParsedAt: null,
     });
 
-    // Single resume rule: replacing any existing resume entry
     const resumeFiles = [resumeFile];
     const merged = this.mergeProgressiveProfileDetails(existing, {
       resumeFile,
@@ -366,15 +487,6 @@ export class UsersService {
       where: { id: userId },
       data: { onboardingDetails: merged as Prisma.InputJsonValue },
     });
-
-    // Best-effort cleanup of replaced storage object after DB update commits
-    if (oldObjectKey && oldObjectKey !== objectKey) {
-      try {
-        await this.storage.deleteObject(oldObjectKey);
-      } catch {
-        // Non-blocking: DB update is already authoritative
-      }
-    }
 
     return { resumeFile, resumeFiles };
   }

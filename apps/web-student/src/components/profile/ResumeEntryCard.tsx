@@ -1,29 +1,19 @@
 'use client';
 
-import { CheckCircle2, FileText, Sparkles, Trash2 } from 'lucide-react';
+import { CheckCircle2, FileText, Loader2, Trash2 } from 'lucide-react';
 import type { CandidateResumeFile } from '@hirekiwi/contracts';
 
-import { CERTIFICATE_CARD_ACCENTS } from '@/lib/certificate-entry-presenters';
 import { formatResumeSize } from '@/lib/resume-list';
 
 interface ResumeEntryCardProps {
   file: CandidateResumeFile;
-  accentIndex: number;
-  isPrimary: boolean;
+  accentIndex?: number;
+  isPrimary?: boolean;
   deleting: boolean;
   onDelete: () => void;
 }
 
-export function ResumeEntryCard({
-  file,
-  accentIndex,
-  isPrimary,
-  deleting,
-  onDelete,
-}: ResumeEntryCardProps) {
-  const accent =
-    CERTIFICATE_CARD_ACCENTS[accentIndex % CERTIFICATE_CARD_ACCENTS.length] ??
-    CERTIFICATE_CARD_ACCENTS[0];
+export function ResumeEntryCard({ file, deleting, onDelete }: ResumeEntryCardProps) {
   const uploadedLabel = new Date(file.uploadedAt).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -31,73 +21,70 @@ export function ResumeEntryCard({
   });
 
   return (
-    <article
-      className={`font-[family-name:var(--tpo-font-sans)] overflow-hidden rounded-[18px] border bg-[var(--ds-surface)] shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${accent.cardBorder}`}
-    >
-      <div
-        className={`flex items-start justify-between gap-3 border-b border-[var(--ds-border-subtle)]/80 px-4 py-3.5 ${accent.headerWash}`}
-      >
-        <div className="flex min-w-0 items-start gap-2.5">
-          <span
-            className={`mt-1.5 size-2 shrink-0 rounded-full shadow-sm ${accent.marker}`}
-            aria-hidden
-          />
-          <div className="min-w-0">
+    <article className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white p-4 shadow-2xs transition-shadow hover:shadow-xs font-[family-name:var(--tpo-font-sans)] select-none dark:border-zinc-800 dark:bg-[#161616]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3.5 min-w-0">
+          {/* PDF icon badge */}
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-rose-200/80 bg-rose-50 text-rose-600 shadow-2xs dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-400">
+            <FileText className="size-5" strokeWidth={1.75} aria-hidden />
+          </div>
+
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="truncate text-[17px] font-semibold leading-snug tracking-[-0.022em] text-[var(--ds-text)]">
+              <h3
+                className="truncate text-[15px] font-bold tracking-tight text-zinc-950 dark:text-white"
+                title={file.fileName}
+              >
                 {file.fileName}
               </h3>
-              {isPrimary ? (
-                <span className="inline-flex items-center gap-1 rounded-md bg-[var(--ds-green-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--ds-green)]">
-                  <Sparkles className="size-3" aria-hidden />
-                  Latest
-                </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/90 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                <CheckCircle2
+                  className="size-3 text-emerald-600 dark:text-emerald-400"
+                  aria-hidden
+                />
+                Active Resume
+              </span>
+            </div>
+
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-zinc-500 dark:text-zinc-400">
+              <span className="font-semibold text-zinc-700 dark:text-zinc-300">PDF</span>
+              <span>•</span>
+              <span>{formatResumeSize(file.fileSizeBytes)}</span>
+              <span>•</span>
+              <span>Uploaded {uploadedLabel}</span>
+              {file.lastParsedAt ? (
+                <>
+                  <span>•</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">Parsed for profile</span>
+                </>
               ) : null}
             </div>
-            <p className="mt-0.5 text-[13px] text-[var(--ds-text-muted)]">
-              Uploaded {uploadedLabel}
-            </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onDelete}
-          disabled={deleting}
-          aria-label={`Remove ${file.fileName}`}
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/60 text-[var(--ds-text-muted)] ring-1 ring-[#101828]/[0.05] transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-        >
-          <Trash2 className="size-4" strokeWidth={1.5} />
-        </button>
-      </div>
 
-      <div className="grid grid-cols-2 gap-2 bg-[var(--ds-surface-muted)]/30 p-3 pt-2.5">
-        <div
-          className={`flex min-h-[4rem] flex-col justify-center gap-0.5 rounded-[14px] px-3.5 py-3 ring-1 ${accent.proofTile}`}
-        >
-          <span className="text-[11px] font-medium text-[var(--ds-text-subtle)]">Size</span>
-          <span className="text-[13px] font-medium text-[var(--ds-text)]">
-            {formatResumeSize(file.fileSizeBytes)}
-          </span>
-        </div>
-        <div
-          className={`flex min-h-[4rem] flex-col justify-center gap-0.5 rounded-[14px] px-3.5 py-3 ring-1 ${accent.issuedTile}`}
-        >
-          <span className="text-[11px] font-medium text-[var(--ds-text-subtle)]">Format</span>
-          <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--ds-text-secondary)]">
-            <FileText className={`size-3.5 ${accent.proofIcon}`} aria-hidden />
-            <span className="truncate">
-              {file.mimeType.replace(/^application\//, '').toUpperCase()}
-            </span>
-          </span>
+        {/* Remove button */}
+        <div className="flex items-center justify-end sm:shrink-0">
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={deleting}
+            aria-label={`Remove Resume ${file.fileName}`}
+            title="Remove Resume"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-2xs transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-rose-900/60 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+          >
+            {deleting ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Trash2
+                className="size-3.5 text-zinc-500 dark:text-zinc-400"
+                strokeWidth={1.75}
+                aria-hidden
+              />
+            )}
+            <span>{deleting ? 'Removing…' : 'Remove Resume'}</span>
+          </button>
         </div>
       </div>
-
-      {file.lastParsedAt ? (
-        <p className="flex items-center gap-1.5 border-t border-[var(--ds-border-subtle)]/80 px-4 py-2.5 text-[12px] text-[var(--ds-green)]">
-          <CheckCircle2 className="size-3.5" aria-hidden />
-          Parsed for profile pre-fill
-        </p>
-      ) : null}
     </article>
   );
 }

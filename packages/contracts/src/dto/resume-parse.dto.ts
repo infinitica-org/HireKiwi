@@ -121,6 +121,63 @@ export type ParseResumeResponse = z.infer<typeof ParseResumeResponseSchema>;
 /** Maximum resume files a candidate may store on their profile (single resume with replacement). */
 export const CANDIDATE_RESUME_FILES_MAX = 1;
 
+export const RESUME_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+export const RESUME_ALLOWED_MIME_TYPE = 'application/pdf' as const;
+
+export const RESUME_VALIDATION_MESSAGES = {
+  ONLY_PDF_ALLOWED: 'Only PDF resumes are allowed.',
+  MAX_SIZE_EXCEEDED: 'Resume must be 5 MB or smaller.',
+  CORRUPTED_OR_UNREADABLE: 'This PDF appears to be corrupted or unreadable.',
+  NOT_A_RESUME: "The uploaded document doesn't appear to be a resume.",
+  REMOVE_EXISTING_FIRST: 'Remove your existing resume before uploading a new one.',
+} as const;
+
+export const NON_RESUME_PATTERNS = [
+  /\b(?:certificate of completion|this is to certify that|certificate of achievement|is hereby awarded to|this certificate is (?:proudly )?awarded to|certificate of appreciation|completion certificate)\b/i,
+  /\b(?:statement of marks|consolidated mark sheet|semester grade report|hall ticket|grade card|provisional certificate|admit card|question paper)\b/i,
+  /\b(?:offer of employment|we are pleased to offer you|employment agreement|letter of appointment|compensation and benefits|annual fixed ctc|relieving letter)\b/i,
+  /\b(?:tax invoice|invoice no|bill to:|gstin:|payment receipt|receipt voucher)\b/i,
+  /\b(?:a project report submitted in partial fulfillment|chapter \d+: introduction|table of contents|literature survey)\b/i,
+  /\b(?:bank statement|account statement|transaction history|available balance|opening balance|closing balance)\b/i,
+  /\b(?:driving licence|driving license|passport of|voter id|election commission|aadhaar|pan card)\b/i,
+  /\b(?:non-disclosure agreement|confidentiality agreement|lease agreement|tenancy agreement|memorandum of understanding|this agreement is made on|indemnity bond)\b/i,
+  /\b(?:medical certificate|diagnostic report|patient name|clinical history|hospital discharge summary|doctor's prescription)\b/i,
+  /\b(?:to whomsoever it may concern|bonafide certificate|letter of recommendation)\b/i,
+];
+
+export const POSITIVE_RESUME_PATTERNS = [
+  /\b(?:curriculum vitae|resume|\bcv\b)\b/i,
+  /\b(?:work experience|professional experience|employment history|career history|employment|experience|internships?)\b/i,
+  /\b(?:education|educational qualifications?|academic background|academic qualifications?|academics|qualifications)\b/i,
+  /\b(?:skills|technical skills|core skills|key skills|competencies|technologies|proficiencies|technical expertise)\b/i,
+  /\b(?:projects|academic projects|personal projects|key projects)\b/i,
+  /\b(?:career objective|professional summary|profile|objective|summary|about me)\b/i,
+  /\b(?:certifications?|certificates?|achievements?|awards?|licenses?)\b/i,
+  /\b(?:languages|contact information|contact details|contact|mobile|phone|email|linkedin\.com|github\.com|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/i,
+];
+
+export function validateResumeDocumentText(rawText: string): { isValid: boolean; error?: string } {
+  const cleaned = rawText.trim();
+  if (cleaned.length < 40) {
+    return { isValid: false, error: RESUME_VALIDATION_MESSAGES.CORRUPTED_OR_UNREADABLE };
+  }
+
+  const nonResumeMatch = NON_RESUME_PATTERNS.some((pattern) => pattern.test(cleaned));
+  if (nonResumeMatch) {
+    return { isValid: false, error: RESUME_VALIDATION_MESSAGES.NOT_A_RESUME };
+  }
+
+  const positiveMatches = POSITIVE_RESUME_PATTERNS.filter((pattern) =>
+    pattern.test(cleaned),
+  ).length;
+
+  if (positiveMatches < 2) {
+    return { isValid: false, error: RESUME_VALIDATION_MESSAGES.NOT_A_RESUME };
+  }
+
+  return { isValid: true };
+}
+
 export const CandidateResumeFilesSchema = z
   .array(CandidateResumeFileSchema)
   .max(CANDIDATE_RESUME_FILES_MAX);
