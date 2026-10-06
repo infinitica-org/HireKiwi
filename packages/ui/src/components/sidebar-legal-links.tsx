@@ -6,6 +6,8 @@ export interface SidebarLegalLinksProps {
   authUrl: string;
   /** Full text links when the sidebar is expanded; a single icon on the collapsed rail. */
   expanded: boolean;
+  /** Show nothing (no icon) on the collapsed rail, instead of the shield icon. */
+  hideWhenCollapsed?: boolean;
   className?: string;
 }
 
@@ -13,8 +15,15 @@ const linkClass =
   'rounded-sm text-zinc-400 transition-colors hover:text-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-300';
 
 /** Sidebar footer: "Privacy Policy | Terms & Conditions", shared by every portal. */
-export function SidebarLegalLinks({ authUrl, expanded, className }: SidebarLegalLinksProps) {
+export function SidebarLegalLinks({
+  authUrl,
+  expanded,
+  hideWhenCollapsed = false,
+  className,
+}: SidebarLegalLinksProps) {
   const base = authUrl.replace(/\/+$/, '');
+
+  if (!expanded && hideWhenCollapsed) return null;
 
   if (!expanded) {
     return (

@@ -1,3 +1,4 @@
+import { portalIcons } from '@hirekiwi/ui/brand/portal-icons';
 import type { Metadata, MetadataRoute, Viewport } from 'next';
 
 /**
@@ -133,6 +134,7 @@ export function rootMetadata(env: SeoEnv = BUILD_ENV): Metadata {
     title: { default: home.title, template: `%s | ${SITE_NAME}` },
     description: home.description,
     manifest: '/manifest.webmanifest',
+    icons: portalIcons,
     formatDetection: { telephone: false, email: false, address: false },
     robots: indexable
       ? { index: true, follow: true }

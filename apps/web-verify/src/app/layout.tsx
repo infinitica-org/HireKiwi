@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
+import { portalIcons } from '@hirekiwi/ui/brand/portal-icons';
 import { SMART_HTML_CLASS, SmartLogo } from '@hirekiwi/ui';
 import './globals.css';
 
 export const metadata: Metadata = {
+  icons: portalIcons,
   title: 'Certificate verification · SMART',
   description: 'Public anonymous lookup. No account required.',
 };
