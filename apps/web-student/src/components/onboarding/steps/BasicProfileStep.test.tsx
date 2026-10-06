@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import BasicProfileStep from './BasicProfileStep';
 import { emptyOnboardingForm } from '@/lib/onboarding-form';
+import { confirmPhotoCrop, mockCanvasCrop } from '@/test/photo-crop-dialog';
 
 const uploadProfilePhoto = vi.fn();
 vi.mock('@/lib/api', () => ({
@@ -37,6 +38,7 @@ describe('BasicProfileStep', () => {
   });
 
   it('uploads a profile photo and stores its URL on the form', async () => {
+    mockCanvasCrop();
     uploadProfilePhoto.mockResolvedValue({ profilePhotoUrl: 'https://cdn.test/photo.png' });
     const { container } = render(
       <BasicProfileStep
@@ -51,10 +53,12 @@ describe('BasicProfileStep', () => {
     const file = new File(['img'], 'me.png', { type: 'image/png' });
     fireEvent.change(input, { target: { files: [file] } });
 
+    await confirmPhotoCrop();
+
     await waitFor(() => {
       expect(updateField).toHaveBeenCalledWith('profilePhotoUrl', 'https://cdn.test/photo.png');
     });
-    expect(uploadProfilePhoto).toHaveBeenCalledWith(file, 'me.png');
+    expect(uploadProfilePhoto).toHaveBeenCalledWith(expect.any(File), 'me.jpg');
   });
 
   it('validates required fields before allowing continue', async () => {

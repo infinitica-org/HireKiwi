@@ -209,7 +209,11 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
   it('shows proof document upload controls in the add experience modal', async () => {
     await openAddExperienceModal();
 
-    expect(screen.getByText('Proof documents *')).toBeTruthy();
+    expect(
+      screen.getByText(
+        (_, element) => element?.tagName === 'H4' && element.textContent === 'Proof documents *',
+      ),
+    ).toBeTruthy();
     expect(screen.getByLabelText('Proof document')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Add file/i })).toBeTruthy();
   });
@@ -655,7 +659,12 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
   it('marks Professional Domain as required', async () => {
     await openAddExperienceModal();
-    expect(screen.getByText('Professional domain *')).toBeTruthy();
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === 'LABEL' && element.textContent === 'Professional domain *',
+      ),
+    ).toBeTruthy();
   });
 
   it('prevents save when domain is empty', async () => {
@@ -696,7 +705,11 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
   it('marks End Date as required when employment has ended', async () => {
     await openAddExperienceModal();
-    expect(screen.getByText('End date *')).toBeTruthy();
+    expect(
+      screen.getByText(
+        (_, element) => element?.tagName === 'LABEL' && element.textContent === 'End date *',
+      ),
+    ).toBeTruthy();
   });
 
   it('prevents save for ended employment when End Date is missing', async () => {
@@ -722,7 +735,11 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container, {}, { isCurrent: true });
-    expect(screen.queryByText('End date *')).toBeNull();
+    expect(
+      screen.queryByText(
+        (_, element) => element?.tagName === 'LABEL' && element.textContent === 'End date *',
+      ),
+    ).toBeNull();
     expect(screen.getByText(/^End date$/i)).toBeTruthy();
     selectCatalogSkill('Git & Version Control');
 

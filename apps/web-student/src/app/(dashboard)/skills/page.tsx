@@ -60,24 +60,6 @@ function scoreToLevel(score: number): SkillProficiencyLevel {
   return 'Beginner';
 }
 
-const ZINC_TONE =
-  'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400';
-
-const CONFIDENCE_CUES: Record<string, { label: string; tone: string }> = {
-  HIGH: {
-    label: 'very sure',
-    tone: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
-  },
-  MEDIUM: {
-    label: 'pretty sure',
-    tone: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
-  },
-  LOW: {
-    label: 'still a rough guess',
-    tone: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
-  },
-};
-
 // Detect if a skill is under verification (assessment taken but result pending)
 function isUnderVerification(claim: SkillClaimDto | undefined): boolean {
   if (!claim) return false;
@@ -93,21 +75,6 @@ function getSkillStatus(
   if (claim.status === 'VERIFIED') return 'VERIFIED';
   if (isUnderVerification(claim)) return 'UNDER_VERIFICATION';
   return 'DECLARED';
-}
-
-// Keeps the level badge honest: the card always carries a lightweight "how
-// sure" signal, so the level is never presented bare.
-function confidenceCue(claim: SkillClaimDto | undefined): { label: string; tone: string } {
-  const assessment = claim?.latestAssessmentResult;
-  const numeric = assessment?.claimConfidence ?? claim?.claimConfidence ?? null;
-  const level =
-    assessment?.confidence ??
-    (numeric !== null ? (numeric >= 0.75 ? 'HIGH' : numeric >= 0.45 ? 'MEDIUM' : 'LOW') : null);
-  const byConfidence = level ? CONFIDENCE_CUES[level] : undefined;
-  if (byConfidence) return byConfidence;
-  if (claim?.status === 'VERIFIED') return { label: 'confirmed', tone: ZINC_TONE };
-  if (claim?.status === 'DECLARED') return { label: 'self-declared', tone: ZINC_TONE };
-  return { label: 'not confirmed yet', tone: ZINC_TONE };
 }
 
 export default function SkillsProfilePage() {
@@ -373,7 +340,6 @@ export default function SkillsProfilePage() {
             const skillStatus = getSkillStatus(item.claim);
             const isVerified = skillStatus === 'VERIFIED';
             const isUnderVerif = skillStatus === 'UNDER_VERIFICATION';
-            const _cue = confidenceCue(item.claim);
 
             return (
               <div

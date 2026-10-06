@@ -27,49 +27,49 @@ const AREA_META: Record<string, AreaMeta> = {
   profilePhoto: {
     title: 'Add a profile photo',
     hint: 'Help employers recognise you',
-    href: '/profile',
+    href: '/student/profile',
     icon: Camera,
   },
   skills: {
     title: 'Add your skills',
     hint: 'Tell SMART what you already know',
-    href: '/profile?section=skills',
+    href: '/student/profile?section=skills',
     icon: Award,
   },
   education: {
     title: 'Education',
     hint: 'Your degree and institution',
-    href: '/profile?section=education',
+    href: '/student/profile?section=education',
     icon: GraduationCap,
   },
   experience: {
     title: 'Work experience',
     hint: 'Internships and roles you have held',
-    href: '/profile?section=experience',
+    href: '/student/profile?section=experience',
     icon: Briefcase,
   },
   projects: {
     title: 'Projects',
     hint: 'Show what you have built',
-    href: '/profile?section=projects',
+    href: '/student/profile?section=projects',
     icon: FolderKanban,
   },
   certifications: {
     title: 'Certifications',
     hint: 'External certificates you hold',
-    href: '/profile?section=certifications',
+    href: '/student/profile?section=certifications',
     icon: FileBadge,
   },
   languages: {
     title: 'Languages',
     hint: 'Languages you speak',
-    href: '/profile?section=languages',
+    href: '/student/profile?section=languages',
     icon: Languages,
   },
   professionalLinks: {
     title: 'Professional links',
     hint: 'LinkedIn or GitHub',
-    href: '/profile?section=links',
+    href: '/student/profile?section=links',
     icon: Link2,
   },
 };
@@ -79,7 +79,7 @@ function metaFor(area: string): AreaMeta {
     AREA_META[area] ?? {
       title: area.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()),
       hint: 'Complete this section',
-      href: '/profile',
+      href: '/student/profile',
       icon: Award,
     }
   );

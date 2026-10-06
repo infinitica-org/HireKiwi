@@ -104,16 +104,16 @@ describe('StudentActivityFeedPanel', () => {
     text: `Activity ${i + 1}`,
   }));
 
-  it('shows five entries per page and pages through the rest', () => {
+  it('shows three entries per page and pages through the rest', () => {
     render(<StudentActivityFeedPanel activities={activities} />);
 
     expect(screen.getByText('Activity 1')).toBeTruthy();
-    expect(screen.getByText('Activity 5')).toBeTruthy();
-    expect(screen.queryByText('Activity 6')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Page 3' })).toBeTruthy();
+    expect(screen.getByText('Activity 3')).toBeTruthy();
+    expect(screen.queryByText('Activity 4')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Page 4' })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Page 3' }));
-    expect(screen.getByText('Activity 11')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Page 4' }));
+    expect(screen.getByText('Activity 10')).toBeTruthy();
     expect(screen.getByText('Activity 12')).toBeTruthy();
     expect(screen.queryByText('Activity 1')).toBeNull();
     expect((screen.getByRole('button', { name: 'Next page' }) as HTMLButtonElement).disabled).toBe(
@@ -122,7 +122,7 @@ describe('StudentActivityFeedPanel', () => {
   });
 
   it('hides the pager when everything fits on one page', () => {
-    render(<StudentActivityFeedPanel activities={activities.slice(0, 5)} />);
+    render(<StudentActivityFeedPanel activities={activities.slice(0, 3)} />);
     expect(screen.queryByRole('navigation', { name: 'Recent activity pages' })).toBeNull();
   });
 });

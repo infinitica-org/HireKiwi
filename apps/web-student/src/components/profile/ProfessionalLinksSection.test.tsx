@@ -40,11 +40,10 @@ describe('ProfessionalLinksSection', () => {
     render(<ProfessionalLinksSection />);
 
     expect(screen.getByRole('heading', { name: 'Integrations' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Connected accounts' })).toBeTruthy();
     const cards = screen.getByTestId('integration-cards');
     expect(cards.textContent).toContain('Not connected');
-    expect(screen.getByRole('button', { name: 'Connect LinkedIn' })).toBeTruthy();
+    // LinkedIn card is hidden for now (see ProfessionalLinksSection.tsx) — only GitHub shows.
+    expect(screen.getByRole('button', { name: 'Connect GitHub' })).toBeTruthy();
     expect(screen.getByText('GitHub')).toBeTruthy();
-    expect(screen.getByText('LinkedIn')).toBeTruthy();
   });
 });

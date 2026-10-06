@@ -21,7 +21,10 @@ vi.mock('@/lib/candidate-identity', () => ({
     },
     isLoading: false,
   }),
+  useTracks: () => ({ data: undefined, isLoading: false }),
   firstNameOf: (name?: string) => name?.split(' ')[0] ?? '',
+  initialsOf: (name?: string) => name?.split(' ')[0]?.[0] ?? '',
+  headlineFor: () => 'SMART candidate',
 }));
 
 vi.mock('@/lib/api', () => ({

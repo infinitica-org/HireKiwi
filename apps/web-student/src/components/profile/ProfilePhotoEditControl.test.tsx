@@ -5,6 +5,7 @@ import { queryKeys } from '@hirekiwi/api-client';
 import type { AuthenticatedUser } from '@hirekiwi/contracts';
 
 import { ProfilePhotoEditControl } from './ProfilePhotoEditControl';
+import { confirmPhotoCrop, mockCanvasCrop } from '@/test/photo-crop-dialog';
 
 const uploadProfilePhoto = vi.fn();
 
@@ -50,6 +51,7 @@ describe('ProfilePhotoEditControl', () => {
   });
 
   it('updates the avatar immediately after a successful upload', async () => {
+    mockCanvasCrop();
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     client.setQueryData(queryKeys.me(), meUser());
 
@@ -65,8 +67,10 @@ describe('ProfilePhotoEditControl', () => {
     const file = new File(['bytes'], 'photo.png', { type: 'image/png' });
     fireEvent.change(input, { target: { files: [file] } });
 
+    await confirmPhotoCrop();
+
     await waitFor(() => {
-      expect(uploadProfilePhoto).toHaveBeenCalledWith(file, 'photo.png');
+      expect(uploadProfilePhoto).toHaveBeenCalledWith(expect.any(File), 'photo.jpg');
     });
 
     await waitFor(() => {

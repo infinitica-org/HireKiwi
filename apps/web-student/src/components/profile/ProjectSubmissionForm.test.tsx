@@ -114,16 +114,16 @@ function formScope() {
 const validFill = () => {
   const form = formScope();
   fireEvent.change(form.getByLabelText(/^Title$/i), { target: { value: 'Campus bus tracker' } });
-  fireEvent.change(form.getByLabelText(/^Problem$/i), {
+  fireEvent.change(form.getByLabelText(/^Problem/i), {
     target: { value: 'Students cannot see live bus location on campus routes.' },
   });
-  fireEvent.change(form.getByLabelText(/^Approach$/i), {
+  fireEvent.change(form.getByLabelText(/^Approach/i), {
     target: { value: 'I used websockets and a small GPS ingest service.' },
   });
   fireEvent.change(form.getByLabelText(/^Skills$/i), {
     target: { value: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT' },
   });
-  fireEvent.change(form.getByLabelText(/^Outcome$/i), {
+  fireEvent.change(form.getByLabelText(/^Outcome/i), {
     target: { value: 'Average wait time dropped in a 30-student pilot.' },
   });
   fireEvent.change(form.getByLabelText(/GitHub link/i), {
@@ -156,7 +156,7 @@ describe('ProjectSubmissionForm', () => {
     await openManualProjectModal();
     const form = formScope();
     fireEvent.change(form.getByLabelText(/^Title$/i), { target: { value: 'App' } });
-    fireEvent.change(form.getByLabelText(/^Problem$/i), { target: { value: 'too short' } });
+    fireEvent.change(form.getByLabelText(/^Problem/i), { target: { value: 'too short' } });
     fireEvent.click(screen.getByRole('button', { name: /Submit project/i }));
     expect(create).not.toHaveBeenCalled();
     expect(screen.getByText(/Fix the highlighted template fields/i)).toBeTruthy();
@@ -295,7 +295,7 @@ describe('ProjectSubmissionForm', () => {
     expect((formScope().getByLabelText(/GitHub link/i) as HTMLInputElement).value).toBe(
       'https://github.com/octocat/bus-tracker',
     );
-    expect((formScope().getByLabelText(/^Approach$/i) as HTMLTextAreaElement).value).toBe(
+    expect((formScope().getByLabelText(/^Approach/i) as HTMLTextAreaElement).value).toBe(
       '# Bus tracker\n\nTracks buses live.',
     );
   });

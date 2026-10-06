@@ -106,9 +106,8 @@ describe('SkillsProfilePage E2E', () => {
       expect(screen.getByText('Python')).toBeDefined();
     });
 
-    // Level badge never renders bare — a confidence cue sits beside it
-    const cue = screen.getByTitle('How sure we are about this level');
-    expect(cue.textContent).toBe('confirmed');
+    // Verified claims show a "Verified" badge next to the level badge
+    expect(screen.getByText('Verified')).toBeDefined();
 
     // Verify toggle button is present
     const whyToggle = screen.getByRole('button', { name: /why this level\?/i });
@@ -135,7 +134,7 @@ describe('SkillsProfilePage E2E', () => {
     expect(screen.getByText(/Python Challenge/i)).toBeDefined();
   });
 
-  it('derives the card confidence cue from claim confidence', async () => {
+  it('shows a Not Verified badge for a self-declared claim', async () => {
     vi.mocked(api.assessment.listSkillClaims).mockResolvedValue([
       {
         claimId: 'claim-2',
@@ -152,7 +151,6 @@ describe('SkillsProfilePage E2E', () => {
 
     render(<SkillsProfilePage />);
 
-    const cue = await screen.findByTitle('How sure we are about this level');
-    expect(cue.textContent).toBe('very sure');
+    expect(await screen.findByText('Not Verified')).toBeDefined();
   });
 });
