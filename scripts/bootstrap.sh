@@ -46,9 +46,19 @@ pnpm db:generate
 pnpm db:deploy
 pnpm db:seed
 
+echo "==> credential-verifier: own database on the same postgres instance"
+"${COMPOSE[@]}" exec -T postgres psql -U smart -d smart -tc \
+  "SELECT 1 FROM pg_database WHERE datname = 'credential_verifier'" | grep -q 1 ||
+  "${COMPOSE[@]}" exec -T postgres psql -U smart -d smart -c \
+    "CREATE DATABASE credential_verifier OWNER smart"
+pnpm cv:db:generate
+pnpm cv:db:deploy
+pnpm cv:db:seed
+
 echo
 echo "Ready."
 echo "  API:      pnpm dev:api          -> http://localhost:3000/health"
+echo "  Verifier: pnpm --filter @hirekiwi/credential-verifier dev -> http://localhost:3100/api/docs"
 echo "  Swagger:  http://localhost:3000/api/docs"
 echo "  Student:  pnpm --filter @hirekiwi/web-student dev"
 echo "  Login:    student@smart.local / ChangeMe!Dev"

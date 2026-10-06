@@ -35,6 +35,7 @@ if [[ "$ENV_NAME" == "dev" ]]; then
   done
   echo "==> Running Prisma migrations on DEV..."
   "${COMPOSE[@]}" --profile apps exec -T api npx prisma migrate deploy
+  "${COMPOSE[@]}" --profile apps exec -T credential-verifier npx prisma migrate deploy
   echo "==> DEV stack deployed successfully at dev.becomesmart.online."
   exit 0
 fi
@@ -100,6 +101,9 @@ echo "==> Target [${TARGET_COLOR}] is healthy!"
 # 4. Database Migrations (Forward-Only)
 echo "==> [Phase 4/5] Running database migrations on shared production database..."
 "${TARGET_COMPOSE[@]}" --profile apps exec -T api npx prisma migrate deploy
+# credential-verifier is not color-coded blue/green (single stable instance,
+# not duplicated per slot) — migrate it here once, not per-slot.
+"${TARGET_COMPOSE[@]}" --profile apps exec -T credential-verifier npx prisma migrate deploy
 
 # 5. Atomic Traffic Switchover via Caddy
 echo "==> [Phase 5/5] Shifting live traffic from ${ACTIVE_COLOR} to ${TARGET_COLOR}..."
