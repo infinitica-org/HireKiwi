@@ -53,6 +53,17 @@ export const tpoCredentials = {
   password: str('TEST_TPO_PASSWORD', credentials.password),
 };
 
+/** Platform admin and employer accounts — same seed, used by the dashboards scenario. */
+export const adminCredentials = {
+  username: str('TEST_ADMIN_USERNAME', 'admin@smart.local'),
+  password: str('TEST_ADMIN_PASSWORD', credentials.password),
+};
+
+export const companyCredentials = {
+  username: str('TEST_COMPANY_USERNAME', 'company@smart.local'),
+  password: str('TEST_COMPANY_PASSWORD', credentials.password),
+};
+
 export const testDataUsers = num('TEST_DATA_USERS', 200);
 export const trackCode = str('TEST_DATA_TRACK_CODE', 'TECH_FULLSTACK');
 

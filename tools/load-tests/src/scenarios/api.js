@@ -17,6 +17,13 @@ export function apiReadsScenario(user) {
   timedGet(`${urls.api}${API_PREFIX}/users/me`, apiLatency, 'api_users_me', { headers });
   sleep(thinkTime(0.2, 0.8));
 
+  // S6-VV-131 (#586): the student dashboard's own named threshold (see config/thresholds.js
+  // buildDashboardThresholds) rides on top of this request's existing `name` tag.
+  timedGet(`${urls.api}${API_PREFIX}/users/me/dashboard`, apiLatency, 'dashboard_student', {
+    headers,
+  });
+  sleep(thinkTime(0.2, 0.8));
+
   timedGet(`${urls.api}${API_PREFIX}/me/notifications`, apiLatency, 'api_notifications', {
     headers,
   });
