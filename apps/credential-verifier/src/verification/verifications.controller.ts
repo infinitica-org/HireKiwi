@@ -41,7 +41,18 @@ export class VerificationsController {
 
     const result = await this.orchestrator.submit(parsed.data);
     if (result.status !== 'cached') {
-      await this.queue.add('verify', { verificationId: result.verificationId });
+      // jobId = verificationId: concurrent submissions for the same
+      // credential all resolve to the same verificationId (orchestrator
+      // dedupes the DB rows) but each still reaches this line — BullMQ
+      // refuses a second add() with a jobId already present in the queue,
+      // so only one worker run actually happens instead of the same
+      // verification being reprocessed (and its checks/evidence
+      // duplicated) once per concurrent request.
+      await this.queue.add(
+        'verify',
+        { verificationId: result.verificationId },
+        { jobId: result.verificationId },
+      );
     }
     return { verificationId: result.verificationId, status: 'PENDING' };
   }

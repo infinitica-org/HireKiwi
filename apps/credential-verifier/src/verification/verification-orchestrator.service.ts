@@ -60,20 +60,8 @@ export class VerificationOrchestratorService {
       };
     }
 
-    const existing = await this.prisma.credential.findUnique({ where: { sourceIdentifier } });
-    if (existing) {
-      const latest = await this.prisma.verification.findFirst({
-        where: { credentialId: existing.id },
-        orderBy: { createdAt: 'desc' },
-      });
-      if (latest) {
-        return {
-          verificationId: latest.id,
-          credentialId: existing.id,
-          status: 'VERIFICATION_PENDING',
-        };
-      }
-    }
+    const existingResult = await this.findExistingVerification(sourceIdentifier);
+    if (existingResult) return existingResult;
 
     const detection = this.issuerDetector.detect(input);
     const issuer = await this.prisma.issuer.upsert({
@@ -99,18 +87,55 @@ export class VerificationOrchestratorService {
         framework: null,
       },
     });
-    const credential = await this.prisma.credential.create({
-      data: {
-        issuerId: issuer.id,
-        subjectId: subject.id,
-        achievementId: achievement.id,
-        credentialType: 'UNKNOWN',
-        status: 'VERIFICATION_PENDING',
-        source: input.type,
-        sourceIdentifier,
-        rawMetadata: (input.metadata ?? {}) as Prisma.InputJsonValue,
-      },
-    });
+
+    // Two requests for the same credential can both pass the existence check
+    // above before either inserts (TOCTOU) — sourceIdentifier is unique, so
+    // the loser's create() throws P2002. Treat that as "someone else just
+    // won the race" rather than a real error: look the row up again instead
+    // of surfacing a 500 for what is, from the caller's perspective, a
+    // perfectly normal duplicate submission.
+    let credential;
+    try {
+      credential = await this.prisma.credential.create({
+        data: {
+          issuerId: issuer.id,
+          subjectId: subject.id,
+          achievementId: achievement.id,
+          credentialType: 'UNKNOWN',
+          status: 'VERIFICATION_PENDING',
+          source: input.type,
+          sourceIdentifier,
+          rawMetadata: (input.metadata ?? {}) as Prisma.InputJsonValue,
+        },
+      });
+    } catch (error: unknown) {
+      if (this.isUniqueConstraintViolation(error)) {
+        const winner = await this.findExistingVerification(sourceIdentifier);
+        if (winner) return winner;
+        // Vanishingly unlikely: the winner's credential row exists but its
+        // verification row doesn't yet (mid-flight between the two inserts
+        // below). Attach a fresh verification to that credential rather
+        // than retrying in a loop.
+        const winnerCredential = await this.prisma.credential.findUniqueOrThrow({
+          where: { sourceIdentifier },
+        });
+        const verification = await this.prisma.verification.create({
+          data: {
+            credentialId: winnerCredential.id,
+            method: 'DOCUMENT_PARSE',
+            verificationLevel: 'UNVERIFIED',
+            adapterVersion: ADAPTER_VERSION,
+          },
+        });
+        return {
+          verificationId: verification.id,
+          credentialId: winnerCredential.id,
+          status: 'VERIFICATION_PENDING',
+        };
+      }
+      throw error;
+    }
+
     const verification = await this.prisma.verification.create({
       data: {
         credentialId: credential.id,
@@ -125,6 +150,25 @@ export class VerificationOrchestratorService {
       credentialId: credential.id,
       status: 'VERIFICATION_PENDING',
     };
+  }
+
+  private async findExistingVerification(
+    sourceIdentifier: string,
+  ): Promise<CreateVerificationResult | null> {
+    const existing = await this.prisma.credential.findUnique({ where: { sourceIdentifier } });
+    if (!existing) return null;
+    const latest = await this.prisma.verification.findFirst({
+      where: { credentialId: existing.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!latest) return null;
+    return { verificationId: latest.id, credentialId: existing.id, status: 'VERIFICATION_PENDING' };
+  }
+
+  private isUniqueConstraintViolation(error: unknown): boolean {
+    return (
+      typeof error === 'object' && error !== null && (error as { code?: string }).code === 'P2002'
+    );
   }
 
   /** Called by the worker. Runs the actual adapter pipeline and persists the outcome + audit trail. */
@@ -152,7 +196,15 @@ export class VerificationOrchestratorService {
       const normalized = await adapter.normalize(input);
       const result = await adapter.verify(normalized);
 
+      // run() must be safe to call more than once for the same
+      // verificationId — a BullMQ attempts-retry after a transient failure,
+      // or (belt and suspenders alongside the controller's jobId dedup) a
+      // race-condition duplicate job, would otherwise append a second copy
+      // of every check/evidence row instead of replacing them. Clear first,
+      // in the same transaction as the re-insert.
       await this.prisma.$transaction([
+        this.prisma.verificationCheck.deleteMany({ where: { verificationId: verification.id } }),
+        this.prisma.verificationEvidence.deleteMany({ where: { verificationId: verification.id } }),
         this.prisma.credential.update({
           where: { id: verification.credentialId },
           data: { status: result.status },

@@ -17,6 +17,8 @@ function base58Encode(bytes: Buffer): string {
   return out || '1';
 }
 
+const isOpenBadge = process.argv[2] === 'openbadge';
+
 const { publicKey, privateKey } = generateKeyPairSync('ed25519');
 const rawPublicKey = Buffer.from(publicKey.export({ format: 'jwk' }).x as string, 'base64url');
 const didKey = `did:key:z${base58Encode(Buffer.concat([Buffer.from([0xed, 0x01]), rawPublicKey]))}`;
@@ -24,7 +26,7 @@ const verificationMethod = `${didKey}#key-1`;
 
 const credentialWithoutProof = {
   '@context': ['https://www.w3.org/2018/credentials/v1'],
-  type: ['VerifiableCredential'],
+  type: isOpenBadge ? ['VerifiableCredential', 'OpenBadgeCredential'] : ['VerifiableCredential'],
   issuer: 'did:example:hirekiwi-demo-issuer',
   credentialSubject: {
     id: 'did:example:demo-candidate',
