@@ -108,6 +108,21 @@ export const FUSION_UPGRADE_RULES_V1: ReadonlyArray<{
     emitsResolvedConflict: true,
   },
   {
+    // Lets a TRUSTED project claim that independently reaches DEMONSTRATED
+    // resolve a confident-but-weaker PARTIALLY_DEMONSTRATED assessment reading,
+    // not just an ambiguous UNCERTAIN one (R-PROJ-UPGRADE-01B/02 below).
+    ruleId: 'R-PROJ-UPGRADE-04',
+    priority: 45,
+    matches: (ctx) =>
+      projectUpgradeRoleGuard(ctx) &&
+      ctx.assessmentStatus === 'PARTIALLY_DEMONSTRATED' &&
+      projectDemonstrated(ctx) &&
+      projectTrusted(ctx),
+    result: 'DEMONSTRATED',
+    decisiveSource: 'PROJECT',
+    emitsResolvedConflict: true,
+  },
+  {
     ruleId: 'R-PROJ-UPGRADE-01B',
     priority: 50,
     matches: (ctx) =>
