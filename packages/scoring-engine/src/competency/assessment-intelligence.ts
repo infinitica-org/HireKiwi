@@ -87,7 +87,7 @@ function statusFromRatio(ratio: number, tested: boolean): CompetencyStatus {
   return 'NOT_DEMONSTRATED';
 }
 
-function confidenceFromStatus(
+export function confidenceFromStatus(
   status: CompetencyStatus,
   sampleSize: number,
 ): AssessmentConfidenceLevel {

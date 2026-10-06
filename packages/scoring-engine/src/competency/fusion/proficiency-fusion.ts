@@ -13,6 +13,7 @@ import type {
 import {
   determineSupportedProficiency,
   recommendAssessmentNextStep,
+  confidenceFromStatus,
 } from '../assessment-intelligence.js';
 import { filterAdmissibleObservations } from './admissibility.js';
 import { minStatus, maxStatus, capProficiency } from './status-ordinal.js';
@@ -48,6 +49,7 @@ export function fuseDomainCapability(
     const appliedCeiling = projectBundle?.appliedCeiling ?? null;
 
     const capabilityProfile: CapabilityProfileEntry[] = [];
+    const competencyConfidence = new Map<string, CompetencyResult['confidence']>();
     const fusionTrace: FusionTraceEntry[] = [];
     const conflicts: CompetencyFusionResult['conflicts'] = [];
     const appliedDomainVetoIds = new Set<string>();
@@ -165,6 +167,13 @@ export function fuseDomainCapability(
       const contributingSources = admissible.map((a) => a.sourceId);
       const observableEvidence = admissible.flatMap((a) => a.observation.evidence).slice(0, 20);
 
+      const decisiveObservation = admissible.find((a) => a.sourceId === upgrade.decisiveSource);
+      const sampleSize = decisiveObservation?.observation.itemCount ?? 1;
+      competencyConfidence.set(
+        competency.competencyId,
+        confidenceFromStatus(candidateStatus, sampleSize),
+      );
+
       capabilityProfile.push({
         competencyId: competency.competencyId,
         capability: competency.capability,
@@ -194,7 +203,7 @@ export function fuseDomainCapability(
     const competencyResults: CompetencyResult[] = capabilityProfile.map((row) => ({
       competencyId: row.competencyId,
       status: row.inferredStatus,
-      confidence: 'MEDIUM' as const,
+      confidence: competencyConfidence.get(row.competencyId) ?? 'LOW',
       evidence: row.observableEvidence,
     }));
 

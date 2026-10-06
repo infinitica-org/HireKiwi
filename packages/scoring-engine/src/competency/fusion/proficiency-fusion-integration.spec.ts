@@ -568,4 +568,67 @@ describe('Evidence Validator Integration in Proficiency Fusion', () => {
     expect(result.inferredDomainProficiency).toBeNull();
     expect(result.proficiencyInferenceReason).toBe('INSUFFICIENT_EVIDENCE');
   });
+
+  it('reaches HIGH domain confidence when assessment has >=2 items per competency and project is strong/trusted (previously capped at MEDIUM by a hardcoded placeholder)', async () => {
+    const competencyModel = [
+      {
+        competencyId: COMPETENCY_ID,
+        skillCode: 'SQL',
+        capability: 'Query optimization',
+        role: 'critical' as const,
+        difficulty: 'ADVANCED' as const,
+      },
+    ];
+    const proficiencyRequirements = [
+      {
+        level: 'INTERMEDIATE' as const,
+        requiredCompetencyIds: [COMPETENCY_ID],
+        criticalCompetencyIds: [COMPETENCY_ID],
+        realWorldApplicationRequired: false,
+        substantialApplicationRequired: false,
+        interviewRequired: false,
+      },
+    ];
+
+    const input: FusionInput = {
+      competencyModel,
+      proficiencyRequirements,
+      sources: [
+        {
+          sourceId: 'ASSESSMENT',
+          available: true,
+          trustTier: 'TRUSTED',
+          observations: [
+            {
+              competencyId: COMPETENCY_ID,
+              capability: 'Query optimization',
+              claimedStatus: 'DEMONSTRATED',
+              evidence: ['item 1', 'item 2'],
+              itemCount: 2,
+            },
+          ],
+          metadata: { testedItemCount: 4 },
+        },
+        {
+          sourceId: 'PROJECT',
+          available: true,
+          trustTier: 'TRUSTED',
+          observations: [
+            {
+              competencyId: COMPETENCY_ID,
+              capability: 'Query optimization',
+              claimedStatus: 'DEMONSTRATED',
+              evidence: ['verified project submission'],
+            },
+          ],
+          metadata: { projectReport: { scores: { confidence: 0.9 } } },
+        },
+      ],
+      targetProficiency: 'INTERMEDIATE',
+    };
+
+    const result = await Effect.runPromise(fuseDomainCapability(input));
+
+    expect(result.confidence).toBe('HIGH');
+  });
 });
