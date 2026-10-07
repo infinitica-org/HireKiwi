@@ -189,7 +189,7 @@ export const STORIES = [
       'End-to-end: OAuth login creates/links user with STUDENT role',
     ],
     failureModes: ['Unknown domain rejected with clear error', 'IdP metadata misconfig surfaced'],
-    demoScript: 'OAuth login as student@smart.local → JWT + institution attached.',
+    demoScript: 'OAuth login as student@hirekiwi.local → JWT + institution attached.',
     subtasks: [
       'OAuth client + callback routes',
       'SAML/OIDC strategy module',
@@ -265,7 +265,7 @@ export const STORIES = [
     id: 'S1-VV-06',
     epic: 'E1',
     github: 8,
-    title: 'B2B X-SMART-API-KEY auth + per-key quota (500/hour) + key issuance admin API',
+    title: 'B2B X-HireKiwi-API-KEY auth + per-key quota (500/hour) + key issuance admin API',
     owner: 'Vishal V',
     handle: '@vis465',
     points: 5,

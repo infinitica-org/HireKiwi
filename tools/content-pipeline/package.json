@@ -5,7 +5,7 @@
   "description": "Item-bank and calibration ingestion CLI. Owner: Vedika G.",
   "type": "module",
   "bin": {
-    "smart-content": "./src/cli.ts"
+    "hirekiwi-content": "./src/cli.ts"
   },
   "scripts": {
     "start": "tsx src/cli.ts",

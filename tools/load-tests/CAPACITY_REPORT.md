@@ -7,8 +7,8 @@ run these tests against real infrastructure yet.
 
 Sources: the k6 terminal summary (`pnpm stress:stress` prints exactly these
 fields), `tools/load-tests/summary-stress.json`, and the Grafana dashboards
-(`smart-platform-overview`, `smart-postgres`, `smart-redis`, `smart-redpanda`,
-`smart-api-metrics`, `smart-host-containers`) queried at the timestamp where
+(`hirekiwi-platform-overview`, `hirekiwi-postgres`, `hirekiwi-redis`, `hirekiwi-redpanda`,
+`hirekiwi-api-metrics`, `hirekiwi-host-containers`) queried at the timestamp where
 degradation first appears.
 
 ## Maximum sustainable load
@@ -35,18 +35,18 @@ Walk the stages in `stress.js`'s output alongside Grafana, in this order —
 whichever one saturates FIRST, at the LOWEST stage, is the bottleneck:
 
 1. **Throughput plateau** — RPS stops climbing while VUs keep climbing
-   (`smart-platform-overview` "RPS" panel vs `smart-k6-load-test` "Active VUs").
+   (`hirekiwi-platform-overview` "RPS" panel vs `hirekiwi-k6-load-test` "Active VUs").
 2. **Postgres** — connections as % of `pg_settings_max_connections`, CPU,
-   deadlocks (`smart-postgres.json`). Cross-reference
+   deadlocks (`hirekiwi-postgres.json`). Cross-reference
    `apps/api-core/src/platform/prisma/prisma.service.ts`'s `max: 20` per
    instance — see "Connection-pool math" below.
 3. **Redis** — memory vs `maxmemory` (512 MB by default, see
-   `infra/docker/docker-compose.yml`), evictions, ops/sec (`smart-redis.json`).
-4. **Kafka (Redpanda)** — consumer lag (`smart-redpanda.json` "Consumer lag"
+   `infra/docker/docker-compose.yml`), evictions, ops/sec (`hirekiwi-redis.json`).
+4. **Kafka (Redpanda)** — consumer lag (`hirekiwi-redpanda.json` "Consumer lag"
    panel — only populated since this change, see ADR-0015), CPU per shard.
 5. **api-core process** — event-loop lag, heap, GC pause p95
-   (`smart-api-metrics.json` Node.js panels), container CPU/memory
-   (`smart-host-containers.json`, filtered to the `api` container).
+   (`hirekiwi-api-metrics.json` Node.js panels), container CPU/memory
+   (`hirekiwi-host-containers.json`, filtered to the `api` container).
 
 ## Connection-pool math
 

@@ -5,8 +5,8 @@ export const e2eEnv = {
   tpoAppUrl: process.env.E2E_TPO_URL ?? 'http://localhost:3002',
   verifyAppUrl: process.env.E2E_VERIFY_URL ?? 'http://localhost:3004',
   mailpitUrl: process.env.E2E_MAILPIT_URL ?? 'http://localhost:8025',
-  studentEmail: process.env.E2E_STUDENT_EMAIL ?? 'student@smart.local',
-  tpoEmail: process.env.E2E_TPO_EMAIL ?? 'tpo@smart.local',
+  studentEmail: process.env.E2E_STUDENT_EMAIL ?? 'student@hirekiwi.local',
+  tpoEmail: process.env.E2E_TPO_EMAIL ?? 'tpo@hirekiwi.local',
   password: process.env.E2E_PASSWORD ?? 'ChangeMe!Dev',
 } as const;
 

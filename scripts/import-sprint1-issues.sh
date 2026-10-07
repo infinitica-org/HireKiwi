@@ -2,7 +2,7 @@
 # Import Sprint 1 tickets from AGILE_PLAN.md into GitHub Issues (idempotent by title prefix).
 set -euo pipefail
 
-REPO="${GITHUB_REPO:-infinitica-org/smart}"
+REPO="${GITHUB_REPO:-infinitica-org/HireKiwi}"
 
 create_issue() {
   local id="$1" title="$2" owner="$3" pts="$4" pri="$5" area="$6"
@@ -41,7 +41,7 @@ create_issue "S1-VV-02" "RBAC guards + decorators: SUPER_ADMIN, INSTITUTION_ADMI
 create_issue "S1-VV-03" "OAuth (Google, GitHub) + SAML 2.0/OIDC institutional SSO with domain→institution mapping" "Vishal V" 8 P0 area:backend
 create_issue "S1-VV-04" "Redis sliding-window + token-bucket Lua guard; X-RateLimit-* + Retry-After; 429 body per §4.2" "Vishal V" 5 P0 area:backend
 create_issue "S1-VV-05" "Full endpoint throttle matrix from ARCHITECTURE.md §4.4 as declarative config" "Vishal V" 3 P0 area:backend
-create_issue "S1-VV-06" "B2B X-SMART-API-KEY auth + per-key quota (500/hour) + key issuance admin API" "Vishal V" 5 P1 area:backend
+create_issue "S1-VV-06" "B2B X-HireKiwi-API-KEY auth + per-key quota (500/hour) + key issuance admin API" "Vishal V" 5 P1 area:backend
 create_issue "S1-VV-07" "Kafka producer/consumer base + outbox pattern + DLQ; all 8 topics registered from contracts" "Vishal V" 5 P0 area:backend
 create_issue "S1-SV-01" "Student auth flow UI: SSO buttons, institution picker, track enrollment wizard" "Satheswaran V" 5 P0 area:frontend
 create_issue "S1-SV-02" "Student dashboard shell: level stepper, tier trail, next-action card" "Satheswaran V" 5 P0 area:frontend

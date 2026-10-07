@@ -4,7 +4,7 @@
  *
  *   login -> start attempt (Postgres write)
  *         -> [next-item (Redis cache-aside) -> submit-l1 (Redis write-through)] x N
- *         -> complete (Postgres write, emits Kafka smart.assessment.submitted)
+ *         -> complete (Postgres write, emits Kafka hirekiwi.assessment.submitted)
  *
  * Measures both the whole workflow (business_flow_duration) and every
  * request inside it (per-request Trends), per the task's "measure the entire
@@ -16,7 +16,7 @@
  * (apps/api-core/src/platform/config/env.ts). Load-testing those would spend
  * real money on every iteration, so this flow never calls them — see
  * safety.allowAiEvalLoad in config/index.js and "Known limitations" in
- * tools/load-tests/README.md. `smart.assessment.submitted`'s current
+ * tools/load-tests/README.md. `hirekiwi.assessment.submitted`'s current
  * consumer (assessment-submitted-eval.consumer.ts) is a same-process,
  * non-AI stub today, so calling /assessment/complete here is safe.
  */
@@ -113,7 +113,7 @@ export function businessFlowScenario(user) {
     'business flow: attempt completed': (r) => r.status === 200,
   });
   if (!completed) ok = false;
-  else kafkaEventsTriggered.add(1); // one smart.assessment.submitted produced
+  else kafkaEventsTriggered.add(1); // one hirekiwi.assessment.submitted produced
 
   businessFlowDuration.add(Date.now() - startedAt, { name: 'business_flow_total' });
   businessFlowErrors.add(ok ? 0 : 1);

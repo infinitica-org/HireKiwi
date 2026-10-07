@@ -742,7 +742,7 @@ export const SKILL_REGISTRY_PROFILES: Readonly<Record<string, SkillRegistryProfi
   BLOCKCHAIN_SMART_CONTRACT_DEVELOPMENT: {
     topics: [
       'Blockchain fundamentals & consensus models',
-      'Smart contract languages (Solidity/Rust)',
+      'HireKiwi contract languages (Solidity/Rust)',
       'Token standards, wallets & transactions',
       'Security vulnerabilities & audit practices',
       'dApp frontends & oracle integration',
@@ -750,7 +750,7 @@ export const SKILL_REGISTRY_PROFILES: Readonly<Record<string, SkillRegistryProfi
     ],
     sdeFormCode: 'SDE_SYSTEM_DESIGN',
     taskFamily: 'APPLIED',
-    focusOptions: ['Solidity', 'Ethereum', 'Smart contracts'],
+    focusOptions: ['Solidity', 'Ethereum', 'HireKiwi contracts'],
     flavorNotes: ['Reentrancy', 'Gas optimization', 'Upgrade patterns'],
   },
   INTERNET_OF_THINGS_IOT_ENGINEERING: {

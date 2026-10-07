@@ -1,5 +1,5 @@
 /**
- * SMART UI stylesheet entry. Each microfrontend imports this once from layout
+ * HireKiwi UI stylesheet entry. Each microfrontend imports this once from layout
  * (`./globals.css` → here) so Cabinet Grotesk, Axiforma, semantic tokens, and
  * shadcn primitives render identically on student, TPO, admin, auth, and verify.
  */

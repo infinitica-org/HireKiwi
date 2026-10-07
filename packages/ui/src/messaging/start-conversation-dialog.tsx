@@ -2,8 +2,8 @@
 
 import { useRef, useState, type ReactNode } from 'react';
 import { MESSAGE_MAX_LENGTH, type StartConversationRequest } from '@hirekiwi/contracts';
-import { SmartApiError } from '@hirekiwi/api-client';
-import { useMutation, useSmartApi } from '../api-provider';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
+import { useMutation, useHireKiwiApi } from '../api-provider';
 import { Alert } from '../components/alert';
 import { Button } from '../components/button';
 import { Modal } from '../components/modal';
@@ -29,7 +29,7 @@ export function StartConversationDialog({
   onStarted,
   verificationHint,
 }: StartConversationDialogProps) {
-  const api = useSmartApi();
+  const api = useHireKiwiApi();
   const [body, setBody] = useState('');
   // One key per attempt: a retry after a network failure is the same message, never a second one.
   const keyRef = useRef(newIdempotencyKey());
@@ -47,7 +47,7 @@ export function StartConversationDialog({
   });
 
   const error = start.error;
-  const notVerified = error instanceof SmartApiError && error.code === 'employer_not_verified';
+  const notVerified = error instanceof HireKiwiApiError && error.code === 'employer_not_verified';
   const tooLong = body.length > MESSAGE_MAX_LENGTH;
 
   return (
