@@ -19,7 +19,7 @@ import {
   PlacementMatchedDataSchema,
   SKILL_CODE_SET,
   ShortlistDtoSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   TIER_RANK,
   TrackCodeSchema,
   VerifiedSkillSummarySchema,
@@ -56,7 +56,7 @@ import {
   filterEmployerDiscoverableStudentIds,
   studentUnavailableToEmployers,
 } from '../../common/employer-visibility.js';
-import { QlixSmartAssessmentSchema } from '../evaluation/qlix-client.js';
+import { QlixHireKiwiAssessmentSchema } from '../evaluation/qlix-client.js';
 import { buildSkillCapabilityJob } from './job-profile.js';
 import {
   jobRequirementsFromProfile,
@@ -1326,7 +1326,7 @@ export class MatchingService {
           isActive: true,
           qlixCheckResult: { isNot: null },
         },
-        include: { qlixCheckResult: { select: { smartAssessmentJson: true } } },
+        include: { qlixCheckResult: { select: { hirekiwiAssessmentJson: true } } },
       }),
     ]);
 
@@ -1383,8 +1383,8 @@ export class MatchingService {
     }
 
     for (const project of projects) {
-      const parsed = QlixSmartAssessmentSchema.safeParse(
-        project.qlixCheckResult?.smartAssessmentJson,
+      const parsed = QlixHireKiwiAssessmentSchema.safeParse(
+        project.qlixCheckResult?.hirekiwiAssessmentJson,
       );
       if (!parsed.success) continue;
       const bucket = qlixByStudent.get(project.studentId) ?? [];
@@ -1424,9 +1424,9 @@ export class MatchingService {
       generatedAt: params.generatedAt,
     });
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.placementMatched,
+      topic: HIREKIWI_TOPICS.placementMatched,
       partitionKey: params.jdId,
-      eventType: SMART_TOPICS.placementMatched,
+      eventType: HIREKIWI_TOPICS.placementMatched,
       source: 'placement',
       data,
     });
@@ -1490,7 +1490,7 @@ export class MatchingService {
           qlixCheckResult: {
             select: {
               gaps: true,
-              smartAssessmentJson: true,
+              hirekiwiAssessmentJson: true,
             },
           },
         },
@@ -1516,7 +1516,7 @@ export class MatchingService {
       bucket.push({
         skillCodes: project.skillMappings.map((mapping) => mapping.skillCode),
         gaps: project.qlixCheckResult.gaps,
-        smartAssessmentJson: project.qlixCheckResult.smartAssessmentJson,
+        hirekiwiAssessmentJson: project.qlixCheckResult.hirekiwiAssessmentJson,
       });
       qlixProjectsByStudent.set(project.studentId, bucket);
     }

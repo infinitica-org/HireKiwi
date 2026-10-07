@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import { SMART_TOPICS } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { ApplicationStageChangedConsumer } from './application-stage-changed.consumer.js';
 
 const applicationId = randomUUID();
@@ -21,7 +21,7 @@ function envelope(fromStage: string | null, toStage: string) {
   return {
     meta: {
       eventId: randomUUID(),
-      eventType: SMART_TOPICS.applicationStageChanged,
+      eventType: HIREKIWI_TOPICS.applicationStageChanged,
       version: 1,
       occurredAt: '2026-09-05T00:00:00.000Z',
       traceId: randomUUID(),

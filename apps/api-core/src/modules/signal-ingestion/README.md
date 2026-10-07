@@ -1,13 +1,13 @@
 # signal-ingestion
 
 Passive external signal adapters (GitHub refresh, HackerRank, LeetCode) that emit
-`smart.signal.ingested` for the signal-encoder pipeline.
+`hirekiwi.signal.ingested` for the signal-encoder pipeline.
 
 **Owner:** Vishal Bharath R (VB)
 
 ## Boundaries
 
-- **Produces:** `smart.signal.ingested` (never `smart.signal.encoded`)
+- **Produces:** `hirekiwi.signal.ingested` (never `hirekiwi.signal.encoded`)
 - **Does not:** call `CorroborationService`, write `SkillClaim`, or change verification status
 - **Encoder consumer:** Ramansh (`signal-ingested.encoder-consumer.ts`)
 

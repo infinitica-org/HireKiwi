@@ -29,7 +29,7 @@ describe('loadDotenv aliases', () => {
     delete process.env.GOOGLE_AI_API_KEY;
     process.env.GEMINI_API_KEY = 'test-gemini-key';
     try {
-      loadDotenv(resolve('/no-such-smart-env-dir'));
+      loadDotenv(resolve('/no-such-hirekiwi-env-dir'));
       expect(process.env.GOOGLE_AI_API_KEY).toBe('test-gemini-key');
     } finally {
       if (previousGoogle === undefined) {

@@ -2,7 +2,7 @@ import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   CredentialVerifiedEventSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   type EvidenceVerificationMethod,
   type VectorizedSignal,
 } from '@hirekiwi/contracts';
@@ -34,7 +34,7 @@ export function tierFromEvents(
 }
 
 /**
- * Reacts to smart.credential.verified: encodes the now-verified
+ * Reacts to hirekiwi.credential.verified: encodes the now-verified
  * CandidateCertificate/ProfessionalCredential and feeds it into corroboration
  * fusion as an EXTERNALCERT/PROFESSIONALCREDENTIAL passive signal (S6-VV-74).
  *
@@ -55,13 +55,13 @@ export class CredentialVerifiedFusionConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.credentialVerified,
+        topic: HIREKIWI_TOPICS.credentialVerified,
         module: 'signal-encoder',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {
             const parsed = CredentialVerifiedEventSchema.safeParse(payload);
             if (!parsed.success) {
-              this.logger.warn('Ignored malformed smart.credential.verified payload');
+              this.logger.warn('Ignored malformed hirekiwi.credential.verified payload');
               return;
             }
 

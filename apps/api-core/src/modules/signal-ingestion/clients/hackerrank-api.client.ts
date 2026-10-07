@@ -95,7 +95,7 @@ export class HackerrankApiClient {
     const url = `https://${HR_HOST}/rest/contests/master/hackers/${encodeURIComponent(username)}/profile`;
     const result = await this.breaker.execute('HACKERRANK', async (signal) => {
       const response = await fetch(url, {
-        headers: { Accept: 'application/json', 'User-Agent': 'smart-signal-ingestion' },
+        headers: { Accept: 'application/json', 'User-Agent': 'hirekiwi-signal-ingestion' },
         signal: AbortSignal.any([signal, AbortSignal.timeout(FETCH_MS)]),
       });
       if (response.status === 404) return null;
@@ -126,7 +126,7 @@ export class HackerrankApiClient {
     const url = `https://${HR_HOST}/rest/hackers/${encodeURIComponent(username)}/profile`;
     const raw = await this.breaker.execute('HACKERRANK', async (signal) => {
       const response = await fetch(url, {
-        headers: { Accept: 'application/json', 'User-Agent': 'smart-signal-ingestion' },
+        headers: { Accept: 'application/json', 'User-Agent': 'hirekiwi-signal-ingestion' },
         signal: AbortSignal.any([signal, AbortSignal.timeout(FETCH_MS)]),
       });
       if (!response.ok) {

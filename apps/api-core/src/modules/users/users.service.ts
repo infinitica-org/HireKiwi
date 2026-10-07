@@ -38,7 +38,7 @@ import {
   RESUME_MAX_FILE_SIZE_BYTES,
   RESUME_VALIDATION_MESSAGES,
   SaveCandidateOnboardingDraftRequestSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   validateResumeDocumentText,
 } from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
@@ -750,9 +750,9 @@ export class UsersService {
       // onboarding completion wait on it or fail because of it.
       await this.outbox
         .enqueueEnvelope({
-          topic: SMART_TOPICS.candidateSkillsDiscovered,
+          topic: HIREKIWI_TOPICS.candidateSkillsDiscovered,
           partitionKey: userId,
-          eventType: SMART_TOPICS.candidateSkillsDiscovered,
+          eventType: HIREKIWI_TOPICS.candidateSkillsDiscovered,
           source: 'users',
           data: { userId, languages, selectedSkillNames },
         })

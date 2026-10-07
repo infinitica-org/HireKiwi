@@ -13,7 +13,7 @@ import {
   REDIS_TTL_SECONDS,
   RefreshSignalsRequestSchema,
   SignalIngestedEventSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   type ConnectableSignalSourceId,
   type ConnectSignalSourceRequest,
   type ConnectSignalSourceResponse,
@@ -307,7 +307,7 @@ export class SignalIngestionService {
       const event = SignalIngestedEventSchema.parse({
         meta: {
           eventId: randomUUID(),
-          eventType: SMART_TOPICS.signalIngested,
+          eventType: HIREKIWI_TOPICS.signalIngested,
           version: 1 as const,
           occurredAt: fetchedAt,
           traceId: randomUUID(),
@@ -317,9 +317,9 @@ export class SignalIngestionService {
       });
 
       await this.outbox.enqueueEnvelope({
-        topic: SMART_TOPICS.signalIngested,
+        topic: HIREKIWI_TOPICS.signalIngested,
         partitionKey: userId,
-        eventType: SMART_TOPICS.signalIngested,
+        eventType: HIREKIWI_TOPICS.signalIngested,
         source: 'signal-ingestion',
         data: event.data,
       });

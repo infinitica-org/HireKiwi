@@ -1,4 +1,4 @@
-import { QlixSmartAssessmentSchema } from '../evaluation/qlix-client.js';
+import { QlixHireKiwiAssessmentSchema } from '../evaluation/qlix-client.js';
 import type { QlixProjectFusionInput } from '@hirekiwi/scoring-engine';
 
 type QlixCheckResultRow = {
@@ -9,7 +9,7 @@ type QlixCheckResultRow = {
   similarityIndex: number | null;
   aiLikelihood: number | null;
   confidence: string | null;
-  smartAssessmentJson: unknown;
+  hirekiwiAssessmentJson: unknown;
 };
 
 type VerifiedProjectRow = {
@@ -28,22 +28,22 @@ export function mapVerifiedProjectToQlixFusionInput(
   const skillCodes = [...new Set(project.skillMappings.map((row) => row.skillCode))];
   if (skillCodes.length === 0) return null;
 
-  const smartAssessment = qlix.smartAssessmentJson
-    ? QlixSmartAssessmentSchema.safeParse(qlix.smartAssessmentJson).data
+  const hirekiwiAssessment = qlix.hirekiwiAssessmentJson
+    ? QlixHireKiwiAssessmentSchema.safeParse(qlix.hirekiwiAssessmentJson).data
     : null;
 
   return {
     projectId: project.id,
     skillCodes,
     appliedProficiencyCeiling:
-      qlix.appliedProficiencyCeiling ?? smartAssessment?.appliedProficiencyCeiling ?? null,
-    qualityScore: qlix.qualityScore ?? smartAssessment?.qualityScore ?? null,
-    authenticityScore: qlix.authenticityScore ?? smartAssessment?.authenticityScore ?? null,
-    relevanceScore: qlix.relevanceScore ?? smartAssessment?.relevanceScore ?? null,
+      qlix.appliedProficiencyCeiling ?? hirekiwiAssessment?.appliedProficiencyCeiling ?? null,
+    qualityScore: qlix.qualityScore ?? hirekiwiAssessment?.qualityScore ?? null,
+    authenticityScore: qlix.authenticityScore ?? hirekiwiAssessment?.authenticityScore ?? null,
+    relevanceScore: qlix.relevanceScore ?? hirekiwiAssessment?.relevanceScore ?? null,
     similarityIndex: qlix.similarityIndex,
     aiLikelihood: qlix.aiLikelihood,
     qlixConfidence: qlix.confidence,
-    competencyObservations: smartAssessment?.competencyObservations ?? [],
+    competencyObservations: hirekiwiAssessment?.competencyObservations ?? [],
     defenseScore: options?.defenseScore ?? null,
     ownershipConcern: options?.ownershipConcern ?? false,
   };

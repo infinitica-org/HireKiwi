@@ -371,7 +371,7 @@ describe('SupportService', () => {
         {
           id: 'audit-1',
           actorId: 'agent-1',
-          actor: { email: 'agent@smart.edu', role: 'SUPPORT_AGENT' },
+          actor: { email: 'agent@hirekiwi.edu', role: 'SUPPORT_AGENT' },
           action: 'support.access_granted',
           resourceType: 'user',
           resourceId: 'user-1',
@@ -385,7 +385,7 @@ describe('SupportService', () => {
 
       expect(res.items).toHaveLength(1);
       expect(res.items[0].auditLogId).toBe('audit-1');
-      expect(res.items[0].actorEmail).toBe('agent@smart.edu');
+      expect(res.items[0].actorEmail).toBe('agent@hirekiwi.edu');
       expect(res.items[0].action).toBe('support.access_granted');
       expect(mockPrisma.auditLog.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

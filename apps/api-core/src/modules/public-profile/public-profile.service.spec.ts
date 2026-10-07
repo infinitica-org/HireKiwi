@@ -366,7 +366,7 @@ describe('PublicProfileService (CN-T09 visibility + in-progress opt-in)', () => 
       expect(result.education.length).toBe(1);
     });
 
-    it('omits SMART and external certificates when hiddenSections contains "certifications"', async () => {
+    it('omits HireKiwi and external certificates when hiddenSections contains "certifications"', async () => {
       prisma.user.findUniqueOrThrow.mockResolvedValue(
         baseOwner({ hiddenSections: ['certifications'] }),
       );

@@ -150,7 +150,7 @@ export class LeetcodeStatsClient {
     const parsed = await this.breaker.execute('LEETCODE', async (signal) => {
       const response = await fetch(LC_GRAPHQL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'User-Agent': 'smart-signal-ingestion' },
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'hirekiwi-signal-ingestion' },
         body: JSON.stringify({ query: LC_LOOKUP_QUERY, variables: { username } }),
         signal: AbortSignal.any([signal, AbortSignal.timeout(FETCH_MS)]),
       });
@@ -188,7 +188,7 @@ export class LeetcodeStatsClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'smart-signal-ingestion',
+          'User-Agent': 'hirekiwi-signal-ingestion',
         },
         body: JSON.stringify({
           query: LC_PROFILE_QUERY,

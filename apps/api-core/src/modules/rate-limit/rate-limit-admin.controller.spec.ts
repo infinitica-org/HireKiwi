@@ -6,7 +6,7 @@ import { RateLimitAdminController } from './rate-limit-admin.controller.js';
 
 const mockUser: RequestUser = {
   sub: '99999999-9999-4999-8999-999999999999',
-  email: 'admin@smart.local',
+  email: 'admin@hirekiwi.local',
   role: 'SUPER_ADMIN',
 };
 
