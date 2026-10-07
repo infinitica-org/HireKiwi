@@ -5,7 +5,7 @@ description: Exhaustive REST API specification, endpoint catalogue, request/resp
 
 ## 19.1 API Architecture Standards & Conventions
 
-HireKiwi provides a secure, versioned RESTful API exposed through `api.becomesmart.online/v1`:
+HireKiwi provides a secure, versioned RESTful API exposed through `api.hirekiwi.online/v1`:
 
 - **Protocol & Encoding:** HTTPS with mandatory TLS 1.3; UTF-8 JSON payloads (`Content-Type: application/json`).
 - **Authentication:** Stateless JSON Web Tokens (JWT, 15-minute TTL) with HttpOnly refresh cookies; or Bearer API keys (`sk_live_*` for production enterprise access).
@@ -14,12 +14,12 @@ HireKiwi provides a secure, versioned RESTful API exposed through `api.becomesma
 
 ```json
 {
-  "type": "https://docs.becomesmart.online/errors/COMPETENCY_FLOOR_NOT_MET",
+  "type": "https://docs.hirekiwi.online/errors/COMPETENCY_FLOOR_NOT_MET",
   "title": "Unmet Competency Threshold",
   "status": 422,
   "detail": "Application requires minimum Silver tier (BARS >= 3.5) in Distributed Caching.",
   "instance": "/v1/tpo/drives/shortlist",
-  "code": "SMART_422_COMPETENCY_FLOOR",
+  "code": "HIREKIWI_422_COMPETENCY_FLOOR",
   "timestamp": "2026-09-30T16:00:00Z"
 }
 ```
@@ -56,7 +56,7 @@ HireKiwi provides a secure, versioned RESTful API exposed through `api.becomesma
   "roleTitle": "Software Engineering Intern",
   "startDate": "2025-05-01",
   "endDate": "2025-07-31",
-  "documentUrl": "https://storage.becomesmart.online/proofs/completion_cert_99.pdf",
+  "documentUrl": "https://storage.hirekiwi.online/proofs/completion_cert_99.pdf",
   "documentType": "COMPLETION_CERTIFICATE"
 }
 ```
@@ -125,7 +125,7 @@ Enterprise recruiters receive real-time webhook updates when candidate milestone
     "competency": "Node.js Distributed Concurrency",
     "tier": "GOLD",
     "barsScore": 4.65,
-    "certificateUrl": "https://becomesmart.online/verify/cert_h7x92j0"
+    "certificateUrl": "https://hirekiwi.online/verify/cert_h7x92j0"
   }
 }
 ```

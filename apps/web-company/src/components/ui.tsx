@@ -102,7 +102,7 @@ export function Modal({
 export type { SkillReq };
 
 /**
- * Removable skill tags with a minimum level. Skills can only be chosen from the SMART skill
+ * Removable skill tags with a minimum level. Skills can only be chosen from the HireKiwi skill
  * catalog, so the API always receives a real skill code.
  */
 export function SkillsEditor({

@@ -3,7 +3,7 @@ import { api } from './api';
 type SearchFn = (query: string) => Promise<{ locations: string[] }>;
 
 /**
- * City/place suggestions from the SMART API's cached location proxy. Returns [] on any failure so the
+ * City/place suggestions from the HireKiwi API's cached location proxy. Returns [] on any failure so the
  * caller falls back to plain free-text entry; a lookup problem never blocks the form.
  */
 export async function searchLocations(

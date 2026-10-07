@@ -1,4 +1,4 @@
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import type { CompanyProfile } from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import {
@@ -54,7 +54,7 @@ describe('company profile form helpers', () => {
   });
 
   it('maps a server 422 onto field paths and ignores other errors', () => {
-    const err = new SmartApiError({
+    const err = new HireKiwiApiError({
       error: 'validation_failed',
       message: 'Request failed validation.',
       statusCode: 422,
@@ -65,7 +65,7 @@ describe('company profile form helpers', () => {
   });
 
   it('recognises a stale-version conflict', () => {
-    const conflict = new SmartApiError({
+    const conflict = new HireKiwiApiError({
       error: 'version_conflict',
       message: 'stale',
       statusCode: 409,

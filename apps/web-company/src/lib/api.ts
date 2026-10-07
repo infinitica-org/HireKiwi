@@ -16,17 +16,17 @@ import {
   type MatchFeedbackResponse,
 } from '@hirekiwi/contracts';
 import {
-  SmartApiClient,
+  HireKiwiApiClient,
   clearAccessToken,
   createRefreshAccessToken,
-  createSmartApi,
+  createHireKiwiApi,
   getAccessToken,
-  isSmartApiError,
+  isHireKiwiApiError,
 } from '@hirekiwi/api-client';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-export const apiClient = new SmartApiClient({
+export const apiClient = new HireKiwiApiClient({
   baseUrl,
   getAccessToken,
   refreshAccessToken: createRefreshAccessToken(() => api.auth.refresh()),
@@ -38,7 +38,7 @@ export const apiClient = new SmartApiClient({
   },
 });
 
-export const api = createSmartApi(apiClient);
+export const api = createHireKiwiApi(apiClient);
 
 /** Fields the server fills from the company profile or that only placement staff set. */
 const SERVER_OWNED_FIELDS = [
@@ -151,10 +151,10 @@ export const companyFeedbackApi = {
 };
 
 export function formatApiError(error: unknown, fallback = 'Operation failed'): string {
-  if (isSmartApiError(error) && error.details.length > 0) {
+  if (isHireKiwiApiError(error) && error.details.length > 0) {
     return error.details.map((d) => d.message).join('. ');
   }
-  if (isSmartApiError(error)) {
+  if (isHireKiwiApiError(error)) {
     return error.message;
   }
   if (error instanceof Error) {

@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://docs.becomesmart.online'),
+  metadataBase: new URL('https://docs.hirekiwi.online'),
   title: {
     template: '%s | HireKiwi Documentation',
     default: 'HireKiwi Platform — Architecture & Engineering Documentation',
