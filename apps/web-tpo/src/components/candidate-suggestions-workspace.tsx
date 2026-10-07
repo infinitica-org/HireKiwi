@@ -61,6 +61,7 @@ function errorMessage(caught: unknown, fallback: string): string {
 function matchMethodLabel(method: MatchMethod | undefined): string {
   if (method === 'RULES') return 'Rules-ranked';
   if (method === 'SKILL_CAPABILITY') return 'Skill + capability match';
+  if (method === 'VECTOR_PREVIEW') return 'Similarity preview (unscored)';
   return 'Matched';
 }
 
