@@ -285,6 +285,7 @@ import {
   BulkOperationResultSchema,
   InvitationDtoSchema,
   InvitationPreviewDtoSchema,
+  GithubOauthUrlResponseSchema,
   JobAcceptedSchema,
   LinkedinOauthUrlResponseSchema,
   SelectableInstitutionDtoSchema,
@@ -591,6 +592,12 @@ export function usersApi(client: SmartApiClient) {
     linkedinOauthUrl: () =>
       client.get(prefixed('/users/me/onboarding/linkedin/oauth-url'), {
         schema: LinkedinOauthUrlResponseSchema,
+      }),
+
+    /** Begins "Sign in with GitHub" — open the returned URL to grant private-repo access. */
+    githubOauthUrl: () =>
+      client.get(prefixed('/users/me/onboarding/github/oauth-url'), {
+        schema: GithubOauthUrlResponseSchema,
       }),
 
     fetchGithubProfile: (body: FetchGithubProfileRequest) =>

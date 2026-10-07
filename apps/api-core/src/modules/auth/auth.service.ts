@@ -45,6 +45,7 @@ import { StorageService } from '../../platform/storage/storage.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { resolveSessionHold } from '../../common/session-hold.js';
 import { toAuthenticatedUserWithPhoto } from '../users/profile-photo.util.js';
+import type { GoogleIdentity, GoogleOauthPortal } from './google-oauth.service.js';
 import { clearRefreshCookie, setRefreshCookie } from './refresh-cookie.js';
 
 const scrypt = promisify(scryptCallback);
@@ -289,6 +290,117 @@ export class AuthService {
     reply: FastifyReply,
   ): Promise<AuthTokenResponse> {
     assertTenantLoginAllowed(user);
+    return this.issueSession(user, reply);
+  }
+
+  /**
+   * "Sign in with Google" for both the student and company login surfaces.
+   * `portal` pins the expected role so a company email can never land a
+   * STUDENT session (or vice versa) just by completing the same OAuth dance.
+   *
+   * Company accounts are never created here — self-serve company signup
+   * goes through the verification wizard (PR #290); an unmatched company
+   * email is pointed back to registration instead.
+   */
+  async loginOrRegisterWithGoogle(
+    identity: GoogleIdentity,
+    portal: GoogleOauthPortal,
+    reply: FastifyReply,
+  ): Promise<AuthTokenResponse> {
+    if (!identity.emailVerified) {
+      throw new ForbiddenException({
+        error: 'google_email_unverified',
+        message: 'That Google account email is not verified.',
+        statusCode: 403,
+      });
+    }
+
+    const email = identity.email.toLowerCase();
+    const expectedRole = portal === 'company' ? 'COMPANY' : 'STUDENT';
+    const include = {
+      institution: true,
+      company: true,
+      primaryTrack: true,
+      secondaryTrack: true,
+    } as const;
+
+    let user = await this.prisma.user.findUnique({ where: { email }, include });
+
+    if (user && user.role !== expectedRole) {
+      throw new UnauthorizedException({
+        error: 'google_role_mismatch',
+        message:
+          portal === 'company'
+            ? 'This email is registered as a student account. Use student sign-in instead.'
+            : 'This email is registered as a company account. Use company sign-in instead.',
+        statusCode: 401,
+      });
+    }
+
+    if (!user) {
+      if (portal === 'company') {
+        throw new NotFoundException({
+          error: 'google_company_not_found',
+          message: 'No company account found for this email. Register your company first.',
+          statusCode: 404,
+        });
+      }
+      try {
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            fullName: identity.name?.trim() || email,
+            role: 'STUDENT',
+            provider: 'GOOGLE',
+            emailVerified: true,
+          },
+          include,
+        });
+      } catch (err: unknown) {
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'code' in err &&
+          (err as { code: string }).code === 'P2002'
+        ) {
+          // Lost a race with a concurrent signup for the same email; use the winner's row.
+          user = await this.prisma.user.findUniqueOrThrow({ where: { email }, include });
+        } else {
+          throw err;
+        }
+      }
+      await this.auditPublisher.record({
+        actorId: user.id,
+        action: 'auth.register',
+        resourceType: 'user',
+        resourceId: user.id,
+        reasonCode: 'google_oauth',
+      });
+    } else if (!user.emailVerified) {
+      // Google's attestation is stronger than our own email-verification link.
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true },
+        include,
+      });
+    }
+
+    if (!user) {
+      throw unauthorized('Could not resolve a user for this Google account.');
+    }
+
+    assertTenantLoginAllowed(user);
+    if (user.deactivatedAt) {
+      throw unauthorized('This account has been deactivated.');
+    }
+
+    await this.auditPublisher.record({
+      actorId: user.id,
+      action: 'auth.login',
+      resourceType: 'user',
+      resourceId: user.id,
+      reasonCode: 'google_oauth',
+    });
     return this.issueSession(user, reply);
   }
 
