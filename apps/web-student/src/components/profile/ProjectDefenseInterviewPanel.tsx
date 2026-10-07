@@ -18,7 +18,7 @@ import { CameraIntegrityDock } from '@/components/proctoring/camera-integrity-do
 import { useProctorLive } from '@/components/proctoring/proctor-live-context';
 import { isFaceAlignmentKind } from '@/lib/proctoring/live-webcam';
 import { projectDefenseTimerProps } from '@/lib/project-defense-timer';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { api } from '../../lib/api';
 import { uploadDefenseTurnAudio } from '../../lib/project-defense-audio-upload';
 import { resolveDefenseClosingAnnouncement } from '../../lib/project-defense-closing';
@@ -308,8 +308,8 @@ export function ProjectDefenseInterviewPanel({
 
         await askThenListen(nextStep.questionText, reply.questionAudioUrl);
       } catch (err) {
-        const rateLimited = isSmartApiError(err) && err.statusCode === 429;
-        const timeUp = isSmartApiError(err) && err.code === 'time_limit';
+        const rateLimited = isHireKiwiApiError(err) && err.statusCode === 429;
+        const timeUp = isHireKiwiApiError(err) && err.code === 'time_limit';
         setError(
           rateLimited
             ? 'Too many requests — wait a few seconds, then tap Try again below.'

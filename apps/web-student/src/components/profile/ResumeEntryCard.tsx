@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, FileText, Loader2, Trash2 } from 'lucide-react';
+import { FileText, Loader2, Trash2 } from 'lucide-react';
 import type { CandidateResumeFile } from '@hirekiwi/contracts';
 
 import { formatResumeSize } from '@/lib/resume-list';

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ArrowLeft, ArrowRight, Loader2, LogOut } from 'lucide-react';
 import { motion } from 'motion/react';
 import { signOut } from '@/lib/auth';
-import smartLogo from '@hirekiwi/ui/assets/images/Logos/WebP/smart-logo-text.jpg';
+import hirekiwiLogo from '@hirekiwi/ui/assets/images/Logos/WebP/hirekiwi-logo-text.jpg';
 
 /** Light-themed primitives for the candidate onboarding wizard. */
 
@@ -160,7 +160,7 @@ export function WizardPage({ children }: { children: ReactNode }) {
         {/* The source image is a square with wide margins: crop to the mark + wordmark (~3:1). */}
         <div className="relative h-9 w-[108px] overflow-hidden sm:h-10 sm:w-[120px]">
           <Image
-            src={smartLogo}
+            src={hirekiwiLogo}
             alt="HireKiwi"
             fill
             sizes="120px"

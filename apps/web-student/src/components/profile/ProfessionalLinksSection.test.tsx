@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { ProfessionalLinksSection } from '@/components/profile/ProfessionalLinksSection';
 
 vi.mock('@/lib/use-onboarding', () => ({
@@ -42,7 +42,7 @@ describe('ProfessionalLinksSection', () => {
       .mockImplementation(async ({ githubUrl }: { githubUrl: string }) => {
         const login = githubUrl.split('/').pop() ?? '';
         if (login === 'nobody') {
-          throw new SmartApiError({
+          throw new HireKiwiApiError({
             error: 'github_user_not_found',
             message: 'GitHub profile not found.',
             statusCode: 404,
@@ -126,7 +126,7 @@ describe('ProfessionalLinksSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Connect GitHub' }));
 
     const dialog = screen.getByText('Connect with GitHub').closest('div') as HTMLElement;
-    expect(dialog.textContent).toContain('What SMART will access');
+    expect(dialog.textContent).toContain('What HireKiwi will access');
     expect(dialog.textContent).toContain('Only your own public GitHub details');
     expect(dialog.textContent).toContain('never ask for your password');
     expect(screen.getByRole('checkbox', { name: /I agree/ })).toBeTruthy();

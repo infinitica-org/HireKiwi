@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { UserMenu, cn, useUnreadMessageCount } from '@hirekiwi/ui';
-import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
+import hirekiwiLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/HireKiwi-logo.png';
 import { useCurrentUser } from '@/lib/candidate-identity';
 import { signOut } from '@/lib/auth';
 import {
@@ -103,20 +103,20 @@ export function StudentTopbar() {
 
             <Link
               href="/student/dashboard"
-              aria-label="SMART home"
-              title="SMART"
+              aria-label="HireKiwi home"
+              title="HireKiwi"
               className={cn('group flex shrink-0 items-center gap-3 rounded-xl', focusRing)}
             >
               <Image
-                src={smartLogoImg}
-                alt="SMART logo"
+                src={hirekiwiLogoImg}
+                alt="HireKiwi logo"
                 width={34}
                 height={34}
                 priority
                 className="h-10 w-9 object-contain"
               />
               <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
-                SMART
+                HireKiwi
               </span>
             </Link>
 

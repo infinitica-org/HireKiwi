@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence } from 'motion/react';
 import { Loader2, MapPin } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { LightSelect } from '../../ui/LightSelect';
 import { CITY_OPTIONS, type OnboardingProfileForm } from '@/lib/onboarding-form';
 import { api } from '@/lib/api';
@@ -98,7 +98,7 @@ export default function JobPreferencesStep({
             });
             updatePrefs('currentLocation', resolveCityLabel(city));
           } catch (error) {
-            const message = isSmartApiError(error)
+            const message = isHireKiwiApiError(error)
               ? error.message
               : 'Could not detect your city. Please pick one manually.';
             setLocationError(message);

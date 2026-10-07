@@ -98,7 +98,7 @@ export const emptyAcademicProgram = (): OnboardingProfileForm['academicProgram']
   graduationYear: '',
 });
 
-export const ONBOARDING_DRAFT_STORAGE_KEY = 'smart.candidate.onboarding.draft';
+export const ONBOARDING_DRAFT_STORAGE_KEY = 'hirekiwi.candidate.onboarding.draft';
 
 export function emptyOnboardingForm(): OnboardingProfileForm {
   return {

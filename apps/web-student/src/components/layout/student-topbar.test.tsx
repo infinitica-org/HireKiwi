@@ -39,12 +39,12 @@ function primaryNav() {
 }
 
 describe('StudentTopbar', () => {
-  it('shows the SMART logo and wordmark linking home', () => {
+  it('shows the HireKiwi logo and wordmark linking home', () => {
     render(<StudentTopbar />);
-    const home = screen.getByRole('link', { name: 'SMART home' });
+    const home = screen.getByRole('link', { name: 'HireKiwi home' });
     expect(home.getAttribute('href')).toBe('/student/dashboard');
-    expect(within(home).getByText('SMART')).toBeDefined();
-    expect(screen.getByRole('img', { name: 'SMART logo' })).toBeDefined();
+    expect(within(home).getByText('HireKiwi')).toBeDefined();
+    expect(screen.getByRole('img', { name: 'HireKiwi logo' })).toBeDefined();
   });
 
   it.each([

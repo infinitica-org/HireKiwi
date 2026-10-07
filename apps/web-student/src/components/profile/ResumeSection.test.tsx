@@ -239,7 +239,7 @@ describe('ResumeSection', () => {
     const apiError = Object.assign(
       new Error("The uploaded document doesn't appear to be a resume."),
       {
-        isSmartApiError: true,
+        isHireKiwiApiError: true,
         message: "The uploaded document doesn't appear to be a resume.",
       },
     );

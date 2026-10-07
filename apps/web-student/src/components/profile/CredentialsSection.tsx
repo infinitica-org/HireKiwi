@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, BadgeCheck, Loader2, Plus, ShieldCheck } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   CREDENTIAL_TYPES,
   type CredentialType,
@@ -103,7 +103,7 @@ export function CredentialsSection() {
       const rows = await api.evidence.listCredentials();
       setCredentials(rows);
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not load credentials.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not load credentials.');
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ export function CredentialsSection() {
       setShowForm(false);
       await loadCredentials();
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not add credential.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not add credential.');
     } finally {
       setSaving(false);
     }
@@ -164,7 +164,7 @@ export function CredentialsSection() {
 
       await loadCredentials();
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Document upload failed.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Document upload failed.');
     } finally {
       setUploadingId(null);
     }

@@ -15,7 +15,7 @@ import type {
   PartnerUniversityOptionDto,
   StudentInstitutionPartnershipStatusDto,
 } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { ErrorBanner, PrimaryButton, StepHeading, TextInput } from '../wizard-ui';
 
@@ -53,7 +53,7 @@ export default function ConnectUniversityStep({
         setSelectedId(res.institutionId);
       }
     } catch (err: unknown) {
-      if (isSmartApiError(err)) {
+      if (isHireKiwiApiError(err)) {
         setStatusError(err.message);
       } else {
         setStatusError('Could not verify institution partnership status.');
@@ -83,7 +83,7 @@ export default function ConnectUniversityStep({
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          if (isSmartApiError(err)) {
+          if (isHireKiwiApiError(err)) {
             setSubmitError(err.message);
           } else {
             setSubmitError('Could not load partner universities.');
@@ -122,7 +122,7 @@ export default function ConnectUniversityStep({
         onConnected(selectedId);
       }
     } catch (err: unknown) {
-      if (isSmartApiError(err)) {
+      if (isHireKiwiApiError(err)) {
         if (err.code === 'invalid_partner_university') {
           setSubmitError('The selected university is not an active partner university.');
         } else {
@@ -147,7 +147,7 @@ export default function ConnectUniversityStep({
       await api.onboarding.requestUniversityContact({ universityName });
       setContactRequestState('submitted');
     } catch (err: unknown) {
-      if (isSmartApiError(err)) {
+      if (isHireKiwiApiError(err)) {
         setContactRequestError(err.message);
       } else {
         setContactRequestError('Could not send the request. Please try again.');

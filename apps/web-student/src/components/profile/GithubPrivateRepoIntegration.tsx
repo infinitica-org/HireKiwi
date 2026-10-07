@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type SVGProps } from 'react';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQuery, useQueryClient } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { IntegrationCard } from '@/components/profile/CodingPlatformIntegrations';
@@ -50,7 +50,9 @@ export function GithubPrivateRepoIntegration() {
       const { url } = await api.users.githubOauthUrl();
       window.location.href = url;
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not start GitHub private-repo access.');
+      setError(
+        isHireKiwiApiError(err) ? err.message : 'Could not start GitHub private-repo access.',
+      );
       setBusy(false);
     }
   };
@@ -62,7 +64,7 @@ export function GithubPrivateRepoIntegration() {
       await api.signals.disconnect('GITHUB');
       await queryClient.invalidateQueries({ queryKey: queryKeys.signalConnections() });
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not disconnect GitHub right now.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not disconnect GitHub right now.');
     } finally {
       setBusy(false);
     }

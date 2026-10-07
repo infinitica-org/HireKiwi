@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@hirekiwi/ui';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { AtSign, Eye, Loader2, Lock } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -92,7 +92,7 @@ export function VisibilitySettingsCard() {
       await api.users.updateProfileVisibility({ profileVisible: next });
       await Promise.all([refetchVisibility(), refetchUsername(), invalidateShareLinkAndPreview()]);
     } catch (err) {
-      setVisibilityError(isSmartApiError(err) ? err.message : 'Could not update visibility.');
+      setVisibilityError(isHireKiwiApiError(err) ? err.message : 'Could not update visibility.');
     } finally {
       setVisibilityBusy(null);
     }
@@ -111,7 +111,7 @@ export function VisibilitySettingsCard() {
         queryClient.invalidateQueries({ queryKey: ['me', 'public-profile'] }),
       ]);
     } catch (err) {
-      setVisibilityError(isSmartApiError(err) ? err.message : 'Could not update this setting.');
+      setVisibilityError(isHireKiwiApiError(err) ? err.message : 'Could not update this setting.');
     } finally {
       setVisibilityBusy(null);
     }
@@ -137,7 +137,7 @@ export function VisibilitySettingsCard() {
       ]);
     } catch (err) {
       setVisibilityError(
-        isSmartApiError(err) ? err.message : 'Could not update section visibility.',
+        isHireKiwiApiError(err) ? err.message : 'Could not update section visibility.',
       );
     } finally {
       setVisibilityBusy(null);
@@ -161,7 +161,7 @@ export function VisibilitySettingsCard() {
       setTimeout(() => setUsernameState('idle'), 2000);
     } catch (err) {
       setUsernameState('error');
-      if (isSmartApiError(err)) {
+      if (isHireKiwiApiError(err)) {
         if (err.code === 'rate_limit_exceeded') {
           const wait = err.retryAfterSeconds ? `${String(err.retryAfterSeconds)}s` : 'a bit';
           setUsernameError(`Too many attempts — try again in ${wait}.`);

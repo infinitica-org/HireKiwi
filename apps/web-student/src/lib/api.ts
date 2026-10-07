@@ -1,8 +1,8 @@
 import {
-  SmartApiClient,
+  HireKiwiApiClient,
   buildLoginUrl,
   clearAccessToken,
-  createSmartApi,
+  createHireKiwiApi,
   createRefreshAccessToken,
   getAccessToken,
 } from '@hirekiwi/api-client';
@@ -29,7 +29,7 @@ const MOCK_TRACK_CODES = TRACK_CODES as readonly string[];
  * dev doesn't look like the server forgot a completed onboarding and bounce the
  * candidate back to /onboarding.
  */
-const MOCK_ONBOARDING_STATE_KEY = 'smart.mock.onboarding-state';
+const MOCK_ONBOARDING_STATE_KEY = 'hirekiwi.mock.onboarding-state';
 
 interface MockOnboardingState {
   completed: boolean;
@@ -252,8 +252,8 @@ function mockStudentAccessToken(): string {
     fam: 'mock-family',
     iat: now,
     exp: now + 900,
-    iss: 'smart',
-    aud: 'smart-api',
+    iss: 'hirekiwi',
+    aud: 'hirekiwi-api',
   });
   const bytes = new TextEncoder().encode(payload);
   let binary = '';
@@ -436,9 +436,9 @@ const mockFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<
         repos: [
           {
             id: 9001,
-            fullName: `${login}/smart-demo`,
+            fullName: `${login}/hirekiwi-demo`,
             description: 'Mock repo for local GitHub import',
-            htmlUrl: `https://github.com/${login}/smart-demo`,
+            htmlUrl: `https://github.com/${login}/hirekiwi-demo`,
             stars: 4,
             primaryLanguage: 'TypeScript',
             updatedAt: now,
@@ -460,7 +460,7 @@ const mockFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<
 
   if (url.includes('/users/me/github/repo-readme') && method === 'POST') {
     const body = JSON.parse(String(init?.body ?? '{}')) as { fullName?: string };
-    const fullName = body.fullName ?? 'octocat/smart-demo';
+    const fullName = body.fullName ?? 'octocat/hirekiwi-demo';
     const title = fullName.split('/')[1] ?? fullName;
     return new Response(
       JSON.stringify({
@@ -1289,9 +1289,9 @@ const mockFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<
 };
 
 // eslint-disable-next-line no-restricted-globals
-export const smartFetch = IS_MOCK_ENV ? (mockFetch as typeof fetch) : fetch;
+export const hirekiwiFetch = IS_MOCK_ENV ? (mockFetch as typeof fetch) : fetch;
 
-export const apiClient = new SmartApiClient({
+export const apiClient = new HireKiwiApiClient({
   baseUrl,
   fetchImpl: IS_MOCK_ENV ? (mockFetch as typeof fetch) : undefined,
   getAccessToken,
@@ -1299,4 +1299,4 @@ export const apiClient = new SmartApiClient({
   onUnauthorized: onSessionUnauthorized,
 });
 
-export const api = createSmartApi(apiClient);
+export const api = createHireKiwiApi(apiClient);

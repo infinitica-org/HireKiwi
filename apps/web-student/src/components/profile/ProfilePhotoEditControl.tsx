@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import type { AuthenticatedUser } from '@hirekiwi/contracts';
 import { useQueryClient } from '@hirekiwi/ui';
 
@@ -72,9 +72,13 @@ export function ProfilePhotoEditControl({
       );
       await queryClient.invalidateQueries({ queryKey: queryKeys.me() });
     } catch (err: unknown) {
-      if (isSmartApiError(err) && err.code === 'storage_unavailable') {
+      if (isHireKiwiApiError(err) && err.code === 'storage_unavailable') {
         setError(err.message);
-      } else if (isSmartApiError(err) && err.message && !err.message.startsWith('Request failed')) {
+      } else if (
+        isHireKiwiApiError(err) &&
+        err.message &&
+        !err.message.startsWith('Request failed')
+      ) {
         setError(err.message);
       } else {
         setError('Could not upload your profile photo. Try again.');

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode, type SVGProps } from 'react';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQuery, useQueryClient } from '@hirekiwi/ui';
 import type { ConnectableSignalSourceId, SignalConnectionSummary } from '@hirekiwi/contracts';
 import { ExternalLink, Loader2, ShieldCheck, X } from 'lucide-react';
@@ -27,7 +27,7 @@ interface CodingPlatform {
   logo: BrandIcon;
   tileClass: string;
   description: string;
-  /** The only data SMART reads from the public profile. */
+  /** The only data HireKiwi reads from the public profile. */
   reads: string;
   profileUrl: (username: string) => string;
 }
@@ -102,7 +102,7 @@ export function ConsentNotice({
     <div className="mt-5 rounded-lg border border-zinc-200 p-3.5 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
       <p className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
         <ShieldCheck className="size-4" aria-hidden />
-        What SMART will access
+        What HireKiwi will access
       </p>
       <ul className="mt-2 space-y-1 pl-5.5 leading-relaxed">
         <li>
@@ -118,7 +118,7 @@ export function ConsentNotice({
           onChange={(event) => onChange(event.target.checked)}
           className="mt-0.5 size-4 shrink-0 rounded border-zinc-300"
         />
-        <span>I agree that SMART may read these details. I can disconnect any time.</span>
+        <span>I agree that HireKiwi may read these details. I can disconnect any time.</span>
       </label>
     </div>
   );
@@ -301,7 +301,9 @@ export function CodingPlatformIntegrations({
       setNotice(wasConnected ? `${active.name} updated.` : `${active.name} connected.`);
       setActive(null);
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : `Could not connect ${active.name} right now.`);
+      setError(
+        isHireKiwiApiError(err) ? err.message : `Could not connect ${active.name} right now.`,
+      );
     } finally {
       setBusy(false);
     }
@@ -318,7 +320,7 @@ export function CodingPlatformIntegrations({
       setActive(null);
     } catch (err) {
       setError(
-        isSmartApiError(err) ? err.message : `Could not disconnect ${active.name} right now.`,
+        isHireKiwiApiError(err) ? err.message : `Could not disconnect ${active.name} right now.`,
       );
     } finally {
       setBusy(false);
