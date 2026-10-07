@@ -130,20 +130,11 @@ export function EditProfileDialog({ isOpen, onClose, user, imageLoader }: EditPr
     setSaving(true);
     setGlobalError(null);
     try {
-      await api.users.updateProfile({
+      const updatedUser = await api.users.updateProfile({
         profileHeadline: trimmedDescription.length > 0 ? trimmedDescription : undefined,
       });
 
-      queryClient.setQueryData<AuthenticatedUser | undefined>(queryKeys.me(), (prev) =>
-        prev
-          ? {
-              ...prev,
-              profileHeadline:
-                trimmedDescription.length > 0 ? trimmedDescription : prev.profileHeadline,
-              profilePhotoUrl: photoUrl ?? prev.profilePhotoUrl,
-            }
-          : prev,
-      );
+      queryClient.setQueryData<AuthenticatedUser | undefined>(queryKeys.me(), updatedUser);
       await queryClient.invalidateQueries({ queryKey: queryKeys.me() });
       onClose();
     } catch {

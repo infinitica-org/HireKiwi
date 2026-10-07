@@ -348,12 +348,13 @@ describe('EditProfileDialog', () => {
     expect(cached?.profilePhotoUrl).toBe('https://cdn.example/uploaded-photo.jpg');
   });
 
-  it('saves changes, updates query cache, and closes dialog on save', async () => {
-    updateProfile.mockResolvedValue({
+  it('saves changes, updates query cache with server response, and closes dialog on save', async () => {
+    const returnedServerUser = mockUser({
       userId: 'user-123',
-      profileHeadline: 'Updated headline',
+      profileHeadline: 'Server authoritative headline',
       profilePhotoUrl: 'https://cdn.example/photo.jpg',
     });
+    updateProfile.mockResolvedValue(returnedServerUser);
 
     const { onClose, client } = renderDialog({
       user: mockUser({
@@ -365,6 +366,7 @@ describe('EditProfileDialog', () => {
     const textarea = screen.getByTestId('profile-description-input');
     fireEvent.change(textarea, { target: { value: 'New updated headline' } });
 
+    expect(onClose).not.toHaveBeenCalled();
     fireEvent.click(screen.getByTestId('save-profile-btn'));
 
     await waitFor(() => {
@@ -374,11 +376,12 @@ describe('EditProfileDialog', () => {
     });
 
     await waitFor(() => {
-      expect(onClose).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
 
     const cached = client.getQueryData<AuthenticatedUser>(queryKeys.me());
-    expect(cached?.profileHeadline).toBe('New updated headline');
+    expect(cached).toEqual(returnedServerUser);
+    expect(cached?.profileHeadline).toBe('Server authoritative headline');
   });
 
   it('calls onClose when Cancel button is clicked', () => {
@@ -402,10 +405,10 @@ describe('EditProfileDialog', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('displays error when updateProfile API fails', async () => {
+  it('displays error when updateProfile API fails, keeps dialog open, and does not call onClose', async () => {
     updateProfile.mockRejectedValue(new Error('Network error'));
 
-    renderDialog({ user: mockUser() });
+    const { onClose } = renderDialog({ user: mockUser() });
 
     fireEvent.click(screen.getByTestId('save-profile-btn'));
 
@@ -414,5 +417,8 @@ describe('EditProfileDialog', () => {
         screen.getByText('Could not save your profile changes. Please try again.'),
       ).toBeTruthy();
     });
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByTestId('edit-profile-dialog')).toBeTruthy();
   });
 });
