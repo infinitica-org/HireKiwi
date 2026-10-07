@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Building2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { CompanyDto, PlanCode } from '@hirekiwi/contracts';
 import { Button } from '@hirekiwi/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
@@ -45,7 +45,9 @@ export default function CompanyDetailPage() {
   }
 
   useEffect(() => {
-    load().catch((err) => setError(isSmartApiError(err) ? err.message : 'Failed to load company.'));
+    load().catch((err) =>
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to load company.'),
+    );
   }, [companyId]);
 
   if (!company) {
@@ -98,7 +100,7 @@ export default function CompanyDetailPage() {
                   });
                   await load();
                 } catch (err) {
-                  setError(isSmartApiError(err) ? err.message : 'Update failed.');
+                  setError(isHireKiwiApiError(err) ? err.message : 'Update failed.');
                 }
               })();
             }}
@@ -164,7 +166,7 @@ export default function CompanyDetailPage() {
                     }
                     await load();
                   } catch (err) {
-                    setError(isSmartApiError(err) ? err.message : 'Hold update failed.');
+                    setError(isHireKiwiApiError(err) ? err.message : 'Hold update failed.');
                   }
                 })();
               }}
@@ -189,7 +191,7 @@ export default function CompanyDetailPage() {
                     }
                     await load();
                   } catch (err) {
-                    setError(isSmartApiError(err) ? err.message : 'Status update failed.');
+                    setError(isHireKiwiApiError(err) ? err.message : 'Status update failed.');
                   }
                 })();
               }}

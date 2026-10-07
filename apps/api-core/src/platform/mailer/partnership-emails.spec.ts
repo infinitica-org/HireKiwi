@@ -14,13 +14,14 @@ const DATA = {
 };
 
 describe('partnership request emails', () => {
-  it('thanks the sender with what they sent, branded as SMART', () => {
+  it('thanks the sender with what they sent, branded as HireKiwi', () => {
     const email = renderEmailTemplate('partnership-request-received', DATA);
     expect(email.subject).toContain('Anna <University>');
     expect(email.html).toContain('Partnership request received');
     expect(email.html).toContain('Kristen');
     expect(email.html).toContain('We have 1200 students.');
-    expect(email.html).not.toContain('HireKiwi');
+    expect(email.html).toContain('HireKiwi');
+    expect(email.html).not.toContain('SMART');
     expect(email.text).toContain('Phone: +91 98765 43210');
   });
 

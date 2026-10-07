@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { EvidenceSkillDisputeRow } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { Flag, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@hirekiwi/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
@@ -34,7 +34,7 @@ export default function EvidenceDisputesPage() {
       const items = await api.evidence.listAdminEvidenceSkillDisputes();
       setDisputes(items);
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to load evidence dispute queue.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to load evidence dispute queue.');
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function EvidenceDisputesPage() {
       setReviewNote('');
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to resolve dispute.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to resolve dispute.');
     }
   }
 

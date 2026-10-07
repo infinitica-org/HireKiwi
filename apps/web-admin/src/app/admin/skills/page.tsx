@@ -1,7 +1,7 @@
 'use client';
 
 import type { SkillRetakePolicyDto } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@hirekiwi/ui/button';
@@ -31,7 +31,7 @@ export default function SkillsRetakePolicyPage() {
       const result = await api.onboarding.listSkillRetakePolicies();
       setSkills(result.skills);
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to load skill policies.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to load skill policies.');
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export default function SkillsRetakePolicyPage() {
       setSuccess(`Updated ${skill.code}.`);
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not update policy.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not update policy.');
     } finally {
       setSubmittingId(null);
     }

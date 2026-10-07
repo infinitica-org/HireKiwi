@@ -21,8 +21,8 @@ export interface EmailLayoutOptions {
 }
 
 const BRAND = {
-  name: 'SMART',
-  supportEmail: 'support@smart.local',
+  name: 'HireKiwi',
+  supportEmail: 'support@hirekiwi.local',
 } as const;
 
 // Brand tokens mirrored from packages/config-tailwind/theme.css so transactional

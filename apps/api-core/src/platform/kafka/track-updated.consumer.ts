@@ -1,6 +1,6 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { SMART_TOPICS, TrackUpdatedEventSchema } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS, TrackUpdatedEventSchema } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../config/env.js';
 import { RedisService } from '../redis/redis.service.js';
@@ -19,13 +19,13 @@ export class TrackUpdatedConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.trackUpdated,
+        topic: HIREKIWI_TOPICS.trackUpdated,
         module: 'platform',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {
             const parsed = TrackUpdatedEventSchema.safeParse(payload);
             if (!parsed.success) {
-              this.logger.warn('Ignored malformed smart.track.updated payload');
+              this.logger.warn('Ignored malformed hirekiwi.track.updated payload');
               return;
             }
 
@@ -48,7 +48,7 @@ export class TrackUpdatedConsumer implements OnModuleInit {
       });
     } catch (error) {
       this.logger.warn(
-        `smart.track.updated consumer not started: ${error instanceof Error ? error.message : 'unknown'}`,
+        `hirekiwi.track.updated consumer not started: ${error instanceof Error ? error.message : 'unknown'}`,
       );
     }
   }

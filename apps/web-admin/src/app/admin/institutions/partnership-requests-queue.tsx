@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { TpoContactRequestDto } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { Handshake, Mail, Phone, UserCheck, XCircle } from 'lucide-react';
 import { Button } from '@hirekiwi/ui/button';
 import { AdminInput, DataTable, InlineAlert, TableCell, TableRow } from '@/components/admin-ui';
@@ -63,7 +63,7 @@ export function PartnershipRequestsQueue({
       setRows(merged);
       onCount(merged.length);
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not load partnership requests.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not load partnership requests.');
     }
   }, [onCount]);
 
@@ -94,7 +94,7 @@ export function PartnershipRequestsQueue({
       await load();
       onApproved();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not approve this request.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not approve this request.');
     } finally {
       setBusyId(null);
     }
@@ -108,7 +108,7 @@ export function PartnershipRequestsQueue({
       setNotice(`Request from ${row.institutionName} was rejected.`);
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not reject this request.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not reject this request.');
     } finally {
       setBusyId(null);
     }

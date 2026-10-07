@@ -165,7 +165,7 @@ function buildPartnershipRequestReceived(payload: PartnershipRequestEmailData): 
   const subject = `We received your partnership request for ${payload.institutionName}`;
   const bodyHtml = [
     paragraph(
-      `Hello ${strong(escapeHtml(firstName(payload.fullName)))}, thank you for your interest in partnering with SMART. We have received the request for ${strong(escapeHtml(payload.institutionName))}.`,
+      `Hello ${strong(escapeHtml(firstName(payload.fullName)))}, thank you for your interest in partnering with HireKiwi. We have received the request for ${strong(escapeHtml(payload.institutionName))}.`,
     ),
     paragraph('Our team will review it and get back to you within two working days. You sent us:'),
     detailRows(partnershipDetails(payload)),
@@ -175,7 +175,7 @@ function buildPartnershipRequestReceived(payload: PartnershipRequestEmailData): 
     paragraph('There is nothing else you need to do right now.'),
   ].join('');
   const text = [
-    `Hello ${firstName(payload.fullName)}, thank you for your interest in partnering with SMART. We have received the request for ${payload.institutionName}.`,
+    `Hello ${firstName(payload.fullName)}, thank you for your interest in partnering with HireKiwi. We have received the request for ${payload.institutionName}.`,
     'Our team will review it and get back to you within two working days. You sent us:',
     partnershipDetailsText(payload).join('\n'),
     'There is nothing else you need to do right now.',
@@ -377,7 +377,7 @@ function buildCompanyPortalInvite(invite: InviteEmailData): RenderedEmail {
 /* ---------------- platform-admin-invite (SUPER_ADMIN) ---------------- */
 
 function buildPlatformAdminInvite(invite: InviteEmailData): RenderedEmail {
-  const subject = "You're invited to become a SMART platform admin";
+  const subject = "You're invited to become a HireKiwi platform admin";
   const bodyHtml = [
     paragraph(
       `Hello ${strong(invite.fullName)}, you've been granted ${strong('platform admin')} access on HireKiwi — full administrative control across every institution and company on the platform.`,
@@ -784,7 +784,7 @@ function buildVerificationEmail(
  * Sent to an external employer contact (not a student or TPO) asking them to
  * confirm a candidate's claimed work experience, so the tone stays formal —
  * no "study buddy" voice for someone who has no existing relationship with
- * SMART. ------------------------------------------------------------------- */
+ * HireKiwi. ------------------------------------------------------------------- */
 
 function buildWorkExperienceVerifierInvite(
   payload: WorkExperienceVerifierInviteEmailData,
@@ -806,7 +806,7 @@ function buildWorkExperienceVerifierInvite(
     ]),
   ].join('');
   const text = [
-    `Hello ${verifierName}, ${payload.candidateName} has listed ${payload.roleTitle} at ${payload.companyName} (${payload.startDate} to ${payload.endDate}) on the SMART platform and named you as the verifier.`,
+    `Hello ${verifierName}, ${payload.candidateName} has listed ${payload.roleTitle} at ${payload.companyName} (${payload.startDate} to ${payload.endDate}) on the HireKiwi platform and named you as the verifier.`,
     `Review this request: ${payload.verificationUrl}`,
     `This link expires in ${payload.expiresAtFormatted}.`,
   ].join('\n\n');

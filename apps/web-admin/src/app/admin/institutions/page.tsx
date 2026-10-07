@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
 import type { InstitutionDto, InstitutionListStatus, PlanCode } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   Check,
   CheckCircle2,
@@ -36,10 +36,10 @@ import { api } from '@/lib/api';
 import { PartnershipRequestsQueue } from './partnership-requests-queue';
 
 function formatApiError(error: unknown, fallback: string): string {
-  if (isSmartApiError(error) && error.details.length > 0) {
+  if (isHireKiwiApiError(error) && error.details.length > 0) {
     return error.details.map((detail) => `${detail.path}: ${detail.message}`).join(' ');
   }
-  if (isSmartApiError(error)) return error.message;
+  if (isHireKiwiApiError(error)) return error.message;
   return fallback;
 }
 

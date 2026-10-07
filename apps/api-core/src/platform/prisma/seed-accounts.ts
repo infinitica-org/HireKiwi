@@ -1,4 +1,4 @@
-export const DEFAULT_SEED_EMAIL_DOMAIN = 'smart.local';
+export const DEFAULT_SEED_EMAIL_DOMAIN = 'hirekiwi.local';
 export const DEFAULT_SEED_INSTITUTION_NAME = 'HireKiwi Pilot Institute';
 export const DEFAULT_SEED_TPO_FULL_NAME = 'Pilot TPO';
 export const DEFAULT_SEED_PASSWORD = 'ChangeMe!Dev';

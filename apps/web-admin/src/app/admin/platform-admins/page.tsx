@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import type { PlatformAdminDto } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { CheckCircle2, Plus, RotateCcw, ShieldPlus, UserCog, X } from 'lucide-react';
 import { Button } from '@hirekiwi/ui/button';
 import { PageHeader } from '@/components/page-header';
@@ -18,10 +18,10 @@ import {
 import { api } from '@/lib/api';
 
 function formatApiError(error: unknown, fallback: string): string {
-  if (isSmartApiError(error) && error.details.length > 0) {
+  if (isHireKiwiApiError(error) && error.details.length > 0) {
     return error.details.map((detail) => `${detail.path}: ${detail.message}`).join(' ');
   }
-  if (isSmartApiError(error)) return error.message;
+  if (isHireKiwiApiError(error)) return error.message;
   return fallback;
 }
 
@@ -249,7 +249,7 @@ export default function PlatformAdminsPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@smart.edu"
+                  placeholder="admin@hirekiwi.edu"
                   required
                 />
               </Field>

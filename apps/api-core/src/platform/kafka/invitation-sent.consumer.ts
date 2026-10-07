@@ -1,6 +1,6 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { InvitationSentEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { InvitationSentEventSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
 import type { EmailTemplateName } from '../mailer/mailer.types.js';
 import { env } from '../config/env.js';
@@ -23,7 +23,7 @@ export class InvitationSentConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.invitationSent,
+        topic: HIREKIWI_TOPICS.invitationSent,
         module: 'notifications',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {
