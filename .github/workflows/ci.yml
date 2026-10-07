@@ -78,9 +78,9 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg16
         env:
-          POSTGRES_USER: smart
-          POSTGRES_PASSWORD: smart
-          POSTGRES_DB: smart
+          POSTGRES_USER: hirekiwi
+          POSTGRES_PASSWORD: hirekiwi
+          POSTGRES_DB: hirekiwi
         ports:
           - 5432:5432
         options: >-
@@ -97,5 +97,5 @@ jobs:
 
       - name: verify db migrations, schema drift & seeds
         env:
-          DATABASE_URL: postgresql://smart:smart@127.0.0.1:5432/smart?schema=public
+          DATABASE_URL: postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public
         run: node scripts/verify-db-migrations.mjs

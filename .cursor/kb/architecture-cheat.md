@@ -44,4 +44,4 @@ Canonical: `ARCHITECTURE.md`, `REPOSITORY_STRUCTURE.md`, `README.md`.
 
 ## Auth model
 
-15m access JWT + HttpOnly refresh · OAuth (Google/GitHub) · institutional SSO · public verify · B2B `X-SMART-API-KEY` · outbound HMAC webhooks.
+15m access JWT + HttpOnly refresh · OAuth (Google/GitHub) · institutional SSO · public verify · B2B `X-HireKiwi-API-KEY` · outbound HMAC webhooks.

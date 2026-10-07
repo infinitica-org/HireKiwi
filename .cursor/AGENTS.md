@@ -2,7 +2,7 @@
 
 Primary: [`../AGENTS.md`](../AGENTS.md).
 
-Platform: **HireKiwi Intelligent Talent Discovery Platform** (formerly SMART / SmartZen / HireKiwi).
+Platform: **HireKiwi Intelligent Talent Discovery Platform** ( HireKiwi).
 Agent Persona: **Vivi** is the unified AI agent, proctoring supervisor, and candidate copilot (do NOT rename Vivi to HireKiwi).
 Framework: **AI-DLC (AI-Driven Software Delivery Lifecycle)** — _"The hardest part of AI coding was never generation — it was delivery."_
 Delivery Mandate: Whenever working on any ticket, the agent MUST update relevant `@hirekiwi/web-docs` pages and verify `pnpm --filter @hirekiwi/web-docs build` passes before PR.

@@ -32,4 +32,4 @@ Always set: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, a
 
 429 body shape: `error: rate_limit_exceeded`, `retry_after_seconds`, `limit`, `window`.
 
-Publish `smart.rate_limit.exceeded` for observability / integrity review.
+Publish `hirekiwi.rate_limit.exceeded` for observability / integrity review.

@@ -1,5 +1,5 @@
 name: Setup Node + pnpm
-description: Checkout-adjacent toolchain for SMART CI (Node 22 from .nvmrc, pnpm 11.22)
+description: Checkout-adjacent toolchain for HireKiwi CI (Node 22 from .nvmrc, pnpm 11.22)
 runs:
   using: composite
   steps:
@@ -16,5 +16,5 @@ runs:
       run: pnpm --filter @hirekiwi/contracts build
     - shell: bash
       env:
-        DATABASE_URL: postgresql://smart:smart@127.0.0.1:5432/smart?schema=public
+        DATABASE_URL: postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public
       run: pnpm --filter @hirekiwi/api-core db:generate

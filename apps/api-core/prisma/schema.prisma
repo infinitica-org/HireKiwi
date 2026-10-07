@@ -1,5 +1,5 @@
-// SMART relational schema — maps ARCHITECTURE.md §5 plus identity, placement,
-// calibration and audit tables required by @smart/contracts.
+// HireKiwi relational schema — maps ARCHITECTURE.md §5 plus identity, placement,
+// calibration and audit tables required by @hirekiwi/contracts.
 // Owner: Vishal V (schema + migrations). Domain columns are owned with the
 // module that writes them; changing an enum here is a contracts PR.
 
@@ -198,7 +198,7 @@ enum CompanyMode {
   PRODUCT
 }
 
-/// CO self-onboarding applicant progress — mirrors @smart/contracts CompanyOnboardingStatus.
+/// CO self-onboarding applicant progress — mirrors @hirekiwi/contracts CompanyOnboardingStatus.
 /// S6-VV-107 — lifecycle of a request to join an existing company.
 enum CompanyJoinRequestStatus {
   PENDING
@@ -458,7 +458,7 @@ enum UniversityContactRequestStatus {
   PENDING
 }
 
-/// STU-01 — a student's ask for SMART to contact a university that isn't yet
+/// STU-01 — a student's ask for HireKiwi to contact a university that isn't yet
 /// a partner. No outbound notification is wired for this ticket; this is
 /// purely an internal, auditable record for ops to review later.
 model UniversityContactRequest {
@@ -1582,7 +1582,7 @@ model QlixCheckResult {
   suspicionLevel            String?  @map("suspicion_level")
   agentSummary              String?  @map("agent_summary") @db.Text
   skillsJson                Json?    @map("skills_json")
-  smartAssessmentJson       Json?    @map("smart_assessment_json")
+  hirekiwiAssessmentJson       Json?    @map("hirekiwi_assessment_json")
   appliedProficiencyCeiling String?  @map("applied_proficiency_ceiling")
   qualityScore              Float?   @map("quality_score")
   authenticityScore         Float?   @map("authenticity_score")

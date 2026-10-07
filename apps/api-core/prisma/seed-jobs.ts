@@ -10,7 +10,7 @@ import { PrismaClient } from '../src/generated/prisma/index.js';
  * not a posting flow (job posting is Th6-356–362).
  *
  * Requires the base seed (pnpm db:seed): it needs the institution, its TPO user and the verified
- * SMART Pilot Employer. Idempotent: an opening is recognised by (institution, company name, title).
+ * HireKiwi Pilot Employer. Idempotent: an opening is recognised by (institution, company name, title).
  *
  * It seeds both kinds of job the Jobs page must handle, plus rows that must never be listed:
  *   - company jobs from a VERIFIED company (badge shown)
@@ -19,8 +19,9 @@ import { PrismaClient } from '../src/generated/prisma/index.js';
  */
 
 const DATABASE_URL =
-  process.env['DATABASE_URL'] ?? 'postgresql://smart:smart@127.0.0.1:5432/smart?schema=public';
-const INSTITUTION_DOMAIN = process.env['TEST_DATA_INSTITUTION_DOMAIN'] ?? 'smart.local';
+  process.env['DATABASE_URL'] ??
+  'postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public';
+const INSTITUTION_DOMAIN = process.env['TEST_DATA_INSTITUTION_DOMAIN'] ?? 'hirekiwi.local';
 
 type Proficiency = 'BEGINNER' | 'INTERMEDIATE' | 'PROFICIENT' | 'ADVANCED' | 'PROFESSIONAL';
 
@@ -40,7 +41,7 @@ interface SeedJob {
 const JOBS: SeedJob[] = [
   {
     company: 'VERIFIED',
-    companyName: 'SMART Pilot Employer',
+    companyName: 'HireKiwi Pilot Employer',
     roleTitle: 'Junior Frontend Engineer',
     location: 'Bengaluru',
     employmentType: 'FULL_TIME',
@@ -51,7 +52,7 @@ const JOBS: SeedJob[] = [
   },
   {
     company: 'VERIFIED',
-    companyName: 'SMART Pilot Employer',
+    companyName: 'HireKiwi Pilot Employer',
     roleTitle: 'Backend Engineering Intern',
     location: 'Pune',
     employmentType: 'INTERNSHIP',
@@ -65,7 +66,7 @@ const JOBS: SeedJob[] = [
   },
   {
     company: 'VERIFIED',
-    companyName: 'SMART Pilot Employer',
+    companyName: 'HireKiwi Pilot Employer',
     roleTitle: 'Platform Engineer',
     location: 'Hyderabad',
     employmentType: 'FULL_TIME',
@@ -128,7 +129,7 @@ const JOBS: SeedJob[] = [
   },
   {
     company: 'VERIFIED',
-    companyName: 'SMART Pilot Employer',
+    companyName: 'HireKiwi Pilot Employer',
     roleTitle: 'Data Analyst (closed)',
     location: 'Pune',
     employmentType: 'FULL_TIME',
@@ -140,7 +141,7 @@ const JOBS: SeedJob[] = [
   },
   {
     company: 'VERIFIED',
-    companyName: 'SMART Pilot Employer',
+    companyName: 'HireKiwi Pilot Employer',
     roleTitle: 'QA Engineer (expired)',
     location: 'Pune',
     employmentType: 'FULL_TIME',
