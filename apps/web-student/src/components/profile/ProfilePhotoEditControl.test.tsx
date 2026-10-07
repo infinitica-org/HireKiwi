@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { queryKeys } from '@hirekiwi/api-client';
 import type { AuthenticatedUser } from '@hirekiwi/contracts';
+import type * as ProfilePhotoModule from '@/lib/profile-photo';
 
 import { ProfilePhotoEditControl } from './ProfilePhotoEditControl';
 
@@ -15,6 +16,31 @@ vi.mock('@/lib/api', () => ({
     },
   },
 }));
+
+vi.mock('@/components/profile/PhotoCropDialog', () => ({
+  PhotoCropDialog: ({
+    file,
+    onConfirm,
+  }: {
+    file: File | null;
+    onConfirm: (file: File) => void;
+  }) => {
+    if (!file) return null;
+    return (
+      <button type="button" data-testid="mock-confirm-crop" onClick={() => onConfirm(file)}>
+        Confirm Crop
+      </button>
+    );
+  },
+}));
+
+vi.mock('@/lib/profile-photo', async (importOriginal) => {
+  const actual = await importOriginal<typeof ProfilePhotoModule>();
+  return {
+    ...actual,
+    validateProfilePhotoImage: vi.fn().mockResolvedValue({ valid: true, error: null }),
+  };
+});
 
 function meUser(): AuthenticatedUser {
   return {
@@ -64,6 +90,9 @@ describe('ProfilePhotoEditControl', () => {
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['bytes'], 'photo.png', { type: 'image/png' });
     fireEvent.change(input, { target: { files: [file] } });
+
+    const confirmCrop = document.querySelector('[data-testid="mock-confirm-crop"]');
+    if (confirmCrop) fireEvent.click(confirmCrop);
 
     await waitFor(() => {
       expect(uploadProfilePhoto).toHaveBeenCalledWith(file, 'photo.png');

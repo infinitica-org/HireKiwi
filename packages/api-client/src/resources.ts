@@ -432,6 +432,7 @@ import {
   ToggleModelVersionResponseSchema,
   ListRegisteredPromptsResponseSchema,
   type CorrectStudentCapabilityRequest,
+  type UpdateCandidateProfileRequest,
 } from '@hirekiwi/contracts';
 import { z } from 'zod';
 import type { SmartApiClient } from './client.js';
@@ -591,6 +592,11 @@ export function usersApi(client: SmartApiClient) {
         schema: UploadProfilePhotoResponseSchema,
       });
     },
+
+    updateProfile: (body: UpdateCandidateProfileRequest) =>
+      client.patch(prefixed('/users/me/profile'), body, {
+        schema: AuthenticatedUserSchema,
+      }),
 
     /** Begins "Sign in with LinkedIn" (OIDC) — open the returned URL to verify. */
     linkedinOauthUrl: () =>

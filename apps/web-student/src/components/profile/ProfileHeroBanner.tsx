@@ -9,6 +9,7 @@ import {
   type CandidateEducationDto,
 } from '@hirekiwi/contracts';
 
+import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ProfilePhotoEditControl } from '@/components/profile/ProfilePhotoEditControl';
 import {
   primaryBatchLabel,
@@ -128,6 +129,7 @@ export function ProfileHeroBanner({
   const hasEducation = education.length > 0;
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const fullName = user?.fullName?.trim() || 'Candidate';
@@ -241,12 +243,13 @@ export function ProfileHeroBanner({
               </button>
 
               {/* Edit Profile Button */}
-              <Link
-                href="/profile?section=experience"
+              <button
+                type="button"
+                onClick={() => setIsEditDialogOpen(true)}
                 className="inline-flex items-center justify-center rounded-md bg-[#000000] px-5 py-2 text-sm font-medium text-white shadow-2xs transition-all hover:bg-[#00382a] active:scale-[0.99] dark:bg-emerald-600 dark:hover:bg-emerald-500"
               >
                 Edit Profile
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -378,6 +381,12 @@ export function ProfileHeroBanner({
           </div>
         </div>
       )}
+
+      <EditProfileDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        user={user}
+      />
     </section>
   );
 }

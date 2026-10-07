@@ -6,6 +6,7 @@ import {
   Get,
   HttpCode,
   Inject,
+  Patch,
   Post,
   Put,
   Query,
@@ -25,6 +26,7 @@ import {
   RepoLanguagesRequestSchema,
   ReverseGeocodeRequestSchema,
   DeleteResumeRequestSchema,
+  UpdateCandidateProfileRequestSchema,
 } from '@hirekiwi/contracts';
 import type { FastifyReply } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -180,7 +182,7 @@ export class UsersController {
   @Post('me/profile-photo')
   @Roles('STUDENT')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Upload or replace the candidate profile photo (JPEG/PNG/WebP).' })
+  @ApiOperation({ summary: 'Upload or replace the candidate profile photo (JPEG/PNG, max 2MB).' })
   @ApiResponse({ status: 200, description: 'Signed profilePhotoUrl for immediate display.' })
   async uploadProfilePhoto(@CurrentUser() user: RequestUser, @Req() request: FastifyRequest) {
     const partsIter = (
@@ -211,7 +213,7 @@ export class UsersController {
     if (!fileBuffer) {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'Choose a JPEG, PNG, or WebP image to upload.',
+        message: 'Choose a JPEG or PNG image to upload.',
         statusCode: 400,
       });
     }
@@ -221,6 +223,16 @@ export class UsersController {
       fileName,
       mimeType,
     });
+  }
+
+  @Patch('me/profile')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update student profile fields such as profile description/headline.' })
+  @ApiResponse({ status: 200, description: 'Updated AuthenticatedUser profile.' })
+  updateProfile(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = UpdateCandidateProfileRequestSchema.parse(body);
+    return this.service.updateProfile(user.sub, parsed);
   }
 
   @Get('me/onboarding/linkedin/oauth-url')

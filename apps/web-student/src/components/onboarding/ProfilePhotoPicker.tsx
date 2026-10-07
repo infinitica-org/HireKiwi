@@ -75,7 +75,7 @@ export function ProfilePhotoPicker({
             )}
             {profilePhotoUrl ? 'Change photo' : 'Upload photo'}
           </button>
-          <p className="text-xs text-muted-foreground">JPEG, PNG, or WebP up to 2MB. Optional.</p>
+          <p className="text-xs text-muted-foreground">JPEG or PNG up to 2MB. Optional.</p>
           {error ? <p className="text-xs text-rose-600">{error}</p> : null}
         </div>
       </div>

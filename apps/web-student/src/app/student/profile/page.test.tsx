@@ -142,7 +142,7 @@ describe('ProfilePage', () => {
     expect(screen.queryByRole('button', { name: 'About' })).toBeNull();
     expect(screen.getByText('Education section')).toBeTruthy();
     expect(screen.queryByText(/Introduce yourself with a short professional summary/i)).toBeNull();
-    expect(screen.queryByRole('button', { name: /Edit Profile/i })).toBeNull();
+    expect(screen.getByRole('button', { name: /Edit Profile/i })).toBeTruthy();
     expect(screen.queryByText('Skills section')).toBeNull();
     expect(screen.queryByText('Resume section')).toBeNull();
     expect(screen.queryByText('Overview')).toBeNull();
