@@ -5,14 +5,16 @@ import { env } from '../../platform/config/env.js';
 import { RedisService } from '../../platform/redis/redis.service.js';
 
 /**
- * "Sign in with Google" (OIDC) for the student and company login pages.
+ * "Sign in with Google" (OIDC) for the student login page. Company accounts
+ * always use their verified work-domain email + password — Google sign-in
+ * is student-only.
  *
  * Unlike LinkedinOauthService (which verifies an *already signed-in* user's
  * profile for evidence purposes), this flow is unauthenticated — it is how a
  * session gets created in the first place. The `state` therefore carries no
- * userId, only which login surface started the flow (`portal`) and where to
- * send the browser back to (`returnTo`), so the callback can route correctly
- * without trusting anything the client passes back directly.
+ * userId, only where to send the browser back to (`returnTo`), so the
+ * callback can route correctly without trusting anything the client passes
+ * back directly.
  */
 
 const STATE_TTL_SECONDS = 10 * 60;
@@ -22,11 +24,7 @@ const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
 const STATE_KEY_PREFIX = 'auth:google:state:';
 
-export const GOOGLE_OAUTH_PORTALS = ['student', 'company'] as const;
-export type GoogleOauthPortal = (typeof GOOGLE_OAUTH_PORTALS)[number];
-
 export interface GoogleOauthState {
-  portal: GoogleOauthPortal;
   returnTo: string | null;
 }
 
@@ -56,10 +54,7 @@ export class GoogleOauthService {
     return Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
   }
 
-  async createAuthorizationUrl(
-    portal: GoogleOauthPortal,
-    returnTo: string | null,
-  ): Promise<string> {
+  async createAuthorizationUrl(returnTo: string | null): Promise<string> {
     if (!this.configured) {
       throw new BadRequestException({
         error: 'google_not_configured',
@@ -68,7 +63,7 @@ export class GoogleOauthService {
       });
     }
     const state = randomUUID();
-    const payload: GoogleOauthState = { portal, returnTo };
+    const payload: GoogleOauthState = { returnTo };
     await this.redis.setex(
       `${STATE_KEY_PREFIX}${state}`,
       STATE_TTL_SECONDS,
@@ -87,16 +82,14 @@ export class GoogleOauthService {
     return `${AUTHORIZE_URL}?${params.toString()}`;
   }
 
-  /** One-time lookup: resolves `state` back to the portal/returnTo that started the flow. */
+  /** One-time lookup: resolves `state` back to the returnTo that started the flow. */
   async consumeState(state: string): Promise<GoogleOauthState | null> {
     const key = `${STATE_KEY_PREFIX}${state}`;
     const raw = await this.redis.get(key);
     if (!raw) return null;
     await this.redis.del(key);
     try {
-      const parsed = JSON.parse(raw) as GoogleOauthState;
-      if (!GOOGLE_OAUTH_PORTALS.includes(parsed.portal)) return null;
-      return parsed;
+      return JSON.parse(raw) as GoogleOauthState;
     } catch {
       return null;
     }

@@ -27,8 +27,8 @@ export function LoginForm() {
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  function onGoogleClick(portal: 'student' | 'company') {
-    window.location.href = buildGoogleOauthUrl(portal, searchParams.get('returnTo'));
+  function onGoogleClick() {
+    window.location.href = buildGoogleOauthUrl(searchParams.get('returnTo'));
   }
 
   async function onIdentifySubmit(event: React.FormEvent) {
@@ -105,7 +105,7 @@ export function LoginForm() {
             <div className="mt-8 w-full max-w-[420px] space-y-4">
               <button
                 type="button"
-                onClick={() => onGoogleClick('student')}
+                onClick={onGoogleClick}
                 className="flex h-11 w-full items-center justify-center gap-3 rounded-md border border-[#e5e7eb] bg-white px-4 text-md font-semibold text-[#111827]  transition hover:bg-slate-50 active:scale-[0.99]"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -128,17 +128,6 @@ export function LoginForm() {
                 </svg>
                 Continue with Google
               </button>
-
-              <p className="text-xs text-[#9ca3af]">
-                Signing in as a company?{' '}
-                <button
-                  type="button"
-                  onClick={() => onGoogleClick('company')}
-                  className="font-medium text-[#111827] underline-offset-4 hover:underline"
-                >
-                  Continue with Google as a company
-                </button>
-              </p>
 
               <div className="relative flex items-center justify-center py-2">
                 <div className="w-full border-t border-[#e5e7eb]" />
