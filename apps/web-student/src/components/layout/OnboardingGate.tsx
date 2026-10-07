@@ -67,7 +67,7 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
         <div className="w-full max-w-sm rounded-lg border border-zinc-200/80 bg-white p-6 text-center shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
           <Image
             src={smartLogoImg}
-            alt="SMART"
+            alt="HireKiwi"
             width={36}
             height={36}
             className="mx-auto h-9 w-9 object-contain"

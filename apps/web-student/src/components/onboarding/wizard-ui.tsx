@@ -161,7 +161,7 @@ export function WizardPage({ children }: { children: ReactNode }) {
         <div className="relative h-9 w-[108px] overflow-hidden sm:h-10 sm:w-[120px]">
           <Image
             src={smartLogo}
-            alt="SMART"
+            alt="HireKiwi"
             fill
             sizes="120px"
             className="scale-[1.4] object-cover mix-blend-multiply"

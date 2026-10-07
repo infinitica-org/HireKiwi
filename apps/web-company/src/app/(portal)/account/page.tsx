@@ -42,8 +42,8 @@ export default function CompanyAccountPage() {
         <CardHeader>
           <CardTitle>Signed-in representative</CardTitle>
           <CardDescription>
-            Tenant context is bound to your SMART account. Company identity cannot be changed from
-            the browser.
+            Tenant context is bound to your HireKiwi account. Company identity cannot be changed
+            from the browser.
           </CardDescription>
         </CardHeader>
         <CardContent>

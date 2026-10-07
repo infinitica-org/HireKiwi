@@ -7,7 +7,7 @@ import type { Metadata, MetadataRoute, Viewport } from 'next';
  * `app/robots.ts`, `app/sitemap.ts` and the OG image routes all read from here.
  */
 
-export const SITE_NAME = 'SMART';
+export const SITE_NAME = 'HireKiwi';
 
 // TODO(Th6-598): confirm the production domain. CookieYes is registered for
 // becomesmart.online; set NEXT_PUBLIC_SITE_URL in each deploy environment.
@@ -46,7 +46,7 @@ export function isIndexable(env: SeoEnv = BUILD_ENV): boolean {
 
 export interface PageSeo {
   path: string;
-  /** `<title>` segment; the root layout template appends " | SMART". */
+  /** `<title>` segment; the root layout template appends " | HireKiwi". */
   title: string;
   description: string;
   /** Headline and tagline rendered into the page's 1200×630 share card. */
@@ -56,14 +56,14 @@ export interface PageSeo {
   priority: number;
 }
 
-export const HOME_TITLE = 'SMART – Verified skills. The right fit, faster.';
+export const HOME_TITLE = 'HireKiwi – Verified skills. The right fit, faster.';
 
 export const PAGES = {
   home: {
     path: '/',
     title: HOME_TITLE,
     description:
-      'SMART connects students, universities and employers through verified skills – endorsed experience, signed credentials and AI-defended projects.',
+      'HireKiwi connects students, universities and employers through verified skills – endorsed experience, signed credentials and AI-defended projects.',
     ogHeadline: 'The right fit. Faster.',
     ogTagline: 'Verified skills connecting students, universities and employers.',
     changeFrequency: 'weekly',
@@ -81,7 +81,7 @@ export const PAGES = {
   },
   universities: {
     path: '/universities',
-    title: 'For Universities & TPOs – Prove placement outcomes',
+    title: 'For Universities & TPOs – Placement outcomes',
     description:
       'Cohort readiness analytics, verified placement data and accreditation-ready reports for placement offices and career centres.',
     ogHeadline: 'Get your students hired.',
@@ -103,7 +103,7 @@ export const PAGES = {
     path: '/universities/contact',
     title: 'Contact us – Universities & TPOs',
     description:
-      'Talk to the SMART partnerships team about verified skills, placement workflows and readiness analytics for your campus.',
+      'Talk to the HireKiwi partnerships team about verified skills, placement workflows and readiness analytics for your campus.',
     ogHeadline: "Let's connect.",
     ogTagline: 'Bring verified skills and placement analytics to your campus.',
     changeFrequency: 'yearly',

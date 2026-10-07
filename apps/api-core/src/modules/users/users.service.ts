@@ -650,7 +650,7 @@ export class UsersService {
     if (unknown.length > 0) {
       throw new BadRequestException({
         error: 'validation_error',
-        message: 'Choose skills from the SMART skill catalog.',
+        message: 'Choose skills from the HireKiwi skill catalog.',
         statusCode: 400,
         details: { unknownSkillCodes: unknown },
       });

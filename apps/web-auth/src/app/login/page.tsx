@@ -7,9 +7,9 @@ import { LoginLoadingState, LoginShell } from './login-shell';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Sign in · SMART',
+  title: 'Sign in · HireKiwi',
   description:
-    'Sign in to SMART — Intellectual Talent Network and role-specific readiness certification for your institution.',
+    'Sign in to HireKiwi — Intellectual Talent Network and role-specific readiness certification for your institution.',
 };
 
 export default function LoginPage() {

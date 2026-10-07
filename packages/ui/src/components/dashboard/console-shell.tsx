@@ -28,7 +28,7 @@ export interface ConsoleShellProps {
 }
 
 export function ConsoleShell({
-  brand = 'SMART',
+  brand = 'HireKiwi',
   homeHref,
   pathname,
   items,

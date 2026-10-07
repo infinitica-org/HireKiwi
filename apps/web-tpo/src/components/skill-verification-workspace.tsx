@@ -132,7 +132,7 @@ export function SkillVerificationWorkspace() {
 
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold mb-2 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-            <Award className="size-3.5" /> SMART Telemetry · Skill Verification
+            <Award className="size-3.5" /> HireKiwi Telemetry · Skill Verification
           </div>
           <h1 className="text-xl md:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-100 to-zinc-300 bg-clip-text text-transparent">
             Student Skill Verification Workspace

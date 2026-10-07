@@ -105,7 +105,7 @@ describe('BatchImportWizard', () => {
     expect(confirm.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText('Full Name *'), { target: { value: 'Column A' } });
     fireEvent.change(screen.getByLabelText('Email *'), { target: { value: 'Column A' } });
-    expect(screen.getByText(/Each SMART field must use a different/)).toBeDefined();
+    expect(screen.getByText(/Each HireKiwi field must use a different/)).toBeDefined();
     expect(confirm.disabled).toBe(true);
   });
 

@@ -164,7 +164,7 @@ export function SkillsEditor({
             aria-label="Skill"
             className={`${input} max-w-[280px]`}
           >
-            <option value="">Choose a skill from the SMART catalog…</option>
+            <option value="">Choose a skill from the HireKiwi catalog…</option>
             {SKILL_CATALOG_GROUPS.map((group) => {
               const available = group.skills.filter((skill) => !chosen.has(skill.code));
               if (available.length === 0) return null;

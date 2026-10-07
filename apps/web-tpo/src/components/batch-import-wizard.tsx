@@ -408,7 +408,7 @@ export function BatchImportWizard({
             {duplicate ? (
               <Alert
                 tone="danger"
-                title="Each SMART field must use a different uploaded column."
+                title="Each HireKiwi field must use a different uploaded column."
                 role="alert"
               />
             ) : null}
@@ -604,7 +604,7 @@ function ImportOutcome({
                 className="mt-1 accent-accent"
               />
               <span>
-                I confirm that SMART should queue {pending} invitation emails for this batch.
+                I confirm that HireKiwi should queue {pending} invitation emails for this batch.
               </span>
             </label>
           ) : (

@@ -2,7 +2,7 @@ import { CalendarDays } from 'lucide-react';
 import { EventsWorkspace } from '../../../components/campus/EventsWorkspace';
 import { TpoBentoPageHeader } from '../../../components/tpo-bento/TpoBentoPageHeader';
 
-export const metadata = { title: 'Events · SMART TPO' };
+export const metadata = { title: 'Events · HireKiwi TPO' };
 
 /** UNI-05 (Th6-448) — create and manage career events. */
 export default function EventsPage() {

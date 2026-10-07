@@ -123,7 +123,7 @@ export function JobPreferencesSection() {
       <div>
         <h3 className="text-lg font-medium text-foreground">Job preferences</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Optional matching preferences. These help SMART suggest relevant opportunities later.
+          Optional matching preferences. These help HireKiwi suggest relevant opportunities later.
         </p>
       </div>
 

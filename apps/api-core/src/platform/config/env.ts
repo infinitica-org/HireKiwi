@@ -13,7 +13,7 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   HOST: z.string().default('0.0.0.0'),
   PORT: z.coerce.number().int().positive().default(3000),
-  APP_NAME: z.string().default('smart-api-core'),
+  APP_NAME: z.string().default('hirekiwi-api-core'),
   APP_VERSION: z.string().default('0.1.0'),
 
   DATABASE_URL: z
@@ -31,7 +31,7 @@ const EnvSchema = z.object({
   // Host 6380 matches infra/docker (Windows often already binds 6379).
   REDIS_URL: z.string().min(1).default('redis://127.0.0.1:6380'),
   KAFKA_BROKERS: z.string().default('127.0.0.1:19092'),
-  KAFKA_CLIENT_ID: z.string().default('smart-api-core'),
+  KAFKA_CLIENT_ID: z.string().default('hirekiwi-api-core'),
 
   JWT_SECRET: z.string().min(32).default('local-dev-jwt-secret-change-me-now!!'),
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),

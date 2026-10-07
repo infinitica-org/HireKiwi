@@ -26,7 +26,7 @@ export function defaultSchoolTagline(): string {
 }
 
 export function defaultSchoolAbout(institutionName: string): string {
-  return `${institutionName} partners with SMART to certify student readiness and connect verified talent with employers recruiting on campus.`;
+  return `${institutionName} partners with HireKiwi to certify student readiness and connect verified talent with employers recruiting on campus.`;
 }
 
 function normalizeDomain(domain: string | undefined): string | null {

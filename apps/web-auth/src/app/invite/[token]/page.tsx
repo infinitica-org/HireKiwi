@@ -109,7 +109,7 @@ export default function InvitePage() {
           <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-[var(--ds-primary)]/10 text-[var(--ds-primary)]">
             <ShieldCheck className="size-6" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">SMART Readiness Platform</h1>
+          <h1 className="text-xl font-bold tracking-tight">HireKiwi Readiness Platform</h1>
           <p className="text-xs text-[var(--ds-text-muted)]">
             Official University Account Activation
           </p>
@@ -133,7 +133,8 @@ export default function InvitePage() {
               <div className="space-y-1">
                 <CardTitle className="text-base font-semibold">Account Already Activated</CardTitle>
                 <CardDescription className="text-xs">
-                  This account has already been activated. You can now sign in to your SMART portal.
+                  This account has already been activated. You can now sign in to your HireKiwi
+                  portal.
                 </CardDescription>
               </div>
               <div className="pt-2">
@@ -141,7 +142,7 @@ export default function InvitePage() {
                   href="/login"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--ds-primary)] px-4 py-2 text-xs font-semibold text-white shadow hover:opacity-90 transition-opacity"
                 >
-                  Sign In to SMART
+                  Sign In to HireKiwi
                   <ArrowRight className="size-4" />
                 </a>
               </div>
@@ -180,7 +181,7 @@ export default function InvitePage() {
                   Account Activated Successfully!
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Redirecting you to your SMART workspace...
+                  Redirecting you to your HireKiwi workspace...
                 </CardDescription>
               </div>
             </CardContent>
@@ -195,7 +196,7 @@ export default function InvitePage() {
                       {preview.fullName} ({preview.email}) &bull; {preview.institutionName}
                     </span>
                   ) : null}
-                  Set a secure password to complete your SMART account setup.
+                  Set a secure password to complete your HireKiwi account setup.
                 </CardDescription>
               </CardHeader>
 

@@ -32,7 +32,7 @@ const AREA_META: Record<string, AreaMeta> = {
   },
   skills: {
     title: 'Add your skills',
-    hint: 'Tell SMART what you already know',
+    hint: 'Tell HireKiwi what you already know',
     href: '/student/profile?section=skills',
     icon: Award,
   },

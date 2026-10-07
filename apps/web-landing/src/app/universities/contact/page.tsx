@@ -27,8 +27,8 @@ export default function UniversityContactPage() {
             className="animate-enter-lcp mx-auto mt-4 sm:mt-5 max-w-2xl text-base sm:text-lg lg:text-xl font-normal leading-relaxed text-slate-600"
             style={{ '--enter-y': '16px', animationDelay: '150ms' } as React.CSSProperties}
           >
-            Discover how SMART equips career centers and placement offices with verifiable 5×3 grid
-            competency assessments, automated drive workflows, and real-time student readiness
+            Discover how HireKiwi equips career centers and placement offices with verifiable 5×3
+            grid competency assessments, automated drive workflows, and real-time student readiness
             intelligence.
           </p>
         </div>
@@ -46,7 +46,7 @@ export default function UniversityContactPage() {
             className="mb-10 sm:mb-14 inline-block"
           >
             <span className="inline-block bg-[#fed7aa] text-zinc-950 font-bold px-4 py-1.5 sm:px-5 sm:py-2 rounded-xs text-base sm:text-xl tracking-tight shadow-xs">
-              Universities that switch to SMART see:
+              Universities that switch to HireKiwi see:
             </span>
           </motion.div>
 

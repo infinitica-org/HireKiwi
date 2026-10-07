@@ -61,7 +61,7 @@ export function ProfileProgressPanel({
     : 'surface-panel rounded-2xl p-6 md:p-7';
 
   return (
-    <section aria-label="Your SMART Profile" className={shellClass}>
+    <section aria-label="Your HireKiwi Profile" className={shellClass}>
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           {isDashboard ? (
@@ -74,7 +74,7 @@ export function ProfileProgressPanel({
           ) : (
             <>
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Your SMART Profile
+                Your HireKiwi Profile
               </p>
               <h2 className="mt-1 text-xl font-medium text-foreground md:text-2xl">
                 {loading ? 'Loading profile progress…' : `${safePercent}% complete`}
@@ -92,7 +92,7 @@ export function ProfileProgressPanel({
           </Link>
         ) : !loading && !isDashboard ? (
           <p className="text-sm text-muted-foreground">
-            Profile completion shows useful information SMART has.
+            Profile completion shows useful information HireKiwi has.
           </p>
         ) : null}
       </div>

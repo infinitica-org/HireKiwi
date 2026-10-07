@@ -27,4 +27,7 @@ apps/api-core/src/
 
 ## Schema changes
 
-Non-VV engineers: file an issue for Vishal V (table, field, type, ticket). Do not run `prisma migrate dev` yourself.
+- **Stewardship (ADR-0007):** Non-VV engineers: file an issue for Vishal V (table, field, type, ticket). Do not run `prisma migrate dev` yourself.
+- **Zero Drift Guard:** Every PR is mechanically verified in CI (`db-migrations` gate). Schema drift or broken migrations block merge. Run `pnpm db:verify` locally to test.
+- **Safe Column Renames:** Never let Prisma generate destructive `DROP COLUMN` + `ADD COLUMN` on renames. Use `ALTER TABLE "..." RENAME COLUMN "old" TO "new";`.
+

@@ -229,13 +229,13 @@ export function AdminSidebar({
         >
           <Link
             href="/admin"
-            aria-label="SMART Admin home"
-            title="SMART Admin"
+            aria-label="HireKiwi Admin home"
+            title="HireKiwi Admin"
             className="flex items-center gap-2.5"
           >
             <Image
               src={smartLogoImg}
-              alt="SMART logo"
+              alt="HireKiwi logo"
               width={28}
               height={28}
               priority

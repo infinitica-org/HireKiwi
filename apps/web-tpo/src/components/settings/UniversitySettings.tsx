@@ -249,7 +249,7 @@ export function UniversitySettings() {
                 <span className="text-xs text-zinc-500 font-medium">Primary domain</span>
               </div>
               <span className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                SMART Verified
+                HireKiwi Verified
               </span>
             </div>
 

@@ -3,7 +3,7 @@ import { BarChart3 } from 'lucide-react';
 import { CohortReadinessDashboard } from '../../../../../../components/readiness/CohortReadinessDashboard';
 import { TpoBentoPageHeader } from '../../../../../../components/tpo-bento/TpoBentoPageHeader';
 
-export const metadata = { title: 'Cohort readiness · SMART TPO' };
+export const metadata = { title: 'Cohort readiness · HireKiwi TPO' };
 
 /** Th6-607 - cohort readiness dashboard (tier distribution + skill-domain heatmap). */
 export default function CohortReadinessPage() {

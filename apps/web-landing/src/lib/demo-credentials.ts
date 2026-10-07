@@ -24,7 +24,7 @@ export const DEMO_CREDENTIAL_DATA: Record<string, DemoCredential> = {
     id: 'CERT-DEMO-2026',
     holderName: 'Alex Chen',
     roleTitle: 'Full-Stack Software Engineering (L3)',
-    issuer: 'SMART Autonomous Verification Engine',
+    issuer: 'HireKiwi Autonomous Verification Engine',
     issuedDate: 'September 15, 2026',
     headlineTier: 'Gold',
     tierTrail: [

@@ -7,8 +7,8 @@ import { Providers } from './providers';
 export const metadata: Metadata = {
   icons: portalIcons,
   title: {
-    default: 'TPO Console · SMART',
-    template: '%s · SMART TPO',
+    default: 'TPO Console · HireKiwi',
+    template: '%s · HireKiwi TPO',
   },
   description: 'Cohort readiness, JD ingest, shortlists.',
   // Authenticated portal: keep out of search indexes (Th6-598).

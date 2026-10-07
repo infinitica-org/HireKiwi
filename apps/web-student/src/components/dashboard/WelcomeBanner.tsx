@@ -8,7 +8,7 @@ type Slide = { title: string; body: string; ctaLabel: string; href: string };
 
 const SLIDES: Slide[] = [
   {
-    title: 'Learn how to get started on SMART',
+    title: 'Learn how to get started on HireKiwi',
     body: 'Complete your profile, verify your skills and get matched to roles at your institution.',
     ctaLabel: 'Complete profile',
     href: '/profile',

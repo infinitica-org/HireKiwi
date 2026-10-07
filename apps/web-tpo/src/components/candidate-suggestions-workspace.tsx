@@ -542,7 +542,7 @@ export function CandidateSuggestionsWorkspace({
                 type="button"
                 className={secondaryButtonClass}
                 onClick={handleExportPdf}
-                title="Download a SMART-branded PDF of this shortlist"
+                title="Download a HireKiwi-branded PDF of this shortlist"
               >
                 <FileText className="h-4 w-4" /> PDF
               </button>

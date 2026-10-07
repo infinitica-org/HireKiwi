@@ -5,9 +5,9 @@ import { RegisterForm } from './register-form';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Create an account · SMART',
+  title: 'Create an account · HireKiwi',
   description:
-    'Register for SMART — Intellectual Talent Network and role-specific readiness certification for your institution.',
+    'Register for HireKiwi — Intellectual Talent Network and role-specific readiness certification for your institution.',
 };
 
 export default function RegisterPage() {

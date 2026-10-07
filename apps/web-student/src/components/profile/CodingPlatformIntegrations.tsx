@@ -102,7 +102,7 @@ export function ConsentNotice({
     <div className="mt-5 rounded-lg border border-zinc-200 p-3.5 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
       <p className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
         <ShieldCheck className="size-4" aria-hidden />
-        What SMART will access
+        What HireKiwi will access
       </p>
       <ul className="mt-2 space-y-1 pl-5.5 leading-relaxed">
         <li>
@@ -118,7 +118,7 @@ export function ConsentNotice({
           onChange={(event) => onChange(event.target.checked)}
           className="mt-0.5 size-4 shrink-0 rounded border-zinc-300"
         />
-        <span>I agree that SMART may read these details. I can disconnect any time.</span>
+        <span>I agree that HireKiwi may read these details. I can disconnect any time.</span>
       </label>
     </div>
   );
@@ -447,7 +447,7 @@ export function CodingPlatformIntegrations({
                 Connect with {active.name}
               </h4>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Your profile must be public for SMART to read it.
+                Your profile must be public for HireKiwi to read it.
               </p>
             </div>
 

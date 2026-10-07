@@ -88,7 +88,7 @@ export function ProjectSkillsPicker({
         </ul>
       ) : (
         <p className="text-xs text-[var(--ds-text-muted)]">
-          Choose the SMART skills this project demonstrates. They appear on your profile and
+          Choose the HireKiwi skills this project demonstrates. They appear on your profile and
           assessment list.
         </p>
       )}

@@ -40,8 +40,8 @@ export interface RenderedEmail {
   text: string;
 }
 
-const SIGNOFF_STUDY_BUDDY = '— Your study buddy at SMART';
-const SIGNOFF_TEAM = '— The SMART Team';
+const SIGNOFF_STUDY_BUDDY = '— Your study buddy at HireKiwi';
+const SIGNOFF_TEAM = '— The HireKiwi Team';
 
 function firstName(fullName: string): string {
   return fullName.split(' ')[0] ?? fullName;
@@ -136,7 +136,7 @@ function escapeHtml(value: string): string {
 function buildCompanyVerificationResubmit(
   payload: CompanyVerificationResubmitEmailData,
 ): RenderedEmail {
-  const subject = `Changes needed for ${payload.companyName} on SMART`;
+  const subject = `Changes needed for ${payload.companyName} on HireKiwi`;
   const documentLine = (doc: { label: string; reason: string | null }) =>
     doc.reason ? `${doc.label}: ${doc.reason}` : doc.label;
   const bodyHtml = [
@@ -186,14 +186,14 @@ function buildCompanyVerificationResubmit(
 function buildCompanyOnboardingEmailVerify(
   payload: CompanyOnboardingEmailVerifyData,
 ): RenderedEmail {
-  const subject = 'Verify your email for SMART company registration';
+  const subject = 'Verify your email for HireKiwi company registration';
   const bodyHtml = [
     paragraph(`Hello ${strong(payload.fullName)}, use this code to verify your work email:`),
     paragraph(strong(payload.verificationCode)),
     paragraph(`This code expires at ${payload.expiresAtFormatted} (UTC).`),
   ].join('');
   const text = [
-    `Hello ${payload.fullName}, your SMART company registration verification code is ${payload.verificationCode}.`,
+    `Hello ${payload.fullName}, your HireKiwi company registration verification code is ${payload.verificationCode}.`,
     `It expires at ${payload.expiresAtFormatted} (UTC).`,
   ].join('\n\n');
   return {
@@ -211,10 +211,10 @@ function buildCompanyOnboardingEmailVerify(
 /* ---------------- institution-admin-invite (TPO / placement staff) ---------------- */
 
 function buildInstitutionAdminInvite(invite: InviteEmailData): RenderedEmail {
-  const subject = `You're invited to manage ${invite.institutionName} on SMART`;
+  const subject = `You're invited to manage ${invite.institutionName} on HireKiwi`;
   const bodyHtml = [
     paragraph(
-      `Hello ${strong(invite.fullName)}, ${invite.institutionName} has added you as a placement officer on SMART — the platform your students already use to track verified skills and job readiness.`,
+      `Hello ${strong(invite.fullName)}, ${invite.institutionName} has added you as a placement officer on HireKiwi — the platform your students already use to track verified skills and job readiness.`,
     ),
     paragraph(
       `As an admin, you'll be able to invite students in bulk, see batch-wide readiness at a glance, review shortlists as recruiters make them, and keep placement records in one place instead of scattered spreadsheets.`,
@@ -225,7 +225,7 @@ function buildInstitutionAdminInvite(invite: InviteEmailData): RenderedEmail {
     detailRows([['Institution', invite.institutionName]]),
   ].join('');
   const text = [
-    `Hello ${invite.fullName}, ${invite.institutionName} has added you as a placement officer on SMART.`,
+    `Hello ${invite.fullName}, ${invite.institutionName} has added you as a placement officer on HireKiwi.`,
     `As an admin, you'll be able to invite students in bulk, see batch-wide readiness, review shortlists, and keep placement records in one place.`,
     `Set up my account: ${invite.inviteUrl}`,
     `This link is valid for ${env.INVITATION_TTL_DAYS} days.`,
@@ -249,17 +249,17 @@ function buildInstitutionAdminInvite(invite: InviteEmailData): RenderedEmail {
 
 function buildCompanyPortalInvite(invite: InviteEmailData): RenderedEmail {
   const companyName = invite.institutionName;
-  const subject = `Set up your ${companyName} account on SMART`;
+  const subject = `Set up your ${companyName} account on HireKiwi`;
   const bodyHtml = [
     paragraph(
-      `Hello ${strong(invite.fullName)}, ${strong(companyName)} has been approved on SMART. You can now set a password for your company portal account.`,
+      `Hello ${strong(invite.fullName)}, ${strong(companyName)} has been approved on HireKiwi. You can now set a password for your company portal account.`,
     ),
     paragraph(
       `Use the button below to choose a password. Once signed in, your company tenant context is tied to your account — never share your credentials.`,
     ),
   ].join('');
   const text = [
-    `Hello ${invite.fullName}, ${companyName} has been approved on SMART.`,
+    `Hello ${invite.fullName}, ${companyName} has been approved on HireKiwi.`,
     `Set up your password: ${invite.inviteUrl}`,
     `This link is valid for ${env.INVITATION_TTL_DAYS} days.`,
   ].join('\n\n');
@@ -284,7 +284,7 @@ function buildPlatformAdminInvite(invite: InviteEmailData): RenderedEmail {
   const subject = "You're invited to become a HireKiwi platform admin";
   const bodyHtml = [
     paragraph(
-      `Hello ${strong(invite.fullName)}, you've been granted ${strong('platform admin')} access on SMART — full administrative control across every institution and company on the platform.`,
+      `Hello ${strong(invite.fullName)}, you've been granted ${strong('platform admin')} access on HireKiwi — full administrative control across every institution and company on the platform.`,
     ),
     paragraph(
       `As a platform admin, you can manage tenants, resolve verification decisions, review integrity flags, and — like this invitation — grant platform-admin access to others. Every sensitive action you take is recorded in the audit log with your name and reason.`,
@@ -294,7 +294,7 @@ function buildPlatformAdminInvite(invite: InviteEmailData): RenderedEmail {
     ),
   ].join('');
   const text = [
-    `Hello ${invite.fullName}, you've been granted platform admin access on SMART — full administrative control across every institution and company on the platform.`,
+    `Hello ${invite.fullName}, you've been granted platform admin access on HireKiwi — full administrative control across every institution and company on the platform.`,
     `As a platform admin, you can manage tenants, resolve verification decisions, review integrity flags, and grant platform-admin access to others. Every sensitive action is recorded in the audit log with your name and reason.`,
     `Set up my account: ${invite.inviteUrl}`,
     `This link is valid for ${env.INVITATION_TTL_DAYS} days.`,
@@ -319,14 +319,14 @@ function buildPlatformAdminInvite(invite: InviteEmailData): RenderedEmail {
 function buildStudentInvite(invite: InviteEmailData): RenderedEmail {
   const name = firstName(invite.fullName);
   const batchSuffix = invite.batchName ? ` for ${invite.batchName}` : '';
-  const subject = `${invite.institutionName} invited you to SMART — let's get your skills verified`;
+  const subject = `${invite.institutionName} invited you to HireKiwi — let's get your skills verified`;
   const rows: Array<[string, string]> = [['Institution', invite.institutionName]];
   if (invite.batchName) rows.push(['Batch', invite.batchName]);
 
   const bodyHtml = [
     paragraph(`Hi ${strong(name)},`),
     paragraph(
-      `${invite.institutionName} just added you to SMART${batchSuffix}. Think of it as your study buddy for placement season — it keeps track of the skills you're building, shows you exactly what recruiters are looking for, and does the bragging for you once a skill is verified.`,
+      `${invite.institutionName} just added you to HireKiwi${batchSuffix}. Think of it as your study buddy for placement season — it keeps track of the skills you're building, shows you exactly what recruiters are looking for, and does the bragging for you once a skill is verified.`,
     ),
     paragraph(
       `Here's the honest version: the students who get shortlisted fastest usually aren't the ones with the longest resume — they're the ones with a few verified skills on their profile. Setting yours up takes one step.`,
@@ -334,7 +334,7 @@ function buildStudentInvite(invite: InviteEmailData): RenderedEmail {
     detailRows(rows),
   ].join('');
   const text = [
-    `Hi ${name}, ${invite.institutionName} just added you to SMART${batchSuffix}.`,
+    `Hi ${name}, ${invite.institutionName} just added you to HireKiwi${batchSuffix}.`,
     `It keeps track of the skills you're building, shows you what recruiters are looking for, and verifies your skills so you don't have to just claim them.`,
     `Set my password: ${invite.inviteUrl}`,
     `This link is valid for ${env.INVITATION_TTL_DAYS} days.`,
@@ -344,7 +344,7 @@ function buildStudentInvite(invite: InviteEmailData): RenderedEmail {
     text,
     html: renderEmailLayout({
       previewText: subject,
-      heading: `Welcome to SMART, ${name}`,
+      heading: `Welcome to HireKiwi, ${name}`,
       illustration: WELCOME_ILLUSTRATION,
       bodyHtml,
       cta: { label: 'Set my password', url: invite.inviteUrl },
@@ -359,18 +359,18 @@ function buildStudentInvite(invite: InviteEmailData): RenderedEmail {
 function buildInviteReminder(invite: InviteEmailData): RenderedEmail {
   const name = firstName(invite.fullName);
   const batchSuffix = invite.batchName ? ` (${invite.batchName})` : '';
-  const subject = 'Still there? Your SMART invite is waiting';
+  const subject = 'Still there? Your HireKiwi invite is waiting';
   const bodyHtml = [
     paragraph(`Hi ${strong(name)},`),
     paragraph(
-      `Just checking in — your invite to join ${invite.institutionName} on SMART${batchSuffix} is still sitting unopened.`,
+      `Just checking in — your invite to join ${invite.institutionName} on HireKiwi${batchSuffix} is still sitting unopened.`,
     ),
     paragraph(
       `No pressure, but this is probably the easiest five minutes you'll spend all week: set a password, and you're already ahead of classmates who haven't started building a verified profile yet.`,
     ),
   ].join('');
   const text = [
-    `Hi ${name}, your invite to join ${invite.institutionName} on SMART${batchSuffix} is still pending.`,
+    `Hi ${name}, your invite to join ${invite.institutionName} on HireKiwi${batchSuffix} is still pending.`,
     `Set your password: ${invite.inviteUrl}`,
   ].join('\n\n');
   return {
@@ -392,15 +392,15 @@ function buildInviteReminder(invite: InviteEmailData): RenderedEmail {
 
 function buildEmailVerification(data: EmailVerificationEmailData): RenderedEmail {
   const name = firstName(data.fullName);
-  const subject = 'Verify your email to finish setting up SMART';
+  const subject = 'Verify your email to finish setting up HireKiwi';
   const bodyHtml = [
     paragraph(`Hi ${strong(name)},`),
     paragraph(
-      `Thanks for creating a SMART account. Confirm this is your email address and you're all set.`,
+      `Thanks for creating a HireKiwi account. Confirm this is your email address and you're all set.`,
     ),
   ].join('');
   const text = [
-    `Hi ${name}, confirm your email to finish setting up your SMART account.`,
+    `Hi ${name}, confirm your email to finish setting up your HireKiwi account.`,
     `Verify my email: ${data.verifyUrl}`,
     `This link is valid until ${data.expiresAtFormatted}.`,
   ].join('\n\n');
@@ -423,16 +423,16 @@ function buildEmailVerification(data: EmailVerificationEmailData): RenderedEmail
 
 function buildPasswordReset(data: PasswordResetEmailData): RenderedEmail {
   const name = firstName(data.fullName);
-  const subject = 'Reset your SMART password';
+  const subject = 'Reset your HireKiwi password';
   const bodyHtml = [
     paragraph(`Hi ${strong(name)},`),
     paragraph(
-      `We got a request to reset the password on your SMART account. If this was you, choose a new password below.`,
+      `We got a request to reset the password on your HireKiwi account. If this was you, choose a new password below.`,
     ),
     paragraph(`If you didn't request this, you can safely ignore this email.`),
   ].join('');
   const text = [
-    `Hi ${name}, we got a request to reset the password on your SMART account.`,
+    `Hi ${name}, we got a request to reset the password on your HireKiwi account.`,
     `Reset my password: ${data.resetUrl}`,
     `This link is valid until ${data.expiresAtFormatted}. If you didn't request this, ignore this email.`,
   ].join('\n\n');
@@ -619,7 +619,7 @@ function buildVerificationPassed(payload: VerificationEmailData): RenderedEmail 
     heading: `You're verified in ${payload.skillName}`,
     tone: 'success',
     illustration: VERIFICATION_PASSED_ILLUSTRATION,
-    extra: `This isn't just a badge — recruiters searching SMART for ${payload.skillName} will now see your profile as verified, which puts you ahead of candidates who only self-reported the same skill.`,
+    extra: `This isn't just a badge — recruiters searching HireKiwi for ${payload.skillName} will now see your profile as verified, which puts you ahead of candidates who only self-reported the same skill.`,
   });
 }
 
@@ -697,7 +697,7 @@ function buildWorkExperienceVerifierInvite(
   const subject = `Work experience verification request — ${payload.candidateName} at ${payload.companyName}`;
   const bodyHtml = [
     paragraph(
-      `Hello ${strong(verifierName)}, ${strong(payload.candidateName)} has listed ${strong(payload.roleTitle)} at ${strong(payload.companyName)} (${payload.startDate} – ${payload.endDate}) as part of their verified profile on SMART, a skills and placement platform used by their institution. You've been named as the point of contact who can confirm this.`,
+      `Hello ${strong(verifierName)}, ${strong(payload.candidateName)} has listed ${strong(payload.roleTitle)} at ${strong(payload.companyName)} (${payload.startDate} – ${payload.endDate}) as part of their verified profile on HireKiwi, a skills and placement platform used by their institution. You've been named as the point of contact who can confirm this.`,
     ),
     paragraph(
       `Confirming takes under a minute — review the details below and approve or reject the claim using the secure link.`,
@@ -773,10 +773,10 @@ function buildWorkExperienceVerifierReminder(
 function buildCertificateEndorsementRequest(
   payload: CertificateEndorsementRequestEmailData,
 ): RenderedEmail {
-  const subject = `${payload.candidateName} asked you to endorse a certificate on SMART`;
+  const subject = `${payload.candidateName} asked you to endorse a certificate on HireKiwi`;
   const bodyHtml = [
     paragraph(
-      `Hello ${strong(payload.endorserName)}, ${strong(payload.candidateName)} has asked you to endorse their certificate ${strong(payload.certificateTitle)} (issued by ${strong(payload.certificateIssuer)}) on SMART, a skills and placement platform.`,
+      `Hello ${strong(payload.endorserName)}, ${strong(payload.candidateName)} has asked you to endorse their certificate ${strong(payload.certificateTitle)} (issued by ${strong(payload.certificateIssuer)}) on HireKiwi, a skills and placement platform.`,
     ),
     paragraph(
       'Reviewing takes under a minute — check the certificate details below and approve or reject the endorsement using the secure link.',
@@ -788,7 +788,7 @@ function buildCertificateEndorsementRequest(
     ]),
   ].join('');
   const text = [
-    `Hello ${payload.endorserName}, ${payload.candidateName} has asked you to endorse their certificate "${payload.certificateTitle}" (issued by ${payload.certificateIssuer}) on SMART.`,
+    `Hello ${payload.endorserName}, ${payload.candidateName} has asked you to endorse their certificate "${payload.certificateTitle}" (issued by ${payload.certificateIssuer}) on HireKiwi.`,
     `Review this request: ${payload.endorsementUrl}`,
     `This link expires in ${payload.expiresAtFormatted}.`,
   ].join('\n\n');
@@ -815,7 +815,7 @@ function buildWorkExperienceManagerInvite(
   const subject = `Endorsement Request: Confirm work experience & skills for ${payload.candidateName}`;
   const bodyHtml = [
     paragraph(
-      `Hello ${strong(payload.managerName)}, ${strong(payload.candidateName)} has listed you as their manager for their role as ${strong(payload.roleTitle)} at ${strong(payload.companyName)} on SMART, a verified skills platform.`,
+      `Hello ${strong(payload.managerName)}, ${strong(payload.candidateName)} has listed you as their manager for their role as ${strong(payload.roleTitle)} at ${strong(payload.companyName)} on HireKiwi, a verified skills platform.`,
     ),
     paragraph(
       'Please confirm their employment dates and optionally rate the skills they demonstrated. This endorsement helps validate their professional profile.',
@@ -829,7 +829,7 @@ function buildWorkExperienceManagerInvite(
     ]),
   ].join('');
   const text = [
-    `Hello ${payload.managerName}, ${payload.candidateName} has listed you as their manager for their role as ${payload.roleTitle} at ${payload.companyName} on SMART.`,
+    `Hello ${payload.managerName}, ${payload.candidateName} has listed you as their manager for their role as ${payload.roleTitle} at ${payload.companyName} on HireKiwi.`,
     `Please confirm their employment and skills using the secure survey link: ${payload.surveyUrl}`,
     `This link is valid for ${payload.expiresAtFormatted}.`,
   ].join('\n\n');

@@ -134,13 +134,13 @@ export function StudentSidebar({
         >
           <Link
             href="/student/dashboard"
-            aria-label="SMART home"
-            title="SMART"
+            aria-label="HireKiwi home"
+            title="HireKiwi"
             className="flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
           >
             <Image
               src={smartLogoImg}
-              alt="SMART logo"
+              alt="HireKiwi logo"
               width={28}
               height={28}
               priority

@@ -1727,7 +1727,7 @@ export const ROUTES: readonly RouteSpec[] = [
     criticality: 'INTERACTIVE',
     execution: 'SYNC',
     slaMs: 150,
-    summary: 'Request a SMART partnership.',
+    summary: 'Request a HireKiwi partnership.',
   },
   {
     method: 'GET',
@@ -2161,7 +2161,7 @@ export const ROUTES: readonly RouteSpec[] = [
     execution: 'SYNC',
     slaMs: 200,
     summary:
-      'Student requests SMART contact a non-partner university found during onboarding search.',
+      'Student requests HireKiwi contact a non-partner university found during onboarding search.',
   },
   {
     method: 'GET',

@@ -68,9 +68,9 @@ async function bootstrap(): Promise<void> {
   });
 
   const openApi = new DocumentBuilder()
-    .setTitle('SMART API')
+    .setTitle('HireKiwi API')
     .setDescription(
-      'Platform core for the SMART Intellectual Talent Network & role-specific readiness certification. Health probes are unauthenticated; product routes use Bearer JWT.',
+      'Platform core for the HireKiwi Intellectual Talent Network & role-specific readiness certification. Health probes are unauthenticated; product routes use Bearer JWT.',
     )
     .setVersion(env.APP_VERSION)
     .addBearerAuth()
@@ -95,7 +95,7 @@ async function bootstrap(): Promise<void> {
   app.enableShutdownHooks();
   await app.listen(env.PORT, env.HOST);
 
-  Logger.log(`SMART API listening on http://${env.HOST}:${String(env.PORT)} (${env.NODE_ENV})`);
+  Logger.log(`HireKiwi API listening on http://${env.HOST}:${String(env.PORT)} (${env.NODE_ENV})`);
   Logger.log(`Swagger UI at http://${env.HOST}:${String(env.PORT)}/api/docs`);
 }
 

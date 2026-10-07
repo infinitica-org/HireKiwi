@@ -110,7 +110,7 @@ describe('CodingPlatformIntegrations', () => {
       render(<CodingPlatformIntegrations pickerOpen={false} onPickerOpenChange={vi.fn()} />);
       fireEvent.click(screen.getByRole('button', { name: `Connect ${platform}` }));
       const dialog = screen.getByRole('dialog', { name: `Connect ${platform}` });
-      expect(dialog.textContent).toContain('What SMART will access');
+      expect(dialog.textContent).toContain('What HireKiwi will access');
       expect(dialog.textContent).toContain(`Only your own public ${platform} details`);
       expect(dialog.textContent).toContain('never ask for your password');
       expect(screen.getByRole('checkbox', { name: /I agree/ })).toBeTruthy();

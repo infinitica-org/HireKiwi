@@ -126,7 +126,7 @@ describe('ProfessionalLinksSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Connect GitHub' }));
 
     const dialog = screen.getByText('Connect with GitHub').closest('div') as HTMLElement;
-    expect(dialog.textContent).toContain('What SMART will access');
+    expect(dialog.textContent).toContain('What HireKiwi will access');
     expect(dialog.textContent).toContain('Only your own public GitHub details');
     expect(dialog.textContent).toContain('never ask for your password');
     expect(screen.getByRole('checkbox', { name: /I agree/ })).toBeTruthy();
