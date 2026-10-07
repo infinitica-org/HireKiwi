@@ -31,6 +31,9 @@ vi.mock('next/link', () => ({
     <a href={href}>{children}</a>
   ),
 }));
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 import { CompanyRegisterWizard } from './company-register-wizard';
 import { COMPANY_ONBOARDING_SESSION_KEY } from '../../../lib/company-onboarding-session';

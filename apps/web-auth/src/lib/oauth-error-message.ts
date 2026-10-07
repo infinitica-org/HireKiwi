@@ -6,7 +6,6 @@ const MESSAGES: Record<string, string> = {
   google_userinfo_failed: 'Google sign-in failed. Please try again.',
   google_email_unverified: 'That Google account email is not verified.',
   google_role_mismatch: 'This email is registered under a different account type on SMART.',
-  google_company_not_found: 'No company account found for this email. Register your company first.',
 };
 
 const DEFAULT_MESSAGE = 'Could not complete Google sign-in. Please try again.';

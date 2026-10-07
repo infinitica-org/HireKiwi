@@ -27,6 +27,7 @@ import {
   type AuthTokenResponse,
   type AuthenticatedUser,
   type CompanyPortalAccount,
+  type IdentifyResponse,
   type ListActiveSessionsQuery,
   type RegisterRequest,
   type RegisterStudentRequest,
@@ -45,7 +46,7 @@ import { StorageService } from '../../platform/storage/storage.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { resolveSessionHold } from '../../common/session-hold.js';
 import { toAuthenticatedUserWithPhoto } from '../users/profile-photo.util.js';
-import type { GoogleIdentity, GoogleOauthPortal } from './google-oauth.service.js';
+import type { GoogleIdentity } from './google-oauth.service.js';
 import { clearRefreshCookie, setRefreshCookie } from './refresh-cookie.js';
 
 const scrypt = promisify(scryptCallback);
@@ -102,6 +103,15 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  /** Identify-first login step. Deliberately reveals existence — see IdentifyResponseSchema. */
+  async identify(email: string): Promise<IdentifyResponse> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true },
+    });
+    return { exists: Boolean(user) };
   }
 
   async login(email: string, password: string, reply: FastifyReply): Promise<AuthTokenResponse> {
@@ -294,17 +304,13 @@ export class AuthService {
   }
 
   /**
-   * "Sign in with Google" for both the student and company login surfaces.
-   * `portal` pins the expected role so a company email can never land a
-   * STUDENT session (or vice versa) just by completing the same OAuth dance.
-   *
-   * Company accounts are never created here — self-serve company signup
-   * goes through the verification wizard (PR #290); an unmatched company
-   * email is pointed back to registration instead.
+   * "Sign in with Google" — student-only. Company accounts always use their
+   * verified work-domain email + password and are never created or signed in
+   * here; self-serve company signup goes through the verification wizard
+   * (PR #290).
    */
   async loginOrRegisterWithGoogle(
     identity: GoogleIdentity,
-    portal: GoogleOauthPortal,
     reply: FastifyReply,
   ): Promise<AuthTokenResponse> {
     if (!identity.emailVerified) {
@@ -316,7 +322,6 @@ export class AuthService {
     }
 
     const email = identity.email.toLowerCase();
-    const expectedRole = portal === 'company' ? 'COMPANY' : 'STUDENT';
     const include = {
       institution: true,
       company: true,
@@ -326,25 +331,15 @@ export class AuthService {
 
     let user = await this.prisma.user.findUnique({ where: { email }, include });
 
-    if (user && user.role !== expectedRole) {
+    if (user && user.role !== 'STUDENT') {
       throw new UnauthorizedException({
         error: 'google_role_mismatch',
-        message:
-          portal === 'company'
-            ? 'This email is registered as a student account. Use student sign-in instead.'
-            : 'This email is registered as a company account. Use company sign-in instead.',
+        message: 'This email is not registered as a student account.',
         statusCode: 401,
       });
     }
 
     if (!user) {
-      if (portal === 'company') {
-        throw new NotFoundException({
-          error: 'google_company_not_found',
-          message: 'No company account found for this email. Register your company first.',
-          statusCode: 404,
-        });
-      }
       try {
         user = await this.prisma.user.create({
           data: {

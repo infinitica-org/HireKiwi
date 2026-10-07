@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { describeApiError } from '@hirekiwi/api-client';
 import {
   COMPANY_SIZE_BANDS,
@@ -50,6 +51,7 @@ function errorMessage(err: unknown, fallback: string): string {
 }
 
 export function CompanyRegisterWizard() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>('account');
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,7 +59,7 @@ export function CompanyRegisterWizard() {
   const [emailCode, setEmailCode] = useState('');
 
   const [fullName, setFullName] = useState('');
-  const [workEmail, setWorkEmail] = useState('');
+  const [workEmail, setWorkEmail] = useState(searchParams.get('email') ?? '');
   const [website, setWebsite] = useState('https://');
 
   const [companyQuery, setCompanyQuery] = useState('');

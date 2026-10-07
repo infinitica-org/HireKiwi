@@ -45,12 +45,9 @@ export const studentDashboardUrl = `${studentUrl.replace(/\/$/u, '')}/dashboard`
 
 export { baseUrl as apiBaseUrl };
 
-export type GoogleOauthPortal = 'student' | 'company';
-
-/** Full-page navigation target for the "Continue with Google" buttons. */
-export function buildGoogleOauthUrl(portal: GoogleOauthPortal, returnTo?: string | null): string {
+/** Full-page navigation target for the "Continue with Google" button. Student-only. */
+export function buildGoogleOauthUrl(returnTo?: string | null): string {
   const url = new URL(`${baseUrl.replace(/\/$/u, '')}${API_PREFIX}/auth/google`);
-  url.searchParams.set('portal', portal);
   if (returnTo) url.searchParams.set('returnTo', returnTo);
   return url.toString();
 }

@@ -14,6 +14,7 @@ import {
 import {
   API_PREFIX,
   AcceptInvitationRequestSchema,
+  IdentifyRequestSchema,
   PasswordLoginRequestSchema,
   PasswordResetConfirmRequestSchema,
   PasswordResetRequestSchema,
@@ -30,11 +31,7 @@ import { env } from '../../platform/config/env.js';
 import { InvitationsService } from '../invitations/invitations.service.js';
 import { AuthService } from './auth.service.js';
 import { EmailVerificationService } from './email-verification.service.js';
-import {
-  GOOGLE_OAUTH_PORTALS,
-  GoogleOauthService,
-  type GoogleOauthPortal,
-} from './google-oauth.service.js';
+import { GoogleOauthService } from './google-oauth.service.js';
 import { PasswordResetService } from './password-reset.service.js';
 
 @Controller(`${API_PREFIX}/auth`)
@@ -52,6 +49,13 @@ export class AuthController {
   login(@Body() body: unknown, @Res({ passthrough: true }) reply: FastifyReply) {
     const parsed = PasswordLoginRequestSchema.parse(body);
     return this.auth.login(parsed.email, parsed.password, reply);
+  }
+
+  @Public()
+  @Post('identify')
+  identify(@Body() body: unknown) {
+    const { email } = IdentifyRequestSchema.parse(body);
+    return this.auth.identify(email);
   }
 
   @Public()
@@ -126,17 +130,15 @@ export class AuthController {
     return this.auth.getCompanyPortalAccount(user.sub);
   }
 
-  /** Kicks off "Sign in with Google" from the student (`/login`) or company (`/company/login`) page. */
+  /** Kicks off "Sign in with Google" from the student login page. Student-only — company accounts use their verified work-domain email + password. */
   @Public()
   @Get('google')
   async googleAuthorize(
-    @Query('portal') portalParam: string | undefined,
     @Query('returnTo') returnToParam: string | undefined,
     @Res() reply: FastifyReply,
   ) {
-    const portal = parseGooglePortal(portalParam);
     const returnTo = parseAbsoluteUrl(returnToParam);
-    const url = await this.googleOauth.createAuthorizationUrl(portal, returnTo);
+    const url = await this.googleOauth.createAuthorizationUrl(returnTo);
     reply.redirect(url, 302);
   }
 
@@ -148,34 +150,25 @@ export class AuthController {
     @Query('error') error: string | undefined,
     @Res() reply: FastifyReply,
   ) {
-    const fallbackLoginUrl = (portal: GoogleOauthPortal) =>
-      `${env.AUTH_APP_URL.replace(/\/$/u, '')}${portal === 'company' ? '/company/login' : '/login'}`;
-
-    const redirectWithError = (portal: GoogleOauthPortal, oauthError: string) => {
-      reply.redirect(
-        `${fallbackLoginUrl(portal)}?oauthError=${encodeURIComponent(oauthError)}`,
-        302,
-      );
+    const loginUrl = `${env.AUTH_APP_URL.replace(/\/$/u, '')}/login`;
+    const redirectWithError = (oauthError: string) => {
+      reply.redirect(`${loginUrl}?oauthError=${encodeURIComponent(oauthError)}`, 302);
     };
 
     if (error || !code || !state) {
-      redirectWithError('student', error ?? 'google_cancelled');
+      redirectWithError(error ?? 'google_cancelled');
       return;
     }
 
     const parsedState = await this.googleOauth.consumeState(state);
     if (!parsedState) {
-      redirectWithError('student', 'google_state_expired');
+      redirectWithError('google_state_expired');
       return;
     }
 
     try {
       const identity = await this.googleOauth.exchangeCode(code);
-      const session = await this.auth.loginOrRegisterWithGoogle(
-        identity,
-        parsedState.portal,
-        reply,
-      );
+      const session = await this.auth.loginOrRegisterWithGoogle(identity, reply);
       const base = env.AUTH_APP_URL.replace(/\/$/u, '');
       const completeUrl = new URL(`${base}/oauth/complete`);
       completeUrl.searchParams.set('accessToken', session.accessToken);
@@ -189,7 +182,7 @@ export class AuthController {
           errorCode = String((body as { error?: unknown }).error ?? errorCode);
         }
       }
-      redirectWithError(parsedState.portal, errorCode);
+      redirectWithError(errorCode);
     }
   }
 
@@ -204,12 +197,6 @@ export class AuthController {
     const user = await this.invitations.accept(token, parsed.password);
     return this.auth.issueSessionAfterInviteAccept(user, reply);
   }
-}
-
-function parseGooglePortal(value: string | undefined): GoogleOauthPortal {
-  return (GOOGLE_OAUTH_PORTALS as readonly string[]).includes(value ?? '')
-    ? (value as GoogleOauthPortal)
-    : 'student';
 }
 
 /** Only ever used as a value forwarded back to the frontend's own origin allow-list check. */

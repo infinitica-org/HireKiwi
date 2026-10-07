@@ -103,6 +103,18 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'POST',
+    path: '/auth/identify',
+    module: 'auth',
+    owner: 'Vishal V',
+    roles: ['PUBLIC'],
+    rateLimit: 'auth.identify',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 150,
+    summary: 'Identify-first login step; resolves whether an email has an account.',
+  },
+  {
+    method: 'POST',
     path: '/auth/refresh',
     module: 'auth',
     owner: 'Vishal V',

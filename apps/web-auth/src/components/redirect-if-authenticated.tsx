@@ -27,7 +27,8 @@ export function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     let cancelled = false;
 
-    void (async () => {
+    const check = async (): Promise<void> => {
+      if (!cancelled) setChecked(false);
       const liveToken = (await reconcileAccessTokenFromCookie(apiBaseUrl)) ?? getAccessToken();
       if (cancelled) return;
       const role = liveToken ? decodeAccessTokenRole(liveToken) : null;
@@ -37,10 +38,25 @@ export function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
         return;
       }
       setChecked(true);
-    })();
+    };
+
+    void check();
+
+    // The browser can restore this page from its back-forward cache on a
+    // Back navigation (e.g. after logging in and landing on a portal, then
+    // pressing Back) without re-running effects or re-fetching anything —
+    // leaving the already-rendered login form on screen even though the
+    // session is still live. `pageshow` with `persisted: true` is the signal
+    // for that restore; re-run the same check so it redirects forward again
+    // instead of looking stuck.
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void check();
+    };
+    window.addEventListener('pageshow', onPageShow);
 
     return () => {
       cancelled = true;
+      window.removeEventListener('pageshow', onPageShow);
     };
   }, []);
 
