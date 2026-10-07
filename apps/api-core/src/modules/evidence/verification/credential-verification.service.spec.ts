@@ -119,7 +119,7 @@ describe('CredentialVerificationService', () => {
     expect(reconciliation.reconcileForStudent).toHaveBeenCalledWith('student-1');
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
       expect.objectContaining({
-        topic: 'smart.credential.verified',
+        topic: 'hirekiwi.credential.verified',
         data: expect.objectContaining({
           userId: 'student-1',
           sourceId: 'PROFESSIONALCREDENTIAL',

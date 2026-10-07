@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildQlixSmartContext } from './qlix-smart-context.js';
+import { buildQlixHireKiwiContext } from './qlix-hirekiwi-context.js';
 
-describe('buildQlixSmartContext', () => {
+describe('buildQlixHireKiwiContext', () => {
   it('returns null when no skill mappings exist', () => {
     expect(
-      buildQlixSmartContext({
+      buildQlixHireKiwiContext({
         projectId: '11111111-1111-4111-8111-111111111111',
         studentId: '22222222-2222-4222-8222-222222222222',
         title: 'Bus tracker',
@@ -17,8 +17,8 @@ describe('buildQlixSmartContext', () => {
     ).toBeNull();
   });
 
-  it('builds smartContext from the primary skill mapping and competency blueprint', () => {
-    const ctx = buildQlixSmartContext({
+  it('builds hirekiwiContext from the primary skill mapping and competency blueprint', () => {
+    const ctx = buildQlixHireKiwiContext({
       projectId: '11111111-1111-4111-8111-111111111111',
       studentId: '22222222-2222-4222-8222-222222222222',
       title: 'Bus tracker',

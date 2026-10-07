@@ -343,7 +343,7 @@ export class InstitutionsTpoController {
     const buffer = await this.institutions.buildImportTemplate();
     reply
       .header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-      .header('Content-Disposition', 'attachment; filename="smart-student-import-template.xlsx"')
+      .header('Content-Disposition', 'attachment; filename="hirekiwi-student-import-template.xlsx"')
       .send(buffer);
   }
 

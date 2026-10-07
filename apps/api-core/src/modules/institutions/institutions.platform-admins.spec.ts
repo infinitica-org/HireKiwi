@@ -14,7 +14,7 @@ function setup() {
       findMany: vi.fn().mockResolvedValue([]),
       findFirstOrThrow: vi.fn().mockResolvedValue({
         id: newUserId,
-        email: 'new.admin@smart.local',
+        email: 'new.admin@hirekiwi.local',
         fullName: 'New Admin',
         emailVerified: false,
       }),
@@ -49,13 +49,13 @@ describe('InstitutionsService platform admins', () => {
     const { service, invitations, auditPublisher } = setup();
 
     const result = await service.invitePlatformAdmin(
-      { fullName: 'New Admin', email: 'new.admin@smart.local', reason: 'Handover to new hire' },
+      { fullName: 'New Admin', email: 'new.admin@hirekiwi.local', reason: 'Handover to new hire' },
       actorId,
     );
 
     expect(invitations.createAndEnqueue).toHaveBeenCalledWith(
       expect.objectContaining({
-        email: 'new.admin@smart.local',
+        email: 'new.admin@hirekiwi.local',
         fullName: 'New Admin',
         role: 'SUPER_ADMIN',
         institutionId: null,
@@ -70,7 +70,7 @@ describe('InstitutionsService platform admins', () => {
         reasonCode: 'Handover to new hire',
       }),
     );
-    expect(result.email).toBe('new.admin@smart.local');
+    expect(result.email).toBe('new.admin@hirekiwi.local');
     expect(result.invitation).not.toBeNull();
   });
 
@@ -78,8 +78,8 @@ describe('InstitutionsService platform admins', () => {
     const { service, prisma } = setup();
     const admin = {
       id: randomUUID(),
-      email: 'admin@smart.local',
-      fullName: 'SMART Super Admin',
+      email: 'admin@hirekiwi.local',
+      fullName: 'HireKiwi Super Admin',
       emailVerified: true,
     };
     prisma.user.findMany.mockResolvedValueOnce([admin]);

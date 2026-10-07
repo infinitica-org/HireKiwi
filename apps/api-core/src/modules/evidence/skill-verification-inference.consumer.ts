@@ -1,6 +1,6 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { SkillVerificationCompletedEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { SkillVerificationCompletedEventSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import { KafkaService } from '../../platform/kafka/kafka.service.js';
@@ -25,7 +25,7 @@ export class SkillVerificationInferenceConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.skillVerificationCompleted,
+        topic: HIREKIWI_TOPICS.skillVerificationCompleted,
         module: 'evidence',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {

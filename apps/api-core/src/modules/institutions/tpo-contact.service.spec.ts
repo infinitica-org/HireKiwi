@@ -71,7 +71,7 @@ describe('TpoContactService', () => {
   });
 
   it('saves the request, thanks the sender, and alerts every admin', async () => {
-    const { service, prisma, queue } = build({ admins: ['a@smart.local', 'b@smart.local'] });
+    const { service, prisma, queue } = build({ admins: ['a@hirekiwi.local', 'b@hirekiwi.local'] });
 
     const result = await service.create(BODY);
 
@@ -84,7 +84,7 @@ describe('TpoContactService', () => {
       template: 'partnership-request-received',
       data: { fullName: 'Kristen Ann Smith', institutionName: 'Anna University' },
     });
-    expect(jobs.slice(1).map((job) => job.to)).toEqual(['a@smart.local', 'b@smart.local']);
+    expect(jobs.slice(1).map((job) => job.to)).toEqual(['a@hirekiwi.local', 'b@hirekiwi.local']);
     expect(jobs[1]).toMatchObject({
       template: 'partnership-request-admin-alert',
       data: { adminUrl: expect.stringContaining('/admin/partnership-requests') },
@@ -95,7 +95,7 @@ describe('TpoContactService', () => {
     const noQueue = build({ queue: false });
     await expect(noQueue.service.create(BODY)).resolves.toMatchObject({ received: true });
 
-    const failing = build({ admins: ['a@smart.local'] });
+    const failing = build({ admins: ['a@hirekiwi.local'] });
     failing.queue.add.mockRejectedValue(new Error('redis down'));
     await expect(failing.service.create(BODY)).resolves.toMatchObject({ received: true });
     expect(failing.prisma.tpoContactRequest.create).toHaveBeenCalledTimes(1);

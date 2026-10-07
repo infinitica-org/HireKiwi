@@ -15,7 +15,7 @@ function row(overrides: Partial<AuditExportRow> = {}): AuditExportRow {
     createdAt: new Date('2026-09-25T10:00:00.000Z'),
     action: 'institution.held',
     actorId: 'admin-1',
-    actor: { email: 'admin@smart.test', role: 'SUPER_ADMIN' },
+    actor: { email: 'admin@hirekiwi.test', role: 'SUPER_ADMIN' },
     resourceType: 'institution',
     resourceId: 'inst-1',
     reasonCode: 'overdue invoice',
@@ -45,7 +45,7 @@ describe('audit export formatting (S6-VV-101)', () => {
       'createdAt,action,actorId,actorEmail,actorRole,resourceType,resourceId,reasonCode,metadata\r\n',
     );
     expect(auditExportLine(row(), 'csv')).toBe(
-      '2026-09-25T10:00:00.000Z,institution.held,admin-1,admin@smart.test,SUPER_ADMIN,institution,inst-1,overdue invoice,"{""planCode"":""PRO""}"\r\n',
+      '2026-09-25T10:00:00.000Z,institution.held,admin-1,admin@hirekiwi.test,SUPER_ADMIN,institution,inst-1,overdue invoice,"{""planCode"":""PRO""}"\r\n',
     );
   });
 
@@ -142,7 +142,7 @@ describe('GET /admin/audit-logs/export (S6-VV-101)', () => {
     expect(prepare).toHaveBeenCalledWith({ action: 'institution' }, 'csv', 'admin-1');
     expect(headers['Content-Type']).toBe('text/csv; charset=utf-8');
     expect(headers['Content-Disposition']).toMatch(
-      /^attachment; filename="smart-audit-log-.*\.csv"$/,
+      /^attachment; filename="hirekiwi-audit-log-.*\.csv"$/,
     );
     let text = '';
     for await (const chunk of body as AsyncIterable<string>) text += chunk;

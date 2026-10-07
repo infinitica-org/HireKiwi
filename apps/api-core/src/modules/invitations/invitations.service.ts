@@ -13,7 +13,7 @@ import type {
   InvitationStatus,
   UserRole,
 } from '@hirekiwi/contracts';
-import { SMART_TOPICS } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
@@ -149,7 +149,7 @@ export class InvitationsService {
       });
     }
 
-    let institutionName = params.tenantName ?? 'SMART';
+    let institutionName = params.tenantName ?? 'HireKiwi';
     if (params.institutionId) {
       const institution = await this.prisma.institution.findUnique({
         where: { id: params.institutionId },
@@ -248,7 +248,7 @@ export class InvitationsService {
 
     await this.enqueueEmail(
       updated,
-      invitation.institution?.name ?? 'SMART',
+      invitation.institution?.name ?? 'HireKiwi',
       raw,
       inviteTemplateForRole(invitation.role as UserRole),
     );
@@ -361,7 +361,7 @@ export class InvitationsService {
       });
       await this.enqueueEmail(
         updated,
-        invitation.institution?.name ?? 'SMART',
+        invitation.institution?.name ?? 'HireKiwi',
         raw,
         'student-invite',
       );
@@ -385,9 +385,9 @@ export class InvitationsService {
     const inviteUrl = buildInviteUrl(rawToken);
 
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.invitationSent,
+      topic: HIREKIWI_TOPICS.invitationSent,
       partitionKey: invitation.id,
-      eventType: SMART_TOPICS.invitationSent,
+      eventType: HIREKIWI_TOPICS.invitationSent,
       source: 'invitations',
       data: {
         invitationId: invitation.id,
@@ -426,7 +426,7 @@ export class InvitationsService {
     if (invitation.role === 'COMPANY') {
       return invitation.user?.company?.name ?? 'Your company';
     }
-    return invitation.institution?.name ?? 'SMART';
+    return invitation.institution?.name ?? 'HireKiwi';
   }
 
   private async assertCompanyInvitationEligible(userId: string): Promise<void> {

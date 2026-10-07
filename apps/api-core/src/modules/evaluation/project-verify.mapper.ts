@@ -13,7 +13,10 @@ import {
   type ProjectVerificationReportDto,
 } from '@hirekiwi/contracts';
 
-export const REPORT_META_MARK = '\n---smart-verify---\n';
+export const REPORT_META_MARK = '\n---hirekiwi-verify---\n';
+
+/** Reports saved before the HireKiwi rename carry this marker; keep reading them. */
+const LEGACY_REPORT_META_MARK = '\n---smart-verify---\n';
 
 export type QlixDigestMeta = {
   similarityIndex: number;
@@ -42,7 +45,9 @@ export function decodeReportMeta(explanation: string): {
   text: string;
   meta: StoredReportMeta | null;
 } {
-  const [text, rawMeta] = explanation.split(REPORT_META_MARK);
+  const [text, rawMeta] = explanation
+    .replace(LEGACY_REPORT_META_MARK, REPORT_META_MARK)
+    .split(REPORT_META_MARK);
   if (!rawMeta) return { text: explanation, meta: null };
   try {
     return { text: text || explanation, meta: JSON.parse(rawMeta) as StoredReportMeta };

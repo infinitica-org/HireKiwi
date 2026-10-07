@@ -7,7 +7,7 @@ import {
   GetSkillEvidenceInferenceResponseSchema,
   ProjectVerificationReportDtoSchema,
   REDIS_TTL_SECONDS,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   SkillEvidenceInferenceSnapshotSchema,
   SkillInferenceUpdatedDataSchema,
   getSkillBlueprint,
@@ -21,7 +21,7 @@ import {
   runSkillEvidenceFusion,
 } from '@hirekiwi/scoring-engine';
 import { CAPABILITY_INFERENCE_PROMPT_REF } from '@hirekiwi/prompts';
-import { QlixSmartAssessmentSchema } from '../evaluation/qlix-client.js';
+import { QlixHireKiwiAssessmentSchema } from '../evaluation/qlix-client.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { RedisService } from '../../platform/redis/redis.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
@@ -259,16 +259,20 @@ export class EvidenceSkillInferenceService {
 
       promptRefs.push(report.promptRef);
 
-      const smart = project.qlixCheckResult.smartAssessmentJson
-        ? QlixSmartAssessmentSchema.safeParse(project.qlixCheckResult.smartAssessmentJson)
+      const hirekiwi = project.qlixCheckResult.hirekiwiAssessmentJson
+        ? QlixHireKiwiAssessmentSchema.safeParse(project.qlixCheckResult.hirekiwiAssessmentJson)
         : null;
 
       projectBundles.push(
         projectBundleFromQlixEvidence(
           {
             report,
-            competencyObservations: smart?.success ? (smart.data.competencyObservations ?? []) : [],
-            appliedProficiencyCeiling: smart?.success ? smart.data.appliedProficiencyCeiling : null,
+            competencyObservations: hirekiwi?.success
+              ? (hirekiwi.data.competencyObservations ?? [])
+              : [],
+            appliedProficiencyCeiling: hirekiwi?.success
+              ? hirekiwi.data.appliedProficiencyCeiling
+              : null,
             evidenceRecordId: record.id,
             projectId: project.id,
           },
@@ -393,9 +397,9 @@ export class EvidenceSkillInferenceService {
       computedAt: snapshot.provenance.computedAt,
     });
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.skillInferenceUpdated,
+      topic: HIREKIWI_TOPICS.skillInferenceUpdated,
       partitionKey: studentId,
-      eventType: SMART_TOPICS.skillInferenceUpdated,
+      eventType: HIREKIWI_TOPICS.skillInferenceUpdated,
       source: 'evidence',
       data,
     });

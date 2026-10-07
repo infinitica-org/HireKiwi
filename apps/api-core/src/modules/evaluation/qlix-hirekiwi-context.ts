@@ -1,6 +1,6 @@
 import { getSkillBlueprint, getSkillDefinition, type ProficiencyLevel } from '@hirekiwi/contracts';
 
-export type QlixSmartContextInput = {
+export type QlixHireKiwiContextInput = {
   projectId: string;
   studentId: string;
   title: string;
@@ -20,7 +20,7 @@ export type QlixSmartContextInput = {
   }>;
 };
 
-export type QlixSmartContext = {
+export type QlixHireKiwiContext = {
   clientRef: {
     projectId: string;
     studentId: string;
@@ -55,8 +55,10 @@ export type QlixSmartContext = {
   };
 };
 
-/** Build QLIX smartContext when the project has at least one skill mapping with a known blueprint. */
-export function buildQlixSmartContext(input: QlixSmartContextInput): QlixSmartContext | null {
+/** Build QLIX hirekiwiContext when the project has at least one skill mapping with a known blueprint. */
+export function buildQlixHireKiwiContext(
+  input: QlixHireKiwiContextInput,
+): QlixHireKiwiContext | null {
   const primary = input.skillMappings[0];
   if (!primary) return null;
 
