@@ -1,6 +1,6 @@
-# SMART — UI/UX Design Brief
+# HireKiwi — UI/UX Design Brief
 
-### For Product Designers | Companion to the SMART PRD v1.0
+### For Product Designers | Companion to the HireKiwi PRD v1.0
 
 | Field          | Detail                                                                                   |
 | -------------- | ---------------------------------------------------------------------------------------- |

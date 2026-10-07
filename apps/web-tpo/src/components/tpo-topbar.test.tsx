@@ -30,10 +30,10 @@ function primaryNav() {
 }
 
 describe('TpoTopbar brand', () => {
-  it('shows the SMART logo linking home', () => {
+  it('shows the HireKiwi logo linking home', () => {
     render(<TpoTopbar />);
-    expect(screen.getByRole('link', { name: 'SMART home' }).getAttribute('href')).toBe('/');
-    expect(screen.getByRole('img', { name: 'SMART logo' })).toBeDefined();
+    expect(screen.getByRole('link', { name: 'HireKiwi home' }).getAttribute('href')).toBe('/');
+    expect(screen.getByRole('img', { name: 'HireKiwi logo' })).toBeDefined();
   });
 });
 

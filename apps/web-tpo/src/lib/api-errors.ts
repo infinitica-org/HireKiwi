@@ -1,8 +1,8 @@
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 
 /** User-facing API error text for TPO placement pages. */
 export function tpoApiErrorMessage(caught: unknown, fallback: string): string {
-  if (isSmartApiError(caught)) {
+  if (isHireKiwiApiError(caught)) {
     if (caught.message === 'An unexpected error occurred.') {
       return (
         `${caught.message} The API may be out of date — run ` +

@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ChevronDown, FileText, GraduationCap, Menu, Settings, Shield, X } from 'lucide-react';
 import type { AuthenticatedUser } from '@hirekiwi/contracts';
 import { UserMenu, cn } from '@hirekiwi/ui';
-import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
+import hirekiwiLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/HireKiwi-logo.png';
 import { api } from '../lib/api';
 import { signOut } from '../lib/auth';
 import {
@@ -101,14 +101,14 @@ export function TpoTopbar() {
 
             <Link
               href="/"
-              aria-label="SMART home"
-              title="SMART Portal"
+              aria-label="HireKiwi home"
+              title="HireKiwi Portal"
               className={cn('group flex shrink-0 items-center gap-3 rounded-xl')}
             >
               <span className="flex size-10 shrink-0 items-center justify-center  ">
                 <Image
-                  src={smartLogoImg}
-                  alt="SMART logo"
+                  src={hirekiwiLogoImg}
+                  alt="HireKiwi logo"
                   width={34}
                   height={34}
                   priority
@@ -116,7 +116,7 @@ export function TpoTopbar() {
                 />
               </span>
               <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
-                SMART
+                HireKiwi
               </span>
             </Link>
 

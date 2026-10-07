@@ -44,10 +44,10 @@ import {
   type UniversityStudentSummary,
 } from '@hirekiwi/contracts';
 import {
-  SmartApiClient,
+  HireKiwiApiClient,
   clearAccessToken,
   createRefreshAccessToken,
-  createSmartApi,
+  createHireKiwiApi,
   getAccessToken,
 } from '@hirekiwi/api-client';
 
@@ -55,7 +55,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 // web-auth is the one login screen for every portal now.
 const authUrl = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';
 
-export const apiClient = new SmartApiClient({
+export const apiClient = new HireKiwiApiClient({
   baseUrl,
   getAccessToken,
   refreshAccessToken: createRefreshAccessToken(() => api.auth.refresh()),
@@ -67,7 +67,7 @@ export const apiClient = new SmartApiClient({
   },
 });
 
-export const api = createSmartApi(apiClient);
+export const api = createHireKiwiApi(apiClient);
 
 export const employersApi = {
   list: (query?: ListPlacementEmployersQuery) =>

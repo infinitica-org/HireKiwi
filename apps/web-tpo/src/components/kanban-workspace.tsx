@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Columns3, Inbox } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   TrackCodeSchema,
   type ApplicationDto,
@@ -61,7 +61,7 @@ const columnWidthClass = 'w-[260px] shrink-0';
 const boardScrollerClass = '-mx-4 overflow-x-auto px-4 pb-2 select-none md:mx-0 md:px-0';
 
 function errorMessage(caught: unknown, fallback: string): string {
-  if (isSmartApiError(caught) || caught instanceof Error) return caught.message;
+  if (isHireKiwiApiError(caught) || caught instanceof Error) return caught.message;
   return fallback;
 }
 

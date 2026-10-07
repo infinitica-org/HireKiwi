@@ -82,7 +82,7 @@ export const JOB_POSTING_STEPS = [
 
 export type JobPostingStepId = (typeof JOB_POSTING_STEPS)[number]['id'];
 
-export const JOB_POSTING_DRAFT_STORAGE_KEY = 'smart.tpo.job-posting.draft';
+export const JOB_POSTING_DRAFT_STORAGE_KEY = 'hirekiwi.tpo.job-posting.draft';
 
 export const JOB_POSTING_DOMAIN_OPTIONS = SKILL_TAXONOMY_DOMAINS;
 

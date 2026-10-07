@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   API_PREFIX,
   BatchImportMappingSchema,
@@ -57,7 +57,7 @@ export function toBatchImportMapping(mapping: MappingState): BatchImportMapping 
 }
 
 function safeMessage(caught: unknown, fallback: string) {
-  if (isSmartApiError(caught)) return caught.message;
+  if (isHireKiwiApiError(caught)) return caught.message;
   if (caught instanceof Error) return caught.message;
   return fallback;
 }
@@ -144,7 +144,7 @@ export function BatchImportWizard({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'smart-student-import-template.xlsx';
+      link.download = 'hirekiwi-student-import-template.xlsx';
       link.click();
       URL.revokeObjectURL(url);
     } catch {

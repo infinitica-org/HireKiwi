@@ -19,7 +19,7 @@ import {
   X,
   Plus,
 } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { CustomSelect } from '../ui/CustomSelect';
 import type { BatchDto, BatchMemberDto } from '@hirekiwi/contracts';
 import { BatchImportWizard } from '../batch-import-wizard';
@@ -46,7 +46,7 @@ function extractEmailsFromText(text: string): string[] {
 }
 
 function safeMsg(err: unknown, fallback: string): string {
-  if (isSmartApiError(err)) return err.message;
+  if (isHireKiwiApiError(err)) return err.message;
   if (err instanceof Error) return err.message;
   return fallback;
 }

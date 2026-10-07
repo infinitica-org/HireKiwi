@@ -1,11 +1,11 @@
 const EXTRA_DOMAINS_KEY = (institutionId: string) =>
-  `smart:tpo:settings:${institutionId}:extraDomains`;
+  `hirekiwi:tpo:settings:${institutionId}:extraDomains`;
 const AUTO_APPROVE_KEY = (institutionId: string) =>
-  `smart:tpo:settings:${institutionId}:autoApproveInvites`;
+  `hirekiwi:tpo:settings:${institutionId}:autoApproveInvites`;
 const DISMISSED_EMPLOYERS_KEY = (institutionId: string) =>
-  `smart:tpo:settings:${institutionId}:dismissedEmployers`;
+  `hirekiwi:tpo:settings:${institutionId}:dismissedEmployers`;
 const SCHOOL_PROFILE_KEY = (institutionId: string) =>
-  `smart:tpo:settings:${institutionId}:schoolProfile`;
+  `hirekiwi:tpo:settings:${institutionId}:schoolProfile`;
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;

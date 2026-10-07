@@ -13,7 +13,7 @@ import {
   BookOpen,
   Lock,
 } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   SKILL_CATEGORY_IDS,
   SKILL_CATEGORIES,
@@ -29,7 +29,7 @@ import { api } from '../lib/api';
 import { CompetencyBreakdown } from './competency-breakdown';
 
 function errorMessage(caught: unknown, fallback: string): string {
-  if (isSmartApiError(caught) || caught instanceof Error) return caught.message;
+  if (isHireKiwiApiError(caught) || caught instanceof Error) return caught.message;
   return fallback;
 }
 
