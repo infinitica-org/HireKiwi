@@ -252,3 +252,24 @@ export type ListActiveSessionsQuery = z.infer<typeof ListActiveSessionsQuerySche
 
 export const ListActiveSessionsResponseSchema = z.array(ActiveSessionDtoSchema);
 export type ListActiveSessionsResponse = z.infer<typeof ListActiveSessionsResponseSchema>;
+
+/* ----------------------- student onboarding email OTP --------------------- */
+
+export const SendEmailOtpResponseSchema = z.object({
+  resendAvailableAt: IsoDateTimeSchema,
+  expiresAt: IsoDateTimeSchema,
+});
+export type SendEmailOtpResponse = z.infer<typeof SendEmailOtpResponseSchema>;
+
+export const VerifyEmailOtpRequestSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Enter a valid 6-digit OTP code.'),
+});
+export type VerifyEmailOtpRequest = z.infer<typeof VerifyEmailOtpRequestSchema>;
+
+export const VerifyEmailOtpResponseSchema = z.object({
+  verified: z.boolean(),
+});
+export type VerifyEmailOtpResponse = z.infer<typeof VerifyEmailOtpResponseSchema>;

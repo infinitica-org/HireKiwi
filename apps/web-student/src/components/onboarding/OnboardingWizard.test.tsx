@@ -134,7 +134,8 @@ describe('OnboardingWizard', () => {
     await waitFor(() => {
       expect(screen.getByText('Basic Profile')).toBeTruthy();
       expect(screen.getByTestId('first-name-input')).toBeTruthy();
-      expect(screen.getByTestId('major-study-program-input')).toBeTruthy();
+      expect(screen.getByTestId('degree-select')).toBeTruthy();
+      expect(screen.getByTestId('specialization-select')).toBeTruthy();
     });
   });
 });

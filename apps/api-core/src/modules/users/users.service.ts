@@ -729,7 +729,10 @@ export class UsersService {
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: {
-        fullName: `${request.firstName} ${request.lastName}`.trim(),
+        fullName: [request.firstName, request.middleName, request.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim(),
         onboardingCompleted: true,
         onboardingDetails: details as Prisma.InputJsonValue,
         dpdpConsentAt: consentTimestamp,

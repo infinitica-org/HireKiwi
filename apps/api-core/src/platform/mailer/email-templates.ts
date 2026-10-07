@@ -32,6 +32,7 @@ import type {
   WorkExperienceVerifierInviteEmailData,
   WorkExperienceVerifierReminderEmailData,
   WorkExperienceManagerEndorsementEmailData,
+  StudentEmailOtpData,
 } from './mailer.types.js';
 
 export interface RenderedEmail {
@@ -120,6 +121,8 @@ export function renderEmailTemplate(
       return buildCompanyOnboardingEmailVerify(data as CompanyOnboardingEmailVerifyData);
     case 'company-verification-resubmit':
       return buildCompanyVerificationResubmit(data as CompanyVerificationResubmitEmailData);
+    case 'student-email-otp':
+      return buildStudentEmailOtp(data as StudentEmailOtpData);
   }
 }
 
@@ -202,6 +205,29 @@ function buildCompanyOnboardingEmailVerify(
     html: renderEmailLayout({
       previewText: subject,
       heading: 'Verify your work email',
+      bodyHtml,
+      signoff: SIGNOFF_TEAM,
+    }),
+  };
+}
+
+function buildStudentEmailOtp(payload: StudentEmailOtpData): RenderedEmail {
+  const subject = 'Your SMART verification code';
+  const bodyHtml = [
+    paragraph(`Hello ${strong(payload.fullName)}, use this code to verify your email address:`),
+    paragraph(strong(payload.verificationCode)),
+    paragraph(`This code expires at ${payload.expiresAtFormatted} (UTC).`),
+  ].join('');
+  const text = [
+    `Hello ${payload.fullName}, your SMART verification code is ${payload.verificationCode}.`,
+    `It expires at ${payload.expiresAtFormatted} (UTC).`,
+  ].join('\n\n');
+  return {
+    subject,
+    text,
+    html: renderEmailLayout({
+      previewText: subject,
+      heading: 'Verify your email address',
       bodyHtml,
       signoff: SIGNOFF_TEAM,
     }),

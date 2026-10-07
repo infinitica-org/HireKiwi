@@ -8,6 +8,9 @@ import {
   RegisterRequestSchema,
   RegisterResponseSchema,
   ResendEmailVerificationRequestSchema,
+  SendEmailOtpResponseSchema,
+  VerifyEmailOtpRequestSchema,
+  VerifyEmailOtpResponseSchema,
 } from '@hirekiwi/contracts';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { Public } from '../../common/guards/public.decorator.js';
@@ -76,6 +79,19 @@ export class AuthController {
   @HttpCode(204)
   async verifyEmail(@Param('token') token: string) {
     await this.emailVerification.confirm(token);
+  }
+
+  @Post('email-otp/send')
+  async sendEmailOtp(@CurrentUser() user: RequestUser) {
+    const result = await this.emailVerification.sendOtpForUser(user.sub);
+    return SendEmailOtpResponseSchema.parse(result);
+  }
+
+  @Post('email-otp/verify')
+  async verifyEmailOtp(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = VerifyEmailOtpRequestSchema.parse(body);
+    const result = await this.emailVerification.verifyOtpForUser(user.sub, parsed.code);
+    return VerifyEmailOtpResponseSchema.parse(result);
   }
 
   @Public()

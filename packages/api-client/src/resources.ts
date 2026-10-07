@@ -209,6 +209,7 @@ import type {
   ReplacePaymentMethodDto,
   VerifyPaymentMethodReplacementDto,
   ResolveEvidenceDisputeRequest,
+  VerifyEmailOtpRequest,
 } from '@hirekiwi/contracts';
 import {
   API_PREFIX,
@@ -247,6 +248,8 @@ import {
   AuthTokenResponseSchema,
   AuthenticatedUserSchema,
   CompanyPortalAccountSchema,
+  SendEmailOtpResponseSchema,
+  VerifyEmailOtpResponseSchema,
   UserHoldResponseSchema,
   RegisterResponseSchema,
   BatchDtoSchema,
@@ -515,6 +518,16 @@ export function authApi(client: SmartApiClient) {
     /** Always resolves (204), whether or not the address has an unverified account. */
     resendEmailVerification: (body: { email: string }) =>
       client.post<void>(prefixed('/auth/verify-email/resend'), body, { anonymous: true }),
+
+    sendEmailOtp: () =>
+      client.post(prefixed('/auth/email-otp/send'), undefined, {
+        schema: SendEmailOtpResponseSchema,
+      }),
+
+    verifyEmailOtp: (body: VerifyEmailOtpRequest) =>
+      client.post(prefixed('/auth/email-otp/verify'), body, {
+        schema: VerifyEmailOtpResponseSchema,
+      }),
 
     requestPasswordReset: (body: { email: string }) =>
       client.post<void>(prefixed('/auth/password-reset/request'), body, {

@@ -30,7 +30,15 @@ export type EmailTemplateName =
   /** APP-01: a company member is told a student applied to their job. */
   | 'application-received'
   /** APP-01: a company member is told an applicant withdrew. */
-  | 'application-withdrawn';
+  | 'application-withdrawn'
+  /** Student onboarding: 6-digit email OTP. */
+  | 'student-email-otp';
+
+export interface StudentEmailOtpData {
+  readonly fullName: string;
+  readonly verificationCode: string;
+  readonly expiresAtFormatted: string;
+}
 
 export interface CompanyOnboardingEmailVerifyData {
   readonly fullName: string;
@@ -148,7 +156,8 @@ export type EmailTemplateData =
   | CertificateEndorsementRequestEmailData
   | WorkExperienceManagerEndorsementEmailData
   | CompanyOnboardingEmailVerifyData
-  | CompanyVerificationResubmitEmailData;
+  | CompanyVerificationResubmitEmailData
+  | StudentEmailOtpData;
 
 export interface EmailJobPayload {
   readonly to: string;

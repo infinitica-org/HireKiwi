@@ -26,6 +26,7 @@ const NAME_TO_SKILL_CODE = new Map(
 
 export interface OnboardingProfileForm {
   firstName: string;
+  middleName: string;
   lastName: string;
   gender: string;
   dobMonth: string;
@@ -64,6 +65,8 @@ export interface OnboardingProfileForm {
   /** Study program (e.g. "B.Tech CSE") + graduation year — optional, string inputs. */
   academicProgram: {
     studyProgram: string;
+    degree?: string;
+    specialization?: string;
     graduationYear: string;
   };
   dpdpConsent: boolean;
@@ -103,6 +106,7 @@ export const ONBOARDING_DRAFT_STORAGE_KEY = 'smart.candidate.onboarding.draft';
 export function emptyOnboardingForm(): OnboardingProfileForm {
   return {
     firstName: '',
+    middleName: '',
     lastName: '',
     gender: '',
     dobMonth: '',
@@ -177,6 +181,7 @@ export function applyResumeDraft(
   return {
     ...form,
     firstName: basic?.firstName?.trim() || form.firstName,
+    middleName: form.middleName,
     lastName: basic?.lastName?.trim() || form.lastName,
     phoneNumber: basic?.phoneNumber?.trim() || form.phoneNumber,
     phoneCountryCode: basic?.phoneCountryCode?.trim() || form.phoneCountryCode,
@@ -238,6 +243,7 @@ export function applyServerDraft(
   return {
     ...form,
     firstName: draft.firstName ?? form.firstName,
+    middleName: draft.middleName ?? form.middleName,
     lastName: draft.lastName ?? form.lastName,
     gender: draft.gender ?? form.gender,
     phoneCountryCode: draft.phoneCountryCode ?? form.phoneCountryCode,
@@ -269,6 +275,15 @@ export function applyServerDraft(
     academicProgram: draft.academicProgram
       ? {
           studyProgram: draft.academicProgram.studyProgram ?? form.academicProgram.studyProgram,
+          ...((draft.academicProgram.degree ?? form.academicProgram.degree)
+            ? { degree: draft.academicProgram.degree ?? form.academicProgram.degree }
+            : {}),
+          ...((draft.academicProgram.specialization ?? form.academicProgram.specialization)
+            ? {
+                specialization:
+                  draft.academicProgram.specialization ?? form.academicProgram.specialization,
+              }
+            : {}),
           graduationYear:
             draft.academicProgram.graduationYear?.toString() ?? form.academicProgram.graduationYear,
         }
@@ -347,11 +362,20 @@ function buildAcademicScoresPayload(
 function buildAcademicProgramPayload(
   form: OnboardingProfileForm,
 ): CandidateAcademicProgram | undefined {
-  const studyProgram = form.academicProgram.studyProgram.trim() || undefined;
+  const degree = form.academicProgram.degree?.trim() || undefined;
+  const specialization = form.academicProgram.specialization?.trim() || undefined;
+  let studyProgram = form.academicProgram.studyProgram.trim() || undefined;
+  if (!studyProgram && degree && specialization) {
+    studyProgram = `${degree} - ${specialization}`;
+  } else if (!studyProgram && degree) {
+    studyProgram = degree;
+  }
   const graduationYearRaw = form.academicProgram.graduationYear.trim();
   const graduationYear = graduationYearRaw ? Number(graduationYearRaw) : undefined;
   const result: CandidateAcademicProgram = {
     ...(studyProgram !== undefined ? { studyProgram } : {}),
+    ...(degree !== undefined ? { degree } : {}),
+    ...(specialization !== undefined ? { specialization } : {}),
     ...(graduationYear !== undefined && !Number.isNaN(graduationYear) ? { graduationYear } : {}),
   };
   return Object.keys(result).length > 0 ? result : undefined;
@@ -398,6 +422,7 @@ export function buildOnboardingDraftPayload(
 
   return {
     firstName: form.firstName.trim() || undefined,
+    middleName: form.middleName.trim() || undefined,
     lastName: form.lastName.trim() || undefined,
     gender: form.gender.trim() || undefined,
     dateOfBirth,
@@ -480,6 +505,7 @@ export function buildCompleteOnboardingRequest(
     // Stream step currently enrolls TECH_FULLSTACK only; broad domain stays CS & IT.
     interestDomain: 'CS_IT',
     firstName: form.firstName.trim(),
+    middleName: form.middleName.trim() || undefined,
     lastName: form.lastName.trim(),
     gender: form.gender.trim() || undefined,
     dateOfBirth,
