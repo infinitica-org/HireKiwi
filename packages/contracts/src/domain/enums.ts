@@ -552,8 +552,14 @@ export type AtsStage = z.infer<typeof AtsStageSchema>;
 export const HUMAN_HIRING_DECISION_REQUIRED = true as const;
 export const HUMAN_GATED_ATS_STAGES: readonly AtsStage[] = ['OFFER', 'HIRED'] as const;
 
-/** How a match score was produced. SKILL_CAPABILITY is the default ranker; RULES is legacy rollback. */
-export const MATCH_METHODS = ['RULES', 'SKILL_CAPABILITY', 'HYBRID'] as const;
+/**
+ * How a match score was produced. SKILL_CAPABILITY is the default ranker; RULES is legacy
+ * rollback. HYBRID means vector similarity narrowed the pool AND the structured scorer ranked
+ * it — that structured score is authoritative. VECTOR_PREVIEW means only vector similarity ran
+ * (e.g. free-text candidate browsing with no job requirements to score against) — it is an
+ * unscored similarity ranking, never a match decision.
+ */
+export const MATCH_METHODS = ['RULES', 'SKILL_CAPABILITY', 'HYBRID', 'VECTOR_PREVIEW'] as const;
 export const MatchMethodSchema = z.enum(MATCH_METHODS);
 export type MatchMethod = z.infer<typeof MatchMethodSchema>;
 
