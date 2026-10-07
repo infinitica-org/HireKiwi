@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
-import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
+import hirekiwiLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/HireKiwi-logo.png';
 import { api } from '../../lib/api';
 
 /**
@@ -48,7 +48,7 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
         className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white font-sans dark:bg-[#111111]"
       >
         <Image
-          src={smartLogoImg}
+          src={hirekiwiLogoImg}
           alt=""
           width={40}
           height={40}
@@ -66,7 +66,7 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 font-sans dark:bg-[#111111]">
         <div className="w-full max-w-sm rounded-lg border border-zinc-200/80 bg-white p-6 text-center shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
           <Image
-            src={smartLogoImg}
+            src={hirekiwiLogoImg}
             alt="HireKiwi"
             width={36}
             height={36}

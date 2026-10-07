@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Briefcase, MapPin } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { StudentApplicationCard } from '@hirekiwi/contracts';
 import { Alert, ConfirmDialog, ErrorState, LoadingState, VerifiedBadge, cn } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
@@ -95,7 +95,7 @@ export function ApplicationsPanel({
   }
 
   const withdrawError = withdraw.isError
-    ? isSmartApiError(withdraw.error) && withdraw.error.message
+    ? isHireKiwiApiError(withdraw.error) && withdraw.error.message
       ? withdraw.error.message
       : 'Could not withdraw. Please try again.'
     : null;

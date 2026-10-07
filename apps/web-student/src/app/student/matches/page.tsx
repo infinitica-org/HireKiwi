@@ -293,7 +293,7 @@ export default function MatchesPage() {
               Jobs
             </h1>
             <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm dark:text-zinc-400">
-              Verified Jobs recommended by Smart based on your evaluated skill claims
+              Verified Jobs recommended by HireKiwi based on your evaluated skill claims
             </p>
           </div>
         </div>

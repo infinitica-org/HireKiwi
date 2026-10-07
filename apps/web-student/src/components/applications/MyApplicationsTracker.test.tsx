@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import type { StudentApplicationCard, StudentApplicationDetail } from '@hirekiwi/contracts';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -245,7 +245,7 @@ describe('MyApplicationsTracker (Th6-392/393)', () => {
       studentApplications.list.mockResolvedValue({ applications: [card()] });
       studentApplications.withdraw
         .mockRejectedValueOnce(
-          new SmartApiError({
+          new HireKiwiApiError({
             error: 'cannot_withdraw',
             message: 'Already closed.',
             statusCode: 422,

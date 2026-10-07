@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Bookmark, BookmarkCheck, EyeOff, Flag, MapPin } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { Alert, AppliedBadge, Button, ErrorState, LoadingState, VerifiedBadge } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { EMPLOYMENT_TYPE_LABELS, WORK_MODE_LABELS } from '@/lib/jobs-url-state';
@@ -39,7 +39,7 @@ export default function JobDetailPage() {
     return <LoadingState message="Loading job…" />;
   }
   if (query.isError) {
-    const missing = isSmartApiError(query.error) && query.error.statusCode === 404;
+    const missing = isHireKiwiApiError(query.error) && query.error.statusCode === 404;
     return (
       <div className="mx-auto max-w-3xl space-y-4">
         <Link

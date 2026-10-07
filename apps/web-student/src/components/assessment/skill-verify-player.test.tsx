@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { SkillVerifyPlayer } from './skill-verify-player';
 
 const prepareSkillVerifyMock = vi.fn();
@@ -32,7 +32,7 @@ describe('SkillVerifyPlayer', () => {
 
   it('shows profile completion guidance when the server rejects an incomplete profile', async () => {
     prepareSkillVerifyMock.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'profile_incomplete',
         message: 'Complete your profile to unlock skill verification.',
         statusCode: 403,

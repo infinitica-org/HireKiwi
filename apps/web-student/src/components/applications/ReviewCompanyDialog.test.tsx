@@ -66,9 +66,9 @@ describe('ReviewCompanyDialog (Th6-355)', () => {
   });
 
   it('shows the server message and reuses the Idempotency-Key on retry', async () => {
-    const { SmartApiError } = await import('@hirekiwi/api-client');
+    const { HireKiwiApiError } = await import('@hirekiwi/api-client');
     createReview.mockRejectedValueOnce(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'review_exists',
         message: 'You have already reviewed this company.',
         statusCode: 409,

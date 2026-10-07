@@ -41,7 +41,9 @@ function renderPage() {
 describe('PublicProfilePreviewPage (employer-visible preview)', () => {
   beforeEach(() => {
     users.getMyPublicProfile.mockReset().mockResolvedValue(baseProfile);
-    users.getPublicProfileLink.mockReset().mockResolvedValue({ url: 'https://smart.test/c/ada' });
+    users.getPublicProfileLink
+      .mockReset()
+      .mockResolvedValue({ url: 'https://hirekiwi.test/c/ada' });
     Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
   });
 
@@ -93,7 +95,7 @@ describe('PublicProfilePreviewPage (employer-visible preview)', () => {
     fireEvent.click(copy);
 
     await waitFor(() =>
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://smart.test/c/ada'),
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://hirekiwi.test/c/ada'),
     );
     expect(await screen.findByText('Copied!')).toBeTruthy();
   });

@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Star } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { CreateCompanyReviewRequestSchema } from '@hirekiwi/contracts';
 import { Button, FormMessage, Modal } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
@@ -40,10 +40,10 @@ export function ReviewCompanyDialog({
     },
     onSuccess: () => setDone(true),
     onError: (err) => {
-      const detail = isSmartApiError(err) ? err.details[0]?.message : undefined;
+      const detail = isHireKiwiApiError(err) ? err.details[0]?.message : undefined;
       setError(
         detail ??
-          (isSmartApiError(err) && err.message ? err.message : 'Could not save your review.'),
+          (isHireKiwiApiError(err) && err.message ? err.message : 'Could not save your review.'),
       );
     },
   });

@@ -61,7 +61,7 @@ describe('OnboardingGate', () => {
 
   it('does not trust localStorage for the gate (server flag only)', async () => {
     window.localStorage.setItem(
-      'smart.candidate.onboarding.draft',
+      'hirekiwi.candidate.onboarding.draft',
       JSON.stringify({ complete: true, dpdpConsent: true, firstName: 'Hack' }),
     );
     me.mockResolvedValueOnce({
