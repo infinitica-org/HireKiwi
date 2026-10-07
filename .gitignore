@@ -78,14 +78,14 @@ tmp/
 *.xlsx
 
 # Product Owner drop copies — canonical pack is docs/product/prd-v1/
-Smart_PRD_v1_Internal/**
-!Smart_PRD_v1_Internal/README.md
+HireKiwi_PRD_v1_Internal/**
+!HireKiwi_PRD_v1_Internal/README.md
 
 # --- VPS server env copies (local reference only, never commit) ---
 vps-dev.env.txt
 vps-prod.env.txt
 00.txt
-SMART KNOWLEDGE.txt
+HireKiwi KNOWLEDGE.txt
 
 # --- k6 run output (tools/load-tests) ---
 tools/load-tests/summary-*.json

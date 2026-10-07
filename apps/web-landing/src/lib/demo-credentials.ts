@@ -35,7 +35,7 @@ export const DEMO_CREDENTIAL_DATA: Record<string, DemoCredential> = {
     ],
     signature: {
       algorithm: 'Ed25519 / SHA-256',
-      keyId: 'ed25519-smart-node-04',
+      keyId: 'ed25519-hirekiwi-node-04',
       hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
       valid: true,
     },

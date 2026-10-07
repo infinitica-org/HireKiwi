@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   SkillClaimDtoSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   UuidSchema,
   type AiCompletionRequest,
   type AttemptSessionDto,
@@ -600,7 +600,7 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
     await this.outbox.enqueueAssessmentSubmitted({
       meta: {
         eventId: randomUUID(),
-        eventType: SMART_TOPICS.assessmentSubmitted,
+        eventType: HIREKIWI_TOPICS.assessmentSubmitted,
         version: 1 as const,
         occurredAt: submittedAt.toISOString(),
         traceId: getContext()?.correlationId ?? randomUUID(),
@@ -732,7 +732,7 @@ export class AssessmentService implements OnModuleInit, OnModuleDestroy {
     await this.outbox.enqueueAssessmentSubmitted({
       meta: {
         eventId: randomUUID(),
-        eventType: SMART_TOPICS.assessmentSubmitted,
+        eventType: HIREKIWI_TOPICS.assessmentSubmitted,
         version: 1 as const,
         occurredAt: submittedAt.toISOString(),
         traceId: getContext()?.correlationId ?? randomUUID(),

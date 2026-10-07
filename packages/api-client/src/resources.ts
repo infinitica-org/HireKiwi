@@ -274,7 +274,12 @@ import {
   InstitutionDtoSchema,
   PartnerUniversityOptionDtoSchema,
   StudentInstitutionPartnershipStatusDtoSchema,
+  TpoContactRequestDtoSchema,
+  ListTpoContactRequestsResponseSchema,
+  ApproveTpoContactResponseSchema,
   UniversityContactRequestDtoSchema,
+  type ListTpoContactRequestsQuery,
+  type TpoContactRequestStatus,
   type ConnectPartnerUniversityRequest,
   type RequestUniversityContactRequest,
   type SetRateLimitOverrideRequest,
@@ -431,7 +436,7 @@ import {
   type CorrectStudentCapabilityRequest,
 } from '@hirekiwi/contracts';
 import { z } from 'zod';
-import type { SmartApiClient } from './client.js';
+import type { HireKiwiApiClient } from './client.js';
 
 /**
  * Typed endpoint bindings.
@@ -447,7 +452,7 @@ import type { SmartApiClient } from './client.js';
 
 const prefixed = (path: string): string => `${API_PREFIX}${path}`;
 
-export function authApi(client: SmartApiClient) {
+export function authApi(client: HireKiwiApiClient) {
   return {
     login: (body: { email: string; password: string }) =>
       client.post(prefixed('/auth/login'), body, { schema: AuthTokenResponseSchema }),
@@ -542,7 +547,7 @@ export function authApi(client: SmartApiClient) {
   };
 }
 
-export function usersApi(client: SmartApiClient) {
+export function usersApi(client: HireKiwiApiClient) {
   return {
     parseResume: (body: ParseResumeRequest) =>
       client.post(prefixed('/users/me/resume/parse'), body, {
@@ -954,7 +959,7 @@ export function usersApi(client: SmartApiClient) {
   };
 }
 
-export function onboardingApi(client: SmartApiClient) {
+export function onboardingApi(client: HireKiwiApiClient) {
   return {
     listPartnerUniversities: (query?: { q?: string }) =>
       client.get(prefixed('/public/partner-universities'), {
@@ -985,6 +990,28 @@ export function onboardingApi(client: SmartApiClient) {
         schema: z.array(InstitutionDtoSchema),
         query,
       }),
+
+    /** Landing-page "Let's Connect" requests from placement officers. */
+    listTpoContactRequests: (query?: Partial<ListTpoContactRequestsQuery>) =>
+      client.get(prefixed('/admin/partnerships/contact-requests'), {
+        schema: ListTpoContactRequestsResponseSchema,
+        query: { status: query?.status, query: query?.query },
+      }),
+
+    /** Creates the university and emails the contact a link to set their own password. */
+    approveTpoContactRequest: (id: string, body: { domain?: string } = {}) =>
+      client.post(prefixed(`/admin/partnerships/contact-requests/${id}/approve`), body, {
+        schema: ApproveTpoContactResponseSchema,
+      }),
+
+    updateTpoContactRequestStatus: (id: string, status: TpoContactRequestStatus) =>
+      client.patch(
+        prefixed(`/admin/partnerships/contact-requests/${id}/status`),
+        { status },
+        {
+          schema: TpoContactRequestDtoSchema,
+        },
+      ),
 
     getInstitution: (institutionId: string) =>
       client.get(prefixed(`/admin/institutions/${institutionId}`), {
@@ -1532,7 +1559,7 @@ export function onboardingApi(client: SmartApiClient) {
   };
 }
 
-export function catalogApi(client: SmartApiClient) {
+export function catalogApi(client: HireKiwiApiClient) {
   return {
     tracks: () =>
       client.get(prefixed('/catalog/tracks'), {
@@ -1579,7 +1606,7 @@ export function catalogApi(client: SmartApiClient) {
   };
 }
 
-export function evidenceApi(client: SmartApiClient) {
+export function evidenceApi(client: HireKiwiApiClient) {
   return {
     list: (query?: { skillCode?: string; claimId?: string; evidenceType?: string }) =>
       client.get(prefixed('/users/me/evidence'), {
@@ -1683,7 +1710,7 @@ export function evidenceApi(client: SmartApiClient) {
   };
 }
 
-export function assessmentApi(client: SmartApiClient) {
+export function assessmentApi(client: HireKiwiApiClient) {
   return {
     start: (body: StartAttemptRequest) =>
       client.post(prefixed('/assessment/start'), body, { schema: AttemptSessionDtoSchema }),
@@ -1813,7 +1840,7 @@ export function assessmentApi(client: SmartApiClient) {
   };
 }
 
-export function proctoringApi(client: SmartApiClient) {
+export function proctoringApi(client: HireKiwiApiClient) {
   return {
     nonce: (attemptId: string) =>
       client.get(prefixed(`/proctoring/${attemptId}/nonce`), {
@@ -1868,7 +1895,7 @@ export function proctoringApi(client: SmartApiClient) {
   };
 }
 
-export function certificateApi(client: SmartApiClient) {
+export function certificateApi(client: HireKiwiApiClient) {
   return {
     mine: () =>
       client.get(prefixed('/certificates/mine'), { schema: z.array(CertificateDtoSchema) }),
@@ -1901,7 +1928,7 @@ export function certificateApi(client: SmartApiClient) {
   };
 }
 
-export function placementApi(client: SmartApiClient) {
+export function placementApi(client: HireKiwiApiClient) {
   return {
     match: (body: unknown) =>
       client.post(prefixed('/placement/match'), body, { schema: JobAcceptedSchema }),
@@ -1978,7 +2005,7 @@ export function placementApi(client: SmartApiClient) {
   };
 }
 
-export function projectsApi(client: SmartApiClient) {
+export function projectsApi(client: HireKiwiApiClient) {
   return {
     listMine: () => client.get(prefixed('/projects'), { schema: ListMyProjectsResponseSchema }),
 
@@ -2055,7 +2082,7 @@ export function projectsApi(client: SmartApiClient) {
   };
 }
 
-export function candidateCertificatesApi(client: SmartApiClient) {
+export function candidateCertificatesApi(client: HireKiwiApiClient) {
   return {
     create: (body: CreateCandidateCertificateRequest) =>
       client.post(prefixed('/candidate-certificates'), body, {
@@ -2119,7 +2146,7 @@ export function candidateCertificatesApi(client: SmartApiClient) {
   };
 }
 
-export function notificationsApi(client: SmartApiClient) {
+export function notificationsApi(client: HireKiwiApiClient) {
   return {
     list: () =>
       client.get(prefixed('/me/notifications'), { schema: ListNotificationsResponseSchema }),
@@ -2152,7 +2179,7 @@ function companyOnboardingSessionPath(sessionToken: string, suffix = ''): string
   return prefixed(`/public/company/onboarding/sessions/${token}${suffix}`);
 }
 
-export function publicApi(client: SmartApiClient) {
+export function publicApi(client: HireKiwiApiClient) {
   return {
     getCandidateProfile: (slug: string) =>
       client.get(prefixed(`/public/candidates/${slug}`), {
@@ -2223,7 +2250,7 @@ export function publicApi(client: SmartApiClient) {
   };
 }
 
-export function systemApi(client: SmartApiClient) {
+export function systemApi(client: HireKiwiApiClient) {
   return {
     health: () =>
       client.get('/health', {
@@ -2233,7 +2260,7 @@ export function systemApi(client: SmartApiClient) {
   };
 }
 
-export function evaluationApi(client: SmartApiClient) {
+export function evaluationApi(client: HireKiwiApiClient) {
   return {
     runSkillFormCode: (body: RunSdeSkillFormCodeRequest) =>
       client.post(prefixed('/evaluation/skill-form/run-code'), body, {
@@ -2278,7 +2305,7 @@ export function evaluationApi(client: SmartApiClient) {
   };
 }
 
-export function trustApi(client: SmartApiClient) {
+export function trustApi(client: HireKiwiApiClient) {
   return {
     listCases: (query?: { status?: string; severity?: string; candidateId?: string }) =>
       client.get(prefixed('/admin/trust/cases'), {
@@ -2357,7 +2384,7 @@ export function trustApi(client: SmartApiClient) {
   };
 }
 
-export function supportApi(client: SmartApiClient) {
+export function supportApi(client: HireKiwiApiClient) {
   return {
     lookupUser: (q: string) =>
       client.get<unknown[]>(prefixed('/admin/support/lookup'), { query: { q } }),
@@ -2390,7 +2417,7 @@ export function supportApi(client: SmartApiClient) {
   };
 }
 
-export function billingApi(client: SmartApiClient) {
+export function billingApi(client: HireKiwiApiClient) {
   return {
     getSubscription: () =>
       client.get(prefixed('/billing/subscription/me'), {
@@ -2492,7 +2519,7 @@ export function billingApi(client: SmartApiClient) {
 }
 
 /** EMP-02 — company profile and team. Mutations carry an Idempotency-Key so a retry never repeats. */
-function employerApi(client: SmartApiClient) {
+function employerApi(client: HireKiwiApiClient) {
   const mutate = (key: string, extra: Record<string, string> = {}) => ({
     headers: { 'idempotency-key': key, ...extra },
   });
@@ -2657,7 +2684,7 @@ function employerApi(client: SmartApiClient) {
 }
 
 /** APP-01 — student applications. Apply and withdraw carry an Idempotency-Key. */
-function studentApplicationsApi(client: SmartApiClient) {
+function studentApplicationsApi(client: HireKiwiApiClient) {
   return {
     preview: (jobId: string) =>
       client.get(prefixed(`/student/jobs/${jobId}/application-preview`), {
@@ -2685,7 +2712,7 @@ function studentApplicationsApi(client: SmartApiClient) {
 }
 
 /** JOB-02 — student job discovery. PUT/DELETE are idempotent; the report POST carries a key. */
-function studentJobsApi(client: SmartApiClient) {
+function studentJobsApi(client: HireKiwiApiClient) {
   return {
     list: (query: Partial<ListStudentJobsQuery> = {}) =>
       client.get(prefixed('/student/jobs'), {
@@ -2729,7 +2756,7 @@ function studentJobsApi(client: SmartApiClient) {
 }
 
 /** Public company profile (verified companies only; anyone may read). */
-function companiesApi(client: SmartApiClient) {
+function companiesApi(client: HireKiwiApiClient) {
   return {
     /** A student reviews a company they applied to (Th6-355). */
     createReview: (body: CreateCompanyReviewRequest, idempotencyKey: string) =>
@@ -2747,7 +2774,7 @@ function companiesApi(client: SmartApiClient) {
 }
 
 /** COM-01 — direct messaging (Th6-422 to Th6-430). Every write takes the caller's Idempotency-Key. */
-function messagingApi(client: SmartApiClient) {
+function messagingApi(client: HireKiwiApiClient) {
   const key = (idempotencyKey: string) => ({ headers: { 'idempotency-key': idempotencyKey } });
   return {
     /** Th6-422 — start a conversation (or add to the existing one). */
@@ -2839,7 +2866,7 @@ function messagingApi(client: SmartApiClient) {
 }
 
 /** Th6-421 — super-admin views over the application pipeline. */
-function adminApplicationsApi(client: SmartApiClient) {
+function adminApplicationsApi(client: HireKiwiApiClient) {
   return {
     conversion: (query: ConversionMetricsQuery = {}) =>
       client.get(prefixed('/admin/applications/conversion'), {
@@ -2850,7 +2877,7 @@ function adminApplicationsApi(client: SmartApiClient) {
 }
 
 /** UNI-05 — employer campus access and career events (Th6-445 to Th6-451). */
-function campusApi(client: SmartApiClient) {
+function campusApi(client: HireKiwiApiClient) {
   const key = (idempotencyKey: string) => ({ headers: { 'idempotency-key': idempotencyKey } });
   const ifMatch = (version: number) => ({ headers: { 'If-Match': String(version) } });
   return {
@@ -2952,7 +2979,7 @@ function campusApi(client: SmartApiClient) {
   };
 }
 
-export function rateLimitsApi(client: SmartApiClient) {
+export function rateLimitsApi(client: HireKiwiApiClient) {
   return {
     listPolicies: (query?: { institutionId?: string }) =>
       client.get(prefixed('/admin/rate-limits/policies'), {
@@ -2976,7 +3003,7 @@ export function rateLimitsApi(client: SmartApiClient) {
 }
 
 /** External passive-signal connections (GitHub, HackerRank, LeetCode, LinkedIn, Credly). */
-export function signalsApi(client: SmartApiClient) {
+export function signalsApi(client: HireKiwiApiClient) {
   return {
     listConnections: () =>
       client.get(prefixed('/signals/connections'), {
@@ -3003,7 +3030,7 @@ export function signalsApi(client: SmartApiClient) {
   };
 }
 
-export function createSmartApi(client: SmartApiClient) {
+export function createHireKiwiApi(client: HireKiwiApiClient) {
   return {
     auth: authApi(client),
     users: usersApi(client),
@@ -3035,4 +3062,4 @@ export function createSmartApi(client: SmartApiClient) {
   };
 }
 
-export type SmartApi = ReturnType<typeof createSmartApi>;
+export type HireKiwiApi = ReturnType<typeof createHireKiwiApi>;

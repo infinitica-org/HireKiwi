@@ -9,7 +9,7 @@ import { jsonOnly } from '../shared.js';
  * here enters the live item bank without a practitioner approving it and the
  * calibration panel setting its cut score. An AI-generated question with an
  * AI-generated answer key and no human sign-off is exactly the "AI slop
- * assessment" SMART is positioned against.
+ * assessment" HireKiwi is positioned against.
  *
  * Owner: Ramansh (prompt) / Vedika G (item bank, review workflow, approval).
  */
@@ -76,7 +76,7 @@ export const itemDraftTemplate: PromptTemplate<ItemDraftVariables> = {
   variablesSchema: ItemDraftVariables,
   render: (variables) => ({
     system: [
-      `You draft assessment items for the SMART readiness certification in the`,
+      `You draft assessment items for the HireKiwi readiness certification in the`,
       `${variables.trackName} track. A working practitioner reviews everything you`,
       `write before it is used, and a calibration panel sets its difficulty. Your job`,
       `is to give them good raw material and to tell them where you are unsure.`,

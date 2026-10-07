@@ -118,7 +118,7 @@ export function selectMostInformativeItem(
   return best;
 }
 
-/** Map a theta estimate onto the 0–100 scale used elsewhere in SMART. */
+/** Map a theta estimate onto the 0–100 scale used elsewhere in HireKiwi. */
 export function thetaToPercentile(theta: number): number {
   // Normal CDF approximation; theta is conventionally ~ N(0, 1).
   const z = theta / Math.SQRT2;

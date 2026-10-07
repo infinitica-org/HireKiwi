@@ -10,14 +10,14 @@ export interface TracedJob {
   readonly opts: { readonly attempts?: number };
 }
 
-const tracer = trace.getTracer('smart-jobs');
+const tracer = trace.getTracer('hirekiwi-jobs');
 
 /**
  * S6-VV-128 (#580): runs a background job inside its own span. Logs written during the job carry
  * its `trace_id` (the logger mixin reads the active span), so a failed verification can be opened
  * in Tempo and followed to its logs. On failure the span records the exception, is marked ERROR,
  * and says whether BullMQ will retry. Also times every job into
- * `smart_queue_job_duration_seconds{queue, outcome}`.
+ * `hirekiwi_queue_job_duration_seconds{queue, outcome}`.
  *
  * Without OTEL_EXPORTER_OTLP_ENDPOINT the tracer is a no-op and only the histogram is recorded.
  */

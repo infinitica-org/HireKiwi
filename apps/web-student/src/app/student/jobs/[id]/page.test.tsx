@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import type { StudentJobDetail } from '@hirekiwi/contracts';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -191,7 +191,7 @@ describe('Job detail page (Th6-382/383)', () => {
 
   it('shows a not-available state for a 404 and an error state that retries', async () => {
     studentJobs.detail.mockRejectedValueOnce(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'not_found',
         message: 'Job not found.',
         statusCode: 404,

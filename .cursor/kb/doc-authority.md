@@ -12,13 +12,13 @@ When sources disagree, use this order:
 8. **`apps/web-docs/content/docs/*`** — Single Source of Truth (Fumadocs portal on :3006).
 9. **`tools/zoho-sprint*/backlog.mjs`** — sprint ticket AC/DoD/subtasks (synced to GitHub Issues).
 10. **`README.md`** — local ports and bootstrap.
-11. Older narrative docs with legacy working titles ("SmartZen", "Vivi", "HireKiwi") — **superseded/historical**; do not hallucinate autonomous agents or use deprecated names.
+11. Older narrative docs with legacy working titles (" Vivi", "HireKiwi") — **superseded/historical**; do not hallucinate autonomous agents or use deprecated names.
 
 ## Known Architecture Truths (October 2026)
 
 | Topic                     | Deprecated / Hallucinated        | Authoritative Truth                                                                                                        |
 | ------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **Product Name**          | "SmartZen" / "HireKiwi"          | **HireKiwi Intelligent Talent Discovery Platform**                                                                         |
+| **Product Name**          | "HireKiwi"                       | **HireKiwi Intelligent Talent Discovery Platform**                                                                         |
 | **Delivery Framework**    | OpenSpec (static markdown)       | **AI-DLC (AI-Driven Software Delivery Lifecycle)** with machine-actionable MCP tickets                                     |
 | **Verification Agent**    | "Vivi Autonomous Agent"          | Modular Ingestion & Verification Engine (`apps/api-core`, BullMQ workers, cryptographic HMAC-SHA256, human verifier queue) |
 | **Matching Engine**       | Generative LLM scoring / ranking | **Algorithmic hybrid matcher** (hard SQL filters + weighted requirement scoring + `pgvector` HNSW cosine similarity)       |

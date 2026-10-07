@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode, type SVGProps } from 'react';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQuery, useQueryClient } from '@hirekiwi/ui';
 import type { ConnectableSignalSourceId, SignalConnectionSummary } from '@hirekiwi/contracts';
 import { ExternalLink, Loader2, ShieldCheck, X } from 'lucide-react';
@@ -27,7 +27,7 @@ interface CodingPlatform {
   logo: BrandIcon;
   tileClass: string;
   description: string;
-  /** The only data SMART reads from the public profile. */
+  /** The only data HireKiwi reads from the public profile. */
   reads: string;
   profileUrl: (username: string) => string;
 }
@@ -301,7 +301,9 @@ export function CodingPlatformIntegrations({
       setNotice(wasConnected ? `${active.name} updated.` : `${active.name} connected.`);
       setActive(null);
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : `Could not connect ${active.name} right now.`);
+      setError(
+        isHireKiwiApiError(err) ? err.message : `Could not connect ${active.name} right now.`,
+      );
     } finally {
       setBusy(false);
     }
@@ -318,7 +320,7 @@ export function CodingPlatformIntegrations({
       setActive(null);
     } catch (err) {
       setError(
-        isSmartApiError(err) ? err.message : `Could not disconnect ${active.name} right now.`,
+        isHireKiwiApiError(err) ? err.message : `Could not disconnect ${active.name} right now.`,
       );
     } finally {
       setBusy(false);

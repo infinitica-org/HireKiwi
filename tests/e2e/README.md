@@ -1,4 +1,4 @@
-# SMART Playwright E2E
+# HireKiwi Playwright E2E
 
 Owner: Satheswaran V.
 
@@ -13,7 +13,7 @@ Owner: Satheswaran V.
    - `pnpm --filter @hirekiwi/web-tpo dev` → `:3002`
    - `pnpm --filter @hirekiwi/web-verify dev` → `:3004`
 
-Default credentials (from seed): `student@smart.local` / `tpo@smart.local` — password `ChangeMe!Dev`.
+Default credentials (from seed): `student@hirekiwi.local` / `tpo@hirekiwi.local` — password `ChangeMe!Dev`.
 
 ## Run
 

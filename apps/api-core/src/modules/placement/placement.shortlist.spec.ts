@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
-import { SMART_TOPICS } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { ROLES_KEY } from '../../common/guards/roles.decorator.js';
 import { PlacementController } from './placement.controller.js';
@@ -409,16 +409,16 @@ describe('AC-T05 tenant isolation', () => {
 });
 
 describe('AC-T05 SE-T07 handoff', () => {
-  it('enqueues smart.application.stage_changed for the new shortlist row', async () => {
+  it('enqueues hirekiwi.application.stage_changed for the new shortlist row', async () => {
     const { controller, outbox } = setup();
 
     await controller.createApplication(validBody, resolveTenantId(tpoAdmin as never));
 
     expect(outbox.enqueueEnvelope).toHaveBeenCalledTimes(1);
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith({
-      topic: SMART_TOPICS.applicationStageChanged,
+      topic: HIREKIWI_TOPICS.applicationStageChanged,
       partitionKey: applicationId,
-      eventType: SMART_TOPICS.applicationStageChanged,
+      eventType: HIREKIWI_TOPICS.applicationStageChanged,
       source: 'applications',
       data: {
         applicationId,

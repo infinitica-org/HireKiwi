@@ -62,7 +62,7 @@ export async function createWorkExperience(
   },
 ): Promise<WorkExperienceRecord> {
   const offerLetterDataUri = `data:application/pdf;base64,${Buffer.from(
-    '%PDF-1.4 SMART E2E offer letter stub',
+    '%PDF-1.4 HireKiwi E2E offer letter stub',
   ).toString('base64')}`;
 
   const response = await request.post(`${apiV1}/users/me/work-experiences`, {

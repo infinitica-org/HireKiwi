@@ -82,14 +82,16 @@ describe('EducationSection', () => {
 
     renderWithQueryClient(<EducationSection />);
     fireEvent.click(
-      (await screen.findAllByRole('button', { name: 'Add education' })).at(-1) as HTMLElement,
+      (await screen.findAllByRole('button', { name: /^Add education$/i })).at(-1) as HTMLElement,
     );
 
     const schoolInput = await screen.findByPlaceholderText(/RV College/i);
     fireEvent.change(schoolInput, { target: { value: 'Draft College' } });
     fireEvent.click(screen.getByLabelText('Close'));
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add education' }).at(-1) as HTMLElement);
+    fireEvent.click(
+      screen.getAllByRole('button', { name: /^Add education$/i }).at(-1) as HTMLElement,
+    );
     const schoolAgain = await screen.findByPlaceholderText(/RV College/i);
     expect((schoolAgain as HTMLInputElement).value).toBe('');
   });
@@ -99,7 +101,7 @@ describe('EducationSection', () => {
     createEducation.mockResolvedValueOnce(mockEduItem);
 
     renderWithQueryClient(<EducationSection />);
-    const addButton = (await screen.findAllByRole('button', { name: 'Add education' })).at(
+    const addButton = (await screen.findAllByRole('button', { name: /^Add education$/i })).at(
       -1,
     ) as HTMLElement;
     fireEvent.click(addButton);
@@ -209,7 +211,7 @@ describe('EducationSection', () => {
 
   async function openCreateModalAndFill() {
     fireEvent.click(
-      (await screen.findAllByRole('button', { name: 'Add education' })).at(-1) as HTMLElement,
+      (await screen.findAllByRole('button', { name: /^Add education$/i })).at(-1) as HTMLElement,
     );
     await screen.findByPlaceholderText(/RV College/i);
     fireEvent.change(screen.getByPlaceholderText(/RV College/i), { target: { value: 'MIT' } });
@@ -241,7 +243,7 @@ describe('EducationSection', () => {
     listEducation.mockResolvedValue([]);
     renderWithQueryClient(<EducationSection />);
     fireEvent.click(
-      (await screen.findAllByRole('button', { name: 'Add education' })).at(-1) as HTMLElement,
+      (await screen.findAllByRole('button', { name: /^Add education$/i })).at(-1) as HTMLElement,
     );
     await screen.findByPlaceholderText(/RV College/i);
 

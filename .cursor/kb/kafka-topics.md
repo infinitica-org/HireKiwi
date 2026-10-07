@@ -2,17 +2,17 @@
 
 Payload schemas live in `@hirekiwi/contracts` (`events/topics.ts`, `events/payloads.ts`). Changing a payload = contract PR + every consumer named.
 
-| Topic                                    | Producer-owner | Consumers                                         |
-| ---------------------------------------- | -------------- | ------------------------------------------------- |
-| `smart.user.created` / `updated`         | **Vishal V**   | Vedika (analytics)                                |
-| `smart.assessment.started` / `submitted` | Vishal Bharath | Ramansh (eval), **Vishal V** (cache invalidation) |
-| `smart.eval.requested`                   | Ramansh        | Ramansh (ai-gateway)                              |
-| `smart.eval.completed`                   | Ramansh        | Vishal Bharath (cert), Vedika                     |
-| `smart.track.updated`                    | Vedika         | **Vishal V** (cache), Vishal Bharath              |
-| `smart.certificate.issued`               | Vishal Bharath | webhooks, analytics                               |
-| `smart.placement.matched`                | Vedika         | webhooks, analytics                               |
-| `smart.application.stage_changed`        | Vishal Bharath | placement, platform, users (My Applications)      |
-| `smart.rate_limit.exceeded`              | **Vishal V**   | observability, integrity review                   |
+| Topic                                       | Producer-owner | Consumers                                         |
+| ------------------------------------------- | -------------- | ------------------------------------------------- |
+| `hirekiwi.user.created` / `updated`         | **Vishal V**   | Vedika (analytics)                                |
+| `hirekiwi.assessment.started` / `submitted` | Vishal Bharath | Ramansh (eval), **Vishal V** (cache invalidation) |
+| `hirekiwi.eval.requested`                   | Ramansh        | Ramansh (ai-gateway)                              |
+| `hirekiwi.eval.completed`                   | Ramansh        | Vishal Bharath (cert), Vedika                     |
+| `hirekiwi.track.updated`                    | Vedika         | **Vishal V** (cache), Vishal Bharath              |
+| `hirekiwi.certificate.issued`               | Vishal Bharath | webhooks, analytics                               |
+| `hirekiwi.placement.matched`                | Vedika         | webhooks, analytics                               |
+| `hirekiwi.application.stage_changed`        | Vishal Bharath | placement, platform, users (My Applications)      |
+| `hirekiwi.rate_limit.exceeded`              | **Vishal V**   | observability, integrity review                   |
 
 ## Platform notes
 

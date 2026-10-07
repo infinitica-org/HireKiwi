@@ -16,12 +16,12 @@ Install it locally:
   Linux:    see https://k6.io/docs/get-started/installation/
 
 Or run any test via the official Docker image instead (no local install):
-  docker run --rm -i --network smart_default \
+  docker run --rm -i --network hirekiwi_default \
     -e API_URL=http://api:3000 \
     -v "$(pwd)/tools/load-tests:/scripts" -w /scripts \
     grafana/k6:latest run src/tests/smoke.js
 
-(--network smart_default only applies when targeting the docker-compose
+(--network hirekiwi_default only applies when targeting the docker-compose
 stack directly by container name; against host-published ports, drop it and
 use http://host.docker.internal:3000 instead.)
 EOF

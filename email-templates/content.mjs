@@ -1,4 +1,4 @@
-// Sample data + per-theme copy for the 8 transactional emails SMART already sends
+// Sample data + per-theme copy for the 8 transactional emails HireKiwi already sends
 // (apps/api-core/src/platform/mailer/mailer.types.ts EmailTemplateName union).
 // Same underlying data across all three themes per template, so the gallery is an
 // apples-to-apples comparison of presentation + tone, not different scenarios.
@@ -8,28 +8,28 @@ const SAMPLE = {
     fullName: 'Ritika Menon',
     institutionName: 'Bansal Institute of Technology',
     role: 'Placement Officer · Full admin access',
-    inviteUrl: 'https://auth.smart.app/invite/inst_8f3a1c29',
+    inviteUrl: 'https://auth.hirekiwi.app/invite/inst_8f3a1c29',
     expires: '10 Sept 2026',
   },
   studentInvite: {
     fullName: 'Aarav Sharma',
     institutionName: 'Bansal Institute of Technology',
     batchName: 'B.Tech CSE · Batch of 2026',
-    inviteUrl: 'https://auth.smart.app/invite/std_71bd4e02',
+    inviteUrl: 'https://auth.hirekiwi.app/invite/std_71bd4e02',
     expires: '10 Sept 2026',
   },
   reminder: {
     fullName: 'Aarav Sharma',
     institutionName: 'Bansal Institute of Technology',
     batchName: 'B.Tech CSE · Batch of 2026',
-    inviteUrl: 'https://auth.smart.app/invite/std_71bd4e02',
+    inviteUrl: 'https://auth.hirekiwi.app/invite/std_71bd4e02',
     daysLeft: '3 days',
   },
   opportunity: {
     fullName: 'Aarav Sharma',
     companyName: 'Nimbus Robotics',
     roleTitle: 'Graduate Software Engineer',
-    applicationsUrl: 'https://app.smart.app/applications',
+    applicationsUrl: 'https://app.hirekiwi.app/applications',
   },
   stage: {
     fullName: 'Aarav Sharma',
@@ -37,27 +37,27 @@ const SAMPLE = {
     roleTitle: 'Graduate Software Engineer',
     fromLabel: 'Applied',
     toLabel: 'Interview Scheduled',
-    applicationsUrl: 'https://app.smart.app/applications',
+    applicationsUrl: 'https://app.hirekiwi.app/applications',
   },
   verifyPassed: {
     fullName: 'Aarav Sharma',
     skillName: 'Data Structures & Algorithms',
     detail:
       'You scored in the top tier — this skill is now visible as verified on your public profile.',
-    profileUrl: 'https://app.smart.app/profile',
+    profileUrl: 'https://app.hirekiwi.app/profile',
   },
   verifyFailed: {
     fullName: 'Aarav Sharma',
     skillName: 'System Design Fundamentals',
     detail:
       'You can retake this verification after 14 days. Review the focus areas in your prep guide first.',
-    profileUrl: 'https://app.smart.app/profile',
+    profileUrl: 'https://app.hirekiwi.app/profile',
   },
   verifyLocked: {
     fullName: 'Aarav Sharma',
     skillName: 'Advanced SQL',
     detail: 'Too many attempts were made in a short window, so this skill is temporarily locked.',
-    profileUrl: 'https://app.smart.app/profile',
+    profileUrl: 'https://app.hirekiwi.app/profile',
     unlockDate: '12 Sept 2026',
   },
 };
@@ -68,7 +68,7 @@ export const CONTENT = {
   /* ---------------- institution-admin-invite (TPO) ---------------- */
   'institution-admin-invite': {
     classic: {
-      subject: `Invitation to administer ${s.tpoInvite.institutionName} on ${'SMART'}`,
+      subject: `Invitation to administer ${s.tpoInvite.institutionName} on ${'HireKiwi'}`,
       previewText: `You have been invited as a placement officer for ${s.tpoInvite.institutionName}.`,
       heading: 'Institution Administrator Invitation',
       salutation: `Dear ${s.tpoInvite.fullName},`,
@@ -85,12 +85,12 @@ export const CONTENT = {
       footerNote: 'For security, this link can only be used once and expires after 7 days.',
     },
     minimal: {
-      subject: `You're invited to manage ${s.tpoInvite.institutionName} on SMART`,
+      subject: `You're invited to manage ${s.tpoInvite.institutionName} on HireKiwi`,
       previewText: `Set up your placement officer account for ${s.tpoInvite.institutionName}.`,
       heading: 'Set up your placement admin account',
       salutation: `Hi ${s.tpoInvite.fullName},`,
       paragraphs: [
-        `${s.tpoInvite.institutionName} has added you as a placement officer on SMART — the platform your students already use to track verified skills and job readiness.`,
+        `${s.tpoInvite.institutionName} has added you as a placement officer on HireKiwi — the platform your students already use to track verified skills and job readiness.`,
         `As an admin, you'll be able to invite students in bulk, see batch-wide readiness at a glance, review shortlists as recruiters make them, and keep placement records in one place instead of scattered spreadsheets.`,
         `Setting up your account takes less than two minutes — just confirm a password and you're in.`,
       ],
@@ -100,13 +100,13 @@ export const CONTENT = {
       ],
       cta: { label: 'Set up my account', url: s.tpoInvite.inviteUrl },
       footerNote: `This link expires on ${s.tpoInvite.expires}, so it's worth doing now rather than later.`,
-      signoff: '— The SMART Team',
+      signoff: '— The HireKiwi Team',
     },
     genz: {
       subject: `🎉 You're the new placement admin for ${s.tpoInvite.institutionName}`,
       previewText: `Welcome aboard — set your password to unlock your admin dashboard.`,
       emoji: '👋',
-      heading: `Welcome to SMART, ${s.tpoInvite.fullName.split(' ')[0]}!`,
+      heading: `Welcome to HireKiwi, ${s.tpoInvite.fullName.split(' ')[0]}!`,
       salutation: `Hey ${s.tpoInvite.fullName.split(' ')[0]},`,
       paragraphs: [
         `${s.tpoInvite.institutionName} just brought you on as a placement admin — nice! You're one click away from your dashboard.`,
@@ -123,7 +123,7 @@ export const CONTENT = {
   /* ---------------- student-invite ---------------- */
   'student-invite': {
     classic: {
-      subject: `You're invited to SMART — ${s.studentInvite.institutionName}`,
+      subject: `You're invited to HireKiwi — ${s.studentInvite.institutionName}`,
       previewText: `Activate your student account for ${s.studentInvite.institutionName}.`,
       heading: 'Student Account Invitation',
       salutation: `Dear ${s.studentInvite.fullName},`,
@@ -140,12 +140,12 @@ export const CONTENT = {
       footerNote: 'This invitation link expires in 7 days.',
     },
     minimal: {
-      subject: `${s.studentInvite.institutionName} invited you to SMART — let's get your skills verified`,
+      subject: `${s.studentInvite.institutionName} invited you to HireKiwi — let's get your skills verified`,
       previewText: `Set your password and start building your verified profile.`,
-      heading: `Welcome to SMART, ${s.studentInvite.fullName.split(' ')[0]}`,
+      heading: `Welcome to HireKiwi, ${s.studentInvite.fullName.split(' ')[0]}`,
       salutation: `Hi ${s.studentInvite.fullName.split(' ')[0]},`,
       paragraphs: [
-        `${s.studentInvite.institutionName} just added you to SMART for ${s.studentInvite.batchName}. Think of it as your study buddy for placement season — it keeps track of the skills you're building, shows you exactly what recruiters are looking for, and does the bragging for you once a skill is verified.`,
+        `${s.studentInvite.institutionName} just added you to HireKiwi for ${s.studentInvite.batchName}. Think of it as your study buddy for placement season — it keeps track of the skills you're building, shows you exactly what recruiters are looking for, and does the bragging for you once a skill is verified.`,
         `Here's the honest version: the students who get shortlisted fastest usually aren't the ones with the longest resume — they're the ones with a few verified skills on their profile. Setting yours up takes one step.`,
       ],
       infoRows: [
@@ -154,16 +154,16 @@ export const CONTENT = {
       ],
       cta: { label: 'Set my password', url: s.studentInvite.inviteUrl },
       footerNote: `Heads up — this link expires on ${s.studentInvite.expires}.`,
-      signoff: '— Your study buddy at SMART',
+      signoff: '— Your study buddy at HireKiwi',
     },
     genz: {
-      subject: `👋 Your SMART invite from ${s.studentInvite.institutionName}`,
+      subject: `👋 Your HireKiwi invite from ${s.studentInvite.institutionName}`,
       previewText: `Set your password and start building your verified profile.`,
       emoji: '✨',
       heading: `You're in, ${s.studentInvite.fullName.split(' ')[0]}!`,
       salutation: `Hey ${s.studentInvite.fullName.split(' ')[0]},`,
       paragraphs: [
-        `${s.studentInvite.institutionName} added you to SMART for ${s.studentInvite.batchName}. Set a password and start tracking your verified skills.`,
+        `${s.studentInvite.institutionName} added you to HireKiwi for ${s.studentInvite.batchName}. Set a password and start tracking your verified skills.`,
       ],
       infoRows: [
         ['Institution', s.studentInvite.institutionName],
@@ -177,12 +177,12 @@ export const CONTENT = {
   /* ---------------- invite-reminder ---------------- */
   'invite-reminder': {
     classic: {
-      subject: 'Reminder: complete your SMART account setup',
+      subject: 'Reminder: complete your HireKiwi account setup',
       previewText: `Your invitation to ${s.reminder.institutionName} is still pending.`,
       heading: 'Your Invitation Is Still Pending',
       salutation: `Dear ${s.reminder.fullName},`,
       paragraphs: [
-        `Our records indicate that your invitation to join <strong>${s.reminder.institutionName}</strong> on SMART (${s.reminder.batchName}) has not yet been actioned.`,
+        `Our records indicate that your invitation to join <strong>${s.reminder.institutionName}</strong> on HireKiwi (${s.reminder.batchName}) has not yet been actioned.`,
         `Kindly complete your account setup at your earliest convenience.`,
       ],
       infoRows: [
@@ -192,12 +192,12 @@ export const CONTENT = {
       cta: { label: 'Complete account setup', url: s.reminder.inviteUrl },
     },
     minimal: {
-      subject: 'Still there? Your SMART invite is waiting',
+      subject: 'Still there? Your HireKiwi invite is waiting',
       previewText: `${s.reminder.daysLeft} left to set up your account.`,
       heading: 'A quick nudge from your study buddy',
       salutation: `Hi ${s.reminder.fullName.split(' ')[0]},`,
       paragraphs: [
-        `Just checking in — your invite to join ${s.reminder.institutionName} on SMART (${s.reminder.batchName}) is still sitting unopened, and it's due to expire soon.`,
+        `Just checking in — your invite to join ${s.reminder.institutionName} on HireKiwi (${s.reminder.batchName}) is still sitting unopened, and it's due to expire soon.`,
         `No pressure, but this is probably the easiest five minutes you'll spend all week: set a password, and you're already ahead of classmates who haven't started building a verified profile yet.`,
       ],
       infoRows: [
@@ -206,10 +206,10 @@ export const CONTENT = {
       ],
       cta: { label: 'Finish setting up', url: s.reminder.inviteUrl },
       footerNote: `You've got ${s.reminder.daysLeft} left before this link expires.`,
-      signoff: '— Your study buddy at SMART',
+      signoff: '— Your study buddy at HireKiwi',
     },
     genz: {
-      subject: `⏳ ${s.reminder.daysLeft} left to activate your SMART account`,
+      subject: `⏳ ${s.reminder.daysLeft} left to activate your HireKiwi account`,
       previewText: `Don't miss out — finish setting up your account.`,
       emoji: '⏳',
       heading: 'Quick reminder for you',
@@ -255,7 +255,7 @@ export const CONTENT = {
       ],
       cta: { label: 'View my applications', url: s.opportunity.applicationsUrl },
       badge: { label: 'Shortlisted', tone: 'info' },
-      signoff: '— Your study buddy at SMART',
+      signoff: '— Your study buddy at HireKiwi',
     },
     genz: {
       subject: `🎉 Shortlisted for ${s.opportunity.roleTitle} at ${s.opportunity.companyName}!`,
@@ -307,7 +307,7 @@ export const CONTENT = {
       ],
       cta: { label: 'Open my application', url: s.stage.applicationsUrl },
       badge: { label: s.stage.toLabel, tone: 'warning' },
-      signoff: '— Your study buddy at SMART',
+      signoff: '— Your study buddy at HireKiwi',
     },
     genz: {
       subject: `📈 ${s.stage.roleTitle} update: you're at ${s.stage.toLabel}`,
@@ -352,7 +352,7 @@ export const CONTENT = {
       salutation: `Hi ${s.verifyPassed.fullName.split(' ')[0]},`,
       paragraphs: [
         s.verifyPassed.detail,
-        `This isn't just a badge — recruiters searching SMART for ${s.verifyPassed.skillName} will now see your profile as verified, which puts you ahead of candidates who only self-reported the same skill.`,
+        `This isn't just a badge — recruiters searching HireKiwi for ${s.verifyPassed.skillName} will now see your profile as verified, which puts you ahead of candidates who only self-reported the same skill.`,
       ],
       infoRows: [
         ['Skill', s.verifyPassed.skillName],
@@ -360,7 +360,7 @@ export const CONTENT = {
       ],
       cta: { label: 'View my profile', url: s.verifyPassed.profileUrl },
       badge: { label: 'Verified', tone: 'success' },
-      signoff: '— Your study buddy at SMART',
+      signoff: '— Your study buddy at HireKiwi',
     },
     genz: {
       subject: `✅ ${s.verifyPassed.skillName} — you're verified!`,
@@ -410,7 +410,7 @@ export const CONTENT = {
       ],
       cta: { label: 'View my profile', url: s.verifyFailed.profileUrl },
       badge: { label: 'Not verified', tone: 'danger' },
-      signoff: '— Your study buddy at SMART',
+      signoff: '— Your study buddy at HireKiwi',
     },
     genz: {
       subject: `${s.verifyFailed.skillName} — not verified yet, no stress`,
@@ -460,7 +460,7 @@ export const CONTENT = {
       ],
       cta: { label: 'View my profile', url: s.verifyLocked.profileUrl },
       badge: { label: 'Locked', tone: 'warning' },
-      signoff: '— Your study buddy at SMART',
+      signoff: '— Your study buddy at HireKiwi',
     },
     genz: {
       subject: `🔒 ${s.verifyLocked.skillName} is on a short break`,

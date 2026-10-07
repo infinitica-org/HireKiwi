@@ -18,7 +18,7 @@ import type {
   SupportHistoryResponse,
   SupportSessionResponse,
 } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { Button } from '@hirekiwi/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
 import { PageHeader } from '@/components/page-header';
@@ -33,10 +33,10 @@ import {
 import { api } from '@/lib/api';
 
 function formatApiError(error: unknown, fallback: string): string {
-  if (isSmartApiError(error) && error.details.length > 0) {
+  if (isHireKiwiApiError(error) && error.details.length > 0) {
     return error.details.map((detail) => `${detail.path}: ${detail.message}`).join(' ');
   }
-  if (isSmartApiError(error)) return error.message;
+  if (isHireKiwiApiError(error)) return error.message;
   return fallback;
 }
 

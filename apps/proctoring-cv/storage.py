@@ -13,7 +13,7 @@ def fetch_object_bytes(object_key: str) -> Optional[bytes]:
     if object_key.startswith("stub:"):
         return None
     endpoint = os.environ.get("S3_ENDPOINT", "http://127.0.0.1:9000")
-    bucket = os.environ.get("S3_BUCKET", "smart")
+    bucket = os.environ.get("S3_BUCKET", "hirekiwi")
     access_key = os.environ.get("S3_ACCESS_KEY", "minioadmin")
     secret_key = os.environ.get("S3_SECRET_KEY", "minioadmin")
     region = os.environ.get("S3_REGION", "us-east-1")

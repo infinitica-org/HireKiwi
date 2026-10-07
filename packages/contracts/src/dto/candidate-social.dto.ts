@@ -15,7 +15,7 @@ import { z } from 'zod';
  * Verification is a trust signal only — it never gates onboarding
  * completion. LinkedIn/GitHub URLs and everything in this file are optional
  * at onboarding completion; they remain available for progressive profile
- * building after the student enters SMART.
+ * building after the student enters HireKiwi.
  */
 
 export const LinkedinVerificationSchema = z.object({

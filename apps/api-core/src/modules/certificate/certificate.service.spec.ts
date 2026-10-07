@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EvalCompletedEvent } from '@hirekiwi/contracts';
-import { SMART_TOPICS } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { CertificateService } from './certificate.service.js';
 import type { PrismaService } from '../../platform/prisma/prisma.service.js';
 import type { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
@@ -52,7 +52,7 @@ describe('CertificateService', () => {
 
     mockStorage = {
       putObjectBuffer: vi.fn().mockResolvedValue(undefined),
-      getSignedDownloadUrl: vi.fn().mockResolvedValue('https://storage.smart.local/signed-url'),
+      getSignedDownloadUrl: vi.fn().mockResolvedValue('https://storage.hirekiwi.local/signed-url'),
     };
 
     mockPdfQueue = {
@@ -69,7 +69,7 @@ describe('CertificateService', () => {
 
   const baseEvent = (overrides: Partial<EvalCompletedEvent['data']> = {}): EvalCompletedEvent => ({
     id: '11111111-1111-4111-8111-111111111111',
-    topic: SMART_TOPICS.evalCompleted,
+    topic: HIREKIWI_TOPICS.evalCompleted,
     partitionKey: attemptId,
     source: 'evaluation',
     timestamp: '2026-09-29T12:00:00Z',
@@ -225,7 +225,7 @@ describe('CertificateService', () => {
     );
   });
 
-  it('15. smart.certificate.issued is emitted exactly once for successful issuance', async () => {
+  it('15. hirekiwi.certificate.issued is emitted exactly once for successful issuance', async () => {
     mockPrisma.attempt.findUnique.mockResolvedValue({ integrityFlag: 'CLEAN' });
     mockPrisma.certificate.findFirst.mockResolvedValue(null);
     mockPrisma.certificate.create.mockImplementation((args: any) => ({
@@ -238,8 +238,8 @@ describe('CertificateService', () => {
     expect(mockOutbox.enqueueEnvelope).toHaveBeenCalledTimes(1);
     expect(mockOutbox.enqueueEnvelope).toHaveBeenCalledWith(
       expect.objectContaining({
-        topic: SMART_TOPICS.certificateIssued,
-        eventType: SMART_TOPICS.certificateIssued,
+        topic: HIREKIWI_TOPICS.certificateIssued,
+        eventType: HIREKIWI_TOPICS.certificateIssued,
         data: expect.objectContaining({
           headlineTier: 'GOLD',
           highestLevelCleared: 1,

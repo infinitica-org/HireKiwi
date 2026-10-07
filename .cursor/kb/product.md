@@ -45,5 +45,5 @@ Per `HireKiwi_RnD_Workstream_Blueprint.md` and the architecture MindMap:
 
 - **Skill Inventory:** Canonical catalog in PostgreSQL with alias resolution and ESCO/O*NET crosswalks.
 - **Incremental Job IDs:** Migrating from legacy 32-bit format to incremental, structured IDs.
-- **Verification ID:** Standardized cryptographic hash and verification URL (`becomesmart.online/verify/{id}`).
+- **Verification ID:** Standardized cryptographic hash and verification URL (`hirekiwi.online/verify/{id}`).
 - **Security:** 1 Mobile Number = 1 Account; rate-limiting on student auth endpoints; resilient HttpOnly token refresh.

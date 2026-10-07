@@ -25,6 +25,7 @@ import type {
   InviteEmailData,
   PasswordResetEmailData,
   OpportunityEmailData,
+  PartnershipRequestEmailData,
   ApplicationSubmittedEmailData,
   EmployerApplicantEmailData,
   StageChangeEmailData,
@@ -120,6 +121,10 @@ export function renderEmailTemplate(
       return buildCompanyOnboardingEmailVerify(data as CompanyOnboardingEmailVerifyData);
     case 'company-verification-resubmit':
       return buildCompanyVerificationResubmit(data as CompanyVerificationResubmitEmailData);
+    case 'partnership-request-received':
+      return buildPartnershipRequestReceived(data as PartnershipRequestEmailData);
+    case 'partnership-request-admin-alert':
+      return buildPartnershipRequestAdminAlert(data as PartnershipRequestEmailData);
   }
 }
 
@@ -131,6 +136,97 @@ function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function partnershipDetails(payload: PartnershipRequestEmailData): [string, string][] {
+  return [
+    ['Institution', escapeHtml(payload.institutionName)],
+    ['Location', escapeHtml(payload.location)],
+    ['Contact', escapeHtml(payload.fullName)],
+    ['Role', escapeHtml(payload.role)],
+    ['Email', escapeHtml(payload.email)],
+    ['Phone', escapeHtml(payload.phone)],
+  ];
+}
+
+function partnershipDetailsText(payload: PartnershipRequestEmailData): string[] {
+  return [
+    `Institution: ${payload.institutionName}`,
+    `Location: ${payload.location}`,
+    `Contact: ${payload.fullName} (${payload.role})`,
+    `Email: ${payload.email}`,
+    `Phone: ${payload.phone}`,
+    ...(payload.message ? [`Message: ${payload.message}`] : []),
+  ];
+}
+
+/** To the person who submitted the landing-page form: we have it, here is what we got. */
+function buildPartnershipRequestReceived(payload: PartnershipRequestEmailData): RenderedEmail {
+  const subject = `We received your partnership request for ${payload.institutionName}`;
+  const bodyHtml = [
+    paragraph(
+      `Hello ${strong(escapeHtml(firstName(payload.fullName)))}, thank you for your interest in partnering with HireKiwi. We have received the request for ${strong(escapeHtml(payload.institutionName))}.`,
+    ),
+    paragraph('Our team will review it and get back to you within two working days. You sent us:'),
+    detailRows(partnershipDetails(payload)),
+    ...(payload.message
+      ? [paragraph(`${strong('Your message:')} ${escapeHtml(payload.message)}`)]
+      : []),
+    paragraph('There is nothing else you need to do right now.'),
+  ].join('');
+  const text = [
+    `Hello ${firstName(payload.fullName)}, thank you for your interest in partnering with HireKiwi. We have received the request for ${payload.institutionName}.`,
+    'Our team will review it and get back to you within two working days. You sent us:',
+    partnershipDetailsText(payload).join('\n'),
+    'There is nothing else you need to do right now.',
+  ].join('\n\n');
+  return {
+    subject,
+    text,
+    html: renderEmailLayout({
+      previewText: escapeHtml(subject),
+      heading: 'Partnership request received',
+      illustration: WELCOME_ILLUSTRATION,
+      badge: { label: 'Received', tone: 'success' },
+      bodyHtml,
+      signoff: SIGNOFF_TEAM,
+    }),
+  };
+}
+
+/** To platform admins: a new request is waiting on the partnership requests page. */
+function buildPartnershipRequestAdminAlert(payload: PartnershipRequestEmailData): RenderedEmail {
+  const subject = `New partnership request: ${payload.institutionName}`;
+  const bodyHtml = [
+    paragraph(
+      `${strong(escapeHtml(payload.fullName))} (${escapeHtml(payload.role)}) sent a partnership request for ${strong(escapeHtml(payload.institutionName))} from the landing page.`,
+    ),
+    detailRows(partnershipDetails(payload)),
+    ...(payload.message ? [paragraph(`${strong('Message:')} ${escapeHtml(payload.message)}`)] : []),
+    paragraph(
+      'Reply to the contact directly, then mark the request as contacted in the admin portal.',
+    ),
+  ].join('');
+  const text = [
+    `${payload.fullName} (${payload.role}) sent a partnership request for ${payload.institutionName} from the landing page.`,
+    partnershipDetailsText(payload).join('\n'),
+    ...(payload.adminUrl ? [`Open it in the admin portal: ${payload.adminUrl}`] : []),
+  ].join('\n\n');
+  return {
+    subject,
+    text,
+    html: renderEmailLayout({
+      previewText: escapeHtml(subject),
+      heading: 'New partnership request',
+      illustration: ADMIN_ILLUSTRATION,
+      badge: { label: 'Needs a reply', tone: 'warning' },
+      bodyHtml,
+      ...(payload.adminUrl
+        ? { cta: { label: 'Open in admin portal', url: payload.adminUrl } }
+        : {}),
+      signoff: SIGNOFF_TEAM,
+    }),
+  };
 }
 
 function buildCompanyVerificationResubmit(
@@ -688,7 +784,7 @@ function buildVerificationEmail(
  * Sent to an external employer contact (not a student or TPO) asking them to
  * confirm a candidate's claimed work experience, so the tone stays formal —
  * no "study buddy" voice for someone who has no existing relationship with
- * SMART. ------------------------------------------------------------------- */
+ * HireKiwi. ------------------------------------------------------------------- */
 
 function buildWorkExperienceVerifierInvite(
   payload: WorkExperienceVerifierInviteEmailData,

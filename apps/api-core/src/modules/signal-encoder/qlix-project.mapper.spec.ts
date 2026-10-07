@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mapVerifiedProjectToQlixFusionInput } from './qlix-project.mapper.js';
 
 describe('mapVerifiedProjectToQlixFusionInput', () => {
-  it('maps persisted QLIX columns and smart assessment JSON to fusion input', () => {
+  it('maps persisted QLIX columns and hirekiwi assessment JSON to fusion input', () => {
     const mapped = mapVerifiedProjectToQlixFusionInput(
       {
         id: '00000000-0000-4000-8000-000000000001',
@@ -15,7 +15,7 @@ describe('mapVerifiedProjectToQlixFusionInput', () => {
           similarityIndex: 15,
           aiLikelihood: 10,
           confidence: 'high',
-          smartAssessmentJson: {
+          hirekiwiAssessmentJson: {
             competencyObservations: [{ competencyId: 'c1', status: 'DEMONSTRATED' }],
           },
         },

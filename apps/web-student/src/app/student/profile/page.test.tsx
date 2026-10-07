@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import ProfilePage from './page';
@@ -136,27 +136,21 @@ vi.mock('@/components/profile/ResumeSection', () => ({
 }));
 
 describe('ProfilePage', () => {
-  it('defaults to education workspace without professional summary above tabs', () => {
+  it('defaults to the profile overview without rendering other sections', () => {
     renderWithQuery(<ProfilePage />);
 
-    expect(screen.queryByRole('button', { name: 'About' })).toBeNull();
-    expect(screen.getByText('Education section')).toBeTruthy();
-    expect(screen.queryByText(/Introduce yourself with a short professional summary/i)).toBeNull();
-    expect(screen.queryByRole('button', { name: /Edit Profile/i })).toBeNull();
+    expect(screen.getAllByText('Ada Lovelace').length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'Profile' }).getAttribute('aria-current')).toBe('page');
+    expect(screen.queryByText('Education section')).toBeNull();
     expect(screen.queryByText('Skills section')).toBeNull();
     expect(screen.queryByText('Resume section')).toBeNull();
-    expect(screen.queryByText('Overview')).toBeNull();
-    expect(screen.getByText('Ada Lovelace')).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: /Upload profile photo|Change profile photo/i }),
-    ).toBeTruthy();
   });
 
-  it('navigates to another subsection via top nav without showing all sections', () => {
+  it('links each subsection from the left sidebar without showing all sections', () => {
     renderWithQuery(<ProfilePage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Work Experience' }));
-
-    expect(push).toHaveBeenCalledWith('/student/profile?section=experience', { scroll: false });
+    expect(screen.getByRole('link', { name: 'Work Experience' }).getAttribute('href')).toBe(
+      '/student/profile?section=experience',
+    );
   });
 });

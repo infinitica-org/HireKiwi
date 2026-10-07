@@ -116,7 +116,7 @@ describe('CertificatesSection', () => {
     expect(screen.getByText('Failed to load candidate certificates.')).toBeTruthy();
   });
 
-  it('offers an add action in the header and in the empty box', () => {
+  it('offers a single add action in the empty box', () => {
     vi.mocked(useQuery).mockReturnValue({
       data: { certificates: [] },
       isLoading: false,
@@ -125,9 +125,9 @@ describe('CertificatesSection', () => {
 
     render(<CertificatesSection />);
 
-    expect(
-      screen.getAllByRole('button', { name: /Add (your first )?certificate/i }).length,
-    ).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByRole('button', { name: /Add (your first )?certificate/i })).toHaveLength(
+      1,
+    );
   });
 
   it('shows the Credly badge picture on a verified certificate', () => {

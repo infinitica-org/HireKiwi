@@ -1,7 +1,7 @@
 'use client';
 
 import type { AdminLevelDto } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -61,7 +61,7 @@ export default function AssessmentsPage() {
         setForm((prev) => ({ ...prev, trackId: firstTrack.trackId }));
       }
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to load assessment levels.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to load assessment levels.');
     } finally {
       setLoading(false);
     }
@@ -87,7 +87,7 @@ export default function AssessmentsPage() {
       setForm((prev) => ({ ...prev, name: '' }));
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not create level.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not create level.');
     } finally {
       setSubmitting(false);
     }
@@ -106,7 +106,7 @@ export default function AssessmentsPage() {
       setEditingId(null);
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not update level.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not update level.');
     } finally {
       setSubmitting(false);
     }

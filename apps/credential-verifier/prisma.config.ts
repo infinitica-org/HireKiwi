@@ -12,7 +12,7 @@ export default defineConfig({
   datasource: {
     url:
       process.env['DATABASE_URL'] ??
-      'postgresql://smart:smart@127.0.0.1:5432/credential_verifier?schema=public',
+      'postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/credential_verifier?schema=public',
     shadowDatabaseUrl: process.env['SHADOW_DATABASE_URL'],
   },
 });

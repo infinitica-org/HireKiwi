@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CandidateMatchDto, MatchRunDto, ShortlistDto } from '@hirekiwi/contracts';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { api, applicationsApi, matchingApi, openingsApi } from '../lib/api';
 import { CandidateSuggestionsWorkspace } from './candidate-suggestions-workspace';
 
@@ -412,7 +412,7 @@ describe('AC-T05 send opportunity', () => {
 
   it('treats a 409 as already shortlisted rather than a hard failure', async () => {
     vi.mocked(applicationsApi.create).mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'conflict',
         message: 'This candidate has already been shortlisted for this opening.',
         statusCode: 409,

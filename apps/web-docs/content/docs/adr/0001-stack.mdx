@@ -12,7 +12,7 @@ description: 'Architecture Decision Records (ADR) - 0001-stack'
 
 ## Context
 
-SMART must ship a role-specific certification platform (4 portals + API + AI evaluation) by 10 Sep 2026 with a 6-person team. Stack choice must maximize reuse, typed boundaries, and operational simplicity on a single VPS first.
+HireKiwi must ship a role-specific certification platform (4 portals + API + AI evaluation) by 10 Sep 2026 with a 6-person team. Stack choice must maximize reuse, typed boundaries, and operational simplicity on a single VPS first.
 
 ## Decision
 
@@ -31,4 +31,4 @@ SMART must ship a role-specific certification platform (4 portals + API + AI eva
 
 - One modular monolith API for V1; extract services later only with an ADR.
 - Portals share `@hirekiwi/ui` and `@hirekiwi/api-client`.
-- Orion RAG is out of band — SMART owns its own AI gateway and vectors.
+- Orion RAG is out of band — HireKiwi owns its own AI gateway and vectors.

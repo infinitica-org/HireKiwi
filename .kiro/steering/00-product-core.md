@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-# SMART — Product Core
+# HireKiwi — Product Core
 
 **One-liner:** Role-specific readiness certification. Shows who's ready for a job track — and shows its work.
 

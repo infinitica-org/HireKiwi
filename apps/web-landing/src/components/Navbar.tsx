@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
 
-import smartTextImg from '@hirekiwi/ui/assets/images/Logos/WebP/samrt-text.png';
+import hirekiwiTextImg from '@hirekiwi/ui/assets/images/Logos/WebP/samrt-text.png';
 import { authLoginUrl } from '@/lib/portal-urls';
 import { getClientSession, type SessionInfo } from '@/lib/session';
 
@@ -101,7 +101,7 @@ export default function Navbar() {
             aria-label="HireKiwi home"
           >
             <Image
-              src={smartTextImg}
+              src={hirekiwiTextImg}
               alt="HireKiwi"
               priority
               className={`${

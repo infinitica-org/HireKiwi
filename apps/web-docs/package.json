@@ -2,7 +2,7 @@
   "name": "@hirekiwi/web-docs",
   "version": "0.1.0",
   "private": true,
-  "description": "SMART Architectural & Engineering Documentation Portal. Powered by Fumadocs.",
+  "description": "HireKiwi Architectural & Engineering Documentation Portal. Powered by Fumadocs.",
   "scripts": {
     "dev": "next dev --port 3008",
     "build": "next build",

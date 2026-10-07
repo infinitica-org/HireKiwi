@@ -70,12 +70,12 @@ export function downloadTextFile(filename: string, content: string, mimeType: st
   URL.revokeObjectURL(url);
 }
 
-const SMART_TEAL = '#14b8a6';
-const SMART_DARK = '#101828';
-const SMART_MUTED = '#475467';
+const HIREKIWI_TEAL = '#14b8a6';
+const HIREKIWI_DARK = '#101828';
+const HIREKIWI_MUTED = '#475467';
 
 /**
- * Landscape one-pager: a SMART-branded header (teal accent band + wordmark),
+ * Landscape one-pager: a HireKiwi-branded header (teal accent band + wordmark),
  * the opening/company details this shortlist is for, and a ranked table of
  * candidates. Built entirely client-side — no server PDF service exists yet.
  */
@@ -83,9 +83,9 @@ export function buildSuggestionsPdf(opening: JobOpeningDto, rows: SuggestionExpo
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  doc.setFillColor(SMART_TEAL);
+  doc.setFillColor(HIREKIWI_TEAL);
   doc.rect(0, 0, pageWidth, 14, 'F');
-  doc.setTextColor(SMART_DARK);
+  doc.setTextColor(HIREKIWI_DARK);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);
   doc.text('HireKiwi', 10, 9.5);
@@ -93,14 +93,14 @@ export function buildSuggestionsPdf(opening: JobOpeningDto, rows: SuggestionExpo
   doc.setFontSize(9);
   doc.text('Intellectual Talent Network & Readiness Certification', 35, 9.5);
 
-  doc.setTextColor(SMART_DARK);
+  doc.setTextColor(HIREKIWI_DARK);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.text('Candidate Suggestions Report', 10, 24);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
-  doc.setTextColor(SMART_MUTED);
+  doc.setTextColor(HIREKIWI_MUTED);
   const meta = [
     `Company: ${opening.companyName}`,
     `Role: ${opening.roleTitle}`,
@@ -124,7 +124,7 @@ export function buildSuggestionsPdf(opening: JobOpeningDto, rows: SuggestionExpo
       whyText(candidate),
     ]),
     styles: { fontSize: 8.5, cellPadding: 2 },
-    headStyles: { fillColor: SMART_DARK, textColor: '#ffffff' },
+    headStyles: { fillColor: HIREKIWI_DARK, textColor: '#ffffff' },
     alternateRowStyles: { fillColor: '#f5f7fa' },
     columnStyles: { 7: { cellWidth: 90 } },
     margin: { left: 10, right: 10 },
@@ -134,7 +134,7 @@ export function buildSuggestionsPdf(opening: JobOpeningDto, rows: SuggestionExpo
   for (let page = 1; page <= pageCount; page += 1) {
     doc.setPage(page);
     doc.setFontSize(8);
-    doc.setTextColor(SMART_MUTED);
+    doc.setTextColor(HIREKIWI_MUTED);
     doc.text(
       `HireKiwi · Generated ${new Date().toLocaleDateString()} · Page ${page} of ${pageCount}`,
       10,

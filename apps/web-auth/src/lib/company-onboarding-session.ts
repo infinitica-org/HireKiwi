@@ -1,4 +1,4 @@
-export const COMPANY_ONBOARDING_SESSION_KEY = 'smart:company-onboarding:session-token';
+export const COMPANY_ONBOARDING_SESSION_KEY = 'hirekiwi:company-onboarding:session-token';
 
 export function readCompanyOnboardingSessionToken(): string | null {
   if (typeof sessionStorage === 'undefined') return null;

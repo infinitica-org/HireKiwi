@@ -67,7 +67,7 @@ export class GeocodingApiClient {
     const response = await fetch(url, {
       headers: {
         Accept: 'application/json',
-        'User-Agent': 'smart-onboarding/1.0 (contact@infinitica.org)',
+        'User-Agent': 'hirekiwi-onboarding/1.0 (contact@infinitica.org)',
       },
       signal: AbortSignal.timeout(FETCH_MS),
     });

@@ -89,7 +89,7 @@ export function reconcileAnchors(
  * Used when several raters (or several LLM samples) grade the same response. On
  * a tie the **lower** tier wins: when the evidence is genuinely split between
  * Gold and Silver, awarding Silver and disclosing the borderline is the honest
- * outcome. Inflating on a coin-flip is the failure mode SMART exists to avoid.
+ * outcome. Inflating on a coin-flip is the failure mode HireKiwi exists to avoid.
  */
 export function resolveTierByMode(judgments: readonly CertifiableTier[]): {
   readonly tier: CertifiableTier | null;

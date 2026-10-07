@@ -1,7 +1,7 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { z } from 'zod';
 import { env } from '../../platform/config/env.js';
-import type { QlixSmartContext } from './qlix-smart-context.js';
+import type { QlixHireKiwiContext } from './qlix-hirekiwi-context.js';
 
 const QlixSubmitResponseSchema = z.object({
   checkId: z.string().min(1),
@@ -27,7 +27,7 @@ const QlixCompetencyObservationSchema = z.object({
   authenticityWeight: z.number().optional(),
 });
 
-export const QlixSmartAssessmentSchema = z.object({
+export const QlixHireKiwiAssessmentSchema = z.object({
   schemaVersion: z.string().optional(),
   relevanceScore: z.number().nullable().optional(),
   qualityScore: z.number().nullable().optional(),
@@ -37,7 +37,7 @@ export const QlixSmartAssessmentSchema = z.object({
   gaps: z.array(z.string()).optional(),
 });
 
-export type QlixSmartAssessment = z.infer<typeof QlixSmartAssessmentSchema>;
+export type QlixHireKiwiAssessment = z.infer<typeof QlixHireKiwiAssessmentSchema>;
 
 export const QlixCheckResultSchema = z.object({
   checkId: z.string(),
@@ -46,8 +46,8 @@ export const QlixCheckResultSchema = z.object({
   similarityExcludingCited: z.number().nullable().optional(),
   confidence: z.enum(['low', 'medium', 'high']).nullable().optional(),
   aiLikelihood: z.number().nullable().optional(),
-  smartAssessmentStatus: z.string().nullable().optional(),
-  smartAssessment: QlixSmartAssessmentSchema.nullable().optional(),
+  hirekiwiAssessmentStatus: z.string().nullable().optional(),
+  hirekiwiAssessment: QlixHireKiwiAssessmentSchema.nullable().optional(),
   agentReview: QlixAgentReviewSchema.nullable().optional(),
   check: z.record(z.string(), z.unknown()).optional(),
 });
@@ -76,7 +76,7 @@ export interface QlixSubmitInput {
   githubUrl: string;
   title: string;
   idempotencyKey: string;
-  smartContext?: QlixSmartContext | null;
+  hirekiwiContext?: QlixHireKiwiContext | null;
 }
 
 @Injectable()
@@ -106,8 +106,8 @@ export class QlixClient {
       sensitivity: 'balanced',
       archive: true,
     };
-    if (input.smartContext) {
-      body.smartContext = input.smartContext;
+    if (input.hirekiwiContext) {
+      body.hirekiwiContext = input.hirekiwiContext;
     }
     const response = await fetch(`${env.QLIX_BASE_URL}/plagiarism/checks`, {
       method: 'POST',
@@ -179,21 +179,21 @@ export class QlixClient {
 
   buildDigest(result: QlixCheckResult): string {
     const summary = result.agentReview?.verdict?.summary ?? 'QLIX integrity check completed.';
-    const smart = result.smartAssessment;
+    const hirekiwi = result.hirekiwiAssessment;
     const lines = [
       `similarityIndex=${result.similarityIndex ?? 'n/a'}`,
       `similarityExcludingCited=${result.similarityExcludingCited ?? 'n/a'}`,
       `aiLikelihood=${result.aiLikelihood ?? 'n/a'}`,
       `suspicion=${result.agentReview?.verdict?.suspicionLevel ?? 'n/a'}`,
     ];
-    if (smart?.appliedProficiencyCeiling) {
-      lines.push(`appliedProficiencyCeiling=${smart.appliedProficiencyCeiling}`);
+    if (hirekiwi?.appliedProficiencyCeiling) {
+      lines.push(`appliedProficiencyCeiling=${hirekiwi.appliedProficiencyCeiling}`);
     }
-    if (smart?.qualityScore != null) {
-      lines.push(`qualityScore=${smart.qualityScore}`);
+    if (hirekiwi?.qualityScore != null) {
+      lines.push(`qualityScore=${hirekiwi.qualityScore}`);
     }
-    if (smart?.gaps?.length) {
-      lines.push(`gaps=${smart.gaps.slice(0, 5).join('; ')}`);
+    if (hirekiwi?.gaps?.length) {
+      lines.push(`gaps=${hirekiwi.gaps.slice(0, 5).join('; ')}`);
     }
     lines.push(summary);
     return lines.join('\n').slice(0, 8_000);
@@ -210,8 +210,8 @@ export class QlixClient {
       similarityIndex: 12,
       similarityExcludingCited: 10,
       aiLikelihood: 35,
-      smartAssessmentStatus: 'completed',
-      smartAssessment: {
+      hirekiwiAssessmentStatus: 'completed',
+      hirekiwiAssessment: {
         relevanceScore: 78,
         qualityScore: 72,
         authenticityScore: 80,

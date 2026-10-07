@@ -27,7 +27,7 @@ import {
   ProjectDefenseReplyResponseSchema,
   ProjectDefenseSessionDtoSchema,
   ProjectDefenseGradeSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   PrepareProjectDefenseResponseSchema,
   StartProjectDefenseResponseSchema,
   UuidSchema,
@@ -513,9 +513,9 @@ export class ProjectDefenseService {
     });
 
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.projectDefenseCompleted,
+      topic: HIREKIWI_TOPICS.projectDefenseCompleted,
       partitionKey: projectId,
-      eventType: SMART_TOPICS.projectDefenseCompleted,
+      eventType: HIREKIWI_TOPICS.projectDefenseCompleted,
       source: 'evaluation',
       data: {
         projectId,

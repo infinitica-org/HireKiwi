@@ -5,7 +5,7 @@ describe('renderEmailTemplate', () => {
   it('renders distinct HTML for invitation and opportunity templates', () => {
     const invite = renderEmailTemplate('student-invite', {
       fullName: 'Alex Student',
-      institutionName: 'SMART University',
+      institutionName: 'HireKiwi University',
       inviteUrl: 'http://localhost:3005/invite/token',
       batchName: 'CS 2026',
     });
@@ -16,7 +16,7 @@ describe('renderEmailTemplate', () => {
       applicationsUrl: 'http://localhost:3001/applications',
     });
 
-    expect(invite.subject).toContain('SMART University');
+    expect(invite.subject).toContain('HireKiwi University');
     expect(opportunity.subject).toContain('Backend Engineer');
     // Both templates share the single brand accent (no more per-type colored header).
     expect(invite.html).toContain('#2fbfae');

@@ -7,7 +7,7 @@ import type {
   IntegrityQueueItemDto,
   VerificationQueueItemDto,
 } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   AlertTriangle,
   BadgeCheck,
@@ -43,10 +43,10 @@ const DUPLICATE_SIGNAL_LABELS: Record<CompanyDuplicateSignal['kind'], string> = 
 };
 
 function formatApiError(error: unknown, fallback: string): string {
-  if (isSmartApiError(error) && error.details.length > 0) {
+  if (isHireKiwiApiError(error) && error.details.length > 0) {
     return error.details.map((detail) => `${detail.path}: ${detail.message}`).join(' ');
   }
-  if (isSmartApiError(error)) return error.message;
+  if (isHireKiwiApiError(error)) return error.message;
   return fallback;
 }
 
@@ -118,7 +118,7 @@ export default function VerificationPage() {
       setCompanyDetail(await api.onboarding.companyVerificationReview(item.tenantId));
     } catch (err) {
       setCompanyDetail(null);
-      setError(isSmartApiError(err) ? err.message : 'Could not load company review details.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not load company review details.');
     }
   }
 

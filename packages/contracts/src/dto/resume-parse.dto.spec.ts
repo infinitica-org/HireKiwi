@@ -115,7 +115,7 @@ describe('validateResumeDocumentText', () => {
       Built verified capability profiles and microservices.
       
       Projects
-      Smart Talent Discovery Platform - Full-stack web application.
+      HireKiwi Talent Discovery Platform - Full-stack web application.
     `;
     const result = validateResumeDocumentText(validResume);
     expect(result.isValid).toBe(true);

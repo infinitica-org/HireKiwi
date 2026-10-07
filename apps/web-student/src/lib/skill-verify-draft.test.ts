@@ -22,7 +22,7 @@ describe('skill-verify draft (S6-VV-162)', () => {
   });
 
   it('treats a corrupt draft as empty instead of throwing', () => {
-    window.sessionStorage.setItem('smart.skill-verify.draft.s-3', '{not json');
+    window.sessionStorage.setItem('hirekiwi.skill-verify.draft.s-3', '{not json');
     expect(readSkillVerifyDraft('s-3')).toEqual({});
   });
 });

@@ -7,7 +7,7 @@ import { ArrowLeft, Briefcase, Loader2, ShieldCheck, Sparkles } from 'lucide-rea
 import { ChipGroup, SkillsEditor, type SkillReq } from '../../../../components/ui';
 import { LocationInput } from '../../../../components/location-input';
 import { toRequiredSkills } from '../../../../lib/skill-catalog';
-import { companyJobsApi, formatApiError } from '../../../../lib/api';
+import { api, companyJobsApi, formatApiError } from '../../../../lib/api';
 import { getCurrentUser } from '../../../../lib/auth';
 import { input, label, textarea } from '../../../../lib/ui';
 
@@ -51,10 +51,9 @@ export default function PostJobPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempted, setAttempted] = useState(false);
-
   const titleInvalid = attempted && title.trim().length === 0;
 
-  async function submit(_kind: 'publish' | 'draft') {
+  async function submit(kind: 'publish' | 'draft') {
     setAttempted(true);
     if (!title.trim()) {
       return;
@@ -63,6 +62,12 @@ export default function PostJobPage() {
     setError(null);
 
     try {
+      const { universities: campuses } = await api.campus.employerCampusAccess();
+      const homeCampus = campuses[0];
+      if (!homeCampus) {
+        setError('No campuses are available to post this job to yet.');
+        return;
+      }
       const me = await getCurrentUser();
       const domainName = me?.email?.split('@')[1]?.split('.')[0];
       const companyName = domainName
@@ -76,7 +81,9 @@ export default function PostJobPage() {
             ? 'PART_TIME'
             : 'FULL_TIME';
 
-      await companyJobsApi.create({
+      // Students of every university can apply; the row only needs one home campus.
+      const created = await companyJobsApi.create({
+        institutionId: homeCampus.institutionId,
         companyName,
         roleTitle: title.trim(),
         domain: 'SOFTWARE_IT',
@@ -88,6 +95,7 @@ export default function PostJobPage() {
         roleDetails: description.trim() || undefined,
         requiredSkills: toRequiredSkills(skills),
       });
+      if (kind === 'publish') await companyJobsApi.publish(created.openingId);
 
       router.push('/jobs');
     } catch (err) {

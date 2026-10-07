@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SmartLogo } from '@hirekiwi/ui';
+import { HireKiwiLogo } from '@hirekiwi/ui';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy · HireKiwi',
@@ -14,7 +14,7 @@ export default function PrivacyPage() {
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link href="/login" className="flex items-center gap-2">
-            <SmartLogo kind="text" className="h-7 w-auto" title="HireKiwi" />
+            <HireKiwiLogo kind="text" className="h-7 w-auto" title="HireKiwi" />
           </Link>
           <Link
             href="/login"

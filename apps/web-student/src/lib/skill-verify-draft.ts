@@ -5,7 +5,7 @@
  */
 export type SkillVerifyAnswers = Record<number, { selectedKey?: string; text?: string }>;
 
-const draftKey = (sessionId: string) => `smart.skill-verify.draft.${sessionId}`;
+const draftKey = (sessionId: string) => `hirekiwi.skill-verify.draft.${sessionId}`;
 
 export function readSkillVerifyDraft(sessionId: string): SkillVerifyAnswers {
   try {

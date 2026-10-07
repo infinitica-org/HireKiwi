@@ -88,7 +88,7 @@ export class CompanyJoinRequestService {
       throw new NotFoundException({
         error: 'no_matching_company',
         message:
-          'No verified company on SMART uses your email domain. Register your company instead.',
+          'No verified company on HireKiwi uses your email domain. Register your company instead.',
         statusCode: 404,
       });
     }

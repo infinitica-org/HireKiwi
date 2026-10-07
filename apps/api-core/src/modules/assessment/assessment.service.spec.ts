@@ -1068,7 +1068,7 @@ describe('AssessmentService (ST-04 / S1-VB-01)', () => {
       );
     });
 
-    it('34. Complete scores an owned attempt and emits smart.assessment.submitted', async () => {
+    it('34. Complete scores an owned attempt and emits hirekiwi.assessment.submitted', async () => {
       await service.startAttempt(STUDENT_ID, {
         trackCode: 'TECH_FULLSTACK',
         levelNumber: 1,

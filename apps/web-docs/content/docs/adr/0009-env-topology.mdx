@@ -16,9 +16,9 @@ The HireKiwi platform requires high-availability zero-downtime releases, isolate
 ## Decision
 
 1. **Long-lived Git Promotion Branches:**
-   - `dev` → Automatic deployment to isolated Development stack (`dev.becomesmart.online`).
+   - `dev` → Automatic deployment to isolated Development stack (`dev.hirekiwi.online`).
    - `qa` → Release candidate freeze and integration verification.
-   - `main` → Production truth (`becomesmart.online`) triggered via automated Blue-Green deployment (`scripts/blue-green-deploy.sh`).
+   - `main` → Production truth (`hirekiwi.online`) triggered via automated Blue-Green deployment (`scripts/blue-green-deploy.sh`).
 
 2. **Single High-End VPS Host Architecture:**
    - A single, dedicated high-performance Linux VPS hosts both environments in completely segregated Docker Compose networks and volumes.

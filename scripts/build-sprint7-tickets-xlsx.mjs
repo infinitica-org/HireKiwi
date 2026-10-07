@@ -1,5 +1,5 @@
 /**
- * Generates SMART_Sprint7_Enterprise_Hardening_Tickets.xlsx
+ * Generates HIREKIWI_Sprint7_Enterprise_Hardening_Tickets.xlsx
  * Pure Node.js (zlib + OpenXML) — zero external dependencies.
  */
 import { writeFileSync } from 'node:fs';
@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const outPath = join(__dirname, '..', 'SMART_Sprint7_Enterprise_Hardening_Tickets.xlsx');
+const outPath = join(__dirname, '..', 'HIREKIWI_Sprint7_Enterprise_Hardening_Tickets.xlsx');
 
 function colLetter(n) {
   let s = '';
@@ -285,7 +285,7 @@ const sheetStories = [
   [
     'S7-VG-02',
     'Market Positioning',
-    'As our Sales & Executive Team, I want an authoritative Competitor Comparison Matrix contrasting SMART against legacy test vendors (AMCAT, Mettl, HackerEarth), so that our unique value proposition is indisputable.',
+    'As our Sales & Executive Team, I want an authoritative Competitor Comparison Matrix contrasting HireKiwi against legacy test vendors (AMCAT, Mettl, HackerEarth), so that our unique value proposition is indisputable.',
     'Vedika G',
     'P1',
     '3 pts (12h)',
@@ -358,7 +358,7 @@ const sheetAcceptance = [
   ],
   [
     'S7-VG-02',
-    '1. Matrix created comparing SMART against AMCAT, Mettl, HackerEarth.\n2. Dimensions covered: evidence-backed proof, 5-level depth, HMAC certs, vector matching.\n3. Published to docs and ready for pitch deck inclusion.',
+    '1. Matrix created comparing HireKiwi against AMCAT, Mettl, HackerEarth.\n2. Dimensions covered: evidence-backed proof, 5-level depth, HMAC certs, vector matching.\n3. Published to docs and ready for pitch deck inclusion.',
   ],
   [
     'S7-VG-03',

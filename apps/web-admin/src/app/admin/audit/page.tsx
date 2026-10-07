@@ -266,7 +266,7 @@ export default function AuditPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `smart-audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.download = `hirekiwi-audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {

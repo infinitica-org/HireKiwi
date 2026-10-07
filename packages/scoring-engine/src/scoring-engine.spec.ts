@@ -26,7 +26,7 @@ import {
 /**
  * Scoring-engine tests.
  *
- * These are not coverage decoration. Each test pins a promise SMART makes to a
+ * These are not coverage decoration. Each test pins a promise HireKiwi makes to a
  * candidate or an employer, and the comment says which promise. If one of these
  * fails, a certificate is about to become indefensible.
  */
@@ -287,7 +287,7 @@ describe('BARS mode consensus', () => {
   });
 
   it('resolves split rater judgments to the lower tier and flags the tie', () => {
-    // Inflating on a coin-flip is the failure mode SMART exists to prevent.
+    // Inflating on a coin-flip is the failure mode HireKiwi exists to prevent.
     expect(resolveTierByMode(['GOLD', 'SILVER'])).toStrictEqual({ tier: 'SILVER', tied: true });
     expect(resolveTierByMode(['GOLD', 'GOLD', 'SILVER'])).toStrictEqual({
       tier: 'GOLD',

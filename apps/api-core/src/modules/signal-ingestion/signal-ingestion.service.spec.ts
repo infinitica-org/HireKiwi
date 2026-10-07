@@ -68,7 +68,7 @@ describe('SignalIngestionService', () => {
     await service.ingest('00000000-0000-4000-8000-000000000001', 'HACKERRANK');
 
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
-      expect.objectContaining({ topic: 'smart.signal.ingested' }),
+      expect.objectContaining({ topic: 'hirekiwi.signal.ingested' }),
     );
     expect(audit.record).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'signal.fetch.completed' }),

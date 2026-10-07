@@ -162,7 +162,7 @@ export const CertificateEndorsementDtoSchema = z.object({
 });
 export type CertificateEndorsementDto = z.infer<typeof CertificateEndorsementDtoSchema>;
 
-/** Public, token-resolved — what an endorser with no SMART account sees. */
+/** Public, token-resolved — what an endorser with no HireKiwi account sees. */
 export const GetCertificateEndorsementResponseSchema = z.object({
   candidateName: z.string(),
   certificateTitle: z.string(),

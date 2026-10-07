@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Star } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { REVIEW_RESPONSE_MAX_LENGTH, type CompanyReview } from '@hirekiwi/contracts';
 import { EmptyState, ErrorState, FormMessage, LoadingState } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
@@ -42,7 +42,7 @@ export default function ReviewsPage() {
       const fields = fieldErrorsFromError(err);
       setError(
         fields?.body ??
-          (isSmartApiError(err) && err.message ? err.message : 'Could not save the response.'),
+          (isHireKiwiApiError(err) && err.message ? err.message : 'Could not save the response.'),
       );
     },
   });

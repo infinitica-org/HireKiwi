@@ -67,7 +67,7 @@ export const PartnershipDecisionResponseSchema = z.object({
 });
 export type PartnershipDecisionResponse = z.infer<typeof PartnershipDecisionResponseSchema>;
 
-export const SMART_ORG_PROVISIONED_ACTION = 'smart.org.provisioned' as const;
+export const HIREKIWI_ORG_PROVISIONED_ACTION = 'hirekiwi.org.provisioned' as const;
 
 export const ActivationTokenDetailsSchema = z.object({
   token: z.string(),
@@ -118,7 +118,7 @@ export const ActivatePartnershipAccountResponseSchema = z.object({
     role: z.string(),
   }),
   auditLog: z.object({
-    action: z.literal(SMART_ORG_PROVISIONED_ACTION),
+    action: z.literal(HIREKIWI_ORG_PROVISIONED_ACTION),
     timestamp: IsoDateTimeSchema,
     provisionerId: UuidSchema,
     ipAddress: z.string(),

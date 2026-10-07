@@ -10,8 +10,8 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": true,
-      "tags": ["smart"],
-      "title": "SMART dashboards",
+      "tags": ["hirekiwi"],
+      "title": "HireKiwi dashboards",
       "type": "dashboards"
     }
   ],
@@ -137,11 +137,11 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["smart", "minio"],
+  "tags": ["hirekiwi", "minio"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timezone": "browser",
-  "title": "SMART / MinIO",
-  "uid": "smart-minio",
+  "title": "HireKiwi / MinIO",
+  "uid": "hirekiwi-minio",
   "version": 1
 }

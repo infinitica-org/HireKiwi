@@ -47,7 +47,7 @@ describe('LanguagesSection', () => {
     createLanguage.mockResolvedValueOnce(mockLangItem);
 
     renderWithQueryClient(<LanguagesSection />);
-    const addButton = (await screen.findAllByRole('button', { name: 'Add language' })).at(
+    const addButton = (await screen.findAllByRole('button', { name: /^Add language$/i })).at(
       -1,
     ) as HTMLElement;
     fireEvent.click(addButton);

@@ -1,5 +1,5 @@
 /**
- * @hirekiwi/scoring-engine — SMART's psychometric core.
+ * @hirekiwi/scoring-engine — HireKiwi's psychometric core.
  *
  * Everything here is a pure function. No I/O, no clock, no randomness, no
  * database. That constraint is deliberate and load-bearing: a tier awarded

@@ -1,5 +1,9 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
-import { AiCompletionRecordedDataSchema, SMART_TOPICS, type AiProvider } from '@hirekiwi/contracts';
+import {
+  AiCompletionRecordedDataSchema,
+  HIREKIWI_TOPICS,
+  type AiProvider,
+} from '@hirekiwi/contracts';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 
 export interface ModelPricing {
@@ -89,9 +93,9 @@ export class AiGatewayAuditService {
         recordedAt: new Date().toISOString(),
       });
       await this.outbox.enqueueEnvelope({
-        topic: SMART_TOPICS.aiCompletionRecorded,
+        topic: HIREKIWI_TOPICS.aiCompletionRecorded,
         partitionKey: input.responseId ?? input.promptRef,
-        eventType: SMART_TOPICS.aiCompletionRecorded,
+        eventType: HIREKIWI_TOPICS.aiCompletionRecorded,
         source: 'ai-gateway',
         data,
       });

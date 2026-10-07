@@ -16,7 +16,7 @@ import type { Queue } from 'bullmq';
 import {
   AddBatchMemberRequestSchema,
   INSTITUTION_STAFF_ROLES,
-  SMART_ORG_PROVISIONED_ACTION,
+  HIREKIWI_ORG_PROVISIONED_ACTION,
 } from '@hirekiwi/contracts';
 import type {
   ActivatePartnershipAccountRequest,
@@ -281,7 +281,7 @@ export class InstitutionsService {
     };
     this.partnershipRequests.set(req.id, updatedReq);
 
-    const activationUrl = `https://tpo.smart.org/activate?token=${rawToken}`;
+    const activationUrl = `https://tpo.hirekiwi.org/activate?token=${rawToken}`;
     this.logger.log(
       `Secure activation token generated for ${req.name} (${req.id}) by ${adminUserId ?? 'system'}`,
     );
@@ -431,10 +431,10 @@ export class InstitutionsService {
     // Consume activation token
     this.activationTokens.delete(body.token);
 
-    // Audit log entry: smart.org.provisioned (AC 4)
+    // Audit log entry: hirekiwi.org.provisioned (AC 4)
     const activeProvisionerId = provisionerId ?? tpoUser.id;
     await this.auditPublisher.record({
-      action: SMART_ORG_PROVISIONED_ACTION,
+      action: HIREKIWI_ORG_PROVISIONED_ACTION,
       actorId: activeProvisionerId,
       resourceType: 'INSTITUTION',
       resourceId: institution.id,
@@ -470,7 +470,7 @@ export class InstitutionsService {
         role: 'INSTITUTION_ADMIN',
       },
       auditLog: {
-        action: SMART_ORG_PROVISIONED_ACTION,
+        action: HIREKIWI_ORG_PROVISIONED_ACTION,
         timestamp: now,
         provisionerId: activeProvisionerId,
         ipAddress,
@@ -513,7 +513,7 @@ export class InstitutionsService {
   async getPartnershipDecision(id: string): Promise<PartnershipDecisionResponse> {
     const req = await this.getPartnershipRequestById(id);
 
-    let nextSteps = 'Your partnership application is currently under review by the SMART team.';
+    let nextSteps = 'Your partnership application is currently under review by the HireKiwi team.';
     let tokenDetails = Array.from(this.activationTokens.values()).find(
       (t) => t.partnershipRequestId === req.id,
     );
@@ -537,7 +537,7 @@ export class InstitutionsService {
     }
 
     const activationUrl = tokenDetails
-      ? `https://tpo.smart.org/activate?token=${tokenDetails.token}`
+      ? `https://tpo.hirekiwi.org/activate?token=${tokenDetails.token}`
       : undefined;
 
     return {
@@ -810,7 +810,7 @@ export class InstitutionsService {
     const trimmedName = universityName.trim();
     const normalizedUniversityName = trimmedName.toLowerCase();
 
-    // Idempotency: the same student asking SMART to contact the same university
+    // Idempotency: the same student asking HireKiwi to contact the same university
     // name again returns the existing request rather than creating a duplicate.
     const existing = await this.prisma.universityContactRequest.findUnique({
       where: {

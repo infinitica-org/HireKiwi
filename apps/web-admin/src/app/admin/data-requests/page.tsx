@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AdminDataRequestDto, DataRequestStatus, DataRequestType } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { FileLock } from 'lucide-react';
 import { Button } from '@hirekiwi/ui/button';
 import { PageHeader } from '@/components/page-header';
@@ -57,7 +57,7 @@ export default function DataRequestsPage() {
         }),
       );
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not load data requests.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not load data requests.');
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,7 @@ export default function DataRequestsPage() {
       if (action !== 'review') setNote('');
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not update this request.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not update this request.');
     } finally {
       setBusyId(null);
     }

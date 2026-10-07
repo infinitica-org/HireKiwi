@@ -121,7 +121,6 @@ export class EmployerJobsService {
 
   async create(userId: string, body: CreateEmployerJobRequest): Promise<EmployerJobDto> {
     const actor = await requireCompanyActor(this.prisma, userId, 'company.jobs.manage');
-    await this.assertCampusAccess(actor.companyId, body.institutionId);
     const { institutionId, requiredSkills, ...fields } = body;
     const job = await this.insertJob(
       actor.companyId,
@@ -190,7 +189,6 @@ export class EmployerJobsService {
         statusCode: 403,
       });
     }
-    await this.assertCampusAccess(actor.companyId, job.institutionId);
     await this.billing.assertQuotaAvailable(actor.companyId, 'ACTIVE_JOBS');
 
     const updated = await this.prisma.jobOpening.update({
@@ -223,7 +221,6 @@ export class EmployerJobsService {
     const actor = await requireCompanyActor(this.prisma, userId, 'company.jobs.manage');
     const source = await this.requireJob(actor.companyId, jobId);
     const institutionId = body.institutionId ?? source.institutionId;
-    await this.assertCampusAccess(actor.companyId, institutionId);
 
     const copy = await this.prisma.jobOpening.create({
       data: {
@@ -334,20 +331,6 @@ export class EmployerJobsService {
   }
 
   /** UNI-05 / JOB-01.12 — a company may only post to a campus that has approved it. */
-  private async assertCampusAccess(companyId: string, institutionId: string): Promise<void> {
-    const access = await this.prisma.universityEmployerAccess.findUnique({
-      where: { institutionId_companyId: { institutionId, companyId } },
-      select: { status: true },
-    });
-    if (access?.status !== 'ACTIVE') {
-      throw new ForbiddenException({
-        error: 'campus_access_required',
-        message: 'This campus has not approved your company. Request campus access first.',
-        statusCode: 403,
-      });
-    }
-  }
-
   private async toDto(row: JobRow): Promise<EmployerJobDto> {
     const normalized = normalizeOpeningRow(row);
     let companyLogoUrl: string | undefined;

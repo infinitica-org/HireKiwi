@@ -31,7 +31,8 @@ const skipSeed = args.includes('--skip-seed');
 const coreOnly = args.includes('--core-only');
 
 const baseDatabaseUrl =
-  process.env['DATABASE_URL'] || 'postgresql://smart:smart@127.0.0.1:5432/smart?schema=public';
+  process.env['DATABASE_URL'] ||
+  'postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public';
 
 function runEnsurePnpm(cmdArgs, envOverrides = {}) {
   const ensureScript = join(root, 'scripts', 'ensure-pnpm.mjs');
@@ -100,8 +101,8 @@ async function probeDatabase(url) {
 
 async function ensureCredentialVerifierDb(baseTargetUrl) {
   const urlObj = new URL(baseTargetUrl);
-  const targetUser = urlObj.username || 'smart';
-  urlObj.pathname = '/smart';
+  const targetUser = urlObj.username || 'hirekiwi';
+  urlObj.pathname = '/hirekiwi';
   const client = new Client({ connectionString: urlObj.toString() });
 
   try {

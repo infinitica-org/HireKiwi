@@ -17,8 +17,8 @@ import {
 } from '@/lib/profile-identity';
 import { PROFILE_AREA_HREFS, PROFILE_AREA_IDS, PROFILE_AREA_LABELS } from '@/lib/profile-progress';
 
-// Official SMART 16-point scalloped verified badge
-export function SmartVerifiedBadge(props: React.SVGProps<SVGSVGElement>) {
+// Official HireKiwi 16-point scalloped verified badge
+export function HireKiwiVerifiedBadge(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       width="20"
@@ -31,11 +31,11 @@ export function SmartVerifiedBadge(props: React.SVGProps<SVGSVGElement>) {
     >
       <path
         d="M5.89596 15.5452C5.56658 15.6923 5.17931 15.5651 5.00143 15.2512L3.9333 13.3666L1.90833 12.8952C1.56822 12.816 1.33848 12.4983 1.36989 12.1505L1.56966 9.93802L0.162633 8.25342C-0.0543614 7.99361 -0.0543617 7.61576 0.162633 7.35596L1.56966 5.67135L1.36989 3.45892C1.33848 3.11113 1.56822 2.79338 1.90833 2.7142L3.9333 2.24278L5.00143 0.358158C5.17931 0.044304 5.56658 -0.0829616 5.89596 0.0641976L7.78784 0.909449L9.67972 0.0641977C10.0091 -0.0829615 10.3964 0.0443043 10.5743 0.358158L11.6424 2.24278L13.6673 2.7142C14.0075 2.79338 14.2372 3.11113 14.2058 3.45892L14.006 5.67135L15.4131 7.35596C15.63 7.61576 15.63 7.99361 15.4131 8.25342L14.006 9.93802L14.2058 12.1505C14.2372 12.4982 14.0075 12.816 13.6673 12.8952L11.6424 13.3666L10.5743 15.2512C10.3964 15.5651 10.0091 15.6923 9.67972 15.5452L7.78784 14.6999L5.89596 15.5452ZM6.95187 10.4337C6.99126 10.4749 7.05715 10.4749 7.09654 10.4337L11.0685 6.27253C11.105 6.23438 11.1055 6.1745 11.0697 6.13572L10.1874 5.17832C10.1482 5.13586 10.0814 5.13528 10.0415 5.17705L7.0957 8.26313C7.05662 8.30406 6.99139 8.30445 6.95184 8.26397L5.53293 6.81207C5.49338 6.7716 5.42815 6.77198 5.38908 6.81291L4.5083 7.73564C4.47141 7.77428 4.47141 7.83509 4.5083 7.87374L6.95187 10.4337Z"
-        fill="url(#smart_verified_badge_grad)"
+        fill="url(#hirekiwi_verified_badge_grad)"
       />
       <defs>
         <linearGradient
-          id="smart_verified_badge_grad"
+          id="hirekiwi_verified_badge_grad"
           x1="2.78784"
           y1="2.30469"
           x2="10.2878"
@@ -50,8 +50,8 @@ export function SmartVerifiedBadge(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-// Same scalloped SMART badge in red with a cross: shown until the profile is 100% complete.
-export function SmartUnverifiedBadge(props: React.SVGProps<SVGSVGElement>) {
+// Same scalloped HireKiwi badge in red with a cross: shown until the profile is 100% complete.
+export function HireKiwiUnverifiedBadge(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       width="20"
@@ -109,7 +109,7 @@ interface ProfileHeroBannerProps {
 }
 
 const HERO_AVATAR_CLASS =
-  'h-28 w-28 sm:h-32 sm:w-32 shrink-0 rounded-full border-2 border-zinc-100 bg-zinc-100 text-3xl font-extrabold text-zinc-900 shadow-sm dark:border-zinc-800 dark:bg-zinc-800 dark:text-white';
+  'h-30 w-30 sm:h-36 sm:w-36 shrink-0 rounded-full border-2 border-zinc-100 bg-zinc-100 text-3xl font-extrabold text-zinc-900 shadow-sm dark:border-zinc-800 dark:bg-zinc-800 dark:text-white';
 
 export function ProfileHeroBanner({
   user,
@@ -157,7 +157,7 @@ export function ProfileHeroBanner({
       data-testid="profile-hero-banner"
       className="w-full font-sans select-none"
     >
-      <div className=" p-4 sm:p-6 dark:bg-[#161616]">
+      <div className="relative flex w-full flex-col items-center p-6 text-center shadow-2xs sm:p-8 dark:border-zinc-800 dark:bg-[#161616]">
         {/* Profile Avatar Photo */}
         <div className="relative flex items-center shrink-0">
           <ProfilePhotoEditControl
@@ -169,17 +169,17 @@ export function ProfileHeroBanner({
         </div>
 
         {/* Candidate Details */}
-        <div className="mt-5 space-y-2 text-left">
+        <div className="mt-5 flex w-full flex-col items-center space-y-2 text-center">
           {/* Name Row: Name + Badges on Left, Share & Edit Buttons STRAIGHT OPPOSITE on Right */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col items-center gap-4">
             {/* Left: Name & Official Verified Badges */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <h1 className="font-medium text-2xl sm:text-3xl   text-zinc-950 dark:text-white">
                 {fullName}
               </h1>
-              {/* SMART badge: green tick at 100% profile completion, red cross until then */}
+              {/* HireKiwi badge: green tick at 100% profile completion, red cross until then */}
               {percent === 100 ? (
-                <SmartVerifiedBadge role="img" aria-label="Profile complete" />
+                <HireKiwiVerifiedBadge role="img" aria-label="Profile complete" />
               ) : (
                 <span className="group relative inline-flex">
                   <span
@@ -193,7 +193,7 @@ export function ProfileHeroBanner({
                     aria-describedby="profile-missing-areas"
                     className="inline-flex cursor-help rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
                   >
-                    <SmartUnverifiedBadge aria-hidden="true" />
+                    <HireKiwiUnverifiedBadge aria-hidden="true" />
                   </span>
                   {/* pt-2 bridges the gap so the card stays open while the pointer moves onto it */}
                   <span className="invisible absolute top-full left-1/2 z-30 -translate-x-1/2 pt-2 opacity-0 transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
@@ -226,9 +226,51 @@ export function ProfileHeroBanner({
                 </span>
               )}
             </div>
+          </div>
 
-            {/* Right (Straight opposite to Name): Share & Edit Profile Buttons */}
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          {/* Username Handle */}
+          {handle ? (
+            <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500">@{handle}</p>
+          ) : null}
+
+          <div className="!mt-5 flex w-full flex-col gap-5 border-t border-zinc-100 pt-5 text-left sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+            <div className="min-w-0 space-y-2">
+              {/* Tagline / Bio Quote */}
+              <p className="text-xs sm:text-sm font-normal text-zinc-600 dark:text-zinc-300 max-w-xl leading-relaxed">
+                &ldquo;{headline}&rdquo;
+              </p>
+
+              {/* Department */}
+              {departmentName ? (
+                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+                  {departmentName}
+                </p>
+              ) : hasEducation ? (
+                <p className="text-xs text-zinc-400">Department not added yet</p>
+              ) : null}
+
+              {/* Experience, Batch & College Info */}
+              <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="inline-flex items-center gap-1.5 font-medium text-zinc-600 dark:text-zinc-300">
+                  <Briefcase className="size-3.5 text-zinc-400" />0 years of experience
+                </span>
+
+                {batchLabel && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-zinc-600 dark:text-zinc-300">
+                    <GraduationCap className="size-3.5 text-zinc-400" />
+                    {batchLabel}
+                  </span>
+                )}
+
+                {collegeName && (
+                  <span className="inline-flex items-center gap-1 font-medium text-zinc-600 dark:text-zinc-300">
+                    <Building2 className="size-3.5 text-zinc-400" />
+                    {collegeName}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2.5">
               {/* Share Profile Button */}
               <button
                 type="button"
@@ -249,46 +291,6 @@ export function ProfileHeroBanner({
               </Link>
             </div>
           </div>
-
-          {/* Username Handle */}
-          {handle ? (
-            <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500">@{handle}</p>
-          ) : null}
-
-          {/* Tagline / Bio Quote */}
-          <p className="text-xs sm:text-sm font-normal text-zinc-600 dark:text-zinc-300 max-w-2xl leading-relaxed">
-            &ldquo;{headline}&rdquo;
-          </p>
-
-          {/* Department */}
-          {departmentName ? (
-            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
-              {departmentName}
-            </p>
-          ) : hasEducation ? (
-            <p className="text-xs text-zinc-400">Department not added yet</p>
-          ) : null}
-
-          {/* Experience, Batch & College Info */}
-          <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            <span className="inline-flex items-center gap-1.5 font-medium text-zinc-600 dark:text-zinc-300">
-              <Briefcase className="size-3.5 text-zinc-400" />0 years of experience
-            </span>
-
-            {batchLabel && (
-              <span className="inline-flex items-center gap-1 font-semibold text-zinc-600 dark:text-zinc-300">
-                <GraduationCap className="size-3.5 text-zinc-400" />
-                {batchLabel}
-              </span>
-            )}
-
-            {collegeName && (
-              <span className="inline-flex items-center gap-1 font-medium text-zinc-600 dark:text-zinc-300">
-                <Building2 className="size-3.5 text-zinc-400" />
-                {collegeName}
-              </span>
-            )}
-          </div>
         </div>
       </div>
 
@@ -296,10 +298,10 @@ export function ProfileHeroBanner({
       {isShareModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
           <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-[#161616] text-left">
-            {/* Modal Header with Official SMART Verified Logo */}
+            {/* Modal Header with Official HireKiwi Verified Logo */}
             <div className="relative flex items-center justify-between pb-3.5 border-b border-zinc-100 dark:border-zinc-800">
               <div className="flex items-center gap-2">
-                <SmartVerifiedBadge className="size-5 shrink-0" />
+                <HireKiwiVerifiedBadge className="size-5 shrink-0" />
                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-white">
                   HireKiwi Verified Profile
                 </span>

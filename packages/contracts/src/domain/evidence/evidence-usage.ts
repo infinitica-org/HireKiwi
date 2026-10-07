@@ -1,7 +1,7 @@
 import type { EvidenceType } from './enums.js';
 
 /**
- * S6-VV-114 (#550, SEC-01): what SMART does with each kind of evidence, in the words the student
+ * S6-VV-114 (#550, SEC-01): what HireKiwi does with each kind of evidence, in the words the student
  * sees next to every add/connect flow and in Settings. Kept in contracts so the web renders it
  * without a round trip, and typed as a full `Record` so adding an `EvidenceType` without an
  * explanation fails to compile (and the spec).

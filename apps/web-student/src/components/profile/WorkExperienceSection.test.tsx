@@ -152,7 +152,7 @@ async function openAddExperienceModal() {
   listWorkExperiences.mockResolvedValueOnce([]);
   const view = renderWithQueryClient(<WorkExperienceSection />);
   fireEvent.click(
-    (await screen.findAllByRole('button', { name: 'Add experience' })).at(-1) as HTMLElement,
+    (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(-1) as HTMLElement,
   );
   return view;
 }
@@ -189,7 +189,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     listWorkExperiences.mockResolvedValueOnce([]);
     renderWithQueryClient(<WorkExperienceSection />);
 
-    const addButton = (await screen.findAllByRole('button', { name: 'Add experience' })).at(
+    const addButton = (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(
       -1,
     ) as HTMLElement;
     fireEvent.click(addButton);
@@ -204,7 +204,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     listWorkExperiences.mockResolvedValueOnce([]);
     renderWithQueryClient(<WorkExperienceSection />);
 
-    const addButton = (await screen.findAllByRole('button', { name: 'Add experience' })).at(
+    const addButton = (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(
       -1,
     ) as HTMLElement;
     fireEvent.click(addButton);
@@ -596,7 +596,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
 
     expect(await screen.findByText(/No work experience yet/i)).toBeTruthy();
     expect(
-      screen.getAllByRole('button', { name: 'Add experience' }).at(-1) as HTMLElement,
+      screen.getAllByRole('button', { name: /^Add experience$/i }).at(-1) as HTMLElement,
     ).toBeTruthy();
   });
 

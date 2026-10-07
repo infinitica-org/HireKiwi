@@ -79,8 +79,8 @@ In real campus placement and talent discovery environments:
 
 **Delta Re-indexing Pipeline:**
 Instead of expensive, high-latency re-runs of the entire student database, HireKiwi listens to Kafka domain events:
-- `smart.eval.completed` (Assessment finished or tier upgraded)
-- `smart.user.updated` (Profile, resume, or verification state changed)
+- `hirekiwi.eval.completed` (Assessment finished or tier upgraded)
+- `hirekiwi.user.updated` (Profile, resume, or verification state changed)
 
 An asynchronous BullMQ worker intercepts the event, retrieves active job openings that match the candidate's track, computes delta requirement coverage, and updates the cached match records in Redis within **`<200 ms`**.
 

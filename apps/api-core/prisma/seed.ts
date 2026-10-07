@@ -51,7 +51,8 @@ interface RawItem {
 
 // Matches DATABASE_URL's default in platform/config/env.ts — local Docker Compose Postgres.
 const DATABASE_URL =
-  process.env['DATABASE_URL'] ?? 'postgresql://smart:smart@127.0.0.1:5432/smart?schema=public';
+  process.env['DATABASE_URL'] ??
+  'postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public';
 
 async function main(): Promise<void> {
   const prisma = new PrismaClient({
@@ -272,12 +273,12 @@ async function main(): Promise<void> {
   const company = await prisma.company.upsert({
     where: { domain: seedDomain },
     update: {
-      name: 'SMART Pilot Employer',
+      name: 'HireKiwi Pilot Employer',
       planId: proPlan.id,
       verificationStatus: 'APPROVED',
     },
     create: {
-      name: 'SMART Pilot Employer',
+      name: 'HireKiwi Pilot Employer',
       domain: seedDomain,
       planId: proPlan.id,
       verificationStatus: 'APPROVED',
@@ -298,7 +299,7 @@ async function main(): Promise<void> {
   }> = [
     {
       email: seedEmails.admin,
-      fullName: 'SMART Super Admin',
+      fullName: 'HireKiwi Super Admin',
       role: 'SUPER_ADMIN',
       institutionId: null,
       companyId: null,

@@ -18,7 +18,7 @@ import {
   LoadingState,
   VerifiedBadge,
 } from '@hirekiwi/ui';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import {
   EMPLOYEE_COUNT_OPTIONS,
@@ -124,7 +124,7 @@ export default function CompanyProfilePage() {
           message={
             // Show the server's reason (e.g. "not linked to a company", "access deactivated")
             // instead of always blaming the connection.
-            isSmartApiError(profileQuery.error) && profileQuery.error.statusCode !== 0
+            isHireKiwiApiError(profileQuery.error) && profileQuery.error.statusCode !== 0
               ? profileQuery.error.message
               : 'Check your connection and try again.'
           }

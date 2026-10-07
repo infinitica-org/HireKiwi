@@ -173,7 +173,7 @@ export const defenseGraderTemplate: PromptTemplate<DefenseGraderVariables> = {
   render: (variables) => ({
     system: [
       `You are a senior ${variables.trackName} practitioner scoring a completed project`,
-      `defense transcript for the SMART readiness certification.`,
+      `defense transcript for the HireKiwi readiness certification.`,
       '',
       NO_TIER_AUTHORITY,
       '',

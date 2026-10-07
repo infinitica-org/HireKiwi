@@ -28,14 +28,15 @@ const OUTPUT_DIR = path.join(
 );
 
 const DATABASE_URL =
-  process.env['DATABASE_URL'] ?? 'postgresql://smart:smart@127.0.0.1:5432/smart?schema=public';
+  process.env['DATABASE_URL'] ??
+  'postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public';
 
 const USER_COUNT = Number(process.env['TEST_DATA_USERS'] ?? '200');
 const TRACK_CODE = process.env['TEST_DATA_TRACK_CODE'] ?? 'TECH_FULLSTACK';
-const INSTITUTION_DOMAIN = process.env['TEST_DATA_INSTITUTION_DOMAIN'] ?? 'smart.local';
+const INSTITUTION_DOMAIN = process.env['TEST_DATA_INSTITUTION_DOMAIN'] ?? 'hirekiwi.local';
 const PASSWORD = process.env['TEST_PASSWORD'] ?? 'LoadTest!2026';
 export const LOAD_TEST_EMAIL_PREFIX = 'loadtest.student.';
-const EMAIL_DOMAIN = 'smart.local';
+const EMAIL_DOMAIN = 'hirekiwi.local';
 
 function emailFor(index: number): string {
   return `${LOAD_TEST_EMAIL_PREFIX}${String(index).padStart(5, '0')}@${EMAIL_DOMAIN}`;

@@ -3,13 +3,13 @@ import { z } from 'zod';
 import { describe, expect, it, vi } from 'vitest';
 import {
   MAX_RATE_LIMIT_RETRIES,
-  SmartApiClient,
-  SmartApiError,
-  SmartContractViolationError,
-  SmartNetworkError,
-  createSmartApi,
+  HireKiwiApiClient,
+  HireKiwiApiError,
+  HireKiwiContractViolationError,
+  HireKiwiNetworkError,
+  createHireKiwiApi,
   invalidationGroups,
-  isSmartApiError,
+  isHireKiwiApiError,
   queryKeys,
 } from './index.js';
 
@@ -60,8 +60,8 @@ function stubFetch(responses: readonly StubResponse[]): {
 describe('request construction', () => {
   it('sends the bearer token, correlation id, and credentials for the refresh cookie', async () => {
     const { fetchImpl, calls } = stubFetch([{ body: { ok: true } }]);
-    const client = new SmartApiClient({
-      baseUrl: 'https://api.smart.test/',
+    const client = new HireKiwiApiClient({
+      baseUrl: 'https://api.hirekiwi.test/',
       getAccessToken: () => 'token-123',
       getCorrelationId: () => 'corr-1',
       fetchImpl,
@@ -79,8 +79,8 @@ describe('request construction', () => {
   it('omits the auth header on anonymous routes', async () => {
     // Public verification must not look like an authenticated request.
     const { fetchImpl, calls } = stubFetch([{ body: { ok: true } }]);
-    const client = new SmartApiClient({
-      baseUrl: 'https://api.smart.test',
+    const client = new HireKiwiApiClient({
+      baseUrl: 'https://api.hirekiwi.test',
       getAccessToken: () => 'token-123',
       fetchImpl,
     });
@@ -92,8 +92,8 @@ describe('request construction', () => {
 
   it('sends multipart data without overriding the browser boundary header', async () => {
     const { fetchImpl, calls } = stubFetch([{ body: { ok: true } }]);
-    const client = new SmartApiClient({
-      baseUrl: 'https://api.smart.test',
+    const client = new HireKiwiApiClient({
+      baseUrl: 'https://api.hirekiwi.test',
       getAccessToken: () => 'token-123',
       fetchImpl,
     });
@@ -117,8 +117,8 @@ describe('request construction', () => {
       headers: ['Student Name', 'Email Address'],
     };
     const { fetchImpl, calls } = stubFetch([{ body: preview }]);
-    const client = new SmartApiClient({
-      baseUrl: 'https://api.smart.test',
+    const client = new HireKiwiApiClient({
+      baseUrl: 'https://api.hirekiwi.test',
       getAccessToken: () => 'token-123',
       fetchImpl,
     });
@@ -152,21 +152,21 @@ describe('request construction', () => {
         },
       },
     ]);
-    const client = new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl });
+    const client = new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl });
     const error = await client
       .postForm('/api/v1/tpo/batches/batch-1/members/import', new FormData(), {
         schema: BatchImportResultDtoSchema,
       })
       .catch((caught: unknown) => caught);
 
-    expect(isSmartApiError(error) && error.statusCode).toBe(400);
-    expect(isSmartApiError(error) && error.message).toBe('Column mapping is invalid.');
+    expect(isHireKiwiApiError(error) && error.statusCode).toBe(400);
+    expect(isHireKiwiApiError(error) && error.message).toBe('Column mapping is invalid.');
   });
 
   it('downloads authenticated binary responses without JSON parsing', async () => {
     const { fetchImpl, calls } = stubFetch([{ text: 'synthetic-template' }]);
-    const client = new SmartApiClient({
-      baseUrl: 'https://api.smart.test',
+    const client = new HireKiwiApiClient({
+      baseUrl: 'https://api.hirekiwi.test',
       getAccessToken: () => 'token-123',
       fetchImpl,
     });
@@ -183,8 +183,8 @@ describe('request construction', () => {
     // A captured token string starts failing 15 minutes after page load.
     const tokens = ['first', 'second'];
     const { fetchImpl, calls } = stubFetch([{ body: { ok: true } }, { body: { ok: true } }]);
-    const client = new SmartApiClient({
-      baseUrl: 'https://api.smart.test',
+    const client = new HireKiwiApiClient({
+      baseUrl: 'https://api.hirekiwi.test',
       getAccessToken: () => tokens.shift() ?? null,
       fetchImpl,
     });
@@ -198,14 +198,14 @@ describe('request construction', () => {
 
   it('serialises query parameters and drops undefined ones', async () => {
     const { fetchImpl, calls } = stubFetch([{ body: { ok: true } }]);
-    const client = new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl });
+    const client = new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl });
 
     await client.get('/api/v1/tpo/shortlist', {
       schema,
       query: { page: 2, tier: 'GOLD', cohortId: undefined },
     });
 
-    expect(calls[0]?.url).toBe('https://api.smart.test/api/v1/tpo/shortlist?page=2&tier=GOLD');
+    expect(calls[0]?.url).toBe('https://api.hirekiwi.test/api/v1/tpo/shortlist?page=2&tier=GOLD');
   });
 });
 
@@ -216,8 +216,8 @@ describe('token refresh', () => {
       { body: { ok: true } },
     ]);
     const refreshAccessToken = vi.fn().mockResolvedValue('fresh-token');
-    const client = new SmartApiClient({
-      baseUrl: 'https://api.smart.test',
+    const client = new HireKiwiApiClient({
+      baseUrl: 'https://api.hirekiwi.test',
       getAccessToken: () => 'stale',
       refreshAccessToken,
       fetchImpl,
@@ -252,8 +252,8 @@ describe('token refresh', () => {
           setTimeout(() => resolve('fresh'), 20);
         }),
     );
-    const client = new SmartApiClient({
-      baseUrl: 'https://api.smart.test',
+    const client = new HireKiwiApiClient({
+      baseUrl: 'https://api.hirekiwi.test',
       getAccessToken: () => 'stale',
       refreshAccessToken,
       fetchImpl,
@@ -273,14 +273,14 @@ describe('token refresh', () => {
       { status: 401, body: { error: 'token_expired', message: 'expired', statusCode: 401 } },
     ]);
     const onUnauthorized = vi.fn();
-    const client = new SmartApiClient({
-      baseUrl: 'https://api.smart.test',
+    const client = new HireKiwiApiClient({
+      baseUrl: 'https://api.hirekiwi.test',
       refreshAccessToken: () => Promise.resolve('fresh'),
       onUnauthorized,
       fetchImpl,
     });
 
-    await expect(client.get('/a', { schema })).rejects.toBeInstanceOf(SmartApiError);
+    await expect(client.get('/a', { schema })).rejects.toBeInstanceOf(HireKiwiApiError);
     expect(calls).toHaveLength(2);
   });
 
@@ -289,14 +289,14 @@ describe('token refresh', () => {
       { status: 401, body: { error: 'token_expired', message: 'expired', statusCode: 401 } },
     ]);
     const onUnauthorized = vi.fn();
-    const client = new SmartApiClient({
-      baseUrl: 'https://api.smart.test',
+    const client = new HireKiwiApiClient({
+      baseUrl: 'https://api.hirekiwi.test',
       refreshAccessToken: () => Promise.resolve(null),
       onUnauthorized,
       fetchImpl,
     });
 
-    await expect(client.get('/a', { schema })).rejects.toBeInstanceOf(SmartApiError);
+    await expect(client.get('/a', { schema })).rejects.toBeInstanceOf(HireKiwiApiError);
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
   });
 });
@@ -311,7 +311,7 @@ describe('rate limiting', () => {
       },
       { body: { ok: true } },
     ]);
-    const client = new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl });
+    const client = new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl });
 
     await expect(client.get('/a', { schema })).resolves.toStrictEqual({ ok: true });
     expect(calls).toHaveLength(2);
@@ -332,11 +332,11 @@ describe('rate limiting', () => {
         },
       },
     ]);
-    const client = new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl });
+    const client = new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl });
 
     const error = await client.get('/a', { schema }).catch((caught: unknown) => caught);
-    expect(isSmartApiError(error) && error.retryAfterSeconds).toBe(60);
-    expect(isSmartApiError(error) && error.isRetryable).toBe(true);
+    expect(isHireKiwiApiError(error) && error.retryAfterSeconds).toBe(60);
+    expect(isHireKiwiApiError(error) && error.isRetryable).toBe(true);
     expect(calls).toHaveLength(1);
   });
 });
@@ -354,10 +354,10 @@ describe('error surfaces', () => {
         },
       },
     ]);
-    const client = new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl });
+    const client = new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl });
 
     const error = await client.get('/a', { schema }).catch((caught: unknown) => caught);
-    expect(isSmartApiError(error) && error.traceId).toBe('11111111-1111-4111-8111-111111111111');
+    expect(isHireKiwiApiError(error) && error.traceId).toBe('11111111-1111-4111-8111-111111111111');
   });
 
   it('maps validation details onto form fields', async () => {
@@ -372,10 +372,10 @@ describe('error surfaces', () => {
         },
       },
     ]);
-    const client = new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl });
+    const client = new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl });
 
     const error = await client.get('/a', { schema }).catch((caught: unknown) => caught);
-    expect(isSmartApiError(error) && error.fieldErrors).toStrictEqual({
+    expect(isHireKiwiApiError(error) && error.fieldErrors).toStrictEqual({
       email: 'Enter a valid email',
     });
   });
@@ -383,40 +383,40 @@ describe('error surfaces', () => {
   it('synthesises a contract-shaped error when a proxy returns HTML', async () => {
     // Callers must never have to handle a third error shape.
     const { fetchImpl } = stubFetch([{ status: 502, text: '<html>502 Bad Gateway</html>' }]);
-    const client = new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl });
+    const client = new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl });
 
     const error = await client.get('/a', { schema }).catch((caught: unknown) => caught);
-    expect(isSmartApiError(error) && error.code).toBe('service_unavailable');
-    expect(isSmartApiError(error) && error.isRetryable).toBe(true);
+    expect(isHireKiwiApiError(error) && error.code).toBe('service_unavailable');
+    expect(isHireKiwiApiError(error) && error.isRetryable).toBe(true);
   });
 
   it('flags a 2xx body that violates the contract instead of passing it through', async () => {
     // Otherwise the failure appears as a crash deep in a component tree.
     const { fetchImpl } = stubFetch([{ body: { ok: 'yes' } }]);
-    const client = new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl });
+    const client = new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl });
 
     await expect(client.get('/api/v1/users/me', { schema })).rejects.toBeInstanceOf(
-      SmartContractViolationError,
+      HireKiwiContractViolationError,
     );
   });
 
   it('distinguishes a dropped connection from a server error', async () => {
     const fetchImpl = (() => Promise.reject(new Error('ECONNRESET'))) as unknown as typeof fetch;
-    const client = new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl });
+    const client = new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl });
 
-    await expect(client.get('/a', { schema })).rejects.toBeInstanceOf(SmartNetworkError);
+    await expect(client.get('/a', { schema })).rejects.toBeInstanceOf(HireKiwiNetworkError);
   });
 
   it('treats 204 as an empty success', async () => {
     const { fetchImpl } = stubFetch([{ status: 204, text: '' }]);
-    const client = new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl });
+    const client = new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl });
 
     await expect(client.delete('/a')).resolves.toBeUndefined();
   });
 
   it('classifies errors that require re-login', () => {
-    const expired = new SmartApiError({ error: 'token_expired', message: 'x', statusCode: 401 });
-    const forbidden = new SmartApiError({ error: 'forbidden', message: 'x', statusCode: 403 });
+    const expired = new HireKiwiApiError({ error: 'token_expired', message: 'x', statusCode: 401 });
+    const forbidden = new HireKiwiApiError({ error: 'forbidden', message: 'x', statusCode: 403 });
 
     expect(expired.requiresLogin).toBe(true);
     expect(forbidden.requiresLogin).toBe(false);
@@ -479,13 +479,13 @@ describe('CN-T06 my applications client', () => {
         },
       },
     ]);
-    const api = createSmartApi(
-      new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl }),
+    const api = createHireKiwiApi(
+      new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl }),
     );
 
     await api.placement.listMyApplications();
 
-    expect(calls[0]?.url).toBe('https://api.smart.test/api/v1/me/applications');
+    expect(calls[0]?.url).toBe('https://api.hirekiwi.test/api/v1/me/applications');
     expect(calls[0]?.url).not.toContain('studentId');
     expect(calls[0]?.init.method ?? 'GET').toBe('GET');
   });
@@ -512,9 +512,9 @@ describe('assessmentApi contracts', () => {
 
   it('parses POST /assessment/start as AttemptSessionDto', async () => {
     const { fetchImpl } = stubFetch([{ status: 201, body: sessionBody }]);
-    const api = createSmartApi(
-      new SmartApiClient({
-        baseUrl: 'https://api.smart.test/',
+    const api = createHireKiwiApi(
+      new HireKiwiApiClient({
+        baseUrl: 'https://api.hirekiwi.test/',
         getAccessToken: () => 'token',
         fetchImpl,
       }),
@@ -539,9 +539,9 @@ describe('assessmentApi contracts', () => {
         },
       },
     ]);
-    const api = createSmartApi(
-      new SmartApiClient({
-        baseUrl: 'https://api.smart.test/',
+    const api = createHireKiwiApi(
+      new HireKiwiApiClient({
+        baseUrl: 'https://api.hirekiwi.test/',
         getAccessToken: () => 'token',
         fetchImpl,
       }),
@@ -570,9 +570,9 @@ describe('evaluationApi contracts', () => {
         },
       },
     ]);
-    const api = createSmartApi(
-      new SmartApiClient({
-        baseUrl: 'https://api.smart.test/',
+    const api = createHireKiwiApi(
+      new HireKiwiApiClient({
+        baseUrl: 'https://api.hirekiwi.test/',
         getAccessToken: () => 'token',
         fetchImpl,
       }),
@@ -582,7 +582,7 @@ describe('evaluationApi contracts', () => {
       source: 'return 1',
       examples: [{ input: '1', output: '1' }],
     });
-    expect(calls[0]?.url).toBe('https://api.smart.test/api/v1/evaluation/skill-form/run-code');
+    expect(calls[0]?.url).toBe('https://api.hirekiwi.test/api/v1/evaluation/skill-form/run-code');
     expect(result.testsPassed).toBe(1);
     expect(result.promptRef).toBe('sde-skill-code-runner@1');
   });
@@ -612,15 +612,15 @@ describe('WE-T03 manager endorsement contracts', () => {
       isAlreadyResponded: false,
     };
     const { fetchImpl, calls } = stubFetch([{ body: surveyPayload }]);
-    const api = createSmartApi(
-      new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl }),
+    const api = createHireKiwiApi(
+      new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl }),
     );
 
     const result =
       await api.users.getWorkExperienceManagerEndorsementByToken('raw-magic-token-123');
 
     expect(calls[0]?.url).toBe(
-      'https://api.smart.test/api/v1/users/work-experiences/manager-survey/raw-magic-token-123',
+      'https://api.hirekiwi.test/api/v1/users/work-experiences/manager-survey/raw-magic-token-123',
     );
     expect(result.candidateName).toBe('Jane Doe');
     expect(result.skillsClaimed).toEqual([
@@ -637,8 +637,8 @@ describe('WE-T03 manager endorsement contracts', () => {
       message: 'Thank you for confirming this work experience.',
     };
     const { fetchImpl, calls } = stubFetch([{ body: submitResponse }]);
-    const api = createSmartApi(
-      new SmartApiClient({ baseUrl: 'https://api.smart.test', fetchImpl }),
+    const api = createHireKiwiApi(
+      new HireKiwiApiClient({ baseUrl: 'https://api.hirekiwi.test', fetchImpl }),
     );
 
     const result = await api.users.submitWorkExperienceManagerEndorsementByToken(
@@ -651,7 +651,7 @@ describe('WE-T03 manager endorsement contracts', () => {
     );
 
     expect(calls[0]?.url).toBe(
-      'https://api.smart.test/api/v1/users/work-experiences/manager-survey/raw-magic-token-123',
+      'https://api.hirekiwi.test/api/v1/users/work-experiences/manager-survey/raw-magic-token-123',
     );
     expect(calls[0]?.init.method).toBe('POST');
     expect(JSON.parse(calls[0]?.init.body as string)).toEqual({
@@ -682,30 +682,34 @@ describe('onboardingApi education verification contracts', () => {
 
   it('posts /tpo/education/:id/confirm', async () => {
     const { fetchImpl, calls } = stubFetch([{ status: 200, body: eduBody }]);
-    const api = createSmartApi(
-      new SmartApiClient({
-        baseUrl: 'https://api.smart.test/',
+    const api = createHireKiwiApi(
+      new HireKiwiApiClient({
+        baseUrl: 'https://api.hirekiwi.test/',
         getAccessToken: () => 'token',
         fetchImpl,
       }),
     );
     const result = await api.onboarding.confirmEducation(eduBody.id);
-    expect(calls[0]?.url).toBe(`https://api.smart.test/api/v1/tpo/education/${eduBody.id}/confirm`);
+    expect(calls[0]?.url).toBe(
+      `https://api.hirekiwi.test/api/v1/tpo/education/${eduBody.id}/confirm`,
+    );
     expect(result.status).toBe('verified');
   });
 
   it('posts /tpo/education/:id/reject with mandatory reason', async () => {
     const rejectedBody = { ...eduBody, status: 'rejected', rejectionReason: 'Invalid degree' };
     const { fetchImpl, calls } = stubFetch([{ status: 200, body: rejectedBody }]);
-    const api = createSmartApi(
-      new SmartApiClient({
-        baseUrl: 'https://api.smart.test/',
+    const api = createHireKiwiApi(
+      new HireKiwiApiClient({
+        baseUrl: 'https://api.hirekiwi.test/',
         getAccessToken: () => 'token',
         fetchImpl,
       }),
     );
     const result = await api.onboarding.rejectEducation(eduBody.id, { reason: 'Invalid degree' });
-    expect(calls[0]?.url).toBe(`https://api.smart.test/api/v1/tpo/education/${eduBody.id}/reject`);
+    expect(calls[0]?.url).toBe(
+      `https://api.hirekiwi.test/api/v1/tpo/education/${eduBody.id}/reject`,
+    );
     expect(calls[0]?.init.body).toBe(JSON.stringify({ reason: 'Invalid degree' }));
     expect(result.status).toBe('rejected');
     expect(result.rejectionReason).toBe('Invalid degree');
@@ -717,9 +721,9 @@ describe('admin user role and access bindings (#169 / #171)', () => {
 
   function apiWith(body: unknown) {
     const { fetchImpl, calls } = stubFetch([{ status: 200, body }]);
-    const api = createSmartApi(
-      new SmartApiClient({
-        baseUrl: 'https://api.smart.test/',
+    const api = createHireKiwiApi(
+      new HireKiwiApiClient({
+        baseUrl: 'https://api.hirekiwi.test/',
         getAccessToken: () => 'token',
         fetchImpl,
       }),
@@ -733,7 +737,7 @@ describe('admin user role and access bindings (#169 / #171)', () => {
       role: 'PLACEMENT_STAFF',
       reason: 'Moved to the placement desk',
     });
-    expect(calls[0]?.url).toBe(`https://api.smart.test/api/v1/admin/users/${userId}/role`);
+    expect(calls[0]?.url).toBe(`https://api.hirekiwi.test/api/v1/admin/users/${userId}/role`);
     expect(calls[0]?.init.body).toBe(
       JSON.stringify({ role: 'PLACEMENT_STAFF', reason: 'Moved to the placement desk' }),
     );
@@ -743,7 +747,7 @@ describe('admin user role and access bindings (#169 / #171)', () => {
   it('posts /admin/users/:id/hold and /release-hold with the reason', async () => {
     const held = apiWith({ userId, heldAt: '2026-09-25T10:00:00.000Z' });
     await held.api.onboarding.holdUser(userId, { reason: 'Left the placement cell' });
-    expect(held.calls[0]?.url).toBe(`https://api.smart.test/api/v1/admin/users/${userId}/hold`);
+    expect(held.calls[0]?.url).toBe(`https://api.hirekiwi.test/api/v1/admin/users/${userId}/hold`);
     expect(held.calls[0]?.init.body).toBe(JSON.stringify({ reason: 'Left the placement cell' }));
 
     const released = apiWith({ userId, heldAt: null });
@@ -751,7 +755,7 @@ describe('admin user role and access bindings (#169 / #171)', () => {
       reason: 'Back on the team',
     });
     expect(released.calls[0]?.url).toBe(
-      `https://api.smart.test/api/v1/admin/users/${userId}/release-hold`,
+      `https://api.hirekiwi.test/api/v1/admin/users/${userId}/release-hold`,
     );
     expect(result.heldAt).toBeNull();
   });
@@ -765,9 +769,9 @@ describe('public company onboarding', () => {
       onboardingStatus: 'EMAIL_VERIFICATION_PENDING',
     };
     const { fetchImpl, calls } = stubFetch([{ status: 201, body }]);
-    const api = createSmartApi(
-      new SmartApiClient({
-        baseUrl: 'https://api.smart.test',
+    const api = createHireKiwiApi(
+      new HireKiwiApiClient({
+        baseUrl: 'https://api.hirekiwi.test',
         getAccessToken: () => 'token-123',
         fetchImpl,
       }),
@@ -779,7 +783,9 @@ describe('public company onboarding', () => {
     });
 
     expect(result.sessionToken).toBe(body.sessionToken);
-    expect(calls[0]?.url).toBe('https://api.smart.test/api/v1/public/company/onboarding/sessions');
+    expect(calls[0]?.url).toBe(
+      'https://api.hirekiwi.test/api/v1/public/company/onboarding/sessions',
+    );
     expect((calls[0]?.init.headers as Record<string, string>).authorization).toBeUndefined();
   });
 });

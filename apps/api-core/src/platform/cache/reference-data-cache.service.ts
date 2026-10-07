@@ -17,7 +17,7 @@ function jitteredTtl(ttlSeconds: number): number {
 }
 
 export interface GetOrLoadOptions {
-  /** Namespace label on `smart_cache_operations_total` and the versioned key prefix. */
+  /** Namespace label on `hirekiwi_cache_operations_total` and the versioned key prefix. */
   readonly namespace: string;
   readonly ttlSeconds: number;
   /**

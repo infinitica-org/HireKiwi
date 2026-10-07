@@ -11,7 +11,7 @@ import { formatStoryDescription } from './format.mjs';
 import { STORIES as S0_STORIES } from '../zoho-sprint0/backlog.mjs';
 import { STORIES as S1_STORIES } from '../zoho-sprint1/backlog.mjs';
 
-const REPO = 'infinitica-org/smart';
+const REPO = 'infinitica-org/HireKiwi';
 const target = process.argv[2] || 'all';
 
 function loadConfig(path) {

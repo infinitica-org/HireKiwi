@@ -10,8 +10,8 @@ import type { Metadata, MetadataRoute, Viewport } from 'next';
 export const SITE_NAME = 'HireKiwi';
 
 // TODO(Th6-598): confirm the production domain. CookieYes is registered for
-// becomesmart.online; set NEXT_PUBLIC_SITE_URL in each deploy environment.
-const FALLBACK_SITE_URL = 'https://smart.example';
+// hirekiwi.online; set NEXT_PUBLIC_SITE_URL in each deploy environment.
+const FALLBACK_SITE_URL = 'https://hirekiwi.example';
 
 export const THEME_COLOR = '#ffffff';
 export const BRAND_LIME = '#d9fa61';
@@ -26,7 +26,7 @@ const BUILD_ENV: SeoEnv = {
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   VERCEL_ENV: process.env.VERCEL_ENV,
-  SMART_ENV: process.env.SMART_ENV,
+  HIREKIWI_ENV: process.env.HIREKIWI_ENV,
 };
 
 export function siteUrl(env: SeoEnv = BUILD_ENV): URL {
@@ -36,11 +36,11 @@ export function siteUrl(env: SeoEnv = BUILD_ENV): URL {
 
 /**
  * Only production is indexable. Precedence: NEXT_PUBLIC_ENV, then VERCEL_ENV,
- * then the repo-wide SMART_ENV. Anything else (unset, preview, staging, dev, qa)
+ * then the repo-wide HIREKIWI_ENV. Anything else (unset, preview, staging, dev, qa)
  * gets `Disallow: /` and noindex so non-production hosts never get indexed.
  */
 export function isIndexable(env: SeoEnv = BUILD_ENV): boolean {
-  const value = (env.NEXT_PUBLIC_ENV || env.VERCEL_ENV || env.SMART_ENV || '').toLowerCase();
+  const value = (env.NEXT_PUBLIC_ENV || env.VERCEL_ENV || env.HIREKIWI_ENV || '').toLowerCase();
   return value === 'production' || value === 'prod';
 }
 

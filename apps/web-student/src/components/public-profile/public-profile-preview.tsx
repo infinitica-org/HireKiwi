@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { CandidateAvatar } from '@/components/profile/CandidateAvatar';
-import { SmartVerifiedBadge } from '@/components/profile/ProfileHeroBanner';
+import { HireKiwiVerifiedBadge } from '@/components/profile/ProfileHeroBanner';
 import { VisibilitySettingsCard } from '@/components/public-profile/visibility-settings-card';
 
 const VERIFICATION_METHOD_LABELS: Record<string, string> = {
@@ -326,7 +326,7 @@ export function PublicProfilePreview({ embedded = false }: { embedded?: boolean 
                   {profile.fullName}
                 </h2>
                 {profile.skills.length > 0 ? (
-                  <SmartVerifiedBadge role="img" aria-label="HireKiwi verified" />
+                  <HireKiwiVerifiedBadge role="img" aria-label="HireKiwi verified" />
                 ) : null}
               </div>
               <p className="mt-1 text-sm font-medium text-zinc-600 dark:text-zinc-300">

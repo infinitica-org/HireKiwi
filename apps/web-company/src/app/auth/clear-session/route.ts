@@ -4,8 +4,8 @@ export function GET() {
   return new NextResponse(
     `<!DOCTYPE html><html><body><script>
 try {
-  sessionStorage.removeItem('smart.accessToken');
-  localStorage.removeItem('smart.accessToken');
+  sessionStorage.removeItem('hirekiwi.accessToken');
+  localStorage.removeItem('hirekiwi.accessToken');
 } catch (e) {}
 </script></body></html>`,
     {

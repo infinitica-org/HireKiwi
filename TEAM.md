@@ -1,11 +1,11 @@
-# SMART — Team Charter, Role Definition & Module Ownership
+# HireKiwi — Team Charter, Role Definition & Module Ownership
 
 > **Version:** v3.0 — Authoritative Ownership Contract
 > **Status:** Active
 > **Methodology:** Scrum (Agile), structured into sequential sprints. See [`docs/delivery/AGILE_PLAN.md`](./docs/delivery/AGILE_PLAN.md).
 > **Release Governance:** General Availability (GA) sign-off criteria and scheduling are maintained in [`docs/delivery/AGILE_PLAN.md`](./docs/delivery/AGILE_PLAN.md).
 
-This document is the single source of truth for module and process ownership within the SMART
+This document is the single source of truth for module and process ownership within the HireKiwi
 engineering team. Any contributor modifying a file outside their designated ownership must open a
 pull request and obtain the owner's review; direct merges into another owner's module are not
 permitted.
@@ -85,17 +85,17 @@ Bharath are blocked on backend internals.
 
 **Owns:**
 
-| Path                                                                         | Deliverable                                                                                                                                    |
-| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/api-core/src/main.ts`, `app.module.ts`                                 | Fastify bootstrap, global pipes/filters/interceptors, Swagger, graceful shutdown.                                                              |
-| `apps/api-core/src/platform/**`                                              | Config (validated env), logging (pino), Prisma service, Redis service, Kafka service, BullMQ registration, health/readiness, OpenTelemetry.    |
-| `apps/api-core/src/modules/auth/**`                                          | 15-minute access JWT, HttpOnly refresh rotation, OAuth (Google/GitHub), SAML 2.0 / OIDC institutional SSO, RBAC guards, B2B `X-SMART-API-KEY`. |
-| `apps/api-core/src/modules/users/**`                                         | Student/TPO/admin profile, track enrollment (primary + secondary).                                                                             |
-| `apps/api-core/src/modules/rate-limit/**`                                    | Redis sliding-window + token-bucket Lua guard, role & endpoint matrix, `X-RateLimit-*` headers, `smart.rate_limit.exceeded`.                   |
-| `apps/api-core/src/modules/sandbox/**`                                       | Non-networked Docker runner (256 MB / 1 CPU / 5 s), SQL executor on throwaway schema, watchdog.                                                |
-| `apps/api-core/prisma/**`                                                    | **Schema steward.** All schema migrations are routed through this owner to prevent migration collisions across a multi-engineer team.          |
-| `infra/docker/**`, `infra/k8s/**`, `infra/helm/**`, `infra/observability/**` | Local stack, images, manifests, Grafana/Prometheus/Loki wiring.                                                                                |
-| `scripts/**`                                                                 | Bootstrap, seed, reset, diagnostics.                                                                                                           |
+| Path                                                                         | Deliverable                                                                                                                                       |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/api-core/src/main.ts`, `app.module.ts`                                 | Fastify bootstrap, global pipes/filters/interceptors, Swagger, graceful shutdown.                                                                 |
+| `apps/api-core/src/platform/**`                                              | Config (validated env), logging (pino), Prisma service, Redis service, Kafka service, BullMQ registration, health/readiness, OpenTelemetry.       |
+| `apps/api-core/src/modules/auth/**`                                          | 15-minute access JWT, HttpOnly refresh rotation, OAuth (Google/GitHub), SAML 2.0 / OIDC institutional SSO, RBAC guards, B2B `X-HireKiwi-API-KEY`. |
+| `apps/api-core/src/modules/users/**`                                         | Student/TPO/admin profile, track enrollment (primary + secondary).                                                                                |
+| `apps/api-core/src/modules/rate-limit/**`                                    | Redis sliding-window + token-bucket Lua guard, role & endpoint matrix, `X-RateLimit-*` headers, `hirekiwi.rate_limit.exceeded`.                   |
+| `apps/api-core/src/modules/sandbox/**`                                       | Non-networked Docker runner (256 MB / 1 CPU / 5 s), SQL executor on throwaway schema, watchdog.                                                   |
+| `apps/api-core/prisma/**`                                                    | **Schema steward.** All schema migrations are routed through this owner to prevent migration collisions across a multi-engineer team.             |
+| `infra/docker/**`, `infra/k8s/**`, `infra/helm/**`, `infra/observability/**` | Local stack, images, manifests, Grafana/Prometheus/Loki wiring.                                                                                   |
+| `scripts/**`                                                                 | Bootstrap, seed, reset, diagnostics.                                                                                                              |
 
 **Non-negotiables:** the local `pnpm dev` environment must function for all other engineers from
 the outset; synchronous endpoints must maintain p95 latency below 200 ms; no Redis key may be
@@ -135,9 +135,9 @@ establish the product's legitimacy: public verification and the administrative c
 | Path                                       | Deliverable                                                                                                                                                                                                                          |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `apps/api-core/src/modules/assessment/**`  | Attempt orchestration, Redis session state `session:assessment:{attempt_id}`, server-authoritative timer with auto-submit, item delivery from `items:form:*` warm cache, level unlock gating (Bronze-or-above), integrity event log. |
-| `apps/api-core/src/modules/certificate/**` | Tier Trail computation, headline tier, confidence note assembly, signed SHA-256 QR, Puppeteer PDF to R2, `smart.certificate.issued`.                                                                                                 |
+| `apps/api-core/src/modules/certificate/**` | Tier Trail computation, headline tier, confidence note assembly, signed SHA-256 QR, Puppeteer PDF to R2, `hirekiwi.certificate.issued`.                                                                                              |
 | `apps/api-core/src/modules/webhooks/**`    | Outbound HMAC-SHA256 dispatcher, endpoint registry, retry with exponential backoff and DLQ.                                                                                                                                          |
-| `apps/web-verify/**`                       | Public `verify.smart.com/cert/[id]` — Tier Trail, confidence note, calibration employer credits, QR validator. Cached, SSG/ISR, p95 latency below 80 ms.                                                                             |
+| `apps/web-verify/**`                       | Public `verify.hirekiwi.com/cert/[id]` — Tier Trail, confidence note, calibration employer credits, QR validator. Cached, SSG/ISR, p95 latency below 80 ms.                                                                          |
 | `apps/web-admin/**`                        | Super Admin console: system health, rate-limit overrides, user/institution management, integrity review queue, cut-score publish workflow.                                                                                           |
 
 **Non-negotiables:** the timer must be authoritative on the server and cannot be circumvented from
@@ -181,15 +181,15 @@ production.
 
 **Owns:**
 
-| Path                                        | Deliverable                                                                                                                                                                                            |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tools/content-pipeline/**`                 | Authoring schema and CLI: `validate`, `seed`, `embed`, `export`, `report`. Item banks are maintained as reviewed files in version control, not as ad-hoc SQL.                                          |
-| `tools/content-pipeline/data/**`            | 25–40 task-based items per track across ten tracks, competency weights, BARS anchor sets, L5 capstone briefs, per-cohort rotation forms.                                                               |
-| `apps/api-core/src/modules/catalog/**`      | Tracks, competencies (Domains A–E), levels, item bank read APIs, parallel-form selection, item retirement on exposure.                                                                                 |
-| `apps/api-core/src/modules/calibration/**`  | Calibration panels (3–5 practitioners per track), Angoff estimate capture, cut-score derivation and publication, Cronbach's α per level/track, confidence-note text generation, `smart.track.updated`. |
-| `apps/api-core/src/modules/placement/**`    | JD records, shortlist generation and export, `placement_records` outcome ingestion, `smart.placement.matched`.                                                                                         |
-| `apps/api-core/src/modules/analytics/**`    | Cohort readiness aggregates, gap reports, correlation records (interview/offer rate by tier), TPO report endpoints.                                                                                    |
-| `packages/prompts/src/templates/goldens/**` | Golden evaluation sets — the regression suite verifying that a prompt change has not degraded grading quality. Co-owned with Ramansh.                                                                  |
+| Path                                        | Deliverable                                                                                                                                                                                               |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tools/content-pipeline/**`                 | Authoring schema and CLI: `validate`, `seed`, `embed`, `export`, `report`. Item banks are maintained as reviewed files in version control, not as ad-hoc SQL.                                             |
+| `tools/content-pipeline/data/**`            | 25–40 task-based items per track across ten tracks, competency weights, BARS anchor sets, L5 capstone briefs, per-cohort rotation forms.                                                                  |
+| `apps/api-core/src/modules/catalog/**`      | Tracks, competencies (Domains A–E), levels, item bank read APIs, parallel-form selection, item retirement on exposure.                                                                                    |
+| `apps/api-core/src/modules/calibration/**`  | Calibration panels (3–5 practitioners per track), Angoff estimate capture, cut-score derivation and publication, Cronbach's α per level/track, confidence-note text generation, `hirekiwi.track.updated`. |
+| `apps/api-core/src/modules/placement/**`    | JD records, shortlist generation and export, `placement_records` outcome ingestion, `hirekiwi.placement.matched`.                                                                                         |
+| `apps/api-core/src/modules/analytics/**`    | Cohort readiness aggregates, gap reports, correlation records (interview/offer rate by tier), TPO report endpoints.                                                                                       |
+| `packages/prompts/src/templates/goldens/**` | Golden evaluation sets — the regression suite verifying that a prompt change has not degraded grading quality. Co-owned with Ramansh.                                                                     |
 
 **Non-negotiables:** every item must carry a `competency_id`, `real_world_weight`, `difficulty_tag`,
 and a model answer; content must pass `content-pipeline validate` in continuous integration, or the
@@ -249,16 +249,16 @@ Each topic has exactly one producer-owner. Any team member may consume a topic. 
 payload schema requires a pull request against `@hirekiwi/contracts`, reviewed by Tino and every
 listed consumer of that topic.
 
-| Topic                                                     | Producer-owner   | Consumers                                                   |
-| --------------------------------------------------------- | ---------------- | ----------------------------------------------------------- |
-| `smart.user.created` / `smart.user.updated`               | Vishal V         | Vedika (analytics)                                          |
-| `smart.assessment.started` / `smart.assessment.submitted` | Vishal Bharath R | Ramansh (evaluation), Vishal V (cache invalidation)         |
-| `smart.eval.requested`                                    | Ramansh          | Ramansh (ai-gateway)                                        |
-| `smart.eval.completed`                                    | Ramansh          | Vishal Bharath (certificate), Vedika (placement, analytics) |
-| `smart.track.updated`                                     | Vedika G         | Vishal V (cache invalidation), Vishal Bharath (certificate) |
-| `smart.certificate.issued`                                | Vishal Bharath R | Vishal Bharath (webhooks), Vedika (analytics)               |
-| `smart.placement.matched`                                 | Vedika G         | Vishal Bharath (webhooks), Vedika (analytics)               |
-| `smart.rate_limit.exceeded`                               | Vishal V         | Vishal V (observability), Vishal Bharath (integrity review) |
+| Topic                                                           | Producer-owner   | Consumers                                                   |
+| --------------------------------------------------------------- | ---------------- | ----------------------------------------------------------- |
+| `hirekiwi.user.created` / `hirekiwi.user.updated`               | Vishal V         | Vedika (analytics)                                          |
+| `hirekiwi.assessment.started` / `hirekiwi.assessment.submitted` | Vishal Bharath R | Ramansh (evaluation), Vishal V (cache invalidation)         |
+| `hirekiwi.eval.requested`                                       | Ramansh          | Ramansh (ai-gateway)                                        |
+| `hirekiwi.eval.completed`                                       | Ramansh          | Vishal Bharath (certificate), Vedika (placement, analytics) |
+| `hirekiwi.track.updated`                                        | Vedika G         | Vishal V (cache invalidation), Vishal Bharath (certificate) |
+| `hirekiwi.certificate.issued`                                   | Vishal Bharath R | Vishal Bharath (webhooks), Vedika (analytics)               |
+| `hirekiwi.placement.matched`                                    | Vedika G         | Vishal Bharath (webhooks), Vedika (analytics)               |
+| `hirekiwi.rate_limit.exceeded`                                  | Vishal V         | Vishal V (observability), Vishal Bharath (integrity review) |
 
 ---
 
@@ -311,7 +311,7 @@ main ─────────────────────────
 
 | Situation                            | Required Action                                                                                                                  |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| Blocked on a contract                | Post the blocker in `#smart-contracts` and tag Tino; resolved at the Architecture Review Board.                                  |
+| Blocked on a contract                | Post the blocker in `#hirekiwi-contracts` and tag Tino; resolved at the Architecture Review Board.                               |
 | Blocked on backend internals         | Tag Vishal V; he is the designated backend escalation path.                                                                      |
 | Blocked on AI output quality or cost | Tag Ramansh. Direct SDK calls that bypass the gateway are not permitted.                                                         |
 | Missing or incorrect content/items   | Tag Vedika G with the `content` label.                                                                                           |
@@ -323,7 +323,7 @@ main ─────────────────────────
 | Seam                        | Between                      | Agreement                                                                                                                                                                    |
 | --------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Player ⇄ Attempt API**    | Satheswaran ⇄ Vishal Bharath | The server is the clock and the authority. The client sends drafts; the server determines validity, expiry, and the next item. Contract: `AttemptSessionDto`, `NextItemDto`. |
-| **Attempt ⇄ Evaluation**    | Vishal Bharath ⇄ Ramansh     | Handoff occurs exclusively via `smart.assessment.submitted`, never a direct service call. The result returns via `smart.eval.completed`.                                     |
+| **Attempt ⇄ Evaluation**    | Vishal Bharath ⇄ Ramansh     | Handoff occurs exclusively via `hirekiwi.assessment.submitted`, never a direct service call. The result returns via `hirekiwi.eval.completed`.                               |
 | **Evaluation ⇄ Cut Scores** | Ramansh ⇄ Vedika             | Evaluation produces a raw score; calibration owns tier assignment via published `cut_scores`. Ramansh must not hardcode a threshold.                                         |
 | **Content ⇄ Delivery**      | Vedika ⇄ Vishal Bharath      | Items are served only from `catalog` parallel forms; delivery must never query `items` directly.                                                                             |
 

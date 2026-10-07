@@ -2,8 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 
 export const metadata = {
-  title:
-    'Digital Personal Data Protection Act (DPDP Act), 2023 - Privacy Notice | HireKiwi Platform',
+  title: 'Digital Personal Data Protection Act (DPDP Act), 2023 - Privacy Notice | HireKiwi',
   description:
     'Statutory Data Privacy Notice issued pursuant to Sections 5 & 6 of the Digital Personal Data Protection Act (DPDP Act), 2023.',
 };
@@ -35,9 +34,9 @@ export default function DpdpPolicyPage() {
               1. Regulatory Identification & Data Fiduciary Notice
             </h2>
             <p className="text-xs text-gray-600">
-              <strong>HireKiwi Platform</strong> (&quot;Data Fiduciary&quot;) hereby notifies all
-              registered candidates and applicants (&quot;Data Principals&quot;) regarding the
-              processing of digital personal data under the{' '}
+              <strong>HireKiwi</strong> (&quot;Data Fiduciary&quot;) hereby notifies all registered
+              candidates and applicants (&quot;Data Principals&quot;) regarding the processing of
+              digital personal data under the{' '}
               <strong>Digital Personal Data Protection Act (DPDP Act), 2023</strong>. Personal data
               is collected and processed strictly in accordance with statutory mandates under the
               DPDP Act, 2023.
@@ -158,7 +157,7 @@ export default function DpdpPolicyPage() {
                 Office of the Data Protection Officer (DPO)
               </p>
               <p>
-                <strong>Email:</strong> dpo@smartplatform.in
+                <strong>Email:</strong> dpo@hirekiwiplatform.in
               </p>
               <p>
                 <strong>Statutory Resolution SLA:</strong> Acknowledgment within twenty-four (24)
@@ -171,8 +170,8 @@ export default function DpdpPolicyPage() {
         {/* Footer */}
         <div className="mt-8 border-t border-gray-200 pt-4 flex justify-between items-center text-xs text-gray-500">
           <p>
-            &copy; {new Date().getFullYear()} HireKiwi Platform. All statutory rights under DPDP Act
-            2023 reserved.
+            &copy; {new Date().getFullYear()} HireKiwi. All statutory rights under DPDP Act 2023
+            reserved.
           </p>
           <Link href="/onboarding" className="text-blue-600 hover:underline font-semibold">
             &larr; Return to Candidate Onboarding

@@ -7,13 +7,13 @@ description: 'Master Framework & Playbook'
 
 > **Scope:** End-to-end flows for track certification (L1–L5), per-skill verification (SDE v4), external certificate verification, scoring, certificate issuance, and public verification.
 >
-> **Sources:** `ARCHITECTURE.md`, `docs/Smart-Level-Tier.md`, `packages/contracts`, `packages/scoring-engine`, `apps/api-core`, `apps/web-student`, `apps/web-verify`.
+> **Sources:** `ARCHITECTURE.md`, `docs/HireKiwi-Level-Tier.md`, `packages/contracts`, `packages/scoring-engine`, `apps/api-core`, `apps/web-student`, `apps/web-verify`.
 
 ---
 
 ## 1. Overview — Three Verification Paths
 
-SMART runs three related but distinct verification systems:
+HireKiwi runs three related but distinct verification systems:
 
 | Path                                | What it certifies                               | Primary outcome                                                 |
 | ----------------------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
@@ -36,7 +36,7 @@ Canonical definitions live in:
 
 - `packages/contracts/src/domain/levels.ts` — `LEVEL_DEFINITIONS`, `L5_SPLIT_WEIGHTS`, `LEVEL_UNLOCK_MIN_TIER`
 - `packages/contracts/src/domain/enums.ts` — `TIERS`, `TIER_LABEL`, `TIER_RANK`
-- `docs/Smart-Level-Tier.md` — product rationale and scoring mechanics
+- `docs/HireKiwi-Level-Tier.md` — product rationale and scoring mechanics
 
 ### 2.2 Level grid
 
@@ -84,13 +84,13 @@ flowchart TD
   C --> D[Start attempt<br/>POST /assessment/start]
   D --> E[Level-specific player]
   E --> F[Complete<br/>POST /assessment/complete]
-  F --> G[Kafka: smart.assessment.submitted]
+  F --> G[Kafka: hirekiwi.assessment.submitted]
   G --> H[Evaluation grades + assignTier]
-  H --> I[Kafka: smart.eval.completed]
+  H --> I[Kafka: hirekiwi.eval.completed]
   I --> J[certificate.issueFromEvalCompleted]
-  J --> K[Kafka: smart.certificate.issued]
+  J --> K[Kafka: hirekiwi.certificate.issued]
   K --> L[Student toggles visibility + PDF]
-  L --> M[Employer verifies at verify.smart.com]
+  L --> M[Employer verifies at verify.hirekiwi.com]
 ```
 
 ### 3.2 Step-by-step journey
@@ -114,7 +114,7 @@ flowchart TD
 - Validates level gating (prior level cleared at Bronze+)
 - Parallel form rotation via item rotation service
 - Redis session: `session:assessment:{attemptId}` (2h TTL)
-- Emits `smart.assessment.started`
+- Emits `hirekiwi.assessment.started`
 
 #### Step 4 — Take assessment (level-specific)
 
@@ -139,17 +139,17 @@ Session resume: `GET /assessment/:attemptId/session`
 - `POST /assessment/complete` → `AssessmentService.completeAttempt()`
 - Scores L1 responses synchronously (weighted item-response)
 - Updates attempt → `EVALUATED` (or `SUBMITTED` / `EVALUATING` for async levels)
-- Enqueues `smart.assessment.submitted` via `KafkaOutboxService.enqueueAssessmentSubmitted()`
+- Enqueues `hirekiwi.assessment.submitted` via `KafkaOutboxService.enqueueAssessmentSubmitted()`
 - Invalidates Redis session `session:assessment:{attemptId}`
 
 #### Step 7 — Grading pipeline
 
 See §6 for full scoring detail. Summary:
 
-1. Evaluation consumes `smart.assessment.submitted`
-2. Per-response grading queued via `smart.eval.requested` → ai-gateway
+1. Evaluation consumes `hirekiwi.assessment.submitted`
+2. Per-response grading queued via `hirekiwi.eval.requested` → ai-gateway
 3. `assignTier()` in `packages/scoring-engine` assigns Gold/Silver/Bronze
-4. Publishes `smart.eval.completed`
+4. Publishes `hirekiwi.eval.completed`
 
 Consumers:
 
@@ -160,7 +160,7 @@ Consumers:
 
 - Upserts `Certificate`, merges tier into `tierTrail`
 - Sets `highestLevelCleared`, `headlineTier`, `status: ISSUED`, `verificationSlug`
-- Emits `smart.certificate.issued` with `verificationUrl`
+- Emits `hirekiwi.certificate.issued` with `verificationUrl`
 
 #### Step 9 — Student controls visibility
 
@@ -211,7 +211,7 @@ flowchart TD
   I -->|No| K[Finalize]
   J --> K[POST .../finalize-verification]
   K --> L[Apply skill-claim transition]
-  L --> M[Kafka: smart.skill.verification.completed]
+  L --> M[Kafka: hirekiwi.skill.verification.completed]
 ```
 
 ### 4.3 Step-by-step journey
@@ -260,7 +260,7 @@ Optional **assessment intelligence** (diagnostic form, then finalize):
 - `POST /assessment/skill-verify/:sessionId/finalize-verification`
 - Applies `GENUINE_PASS` or `GENUINE_FAIL` via `applySkillClaimTransition()`
 - On pass: status → `VERIFIED`, `verifiedUntil` = now + 35 days (`SKILL_REFRESH_DAYS`)
-- Emits `smart.skill.verification.completed`
+- Emits `hirekiwi.skill.verification.completed`
 - Corroboration consumer may update passive signal fusion (never auto-promotes claims)
 
 ### 4.4 Skill claim state machine
@@ -318,7 +318,7 @@ flowchart TD
 
 ### 6.1 Module coupling rule
 
-> **Assessment ⇄ Evaluation:** handoff **only** via `smart.assessment.submitted`. Result returns via `smart.eval.completed`. **No direct service calls** between modules.
+> **Assessment ⇄ Evaluation:** handoff **only** via `hirekiwi.assessment.submitted`. Result returns via `hirekiwi.eval.completed`. **No direct service calls** between modules.
 
 Source: `packages/contracts/src/events/topics.ts`, `.cursor/kb/seams.md`
 
@@ -327,14 +327,14 @@ Source: `packages/contracts/src/events/topics.ts`, `.cursor/kb/seams.md`
 ```
 [Student completes attempt]
   → assessment.completeAttempt()           // L1 sync; L2–L5 may be partial
-  → Kafka: smart.assessment.submitted      // partition key: attemptId
+  → Kafka: hirekiwi.assessment.submitted      // partition key: attemptId
   → evaluation (consumer)                  // queues per-response grading
-  → Kafka: smart.eval.requested            // per responseId → ai-gateway
+  → Kafka: hirekiwi.eval.requested            // per responseId → ai-gateway
   → LLM / sandbox / checklist evaluators
   → assignTier(rawScore, cutScores)        // scoring-engine ONLY
-  → Kafka: smart.eval.completed              // partition key: attemptId
+  → Kafka: hirekiwi.eval.completed              // partition key: attemptId
   → certificate.issueFromEvalCompleted()
-  → Kafka: smart.certificate.issued
+  → Kafka: hirekiwi.certificate.issued
 ```
 
 ### 6.3 Scoring by level
@@ -357,7 +357,7 @@ Returns: `tier`, `confidenceBand`, `borderline`, `borderlineNote`, `pointsToNext
 
 - Published by **calibration** module (`calibration.service.ts`) via Angoff panels
 - Cached in Redis: `cut_scores:track:{track_id}` (7d TTL)
-- Invalidated on `smart.track.updated`
+- Invalidated on `hirekiwi.track.updated`
 - Angoff: μ ± σ per tier; σ displayed as confidence band on certificates
 
 **Calibration statuses:** `NOT_CALIBRATED` → `PROVISIONAL` → `PANEL_CALIBRATED` → `RELIABILITY_VERIFIED`
@@ -422,7 +422,7 @@ See §5.
 | **sandbox**                                    | Vishal V         | L2 Docker/SQL execution                                                                      |
 | **evaluation**                                 | Ramansh          | BARS grading, L4 defense, skill-form/interview, cert-agenda; consumes `assessment.submitted` |
 | **ai-gateway**                                 | Ramansh          | All LLM traffic; token bucket; failover to Gemini                                            |
-| **calibration**                                | Vedika G         | Angoff panels, published cut scores; emits `smart.track.updated`                             |
+| **calibration**                                | Vedika G         | Angoff panels, published cut scores; emits `hirekiwi.track.updated`                             |
 | **certificate**                                | Vishal Bharath R | Tier Trail issuance, visibility, PDF, public verify payload                                  |
 | **catalog**                                    | Vedika G         | Tracks, competencies, item banks, skills taxonomy                                            |
 | **scoring-engine** (`packages/scoring-engine`) | Ramansh          | Pure tier assignment, weighted scoring, BARS consensus — no I/O                              |
@@ -479,15 +479,15 @@ Each route declares: `module`, `owner`, `roles`, `rateLimit`, `execution` (SYNC/
 
 | Topic                                | Producer    | Key consumers                          | Partition key   |
 | ------------------------------------ | ----------- | -------------------------------------- | --------------- |
-| `smart.assessment.started`           | assessment  | analytics, catalog                     | `attemptId`     |
-| `smart.assessment.submitted`         | assessment  | **evaluation**, platform, analytics    | `attemptId`     |
-| `smart.eval.requested`               | evaluation  | ai-gateway                             | `responseId`    |
-| `smart.eval.completed`               | evaluation  | **certificate**, placement, analytics  | `attemptId`     |
-| `smart.track.updated`                | calibration | platform, certificate, catalog         | `trackCode`     |
-| `smart.certificate.issued`           | certificate | **webhooks**, analytics, notifications | `certificateId` |
-| `smart.skill.verification.completed` | assessment  | notifications, corroboration           | `claimId`       |
-| `smart.proctoring.snapshot.ready`    | proctoring  | proctoring                             | `attemptId`     |
-| `smart.rate_limit.exceeded`          | rate-limit  | observability, assessment              | `identifier`    |
+| `hirekiwi.assessment.started`           | assessment  | analytics, catalog                     | `attemptId`     |
+| `hirekiwi.assessment.submitted`         | assessment  | **evaluation**, platform, analytics    | `attemptId`     |
+| `hirekiwi.eval.requested`               | evaluation  | ai-gateway                             | `responseId`    |
+| `hirekiwi.eval.completed`               | evaluation  | **certificate**, placement, analytics  | `attemptId`     |
+| `hirekiwi.track.updated`                | calibration | platform, certificate, catalog         | `trackCode`     |
+| `hirekiwi.certificate.issued`           | certificate | **webhooks**, analytics, notifications | `certificateId` |
+| `hirekiwi.skill.verification.completed` | assessment  | notifications, corroboration           | `claimId`       |
+| `hirekiwi.proctoring.snapshot.ready`    | proctoring  | proctoring                             | `attemptId`     |
+| `hirekiwi.rate_limit.exceeded`          | rate-limit  | observability, assessment              | `identifier`    |
 
 Full registry: `packages/contracts/src/events/topics.ts`, `.cursor/kb/kafka-topics.md`
 
@@ -509,12 +509,12 @@ Full registry: `packages/contracts/src/events/topics.ts`, `.cursor/kb/kafka-topi
 | `cut_scores:track:{trackId}`       | 7d            | Angoff cut scores              |
 | `verify:cert:{certificateId}`      | 1h            | Public verify cache            |
 
-Invalidation: on `smart.assessment.submitted`, `smart.certificate.issued`, `smart.track.updated`.
+Invalidation: on `hirekiwi.assessment.submitted`, `hirekiwi.certificate.issued`, `hirekiwi.track.updated`.
 
 ### 9.4 Outbound webhooks
 
 - Service: `apps/api-core/src/modules/webhooks/webhooks.service.ts`
-- Events: `smart.certificate.issued`, `smart.placement.matched`
+- Events: `hirekiwi.certificate.issued`, `hirekiwi.placement.matched`
 - Signing: HMAC-SHA256 via `WEBHOOK_HEADERS` from contracts
 - Registration: `webhookEndpoint` Prisma model — per-institution URL + subscribed events
 
@@ -528,7 +528,7 @@ All LLM calls route through `apps/api-core/src/modules/ai-gateway/`:
 | `P2_ASYNC_EVAL` | L3 BARS, skill interviews       |
 | `P3_BATCH`      | JD parsing, batch jobs          |
 
-Failover: Anthropic → Gemini (ADR `0005-ai-failover.md`). Audit: `smart.ai.completion.recorded`.
+Failover: Anthropic → Gemini (ADR `0005-ai-failover.md`). Audit: `hirekiwi.ai.completion.recorded`.
 
 ---
 
@@ -587,7 +587,7 @@ Blueprints: `docs/HireKiwi_Blueprint_*.md`. Taxonomy pipeline: `tools/content-pi
 
 ## 12. Public Verification Display
 
-When an employer visits `verify.smart.com/cert/{id}`:
+When an employer visits `verify.hirekiwi.com/cert/{id}`:
 
 1. Candidate identity & issued date
 2. Specialization track
@@ -596,7 +596,7 @@ When an employer visits `verify.smart.com/cert/{id}`:
 5. Calibration panel credits
 6. SHA-256 signed dynamic QR
 
-API: `GET /verify/:certificateId` — cached 1h in Redis, refreshed on `smart.certificate.issued`.
+API: `GET /verify/:certificateId` — cached 1h in Redis, refreshed on `hirekiwi.certificate.issued`.
 
 ---
 
@@ -605,7 +605,7 @@ API: `GET /verify/:certificateId` — cached 1h in Redis, refreshed on `smart.ce
 | Area                         | Path                                                                 |
 | ---------------------------- | -------------------------------------------------------------------- |
 | Architecture                 | `ARCHITECTURE.md`                                                    |
-| Level × tier design          | `docs/Smart-Level-Tier.md`                                           |
+| Level × tier design          | `docs/HireKiwi-Level-Tier.md`                                           |
 | Domain enums & statuses      | `packages/contracts/src/domain/enums.ts`                             |
 | Level definitions            | `packages/contracts/src/domain/levels.ts`                            |
 | Skill proficiency thresholds | `packages/contracts/src/domain/skill-levels.ts`                      |

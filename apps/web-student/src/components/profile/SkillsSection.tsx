@@ -60,7 +60,11 @@ export function SkillsSection() {
       <ProfileSectionHeader
         title="Skills"
         description="Skills you chose to assess and build verified credentials for. They also appear on your Assessment page."
-        action={hydrated ? addLink('justify-center px-4 py-2.5 text-[13px] font-semibold') : null}
+        action={
+          hydrated && selectedSkills.length > 0
+            ? addLink('justify-center px-4 py-2.5 text-[13px] font-semibold')
+            : null
+        }
       />
 
       {error ? <ProfileSectionError>{error}</ProfileSectionError> : null}

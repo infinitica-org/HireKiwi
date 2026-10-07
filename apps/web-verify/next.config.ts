@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next';
-import { withSmartConfig } from '@hirekiwi/next-config';
+import { withHireKiwiConfig } from '@hirekiwi/next-config';
 
 const config: NextConfig = {
   // Public profile by claimed username: /@ada renders the candidate page, which resolves
@@ -9,4 +9,4 @@ const config: NextConfig = {
   },
 };
 
-export default withSmartConfig(config);
+export default withHireKiwiConfig(config);

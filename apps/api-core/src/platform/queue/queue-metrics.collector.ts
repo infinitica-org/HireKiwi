@@ -31,7 +31,7 @@ export interface QueueSnapshot {
 /**
  * S6-VV-127 (#579): BullMQ had no metrics at all, so a stalled grading worker or a growing DLQ
  * was invisible. Polls every registered queue (DLQs included) and exports
- * `smart_queue_jobs{queue,state}` and `smart_queue_oldest_waiting_seconds{queue}`.
+ * `hirekiwi_queue_jobs{queue,state}` and `hirekiwi_queue_oldest_waiting_seconds{queue}`.
  */
 @Injectable()
 export class QueueMetricsCollector implements OnModuleInit, OnModuleDestroy {

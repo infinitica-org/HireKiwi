@@ -36,17 +36,30 @@ export function companyVisibleWhere(institutionId: string): Prisma.JobOpeningWhe
   return { AND: [COMPANY_VISIBLE_WHERE, campusApprovedWhere(institutionId)] };
 }
 
+/**
+ * Which openings a student may see. A company's job is open to students of every university, as
+ * long as the company is verified and active; no campus approval is needed. A job with no company
+ * is the institution's own and stays visible only to that institution's students.
+ */
+export function studentScopeWhere(institutionId: string): Prisma.JobOpeningWhereInput {
+  return {
+    OR: [
+      { companyId: null, institutionId },
+      { companyId: { not: null }, ...COMPANY_VISIBLE_WHERE },
+    ],
+  };
+}
+
 /** Open, published, not past its deadline, at the student's institution, and from a visible company. */
 export function acceptingOpeningWhere(
   institutionId: string,
   today: Date = utcToday(),
 ): Prisma.JobOpeningWhereInput {
   return {
-    institutionId,
     status: 'OPEN',
     AND: [
       { OR: [{ lastDateToApply: null }, { lastDateToApply: { gte: today } }] },
-      companyVisibleWhere(institutionId),
+      studentScopeWhere(institutionId),
     ],
   };
 }

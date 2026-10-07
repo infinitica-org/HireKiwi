@@ -4,7 +4,7 @@ import { headlineFor } from './candidate-identity';
 
 const baseUser: AuthenticatedUser = {
   userId: '00000000-0000-4000-8000-000000000001',
-  email: 'student@smart.local',
+  email: 'student@hirekiwi.local',
   fullName: 'Test Student',
   role: 'STUDENT',
   institutionId: null,

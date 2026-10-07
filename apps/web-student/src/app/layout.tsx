@@ -17,7 +17,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased font-[family-name:var(--tpo-font-sans)]">
-        <ThemeProvider defaultTheme="light" enableSystem={false} storageKey="smart-student-theme">
+        <ThemeProvider
+          defaultTheme="light"
+          enableSystem={false}
+          storageKey="hirekiwi-student-theme"
+        >
           <Providers>{children}</Providers>
         </ThemeProvider>
       </body>

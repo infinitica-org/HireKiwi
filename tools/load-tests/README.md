@@ -1,6 +1,6 @@
 # @hirekiwi/load-tests — performance & stress testing
 
-k6-based performance/stress testing for the whole SMART stack: 5 Next.js apps
+k6-based performance/stress testing for the whole HireKiwi stack: 5 Next.js apps
 (web-student, web-tpo, web-admin, web-verify, web-auth), the NestJS `api-core`
 backend, PostgreSQL, Redis, and Redpanda (Kafka-protocol). Integrates with the
 existing Prometheus/Grafana/Loki/Tempo stack under `infra/observability/`
@@ -157,45 +157,45 @@ to run them with.
 pnpm stress:dashboard   # prints the URLs
 ```
 
-- **SMART / k6 Load Test** — RPS, error rate, p50/95/99, active VUs, per-name
+- **HireKiwi / k6 Load Test** — RPS, error rate, p50/95/99, active VUs, per-name
   RPS, custom category latency. Populated only while a `pnpm stress:*` run
   has Prometheus remote-write enabled (automatic when Prometheus is up).
-- **SMART / Platform Overview**, **API Metrics**, **Postgres**, **Redis**,
+- **HireKiwi / Platform Overview**, **API Metrics**, **Postgres**, **Redis**,
   **Redpanda (Kafka)**, **Host & Containers** — the app/infra side; see
   `infra/observability/README.md` for full panel-by-panel coverage.
 
 ## 15. Interpreting Kafka lag
 
-`smart-redpanda.json`'s "Consumer lag (messages) by topic/group" panel plots
-`smart_kafka_consumer_lag_messages` — computed by `api-core`'s `KafkaService`
+`hirekiwi-redpanda.json`'s "Consumer lag (messages) by topic/group" panel plots
+`hirekiwi_kafka_consumer_lag_messages` — computed by `api-core`'s `KafkaService`
 polling broker high-water marks against each consumer group's committed
 offset every 15s (this is new; previously declared but never populated — see
 ADR-0015). Rising, non-recovering lag during `kafka-backpressure.js` means
 the `evaluation` consumer group is falling behind produce rate — the
-`smart.assessment.submitted` topic has 12 partitions
+`hirekiwi.assessment.submitted` topic has 12 partitions
 (`packages/contracts/src/events/topics.ts`), so lag concentrated on a few
 partitions vs. spread evenly also tells you whether more partitions or more
 consumer instances is the right fix.
 
 ## 16. Interpreting PostgreSQL saturation
 
-`smart-postgres.json`: connections as % of `max_connections`, cache hit
+`hirekiwi-postgres.json`: connections as % of `max_connections`, cache hit
 ratio, deadlocks, commit/rollback rate. Cross-reference with
 `CAPACITY_REPORT.md`'s connection-pool math — `PrismaService` hardcodes
 `max: 20` per `api-core` instance with no PgBouncer.
 
 ## 17. Interpreting Redis saturation
 
-`smart-redis.json`: memory vs. the compose-configured 512 MB `maxmemory`
+`hirekiwi-redis.json`: memory vs. the compose-configured 512 MB `maxmemory`
 (`volatile-lru` eviction — `infra/docker/docker-compose.yml`), hit/miss
 ratio, evictions, connected clients. The app-level
-`smart_cache_operations_total{namespace="items_form"}` hit-ratio panel on
-`smart-api-metrics.json` is the more direct signal for
+`hirekiwi_cache_operations_total{namespace="items_form"}` hit-ratio panel on
+`hirekiwi-api-metrics.json` is the more direct signal for
 `scenarios/cache-stampede.js` specifically.
 
 ## 18. Finding NestJS bottlenecks
 
-`smart-api-metrics.json`'s Node.js panels: event-loop lag, heap ratio, GC
+`hirekiwi-api-metrics.json`'s Node.js panels: event-loop lag, heap ratio, GC
 pause p95, active handles/requests. If `OTEL_EXPORTER_OTLP_ENDPOINT` is set,
 Tempo shows the actual per-request span breakdown (HTTP handler time vs.
 Postgres query time vs. Redis call time vs. Kafka produce time) for any slow
@@ -206,7 +206,7 @@ request — see "Correlated observability" below.
 Deliberately out of deep scope: every app but `web-verify`'s one server page
 is `'use client'`, fetching from `api-core` after hydration — a slow page is
 almost always a slow `api-core` call, findable via #18 above, not a Next.js
-server-side issue. `smart-host-containers.json`'s per-container CPU/memory
+server-side issue. `hirekiwi-host-containers.json`'s per-container CPU/memory
 (cAdvisor) still shows if a specific web app's container itself is
 resource-starved.
 
@@ -249,7 +249,7 @@ to `smoke` for PRs even then.
   line) — and even then, a loud warning prints before the run starts.
 - This suite never deletes data and never changes infrastructure
   configuration — `db:seed:load-test` only upserts rows tagged
-  `loadtest.student.*@smart.local`.
+  `loadtest.student.*@hirekiwi.local`.
 - The connection-pool math in `CAPACITY_REPORT.md` is documentation, not an
   automatic change — this suite never touches `max_connections` or
   `PrismaService`'s pool size.
@@ -291,7 +291,7 @@ threshold breach and an ARCHITECTURE.md SLA breach mean the same thing.
 
 The assessment-attempt flow — login, start attempt (Postgres write), a loop
 of next-item (Redis cache-aside) + submit-l1 (Redis write-through draft
-save), complete (Postgres write, emits Kafka `smart.assessment.submitted`) —
+save), complete (Postgres write, emits Kafka `hirekiwi.assessment.submitted`) —
 is the platform's core value delivery and the most instrumented scenario
 here (`scenarios/business-flow.js`).
 
@@ -314,7 +314,7 @@ here (`scenarios/business-flow.js`).
   latency needs a fault-injection proxy (e.g. Toxiproxy) in front of
   Postgres, which this stack doesn't have — see the file's header for the
   full reasoning.
-- **`smart_db_query_duration_seconds`'s `model` label is always `"all"`** —
+- **`hirekiwi_db_query_duration_seconds`'s `model` label is always `"all"`** —
   Prisma's query event doesn't reliably carry per-model attribution across
   driver adapters (see ADR-0015).
 - **A k6-originated trace doesn't include a k6-side span** — k6 doesn't

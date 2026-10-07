@@ -128,7 +128,7 @@ export function LanguagesSection() {
         title={meta.title}
         description={meta.description}
         action={
-          !loading ? (
+          !loading && languages.length > 0 ? (
             <button
               type="button"
               onClick={openCreateModal}

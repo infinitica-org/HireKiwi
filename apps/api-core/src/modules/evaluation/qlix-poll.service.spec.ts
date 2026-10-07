@@ -4,7 +4,7 @@ import { QlixPollService } from './qlix-poll.service.js';
 describe('QlixPollService', () => {
   it('skips when a verification report already exists', async () => {
     const completedExplanation =
-      'QLIX complete\n---smart-verify---\n' +
+      'QLIX complete\n---hirekiwi-verify---\n' +
       JSON.stringify({
         qualityScore: 80,
         duplicateScore: 0,
@@ -63,7 +63,7 @@ describe('QlixPollService', () => {
         status: 'completed',
         similarityIndex: 12,
         aiLikelihood: 20,
-        smartAssessment: {
+        hirekiwiAssessment: {
           appliedProficiencyCeiling: 'INTERMEDIATE',
           qualityScore: 72,
           competencyObservations: [],

@@ -2,7 +2,7 @@
   "name": "@hirekiwi/api-core",
   "version": "0.1.0",
   "private": true,
-  "description": "SMART NestJS API: platform core plus owned domain modules. Owners: Vishal V (platform), plus module owners in TEAM.md.",
+  "description": "HireKiwi NestJS API: platform core plus owned domain modules. Owners: Vishal V (platform), plus module owners in TEAM.md.",
   "type": "commonjs",
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.json",

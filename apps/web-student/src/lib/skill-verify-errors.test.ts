@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SmartApiError, SmartNetworkError } from '@hirekiwi/api-client';
+import { HireKiwiApiError, HireKiwiNetworkError } from '@hirekiwi/api-client';
 import type { SkillVerifySessionDto } from '@hirekiwi/contracts';
 import {
   areAllSkillVerifyItemsAnswered,
@@ -26,7 +26,7 @@ function session(items: SkillVerifySessionDto['items']): SkillVerifySessionDto {
 describe('skillVerifyErrorFromUnknown', () => {
   it('maps submit scoring failures without referencing a second assessment stage', () => {
     const mapped = skillVerifyErrorFromUnknown(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'skill_form_unavailable',
         message: 'Skill form could not be graded.',
         statusCode: 502,
@@ -39,7 +39,7 @@ describe('skillVerifyErrorFromUnknown', () => {
 
   it('maps provider failures to a friendly generation message', () => {
     const mapped = skillVerifyErrorFromUnknown(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'skill_form_unavailable',
         message: 'Skill form could not be generated.',
         statusCode: 502,
@@ -61,14 +61,14 @@ describe('skillVerifyErrorFromUnknown', () => {
   });
 
   it('maps network failures separately from server errors', () => {
-    const mapped = skillVerifyErrorFromUnknown(new SmartNetworkError('offline'), 'save');
+    const mapped = skillVerifyErrorFromUnknown(new HireKiwiNetworkError('offline'), 'save');
     expect(mapped.kind).toBe('network');
     expect(mapped.title).toBe('Connection lost');
   });
 
   it('maps login-required responses', () => {
     const mapped = skillVerifyErrorFromUnknown(
-      new SmartApiError({ error: 'token_expired', message: 'expired', statusCode: 401 }),
+      new HireKiwiApiError({ error: 'token_expired', message: 'expired', statusCode: 401 }),
       'prepare',
     );
     expect(mapped.kind).toBe('login_required');

@@ -1,9 +1,9 @@
 apiVersion: 1
 
 providers:
-  - name: SMART
+  - name: HireKiwi
     orgId: 1
-    folder: SMART
+    folder: HireKiwi
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30

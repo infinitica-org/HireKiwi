@@ -28,7 +28,7 @@ Client-side timers are treated strictly as visual UI affordances. The backend ha
                  ├── Checks if attempt is already SUBMITTED (race condition guard)
                  ├── Locks attempt atomically in Redis (SET NX EX)
                  ├── Updates PostgreSQL status: SUBMITTED (force_submitted_at = now())
-                 └── Publishes smart.assessment.submitted to Kafka event bus
+                 └── Publishes hirekiwi.assessment.submitted to Kafka event bus
 ```
 
 If a candidate disconnects, alters their local clock, or keeps the tab open past the allocated time, the delayed job automatically closes the attempt on the server.
@@ -37,10 +37,10 @@ If a candidate disconnects, alters their local clock, or keeps the tab open past
 
 ## 2. Proctoring CV Sidecar (`apps/proctoring-cv`)
 
-Per [ADR-0014](file:///d:/Work's/Infinitica/smart/docs/adr/0014-proctoring-sidecar.md), continuous high-bandwidth video streaming is replaced by an asynchronous snapshot architecture:
+Per [ADR-0014](file:///d:/Work's/Infinitica/hirekiwi/docs/adr/0014-proctoring-sidecar.md), continuous high-bandwidth video streaming is replaced by an asynchronous snapshot architecture:
 
 1. **Periodic Snapshot Capture:** The candidate's client uploads a webcam frame every 30–60 seconds to Cloudflare R2 / MinIO via pre-signed URLs.
-2. **Event Dispatch:** `api-core` publishes a Kafka event (`smart.proctoring.snapshot.ready`).
+2. **Event Dispatch:** `api-core` publishes a Kafka event (`hirekiwi.proctoring.snapshot.ready`).
 3. **Computer Vision Inference:** The Python sidecar processes frames via MediaPipe and OpenCV:
    - **Multi-Face Detection:** Flags occurrences where additional individuals enter the frame.
    - **Gaze Angle Analysis:** Detects persistent head rotation away from the assessment screen.

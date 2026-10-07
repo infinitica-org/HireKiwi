@@ -1,20 +1,20 @@
 ---
-title: 'SMART — Database (Postgres)'
+title: 'HireKiwi — Database (Postgres)'
 description: 'Delivery & Engineering Protocols - DATABASE'
 ---
 
-# SMART — Database (Postgres)
+# HireKiwi — Database (Postgres)
 
 > Owner: Vishal V (schema / migrations) · Tino (this policy)  
 > Runtime client: **Prisma 7** in `apps/api-core`. There is no second ORM.
 
 ## One database engine
 
-SMART talks to **PostgreSQL 16+ with `pgvector`**, self-hosted via Docker on every environment. Application code always uses `DATABASE_URL`.
+HireKiwi talks to **PostgreSQL 16+ with `pgvector`**, self-hosted via Docker on every environment. Application code always uses `DATABASE_URL`.
 
 | Host                            | When to use                         | What you set                                            |
 | ------------------------------- | ----------------------------------- | ------------------------------------------------------- |
-| Docker `pgvector/pgvector:pg16` | Laptop, Single High-End VPS Compose | `DATABASE_URL=postgresql://smart:…@postgres:5432/smart` |
+| Docker `pgvector/pgvector:pg16` | Laptop, Single High-End VPS Compose | `DATABASE_URL=postgresql://hirekiwi:…@postgres:5432/hirekiwi` |
 
 Prisma stays the only write path — no separate data-access SDK.
 
@@ -48,9 +48,9 @@ Never point `dev`, `qa`, and `prod` at the same database.
 | Environment | Git branch | VPS Host / Topology                                     | Database Storage       |
 | ----------- | ---------- | ------------------------------------------------------- | ---------------------- |
 | local       | feature    | laptop Docker                                           | local volume           |
-| **dev**     | `dev`      | **Single VPS** (`COMPOSE_PROJECT_NAME=smart-dev`)       | isolated volume        |
-| **qa**      | `qa`       | **Single VPS** (`COMPOSE_PROJECT_NAME=smart-qa`)        | isolated volume        |
-| **prod**    | `main`     | **Single VPS** (`smart-prod-blue` / `smart-prod-green`) | persistent prod volume |
+| **dev**     | `dev`      | **Single VPS** (`COMPOSE_PROJECT_NAME=hirekiwi-dev`)       | isolated volume        |
+| **qa**      | `qa`       | **Single VPS** (`COMPOSE_PROJECT_NAME=hirekiwi-qa`)        | isolated volume        |
+| **prod**    | `main`     | **Single VPS** (`hirekiwi-prod-blue` / `hirekiwi-prod-green`) | persistent prod volume |
 
 ## Env files
 
@@ -109,5 +109,5 @@ Local: `pnpm bootstrap` (or `pnpm --filter @hirekiwi/api-core db:seed`).
 
 VPS: the `api` container is a slim production image — no `pnpm`, no
 TypeScript source — so `prisma/seed.ts` cannot run via `docker compose exec`.
-Use `bash scripts/seed-vps.sh &lt;dev|qa|prod>` from `~deploy/smart` instead; see
+Use `bash scripts/seed-vps.sh &lt;dev|qa|prod>` from `~deploy/hirekiwi` instead; see
 `infra/vps/README.md`.

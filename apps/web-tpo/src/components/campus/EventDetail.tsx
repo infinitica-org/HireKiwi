@@ -12,7 +12,7 @@ import {
   Modal,
   formatEventRange,
 } from '@hirekiwi/ui';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import type {
   CreateCareerEvent,
   UniversityEventDetail,
@@ -72,7 +72,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
     try {
       await api.campus.updateEvent(eventId, detail.event.version, body as UpdateCareerEvent);
     } catch (failure) {
-      if (failure instanceof SmartApiError && failure.statusCode === 409) {
+      if (failure instanceof HireKiwiApiError && failure.statusCode === 409) {
         setEditing(false);
         setActionError(
           'Someone else changed this event. It has been reloaded; review it and edit again.',

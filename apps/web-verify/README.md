@@ -1,6 +1,6 @@
-# SMART Trust & Verification Portal (`web-verify`)
+# HireKiwi Trust & Verification Portal (`web-verify`)
 
-This is the public-facing, anonymous lookup and verification portal for SMART certificates. It requires no authentication and is optimized for speed (< 80 ms target) and platform trust.
+This is the public-facing, anonymous lookup and verification portal for HireKiwi certificates. It requires no authentication and is optimized for speed (< 80 ms target) and platform trust.
 
 ## Routing Schema
 

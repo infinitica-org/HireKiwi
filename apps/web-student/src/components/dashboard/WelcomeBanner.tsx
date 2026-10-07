@@ -29,7 +29,7 @@ const SLIDES: Slide[] = [
 
 const ROTATE_MS = 7000;
 
-/** "Getting started" carousel at the top of the dashboard, in the white SMART/TPO card style. */
+/** "Getting started" carousel at the top of the dashboard, in the white HireKiwi/TPO card style. */
 export function WelcomeBanner() {
   const [index, setIndex] = useState(0);
 

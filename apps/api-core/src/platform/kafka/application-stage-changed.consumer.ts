@@ -1,6 +1,6 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ApplicationStageChangedEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { ApplicationStageChangedEventSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../config/env.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -24,7 +24,7 @@ export class ApplicationStageChangedConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.applicationStageChanged,
+        topic: HIREKIWI_TOPICS.applicationStageChanged,
         module: 'notifications',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, () => this.handleStageChanged(payload));

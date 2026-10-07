@@ -29,7 +29,7 @@ export function NavUser() {
   }, []);
 
   const name = user?.fullName ?? 'Admin';
-  const email = user?.email ?? 'admin@smart.local';
+  const email = user?.email ?? 'admin@hirekiwi.local';
 
   return (
     <SidebarMenu>

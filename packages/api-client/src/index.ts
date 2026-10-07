@@ -1,5 +1,5 @@
 /**
- * @hirekiwi/api-client — the only way a SMART frontend talks to the API.
+ * @hirekiwi/api-client — the only way a HireKiwi frontend talks to the API.
  *
  * Raw `fetch` is blocked by ESLint in the web apps, because four things must
  * happen on every request and none of them survive being left to memory:

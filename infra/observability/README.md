@@ -18,7 +18,7 @@ pnpm infra:up
 docker compose -f infra/docker/docker-compose.yml --profile apps --profile obs up -d
 ```
 
-Grafana: http://localhost:3100 (admin / `smart` or anon).
+Grafana: http://localhost:3100 (admin / `hirekiwi` or anon).
 
 Explore LogQL examples:
 
@@ -27,12 +27,12 @@ Explore LogQL examples:
 {service="api"} | json | level="error"
 ```
 
-Dashboard **SMART API logs** is provisioned with a `correlationId` textbox.
+Dashboard **HireKiwi API logs** is provisioned with a `correlationId` textbox.
 
 ## Dashboards
 
-All under the **SMART** folder in Grafana; each links to the others via the
-**SMART dashboards** dropdown top-right.
+All under the **HireKiwi** folder in Grafana; each links to the others via the
+**HireKiwi dashboards** dropdown top-right.
 
 | Dashboard         | Covers                                                                                                                                                                                                                             |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -46,8 +46,8 @@ All under the **SMART** folder in Grafana; each links to the others via the
 
 **Known gaps, on purpose (not silently missing):**
 
-- `packages/observability/src/metrics.ts` declares several metrics — `smart_ai_*`, `smart_tier_distribution_ratio`, `smart_inter_rater_kappa`, `smart_attempts_completed_total`, `smart_sandbox_executions_total`, `smart_certificates_issued_total`, `smart_verification_lookups_total` — that are never actually `.inc()`/`.observe()`/`.set()` anywhere in `apps/`. No dashboard is built against these; they'd only ever show "No data." ARCHITECTURE.md's "Claude API token consumption" Grafana claim in particular has no metric behind it today. Wiring these up is an `api-core` app-code change, not a dashboards change.
-  - `smart_cache_operations_total` (item-bank namespace), `smart_db_query_duration_seconds`, and `smart_kafka_events_consumed_total`/`smart_kafka_consumer_lag_messages` **are now live** — wired as part of `tools/load-tests` (see `tools/load-tests/README.md`) because the stress-test scenarios that exercise them (cache stampede, Kafka backpressure) needed a real signal to assert against. Panels: API Metrics dashboard (cache hit ratio, DB query p95) and Redpanda dashboard (consumer lag).
+- `packages/observability/src/metrics.ts` declares several metrics — `hirekiwi_ai_*`, `hirekiwi_tier_distribution_ratio`, `hirekiwi_inter_rater_kappa`, `hirekiwi_attempts_completed_total`, `hirekiwi_sandbox_executions_total`, `hirekiwi_certificates_issued_total`, `hirekiwi_verification_lookups_total` — that are never actually `.inc()`/`.observe()`/`.set()` anywhere in `apps/`. No dashboard is built against these; they'd only ever show "No data." ARCHITECTURE.md's "Claude API token consumption" Grafana claim in particular has no metric behind it today. Wiring these up is an `api-core` app-code change, not a dashboards change.
+  - `hirekiwi_cache_operations_total` (item-bank namespace), `hirekiwi_db_query_duration_seconds`, and `hirekiwi_kafka_events_consumed_total`/`hirekiwi_kafka_consumer_lag_messages` **are now live** — wired as part of `tools/load-tests` (see `tools/load-tests/README.md`) because the stress-test scenarios that exercise them (cache stampede, Kafka backpressure) needed a real signal to assert against. Panels: API Metrics dashboard (cache hit ratio, DB query p95) and Redpanda dashboard (consumer lag).
 - `apps/proctoring-cv` exposes no `/metrics` at all (plain stdlib `http.server`, no `prometheus_client`). It's dark to Prometheus entirely — not in any dashboard here.
 - **Host & Containers** → "Disk free %" and container mounts reflect the **Docker Desktop Linux VM** on a Windows dev machine, not the Windows host — this is expected locally and will show real numbers once running on the actual Linux VPS (dev/qa/prod).
 - `minio_v2/metrics/cluster` only exposes capacity + traffic; per-request/error-rate metrics live on MinIO's node/bucket metrics endpoints, not scraped here to keep this addition scoped.

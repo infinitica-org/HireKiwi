@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { SEND_TO_COMPANY_STAGE } from '@hirekiwi/contracts';
 import type { ApplicationConfidenceDto, ApplicationDto } from '@hirekiwi/contracts';
 import { applicationsApi, openingsApi } from '../lib/api';
@@ -156,7 +156,7 @@ describe('AC-T06 confidence review workspace', () => {
     vi.mocked(applicationsApi.listForOpening).mockResolvedValue({ applications: [shortlisted] });
     vi.mocked(applicationsApi.getConfidence).mockResolvedValue(completeConfidence);
     vi.mocked(applicationsApi.sendToCompany).mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         statusCode: 422,
         error: 'validation_failed',
         message: 'A complete SE-T02 confidence result is required before sending to the company.',
@@ -179,7 +179,7 @@ describe('AC-T06 confidence review workspace', () => {
     vi.mocked(openingsApi.list).mockResolvedValue({ openings: [mockOpening] });
     vi.mocked(applicationsApi.listForOpening).mockResolvedValue({ applications: [shortlisted] });
     vi.mocked(applicationsApi.getConfidence).mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         statusCode: 500,
         error: 'internal_error',
         message: 'Confidence lookup failed.',

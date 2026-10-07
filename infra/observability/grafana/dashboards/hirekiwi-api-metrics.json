@@ -10,8 +10,8 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": true,
-      "tags": ["smart"],
-      "title": "SMART dashboards",
+      "tags": ["hirekiwi"],
+      "title": "HireKiwi dashboards",
       "type": "dashboards"
     }
   ],
@@ -28,7 +28,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (route) (rate(smart_http_requests_total[5m]))",
+          "expr": "sum by (route) (rate(hirekiwi_http_requests_total[5m]))",
           "legendFormat": "{{route}}",
           "refId": "A"
         }
@@ -48,7 +48,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (class) (label_replace(rate(smart_http_requests_total[5m]), \"class\", \"${1}xx\", \"status_code\", \"^(.)..$\"))",
+          "expr": "sum by (class) (label_replace(rate(hirekiwi_http_requests_total[5m]), \"class\", \"${1}xx\", \"status_code\", \"^(.)..$\"))",
           "legendFormat": "{{class}}",
           "refId": "A"
         }
@@ -69,21 +69,21 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(smart_http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(hirekiwi_http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(smart_http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(hirekiwi_http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "p95",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(smart_http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(hirekiwi_http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -104,7 +104,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(smart_http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(hirekiwi_http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "{{route}}",
           "refId": "A"
         }
@@ -124,7 +124,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (policy, role) (rate(smart_rate_limit_rejections_total[5m]))",
+          "expr": "sum by (policy, role) (rate(hirekiwi_rate_limit_rejections_total[5m]))",
           "legendFormat": "{{policy}}/{{role}}",
           "refId": "A"
         }
@@ -145,7 +145,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "max by (policy) (smart_rate_limit_utilisation_ratio)",
+          "expr": "max by (policy) (hirekiwi_rate_limit_utilisation_ratio)",
           "legendFormat": "{{policy}}",
           "refId": "A"
         }
@@ -165,7 +165,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (track_code) (rate(smart_attempts_started_total[5m]))",
+          "expr": "sum by (track_code) (rate(hirekiwi_attempts_started_total[5m]))",
           "legendFormat": "{{track_code}}",
           "refId": "A"
         }
@@ -185,7 +185,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (track_code) (rate(smart_drafts_saved_total[5m]))",
+          "expr": "sum by (track_code) (rate(hirekiwi_drafts_saved_total[5m]))",
           "legendFormat": "{{track_code}}",
           "refId": "A"
         }
@@ -205,7 +205,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (flag) (rate(smart_integrity_flags_total[5m]))",
+          "expr": "sum by (flag) (rate(hirekiwi_integrity_flags_total[5m]))",
           "legendFormat": "{{flag}}",
           "refId": "A"
         }
@@ -225,7 +225,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (topic) (rate(smart_kafka_events_produced_total[5m]))",
+          "expr": "sum by (topic) (rate(hirekiwi_kafka_events_produced_total[5m]))",
           "legendFormat": "{{topic}}",
           "refId": "A"
         }
@@ -245,7 +245,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (outcome) (rate(smart_tpo_batch_import_rows_total[5m]))",
+          "expr": "sum by (outcome) (rate(hirekiwi_tpo_batch_import_rows_total[5m]))",
           "legendFormat": "{{outcome}}",
           "refId": "A"
         }
@@ -266,7 +266,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "smart_nodejs_eventloop_lag_seconds",
+          "expr": "hirekiwi_nodejs_eventloop_lag_seconds",
           "legendFormat": "lag",
           "refId": "A"
         }
@@ -287,7 +287,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "smart_nodejs_heap_size_used_bytes / smart_nodejs_heap_size_total_bytes",
+          "expr": "hirekiwi_nodejs_heap_size_used_bytes / hirekiwi_nodejs_heap_size_total_bytes",
           "legendFormat": "heap used",
           "refId": "A"
         }
@@ -308,7 +308,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "rate(smart_process_cpu_seconds_total[5m])",
+          "expr": "rate(hirekiwi_process_cpu_seconds_total[5m])",
           "legendFormat": "cpu",
           "refId": "A"
         }
@@ -329,7 +329,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "smart_process_resident_memory_bytes",
+          "expr": "hirekiwi_process_resident_memory_bytes",
           "legendFormat": "RSS",
           "refId": "A"
         }
@@ -350,7 +350,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le, kind) (rate(smart_nodejs_gc_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, kind) (rate(hirekiwi_nodejs_gc_duration_seconds_bucket[5m])))",
           "legendFormat": "{{kind}}",
           "refId": "A"
         }
@@ -370,14 +370,14 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "smart_nodejs_active_handles_total",
+          "expr": "hirekiwi_nodejs_active_handles_total",
           "legendFormat": "active handles",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "smart_nodejs_active_requests_total",
+          "expr": "hirekiwi_nodejs_active_requests_total",
           "legendFormat": "active requests",
           "refId": "B"
         }
@@ -399,7 +399,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (namespace) (rate(smart_cache_operations_total{result=\"hit\"}[5m])) / sum by (namespace) (rate(smart_cache_operations_total[5m]))",
+          "expr": "sum by (namespace) (rate(hirekiwi_cache_operations_total{result=\"hit\"}[5m])) / sum by (namespace) (rate(hirekiwi_cache_operations_total[5m]))",
           "legendFormat": "{{namespace}} hit ratio",
           "refId": "A"
         }
@@ -421,7 +421,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le, operation) (rate(smart_db_query_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, operation) (rate(hirekiwi_db_query_duration_seconds_bucket[5m])))",
           "legendFormat": "{{operation}} p95",
           "refId": "A"
         }
@@ -431,11 +431,11 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["smart", "api"],
+  "tags": ["hirekiwi", "api"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timezone": "browser",
-  "title": "SMART / API Metrics",
-  "uid": "smart-api-metrics",
+  "title": "HireKiwi / API Metrics",
+  "uid": "hirekiwi-api-metrics",
   "version": 1
 }

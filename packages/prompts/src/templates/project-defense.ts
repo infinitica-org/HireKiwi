@@ -147,7 +147,7 @@ export const projectDefenseGraderTemplate: PromptTemplate<
   variablesSchema: ProjectDefenseGraderVariables,
   render: (variables) => ({
     system: [
-      'Score a project defense interview for SMART project verification.',
+      'Score a project defense interview for HireKiwi project verification.',
       'Focus on whether the candidate demonstrated they applied the declared stack/skills in this specific project.',
       'depthOfUnderstanding: can they explain implementation details, not just buzzwords?',
       'ownershipAndOriginality: did they personally build what they claim?',

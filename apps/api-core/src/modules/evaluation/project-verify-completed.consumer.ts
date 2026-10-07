@@ -1,6 +1,6 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ProjectVerifyCompletedEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { ProjectVerifyCompletedEventSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import { KafkaService } from '../../platform/kafka/kafka.service.js';
@@ -25,13 +25,13 @@ export class ProjectVerifyCompletedConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.projectVerifyCompleted,
+        topic: HIREKIWI_TOPICS.projectVerifyCompleted,
         module: 'evaluation',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {
             const parsed = ProjectVerifyCompletedEventSchema.safeParse(payload);
             if (!parsed.success) {
-              this.logger.warn('Ignored malformed smart.project.verify.completed payload');
+              this.logger.warn('Ignored malformed hirekiwi.project.verify.completed payload');
               return;
             }
             const { projectId } = parsed.data.data;

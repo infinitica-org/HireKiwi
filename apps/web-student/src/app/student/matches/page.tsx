@@ -50,7 +50,7 @@ export interface JobMatch {
   deadline?: string;
 }
 
-type TabType = 'strong' | 'medium' | 'applied' | 'saved';
+type TabType = 'jobs' | 'applied' | 'saved';
 type SortOption = 'best-match' | 'newest' | 'pay';
 type JobTypeFilter = 'all' | 'Full-time' | 'Internship' | 'Part-time';
 
@@ -73,7 +73,7 @@ export default function MatchesPage() {
   const profilePercent = progress?.percent ?? 33;
   const isVerified = canVerifySkills(profilePercent);
 
-  const [activeTab, setActiveTab] = useState<TabType>('strong');
+  const [activeTab, setActiveTab] = useState<TabType>('jobs');
   const [searchQuery, setSearchQuery] = useState('');
   const [jobTypeFilter, setJobTypeFilter] = useState<JobTypeFilter>('all');
   const [remoteOnly, setRemoteOnly] = useState(false);
@@ -239,11 +239,8 @@ export default function MatchesPage() {
     setShowAppliedSuccess(true);
   };
 
-  const strongFitJobs = useMemo(() => liveMatches.filter((j) => j.matchScore >= 85), [liveMatches]);
-  const mediumFitJobs = useMemo(
-    () => liveMatches.filter((j) => j.matchScore < 85 && j.matchScore >= 60),
-    [liveMatches],
-  );
+  // Every job worth showing: strong (>= 85) and medium (60-84) fits together.
+  const jobs = useMemo(() => liveMatches.filter((j) => j.matchScore >= 60), [liveMatches]);
   const savedJobs = useMemo(
     () => liveMatches.filter((j) => savedJobIds.has(j.id)),
     [liveMatches, savedJobIds],
@@ -251,8 +248,7 @@ export default function MatchesPage() {
 
   const filteredAndSortedJobs = useMemo(() => {
     let list: JobMatch[] = [];
-    if (activeTab === 'strong') list = strongFitJobs;
-    else if (activeTab === 'medium') list = mediumFitJobs;
+    if (activeTab === 'jobs') list = jobs;
     else if (activeTab === 'saved') list = savedJobs;
     else return [];
 
@@ -285,16 +281,7 @@ export default function MatchesPage() {
     }
 
     return sorted;
-  }, [
-    activeTab,
-    strongFitJobs,
-    mediumFitJobs,
-    savedJobs,
-    searchQuery,
-    jobTypeFilter,
-    remoteOnly,
-    sortBy,
-  ]);
+  }, [activeTab, jobs, savedJobs, searchQuery, jobTypeFilter, remoteOnly, sortBy]);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6 pb-16 pt-2 font-sans select-none">
@@ -303,11 +290,10 @@ export default function MatchesPage() {
         <div className="flex items-center gap-3.5">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl dark:text-white">
-              Job Matches
+              Jobs
             </h1>
             <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm dark:text-zinc-400">
-              Verified campus placement opportunities recommended by Smart based on your evaluated
-              skill claims
+              Verified Jobs recommended by HireKiwi based on your evaluated skill claims
             </p>
           </div>
         </div>
@@ -342,8 +328,7 @@ export default function MatchesPage() {
           {/* Animated Tabs */}
           <div className="flex w-full items-center gap-2 overflow-x-auto border-b border-zinc-200 [scrollbar-width:none] dark:border-zinc-800 [&::-webkit-scrollbar]:hidden">
             {[
-              { key: 'strong', label: 'Strong fit', count: strongFitJobs.length },
-              { key: 'medium', label: 'Medium fit', count: mediumFitJobs.length },
+              { key: 'jobs', label: 'Jobs', count: jobs.length },
               { key: 'applied', label: 'Applied', count: appliedApplications.length },
               { key: 'saved', label: 'Saved', count: savedJobs.length },
             ].map((tab) => (
@@ -369,7 +354,7 @@ export default function MatchesPage() {
                 <span
                   className={cn(
                     'rounded-full px-1.5 py-0.2 text-[10px] font-bold',
-                    tab.key === 'strong'
+                    tab.key === 'jobs'
                       ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                       : 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
                   )}
@@ -454,14 +439,14 @@ export default function MatchesPage() {
                 No applications submitted yet
               </p>
               <p className="text-xs text-zinc-500 mt-1">
-                Browse your strong-fit matches and submit verified applications with one click.
+                Browse your matched jobs and submit verified applications with one click.
               </p>
               <button
                 type="button"
-                onClick={() => setActiveTab('strong')}
+                onClick={() => setActiveTab('jobs')}
                 className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-4 py-2 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
               >
-                Explore Strong Fits
+                Explore Jobs
                 <ArrowRight className="size-3.5" />
               </button>
             </div>

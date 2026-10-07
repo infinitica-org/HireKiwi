@@ -68,7 +68,7 @@ describe('KafkaService emit headers', () => {
     const id = newCorrelationId();
     const headers = kafkaCorrelationHeaders(id);
     await send({
-      topic: 'smart.test',
+      topic: 'hirekiwi.test',
       messages: [{ key: 'k', value: '{}', headers }],
     });
     expect(

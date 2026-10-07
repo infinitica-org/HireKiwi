@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, Globe, Lock, Plus, Trash2 } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { PlacementEmployerSummary, TenantEntitlementsDto } from '@hirekiwi/contracts';
 import { StaffManagementWorkspace } from '../staff/StaffManagementWorkspace';
 import { CampusesSection } from './CampusesSection';
@@ -87,7 +87,7 @@ export function UniversitySettings() {
         setDismissedEmployerIds(loadDismissedEmployerIds(inst));
       }
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to load settings.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to load settings.');
     } finally {
       setLoading(false);
     }

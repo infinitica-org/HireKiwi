@@ -10,6 +10,7 @@ import {
   UserPlus,
   UserSearch,
   Users,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -203,4 +204,29 @@ export function isWhitelistTopNavActive(pathname: string): boolean {
     isNavLinkActive(pathname, '/onboarding') ||
     isNavLinkActive(pathname, '/provisioning')
   );
+}
+
+/** Primary console navigation, rendered in the topbar (there is no sidebar). */
+export interface TpoTopNavLink {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+export const TPO_TOP_NAV: TpoTopNavLink[] = [
+  { name: 'Home', href: '/', icon: LayoutDashboard },
+  { name: 'Students', href: '/students', icon: GraduationCap },
+  { name: 'Whitelist', href: '/whitelist', icon: ShieldCheck },
+  // { name: 'Recruiters', href: '/companies', icon: Building2 },
+
+  { name: 'Reports', href: '/reports', icon: BarChart3 },
+];
+
+/** Whether a topbar link is current; related sub-routes keep their parent tab lit. */
+export function isTopNavLinkActive(pathname: string, link: TpoTopNavLink): boolean {
+  if (link.href === '/') return pathname === '/' || pathname === '/dashboard';
+  if (link.name === 'Recruiters') return isPlacementTopNavActive(pathname);
+  if (link.name === 'Students') return isStudentsTopNavActive(pathname);
+  if (link.name === 'Whitelist') return isWhitelistTopNavActive(pathname);
+  return isNavLinkActive(pathname, link.href);
 }

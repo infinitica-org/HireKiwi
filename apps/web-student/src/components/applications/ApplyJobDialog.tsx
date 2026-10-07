@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { COVER_NOTE_MAX_LENGTH, type ApplyToJobResponse } from '@hirekiwi/contracts';
 import { Button, ErrorState, FormMessage, LoadingState, Modal } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
@@ -21,7 +21,7 @@ interface ApplyJobDialogProps {
 const BAND_LABEL = { STRONG: 'Strong fit', MODERATE: 'Good fit', STRETCH: 'Stretch' } as const;
 
 /**
- * Apply with my verified SMART profile (Th6-387/388/389).
+ * Apply with my verified HireKiwi profile (Th6-387/388/389).
  * Step 1: see exactly what the employer will see and confirm you reviewed it.
  * Step 2: optional cover note, then submit. Then a confirmation with a reference number.
  */
@@ -62,10 +62,10 @@ export function ApplyJobDialog({ open, jobId, onClose }: ApplyJobDialogProps) {
       ]);
     },
     onError: (err) => {
-      const field = isSmartApiError(err) ? err.details[0]?.message : undefined;
+      const field = isHireKiwiApiError(err) ? err.details[0]?.message : undefined;
       setError(
         field ??
-          (isSmartApiError(err) && err.message
+          (isHireKiwiApiError(err) && err.message
             ? err.message
             : 'Could not submit your application.'),
       );
@@ -127,7 +127,7 @@ export function ApplyJobDialog({ open, jobId, onClose }: ApplyJobDialogProps) {
         <ErrorState
           title="Could not prepare your application"
           message={
-            isSmartApiError(preview.error) && preview.error.statusCode === 409
+            isHireKiwiApiError(preview.error) && preview.error.statusCode === 409
               ? 'This job is no longer accepting applications.'
               : 'Check your connection and try again.'
           }

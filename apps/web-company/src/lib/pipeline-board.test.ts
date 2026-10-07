@@ -1,4 +1,4 @@
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { APPLICATION_STATUSES, type EmployerApplicantCard } from '@hirekiwi/contracts';
 import { describe, expect, it } from 'vitest';
 import {
@@ -68,12 +68,12 @@ describe('pipeline board logic (Th6-414)', () => {
   });
 
   it('describes failures: 409 conflict, 422 not allowed, anything else generic', () => {
-    const conflict = new SmartApiError({
+    const conflict = new HireKiwiApiError({
       error: 'stale_status',
       message: 'This application is now Reviewing.',
       statusCode: 409,
     } as never);
-    const refused = new SmartApiError({
+    const refused = new HireKiwiApiError({
       error: 'transition_not_allowed',
       message: "Can't move from Applied to Offered",
       statusCode: 422,

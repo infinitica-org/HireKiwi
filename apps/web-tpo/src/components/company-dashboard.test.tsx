@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import type { ApplicationDto, JobOpeningDto } from '@hirekiwi/contracts';
 import { applicationsApi, openingsApi } from '../lib/api';
 import { CompanyDashboard } from './company-dashboard';
@@ -166,7 +166,7 @@ describe('CO-T04 company dashboard', () => {
 
   it('shows section errors without fabricating fallback pipeline metrics', async () => {
     vi.mocked(openingsApi.list).mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         statusCode: 403,
         error: 'forbidden',
         message: 'Placement staff must belong to an institution.',
@@ -186,7 +186,7 @@ describe('CO-T04 company dashboard', () => {
   it('shows an applications error when openings load but ATS list fails', async () => {
     vi.mocked(openingsApi.list).mockResolvedValue({ openings: [openOpening] });
     vi.mocked(applicationsApi.listForOpening).mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         statusCode: 404,
         error: 'not_found',
         message: 'Job opening not found.',

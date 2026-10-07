@@ -473,7 +473,7 @@ export class PlacementService {
    * the pair are re-checked against the token's institution, so a body that
    * names another tenant's opening or student cannot create a cross-tenant row.
    *
-   * The `smart.application.stage_changed` event is the SE-T07 integration
+   * The `hirekiwi.application.stage_changed` event is the SE-T07 integration
    * point — the candidate notification is delivered by that service, not here.
    */
   async createApplication(

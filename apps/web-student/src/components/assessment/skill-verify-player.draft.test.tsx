@@ -97,7 +97,7 @@ describe('SkillVerifyPlayer answer safety (S6-VV-162, #613)', () => {
     render(<SkillVerifyPlayer claimId="c-1" />);
     await screen.findByTestId('answer-1');
     fireEvent.click(screen.getByRole('button', { name: 'type' }));
-    expect(window.sessionStorage.getItem(`smart.skill-verify.draft.${SESSION_ID}`)).toContain(
+    expect(window.sessionStorage.getItem(`hirekiwi.skill-verify.draft.${SESSION_ID}`)).toContain(
       'typed',
     );
 

@@ -94,7 +94,7 @@ describe('NotificationsService.notify with preferences (S6-VV-121)', () => {
     const send = () =>
       service.notify({
         userId: 'u-1',
-        email: 'student@smart.local',
+        email: 'student@hirekiwi.local',
         kind: 'OPPORTUNITY',
         title: 'Shortlisted',
         body: 'You have been shortlisted.',

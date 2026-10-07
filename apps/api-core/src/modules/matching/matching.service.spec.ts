@@ -360,7 +360,7 @@ describe('SE-T05 POST /placement/match', () => {
         skillMappings: [{ skillCode: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT' }],
         qlixCheckResult: {
           gaps: ['Missing Dockerfile'],
-          smartAssessmentJson: {
+          hirekiwiAssessmentJson: {
             appliedProficiencyCeiling: 'INTERMEDIATE',
             competencyObservations: [],
           },

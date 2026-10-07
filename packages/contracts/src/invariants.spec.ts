@@ -16,7 +16,7 @@ import {
   SKILL_REATTEMPTS,
   SKILL_REFRESH_DAYS,
   SKILL_DEFINITIONS,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   TOPIC_SPECS,
   TRACK_DEFINITIONS,
   TRACK_CODES,
@@ -284,10 +284,10 @@ describe('skill taxonomy (skill@1)', () => {
 
 describe('kafka topics', () => {
   it('registers a spec for every declared topic', () => {
-    for (const topic of Object.values(SMART_TOPICS)) {
+    for (const topic of Object.values(HIREKIWI_TOPICS)) {
       expect(() => getTopicSpec(topic)).not.toThrow();
     }
-    expect(TOPIC_SPECS).toHaveLength(Object.values(SMART_TOPICS).length);
+    expect(TOPIC_SPECS).toHaveLength(Object.values(HIREKIWI_TOPICS).length);
   });
 
   it('names exactly one producer owner per topic', () => {
@@ -298,11 +298,11 @@ describe('kafka topics', () => {
   });
 
   it('keeps assessment and evaluation coupled only through the event bus', () => {
-    const submitted = getTopicSpec(SMART_TOPICS.assessmentSubmitted);
+    const submitted = getTopicSpec(HIREKIWI_TOPICS.assessmentSubmitted);
     expect(submitted.producerModule).toBe('assessment');
     expect(submitted.consumerModules).toContain('evaluation');
 
-    const completed = getTopicSpec(SMART_TOPICS.evalCompleted);
+    const completed = getTopicSpec(HIREKIWI_TOPICS.evalCompleted);
     expect(completed.producerModule).toBe('evaluation');
     expect(completed.consumerModules).toContain('certificate');
   });
@@ -341,8 +341,8 @@ describe('sprint 3 MMP placement contracts', () => {
   });
 
   it('registers ATS stage-change for My Applications sync', () => {
-    expect(SMART_TOPICS.applicationStageChanged).toBe('smart.application.stage_changed');
-    expect(getTopicSpec(SMART_TOPICS.applicationStageChanged).producerModule).toBe('placement');
+    expect(HIREKIWI_TOPICS.applicationStageChanged).toBe('hirekiwi.application.stage_changed');
+    expect(getTopicSpec(HIREKIWI_TOPICS.applicationStageChanged).producerModule).toBe('placement');
   });
 });
 
@@ -568,10 +568,10 @@ describe('SE-T03 project verification contracts', () => {
     expect(getRateLimitPolicy('evaluation.projectVerify').limit).toBe(8);
   });
 
-  it('does not reuse smart.eval.completed for project scores', () => {
-    expect(SMART_TOPICS.projectVerifyCompleted).toBe('smart.project.verify.completed');
-    expect(getTopicSpec(SMART_TOPICS.projectVerifyCompleted).producerModule).toBe('evaluation');
-    expect(getTopicSpec(SMART_TOPICS.evalCompleted).purpose).toMatch(/certificate/i);
+  it('does not reuse hirekiwi.eval.completed for project scores', () => {
+    expect(HIREKIWI_TOPICS.projectVerifyCompleted).toBe('hirekiwi.project.verify.completed');
+    expect(getTopicSpec(HIREKIWI_TOPICS.projectVerifyCompleted).producerModule).toBe('evaluation');
+    expect(getTopicSpec(HIREKIWI_TOPICS.evalCompleted).purpose).toMatch(/certificate/i);
   });
 });
 
@@ -585,7 +585,7 @@ describe('proctoring routes (S4-RM-01)', () => {
       rateLimit: 'proctoring.telemetry',
     });
     expect(getRateLimitPolicy('proctoring.telemetry').limit).toBe(40);
-    expect(getTopicSpec(SMART_TOPICS.proctoringSnapshotReady).producerModule).toBe('proctoring');
+    expect(getTopicSpec(HIREKIWI_TOPICS.proctoringSnapshotReady).producerModule).toBe('proctoring');
   });
 });
 

@@ -21,4 +21,4 @@ Skeleton initialized. Controller class is decorated with `@ApiTags('certificate'
 
 ## Ownership & Boundaries
 
-Owned by Vishal Bharath R. Issuance is triggered exclusively by inbound Kafka events from the `evaluation` module (`smart.eval.completed`). Direct database querying of assessment attempts is strictly forbidden.
+Owned by Vishal Bharath R. Issuance is triggered exclusively by inbound Kafka events from the `evaluation` module (`hirekiwi.eval.completed`). Direct database querying of assessment attempts is strictly forbidden.

@@ -23,7 +23,7 @@ describe('uploadDefenseTurnAudio', () => {
 
   it('uploads via presigned PUT and returns object key', async () => {
     vi.mocked(api.projects.defenseAudioUploadUrl).mockResolvedValue({
-      uploadUrl: 'http://127.0.0.1:9000/smart/project-defense/p1/turn.webm?sig=1',
+      uploadUrl: 'http://127.0.0.1:9000/hirekiwi/project-defense/p1/turn.webm?sig=1',
       objectKey: 'project-defense/p1/turn.webm',
       expiresInSeconds: 900,
     });
@@ -37,7 +37,7 @@ describe('uploadDefenseTurnAudio', () => {
     expect(result).toEqual({ ok: true, objectKey: 'project-defense/p1/turn.webm' });
     // eslint-disable-next-line no-restricted-globals
     expect(fetch).toHaveBeenCalledWith(
-      'http://127.0.0.1:9000/smart/project-defense/p1/turn.webm?sig=1',
+      'http://127.0.0.1:9000/hirekiwi/project-defense/p1/turn.webm?sig=1',
       expect.objectContaining({ method: 'PUT' }),
     );
     vi.unstubAllGlobals();
@@ -45,7 +45,7 @@ describe('uploadDefenseTurnAudio', () => {
 
   it('surfaces upload HTTP failures', async () => {
     vi.mocked(api.projects.defenseAudioUploadUrl).mockResolvedValue({
-      uploadUrl: 'http://127.0.0.1:9000/smart/project-defense/p1/turn.webm?sig=1',
+      uploadUrl: 'http://127.0.0.1:9000/hirekiwi/project-defense/p1/turn.webm?sig=1',
       objectKey: 'project-defense/p1/turn.webm',
       expiresInSeconds: 900,
     });

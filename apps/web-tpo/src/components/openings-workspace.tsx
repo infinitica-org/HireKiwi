@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Briefcase, RefreshCw, Search } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   JOB_OPENING_STATUSES,
   type JobOpeningDto,
@@ -43,7 +43,7 @@ const statusPillBaseClass =
   'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold';
 
 function errorMessage(caught: unknown, fallback: string): string {
-  if (isSmartApiError(caught) || caught instanceof Error) return caught.message;
+  if (isHireKiwiApiError(caught) || caught instanceof Error) return caught.message;
   return fallback;
 }
 

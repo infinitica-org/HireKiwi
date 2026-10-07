@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Build from the monorepo root:
-#   docker build -f infra/docker/Dockerfile.api -t smart-api .
+#   docker build -f infra/docker/Dockerfile.api -t hirekiwi-api .
 
 FROM node:22.20.0-bookworm-slim AS base
 
@@ -42,7 +42,7 @@ FROM deps AS build
 COPY packages ./packages
 COPY apps ./apps
 
-ENV DATABASE_URL=postgresql://smart:smart@127.0.0.1:5432/smart
+ENV DATABASE_URL=postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi
 
 RUN pnpm --filter @hirekiwi/api-core... build
 
@@ -55,56 +55,56 @@ ENV NODE_ENV=production
 
 WORKDIR /app
 
-RUN useradd --system --uid 10001 smart
+RUN useradd --system --uid 10001 hirekiwi
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/apps/api-core/dist \
     ./apps/api-core/dist
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/apps/api-core/package.json \
     ./apps/api-core/package.json
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/apps/api-core/prisma \
     ./apps/api-core/prisma
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/apps/api-core/prisma.config.ts \
     ./apps/api-core/prisma.config.ts
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/apps/api-core/src/generated \
     ./apps/api-core/src/generated
 
 # tsc (rootDir=src, outDir=dist) doesn't compile the pre-built
 # Prisma client into dist. Mirror generated Prisma client into
 # dist/generated because compiled JS references it there.
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/apps/api-core/src/generated \
     ./apps/api-core/dist/generated
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/apps/api-core/node_modules \
     ./apps/api-core/node_modules
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/node_modules \
     ./node_modules
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/packages \
     ./packages
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/pnpm-workspace.yaml \
     ./pnpm-workspace.yaml
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/package.json \
     ./package.json
 
-USER smart
+USER hirekiwi
 
 EXPOSE 3000
 

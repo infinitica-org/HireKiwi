@@ -5,7 +5,7 @@ import appleTouchIcon from '../assets/favicons/apple-touch-icon.png';
 import favicon from '../assets/favicons/favicon.ico';
 
 /**
- * The browser-tab icon for every SMART portal, defined once.
+ * The browser-tab icon for every HireKiwi portal, defined once.
  *
  * Each portal's root layout sets `icons: portalIcons` instead of keeping its own copy of the
  * files, so changing the logo here changes all of them. Server-safe on purpose: no React and no

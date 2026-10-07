@@ -12,7 +12,7 @@ import type {
   SkillLibraryResponse,
   SkillProficiency,
 } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { Search, Users } from 'lucide-react';
 import { Button } from '@hirekiwi/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
@@ -55,10 +55,10 @@ const VERIFICATION_STATUSES: SkillClaimStatus[] = [
 ];
 
 function formatApiError(error: unknown, fallback: string): string {
-  if (isSmartApiError(error) && error.details.length > 0) {
+  if (isHireKiwiApiError(error) && error.details.length > 0) {
     return error.details.map((detail) => `${detail.path}: ${detail.message}`).join(' ');
   }
-  if (isSmartApiError(error)) return error.message;
+  if (isHireKiwiApiError(error)) return error.message;
   return fallback;
 }
 
@@ -315,7 +315,9 @@ export default function Page() {
                               }),
                             );
                           } catch (err) {
-                            setError(isSmartApiError(err) ? err.message : 'Profile view failed.');
+                            setError(
+                              isHireKiwiApiError(err) ? err.message : 'Profile view failed.',
+                            );
                           }
                         })();
                       }}
@@ -345,7 +347,7 @@ export default function Page() {
                             }
                             await refresh();
                           } catch (err) {
-                            setError(isSmartApiError(err) ? err.message : 'Hold update failed.');
+                            setError(isHireKiwiApiError(err) ? err.message : 'Hold update failed.');
                           }
                         })();
                       }}

@@ -68,6 +68,7 @@ export * from './dto/analytics.dto.js';
 export * from './dto/onboarding.dto.js';
 export * from './dto/company-onboarding.dto.js';
 export * from './dto/partnership.dto.js';
+export * from './dto/tpo-contact.dto.js';
 export * from './dto/candidate-onboarding.dto.js';
 export * from './dto/candidate-social.dto.js';
 export * from './dto/company-onboarding.dto.js';

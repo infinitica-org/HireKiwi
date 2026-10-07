@@ -3,7 +3,7 @@ import type { SdeOpenBatchGradeSchema } from '@hirekiwi/prompts';
 
 export type OpenBatchGradeParsed = z.infer<typeof SdeOpenBatchGradeSchema>;
 
-/** LLM graders often return 0-based positions; SMART items use 1-based sealed indices. */
+/** LLM graders often return 0-based positions; HireKiwi items use 1-based sealed indices. */
 export function normalizeOpenBatchGradeIndices(
   parsed: OpenBatchGradeParsed,
   expectedIndices: readonly number[],

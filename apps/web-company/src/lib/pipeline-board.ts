@@ -6,7 +6,7 @@ import {
   type ApplicationStatus,
   type EmployerApplicantCard,
 } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 
 /**
  * Pipeline board logic (Th6-414). Which columns exist and which moves are offered comes from the shared
@@ -64,7 +64,7 @@ export type MoveFailure =
 
 /** Turns a failed move into the toast text: 409 means someone else moved it, 422 means the rules refused. */
 export function describeMoveFailure(error: unknown): MoveFailure {
-  if (isSmartApiError(error)) {
+  if (isHireKiwiApiError(error)) {
     if (error.statusCode === 409) {
       return {
         kind: 'conflict',

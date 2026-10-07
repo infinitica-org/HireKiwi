@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@hirekiwi/ui';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { STUDENT_DASHBOARD_QUERY_KEY } from '@/lib/use-student-dashboard';
 import { SettingsCard, StatusMessage } from './account-ui';
@@ -28,7 +28,7 @@ export function ProfileViewsSettingCard() {
         queryClient.invalidateQueries({ queryKey: STUDENT_DASHBOARD_QUERY_KEY }),
       ]);
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not update this setting.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not update this setting.');
     } finally {
       setBusy(false);
     }

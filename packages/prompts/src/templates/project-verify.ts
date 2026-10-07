@@ -35,7 +35,7 @@ export const projectVerifyTemplate: PromptTemplate<ProjectVerifyVariables> = {
   variablesSchema: ProjectVerifyVariables,
   render: (variables) => ({
     system: [
-      'You score a SMART student project for relevance to the written brief and repo quality signals.',
+      'You score a HireKiwi student project for relevance to the written brief and repo quality signals.',
       'This is not a certification tier. Do not say Gold, Silver, or Bronze.',
       'Never recommend rejecting the student. Low evidence means lower confidence.',
       '',

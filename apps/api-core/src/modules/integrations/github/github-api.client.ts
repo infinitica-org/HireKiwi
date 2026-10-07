@@ -91,7 +91,7 @@ export class GithubApiClient {
   private headers(): Record<string, string> {
     const headers: Record<string, string> = {
       Accept: 'application/vnd.github+json',
-      'User-Agent': 'smart-onboarding',
+      'User-Agent': 'hirekiwi-onboarding',
       'X-GitHub-Api-Version': '2022-11-28',
     };
     if (env.GITHUB_API_TOKEN) headers.Authorization = `Bearer ${env.GITHUB_API_TOKEN}`;
@@ -102,7 +102,7 @@ export class GithubApiClient {
   private authedHeaders(accessToken: string): Record<string, string> {
     return {
       Accept: 'application/vnd.github+json',
-      'User-Agent': 'smart-onboarding',
+      'User-Agent': 'hirekiwi-onboarding',
       'X-GitHub-Api-Version': '2022-11-28',
       Authorization: `Bearer ${accessToken}`,
     };

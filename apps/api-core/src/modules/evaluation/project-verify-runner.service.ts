@@ -6,7 +6,7 @@ import { GithubApiClient } from '../integrations/github/github-api.client.js';
 import { QlixClient } from './qlix-client.js';
 import { QlixPollService } from './qlix-poll.service.js';
 import { buildProjectGithubSnapshot } from './project-github-snapshot.js';
-import { buildQlixSmartContext } from './qlix-smart-context.js';
+import { buildQlixHireKiwiContext } from './qlix-hirekiwi-context.js';
 import { ProjectInterviewGateService } from './project-interview-gate.service.js';
 import { encodeReportExplanation, type StoredReportMeta } from './project-verify.mapper.js';
 import { EvidenceSyncService } from '../evidence/evidence-sync.service.js';
@@ -72,7 +72,7 @@ export class ProjectVerifyRunnerService {
     const idempotencyKey = `${projectId}:${snapshotSha}`;
     let checkId: string;
     try {
-      const smartContext = buildQlixSmartContext({
+      const hirekiwiContext = buildQlixHireKiwiContext({
         projectId: project.id,
         studentId: project.studentId,
         title: project.title,
@@ -88,7 +88,7 @@ export class ProjectVerifyRunnerService {
         githubUrl: project.githubUrl,
         title: project.title,
         idempotencyKey,
-        smartContext,
+        hirekiwiContext,
       });
       checkId = submitted.checkId;
     } catch (error) {

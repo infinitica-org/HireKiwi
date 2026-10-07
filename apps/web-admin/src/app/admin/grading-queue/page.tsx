@@ -1,7 +1,7 @@
 'use client';
 
 import type { GradingQueueItemDto } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { PenLine } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@hirekiwi/ui/button';
@@ -34,7 +34,7 @@ export default function GradingQueuePage() {
       const result = await api.onboarding.listGradingQueue({ page: 1, pageSize: 50 });
       setItems(result.items);
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to load grading queue.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to load grading queue.');
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,7 @@ export default function GradingQueuePage() {
       setScore('');
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not save grade.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not save grade.');
     } finally {
       setSubmitting(false);
     }

@@ -53,7 +53,7 @@ export const jdSkillExtractTemplate: PromptTemplate<JdSkillExtractVariables> = {
   variablesSchema: JdSkillExtractVariables,
   render: (variables) => ({
     system: [
-      'Extract hiring requirements from a job description into the SMART skill@1 taxonomy.',
+      'Extract hiring requirements from a job description into the HireKiwi skill@1 taxonomy.',
       'Use ONLY skill codes and competencyIds from the catalogs below — never invent codes.',
       'Set minProficiency from JD language: exposure/familiarity=BEGINNER, solid/strong=INTERMEDIATE, proficient/production-ready=PROFICIENT, expert/lead=ADVANCED, principal/architect=PROFESSIONAL.',
       'Pick emphasisedCapabilities that the JD actually requires day-to-day, not nice-to-have fluff.',

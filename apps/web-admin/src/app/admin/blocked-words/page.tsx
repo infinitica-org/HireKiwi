@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { BlockedWordDto } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { ShieldBan, Trash2 } from 'lucide-react';
 import { Button } from '@hirekiwi/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
@@ -47,7 +47,7 @@ export default function BlockedWordsPage() {
       setNewWord('');
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not add that word.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not add that word.');
     } finally {
       setSubmitting(false);
     }
@@ -58,7 +58,7 @@ export default function BlockedWordsPage() {
       await api.onboarding.removeBlockedWord(id);
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not remove that word.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not remove that word.');
     }
   }
 
