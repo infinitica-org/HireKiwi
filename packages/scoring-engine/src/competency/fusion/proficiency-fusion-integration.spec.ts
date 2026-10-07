@@ -393,4 +393,242 @@ describe('Evidence Validator Integration in Proficiency Fusion', () => {
     expect(trustedResult.evidenceValidationMetrics[0].sourceAuthorityWeight).toBe(0.9);
     expect(untrustedResult.evidenceValidationMetrics[0].sourceAuthorityWeight).toBe(0.5);
   });
+
+  it('lets a TRUSTED, independently DEMONSTRATED project claim upgrade a PARTIALLY_DEMONSTRATED assessment reading (R-PROJ-UPGRADE-04)', async () => {
+    const competencyModel = [
+      {
+        competencyId: COMPETENCY_ID,
+        skillCode: 'SQL',
+        capability: 'Query optimization',
+        role: 'critical' as const,
+        difficulty: 'ADVANCED' as const,
+      },
+    ];
+    const proficiencyRequirements = [
+      {
+        level: 'INTERMEDIATE' as const,
+        requiredCompetencyIds: [COMPETENCY_ID],
+        criticalCompetencyIds: [COMPETENCY_ID],
+        realWorldApplicationRequired: false,
+        substantialApplicationRequired: false,
+        interviewRequired: false,
+      },
+    ];
+
+    const input: FusionInput = {
+      competencyModel,
+      proficiencyRequirements,
+      sources: [
+        {
+          sourceId: 'ASSESSMENT',
+          available: true,
+          trustTier: 'TRUSTED',
+          observations: [
+            {
+              competencyId: COMPETENCY_ID,
+              capability: 'Query optimization',
+              claimedStatus: 'PARTIALLY_DEMONSTRATED',
+              evidence: ['borderline item'],
+            },
+          ],
+        },
+        {
+          sourceId: 'PROJECT',
+          available: true,
+          trustTier: 'TRUSTED',
+          observations: [
+            {
+              competencyId: COMPETENCY_ID,
+              capability: 'Query optimization',
+              claimedStatus: 'DEMONSTRATED',
+              evidence: ['verified, trusted project submission'],
+            },
+          ],
+        },
+      ],
+      targetProficiency: 'INTERMEDIATE',
+    };
+
+    const result = await Effect.runPromise(fuseDomainCapability(input));
+
+    expect(result.capabilityProfile[0].inferredStatus).toBe('DEMONSTRATED');
+    expect(result.capabilityProfile[0].primaryEvidenceSource).toBe('PROJECT');
+    expect(result.conflicts).toHaveLength(1);
+    expect(result.conflicts[0].resolved).toBe(true);
+  });
+
+  it('does NOT upgrade a merely PROVISIONAL or UNTRUSTED project claim over a PARTIALLY_DEMONSTRATED assessment', async () => {
+    const competencyModel = [
+      {
+        competencyId: COMPETENCY_ID,
+        skillCode: 'SQL',
+        capability: 'Query optimization',
+        role: 'critical' as const,
+        difficulty: 'ADVANCED' as const,
+      },
+    ];
+    const proficiencyRequirements = [
+      {
+        level: 'INTERMEDIATE' as const,
+        requiredCompetencyIds: [COMPETENCY_ID],
+        criticalCompetencyIds: [COMPETENCY_ID],
+        realWorldApplicationRequired: false,
+        substantialApplicationRequired: false,
+        interviewRequired: false,
+      },
+    ];
+
+    const input: FusionInput = {
+      competencyModel,
+      proficiencyRequirements,
+      sources: [
+        {
+          sourceId: 'ASSESSMENT',
+          available: true,
+          trustTier: 'TRUSTED',
+          observations: [
+            {
+              competencyId: COMPETENCY_ID,
+              capability: 'Query optimization',
+              claimedStatus: 'PARTIALLY_DEMONSTRATED',
+              evidence: ['borderline item'],
+            },
+          ],
+        },
+        {
+          sourceId: 'PROJECT',
+          available: true,
+          trustTier: 'PROVISIONAL',
+          observations: [
+            {
+              competencyId: COMPETENCY_ID,
+              capability: 'Query optimization',
+              claimedStatus: 'DEMONSTRATED',
+              evidence: ['unverified project submission'],
+            },
+          ],
+        },
+      ],
+      targetProficiency: 'INTERMEDIATE',
+    };
+
+    const result = await Effect.runPromise(fuseDomainCapability(input));
+
+    expect(result.capabilityProfile[0].inferredStatus).toBe('PARTIALLY_DEMONSTRATED');
+    expect(result.capabilityProfile[0].primaryEvidenceSource).toBe('ASSESSMENT');
+  });
+
+  it('reports INSUFFICIENT_EVIDENCE, not VETO_BLOCKED, when no domain veto fired but requirements are simply unmet', async () => {
+    const competencyModel = [
+      {
+        competencyId: COMPETENCY_ID,
+        skillCode: 'SQL',
+        capability: 'Query optimization',
+        role: 'critical' as const,
+        difficulty: 'ADVANCED' as const,
+      },
+    ];
+    const proficiencyRequirements = [
+      {
+        level: 'BEGINNER' as const,
+        requiredCompetencyIds: [COMPETENCY_ID],
+        criticalCompetencyIds: [COMPETENCY_ID],
+        realWorldApplicationRequired: false,
+        substantialApplicationRequired: false,
+        interviewRequired: false,
+      },
+    ];
+
+    const input: FusionInput = {
+      competencyModel,
+      proficiencyRequirements,
+      sources: [
+        {
+          sourceId: 'ASSESSMENT',
+          available: true,
+          trustTier: 'TRUSTED',
+          observations: [
+            {
+              competencyId: COMPETENCY_ID,
+              capability: 'Query optimization',
+              // PARTIALLY_DEMONSTRATED never satisfies a *critical* requirement
+              // (which needs DEMONSTRATED), so BEGINNER is unmet -- with no
+              // plagiarism/dedup/integrity/ceiling veto involved at all.
+              claimedStatus: 'PARTIALLY_DEMONSTRATED',
+              evidence: ['borderline item'],
+            },
+          ],
+        },
+      ],
+      targetProficiency: 'BEGINNER',
+    };
+
+    const result = await Effect.runPromise(fuseDomainCapability(input));
+
+    expect(result.inferredDomainProficiency).toBeNull();
+    expect(result.proficiencyInferenceReason).toBe('INSUFFICIENT_EVIDENCE');
+  });
+
+  it('reaches HIGH domain confidence when assessment has >=2 items per competency and project is strong/trusted (previously capped at MEDIUM by a hardcoded placeholder)', async () => {
+    const competencyModel = [
+      {
+        competencyId: COMPETENCY_ID,
+        skillCode: 'SQL',
+        capability: 'Query optimization',
+        role: 'critical' as const,
+        difficulty: 'ADVANCED' as const,
+      },
+    ];
+    const proficiencyRequirements = [
+      {
+        level: 'INTERMEDIATE' as const,
+        requiredCompetencyIds: [COMPETENCY_ID],
+        criticalCompetencyIds: [COMPETENCY_ID],
+        realWorldApplicationRequired: false,
+        substantialApplicationRequired: false,
+        interviewRequired: false,
+      },
+    ];
+
+    const input: FusionInput = {
+      competencyModel,
+      proficiencyRequirements,
+      sources: [
+        {
+          sourceId: 'ASSESSMENT',
+          available: true,
+          trustTier: 'TRUSTED',
+          observations: [
+            {
+              competencyId: COMPETENCY_ID,
+              capability: 'Query optimization',
+              claimedStatus: 'DEMONSTRATED',
+              evidence: ['item 1', 'item 2'],
+              itemCount: 2,
+            },
+          ],
+          metadata: { testedItemCount: 4 },
+        },
+        {
+          sourceId: 'PROJECT',
+          available: true,
+          trustTier: 'TRUSTED',
+          observations: [
+            {
+              competencyId: COMPETENCY_ID,
+              capability: 'Query optimization',
+              claimedStatus: 'DEMONSTRATED',
+              evidence: ['verified project submission'],
+            },
+          ],
+          metadata: { projectReport: { scores: { confidence: 0.9 } } },
+        },
+      ],
+      targetProficiency: 'INTERMEDIATE',
+    };
+
+    const result = await Effect.runPromise(fuseDomainCapability(input));
+
+    expect(result.confidence).toBe('HIGH');
+  });
 });
