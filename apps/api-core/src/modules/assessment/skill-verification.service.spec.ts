@@ -345,7 +345,7 @@ describe('SkillVerificationService', () => {
     expect(result.grade?.passed).toBe(true);
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
       expect.objectContaining({
-        topic: 'smart.skill.verification.completed',
+        topic: 'hirekiwi.skill.verification.completed',
         data: expect.objectContaining({ status: 'VERIFIED' }),
       }),
     );

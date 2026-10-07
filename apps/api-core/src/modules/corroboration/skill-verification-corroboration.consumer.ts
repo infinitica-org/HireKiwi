@@ -4,7 +4,7 @@ import {
   ACTIVE_TAXONOMY_VERSION,
   AssessmentPerformanceVectorSchema,
   SkillVerificationCompletedEventSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
 } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
@@ -31,7 +31,7 @@ export class SkillVerificationCorroborationConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.skillVerificationCompleted,
+        topic: HIREKIWI_TOPICS.skillVerificationCompleted,
         module: 'corroboration',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {

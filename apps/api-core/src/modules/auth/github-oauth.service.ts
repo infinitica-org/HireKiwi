@@ -122,7 +122,7 @@ export class GithubOauthService {
       headers: {
         Authorization: `Bearer ${token.access_token}`,
         Accept: 'application/vnd.github+json',
-        'User-Agent': 'smart-onboarding',
+        'User-Agent': 'hirekiwi-onboarding',
         'X-GitHub-Api-Version': '2022-11-28',
       },
       signal: AbortSignal.timeout(FETCH_MS),

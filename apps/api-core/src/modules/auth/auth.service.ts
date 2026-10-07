@@ -435,7 +435,7 @@ export class AuthService {
       throw new UnprocessableEntityException({
         error: 'unregistered_university_domain',
         message:
-          'Your university domain is not registered on SMART. Please contact your placement administrator.',
+          'Your university domain is not registered on HireKiwi. Please contact your placement administrator.',
         statusCode: 422,
       });
     }

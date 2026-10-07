@@ -1822,7 +1822,7 @@ export class BillingService {
 
     const contentText = [
       `BT`,
-      `/F1 16 Tf 50 720 Td (INVOICE - SMART PLATFORM) Tj`,
+      `/F1 16 Tf 50 720 Td (INVOICE - HireKiwi PLATFORM) Tj`,
       `/F1 10 Tf 0 -30 Td (Invoice Number: ${invoice.invoiceNumber}) Tj`,
       `0 -15 Td (Company: ${safeCompanyName}) Tj`,
       `0 -15 Td (Date: ${invoice.issuedAt.toISOString().slice(0, 10)}) Tj`,

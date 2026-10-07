@@ -16,7 +16,9 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const route = request.routeOptions?.url ?? request.url;
     // Prefer ALS (minted UUID), then interceptor stash — never raw inbound header.
     const traceId =
-      getContext()?.correlationId ?? request.smartLogContext?.correlationId ?? String(request.id);
+      getContext()?.correlationId ??
+      request.hirekiwiLogContext?.correlationId ??
+      String(request.id);
 
     if (exception instanceof ZodError) {
       logEvent(
