@@ -132,6 +132,17 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
       'Authorize-redirect kickoff for "Sign in with Google"; abuse risk is low but unauthenticated.',
   },
   {
+    key: 'auth.identify',
+    scope: 'IP',
+    limit: 5,
+    windowSeconds: 60,
+    burst: 2,
+    redisKey: 'rl:auth:identify:ip:{id}',
+    rationale:
+      'This endpoint is an intentional email-existence oracle for the identify-first login flow — tighter than auth.login to bound enumeration.',
+    onViolation: 'ALERT',
+  },
+  {
     key: 'auth.refresh',
     scope: 'USER',
     limit: 20,

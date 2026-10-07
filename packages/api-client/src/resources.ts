@@ -248,6 +248,7 @@ import {
   AuthTokenResponseSchema,
   AuthenticatedUserSchema,
   CompanyPortalAccountSchema,
+  IdentifyResponseSchema,
   UserHoldResponseSchema,
   RegisterResponseSchema,
   BatchDtoSchema,
@@ -450,6 +451,12 @@ export function authApi(client: SmartApiClient) {
   return {
     login: (body: { email: string; password: string }) =>
       client.post(prefixed('/auth/login'), body, { schema: AuthTokenResponseSchema }),
+
+    identify: (body: { email: string }) =>
+      client.post(prefixed('/auth/identify'), body, {
+        schema: IdentifyResponseSchema,
+        anonymous: true,
+      }),
 
     registerStudent: (body: RegisterStudentRequest) =>
       client.post(prefixed('/auth/register'), body, {

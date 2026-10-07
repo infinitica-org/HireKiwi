@@ -13,12 +13,22 @@ vi.mock('next/link', () => ({
   ),
 }));
 vi.mock('../../lib/api', () => ({
-  api: { auth: { login: vi.fn(), resendEmailVerification: vi.fn() } },
+  api: {
+    auth: { identify: vi.fn(), login: vi.fn(), resendEmailVerification: vi.fn() },
+  },
   storeSession: vi.fn(),
   redirectForRole: vi.fn(),
 }));
 
-describe('LoginForm with an unverified email', () => {
+async function identifyAndReachPasswordStage(email: string) {
+  render(<LoginForm />);
+  const emailInput = screen.getByLabelText('Email');
+  fireEvent.change(emailInput, { target: { value: email } });
+  fireEvent.submit(emailInput.closest('form')!);
+  await screen.findByLabelText('Password');
+}
+
+describe('LoginForm identify-first flow', () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
@@ -26,7 +36,35 @@ describe('LoginForm with an unverified email', () => {
     cleanup();
   });
 
+  it('shows the password field when the email already has an account', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: true });
+
+    await identifyAndReachPasswordStage('jane@psgtech.ac.in');
+
+    expect(api.auth.identify).toHaveBeenCalledWith({ email: 'jane@psgtech.ac.in' });
+    expect(screen.getByLabelText('Password')).toBeTruthy();
+  });
+
+  it('offers student/company signup choices when the email has no account', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: false });
+
+    render(<LoginForm />);
+    const emailInput = screen.getByLabelText('Email');
+    fireEvent.change(emailInput, { target: { value: 'new.person@example.com' } });
+    fireEvent.submit(emailInput.closest('form')!);
+
+    expect(await screen.findByText(/Sign up as a student/i)).toBeTruthy();
+    expect(screen.getByText(/Sign up as a company/i)).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Sign up as a student/i }).getAttribute('href')).toBe(
+      '/register?email=new.person%40example.com',
+    );
+    expect(screen.getByRole('link', { name: /Sign up as a company/i }).getAttribute('href')).toBe(
+      '/company/register?email=new.person%40example.com',
+    );
+  });
+
   it('explains why sign-in failed and offers a new verification link', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: true });
     vi.mocked(api.auth.login).mockRejectedValue(
       new SmartApiError({
         error: 'email_not_verified',
@@ -36,15 +74,11 @@ describe('LoginForm with an unverified email', () => {
     );
     vi.mocked(api.auth.resendEmailVerification).mockResolvedValue(undefined);
 
-    const { container } = render(<LoginForm />);
-    const email = container.querySelector('input[type="email"]');
-    const password = container.querySelector('input[type="password"]');
-    if (!email || !password) throw new Error('login inputs missing');
-    fireEvent.change(email, { target: { value: 'jane@psgtech.ac.in' } });
+    await identifyAndReachPasswordStage('jane@psgtech.ac.in');
+
+    const password = screen.getByLabelText('Password');
     fireEvent.change(password, { target: { value: 'Password123!' } });
-    const form = email.closest('form');
-    if (!form) throw new Error('form missing');
-    fireEvent.submit(form);
+    fireEvent.submit(password.closest('form')!);
 
     expect((await screen.findByRole('alert')).textContent).toBe(
       'Verify your email before signing in.',
@@ -65,9 +99,14 @@ describe('LoginForm accessibility (S6-VV-161)', () => {
     cleanup();
   });
 
-  it('gives the email and password inputs accessible names', () => {
+  it('gives the email input an accessible name', () => {
     render(<LoginForm />);
     expect(screen.getByLabelText('Email').getAttribute('type')).toBe('email');
+  });
+
+  it('gives the password input an accessible name once reached', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: true });
+    await identifyAndReachPasswordStage('jane@psgtech.ac.in');
     expect(screen.getByLabelText('Password').getAttribute('type')).toBe('password');
   });
 });

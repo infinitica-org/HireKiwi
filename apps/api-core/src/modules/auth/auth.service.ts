@@ -27,6 +27,7 @@ import {
   type AuthTokenResponse,
   type AuthenticatedUser,
   type CompanyPortalAccount,
+  type IdentifyResponse,
   type ListActiveSessionsQuery,
   type RegisterRequest,
   type RegisterStudentRequest,
@@ -102,6 +103,15 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  /** Identify-first login step. Deliberately reveals existence — see IdentifyResponseSchema. */
+  async identify(email: string): Promise<IdentifyResponse> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true },
+    });
+    return { exists: Boolean(user) };
   }
 
   async login(email: string, password: string, reply: FastifyReply): Promise<AuthTokenResponse> {

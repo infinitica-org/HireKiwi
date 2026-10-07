@@ -14,6 +14,7 @@ import {
 import {
   API_PREFIX,
   AcceptInvitationRequestSchema,
+  IdentifyRequestSchema,
   PasswordLoginRequestSchema,
   PasswordResetConfirmRequestSchema,
   PasswordResetRequestSchema,
@@ -52,6 +53,13 @@ export class AuthController {
   login(@Body() body: unknown, @Res({ passthrough: true }) reply: FastifyReply) {
     const parsed = PasswordLoginRequestSchema.parse(body);
     return this.auth.login(parsed.email, parsed.password, reply);
+  }
+
+  @Public()
+  @Post('identify')
+  identify(@Body() body: unknown) {
+    const { email } = IdentifyRequestSchema.parse(body);
+    return this.auth.identify(email);
   }
 
   @Public()

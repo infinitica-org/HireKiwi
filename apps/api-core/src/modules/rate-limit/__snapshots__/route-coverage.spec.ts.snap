@@ -344,6 +344,7 @@ exports[`declarative throttle matrix (S1-VV-05) > snapshots method+path → poli
   "POST /assessment/skill-verify/:sessionId/save": "assessment.skillClaim",
   "POST /assessment/start": "role.student",
   "POST /assessment/submit-l1": "assessment.submitL1",
+  "POST /auth/identify": "auth.identify",
   "POST /auth/invitations/:token/accept": "auth.invite",
   "POST /auth/login": "auth.login",
   "POST /auth/logout": "role.student",
