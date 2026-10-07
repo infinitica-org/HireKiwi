@@ -62,7 +62,7 @@ describe('Accessibility & WCAG Compliance Unit Tests', () => {
   });
 
   it('UserMenu closes on Escape key press', () => {
-    render(<UserMenu user={{ name: 'Sathesh V', email: 'sathesh@smart.edu' }} />);
+    render(<UserMenu user={{ name: 'Sathesh V', email: 'sathesh@hirekiwi.edu' }} />);
     const menuButton = screen.getByRole('button');
     fireEvent.click(menuButton);
     expect(screen.getByRole('menu')).toBeDefined();

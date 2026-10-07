@@ -5,7 +5,7 @@ import { cn } from '../lib/cn';
 
 /**
  * Certification-tier badge. Colours come from the shared theme tokens so a Gold
- * on the student portal is the same Gold an employer sees on verify.smart.
+ * on the student portal is the same Gold an employer sees on verify.hirekiwi.
  *
  * Owner: Satheswaran V.
  */

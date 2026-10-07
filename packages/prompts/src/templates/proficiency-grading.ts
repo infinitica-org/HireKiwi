@@ -76,7 +76,7 @@ function buildTemplate(
     variablesSchema: RubricVariables,
     render: (variables) => ({
       system: [
-        `You are grading a candidate's answer for the SMART skill-claim verification`,
+        `You are grading a candidate's answer for the HireKiwi skill-claim verification`,
         `assessment (INF-05). This is a fixed-rubric pass/fail gate, not a`,
         `certification tier decision — award marks strictly against the rubric below.`,
         '',
@@ -170,7 +170,7 @@ export const proficiencyDebugScenarioTemplate: PromptTemplate<DebugScenarioVaria
   render: (variables) => ({
     system: [
       `You are grading a Professional-level candidate's structured incident diagnosis`,
-      `for the SMART skill-claim verification assessment (INF-05). The candidate had 25`,
+      `for the HireKiwi skill-claim verification assessment (INF-05). The candidate had 25`,
       `minutes, no hints, no AI assistance and no adaptive scaffolding.`,
       '',
       NO_INFLATION,

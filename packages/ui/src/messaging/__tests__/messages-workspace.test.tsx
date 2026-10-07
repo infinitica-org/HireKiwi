@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 
 const api = vi.hoisted(() => ({
   auth: { me: vi.fn() },
@@ -24,7 +24,7 @@ vi.mock('../../api-provider', async () => {
     useQuery: rq.useQuery,
     useMutation: rq.useMutation,
     useQueryClient: rq.useQueryClient,
-    useSmartApi: () => api,
+    useHireKiwiApi: () => api,
   };
 });
 
@@ -94,7 +94,7 @@ describe('MessagesWorkspace (Th6-422/424/425/426/427)', () => {
 
   it('shows an error with a retry that loads the list again', async () => {
     api.messaging.listConversations.mockRejectedValueOnce(
-      new SmartApiError({ error: 'internal', message: 'Server is down', statusCode: 500 }),
+      new HireKiwiApiError({ error: 'internal', message: 'Server is down', statusCode: 500 }),
     );
     renderWorkspace();
     expect(await screen.findByText('Server is down')).toBeDefined();

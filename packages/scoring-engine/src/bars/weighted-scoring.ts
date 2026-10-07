@@ -9,7 +9,7 @@ import { roundTo, sum } from '../statistics.js';
  *
  * The weight is `real_world_weight` — how much practitioners said the
  * competency actually matters on the job. That weighting is the difference
- * between SMART and a generic percentage-correct test, so it is applied here
+ * between HireKiwi and a generic percentage-correct test, so it is applied here
  * rather than being left to each caller to remember.
  *
  * Owner: Ramansh.

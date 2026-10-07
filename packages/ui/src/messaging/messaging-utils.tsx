@@ -1,14 +1,14 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { SmartApiError } from '@hirekiwi/api-client';
-import { useQuery, useSmartApi } from '../api-provider';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
+import { useQuery, useHireKiwiApi } from '../api-provider';
 
 /** Th6-422 — client polling interval. TODO: replace polling with a socket subscription. */
 export const MESSAGING_POLL_MS = 15_000;
 
 export function messageErrorText(error: unknown): string {
-  return error instanceof SmartApiError ? error.message : 'Something went wrong. Try again.';
+  return error instanceof HireKiwiApiError ? error.message : 'Something went wrong. Try again.';
 }
 
 export function newIdempotencyKey(): string {
@@ -17,7 +17,7 @@ export function newIdempotencyKey(): string {
 
 /** Th6-426 — the total unread count for a nav badge. Returns 0 while loading or on error. */
 export function useUnreadMessageCount(): number {
-  const api = useSmartApi();
+  const api = useHireKiwiApi();
   const query = useQuery({
     queryKey: ['messaging', 'unread'],
     queryFn: () => api.messaging.unreadCount(),

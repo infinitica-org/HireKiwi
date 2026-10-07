@@ -8,7 +8,7 @@ import {
   type ListAdminReportsQuery,
 } from '@hirekiwi/contracts';
 import { Flag } from 'lucide-react';
-import { useQuery, useSmartApi } from '../api-provider';
+import { useQuery, useHireKiwiApi } from '../api-provider';
 import { Button } from '../components/button';
 import { EmptyState, ErrorState, LoadingState } from '../components/common-states';
 import { messageErrorText } from './messaging-utils';
@@ -50,7 +50,7 @@ export function AdminReportsList({
   detailHref = '/admin/reports',
   linkComponent: LinkComponent = 'a',
 }: AdminReportsListProps) {
-  const api = useSmartApi();
+  const api = useHireKiwiApi();
   // Messages are what moderators open first.
   const [targetType, setTargetType] = useState<TargetFilter>('MESSAGE');
   const [status, setStatus] = useState<StatusFilter>('');

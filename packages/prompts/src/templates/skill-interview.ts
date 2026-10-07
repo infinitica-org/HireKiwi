@@ -46,7 +46,7 @@ export const skillInterviewExaminerTemplate: PromptTemplate<SkillInterviewExamin
   variablesSchema: SkillInterviewExaminerVariables,
   render: (variables) => ({
     system: [
-      'You write three short interview questions for a SMART skill check.',
+      'You write three short interview questions for a HireKiwi skill check.',
       'This is not a multiple-choice quiz and not a project defense.',
       '',
       'RULES',
