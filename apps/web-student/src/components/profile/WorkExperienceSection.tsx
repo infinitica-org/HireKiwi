@@ -86,6 +86,18 @@ export function WorkExperienceSection() {
     queryFn: () => api.users.listWorkExperiences(),
     staleTime: 60_000,
   });
+
+  const {
+    data: declarationData,
+    isLoading: declarationLoading,
+    refetch: refetchDeclaration,
+  } = useQuery({
+    queryKey: queryKeys.myWorkExperienceDeclaration(),
+    queryFn: () => api.users.getWorkExperienceDeclaration(),
+    staleTime: 60_000,
+  });
+  const hasNoWorkExperience = declarationData?.hasNoWorkExperience ?? null;
+  const [isDeclaring, setIsDeclaring] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [proofValidationError, setProofValidationError] = useState<string | null>(null);
 
@@ -172,7 +184,40 @@ export function WorkExperienceSection() {
 
   const fetchExperiences = async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.myWorkExperiences() });
-    await refetchExperiences();
+    await queryClient.invalidateQueries({ queryKey: queryKeys.myWorkExperienceDeclaration() });
+    await Promise.all([refetchExperiences(), refetchDeclaration()]);
+  };
+
+  const handleDeclareNoExperience = async () => {
+    try {
+      setIsDeclaring(true);
+      setError(null);
+      const res = await api.users.updateWorkExperienceDeclaration({ hasNoWorkExperience: true });
+      queryClient.setQueryData(queryKeys.myWorkExperienceDeclaration(), res);
+      await fetchExperiences();
+    } catch (err: unknown) {
+      setError(
+        workExperienceSaveErrorMessage(err, 'Failed to update work experience declaration.'),
+      );
+    } finally {
+      setIsDeclaring(false);
+    }
+  };
+
+  const handleChangeDeclaration = async () => {
+    try {
+      setIsDeclaring(true);
+      setError(null);
+      const res = await api.users.updateWorkExperienceDeclaration({ hasNoWorkExperience: null });
+      queryClient.setQueryData(queryKeys.myWorkExperienceDeclaration(), res);
+      await fetchExperiences();
+    } catch (err: unknown) {
+      setError(
+        workExperienceSaveErrorMessage(err, 'Failed to update work experience declaration.'),
+      );
+    } finally {
+      setIsDeclaring(false);
+    }
   };
 
   const openAddModal = () => {
@@ -519,6 +564,11 @@ export function WorkExperienceSection() {
       setModalPendingDocs([]);
       setModalNewProofFile(null);
       setIsModalOpen(false);
+      if (!editingId) {
+        queryClient.setQueryData(queryKeys.myWorkExperienceDeclaration(), {
+          hasNoWorkExperience: false,
+        });
+      }
       await fetchExperiences();
 
       if (trimmedVerifierEmail && savedExperienceId) {
@@ -547,6 +597,9 @@ export function WorkExperienceSection() {
     if (!confirm('Are you sure you want to delete this work experience entry?')) return;
     try {
       await api.users.deleteWorkExperience(id);
+      queryClient.setQueryData(queryKeys.myWorkExperienceDeclaration(), {
+        hasNoWorkExperience: false,
+      });
       await fetchExperiences();
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Failed to delete work experience entry.');
@@ -639,7 +692,7 @@ export function WorkExperienceSection() {
         evidenceType="WORK_EXPERIENCE"
         description={meta.description}
         action={
-          !loading ? (
+          !loading && !declarationLoading ? (
             <button
               type="button"
               onClick={openAddModal}
@@ -713,13 +766,19 @@ export function WorkExperienceSection() {
         </div>
       ) : null}
 
-      {loading ? (
+      {loading || declarationLoading ? (
         <div className="flex items-center justify-center py-12 text-[var(--ds-text-muted)]">
           <Loader2 className="h-6 w-6 animate-spin text-[var(--ds-green)]" />
           <span className="ml-2 text-sm">Loading work experience entries...</span>
         </div>
       ) : experiences.length === 0 ? (
-        <ExperienceEmptyState onAdd={openAddModal} />
+        <ExperienceEmptyState
+          onAdd={openAddModal}
+          onDeclareNoExperience={handleDeclareNoExperience}
+          onChangeDeclaration={handleChangeDeclaration}
+          isDeclaring={isDeclaring}
+          hasDeclaredNoExperience={hasNoWorkExperience === true}
+        />
       ) : (
         <div className="flex w-full max-w-none flex-col gap-4">
           {experiences.map((exp, index) => (

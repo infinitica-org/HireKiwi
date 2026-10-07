@@ -747,3 +747,21 @@ export const SubmitManagerEndorsementResponseSchema = z.object({
 export type SubmitManagerEndorsementResponseDto = z.infer<
   typeof SubmitManagerEndorsementResponseSchema
 >;
+
+/* -------------------- Work Experience Declaration -------------------- */
+
+export const WorkExperienceDeclarationResponseSchema = z.object({
+  hasNoWorkExperience: z.boolean().nullable(),
+});
+export type WorkExperienceDeclarationResponseDto = z.infer<
+  typeof WorkExperienceDeclarationResponseSchema
+>;
+export const WorkExperienceDeclarationSchema = WorkExperienceDeclarationResponseSchema;
+export type WorkExperienceDeclarationDto = WorkExperienceDeclarationResponseDto;
+
+export const UpdateWorkExperienceDeclarationSchema = z.object({
+  hasNoWorkExperience: z.boolean().nullable(),
+});
+export type UpdateWorkExperienceDeclarationDto = z.infer<
+  typeof UpdateWorkExperienceDeclarationSchema
+>;

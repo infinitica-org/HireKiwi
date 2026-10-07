@@ -387,12 +387,14 @@ import {
   SendManagerEndorsementResponseSchema,
   ResendManagerEndorsementResponseSchema,
   WorkExperienceOpsDashboardItemSchema,
+  WorkExperienceDeclarationResponseSchema,
   type CreateWorkExperienceDto,
   type UpdateWorkExperienceDto,
   type CreateWorkExperienceDocumentDto,
   type SubmitWorkExperienceVerificationDto,
   type SendManagerEndorsementDto,
   type SubmitManagerEndorsementDto,
+  type UpdateWorkExperienceDeclarationDto,
   UsernameStatusResponseSchema,
   ProfileVisibilityResponseSchema,
   PersonalInfoResponseSchema,
@@ -742,6 +744,19 @@ export function usersApi(client: SmartApiClient) {
     listWorkExperiences: () =>
       client.get(prefixed('/users/me/work-experiences'), {
         schema: z.array(WorkExperienceSchema),
+      }),
+
+    getWorkExperienceDeclaration: () =>
+      client.get(prefixed('/users/me/work-experiences/declaration'), {
+        schema: WorkExperienceDeclarationResponseSchema,
+      }),
+
+    updateWorkExperienceDeclaration: (body: UpdateWorkExperienceDeclarationDto) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed('/users/me/work-experiences/declaration'),
+        body,
+        schema: WorkExperienceDeclarationResponseSchema,
       }),
 
     listEducation: () =>

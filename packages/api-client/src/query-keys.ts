@@ -32,6 +32,7 @@ export const queryKeys = {
   mySkillClaims: () => ['me', 'skill-claims'] as const,
   myEducation: () => ['me', 'education'] as const,
   myWorkExperiences: () => ['me', 'work-experiences'] as const,
+  myWorkExperienceDeclaration: () => ['me', 'work-experiences', 'declaration'] as const,
   myLanguages: () => ['me', 'languages'] as const,
   myProjects: () => ['me', 'projects'] as const,
   myCandidateCertificates: () => ['me', 'candidate-certificates'] as const,

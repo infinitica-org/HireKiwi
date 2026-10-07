@@ -133,6 +133,25 @@ describe('computeProfileCompletion', () => {
     ).toBe(true);
   });
 
+  it('marks experience complete when hasNoWorkExperience is true even without experience records', () => {
+    expect(
+      computeProfileCompletion(emptyInput({ hasNoWorkExperience: true, experiences: [] }))
+        .areaStatus.experience,
+    ).toBe(true);
+  });
+
+  it('marks experience incomplete when hasNoWorkExperience is null or false and experiences are empty', () => {
+    expect(
+      computeProfileCompletion(emptyInput({ hasNoWorkExperience: null, experiences: [] }))
+        .areaStatus.experience,
+    ).toBe(false);
+
+    expect(
+      computeProfileCompletion(emptyInput({ hasNoWorkExperience: false, experiences: [] }))
+        .areaStatus.experience,
+    ).toBe(false);
+  });
+
   it('marks projects complete from project records', () => {
     expect(
       computeProfileCompletion(

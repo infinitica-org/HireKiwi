@@ -37,6 +37,7 @@ import type {
   UpdateWorkExperienceDto,
   WorkExperienceValidationInput,
   WorkExperienceProofReasonCode,
+  WorkExperienceDeclarationResponseDto,
 } from '@hirekiwi/contracts';
 import {
   CreateWorkExperienceSchema,
@@ -481,6 +482,60 @@ export class WorkExperienceService {
     return this.signDocuments(this.mapToDto(record));
   }
 
+  async getDeclaration(studentId: string): Promise<WorkExperienceDeclarationResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: studentId },
+      select: { hasNoWorkExperience: true },
+    });
+    if (!user) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Student not found.',
+        statusCode: 404,
+      });
+    }
+    return {
+      hasNoWorkExperience: user.hasNoWorkExperience ?? null,
+    };
+  }
+
+  async setDeclaration(
+    studentId: string,
+    hasNoWorkExperience: boolean | null,
+  ): Promise<WorkExperienceDeclarationResponseDto> {
+    if (hasNoWorkExperience === true) {
+      const count = await this.prisma.workExperience.count({
+        where: { studentId },
+      });
+      if (count > 0) {
+        throw new BadRequestException({
+          error: 'validation_error',
+          message: 'Cannot declare no work experience while work experience entries exist.',
+          statusCode: 400,
+        });
+      }
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: studentId },
+      data: { hasNoWorkExperience },
+      select: { hasNoWorkExperience: true },
+    });
+
+    await this.auditPublisher.record({
+      actorId: studentId,
+      action: 'WORK_EXPERIENCE_DECLARATION_UPDATED',
+      resourceType: 'User',
+      resourceId: studentId,
+      reasonCode: null,
+      metadata: { hasNoWorkExperience },
+    });
+
+    return {
+      hasNoWorkExperience: updated.hasNoWorkExperience ?? null,
+    };
+  }
+
   /** Th6-600 — presigned PUT (15 min) for one PDF/PNG proof on an experience the student owns. */
   async createDocumentUploadUrl(studentId: string, experienceId: string, body: unknown) {
     const existing = await this.prisma.workExperience.findUnique({ where: { id: experienceId } });
@@ -680,6 +735,11 @@ export class WorkExperienceService {
     }
 
     await this.syncEvidenceRecord(studentId, created.id, structuredMetadata);
+
+    await this.prisma.user.update({
+      where: { id: studentId },
+      data: { hasNoWorkExperience: false },
+    });
 
     await this.auditPublisher.record({
       actorId: studentId,

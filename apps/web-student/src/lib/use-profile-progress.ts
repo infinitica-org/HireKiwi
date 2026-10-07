@@ -63,6 +63,11 @@ export function useProfileProgress(): UseProfileProgressResult {
     queryKey: [...queryKeys.myWorkExperiences(), refreshToken],
     queryFn: () => api.users.listWorkExperiences(),
   });
+  const declarationQuery = useQuery({
+    ...queryOpts,
+    queryKey: [...queryKeys.myWorkExperienceDeclaration(), refreshToken],
+    queryFn: () => api.users.getWorkExperienceDeclaration(),
+  });
   const languagesQuery = useQuery({
     ...queryOpts,
     queryKey: [...queryKeys.myLanguages(), refreshToken],
@@ -84,6 +89,7 @@ export function useProfileProgress(): UseProfileProgressResult {
     skillClaimsQuery,
     educationQuery,
     experiencesQuery,
+    declarationQuery,
     languagesQuery,
     projectsQuery,
     certificatesQuery,
@@ -100,6 +106,7 @@ export function useProfileProgress(): UseProfileProgressResult {
   const claims = skillClaimsQuery.data ?? [];
   const education = educationQuery.data ?? [];
   const experiences = experiencesQuery.data ?? [];
+  const hasNoWorkExperience = declarationQuery.data?.hasNoWorkExperience ?? null;
   const languages = languagesQuery.data ?? [];
   const projects = projectsQuery.data ?? [];
   const certificates = certificatesQuery.data ?? [];
@@ -113,6 +120,7 @@ export function useProfileProgress(): UseProfileProgressResult {
         languages,
         education,
         experiences,
+        hasNoWorkExperience,
         projects,
         certificates,
         hasProfilePhoto: Boolean(onboarding.profilePhotoUrl),

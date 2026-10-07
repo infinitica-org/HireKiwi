@@ -109,6 +109,7 @@ export interface ProfileProgressInput {
   languages: CandidateLanguageDto[];
   education: CandidateEducationDto[];
   experiences: WorkExperienceDto[];
+  hasNoWorkExperience?: boolean | null;
   projects: ProjectDto[];
   certificates: CandidateCertificateDto[];
   hasProfilePhoto: boolean;
@@ -164,7 +165,7 @@ export function isEducationAreaComplete(input: ProfileProgressInput): boolean {
 }
 
 export function isExperienceAreaComplete(input: ProfileProgressInput): boolean {
-  return input.experiences.length > 0;
+  return input.hasNoWorkExperience === true || input.experiences.length > 0;
 }
 
 export function isProjectsAreaComplete(input: ProfileProgressInput): boolean {
