@@ -9,6 +9,7 @@ import {
   returnToForRole,
   storeAccessToken,
 } from '@hirekiwi/api-client';
+import { API_PREFIX } from '@hirekiwi/contracts';
 import type { AuthenticatedUser } from '@hirekiwi/contracts';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -41,3 +42,15 @@ export function redirectForRole(
 export { buildPortalRedirectUrl, studentUrl, tpoUrl, adminUrl, companyUrl, portalOrigins };
 
 export const studentDashboardUrl = `${studentUrl.replace(/\/$/u, '')}/dashboard`;
+
+export { baseUrl as apiBaseUrl };
+
+export type GoogleOauthPortal = 'student' | 'company';
+
+/** Full-page navigation target for the "Continue with Google" buttons. */
+export function buildGoogleOauthUrl(portal: GoogleOauthPortal, returnTo?: string | null): string {
+  const url = new URL(`${baseUrl.replace(/\/$/u, '')}${API_PREFIX}/auth/google`);
+  url.searchParams.set('portal', portal);
+  if (returnTo) url.searchParams.set('returnTo', returnTo);
+  return url.toString();
+}

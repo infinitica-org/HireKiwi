@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
+import { RedirectIfAuthenticated } from '../../components/redirect-if-authenticated';
 import { LoginForm } from './login-form';
 import { LoginLoadingState, LoginShell } from './login-shell';
 
@@ -14,9 +15,11 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <Suspense fallback={<LoginLoadingState />}>
-      <LoginShell>
-        <LoginForm />
-      </LoginShell>
+      <RedirectIfAuthenticated>
+        <LoginShell>
+          <LoginForm />
+        </LoginShell>
+      </RedirectIfAuthenticated>
     </Suspense>
   );
 }

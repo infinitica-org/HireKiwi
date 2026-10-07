@@ -6,6 +6,8 @@ import { AdminSessionsController } from './admin-sessions.controller.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { EmailVerificationService } from './email-verification.service.js';
+import { GithubOauthService } from './github-oauth.service.js';
+import { GoogleOauthService } from './google-oauth.service.js';
 import { LinkedinOauthService } from './linkedin-oauth.service.js';
 import { PasswordResetService } from './password-reset.service.js';
 
@@ -19,7 +21,14 @@ import { PasswordResetService } from './password-reset.service.js';
     }),
   ],
   controllers: [AuthController, AdminSessionsController],
-  providers: [AuthService, LinkedinOauthService, EmailVerificationService, PasswordResetService],
-  exports: [AuthService, LinkedinOauthService],
+  providers: [
+    AuthService,
+    LinkedinOauthService,
+    GoogleOauthService,
+    GithubOauthService,
+    EmailVerificationService,
+    PasswordResetService,
+  ],
+  exports: [AuthService, LinkedinOauthService, GoogleOauthService, GithubOauthService],
 })
 export class AuthModule {}

@@ -7,7 +7,8 @@ import { isSmartApiError } from '@hirekiwi/api-client';
 import { EMAIL_NOT_VERIFIED_ERROR } from '@hirekiwi/contracts';
 import { EyeIcon, EyeOffIcon } from '../../components/auth-icons';
 import { ResendVerification } from '../../components/resend-verification';
-import { api, redirectForRole, storeSession } from '../../lib/api';
+import { api, buildGoogleOauthUrl, redirectForRole, storeSession } from '../../lib/api';
+import { oauthErrorMessage } from '../../lib/oauth-error-message';
 
 const inputClass =
   'w-full h-12 rounded-md border border-[#e5e7eb] bg-white px-3.5 text-sm text-[#111827] placeholder:text-[#9ca3af] transition-[border-color,box-shadow] duration-150 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10';
@@ -17,9 +18,15 @@ export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    oauthErrorMessage(searchParams.get('oauthError')),
+  );
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  function onGoogleClick() {
+    window.location.href = buildGoogleOauthUrl('student', searchParams.get('returnTo'));
+  }
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -72,11 +79,7 @@ export function LoginForm() {
         <div className="mt-8 w-full max-w-[420px] space-y-4">
           <button
             type="button"
-            onClick={() => {
-              alert(
-                'Google authentication will redirect to your university single sign-on provider.',
-              );
-            }}
+            onClick={onGoogleClick}
             className="flex h-11 w-full items-center justify-center gap-3 rounded-md border border-[#e5e7eb] bg-white px-4 text-md font-semibold text-[#111827]  transition hover:bg-slate-50 active:scale-[0.99]"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">

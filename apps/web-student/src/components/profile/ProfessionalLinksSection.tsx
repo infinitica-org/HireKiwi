@@ -22,6 +22,7 @@ import {
   ConsentNotice,
   IntegrationCard,
 } from '@/components/profile/CodingPlatformIntegrations';
+import { GithubPrivateRepoIntegration } from '@/components/profile/GithubPrivateRepoIntegration';
 import { profileSectionMeta } from '@/lib/profile-sections';
 import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
 import { useOnboarding } from '@/lib/use-onboarding';
@@ -370,6 +371,7 @@ export function ProfessionalLinksSection() {
               pickerOpen={pickerOpen}
               onPickerOpenChange={setPickerOpen}
             />
+            <GithubPrivateRepoIntegration />
           </div>
 
           {/* Test and Automation Bridge */}

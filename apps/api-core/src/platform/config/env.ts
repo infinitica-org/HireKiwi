@@ -98,7 +98,8 @@ const EnvSchema = z.object({
    * CN-T01 GitHub identity/repo-picker proxy. Unauthenticated GitHub REST calls
    * are capped at 60/hr per source IP — far too low once real traffic hits this
    * endpoint. Setting a PAT (no scopes needed, public data only) raises that to
-   * 5,000/hr. No user-facing GitHub OAuth: we only ever read public data.
+   * 5,000/hr. This app-level token only ever reads public data; see
+   * GITHUB_OAUTH_CLIENT_ID below for the per-student private-repo OAuth flow.
    */
   GITHUB_API_TOKEN: z.string().optional(),
 
@@ -121,6 +122,33 @@ const EnvSchema = z.object({
   LINKEDIN_REDIRECT_URI: z
     .string()
     .default('http://localhost:3000/api/v1/users/onboarding/linkedin/callback'),
+
+  /**
+   * "Sign in with Google" — primary account authentication on the student and
+   * company login pages (distinct from LINKEDIN_*, which only verifies an
+   * already-signed-in student's profile for evidence purposes).
+   */
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  /** Must exactly match the redirect URI registered on the Google OAuth client. */
+  GOOGLE_OAUTH_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:3000/api/v1/auth/google/callback'),
+
+  /**
+   * "Sign in with GitHub" (classic `repo` scope) — an already-signed-in student
+   * grants read access to their private repos so corroboration can analyze
+   * them, not just their public ones. The resulting access token is encrypted
+   * at rest with GITHUB_TOKEN_ENCRYPTION_KEY; see secret-cipher.util.ts.
+   * GitHub OAuth Apps accept exactly one callback URL, unlike Google.
+   */
+  GITHUB_OAUTH_CLIENT_ID: z.string().optional(),
+  GITHUB_OAUTH_CLIENT_SECRET: z.string().optional(),
+  GITHUB_OAUTH_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:3000/api/v1/users/onboarding/github/callback'),
+  /** AES-256-GCM key (any passphrase; it is hashed to 32 bytes) for stored GitHub access tokens. */
+  GITHUB_TOKEN_ENCRYPTION_KEY: z.string().optional(),
 
   ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_AI_API_KEY: z.string().optional(),

@@ -122,6 +122,16 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     onViolation: 'ALERT',
   },
   {
+    key: 'auth.google',
+    scope: 'IP',
+    limit: 20,
+    windowSeconds: 60,
+    burst: 5,
+    redisKey: 'rl:auth:google:ip:{id}',
+    rationale:
+      'Authorize-redirect kickoff for "Sign in with Google"; abuse risk is low but unauthenticated.',
+  },
+  {
     key: 'auth.refresh',
     scope: 'USER',
     limit: 20,
