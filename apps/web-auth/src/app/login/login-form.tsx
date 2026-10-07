@@ -251,8 +251,8 @@ export function LoginForm() {
         {stage === 'choose-signup' ? (
           <div className="mt-8 w-full max-w-[420px] space-y-4 text-center mx-auto">
             <p className="text-sm text-[#6b7280]">
-              We couldn&apos;t find an account for <span className="font-medium">{email}</span>.
-              How would you like to sign up?
+              We couldn&apos;t find an account for <span className="font-medium">{email}</span>. How
+              would you like to sign up?
             </p>
 
             <div className="space-y-3">
@@ -268,9 +268,7 @@ export function LoginForm() {
                 href={`/company/register?email=${encodeURIComponent(email)}`}
                 className="flex h-14 w-full flex-col items-start justify-center rounded-md border border-[#e5e7eb] bg-white px-4 text-left transition hover:bg-slate-50"
               >
-                <span className="text-sm font-semibold text-[#111827]">
-                  Sign up as a company
-                </span>
+                <span className="text-sm font-semibold text-[#111827]">Sign up as a company</span>
                 <span className="text-xs text-[#6b7280]">Hire from a verified talent pool</span>
               </Link>
             </div>
