@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialsSection } from './CredentialsSection';
 
@@ -81,7 +81,9 @@ describe('CredentialsSection', () => {
     fireEvent.change(screen.getByPlaceholderText('e.g. AWS Certified Solutions Architect'), {
       target: { value: 'AWS Certified Solutions Architect' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Add credential' }));
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Add credential' }),
+    );
 
     await waitFor(() => {
       expect(createCredential).toHaveBeenCalledWith(

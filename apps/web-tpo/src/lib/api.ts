@@ -18,6 +18,7 @@ import {
   UploadJobOpeningLogoResponseSchema,
   ShortlistDtoSchema,
   SendMessageResponseSchema,
+  UniversityReadinessAnalyticsResponseSchema,
   UniversityRosterResponseSchema,
   UniversityStudentSummarySchema,
   z,
@@ -36,6 +37,8 @@ import {
   type StaffRole,
   type SendMessageResponse,
   type UniversityMessageStudentRequest,
+  type UniversityReadinessAnalyticsQuery,
+  type UniversityReadinessAnalyticsResponse,
   type UniversityRosterQuery,
   type UniversityRosterResponse,
   type UniversityStudentSummary,
@@ -215,6 +218,14 @@ export const staffApi = {
 
 /** UNI-04 — student readiness dashboard (Th6-437 to Th6-444). */
 export const universityApi = {
+  /** Th6-607 - tier distribution + department x domain heatmap for the caller's university. */
+  readinessAnalytics: (
+    query: UniversityReadinessAnalyticsQuery,
+  ): Promise<UniversityReadinessAnalyticsResponse> =>
+    apiClient.get(`${API_PREFIX}/tpo/analytics/readiness`, {
+      schema: UniversityReadinessAnalyticsResponseSchema,
+      query,
+    }),
   roster: (
     query: Partial<Omit<UniversityRosterQuery, 'limit'>> & { limit?: number },
   ): Promise<UniversityRosterResponse> =>

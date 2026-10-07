@@ -32,3 +32,8 @@ declare module '*.avif' {
   const content: string | { src: string };
   export default content;
 }
+
+declare module '*.ico' {
+  const content: string | { src: string };
+  export default content;
+}

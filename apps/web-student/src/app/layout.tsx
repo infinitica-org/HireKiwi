@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
+import { portalIcons } from '@hirekiwi/ui/brand/portal-icons';
 import './globals.css';
 import { ThemeProvider } from '@hirekiwi/ui/theme-provider';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
+  icons: portalIcons,
   title: 'Student portal · SMART',
   description: 'Track enrolment, L1-L5 player, results.',
   // Authenticated portal: keep out of search indexes (Th6-598).

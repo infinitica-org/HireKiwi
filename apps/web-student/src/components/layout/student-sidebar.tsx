@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
-  Brain,
+  BadgeCheck,
   BriefcaseBusiness,
   CircleUserRound,
   ClipboardCheck,
@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   { name: 'Jobs', href: '/student/matches', icon: BriefcaseBusiness },
   { name: 'Opportunities', href: '/student/opportunities', icon: Compass },
   { name: 'My profile', href: '/student/profile', icon: CircleUserRound },
-  { name: 'Skills', href: '/student/skills', icon: Brain },
+  { name: 'Skills', href: '/student/skills', icon: BadgeCheck },
   { name: 'Endorsement tracking', href: '/student/applications', icon: ClipboardCheck },
   { name: 'Assessments', href: '/student/assessments', icon: NotebookPen },
   { name: 'Interviews', href: '/student/interviews', icon: Video },
@@ -204,13 +204,15 @@ export function StudentSidebar({
           </ul>
         </nav>
 
-        {/* Bottom stack: verification progress, Settings, legal links */}
+        {/* Bottom stack: legal links, then Settings (no icon for the legal links) */}
         <div
           className={cn(
             'flex w-full shrink-0 flex-col gap-2 border-t border-zinc-200/80 py-3 dark:border-zinc-800/80',
             isExpanded ? 'px-2' : 'items-center px-1.5',
           )}
         >
+          <SidebarLegalLinks authUrl={AUTH_URL} expanded={isExpanded} hideWhenCollapsed />
+
           {(() => {
             const isActive = isItemActive(pathname, settingsItem.href);
             return (
@@ -226,8 +228,6 @@ export function StudentSidebar({
               </Link>
             );
           })()}
-
-          <SidebarLegalLinks authUrl={AUTH_URL} expanded={isExpanded} />
         </div>
       </aside>
     </>

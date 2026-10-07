@@ -3358,3 +3358,39 @@ model EventRegistration {
   @@index([userId, status])
   @@map("event_registrations")
 }
+
+/// Th6-607 - cache for the TPO cohort readiness dashboard (one row per student). Rebuilt per
+/// institution by ReadinessAnalyticsService.refreshInstitution; never the source of truth, so
+/// there are deliberately no foreign keys. `gradYear` 0 and `campus` '' mean "not set".
+model ReadinessAnalyticsStudent {
+  userId         String   @id @map("user_id") @db.Uuid
+  institutionId  String   @map("institution_id") @db.Uuid
+  campus         String   @default("")
+  department     String   @default("Unspecified")
+  gradYear       Int      @default(0) @map("grad_year")
+  /// GOLD | SILVER | BRONZE | NEEDS_IMPROVEMENT
+  tier           String
+  computedAt     DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  @@index([institutionId, tier])
+  @@index([institutionId, computedAt])
+  @@index([institutionId, department, campus, gradYear], map: "readiness_analytics_students_scope_idx")
+  @@map("readiness_analytics_students")
+}
+
+/// Th6-607 - pre-aggregated heatmap cells: one row per (institution, department, campus, grad
+/// year, skill domain). The dashboard sums these rows, so its cost does not grow with cohort size.
+model ReadinessAnalyticsCell {
+  institutionId    String @map("institution_id") @db.Uuid
+  department       String
+  campus           String @default("")
+  gradYear         Int    @default(0) @map("grad_year")
+  domainId         String @map("domain_id")
+  studentCount     Int    @map("student_count")
+  scoreSum         Float  @map("score_sum")
+  belowTargetCount Int    @map("below_target_count")
+
+  @@id([institutionId, department, campus, gradYear, domainId])
+  @@index([institutionId, domainId])
+  @@map("readiness_analytics_cells")
+}

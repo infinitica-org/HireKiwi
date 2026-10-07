@@ -17,6 +17,8 @@ import { InstitutionsPublicController } from './institutions-public.controller.j
 import { InstitutionsPartnershipController } from './institutions-partnership.controller.js';
 import { InstitutionsStudentController } from './institutions-student.controller.js';
 import { InstitutionsTpoController } from './institutions-tpo.controller.js';
+import { UniversityReadinessAnalyticsController } from './university-readiness-analytics.controller.js';
+import { UniversityReadinessAnalyticsService } from './university-readiness-analytics.service.js';
 import { UniversityStudentsController } from './university-students.controller.js';
 import { IdempotencyService } from '../company-profile/idempotency.service.js';
 import { UniversityStudentsService } from './university-students.service.js';
@@ -39,6 +41,7 @@ import { BulkWhitelistImportProcessor } from './bulk-whitelist-import.processor.
     InstitutionsAdminController,
     InstitutionsTpoController,
     UniversityStudentsController,
+    UniversityReadinessAnalyticsController,
     InstitutionsCampusesController,
     InstitutionsStudentController,
     InstitutionsPublicController,
@@ -49,6 +52,7 @@ import { BulkWhitelistImportProcessor } from './bulk-whitelist-import.processor.
   providers: [
     InstitutionsService,
     UniversityStudentsService,
+    UniversityReadinessAnalyticsService,
     CampusesService,
     AuditLogExportService,
     CompaniesService,

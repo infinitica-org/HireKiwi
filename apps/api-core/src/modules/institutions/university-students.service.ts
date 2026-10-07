@@ -28,7 +28,7 @@ export function studentPreferenceAllowsUniversityMessage(_studentId: string): bo
   return true;
 }
 
-interface StaffScope {
+export interface StaffScope {
   readonly institutionId: string;
   /** The staff account's campus. Null means every campus of the institution. */
   readonly groupLabel: string | null;
@@ -106,7 +106,7 @@ export class UniversityStudentsService {
   ) {}
 
   /** Same campus rule as `InstitutionsService.listAssignedStudents`. */
-  private async resolveScope(user: RequestUser): Promise<StaffScope> {
+  async resolveScope(user: RequestUser): Promise<StaffScope> {
     const staff = user.inst
       ? await this.prisma.user.findFirst({
           where: { id: user.sub, institutionId: user.inst, role: { in: [...STAFF_ROLES] } },

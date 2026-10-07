@@ -12,6 +12,7 @@ import {
   HttpException,
   HttpStatus,
   Inject,
+  Optional,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -34,6 +35,11 @@ import {
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { env } from '../../platform/config/env.js';
+import { RedisService } from '../../platform/redis/redis.service.js';
+import {
+  revokedFamilyKey,
+  revokedFamilyTtlSeconds,
+} from '../../common/guards/session-revocation.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
@@ -83,6 +89,7 @@ export class AuthService {
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(StorageService) private readonly storage: StorageService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
+    @Optional() @Inject(RedisService) private readonly redis?: RedisService,
   ) {}
 
   tryVerifyAccessToken(header?: string): RequestUser | null {
@@ -478,10 +485,16 @@ export class AuthService {
   }
 
   async revokeAllForUser(userId: string): Promise<void> {
+    const live = await this.prisma.refreshToken.findMany({
+      where: { userId, revokedAt: null },
+      select: { familyId: true },
+      distinct: ['familyId'],
+    });
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    await Promise.all(live.map((row) => this.markFamilyRevoked(row.familyId)));
   }
 
   /** S6-VV-93 — one row per active session, for the SUPER_ADMIN sessions panel. */
@@ -543,6 +556,24 @@ export class AuthService {
       where: { familyId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    await this.markFamilyRevoked(familyId);
+  }
+
+  /**
+   * Th6-614 - also cut off the session's access tokens, which are otherwise valid until they
+   * expire. The refresh-token rows above stay the source of truth; this marker is best effort.
+   */
+  private async markFamilyRevoked(familyId: string): Promise<void> {
+    if (!this.redis) return;
+    try {
+      await this.redis.setex(
+        revokedFamilyKey(familyId),
+        revokedFamilyTtlSeconds(env.JWT_ACCESS_TTL_SECONDS),
+        '1',
+      );
+    } catch {
+      // Redis is down: the refresh token is revoked in the database; access tokens expire on their own.
+    }
   }
 
   async getCompanyPortalAccount(userId: string): Promise<CompanyPortalAccount> {

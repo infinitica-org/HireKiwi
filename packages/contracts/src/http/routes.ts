@@ -2407,6 +2407,19 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'GET',
+    path: '/tpo/analytics/readiness',
+    module: 'institutions',
+    owner: 'Satheswaran V',
+    roles: ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN'],
+    rateLimit: 'role.institutionAdmin',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 300,
+    summary:
+      'Th6-607: tier distribution and department x skill-domain heatmap from an indexed cache, own university only.',
+  },
+  {
+    method: 'GET',
     path: '/tpo/students/roster',
     module: 'institutions',
     owner: 'Satheswaran V',
@@ -5141,6 +5154,18 @@ export const ROUTES: readonly RouteSpec[] = [
     execution: 'SYNC',
     slaMs: 200,
     summary: 'Revoke an external passive signal connection.',
+  },
+  {
+    method: 'POST',
+    path: '/signals/lookup/:sourceId',
+    module: 'signal-ingestion',
+    owner: 'Vishal Bharath R',
+    roles: ['STUDENT'],
+    rateLimit: 'signals.lookup',
+    criticality: 'LLM_INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 3000,
+    summary: 'Check a username and return its public profile (name, photo) before connecting.',
   },
   {
     method: 'POST',

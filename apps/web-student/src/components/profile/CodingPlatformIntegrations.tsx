@@ -4,8 +4,10 @@ import { useState, type ReactNode, type SVGProps } from 'react';
 import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQuery, useQueryClient } from '@hirekiwi/ui';
 import type { ConnectableSignalSourceId, SignalConnectionSummary } from '@hirekiwi/contracts';
-import { CheckCircle2, ExternalLink, Loader2, X } from 'lucide-react';
+import { ExternalLink, Loader2, ShieldCheck, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { ProfileToast } from '@/components/profile/ProfileToast';
+import { ProfileLookupCard, useProfileLookup } from '@/components/profile/IntegrationProfileLookup';
 import {
   CodeforcesIcon,
   GitLabIcon,
@@ -25,6 +27,8 @@ interface CodingPlatform {
   logo: BrandIcon;
   tileClass: string;
   description: string;
+  /** The only data SMART reads from the public profile. */
+  reads: string;
   profileUrl: (username: string) => string;
 }
 
@@ -36,6 +40,7 @@ export const CODING_PLATFORMS: CodingPlatform[] = [
     logo: LeetCodeIcon,
     tileClass: 'bg-[#FFA116]/10 text-[#FFA116]',
     description: 'Problems solved by difficulty, contest rating and top languages.',
+    reads: 'problems solved by difficulty, contest rating and top languages',
     profileUrl: (u) => `https://leetcode.com/u/${encodeURIComponent(u)}/`,
   },
   {
@@ -44,6 +49,7 @@ export const CODING_PLATFORMS: CodingPlatform[] = [
     logo: HackerRankIcon,
     tileClass: 'bg-[#00EA64]/10 text-[#00B84F]',
     description: 'Skill badges, certificates and domain scores from your public profile.',
+    reads: 'skill badges, certificates and domain scores',
     profileUrl: (u) => `https://www.hackerrank.com/profile/${encodeURIComponent(u)}`,
   },
 ];
@@ -78,14 +84,66 @@ export function PlatformTile({ logo: Logo, tileClass }: { logo: BrandIcon; tileC
   );
 }
 
+/** Plain-language consent shown before a platform is connected. */
+export function ConsentNotice({
+  platformName,
+  reads,
+  checked,
+  onChange,
+  disabled = false,
+}: {
+  platformName: string;
+  reads: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="mt-5 rounded-lg border border-zinc-200 p-3.5 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
+      <p className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
+        <ShieldCheck className="size-4" aria-hidden />
+        What SMART will access
+      </p>
+      <ul className="mt-2 space-y-1 pl-5.5 leading-relaxed">
+        <li>
+          Only your own public {platformName} details: {reads}.
+        </li>
+        <li>We never ask for your password, and nothing is posted or changed.</li>
+      </ul>
+      <label className="mt-3 flex cursor-pointer items-start gap-2 border-t border-zinc-200 pt-3 font-medium text-zinc-900 dark:border-zinc-800 dark:text-white">
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+          className="mt-0.5 size-4 shrink-0 rounded border-zinc-300"
+        />
+        <span>I agree that SMART may read these details. I can disconnect any time.</span>
+      </label>
+    </div>
+  );
+}
+
+function syncedLabel(lastFetchedAt: string | null): string {
+  if (!lastFetchedAt) return 'first sync pending';
+  const parsed = Date.parse(lastFetchedAt);
+  if (Number.isNaN(parsed)) return 'synced';
+  return `last synced ${new Date(parsed).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })}`;
+}
+
 /** Integration card (logo, status button, name, description, footer) shared by every platform. */
 export function IntegrationCard({
   logo,
   name,
   description,
   connected,
-  verified = false,
   link,
+  detail,
   onAction,
   disabled = false,
 }: {
@@ -93,8 +151,9 @@ export function IntegrationCard({
   name: string;
   description: string;
   connected: boolean;
-  verified?: boolean;
   link?: { href: string; label: string } | null;
+  /** Extra line shown only while the integration is connected. */
+  detail?: ReactNode;
   onAction: () => void;
   disabled?: boolean;
 }) {
@@ -108,27 +167,20 @@ export function IntegrationCard({
             onClick={onAction}
             disabled={disabled}
             aria-label={`${connected ? 'Edit' : 'Connect'} ${name}`}
-            className={`rounded-md border px-4 py-1.5 text-sm font-medium shadow-2xs transition-all disabled:opacity-50 ${
-              connected
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-                : 'border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50 active:scale-95 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
-            }`}
+            className="rounded-md border border-zinc-200 bg-white px-4 py-1.5 text-sm font-medium text-zinc-800 shadow-2xs transition-all hover:bg-zinc-50 active:scale-95 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
           >
-            {verified ? (
-              <span className="inline-flex items-center gap-1">
-                <CheckCircle2 className="size-3 text-emerald-600" /> Verified
-              </span>
-            ) : connected ? (
-              'Connected'
-            ) : (
-              'Connect'
-            )}
+            {connected ? 'Connected' : 'Connect'}
           </button>
         </div>
         <h4 className="mt-5 text-base font-bold text-zinc-900 dark:text-white">{name}</h4>
         <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
           {description}
         </p>
+        {connected && detail ? (
+          <p className="mt-3 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+            {detail}
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-5 flex items-center justify-between border-t border-zinc-100 pt-3.5 text-xs dark:border-zinc-800/60">
@@ -180,6 +232,10 @@ export function CodingPlatformIntegrations({
   const [username, setUsername] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consented, setConsented] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  // The username the student confirmed is theirs by selecting the profile card.
+  const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
 
   const connectionFor = (id: ConnectableSignalSourceId): SignalConnectionSummary | undefined =>
     data?.connections.find((c) => c.sourceId === id && c.status !== 'REVOKED');
@@ -188,23 +244,61 @@ export function CodingPlatformIntegrations({
     setPickerOpen(false);
     setActive(platform);
     setUsername(connectionFor(platform.id)?.externalAccountId ?? '');
+    setConsented(false);
+    setSelectedUsername(null);
     setError(null);
   };
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: queryKeys.signalConnections() });
 
+  const activeConnection = active ? connectionFor(active.id) : undefined;
+  const typedName = usernameFrom(username);
+  // Editing a connected account without changing the username needs no new check.
+  const unchangedFromConnection =
+    Boolean(activeConnection) &&
+    typedName.toLowerCase() === activeConnection?.externalAccountId.toLowerCase();
+  const needsProfileCheck = Boolean(active) && !unchangedFromConnection;
+
+  const lookup = useProfileLookup({
+    username: typedName,
+    enabled: needsProfileCheck,
+    platformName: active?.name ?? 'platform',
+    lookup: (name) =>
+      active ? api.signals.lookup(active.id, name) : Promise.reject(new Error('none')),
+    toProfile: (profile) => profile,
+  });
+  const profileSelected =
+    lookup.status === 'found' && selectedUsername === (lookup.profile?.username ?? null);
+
   const handleConnect = async () => {
     if (!active) return;
-    const name = usernameFrom(username);
-    if (!name) {
+    const typed = usernameFrom(username);
+    if (!typed) {
       setError(`Enter your ${active.name} username.`);
+      return;
+    }
+    if (needsProfileCheck && !profileSelected) {
+      setError(
+        lookup.status === 'found'
+          ? 'Select your profile to continue.'
+          : `Enter a ${active.name} username we can find first.`,
+      );
+      return;
+    }
+    // Use the platform's own spelling of the username once it has been confirmed.
+    const name = needsProfileCheck && lookup.profile ? lookup.profile.username : typed;
+    // A new connection needs consent; editing one that is already connected does not.
+    if (!connectionFor(active.id) && !consented) {
+      setError('Please agree to share your public details first.');
       return;
     }
     setBusy(true);
     setError(null);
     try {
+      const wasConnected = Boolean(connectionFor(active.id));
       await api.signals.connect(active.id, connectBody(active.id, name));
       await refresh();
+      setNotice(wasConnected ? `${active.name} updated.` : `${active.name} connected.`);
       setActive(null);
     } catch (err) {
       setError(isSmartApiError(err) ? err.message : `Could not connect ${active.name} right now.`);
@@ -220,6 +314,7 @@ export function CodingPlatformIntegrations({
     try {
       await api.signals.disconnect(active.id);
       await refresh();
+      setNotice(`${active.name} disconnected.`);
       setActive(null);
     } catch (err) {
       setError(
@@ -230,10 +325,9 @@ export function CodingPlatformIntegrations({
     }
   };
 
-  const activeConnection = active ? connectionFor(active.id) : undefined;
-
   return (
     <>
+      <ProfileToast message={notice} onDismiss={() => setNotice(null)} />
       {CODING_PLATFORMS.map((platform) => {
         const connection = connectionFor(platform.id);
         return (
@@ -249,6 +343,11 @@ export function CodingPlatformIntegrations({
                     href: platform.profileUrl(connection.externalAccountId),
                     label: `@${connection.externalAccountId}`,
                   }
+                : null
+            }
+            detail={
+              connection
+                ? `Reading only your public details (${platform.reads}); ${syncedLabel(connection.lastFetchedAt)}.`
                 : null
             }
             onAction={() => openConnect(platform)}
@@ -371,6 +470,28 @@ export function CodingPlatformIntegrations({
               className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
             />
 
+            {needsProfileCheck ? (
+              <ProfileLookupCard
+                platformName={active.name}
+                status={lookup.status}
+                profile={lookup.profile}
+                message={lookup.message}
+                selected={profileSelected}
+                onSelect={() => setSelectedUsername(lookup.profile?.username ?? null)}
+                onRetry={lookup.retry}
+              />
+            ) : null}
+
+            {activeConnection ? null : (
+              <ConsentNotice
+                platformName={active.name}
+                reads={active.reads}
+                checked={consented}
+                onChange={setConsented}
+                disabled={busy}
+              />
+            )}
+
             {error ? (
               <p role="alert" className="mt-2 text-xs font-medium text-rose-600">
                 {error}
@@ -402,7 +523,12 @@ export function CodingPlatformIntegrations({
                 <button
                   type="button"
                   onClick={() => void handleConnect()}
-                  disabled={busy}
+                  disabled={
+                    busy ||
+                    !typedName ||
+                    (needsProfileCheck && !profileSelected) ||
+                    (!activeConnection && !consented)
+                  }
                   className="inline-flex items-center gap-1.5 rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-950"
                 >
                   {busy ? <Loader2 className="size-4 animate-spin" /> : null}

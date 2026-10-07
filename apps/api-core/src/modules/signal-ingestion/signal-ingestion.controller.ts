@@ -4,6 +4,7 @@ import {
   API_PREFIX,
   ConnectableSignalSourceIdSchema,
   ConnectSignalSourceRequestSchema,
+  LookupSignalProfileRequestSchema,
   RefreshSignalsRequestSchema,
   SelectRepositoriesRequestSchema,
 } from '@hirekiwi/contracts';
@@ -33,6 +34,20 @@ export class SignalIngestionController {
   selectRepositories(@CurrentUser() user: RequestUser, @Body() body: unknown) {
     const parsed = SelectRepositoriesRequestSchema.parse(body);
     return this.service.selectGithubRepositories(user.sub, parsed.selectedRepoFullNames);
+  }
+
+  @Post('lookup/:sourceId')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Check a username and show its public profile (name, photo) before connecting.',
+  })
+  @ApiResponse({ status: 201, description: 'The public profile found for that username.' })
+  @ApiResponse({ status: 404, description: 'No public profile for that username.' })
+  lookup(@Param('sourceId') sourceIdParam: string, @Body() body: unknown) {
+    const sourceId = ConnectableSignalSourceIdSchema.parse(sourceIdParam);
+    const { username } = LookupSignalProfileRequestSchema.parse(body);
+    return this.service.lookupProfile(sourceId, username);
   }
 
   @Post('connect/:sourceId')

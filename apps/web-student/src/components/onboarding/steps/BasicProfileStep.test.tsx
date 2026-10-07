@@ -4,6 +4,22 @@ import BasicProfileStep from './BasicProfileStep';
 import { emptyOnboardingForm } from '@/lib/onboarding-form';
 
 const uploadProfilePhoto = vi.fn();
+vi.mock('@/components/profile/PhotoCropDialog', () => ({
+  // The real dialog crops on a canvas, which jsdom lacks; confirm hands the picked file straight on.
+  PhotoCropDialog: ({
+    file,
+    onConfirm,
+  }: {
+    file: File | null;
+    onConfirm: (cropped: File) => void;
+  }) =>
+    file ? (
+      <button type="button" onClick={() => onConfirm(file)}>
+        Confirm crop
+      </button>
+    ) : null,
+}));
+
 vi.mock('@/lib/api', () => ({
   api: { users: { uploadProfilePhoto: (...args: unknown[]) => uploadProfilePhoto(...args) } },
 }));
@@ -50,6 +66,7 @@ describe('BasicProfileStep', () => {
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['img'], 'me.png', { type: 'image/png' });
     fireEvent.change(input, { target: { files: [file] } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm crop' }));
 
     await waitFor(() => {
       expect(updateField).toHaveBeenCalledWith('profilePhotoUrl', 'https://cdn.test/photo.png');

@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { Users } from 'lucide-react';
 import { StudentReadinessRoster } from '../../../../../components/readiness/StudentReadinessRoster';
 import { TpoBentoPageHeader } from '../../../../../components/tpo-bento/TpoBentoPageHeader';
@@ -14,6 +15,12 @@ export default function StudentReadinessPage() {
         title="Student readiness"
         description="Filter students by verification status, program and graduation year, and see who needs help."
       />
+      <Link
+        href="/students/readiness/cohort"
+        className="inline-block text-sm font-semibold underline"
+      >
+        View cohort readiness and skill heatmap
+      </Link>
       {/* useSearchParams needs a Suspense boundary for static rendering. */}
       <Suspense fallback={null}>
         <StudentReadinessRoster />

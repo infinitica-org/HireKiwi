@@ -178,7 +178,7 @@ export function LoginForm() {
 
       {/* Footer Legal Disclaimer */}
       <footer className="mx-auto mt-auto w-full max-w-2xl px-4 pt-6 text-center text-[12px] leading-relaxed text-neutral-400">
-        By continuing, you agree to our{' '}
+        By creating an account, you accept ou{' '}
         <Link
           href="/terms"
           className="font-medium text-blue-500 underline underline-offset-2 hover:text-blue-600 decoration-blue-400/50"
@@ -192,8 +192,8 @@ export function LoginForm() {
         >
           Privacy Policy
         </Link>
-        . We send marketing emails about updates and promotions. To opt out, use the unsubscribe
-        link.
+        .We’ll send you periodic product news, career opportunities, and platform updates. You can
+        easily unsubscribe at any time.
       </footer>
     </section>
   );

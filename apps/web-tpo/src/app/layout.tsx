@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
+import { portalIcons } from '@hirekiwi/ui/brand/portal-icons';
 import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
+  icons: portalIcons,
   title: {
     default: 'TPO Console · SMART',
     template: '%s · SMART TPO',

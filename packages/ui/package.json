@@ -17,6 +17,7 @@
     "./styles.css": "./src/styles.css",
     "./assets/*": "./src/assets/*",
     "./assets/brand/*": "./src/assets/brand/*",
+    "./brand/portal-icons": "./src/brand/portal-icons.ts",
     "./utils": "./src/lib/cn.ts",
     "./theme-provider": "./src/components/theme-provider.tsx",
     "./theme-switcher": "./src/components/theme-switcher.tsx",

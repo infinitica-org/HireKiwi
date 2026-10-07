@@ -1,5 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ConnectSignalSourceRequestSchema,
   RawSignalEnvelopeSchema,
@@ -13,6 +20,7 @@ import {
   type ListSignalConnectionsResponse,
   type RefreshSignalsRequest,
   type RefreshSignalsResponse,
+  type SignalProfilePreview,
 } from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
@@ -45,6 +53,22 @@ export class SignalIngestionService {
   async listConnections(userId: string): Promise<ListSignalConnectionsResponse> {
     const rows = await this.connections.list(userId);
     return { connections: rows.map((row) => this.connections.toSummary(row)) };
+  }
+
+  /** Check a username and return its public profile, without connecting anything. */
+  async lookupProfile(
+    sourceId: ConnectableSignalSourceId,
+    username: string,
+  ): Promise<SignalProfilePreview> {
+    const adapter = this.registry.get(sourceId);
+    if (!adapter.lookupProfile) {
+      throw new BadRequestException({
+        error: 'lookup_not_supported',
+        message: `${sourceId} profiles cannot be looked up before connecting.`,
+        statusCode: 400,
+      });
+    }
+    return adapter.lookupProfile(username);
   }
 
   async connect(

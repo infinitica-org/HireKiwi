@@ -38,6 +38,7 @@ import { EMAIL_QUEUE } from '../../platform/mailer/mailer.types.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
 import { CertificateSourceVerificationService } from './verification/certificate-source-verification.service.js';
+import { credlyBadgeImage } from './verification/credly-badge-image.js';
 import { CredentialDedupService } from './verification/credential-dedup.service.js';
 import { publishCredentialVerified } from './verification/credential-verified-publisher.js';
 import { PublicProfileService } from '../public-profile/public-profile.service.js';
@@ -626,6 +627,8 @@ export class CandidateCertificatesService {
       issueDate: row.issueDate ?? null,
       expiryDate: row.expiryDate ?? null,
       verificationUrl: row.verificationUrl ?? null,
+      previewImageUrl:
+        row.status === 'VERIFIED' ? await credlyBadgeImage(row.verificationUrl) : null,
       verificationMethod: row.verificationMethod,
       certificateFileUrl: row.certificateFileUrl
         ? await this.storage.getSignedDownloadUrl(row.certificateFileUrl)

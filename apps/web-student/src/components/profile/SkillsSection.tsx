@@ -1,53 +1,34 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
-import { Search } from 'lucide-react';
-import {
-  SKILL_DEFINITIONS,
-  skillFocusOptions,
-  type SkillCategoryId,
-  type SkillClaimDto,
-} from '@hirekiwi/contracts';
-import { Alert } from '@hirekiwi/ui';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { Code2, Plus } from 'lucide-react';
+import { SKILL_DEFINITIONS, type SkillClaimDto } from '@hirekiwi/contracts';
 
 import { api } from '@/lib/api';
-import { SKILL_VERIFICATION_DIAGNOSTIC_PROFICIENCY } from '@/lib/skill-declarations';
-import { CATEGORY_OPTIONS } from '@/lib/skills-catalog';
 import {
-  profileCardClass,
-  profileHeadingClass,
-  profileMutedTextClass,
-  profilePrimaryButtonSmClass,
-  profileSecondaryButtonClass,
-  profileSecondaryTextClass,
-} from '@/lib/profile-ui-classes';
+  ProfileBentoEmptyPanel,
+  ProfileSectionError,
+  ProfileSectionHeader,
+} from '@/components/profile/ProfileSectionChrome';
+import { profileCardClass, profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
 
-type CategoryFilter = SkillCategoryId | 'ALL';
+const SKILLS_PAGE_HREF = '/skills';
 
+/** The skills the student has added. Adding more happens on the Skills page. */
 export function SkillsSection() {
   const [claims, setClaims] = useState<SkillClaimDto[]>([]);
   const [hydrated, setHydrated] = useState(false);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState<CategoryFilter>('ALL');
   const [error, setError] = useState<string | null>(null);
-  const [pendingCode, setPendingCode] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  const refreshClaims = useCallback(async () => {
-    const rows = await api.assessment.listSkillClaims();
-    setClaims(rows);
-    return rows;
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        await refreshClaims();
+        const rows = await api.assessment.listSkillClaims();
+        if (!cancelled) setClaims(rows);
       } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load skills.');
-        }
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load skills.');
       } finally {
         if (!cancelled) setHydrated(true);
       }
@@ -55,149 +36,61 @@ export function SkillsSection() {
     return () => {
       cancelled = true;
     };
-  }, [refreshClaims]);
+  }, []);
 
-  const claimByCode = useMemo(() => new Map(claims.map((row) => [row.skillCode, row])), [claims]);
-
-  const availableSkills = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return SKILL_DEFINITIONS.filter((skill) => {
-      if (category !== 'ALL' && skill.categoryId !== category) return false;
-      if (!q) return true;
-      return (
-        skill.name.toLowerCase().includes(q) ||
-        skill.code.toLowerCase().includes(q) ||
-        skill.categoryName.toLowerCase().includes(q)
-      );
-    }).sort((a, b) => a.name.localeCompare(b.name));
-  }, [category, search]);
-
-  const toggleSkill = (skillCode: string, selected: boolean) => {
-    if (selected) return;
-    setError(null);
-    setPendingCode(skillCode);
-    startTransition(() => {
-      void (async () => {
-        try {
-          const options = skillFocusOptions(skillCode);
-          await api.assessment.declareSkillClaim({
-            skillCode,
-            proficiency: SKILL_VERIFICATION_DIAGNOSTIC_PROFICIENCY,
-            skillFocus: options[0] || undefined,
-          });
-          await refreshClaims();
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Could not select skill.');
-        } finally {
-          setPendingCode(null);
-        }
-      })();
-    });
-  };
-
-  if (!hydrated) {
-    return (
-      <p className={`text-sm ${profileMutedTextClass}`} aria-live="polite">
-        Loading skills…
-      </p>
+  const selectedSkills = useMemo(() => {
+    const codes = new Set(claims.map((row) => row.skillCode));
+    return SKILL_DEFINITIONS.filter((skill) => codes.has(skill.code)).sort((a, b) =>
+      a.name.localeCompare(b.name),
     );
-  }
+  }, [claims]);
+
+  const addLink = (extraClass: string) => (
+    <Link href={SKILLS_PAGE_HREF} className={`${profilePrimaryButtonSmClass} ${extraClass}`}>
+      <Plus className="size-4" strokeWidth={2} aria-hidden />
+      Add skills
+    </Link>
+  );
 
   return (
-    <section className="space-y-8" aria-labelledby="skills-heading">
-      <div>
-        <h2
-          id="skills-heading"
-          className={`text-xl font-semibold tracking-tight ${profileHeadingClass}`}
-        >
-          Skills
-        </h2>
-        <p className={`mt-1 max-w-2xl text-sm leading-relaxed ${profileMutedTextClass}`}>
-          Choose the skills you want to assess and build verified credentials for. Selected skills
-          appear on your Assessment page.
+    <section
+      className="flex w-full min-w-0 flex-col gap-4 font-[family-name:var(--tpo-font-sans)]"
+      aria-label="Skills"
+    >
+      <ProfileSectionHeader
+        title="Skills"
+        description="Skills you chose to assess and build verified credentials for. They also appear on your Assessment page."
+        action={hydrated ? addLink('justify-center px-4 py-2.5 text-[13px] font-semibold') : null}
+      />
+
+      {error ? <ProfileSectionError>{error}</ProfileSectionError> : null}
+
+      {!hydrated ? (
+        <p className="text-sm text-[var(--ds-text-muted)]" aria-live="polite">
+          Loading skills…
         </p>
-      </div>
+      ) : null}
 
-      <div className={`${profileCardClass} space-y-5 !p-5 md:!p-6`}>
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--ds-text-muted)]"
-            aria-hidden="true"
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search skills…"
-            className="w-full rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] py-2.5 pl-10 pr-3 text-sm text-[var(--ds-text)] placeholder:text-[var(--ds-text-muted)] focus:border-[var(--ds-green)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green)]/20"
-          />
-        </div>
+      {hydrated && selectedSkills.length === 0 ? (
+        <ProfileBentoEmptyPanel
+          emptyIcon={Code2}
+          emptyTitle="No skills yet"
+          emptyBody="When you add a skill, it appears here and on your Assessment page."
+          actions={addLink('justify-center px-5 py-2.5 text-[13px]')}
+        />
+      ) : null}
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setCategory('ALL')}
-            className={
-              category === 'ALL'
-                ? profilePrimaryButtonSmClass
-                : `${profileSecondaryButtonClass} !py-1.5 !text-xs`
-            }
-          >
-            All
-          </button>
-          {CATEGORY_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setCategory(option.id)}
-              className={
-                category === option.id
-                  ? profilePrimaryButtonSmClass
-                  : `${profileSecondaryButtonClass} !py-1.5 !text-xs`
-              }
-            >
-              {option.name}
-            </button>
+      {hydrated && selectedSkills.length > 0 ? (
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {selectedSkills.map((skill) => (
+            <li key={skill.code} className={`${profileCardClass} !p-4`}>
+              <p className="text-sm font-semibold text-zinc-950 dark:text-white">{skill.name}</p>
+              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                {skill.categoryName}
+              </p>
+            </li>
           ))}
-        </div>
-
-        <div>
-          <h3 className={`mb-3 text-sm font-semibold ${profileHeadingClass}`}>Available skills</h3>
-          <ul className="divide-y divide-[var(--ds-border)] rounded-xl border border-[var(--ds-border)]">
-            {availableSkills.map((skill) => {
-              const selected = claimByCode.has(skill.code);
-              const busy = pendingCode === skill.code && isPending;
-              return (
-                <li
-                  key={skill.code}
-                  className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <p className={`font-medium ${profileHeadingClass}`}>{skill.name}</p>
-                    <p className={`text-xs ${profileSecondaryTextClass}`}>{skill.categoryName}</p>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={selected || busy}
-                    onClick={() => toggleSkill(skill.code, selected)}
-                    className={`${selected ? profileSecondaryButtonClass : profilePrimaryButtonSmClass} shrink-0 disabled:opacity-60`}
-                  >
-                    {busy ? 'Saving…' : selected ? 'Selected' : 'Select'}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          {availableSkills.length === 0 ? (
-            <p className={`mt-3 text-sm ${profileMutedTextClass}`}>No skills match your search.</p>
-          ) : null}
-        </div>
-      </div>
-
-      {error ? (
-        <Alert tone="danger" title="Error">
-          {error}
-        </Alert>
+        </ul>
       ) : null}
     </section>
   );

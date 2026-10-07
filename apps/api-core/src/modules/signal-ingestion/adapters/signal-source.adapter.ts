@@ -2,6 +2,7 @@ import type {
   ConnectSignalSourceRequest,
   ConnectableSignalSourceId,
   RawSignalEnvelope,
+  SignalProfilePreview,
 } from '@hirekiwi/contracts';
 
 export interface EncryptedCredentialsRef {
@@ -35,6 +36,12 @@ export interface SignalSourceAdapter {
   validateConnectInput(input: ConnectSignalSourceRequest): Promise<ConnectValidationResult>;
 
   fetchRaw(ctx: AdapterFetchContext): Promise<RawSignalEnvelope>;
+
+  /**
+   * Optional: look a public profile up by username (existence + display name) without connecting.
+   * Throws NotFoundException when there is no such public profile.
+   */
+  lookupProfile?(username: string): Promise<SignalProfilePreview>;
 
   checkHealth?(): Promise<{ reachable: boolean; latencyMs: number }>;
 }

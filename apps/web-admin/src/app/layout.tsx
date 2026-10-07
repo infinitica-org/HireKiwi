@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
+import { portalIcons } from '@hirekiwi/ui/brand/portal-icons';
 import './globals.css';
 import { PortalAuthGate } from '../components/portal-auth-gate';
 import { ThemeProvider } from '@hirekiwi/ui/theme-provider';
@@ -7,6 +8,7 @@ import { Toaster } from '@hirekiwi/ui/sonner';
 import { TooltipProvider } from '@hirekiwi/ui/tooltip';
 
 export const metadata: Metadata = {
+  icons: portalIcons,
   title: 'Platform admin · SMART',
   description: 'Integrity queue, AI health, cut scores.',
   // Authenticated portal: keep out of search indexes (Th6-598).
