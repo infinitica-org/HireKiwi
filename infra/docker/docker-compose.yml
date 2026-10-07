@@ -1,9 +1,9 @@
-name: smart
+name: hirekiwi
 
 x-app-env: &app-env
   NODE_ENV: ${NODE_ENV:-development}
-  DATABASE_URL: postgresql://smart:${POSTGRES_PASSWORD:-smart}@postgres:5432/smart?schema=public
-  POOLED_DATABASE_URL: postgresql://smart:${POSTGRES_PASSWORD:-smart}@pgbouncer:6432/smart?schema=public
+  DATABASE_URL: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@postgres:5432/hirekiwi?schema=public
+  POOLED_DATABASE_URL: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@pgbouncer:6432/hirekiwi?schema=public
   REDIS_URL: redis://redis:6379
   KAFKA_BROKERS: redpanda:9092
   JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret-change-me-now!!}
@@ -11,9 +11,9 @@ x-app-env: &app-env
   S3_ENDPOINT: http://minio:9000
   S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://127.0.0.1:9000}
   S3_REGION: ${S3_REGION:-us-east-1}
-  S3_ACCESS_KEY: ${MINIO_ROOT_USER:-smart}
-  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-smartsecret}
-  S3_BUCKET: smart
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER:-hirekiwi}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-hirekiwisecret}
+  S3_BUCKET: hirekiwi
   # S6-VV-119: `required` only after MinIO has a KMS key and the bucket encrypts by default.
   S3_ENCRYPTION: ${S3_ENCRYPTION:-off}
   # S6-VV-120: `required` once the clamav service (profile `scan`) runs next to the API.
@@ -23,7 +23,7 @@ x-app-env: &app-env
   LOG_LEVEL: ${LOG_LEVEL:-info}
   SMTP_HOST: mailpit
   SMTP_PORT: "1025"
-  SMTP_FROM: HireKiwi Platform <noreply@smart.local>
+  SMTP_FROM: HireKiwi Platform <noreply@hirekiwi.local>
   AUTH_APP_URL: ${AUTH_APP_URL:-http://localhost:3005}
   STUDENT_APP_URL: ${STUDENT_APP_URL:-http://localhost:3001}
   TPO_APP_URL: ${TPO_APP_URL:-http://localhost:3002}
@@ -50,15 +50,15 @@ services:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: smart
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smart}
-      POSTGRES_DB: smart
+      POSTGRES_USER: hirekiwi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hirekiwi}
+      POSTGRES_DB: hirekiwi
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U smart -d smart"]
+      test: ["CMD-SHELL", "pg_isready -U hirekiwi -d hirekiwi"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -73,7 +73,7 @@ services:
     image: edoburu/pgbouncer:v1.25.2-p0
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://smart:${POSTGRES_PASSWORD:-smart}@postgres:5432/smart
+      DATABASE_URL: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@postgres:5432/hirekiwi
       LISTEN_PORT: "6432"
       AUTH_TYPE: scram-sha-256
       POOL_MODE: transaction
@@ -88,7 +88,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "PGPASSWORD=${POSTGRES_PASSWORD:-smart} psql -h 127.0.0.1 -p 6432 -U smart -d smart -c 'SELECT 1' >/dev/null 2>&1",
+          "PGPASSWORD=${POSTGRES_PASSWORD:-hirekiwi} psql -h 127.0.0.1 -p 6432 -U hirekiwi -d hirekiwi -c 'SELECT 1' >/dev/null 2>&1",
         ]
       interval: 10s
       timeout: 5s
@@ -172,10 +172,10 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-smart}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-smartsecret}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-hirekiwi}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-hirekiwisecret}
       # Community MinIO: global CORS only (per-bucket mc cors set requires AIStor).
-      MINIO_API_CORS_ALLOW_ORIGIN: ${MINIO_API_CORS_ALLOW_ORIGIN:-http://localhost:3001,http://127.0.0.1:3001,https://dev.app.becomesmart.online}
+      MINIO_API_CORS_ALLOW_ORIGIN: ${MINIO_API_CORS_ALLOW_ORIGIN:-http://localhost:3001,http://127.0.0.1:3001,https://dev.app.hirekiwi.online}
       # Metrics scraped in-network only (127.0.0.1-bound Prometheus) — public
       # auth mode is acceptable here, but do not expose this port beyond that.
       MINIO_PROMETHEUS_AUTH_TYPE: public
@@ -194,7 +194,7 @@ services:
       retries: 10
       start_period: 10s
 
-  # One-shot: provisions the "smart" bucket so a fresh stack never hits
+  # One-shot: provisions the "hirekiwi" bucket so a fresh stack never hits
   # NoSuchBucket on first upload. Idempotent (--ignore-existing) and exits
   # after running — StorageService also self-heals this on boot as a
   # second-layer guard for anyone running MinIO outside this compose file.
@@ -209,9 +209,9 @@ services:
       KMS_ENABLED: ${MINIO_KMS_SECRET_KEY:+true}
     entrypoint: >
       /bin/sh -c "
-      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-smart} ${MINIO_ROOT_PASSWORD:-smartsecret} &&
-      mc mb --ignore-existing local/smart &&
-      if [ \"$$KMS_ENABLED\" = true ]; then mc encrypt set sse-s3 local/smart; fi
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-hirekiwi} ${MINIO_ROOT_PASSWORD:-hirekiwisecret} &&
+      mc mb --ignore-existing local/hirekiwi &&
+      if [ \"$$KMS_ENABLED\" = true ]; then mc encrypt set sse-s3 local/hirekiwi; fi
       "
 
   # S6-VV-120: malware scanning for uploads (FILE_SCAN=required). Needs ~1.2 GB RAM, so it only
@@ -261,7 +261,7 @@ services:
       - ../../apps/api-core/prisma:/app/prisma:ro
       - ../../apps/api-core/prisma.config.ts:/app/prisma.config.ts:ro
     environment:
-      DATABASE_URL: postgresql://smart:${POSTGRES_PASSWORD:-smart}@postgres:5432/smart?schema=public
+      DATABASE_URL: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@postgres:5432/hirekiwi?schema=public
     ports:
       - "127.0.0.1:${PRISMA_STUDIO_PORT:-5555}:5555"
     depends_on:
@@ -322,7 +322,7 @@ services:
 
   # One-shot: creates the credential-verifier's own database on the shared
   # postgres instance. The postgres image only auto-creates POSTGRES_DB
-  # ("smart") on first boot — every other service's database is provisioned
+  # ("hirekiwi") on first boot — every other service's database is provisioned
   # here, idempotently (checks pg_database first), same pattern as minio-init.
   credential-verifier-db-init:
     image: postgres:16-alpine
@@ -331,11 +331,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      PGPASSWORD: ${POSTGRES_PASSWORD:-smart}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-hirekiwi}
     entrypoint: >
       /bin/sh -c "
-      psql -h postgres -U smart -d smart -tc \"SELECT 1 FROM pg_database WHERE datname = 'credential_verifier'\" | grep -q 1 ||
-      psql -h postgres -U smart -d smart -c \"CREATE DATABASE credential_verifier OWNER smart\"
+      psql -h postgres -U hirekiwi -d hirekiwi -tc \"SELECT 1 FROM pg_database WHERE datname = 'credential_verifier'\" | grep -q 1 ||
+      psql -h postgres -U hirekiwi -d hirekiwi -c \"CREATE DATABASE credential_verifier OWNER hirekiwi\"
       "
     profiles: ["apps"]
 
@@ -353,7 +353,7 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       HOST: 0.0.0.0
       PORT: "3100"
-      DATABASE_URL: postgresql://smart:${POSTGRES_PASSWORD:-smart}@postgres:5432/credential_verifier?schema=public
+      DATABASE_URL: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@postgres:5432/credential_verifier?schema=public
       REDIS_URL: redis://redis:6379
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3004,http://localhost}
     depends_on:
@@ -388,7 +388,7 @@ services:
       PROCTORING_CV_PROVIDER: ${PROCTORING_CV_PROVIDER:-real}
       PROCTORING_CV_PORT: "8091"
       S3_ENDPOINT: http://minio:9000
-      S3_BUCKET: ${S3_BUCKET:-smart}
+      S3_BUCKET: ${S3_BUCKET:-hirekiwi}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
       S3_REGION: ${S3_REGION:-us-east-1}
@@ -595,7 +595,7 @@ services:
     profiles: ["apps"]
 
   # S6-VV-97 — nightly encrypted, off-box backup of Postgres + MinIO objects.
-  # Idles (smart_backup_enabled 0) until BACKUP_ENABLED=true and the BACKUP_*
+  # Idles (hirekiwi_backup_enabled 0) until BACKUP_ENABLED=true and the BACKUP_*
   # vars are set; see docs/delivery/BACKUP_RESTORE.md. On demand:
   #   docker compose ... --profile vps run --rm backup backup.sh
   backup:
@@ -612,18 +612,18 @@ services:
       BACKUP_ENV_NAME: ${BACKUP_ENV_NAME:-local}
       BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-30 20 * * *}
       BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:-}
-      BACKUP_DEST: ${BACKUP_DEST:-offsite:smart-backups}
+      BACKUP_DEST: ${BACKUP_DEST:-offsite:hirekiwi-backups}
       BACKUP_INCLUDE_OBJECTS: ${BACKUP_INCLUDE_OBJECTS:-true}
       PGHOST: postgres
-      PGUSER: smart
-      PGDATABASE: smart
-      PGPASSWORD: ${POSTGRES_PASSWORD:-smart}
-      MINIO_BUCKET: smart
+      PGUSER: hirekiwi
+      PGDATABASE: hirekiwi
+      PGPASSWORD: ${POSTGRES_PASSWORD:-hirekiwi}
+      MINIO_BUCKET: hirekiwi
       RCLONE_CONFIG_MINIO_TYPE: s3
       RCLONE_CONFIG_MINIO_PROVIDER: Minio
       RCLONE_CONFIG_MINIO_ENDPOINT: http://minio:9000
-      RCLONE_CONFIG_MINIO_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-smart}
-      RCLONE_CONFIG_MINIO_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-smartsecret}
+      RCLONE_CONFIG_MINIO_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-hirekiwi}
+      RCLONE_CONFIG_MINIO_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-hirekiwisecret}
       RCLONE_CONFIG_OFFSITE_TYPE: s3
       RCLONE_CONFIG_OFFSITE_PROVIDER: ${BACKUP_S3_PROVIDER:-Other}
       RCLONE_CONFIG_OFFSITE_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
@@ -710,20 +710,20 @@ services:
     image: grafana/grafana:12.1.0
     restart: unless-stopped
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-smart}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-hirekiwi}
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_USERS_DEFAULT_THEME: dark
       # S6-VV-125: alert delivery (provisioning/alerting). Destination per decision D3; the
       # defaults send alert email to Mailpit and point the webhook at a discard address.
-      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@smart.local}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@hirekiwi.local}
       ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-http://127.0.0.1:9/alert-webhook-not-configured}
       GF_SMTP_ENABLED: "true"
       GF_SMTP_HOST: ${GRAFANA_SMTP_HOST:-mailpit:1025}
       GF_SMTP_USER: ${GRAFANA_SMTP_USER:-}
       GF_SMTP_PASSWORD: ${GRAFANA_SMTP_PASSWORD:-}
-      GF_SMTP_FROM_ADDRESS: ${GRAFANA_SMTP_FROM:-alerts@smart.local}
-      GF_SMTP_FROM_NAME: SMART alerts
+      GF_SMTP_FROM_ADDRESS: ${GRAFANA_SMTP_FROM:-alerts@hirekiwi.local}
+      GF_SMTP_FROM_NAME: HireKiwi alerts
     ports:
       # Host 3100 (not 3030) — keep Loki on 3101 to avoid collision.
       - "127.0.0.1:${GRAFANA_PORT:-3100}:3000"
@@ -826,7 +826,7 @@ services:
       - --path.sysfs=/host/sys
       - --path.rootfs=/rootfs
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
-      # S6-VV-97: exposes smart_backup_* written by the backup service.
+      # S6-VV-97: exposes hirekiwi_backup_* written by the backup service.
       - --collector.textfile.directory=/textfile
     ports:
       - "127.0.0.1:${NODE_EXPORTER_PORT:-9101}:9100"
@@ -836,7 +836,7 @@ services:
     image: prometheuscommunity/postgres-exporter:v0.20.1
     restart: unless-stopped
     environment:
-      DATA_SOURCE_NAME: postgresql://smart:${POSTGRES_PASSWORD:-smart}@postgres:5432/smart?sslmode=disable
+      DATA_SOURCE_NAME: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@postgres:5432/hirekiwi?sslmode=disable
     depends_on:
       postgres:
         condition: service_healthy

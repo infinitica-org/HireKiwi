@@ -5,14 +5,14 @@ apiVersion: 1
 
 contactPoints:
   - orgId: 1
-    name: smart-team
+    name: hirekiwi-team
     receivers:
-      - uid: smart-team-email
+      - uid: hirekiwi-team-email
         type: email
         settings:
           addresses: ${ALERT_EMAIL_TO}
           singleEmail: true
-      - uid: smart-team-webhook
+      - uid: hirekiwi-team-webhook
         type: webhook
         settings:
           url: ${ALERT_WEBHOOK_URL}
@@ -20,23 +20,23 @@ contactPoints:
 
 policies:
   - orgId: 1
-    receiver: smart-team
+    receiver: hirekiwi-team
     group_by: [grafana_folder, alertname]
     group_wait: 30s
     group_interval: 5m
     repeat_interval: 12h
     routes:
-      - receiver: smart-team
+      - receiver: hirekiwi-team
         object_matchers: [[severity, "=", critical]]
         repeat_interval: 1h
 
 groups:
   - orgId: 1
-    name: smart-critical
-    folder: SMART
+    name: hirekiwi-critical
+    folder: HireKiwi
     interval: 1m
     rules:
-      - uid: smart-api-scrape-down
+      - uid: hirekiwi-api-scrape-down
         title: "API not scraped (down or rejecting the scrape)"
         condition: C
         data:
@@ -45,7 +45,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: 'up{job="smart-api"}'
+              expr: 'up{job="hirekiwi-api"}'
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -62,8 +62,8 @@ groups:
           severity: critical
         annotations:
           summary: "Prometheus cannot scrape api-core: the API is down, or /api/v1/admin/metrics rejects the scrape token."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#api-not-scraped
-      - uid: smart-api-5xx-ratio
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#api-not-scraped
+      - uid: hirekiwi-api-5xx-ratio
         title: "API 5xx ratio above 2%"
         condition: C
         data:
@@ -72,7 +72,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: 'sum(rate(smart_http_requests_total{status_code=~"5.."}[5m])) / clamp_min(sum(rate(smart_http_requests_total[5m])), 1e-9)'
+              expr: 'sum(rate(hirekiwi_http_requests_total{status_code=~"5.."}[5m])) / clamp_min(sum(rate(hirekiwi_http_requests_total[5m])), 1e-9)'
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -89,8 +89,8 @@ groups:
           severity: critical
         annotations:
           summary: "More than 2% of API requests are failing with 5xx."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#api-5xx-ratio
-      - uid: smart-postgres-down
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#api-5xx-ratio
+      - uid: hirekiwi-postgres-down
         title: "Postgres down"
         condition: C
         data:
@@ -116,8 +116,8 @@ groups:
           severity: critical
         annotations:
           summary: "postgres-exporter reports the database unreachable (or the exporter is down)."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#postgres-down
-      - uid: smart-redis-down
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#postgres-down
+      - uid: hirekiwi-redis-down
         title: "Redis down"
         condition: C
         data:
@@ -143,8 +143,8 @@ groups:
           severity: critical
         annotations:
           summary: "redis-exporter reports Redis unreachable: queues, rate limits and sessions are affected."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#redis-down
-      - uid: smart-backup-stale
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#redis-down
+      - uid: hirekiwi-backup-stale
         title: "No successful backup in 26 hours"
         condition: C
         data:
@@ -153,7 +153,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: "(time() - max(smart_backup_last_success_timestamp_seconds)) and on() (max(smart_backup_enabled) == 1)"
+              expr: "(time() - max(hirekiwi_backup_last_success_timestamp_seconds)) and on() (max(hirekiwi_backup_enabled) == 1)"
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -170,13 +170,13 @@ groups:
           severity: critical
         annotations:
           summary: "Backups are enabled but the last successful run is more than 26 hours old."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#backup-stale
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#backup-stale
   - orgId: 1
-    name: smart-warning
-    folder: SMART
+    name: hirekiwi-warning
+    folder: HireKiwi
     interval: 1m
     rules:
-      - uid: smart-api-p95-latency
+      - uid: hirekiwi-api-p95-latency
         title: "API p95 latency above 1.5 s"
         condition: C
         data:
@@ -185,7 +185,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: "histogram_quantile(0.95, sum by (le) (rate(smart_http_request_duration_seconds_bucket[5m])))"
+              expr: "histogram_quantile(0.95, sum by (le) (rate(hirekiwi_http_request_duration_seconds_bucket[5m])))"
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -202,8 +202,8 @@ groups:
           severity: warning
         annotations:
           summary: "API p95 latency has been above 1.5 s for 10 minutes."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#api-p95-latency
-      - uid: smart-disk-usage
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#api-p95-latency
+      - uid: hirekiwi-disk-usage
         title: "Host disk above 85%"
         condition: C
         data:
@@ -229,8 +229,8 @@ groups:
           severity: warning
         annotations:
           summary: "The root filesystem is more than 85% full."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#disk-usage
-      - uid: smart-kafka-lag
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#disk-usage
+      - uid: hirekiwi-kafka-lag
         title: "Kafka consumer lag above 1,000"
         condition: C
         data:
@@ -239,7 +239,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: "max by (topic, consumer_group) (smart_kafka_consumer_lag_messages)"
+              expr: "max by (topic, consumer_group) (hirekiwi_kafka_consumer_lag_messages)"
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -256,8 +256,8 @@ groups:
           severity: warning
         annotations:
           summary: "A consumer group is more than 1,000 messages behind."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#kafka-lag
-      - uid: smart-scoring-paused
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#kafka-lag
+      - uid: hirekiwi-scoring-paused
         title: "Automated scoring paused"
         condition: C
         data:
@@ -266,7 +266,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: "max(smart_automated_scoring_paused)"
+              expr: "max(hirekiwi_automated_scoring_paused)"
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -283,8 +283,8 @@ groups:
           severity: warning
         annotations:
           summary: "Automated scoring is paused (inter-rater agreement fell below threshold); submissions wait for humans."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#scoring-paused
-      - uid: smart-ai-queue-stalled
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#scoring-paused
+      - uid: hirekiwi-ai-queue-stalled
         title: "AI queue job waiting over 15 minutes"
         condition: C
         data:
@@ -293,7 +293,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: 'max by (queue) (smart_queue_oldest_waiting_seconds{queue=~"skill_verify_grade|score_recalculation|credential_verification|audio_evaluation|qlix_poll|jd_parse"})'
+              expr: 'max by (queue) (hirekiwi_queue_oldest_waiting_seconds{queue=~"skill_verify_grade|score_recalculation|credential_verification|audio_evaluation|qlix_poll|jd_parse"})'
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -310,8 +310,8 @@ groups:
           severity: warning
         annotations:
           summary: "An AI-processing queue has had a job waiting over 15 minutes: its worker may be stalled."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#ai-queue-stalled
-      - uid: smart-dlq-growing
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#ai-queue-stalled
+      - uid: hirekiwi-dlq-growing
         title: "Jobs landing in a dead-letter queue"
         condition: C
         data:
@@ -320,7 +320,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: "sum by (queue) (delta(smart_queue_jobs{queue=~\".*\\\\.dlq\",state=\"waiting\"}[30m]))"
+              expr: "sum by (queue) (delta(hirekiwi_queue_jobs{queue=~\".*\\\\.dlq\",state=\"waiting\"}[30m]))"
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -337,4 +337,4 @@ groups:
           severity: warning
         annotations:
           summary: "Jobs exhausted their retries and were dead-lettered in the last 30 minutes."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#dlq-growing
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/ALERTS.mdx#dlq-growing

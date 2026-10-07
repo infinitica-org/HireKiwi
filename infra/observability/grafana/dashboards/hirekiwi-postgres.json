@@ -10,8 +10,8 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": true,
-      "tags": ["smart"],
-      "title": "SMART dashboards",
+      "tags": ["hirekiwi"],
+      "title": "HireKiwi dashboards",
       "type": "dashboards"
     }
   ],
@@ -255,11 +255,11 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["smart", "postgres"],
+  "tags": ["hirekiwi", "postgres"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timezone": "browser",
-  "title": "SMART / Postgres",
-  "uid": "smart-postgres",
+  "title": "HireKiwi / Postgres",
+  "uid": "hirekiwi-postgres",
   "version": 1
 }

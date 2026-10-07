@@ -5,8 +5,8 @@ import {
   type UserRole,
 } from '@hirekiwi/contracts';
 
-/** Shared browser session key — all SMART portals read/write this. */
-export const ACCESS_TOKEN_KEY = 'smart.accessToken' as const;
+/** Shared browser session key — all HireKiwi portals read/write this. */
+export const ACCESS_TOKEN_KEY = 'hirekiwi.accessToken' as const;
 
 /** Roles allowed on each authenticated microfrontend (mirrors api-core RolesGuard). */
 export const PORTAL_ROLES = {
@@ -42,7 +42,7 @@ export function clearAccessToken(): void {
 /** Hidden iframe target so Sign out on one portal can wipe leftover JWTs on the others. */
 export const CLEAR_SESSION_PATH = '/auth/clear-session' as const;
 
-export const SESSION_LOGOUT_CHANNEL = 'smart.session.logout' as const;
+export const SESSION_LOGOUT_CHANNEL = 'hirekiwi.session.logout' as const;
 
 export function isClearSessionPath(pathname: string): boolean {
   return pathname === CLEAR_SESSION_PATH || pathname.startsWith(`${CLEAR_SESSION_PATH}/`);
@@ -126,7 +126,7 @@ function sharedAccessToken(): string | null {
 }
 
 /** Web Lock name: one refresh at a time across all tabs of an origin. */
-export const REFRESH_LOCK_NAME = 'smart.auth.refresh' as const;
+export const REFRESH_LOCK_NAME = 'hirekiwi.auth.refresh' as const;
 /** A token minted this recently by another tab is reused instead of refreshing again. */
 export const REFRESH_REUSE_WINDOW_MS = 30_000;
 /** Longest a tab waits for another tab's refresh before refreshing on its own. */
@@ -135,7 +135,7 @@ export const REFRESH_LOCK_WAIT_MS = 10_000;
 /**
  * Th6-614 - run a token refresh at most once across ALL tabs of this origin.
  *
- * `SmartApiClient` already single-flights refresh inside one tab, but five tabs opened with the
+ * `HireKiwiApiClient` already single-flights refresh inside one tab, but five tabs opened with the
  * same stale token each rotated the refresh cookie on their own. Tabs now queue on a Web Lock;
  * the first one refreshes and stores the new token in localStorage, and every tab behind it adopts
  * that token instead of calling the API again. Without the Web Locks API (or if the lock holder
@@ -377,7 +377,7 @@ export async function signOutAndRedirect(options: {
  * a second call presenting the same now-already-rotated cookie reads as reuse
  * to the server, which revokes the *entire* session family, logging the user
  * straight back out immediately after a successful login. Single-flighting
- * this the same way `SmartApiClient.refreshOnce` does closes that race.
+ * this the same way `HireKiwiApiClient.refreshOnce` does closes that race.
  */
 let reconcileInFlight: Promise<string | null> | null = null;
 
@@ -417,7 +417,7 @@ async function reconcileOnce(apiBaseUrl: string): Promise<string | null> {
 }
 
 /**
- * Hook for SmartApiClient: rotate the access token using the HttpOnly refresh cookie.
+ * Hook for HireKiwiApiClient: rotate the access token using the HttpOnly refresh cookie.
  */
 export function createRefreshAccessToken(refresh: () => Promise<{ accessToken: string }>) {
   return (): Promise<string | null> =>
