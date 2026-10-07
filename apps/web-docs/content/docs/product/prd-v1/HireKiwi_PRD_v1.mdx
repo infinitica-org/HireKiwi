@@ -1,9 +1,9 @@
 ---
-title: 'SMART — Product Requirements Document'
+title: 'HireKiwi — Product Requirements Document'
 description: 'prd-v1 - HireKiwi_PRD_v1'
 ---
 
-# SMART — Product Requirements Document
+# HireKiwi — Product Requirements Document
 
 ### AI-Powered Talent Intelligence Platform | Version 1.0 (Minimum Marketable Product)
 
@@ -32,13 +32,13 @@ Feature IDs use module prefixes: `SA-` Super Admin, `AC-` Academia/TPO, `CN-` Ca
 
 ## 1. Executive Summary
 
-SMART is an AI-powered Talent Intelligence Platform that partners directly with academic institutions to build **verified** skill profiles for students, and connects that verified talent to companies through a controlled matching layer.
+HireKiwi is an AI-powered Talent Intelligence Platform that partners directly with academic institutions to build **verified** skill profiles for students, and connects that verified talent to companies through a controlled matching layer.
 
 The core differentiation, stated plainly:
 
-> **SMART does not hand over a searchable data repository.** It verifies capability through autonomous, evidence-based assessment (skills, cognitive ability, communication, projects), and it closes the loop by telling the candidate exactly what to fix and giving them a path to re-verify. Companies get curated, verified profiles — not a resume database to mine.
+> **HireKiwi does not hand over a searchable data repository.** It verifies capability through autonomous, evidence-based assessment (skills, cognitive ability, communication, projects), and it closes the loop by telling the candidate exactly what to fix and giving them a path to re-verify. Companies get curated, verified profiles — not a resume database to mine.
 
-This is the wedge against "Superset"-style platforms, which primarily aggregate and expose raw candidate data. SMART's product bet is that **verification + a continuous development loop** is what makes a profile trustworthy enough for a company to skip its own screening.
+This is the wedge against "Superset"-style platforms, which primarily aggregate and expose raw candidate data. HireKiwi's product bet is that **verification + a continuous development loop** is what makes a profile trustworthy enough for a company to skip its own screening.
 
 **Phase 1 (this PRD) objective:** prove the verified-profile engine works, onboard academia at scale, and connect companies through a semi-manual, TPO-mediated placement flow — deliberately lightweight on the company side. Automation of matching, self-serve company tooling, and candidate-facing job discovery are Phase 2+.
 
@@ -134,7 +134,7 @@ The last row is the product's core trust boundary and should be enforced at the 
 | AC-06 | Multiple TPO staff seats with scoped permissions                   | S        | One institution ≠ one person; placement cells have teams                                                                                                                                              |
 | AC-07 | Assessment builder (supplementary, drive-specific)                 | V2       | **Scope correction:** this does _not_ replace the autonomous skill-verification engine candidates go through (Candidate #8–10). It lets a TPO add a _drive-specific_ extra round for a particular JD. |
 | AC-08 | Interview builder (supplementary, drive-specific)                  | V2       | Same relationship as AC-07 — parameters for a company-specific round, layered on top of the always-on verification engine                                                                             |
-| AC-09 | Compliance/accreditation export (NAAC/NBA-style reports)           | S        | Not in your original list; recommended addition — Indian institutions need placement evidence for accreditation, and this makes SMART indispensable to the TPO office specifically                    |
+| AC-09 | Compliance/accreditation export (NAAC/NBA-style reports)           | S        | Not in your original list; recommended addition — Indian institutions need placement evidence for accreditation, and this makes HireKiwi indispensable to the TPO office specifically                    |
 
 ### 6.3 Placement Management — Detailed Flow
 
@@ -365,7 +365,7 @@ Covered in depth in 7.3. Key design principle: **thresholds and cooldown periods
 - **Confidence Score** — output of the lightweight AI interview run per shortlisted opportunity
 - **Integrity Score** — composite proctoring trust score for an assessment/interview session
 - **Skill Cooldown** — mandatory waiting period before a locked skill can be re-attempted
-- **ORION** — the market/role-intelligence layer that informs SMART's competency framework and (in later phases) drives autonomous matching and readiness tiering
+- **ORION** — the market/role-intelligence layer that informs HireKiwi's competency framework and (in later phases) drives autonomous matching and readiness tiering
 
 ---
 

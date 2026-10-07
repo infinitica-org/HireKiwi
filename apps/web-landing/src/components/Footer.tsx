@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import smartTextImg from '@hirekiwi/ui/assets/images/Logos/WebP/samrt-text.png';
+import hirekiwiTextImg from '@hirekiwi/ui/assets/images/Logos/WebP/samrt-text.png';
 import { studentAppUrl } from '@/lib/portal-urls';
 
 export default function Footer() {
@@ -18,7 +18,7 @@ export default function Footer() {
               aria-label="HireKiwi home"
               className="inline-block transition-opacity hover:opacity-85"
             >
-              <Image src={smartTextImg} alt="HireKiwi" className="h-7 w-auto object-contain" />
+              <Image src={hirekiwiTextImg} alt="HireKiwi" className="h-7 w-auto object-contain" />
             </Link>
             <span className="hidden sm:inline text-zinc-200" aria-hidden="true">
               |

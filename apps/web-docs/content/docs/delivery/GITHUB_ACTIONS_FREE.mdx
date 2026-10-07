@@ -5,13 +5,13 @@ description: 'Delivery & Engineering Protocols - GITHUB_ACTIONS_FREE'
 
 # CI/CD & GitHub Plan Architecture
 
-> Owner: Tino (System Architect) · Applies to: SMART Monorepo
+> Owner: Tino (System Architect) · Applies to: HireKiwi Monorepo
 
 ---
 
 ## 1. Current Plan Status — GitHub Free
 
-SMART is currently on the **GitHub Free** organisational plan.
+HireKiwi is currently on the **GitHub Free** organisational plan.
 
 | Limit                            | Value                                     |
 | -------------------------------- | ----------------------------------------- |
@@ -80,9 +80,9 @@ Label completeness is checked by `.github/workflows/pr-label-check.yml` (warning
 
 | Branch | Workflow          | Trigger                 | Target                                                              |
 | ------ | ----------------- | ----------------------- | ------------------------------------------------------------------- |
-| `dev`  | `deploy-dev.yml`  | Successful CI on `dev`  | Single VPS `smart-dev` (`dev.becomesmart.online`)                   |
-| `qa`   | `deploy-qa.yml`   | Successful CI on `qa`   | Single VPS `smart-qa`                                               |
-| `main` | `deploy-prod.yml` | Successful CI on `main` | Single VPS `smart-prod` (`becomesmart.online`, Blue-Green Strategy) |
+| `dev`  | `deploy-dev.yml`  | Successful CI on `dev`  | Single VPS `hirekiwi-dev` (`dev.hirekiwi.online`)                   |
+| `qa`   | `deploy-qa.yml`   | Successful CI on `qa`   | Single VPS `hirekiwi-qa`                                               |
+| `main` | `deploy-prod.yml` | Successful CI on `main` | Single VPS `hirekiwi-prod` (`hirekiwi.online`, Blue-Green Strategy) |
 
 Deployments use a **blue-green strategy** (`scripts/blue-green-deploy.sh`) to eliminate downtime. See script header for operation details.
 

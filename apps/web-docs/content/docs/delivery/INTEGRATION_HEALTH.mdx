@@ -1,9 +1,9 @@
 ---
-title: 'SMART — Third-party integration health'
+title: 'HireKiwi — Third-party integration health'
 description: 'Delivery & Engineering Protocols - INTEGRATION_HEALTH'
 ---
 
-# SMART — Third-party integration health
+# HireKiwi — Third-party integration health
 
 > Owner: Vishal V · Ticket: S6-VV-129 (Zoho #585) · Code: `apps/api-core/src/modules/integration-health/`
 
@@ -19,8 +19,8 @@ balancer. Everything else is probed by api-core once a minute with its cheapest 
 | `github` | `GET https://api.github.com/rate_limit` (doesn't use the quota) |
 
 Results: `GET /api/v1/admin/health/integrations` (super admin) shows the last status, latency and error per
-integration. Prometheus gets `smart_integration_up{integration}` (configured integrations only) and
-`smart_integration_probe_duration_seconds`. A probe that takes longer than 10 s counts as down.
+integration. Prometheus gets `hirekiwi_integration_up{integration}` (configured integrations only) and
+`hirekiwi_integration_probe_duration_seconds`. A probe that takes longer than 10 s counts as down.
 
 ## integration-down
 An integration has failed its probe for 10 minutes. Open `/admin/health/integrations` for the error, then:
