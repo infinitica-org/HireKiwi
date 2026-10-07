@@ -43,6 +43,7 @@ function setup() {
   const prisma = {
     candidateCertificate: {
       create: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
       findMany: vi.fn().mockResolvedValue([]),
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn().mockImplementation((_args?: { where?: { id?: string } }) => {
@@ -70,6 +71,8 @@ function setup() {
     },
     user: {
       findUniqueOrThrow: vi.fn().mockResolvedValue({ fullName: 'Ada Lovelace' }),
+      findUnique: vi.fn().mockResolvedValue({ hasNoCertifications: null }),
+      update: vi.fn().mockImplementation((args: { data: unknown }) => Promise.resolve(args.data)),
     },
     $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
   };
@@ -527,6 +530,59 @@ describe('CandidateCertificatesService', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('getDeclaration and setDeclaration', () => {
+    it('returns null when no declaration exists', async () => {
+      const { prisma, service } = setup();
+      prisma.user.findUnique = vi.fn().mockResolvedValue({ hasNoCertifications: null });
+      const res = await service.getDeclaration(candidateId);
+      expect(res).toEqual({ hasNoCertifications: null });
+    });
+
+    it('sets declaration to true when no certificates exist', async () => {
+      const { prisma, service } = setup();
+      prisma.candidateCertificate.count = vi.fn().mockResolvedValue(0);
+      prisma.user.update = vi.fn().mockResolvedValue({ hasNoCertifications: true });
+      const res = await service.setDeclaration(candidateId, true);
+      expect(res).toEqual({ hasNoCertifications: true });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: candidateId },
+        data: { hasNoCertifications: true },
+        select: { hasNoCertifications: true },
+      });
+    });
+
+    it('throws BadRequestException when declaring true but certificates exist', async () => {
+      const { prisma, service } = setup();
+      prisma.candidateCertificate.count = vi.fn().mockResolvedValue(2);
+      await expect(service.setDeclaration(candidateId, true)).rejects.toThrow(BadRequestException);
+    });
+
+    it('allows setting declaration to false or null', async () => {
+      const { prisma, service } = setup();
+      prisma.user.update = vi.fn().mockResolvedValue({ hasNoCertifications: false });
+      const resFalse = await service.setDeclaration(candidateId, false);
+      expect(resFalse).toEqual({ hasNoCertifications: false });
+
+      prisma.user.update = vi.fn().mockResolvedValue({ hasNoCertifications: null });
+      const resNull = await service.setDeclaration(candidateId, null);
+      expect(resNull).toEqual({ hasNoCertifications: null });
+    });
+
+    it('sets hasNoCertifications to false when creating a certificate', async () => {
+      const { prisma, service } = setup();
+      prisma.candidateCertificate.create = vi.fn().mockResolvedValue(baseCertificateRow());
+      prisma.user.update = vi.fn().mockResolvedValue({ hasNoCertifications: false });
+      await service.create(candidateId, {
+        title: 'Google Cloud Engineer',
+        issuer: 'Google',
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: candidateId },
+        data: { hasNoCertifications: false },
+      });
     });
   });
 });

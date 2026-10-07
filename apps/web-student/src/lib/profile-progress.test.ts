@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import type { ProfileProgressInput } from './profile-progress';
 import {
+  PROFILE_AREA_IDS,
   RECOMMENDED_ACTION_DISMISSAL_MS,
   computeProfileCompletion,
   dismissRecommendedAction,
@@ -166,6 +167,44 @@ describe('computeProfileCompletion', () => {
         emptyInput({ certificates: [{ certificateId: 'cert_1', title: 'PMP' } as never] }),
       ).areaStatus.certifications,
     ).toBe(true);
+  });
+
+  it('marks certifications complete when hasNoCertifications is true even without certificate records', () => {
+    expect(
+      computeProfileCompletion(emptyInput({ hasNoCertifications: true, certificates: [] }))
+        .areaStatus.certifications,
+    ).toBe(true);
+  });
+
+  it('marks certifications incomplete when hasNoCertifications is null or false and certificates are empty', () => {
+    expect(
+      computeProfileCompletion(emptyInput({ hasNoCertifications: null, certificates: [] }))
+        .areaStatus.certifications,
+    ).toBe(false);
+
+    expect(
+      computeProfileCompletion(emptyInput({ hasNoCertifications: false, certificates: [] }))
+        .areaStatus.certifications,
+    ).toBe(false);
+  });
+
+  it('does not include credentials as a canonical profile-progress area', () => {
+    expect(PROFILE_AREA_IDS).not.toContain('credentials');
+    const result = computeProfileCompletion(emptyInput());
+    expect((result.areaStatus as Record<string, boolean>).credentials).toBeUndefined();
+    expect(result.completedAreas).not.toContain('credentials');
+    expect(result.incompleteAreas).not.toContain('credentials');
+  });
+
+  it('confirms credentials or credential declaration does not alter profile completion', () => {
+    const baseline = computeProfileCompletion(emptyInput());
+    const withExtra = computeProfileCompletion({
+      ...emptyInput(),
+      ...({ hasNoCredentials: true, credentials: [{ id: 'cred-1' }] } as Record<string, unknown>),
+    } as unknown as ProfileProgressInput);
+    expect(withExtra.percent).toBe(baseline.percent);
+    expect(withExtra.completedAreas).toEqual(baseline.completedAreas);
+    expect(withExtra.incompleteAreas).toEqual(baseline.incompleteAreas);
   });
 
   it('marks professional links complete with LinkedIn URL', () => {

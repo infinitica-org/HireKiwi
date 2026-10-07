@@ -1,13 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AlertCircle, BadgeCheck, Loader2, Plus, ShieldCheck } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
-import {
-  CREDENTIAL_TYPES,
-  type CredentialType,
-  type ProfessionalCredentialDto,
-} from '@hirekiwi/contracts';
+import { AlertCircle, BadgeCheck, CheckCircle2, Loader2, Plus, ShieldCheck } from 'lucide-react';
+import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { useQuery, useQueryClient } from '@hirekiwi/ui';
+import { CREDENTIAL_TYPES, type CredentialType } from '@hirekiwi/contracts';
 import { CredentialEntryCard } from '@/components/profile/CredentialEntryCard';
 import {
   ProfileBentoEmptyPanel,
@@ -15,7 +12,10 @@ import {
   ProfileSectionHeader,
 } from '@/components/profile/ProfileSectionChrome';
 import { api } from '@/lib/api';
-import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
+import {
+  profilePrimaryButtonSmClass,
+  profileSecondaryButtonSmClass,
+} from '@/lib/profile-ui-classes';
 import { profileSectionMeta } from '@/lib/profile-sections';
 
 // DEGREE is intentionally not offered here: CandidateEducation already owns
@@ -67,12 +67,33 @@ function emptyForm(): NewCredentialForm {
 }
 
 export function CredentialsSection() {
-  const [credentials, setCredentials] = useState<ProfessionalCredentialDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const {
+    data: credentials = [],
+    isLoading: credentialsLoading,
+    error: credentialsQueryError,
+    refetch: refetchCredentials,
+  } = useQuery({
+    queryKey: queryKeys.myCredentials(),
+    queryFn: () => api.evidence.listCredentials(),
+    staleTime: 60_000,
+  });
+
+  const { data: declarationData, isLoading: declarationLoading } = useQuery({
+    queryKey: queryKeys.myCredentialDeclaration(),
+    queryFn: () => api.evidence.getCredentialDeclaration(),
+    staleTime: 60_000,
+  });
+
+  const hasNoCredentials = declarationData?.hasNoCredentials ?? null;
+  const loading = credentialsLoading || declarationLoading;
+
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<NewCredentialForm>(emptyForm());
   const [saving, setSaving] = useState(false);
+  const [isDeclaring, setIsDeclaring] = useState(false);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [documentPreviews, setDocumentPreviews] = useState<Record<string, DocumentPreview>>({});
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -87,21 +108,39 @@ export function CredentialsSection() {
     };
   }, []);
 
-  const loadCredentials = async () => {
+  const handleDeclareNoCredentials = async () => {
     try {
+      setIsDeclaring(true);
       setError(null);
-      const rows = await api.evidence.listCredentials();
-      setCredentials(rows);
+      const res = await api.evidence.updateCredentialDeclaration({ hasNoCredentials: true });
+      queryClient.setQueryData(queryKeys.myCredentialDeclaration(), res);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.myCredentials() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.myCredentialDeclaration() }),
+      ]);
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not load credentials.');
+      setError(isSmartApiError(err) ? err.message : 'Failed to update credentials declaration.');
     } finally {
-      setLoading(false);
+      setIsDeclaring(false);
     }
   };
 
-  useEffect(() => {
-    void loadCredentials();
-  }, []);
+  const handleChangeDeclaration = async () => {
+    try {
+      setIsDeclaring(true);
+      setError(null);
+      const res = await api.evidence.updateCredentialDeclaration({ hasNoCredentials: null });
+      queryClient.setQueryData(queryKeys.myCredentialDeclaration(), res);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.myCredentials() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.myCredentialDeclaration() }),
+      ]);
+    } catch (err: unknown) {
+      setError(isSmartApiError(err) ? err.message : 'Failed to update credentials declaration.');
+    } finally {
+      setIsDeclaring(false);
+    }
+  };
 
   const handleCreate = async () => {
     if (!form.issuer.trim() || !form.credentialName.trim()) {
@@ -118,9 +157,13 @@ export function CredentialsSection() {
         externalCredentialId: form.externalCredentialId.trim() || undefined,
         verificationSource: form.verificationSource.trim() || undefined,
       });
+      queryClient.setQueryData(queryKeys.myCredentialDeclaration(), { hasNoCredentials: false });
       setForm(emptyForm());
       setShowForm(false);
-      await loadCredentials();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.myCredentials() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.myCredentialDeclaration() }),
+      ]);
     } catch (err: unknown) {
       setError(isSmartApiError(err) ? err.message : 'Could not add credential.');
     } finally {
@@ -152,13 +195,22 @@ export function CredentialsSection() {
         [credentialId]: { objectUrl, fileName: file.name, isImage: file.type.startsWith('image/') },
       }));
 
-      await loadCredentials();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.myCredentials() }),
+        refetchCredentials(),
+      ]);
     } catch (err: unknown) {
       setError(isSmartApiError(err) ? err.message : 'Document upload failed.');
     } finally {
       setUploadingId(null);
     }
   };
+
+  const displayError =
+    error ??
+    (credentialsQueryError
+      ? (credentialsQueryError as Error).message || 'Could not load credentials.'
+      : null);
 
   const meta = profileSectionMeta('credentials');
 
@@ -192,11 +244,11 @@ export function CredentialsSection() {
         }
       />
 
-      {error ? (
+      {displayError ? (
         <ProfileSectionError>
           <span className="inline-flex items-start gap-2">
             <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-            {error}
+            {displayError}
           </span>
         </ProfileSectionError>
       ) : null}
@@ -282,25 +334,65 @@ export function CredentialsSection() {
       {loading ? <p className="text-sm text-[var(--ds-text-muted)]">Loading credentials…</p> : null}
 
       {!loading && credentials.length === 0 && !showForm ? (
-        <ProfileBentoEmptyPanel
-          tipIcon={ShieldCheck}
-          tipIconClassName="text-[#0284c7]"
-          tipTitle="Licenses and professional IDs"
-          tipBody="Upload supporting documents — we verify against the issuer where possible and keep pending items visible until confirmed."
-          emptyIcon={BadgeCheck}
-          emptyTitle="No credentials yet"
-          emptyBody="Add a license, certification, badge, or membership to track verification here."
-          actions={
-            <button
-              type="button"
-              onClick={() => setShowForm(true)}
-              className={`${profilePrimaryButtonSmClass} justify-center px-5 py-2.5 text-[13px]`}
-            >
-              <Plus className="size-4" strokeWidth={2} aria-hidden />
-              Add credential
-            </button>
-          }
-        />
+        hasNoCredentials === true ? (
+          <ProfileBentoEmptyPanel
+            emptyIcon={CheckCircle2}
+            emptyTitle="No credentials"
+            emptyBody="You've indicated that you don't currently have any credentials."
+            actions={
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(true)}
+                  className={`${profilePrimaryButtonSmClass} justify-center px-5 py-2.5 text-[13px]`}
+                >
+                  <Plus className="size-4" strokeWidth={2} aria-hidden />
+                  Add credential
+                </button>
+                <button
+                  type="button"
+                  onClick={handleChangeDeclaration}
+                  disabled={isDeclaring}
+                  className={`${profileSecondaryButtonSmClass} justify-center px-5 py-2.5 text-[13px] disabled:opacity-50`}
+                >
+                  {isDeclaring ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                  Change declaration
+                </button>
+              </>
+            }
+          />
+        ) : (
+          <ProfileBentoEmptyPanel
+            tipIcon={ShieldCheck}
+            tipIconClassName="text-[#0284c7]"
+            tipTitle="Licenses and professional IDs"
+            tipBody="Upload supporting documents — we verify against the issuer where possible and keep pending items visible until confirmed."
+            emptyIcon={BadgeCheck}
+            emptyTitle="No credentials yet"
+            emptyBody="Add a license, certification, badge, or membership to track verification here."
+            actions={
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(true)}
+                  className={`${profilePrimaryButtonSmClass} justify-center px-5 py-2.5 text-[13px]`}
+                >
+                  <Plus className="size-4" strokeWidth={2} aria-hidden />
+                  Add credential
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeclareNoCredentials}
+                  disabled={isDeclaring}
+                  className={`${profileSecondaryButtonSmClass} justify-center px-5 py-2.5 text-[13px] disabled:opacity-50`}
+                >
+                  {isDeclaring ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}I
+                  don't have any credentials
+                </button>
+              </>
+            }
+          />
+        )
       ) : null}
 
       {!loading && credentials.length > 0 ? (

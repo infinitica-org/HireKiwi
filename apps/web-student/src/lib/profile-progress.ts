@@ -112,6 +112,7 @@ export interface ProfileProgressInput {
   hasNoWorkExperience?: boolean | null;
   projects: ProjectDto[];
   certificates: CandidateCertificateDto[];
+  hasNoCertifications?: boolean | null;
   hasProfilePhoto: boolean;
 }
 
@@ -173,7 +174,7 @@ export function isProjectsAreaComplete(input: ProfileProgressInput): boolean {
 }
 
 export function isCertificationsAreaComplete(input: ProfileProgressInput): boolean {
-  return input.certificates.length > 0;
+  return input.hasNoCertifications === true || input.certificates.length > 0;
 }
 
 export function isProfessionalLinksAreaComplete(input: ProfileProgressInput): boolean {

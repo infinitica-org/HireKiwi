@@ -196,3 +196,17 @@ export const SubmitCertificateEndorsementDecisionResponseSchema = z.object({
 export type SubmitCertificateEndorsementDecisionResponse = z.infer<
   typeof SubmitCertificateEndorsementDecisionResponseSchema
 >;
+
+export const CandidateCertificateDeclarationResponseDtoSchema = z.object({
+  hasNoCertifications: z.boolean().nullable(),
+});
+export type CandidateCertificateDeclarationResponseDto = z.infer<
+  typeof CandidateCertificateDeclarationResponseDtoSchema
+>;
+
+export const UpdateCandidateCertificateDeclarationDtoSchema = z.object({
+  hasNoCertifications: z.boolean().nullable(),
+});
+export type UpdateCandidateCertificateDeclarationDto = z.infer<
+  typeof UpdateCandidateCertificateDeclarationDtoSchema
+>;

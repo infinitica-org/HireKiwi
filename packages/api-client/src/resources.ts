@@ -254,6 +254,7 @@ import {
   BatchMemberDtoSchema,
   CandidateBriefDtoSchema,
   CandidateCertificateDtoSchema,
+  CandidateCertificateDeclarationResponseDtoSchema,
   CandidateEducationDocumentSchema,
   CandidateEducationSchema,
   CandidateLanguageSchema,
@@ -332,6 +333,7 @@ import {
   ListCapabilityInferenceReviewQueueResponseSchema,
   CorrectStudentCapabilityResponseSchema,
   ProfessionalCredentialDtoSchema,
+  ProfessionalCredentialDeclarationResponseDtoSchema,
   PassiveSignalEvidenceDtoSchema,
   ProjectSkillMappingDtoSchema,
   VerificationDecisionDtoSchema,
@@ -395,6 +397,8 @@ import {
   type SendManagerEndorsementDto,
   type SubmitManagerEndorsementDto,
   type UpdateWorkExperienceDeclarationDto,
+  type UpdateCandidateCertificateDeclarationDto,
+  type UpdateProfessionalCredentialDeclarationDto,
   UsernameStatusResponseSchema,
   ProfileVisibilityResponseSchema,
   PersonalInfoResponseSchema,
@@ -1632,6 +1636,19 @@ export function evidenceApi(client: SmartApiClient) {
         schema: z.array(ProfessionalCredentialDtoSchema),
       }),
 
+    getCredentialDeclaration: () =>
+      client.get(prefixed('/users/me/credentials/declaration'), {
+        schema: ProfessionalCredentialDeclarationResponseDtoSchema,
+      }),
+
+    updateCredentialDeclaration: (body: UpdateProfessionalCredentialDeclarationDto) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed('/users/me/credentials/declaration'),
+        body,
+        schema: ProfessionalCredentialDeclarationResponseDtoSchema,
+      }),
+
     createCredential: (body: unknown) =>
       client.post(prefixed('/users/me/credentials'), body, {
         schema: ProfessionalCredentialDtoSchema,
@@ -2065,6 +2082,19 @@ export function candidateCertificatesApi(client: SmartApiClient) {
     listMine: () =>
       client.get(prefixed('/candidate-certificates'), {
         schema: ListMyCandidateCertificatesResponseSchema,
+      }),
+
+    getDeclaration: () =>
+      client.get(prefixed('/candidate-certificates/declaration'), {
+        schema: CandidateCertificateDeclarationResponseDtoSchema,
+      }),
+
+    updateDeclaration: (body: UpdateCandidateCertificateDeclarationDto) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed('/candidate-certificates/declaration'),
+        body,
+        schema: CandidateCertificateDeclarationResponseDtoSchema,
       }),
 
     get: (id: string) =>

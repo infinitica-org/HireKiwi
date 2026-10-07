@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Req,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -18,6 +19,7 @@ import {
   CreateCandidateCertificateRequestSchema,
   CreateCertificateEndorsementRequestSchema,
   SubmitCertificateAgendaRequestSchema,
+  UpdateCandidateCertificateDeclarationDtoSchema,
   UpdateCertificateLearningRequestSchema,
 } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -48,6 +50,25 @@ export class CandidateCertificatesController {
   @ApiOperation({ summary: "List the caller's own declared certificates." })
   listMine(@CurrentUser() user: RequestUser) {
     return this.service.listMine(user.sub);
+  }
+
+  @Get('declaration')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get external certification declaration status for the authenticated student.',
+  })
+  getDeclaration(@CurrentUser() user: RequestUser) {
+    return this.service.getDeclaration(user.sub);
+  }
+
+  @Put('declaration')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Set or clear external certification declaration for the authenticated student.',
+  })
+  setDeclaration(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = UpdateCandidateCertificateDeclarationDtoSchema.parse(body);
+    return this.service.setDeclaration(user.sub, parsed.hasNoCertifications);
   }
 
   @Get(':id')

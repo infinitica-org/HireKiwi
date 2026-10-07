@@ -83,6 +83,11 @@ export function useProfileProgress(): UseProfileProgressResult {
     queryKey: [...queryKeys.myCandidateCertificates(), refreshToken],
     queryFn: () => api.candidateCertificates.listMine().then((res) => res.certificates ?? []),
   });
+  const certificateDeclarationQuery = useQuery({
+    ...queryOpts,
+    queryKey: [...queryKeys.myCandidateCertificateDeclaration(), refreshToken],
+    queryFn: () => api.candidateCertificates.getDeclaration(),
+  });
 
   const queryResults = [
     onboardingQuery,
@@ -93,6 +98,7 @@ export function useProfileProgress(): UseProfileProgressResult {
     languagesQuery,
     projectsQuery,
     certificatesQuery,
+    certificateDeclarationQuery,
   ];
 
   const loading = queryResults.some((query) => query.isLoading);
@@ -110,6 +116,7 @@ export function useProfileProgress(): UseProfileProgressResult {
   const languages = languagesQuery.data ?? [];
   const projects = projectsQuery.data ?? [];
   const certificates = certificatesQuery.data ?? [];
+  const hasNoCertifications = certificateDeclarationQuery.data?.hasNoCertifications ?? null;
 
   const input: ProfileProgressInput | null = loading
     ? null
@@ -123,6 +130,7 @@ export function useProfileProgress(): UseProfileProgressResult {
         hasNoWorkExperience,
         projects,
         certificates,
+        hasNoCertifications,
         hasProfilePhoto: Boolean(onboarding.profilePhotoUrl),
       };
 
