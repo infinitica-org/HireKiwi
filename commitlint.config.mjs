@@ -1,5 +1,5 @@
 /**
- * Conventional Commits, scoped to SMART's module boundaries.
+ * Conventional Commits, scoped to HireKiwi's module boundaries.
  *
  * The `scope-enum` list is deliberately the same as the module ownership matrix in
  * TEAM.md §3 — a commit scope names exactly one owned area, which makes

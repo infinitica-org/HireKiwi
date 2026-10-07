@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { TierBadge } from '@hirekiwi/ui';
 import type { PublicCandidateProfileDto } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
@@ -71,7 +71,7 @@ export default function PublicCandidateProfilePage({ params }: PageProps) {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        if (isSmartApiError(err) && err.statusCode === 404) {
+        if (isHireKiwiApiError(err) && err.statusCode === 404) {
           setNotFound(true);
         } else {
           setError('Could not load this profile right now.');

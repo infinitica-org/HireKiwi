@@ -1,10 +1,10 @@
-# SMART: Full Implementation Guide
+# HireKiwi: Full Implementation Guide
 
 Google Analytics, Sentry, Prometheus, health monitoring, open-source code review and OAuth, designed for **our** codebase and deployment.
 
 |                |                                                                                                                                                                                                                      |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Audience**   | SMART engineers: backend (api-core), frontend (portals), infra (Compose, Caddy, Grafana), CI                                                                                                                         |
+| **Audience**   | HireKiwi engineers: backend (api-core), frontend (portals), infra (Compose, Caddy, Grafana), CI                                                                                                                      |
 | **Status**     | Proposal. Nothing below is implemented unless a box says "Already built"                                                                                                                                             |
 | **Date**       | 2026-10-07                                                                                                                                                                                                           |
 | **How to use** | Read section 1 (how our product is configured and deployed), then work through sections 2 to 7 in the suggested order. Each section lists files to change, code, config per environment, tests, rollout and rollback |
@@ -51,7 +51,7 @@ Every item in this guide touches configuration, so these facts decide how each o
 | Server secrets per environment      | `.env.dev`, `.env.qa`, `.env.prod` on the VPS, created from `.env.dev.example`, `.env.qa.example`, `.env.prod.example`. The deploy workflows rsync the repo **excluding** `.env*` and then run `scripts/deploy-vps.sh <env>` | Real secrets are never in the repo or in GitHub secrets for the app. New variables must be added to the `.example` files and filled on the server by hand |
 | Browser variables (`NEXT_PUBLIC_*`) | **Baked at Docker build time.** `infra/docker/Dockerfile.web` declares `ARG` and `ENV` for each one, and each web service in `docker-compose.yml` passes them under `build.args`                                             | A `NEXT_PUBLIC_` value set only at runtime is **undefined in the browser**. Every new one needs an `ARG`, an `ENV` and a `build.args` entry               |
 | Builds                              | The VPS builds images itself, one service at a time (`deploy-vps.sh`)                                                                                                                                                        | Anything needed at build time (source-map upload tokens) must be available on the VPS, not in GitHub Actions                                              |
-| Shared Next.js config               | `packages/config-next` (package name `@hirekiwi/next-config`, function `withSmartConfig`)                                                                                                                                    | Cross-portal build behaviour belongs here, not copied into nine `next.config.ts` files                                                                    |
+| Shared Next.js config               | `packages/config-next` (package name `@hirekiwi/next-config`, function `withHireKiwiConfig`)                                                                                                                                 | Cross-portal build behaviour belongs here, not copied into nine `next.config.ts` files                                                                    |
 | Reverse proxy                       | `infra/docker/Caddyfile`                                                                                                                                                                                                     | Security headers and any new public host go here                                                                                                          |
 | Observability stack                 | Compose profile `obs`: Prometheus, Grafana, Loki, Alloy, Tempo, cAdvisor, node-exporter, Postgres and Redis exporters. Config in `infra/observability/`                                                                      | New scrape jobs, dashboards and alert rules go in this folder                                                                                             |
 
@@ -294,7 +294,7 @@ SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
 pnpm --filter @hirekiwi/web-student add @sentry/nextjs
 ```
 
-2. **Centralise** the Sentry wrapper in `packages/config-next` so nine apps do not drift. Add an optional `withSmartSentry(config)` that calls `withSentryConfig` only when `SENTRY_AUTH_TOKEN` is present at build time. Each portal's `next.config.ts` then wraps once: `export default withSmartSentry(config)`.
+2. **Centralise** the Sentry wrapper in `packages/config-next` so nine apps do not drift. Add an optional `withHireKiwiSentry(config)` that calls `withSentryConfig` only when `SENTRY_AUTH_TOKEN` is present at build time. Each portal's `next.config.ts` then wraps once: `export default withHireKiwiSentry(config)`.
 3. Per portal, create `instrumentation-client.ts`:
 
 ```ts
@@ -596,7 +596,7 @@ export class GoogleAuthController {
       return reply.redirect(`${env.AUTH_APP_URL}/login?error=google_not_configured`);
     const { url, state } = await this.google.createAuthorizationUrl(returnTo ?? null);
     // Bind the state to THIS browser so a forged callback is rejected (login CSRF).
-    void (reply as CookieReply).setCookie('smart_oauth_state', state, {
+    void (reply as CookieReply).setCookie('hirekiwi_oauth_state', state, {
       httpOnly: true,
       sameSite: 'lax',
       secure: env.NODE_ENV === 'production',
@@ -614,7 +614,7 @@ export class GoogleAuthController {
     @Req() req: FastifyRequest,
     @Res() reply: FastifyReply,
   ) {
-    const bound = req.cookies?.['smart_oauth_state'];
+    const bound = req.cookies?.['hirekiwi_oauth_state'];
     if (!code || !state || bound !== state) {
       return reply.redirect(`${env.AUTH_APP_URL}/login?error=oauth_failed`);
     }
@@ -631,7 +631,7 @@ export class GoogleAuthController {
 }
 ```
 
-`mapOauthError` maps known exceptions to the codes the login form already understands (`account_held`, `institution_held`, `institution_deactivated`) and everything else to `oauth_failed`. Register the service and controller in `auth.module.ts`. Clear the `smart_oauth_state` cookie in the callback.
+`mapOauthError` maps known exceptions to the codes the login form already understands (`account_held`, `institution_held`, `institution_deactivated`) and everything else to `oauth_failed`. Register the service and controller in `auth.module.ts`. Clear the `hirekiwi_oauth_state` cookie in the callback.
 
 **Cookie caveat to test early:** the refresh cookie is `SameSite=Strict`. The callback response is a top-level navigation, which browsers allow to set it, and `web-auth` then calls `POST /auth/refresh` with `credentials: 'include'` from a same-site origin (`localhost` ports in dev, subdomains of one registrable domain in production). Verify this in a real browser in both dev and the QA domain before building more on it. 5. **Token hand-off.** The callback must not put an access token in a URL. Instead it redirects to a new `web-auth` page, `/login/callback`, which calls the existing refresh endpoint (the pattern `reconcileAccessTokenFromCookie` already uses), stores the session, and calls `redirectForRole` with the `returnTo` value.
 
@@ -724,7 +724,7 @@ pnpm --filter @hirekiwi/web-landing --filter @hirekiwi/web-auth --filter @hireki
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { useEffect, useState } from 'react';
 
-const CONSENT_KEY = 'smart.analytics.consent';
+const CONSENT_KEY = 'hirekiwi.analytics.consent';
 
 export function Analytics({
   gaId,
@@ -745,8 +745,8 @@ export function Analytics({
       }
     };
     read();
-    window.addEventListener('smart:analytics-consent', read);
-    return () => window.removeEventListener('smart:analytics-consent', read);
+    window.addEventListener('hirekiwi:analytics-consent', read);
+    return () => window.removeEventListener('hirekiwi:analytics-consent', read);
   }, [requireConsent]);
 
   if (!gaId || !allowed) return null;
@@ -759,7 +759,7 @@ export function setAnalyticsConsent(granted: boolean): void {
   } catch {
     /* storage blocked: stay denied */
   }
-  window.dispatchEvent(new Event('smart:analytics-consent'));
+  window.dispatchEvent(new Event('hirekiwi:analytics-consent'));
 }
 ```
 
@@ -787,7 +787,7 @@ Confirm with legal whether the landing page also needs a banner under DPDP befor
 
 ## 6. Prometheus
 
-> **Already built.** `packages/observability/src/metrics.ts` defines the `prom-client` registry (default metrics prefixed `smart_`). The API serves them at `/api/v1/admin/metrics`, protected by the `x-metrics-token` header (`METRICS_SCRAPE_TOKEN` is required in production). `infra/observability/prometheus.yml` scrapes: `smart-api`, `cadvisor`, `node`, `postgres`, `redis`, `redpanda`, `minio`. Dashboards: API metrics, API logs, Postgres, host and containers, MinIO, platform overview, k6. Prometheus runs in the Compose `obs` profile.
+> **Already built.** `packages/observability/src/metrics.ts` defines the `prom-client` registry (default metrics prefixed `hirekiwi_`). The API serves them at `/api/v1/admin/metrics`, protected by the `x-metrics-token` header (`METRICS_SCRAPE_TOKEN` is required in production). `infra/observability/prometheus.yml` scrapes: `hirekiwi-api`, `cadvisor`, `node`, `postgres`, `redis`, `redpanda`, `minio`. Dashboards: API metrics, API logs, Postgres, host and containers, MinIO, platform overview, k6. Prometheus runs in the Compose `obs` profile.
 
 So the work is extending it.
 
@@ -797,21 +797,21 @@ Declare metrics **only** in `packages/observability/src/metrics.ts` (never insid
 
 ```ts
 export const assessmentAttemptsTotal = new Counter({
-  name: 'smart_assessment_attempts_total',
+  name: 'hirekiwi_assessment_attempts_total',
   help: 'Skill assessment attempts by outcome.',
   labelNames: ['outcome'] as const, // started | completed | abandoned | flagged
   registers: [registry],
 });
 
 export const authLoginsTotal = new Counter({
-  name: 'smart_auth_logins_total',
+  name: 'hirekiwi_auth_logins_total',
   help: 'Sign-ins by method and result.',
   labelNames: ['method', 'result'] as const, // password|google  x  success|failure
   registers: [registry],
 });
 
 export const signalIngestionTotal = new Counter({
-  name: 'smart_signal_ingestion_total',
+  name: 'hirekiwi_signal_ingestion_total',
   help: 'External signal fetches by source and result.',
   labelNames: ['source', 'result'] as const, // leetcode|hackerrank|github x ok|error
   registers: [registry],
@@ -833,21 +833,21 @@ rule_files:
 ```yaml
 # infra/observability/slo.rules.yml
 groups:
-  - name: smart-slo
+  - name: hirekiwi-slo
     interval: 30s
     rules:
-      - record: smart:http_requests_under_200ms:ratio_rate5m
+      - record: hirekiwi:http_requests_under_200ms:ratio_rate5m
         expr: |
-          sum(rate(smart_http_request_duration_seconds_bucket{le="0.2"}[5m]))
-          / sum(rate(smart_http_request_duration_seconds_count[5m]))
-      - record: smart:http_requests_under_500ms:ratio_rate5m
+          sum(rate(hirekiwi_http_request_duration_seconds_bucket{le="0.2"}[5m]))
+          / sum(rate(hirekiwi_http_request_duration_seconds_count[5m]))
+      - record: hirekiwi:http_requests_under_500ms:ratio_rate5m
         expr: |
-          sum(rate(smart_http_request_duration_seconds_bucket{le="0.5"}[5m]))
-          / sum(rate(smart_http_request_duration_seconds_count[5m]))
-      - record: smart:http_5xx:ratio_rate5m
+          sum(rate(hirekiwi_http_request_duration_seconds_bucket{le="0.5"}[5m]))
+          / sum(rate(hirekiwi_http_request_duration_seconds_count[5m]))
+      - record: hirekiwi:http_5xx:ratio_rate5m
         expr: |
-          sum(rate(smart_http_requests_total{status_code=~"5.."}[5m]))
-          / sum(rate(smart_http_requests_total[5m]))
+          sum(rate(hirekiwi_http_requests_total{status_code=~"5.."}[5m]))
+          / sum(rate(hirekiwi_http_requests_total[5m]))
 ```
 
 Mount the file into the `prometheus` service in compose. Then add Grafana alert rules that fire when the 5-minute ratio stays below target (see 7.4). Today's alert is only a flat "p95 above 1.5 s".
@@ -861,7 +861,7 @@ The portals expose only `/health`. Container metrics from cAdvisor are enough to
 - Open the Prometheus targets page and confirm every job is `UP`.
 - Query each new metric after exercising the feature.
 - Add a test beside the existing registry tests that asserts each new metric name is registered once.
-- Check cardinality: `count({__name__=~"smart_.*"})` should stay stable under load.
+- Check cardinality: `count({__name__=~"hirekiwi_.*"})` should stay stable under load.
 
 **Rollback:** remove the `rule_files` entry; metrics are additive.
 
@@ -914,7 +914,7 @@ uptime-kuma:
 }
 ```
 
-Add monitors for each public host (API `/ready`, all portals' `/health`) and TLS certificate expiry (alert at 14 days). Send notifications to the same channel as the Grafana webhook. 3. **Notification route.** Confirm the Grafana webhook contact point (`smart-team-webhook`) goes to a monitored channel (for example Slack) and name an on-call owner in the runbook.
+Add monitors for each public host (API `/ready`, all portals' `/health`) and TLS certificate expiry (alert at 14 days). Send notifications to the same channel as the Grafana webhook. 3. **Notification route.** Confirm the Grafana webhook contact point (`hirekiwi-team-webhook`) goes to a monitored channel (for example Slack) and name an on-call owner in the runbook.
 
 ### 7.2 Database health gaps
 

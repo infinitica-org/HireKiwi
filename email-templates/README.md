@@ -1,6 +1,6 @@
-# SMART email templates — design review
+# HireKiwi email templates — design review
 
-Three visual treatments (`classic`, `minimal`, `genz`) of all 8 transactional emails SMART
+Three visual treatments (`classic`, `minimal`, `genz`) of all 8 transactional emails HireKiwi
 already sends, built from the same brand tokens as the product
 (`packages/config-tailwind/theme.css`) and the same wordmark/mark SVGs
 (`packages/ui/src/assets/brand/`).
