@@ -2902,7 +2902,7 @@ enum TrustReportCategory {
 }
 
 model TrustCase {
-  id              String            @id @default(uuid()) @db.Uuid
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   candidateId     String            @map("candidate_id") @db.Uuid
   candidate       User              @relation("UserTrustCases", fields: [candidateId], references: [id], onDelete: Cascade)
   status          TrustCaseStatus   @default(OPEN)
@@ -2914,7 +2914,7 @@ model TrustCase {
   closedAt        DateTime?         @map("closed_at") @db.Timestamptz(6)
   resolutionNotes String?           @map("resolution_notes") @db.Text
   createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   integrityEvents    IntegrityEvent[]
   corroborationFlags CorroborationReviewFlag[]
@@ -2929,7 +2929,7 @@ model TrustCase {
 }
 
 model UserAccountHold {
-  id          String     @id @default(uuid()) @db.Uuid
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId      String     @map("user_id") @db.Uuid
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   trustCaseId String?    @map("trust_case_id") @db.Uuid
@@ -2947,7 +2947,7 @@ model UserAccountHold {
 }
 
 model EnforcementAction {
-  id             String                @id @default(uuid()) @db.Uuid
+  id             String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   trustCaseId    String                @map("trust_case_id") @db.Uuid
   trustCase      TrustCase             @relation(fields: [trustCaseId], references: [id], onDelete: Cascade)
   candidateId    String                @map("candidate_id") @db.Uuid
@@ -2971,7 +2971,7 @@ model EnforcementAction {
 }
 
 model ProfileAccessLog {
-  id           String   @id @default(uuid()) @db.Uuid
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   candidateId  String   @map("candidate_id") @db.Uuid
   candidate    User     @relation("UserProfileAccessCandidate", fields: [candidateId], references: [id], onDelete: Cascade)
   viewerId     String?  @map("viewer_id") @db.Uuid
@@ -2987,7 +2987,7 @@ model ProfileAccessLog {
 }
 
 model TrustAppeal {
-  id                  String            @id @default(uuid()) @db.Uuid
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   enforcementActionId String            @map("enforcement_action_id") @db.Uuid
   enforcementAction   EnforcementAction @relation(fields: [enforcementActionId], references: [id], onDelete: Cascade)
   candidateId         String            @map("candidate_id") @db.Uuid
@@ -3006,7 +3006,7 @@ model TrustAppeal {
 }
 
 model TrustReport {
-  id                 String              @id @default(uuid()) @db.Uuid
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   reporterId         String?             @map("reporter_id") @db.Uuid
   reporter           User?               @relation("UserReportsCreated", fields: [reporterId], references: [id], onDelete: SetNull)
   reporterEmail      String?             @map("reporter_email")
@@ -3023,7 +3023,7 @@ model TrustReport {
   resolvedAt         DateTime?           @map("resolved_at") @db.Timestamptz(6)
   resolutionSummary  String?             @map("resolution_summary") @db.Text
   createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([targetUserId])
   @@index([status])
@@ -3214,7 +3214,7 @@ model Message {
   deletedBy        String?                  @map("deleted_by") @db.Uuid
   moderationStatus MessageModerationStatus  @default(NONE) @map("moderation_status")
   idempotencyKey   String                   @map("idempotency_key")
-  searchVector     Unsupported("tsvector")? @map("search_vector")
+  searchVector     Unsupported("tsvector")? @default(dbgenerated("to_tsvector('simple'::regconfig, body)")) @map("search_vector")
 
   holds ModerationHold[]
 
