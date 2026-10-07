@@ -20,11 +20,17 @@ vi.mock('../../lib/api', () => ({
   redirectForRole: vi.fn(),
 }));
 
+function submitClosestForm(input: HTMLElement) {
+  const form = input.closest('form');
+  if (!form) throw new Error('form missing');
+  fireEvent.submit(form);
+}
+
 async function identifyAndReachPasswordStage(email: string) {
   render(<LoginForm />);
   const emailInput = screen.getByLabelText('Email');
   fireEvent.change(emailInput, { target: { value: email } });
-  fireEvent.submit(emailInput.closest('form')!);
+  submitClosestForm(emailInput);
   await screen.findByLabelText('Password');
 }
 
@@ -51,7 +57,7 @@ describe('LoginForm identify-first flow', () => {
     render(<LoginForm />);
     const emailInput = screen.getByLabelText('Email');
     fireEvent.change(emailInput, { target: { value: 'new.person@example.com' } });
-    fireEvent.submit(emailInput.closest('form')!);
+    submitClosestForm(emailInput);
 
     expect(await screen.findByText(/Sign up as a student/i)).toBeTruthy();
     expect(screen.getByText(/Sign up as a company/i)).toBeTruthy();
@@ -78,7 +84,7 @@ describe('LoginForm identify-first flow', () => {
 
     const password = screen.getByLabelText('Password');
     fireEvent.change(password, { target: { value: 'Password123!' } });
-    fireEvent.submit(password.closest('form')!);
+    submitClosestForm(password);
 
     expect((await screen.findByRole('alert')).textContent).toBe(
       'Verify your email before signing in.',
