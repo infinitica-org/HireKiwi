@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /**
- * Evidence architecture enumerations (SMART Evidence & Onboarding Framework).
+ * Evidence architecture enumerations (HireKiwi Evidence & Onboarding Framework).
  * Owner: Ramansh. Review: Tino.
  */
 

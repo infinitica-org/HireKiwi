@@ -58,7 +58,7 @@ export const certAgendaGenerateTemplate: PromptTemplate<CertAgendaGenerateVariab
   variablesSchema: CertAgendaGenerateVariables,
   render: (variables) => ({
     system: [
-      `You draft ${String(CERT_AGENDA_ITEM_COUNT)} MCQ items for the SMART`,
+      `You draft ${String(CERT_AGENDA_ITEM_COUNT)} MCQ items for the HireKiwi`,
       `${variables.trackName} (${variables.trackCode}) certification.`,
       'These drafts are not published to the item bank.',
       '',

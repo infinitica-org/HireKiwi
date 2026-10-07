@@ -3046,7 +3046,7 @@ export const ROUTES: readonly RouteSpec[] = [
     rateLimit: 'role.student',
     criticality: 'CANDIDATE_CRITICAL',
     execution: 'ASYNC',
-    summary: 'Finalise attempt; emits smart.assessment.submitted.',
+    summary: 'Finalise attempt; emits hirekiwi.assessment.submitted.',
   },
 
   /* ------------------------------ proctoring ------------------------------- */
@@ -3943,7 +3943,7 @@ export const ROUTES: readonly RouteSpec[] = [
     criticality: 'INTERACTIVE',
     execution: 'SYNC',
     slaMs: 200,
-    summary: 'Move ATS stage; emits smart.application.stage_changed.',
+    summary: 'Move ATS stage; emits hirekiwi.application.stage_changed.',
   },
   {
     method: 'GET',

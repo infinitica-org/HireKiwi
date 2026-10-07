@@ -217,7 +217,7 @@ export const CreateApiKeyResponseSchema = z.object({
 });
 export type CreateApiKeyResponse = z.infer<typeof CreateApiKeyResponseSchema>;
 
-export const API_KEY_HEADER = 'x-smart-api-key' as const;
+export const API_KEY_HEADER = 'x-hirekiwi-api-key' as const;
 
 /* ------------------------------- role assignment -------------------------- */
 

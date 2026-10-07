@@ -5,7 +5,7 @@ import { SkillDiscoverySchema, SocialVerificationSchema } from './candidate-soci
 /**
  * CN-T01 — candidate onboarding completion payload.
  *
- * Progressive onboarding model: completion means the student has entered SMART
+ * Progressive onboarding model: completion means the student has entered HireKiwi
  * with a broad interest domain and minimum identity/contact fields — not that
  * they finished their professional profile, declared skills, or enrolled in a
  * certification track.

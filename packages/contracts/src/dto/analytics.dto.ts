@@ -52,7 +52,7 @@ export const BatchGapReportDtoSchema = z.object({
 export type BatchGapReportDto = z.infer<typeof BatchGapReportDtoSchema>;
 
 /**
- * SMART's north-star metric: do Gold-tier candidates convert to interviews and
+ * HireKiwi's north-star metric: do Gold-tier candidates convert to interviews and
  * offers at a higher rate than the cohort baseline?
  *
  * HONESTY REQUIREMENT: this is only meaningful after 2+ placement cycles.

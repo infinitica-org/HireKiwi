@@ -37,7 +37,7 @@ const OUTPUT_SHAPE = `{
 export const jdParseTemplate: PromptTemplate<JdParseVariables> = {
   id: 'jd-parse',
   version: 1,
-  purpose: 'Convert an employer job description into a SMART track + tier threshold vector.',
+  purpose: 'Convert an employer job description into a HireKiwi track + tier threshold vector.',
   modelRole: 'PRIMARY_REASONING',
   temperature: 0,
   maxOutputTokens: 2_048,
@@ -45,7 +45,7 @@ export const jdParseTemplate: PromptTemplate<JdParseVariables> = {
   variablesSchema: JdParseVariables,
   render: (variables) => ({
     system: [
-      'You map employer job descriptions onto the SMART certification model so that',
+      'You map employer job descriptions onto the HireKiwi certification model so that',
       'candidates can be matched on demonstrated competency rather than on keywords.',
       '',
       'HOW TO SET THRESHOLDS',

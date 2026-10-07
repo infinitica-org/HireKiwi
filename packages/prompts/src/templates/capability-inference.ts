@@ -9,7 +9,7 @@ export const CapabilityInferenceVariables = z.object({
   projectSummary: z.string().min(20).max(8_000),
   stack: z.string().min(1).max(1_000),
   qlixDigest: z.string().max(8_000),
-  smartAssessmentJson: z.string().max(16_000),
+  hirekiwiAssessmentJson: z.string().max(16_000),
   skillsDigest: z.string().max(8_000),
 });
 
@@ -81,7 +81,7 @@ export const capabilityInferenceTemplate: PromptTemplate<
       'Infer concrete, action-oriented capability statements from QLIX project verification evidence.',
       'Each capabilityLabel must be verb-led and specific to this project — no generic resume fluff.',
       'Confidence must reflect evidence strength only; lower confidence when QLIX observations are UNCERTAIN.',
-      'Each evidenceRefs entry must be a short pointer (file path, symbol, or ≤200 character quote) referencing ONLY recorded evidence present in QLIX_DIGEST or SMART_ASSESSMENT — do NOT cite or hallucinate unrecorded files, URLs, or external artifacts.',
+      'Each evidenceRefs entry must be a short pointer (file path, symbol, or ≤200 character quote) referencing ONLY recorded evidence present in QLIX_DIGEST or HIREKIWI_ASSESSMENT — do NOT cite or hallucinate unrecorded files, URLs, or external artifacts.',
       'Strictly ground all inferences: only cite evidence records that are explicitly provided in the input context.',
       'These are provisional coaching signals unless assessment-verified elsewhere — do not overstate.',
       INJECTION_GUARD,
@@ -92,7 +92,7 @@ export const capabilityInferenceTemplate: PromptTemplate<
       `STACK: ${variables.stack}`,
       `SUMMARY: ${variables.projectSummary}`,
       `QLIX_DIGEST: ${untrusted(variables.qlixDigest)}`,
-      `SMART_ASSESSMENT: ${untrusted(variables.smartAssessmentJson)}`,
+      `HIREKIWI_ASSESSMENT: ${untrusted(variables.hirekiwiAssessmentJson)}`,
       `SKILLS: ${untrusted(variables.skillsDigest)}`,
     ].join('\n'),
   }),
