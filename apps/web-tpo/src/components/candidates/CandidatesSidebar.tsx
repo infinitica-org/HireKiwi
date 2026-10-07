@@ -61,7 +61,7 @@ export function CandidatesSidebar() {
         </div>
 
         <p className="mt-auto shrink-0 px-3 pb-2 pt-4 text-[11px] leading-snug text-[var(--ds-text-subtle)]">
-          © SMART. Build. Verify. Grow.
+          © HireKiwi. Build. Verify. Grow.
         </p>
       </div>
     </nav>

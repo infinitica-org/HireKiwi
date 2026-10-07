@@ -10,7 +10,7 @@ import {
 const addSkillsAction = {
   id: 'add-skills',
   title: 'Add your skills',
-  description: 'Tell SMART what you already know.',
+  description: 'Tell HireKiwi what you already know.',
   ctaLabel: 'Add skills',
   href: '/student/profile?section=skills',
 };
@@ -71,7 +71,7 @@ describe('NextActionCard', () => {
         action={{
           id: 'explore-public-profile',
           title: 'Explore your public profile',
-          description: 'See how employers will view your SMART profile.',
+          description: 'See how employers will view your HireKiwi profile.',
           ctaLabel: 'View public profile',
           href: '/student/public-profile',
         }}

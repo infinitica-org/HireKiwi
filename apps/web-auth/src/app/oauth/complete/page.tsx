@@ -6,7 +6,7 @@ import { LoginLoadingState } from '../../login/login-shell';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Signing in… · SMART',
+  title: 'Signing in… · HireKiwi',
 };
 
 export default function OauthCompletePage() {

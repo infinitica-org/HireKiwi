@@ -313,7 +313,7 @@ export default function UniversitiesPage() {
             {/* Tag Badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-600/20 bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-800 mb-6 shadow-xs">
               <Sparkles className="size-3.5 text-emerald-600" />
-              <span>Partner with SMART</span>
+              <span>Partner with HireKiwi</span>
             </div>
 
             {/* Clean Headline */}

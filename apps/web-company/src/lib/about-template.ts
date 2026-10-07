@@ -26,5 +26,5 @@ export function buildAboutDraft(input: AboutTemplateInput): string {
 
   const intro =
     facts.length > 0 ? `${name} is a company ${facts.join(', ')}.` : `${name} is a company.`;
-  return `${intro} We hire verified graduates and student talent through SMART competency credentials.`;
+  return `${intro} We hire verified graduates and student talent through HireKiwi competency credentials.`;
 }

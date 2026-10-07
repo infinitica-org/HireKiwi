@@ -11,7 +11,7 @@ describe('buildAboutDraft', () => {
         size: '51–200 employees',
       }),
     ).toBe(
-      'Acme Labs is a company in Software, based in Pune, with 51–200 employees. We hire verified graduates and student talent through SMART competency credentials.',
+      'Acme Labs is a company in Software, based in Pune, with 51–200 employees. We hire verified graduates and student talent through HireKiwi competency credentials.',
     );
   });
 

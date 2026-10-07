@@ -5,7 +5,7 @@ import { SessionBootstrap, SMART_HTML_CLASS } from '@hirekiwi/ui';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Sign in · SMART',
+  title: 'Sign in · HireKiwi',
   description: 'Login and account setup.',
   icons: portalIcons,
 };

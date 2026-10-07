@@ -9,7 +9,7 @@ import { TooltipProvider } from '@hirekiwi/ui/tooltip';
 
 export const metadata: Metadata = {
   icons: portalIcons,
-  title: 'Platform admin · SMART',
+  title: 'Platform admin · HireKiwi',
   description: 'Integrity queue, AI health, cut scores.',
   // Authenticated portal: keep out of search indexes (Th6-598).
   robots: { index: false, follow: false },

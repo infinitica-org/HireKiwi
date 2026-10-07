@@ -7,7 +7,7 @@ import { Providers } from './providers';
 
 export const metadata: Metadata = {
   icons: portalIcons,
-  title: 'Student portal · SMART',
+  title: 'Student portal · HireKiwi',
   description: 'Track enrolment, L1-L5 player, results.',
   // Authenticated portal: keep out of search indexes (Th6-598).
   robots: { index: false, follow: false },

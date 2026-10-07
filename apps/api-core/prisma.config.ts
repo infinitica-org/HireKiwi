@@ -15,6 +15,7 @@ export default defineConfig({
   },
   datasource: {
     url:
-      process.env['DATABASE_URL'] ?? 'postgresql://smart:smart@127.0.0.1:5433/smart?schema=public',
+      process.env['DATABASE_URL'] ?? 'postgresql://smart:smart@127.0.0.1:5432/smart?schema=public',
+    shadowDatabaseUrl: process.env['SHADOW_DATABASE_URL'],
   },
 });

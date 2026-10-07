@@ -83,7 +83,7 @@ export function LoginForm() {
   return (
     <section className="flex w-full flex-1 flex-col items-center justify-between text-center">
       <div className="my-auto flex w-full flex-col items-center justify-center pt-14 ">
-        <img src="/icon.png" alt="SMART" className="mx-auto h-11 w-11 object-contain" />
+        <img src="/icon.png" alt="HireKiwi" className="mx-auto h-11 w-11 object-contain" />
 
         <h1 className="mt-4 text-[1.65rem] font-bold leading-tight tracking-tight text-[#111827] sm:text-[1.85rem]">
           {stage === 'choose-signup' ? "Let's get you set up" : 'Log in or sign up'}

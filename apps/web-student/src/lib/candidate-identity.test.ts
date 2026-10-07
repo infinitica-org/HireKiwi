@@ -39,7 +39,7 @@ describe('headlineFor', () => {
     ).toBe('Finance Analyst candidate');
   });
 
-  it('returns SMART candidate when track is unset', () => {
-    expect(headlineFor(baseUser, [])).toBe('SMART candidate');
+  it('returns HireKiwi candidate when track is unset', () => {
+    expect(headlineFor(baseUser, [])).toBe('HireKiwi candidate');
   });
 });

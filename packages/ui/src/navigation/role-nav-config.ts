@@ -92,7 +92,7 @@ export function getPortalConfigForRole(role: UserRole): RolePortalConfig {
     case 'SYSTEM_ADMIN':
       return {
         role: 'SUPER_ADMIN',
-        portalName: 'SMART Admin Console',
+        portalName: 'HireKiwi Admin Console',
         kicker: 'Platform Control',
         homeUrl: '/admin',
         navItems: SUPER_ADMIN_NAV,
@@ -101,7 +101,7 @@ export function getPortalConfigForRole(role: UserRole): RolePortalConfig {
     case 'TPO_ADMIN':
       return {
         role: 'INSTITUTION_ADMIN',
-        portalName: 'SMART Career Center',
+        portalName: 'HireKiwi Career Center',
         kicker: 'TPO Portal',
         homeUrl: '/',
         navItems: INSTITUTION_TPO_NAV,
@@ -110,7 +110,7 @@ export function getPortalConfigForRole(role: UserRole): RolePortalConfig {
     case 'RECRUITER':
       return {
         role: 'COMPANY_ADMIN',
-        portalName: 'SMART Employer Hub',
+        portalName: 'HireKiwi Employer Hub',
         kicker: 'Talent Acquisition',
         homeUrl: '/company',
         navItems: COMPANY_NAV,
@@ -120,7 +120,7 @@ export function getPortalConfigForRole(role: UserRole): RolePortalConfig {
     default:
       return {
         role: 'STUDENT',
-        portalName: 'SMART Student Portal',
+        portalName: 'HireKiwi Student Portal',
         kicker: 'Readiness & Credentials',
         homeUrl: '/dashboard',
         navItems: STUDENT_NAV,

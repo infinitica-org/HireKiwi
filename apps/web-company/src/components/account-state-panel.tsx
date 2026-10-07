@@ -68,7 +68,7 @@ export function OverviewHero({ account }: { account: CompanyPortalAccount }) {
         <CardDescription>
           {approved
             ? 'Your company tenant is active. Recruitment workflows will appear here in a later release.'
-            : 'Your company account is not fully active yet. Contact SMART support if this persists.'}
+            : 'Your company account is not fully active yet. Contact HireKiwi support if this persists.'}
         </CardDescription>
       </CardHeader>
       <CardContent>

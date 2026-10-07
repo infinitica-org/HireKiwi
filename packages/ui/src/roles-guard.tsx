@@ -37,7 +37,7 @@ type Gate = 'checking' | 'open' | 'forbidden';
 const SESSION_CHECK_MESSAGES = [
   'Waking up your dashboard…',
   'Syncing your verified skills…',
-  'Warming up SMART…',
+  'Warming up HireKiwi…',
   'Fetching your progress…',
   'Getting things ready…',
   'Almost there…',

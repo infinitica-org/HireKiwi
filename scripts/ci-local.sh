@@ -25,4 +25,9 @@ pnpm test:unit
 echo "==> build"
 pnpm build
 
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'postgres'; then
+  echo "==> db migrations & drift check"
+  node scripts/verify-db-migrations.mjs
+fi
+
 echo "Local CI gates passed."

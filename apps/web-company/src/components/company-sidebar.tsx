@@ -103,13 +103,13 @@ export function CompanySidebar({
         >
           <Link
             href="/"
-            aria-label="SMART home"
-            title="SMART Company Portal"
+            aria-label="HireKiwi home"
+            title="HireKiwi Company Portal"
             className="flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
           >
             <Image
               src={smartLogoImg}
-              alt="SMART logo"
+              alt="HireKiwi logo"
               width={28}
               height={28}
               priority

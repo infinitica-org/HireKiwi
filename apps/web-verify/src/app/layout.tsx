@@ -6,7 +6,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   icons: portalIcons,
-  title: 'Certificate verification · SMART',
+  title: 'Certificate verification · HireKiwi',
   description: 'Public anonymous lookup. No account required.',
 };
 

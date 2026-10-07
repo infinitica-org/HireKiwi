@@ -64,7 +64,7 @@ const STUDENT_ADVANTAGES = [
   {
     icon: ShieldCheck,
     title: 'Bypass the Resume Black Hole',
-    desc: 'Don’t let automated ATS keyword parsers discard your hard work. Hiring managers on SMART search directly by verified competency scores.',
+    desc: 'Don’t let automated ATS keyword parsers discard your hard work. Hiring managers on HireKiwi search directly by verified competency scores.',
   },
   {
     icon: GraduationCap,
@@ -129,7 +129,7 @@ export default function StudentsPage() {
 
               {/* Tagline */}
               <p className="mt-6 text-base sm:text-lg text-zinc-600 max-w-2xl leading-relaxed">
-                Traditional resumes are full of buzzwords that bots discard. SMART lets you build
+                Traditional resumes are full of buzzwords that bots discard. HireKiwi lets you build
                 real code in sandbox environments, earning an authenticated credential that 1,000+
                 top tech employers trust and hire from immediately.
               </p>
@@ -182,11 +182,11 @@ export default function StudentsPage() {
                 <div className="flex items-center justify-between pb-5 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <div className="size-11 rounded-2xl bg-zinc-950 text-white flex items-center justify-center font-bold text-lg">
-                      S
+                      H
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-wider font-semibold text-zinc-500">
-                        Official SMART Credential
+                        Official HireKiwi Credential
                       </div>
                       <div className="font-bold text-zinc-900 text-sm sm:text-base">
                         Ananya Sharma
@@ -354,7 +354,7 @@ export default function StudentsPage() {
         <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-8">
           <div className="max-w-2xl mx-auto text-center mb-16">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-              Why SMART Works
+              Why HireKiwi Works
             </span>
             <h2 className="mt-2 font-manrope text-3xl sm:text-4xl font-extrabold text-zinc-950">
               Built to give students an unfair advantage

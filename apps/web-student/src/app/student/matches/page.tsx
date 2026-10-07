@@ -129,7 +129,7 @@ export default function MatchesPage() {
           matchReason: `Your verified profile matches ${score}% of ${company}'s role requirements.`,
           tags: [app.domain || 'Engineering', 'Full-time', 'Campus Drive'],
           description: `Active campus hiring opportunity for ${title} at ${company}. Matched based on your verified credentials.`,
-          companyAbout: `${company} is an active enterprise placement partner in the SMART campus recruitment network.`,
+          companyAbout: `${company} is an active enterprise placement partner in the HireKiwi campus recruitment network.`,
           companyProfileUrl: '#',
           requiredSkills: [
             {
@@ -170,7 +170,8 @@ export default function MatchesPage() {
         matchReason: `Your ${name} claim (${claim.status}) matches the job requirement profile.`,
         tags: [name, 'Software Engineering', claim.proficiency || 'Intermediate'],
         description: `Join our campus cohort looking for verified ${name} capabilities to build enterprise web applications and reliable microservices.`,
-        companyAbout: 'Enterprise placement partner connected through SMART campus hiring network.',
+        companyAbout:
+          'Enterprise placement partner connected through HireKiwi campus hiring network.',
         companyProfileUrl: '#',
         requiredSkills: [
           {

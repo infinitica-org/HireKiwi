@@ -171,7 +171,7 @@ export default function ConnectUniversityStep({
       <div className="mb-6 rounded-xl border border-blue-500/20 bg-blue-500/10 p-3.5 text-xs text-blue-900 dark:text-blue-200">
         <p className="font-semibold">Note</p>
         <p className="mt-0.5 opacity-90">
-          Your university must be an active SMART partner and must have whitelisted your student
+          Your university must be an active HireKiwi partner and must have whitelisted your student
           email to enable automatic credential verification.
         </p>
       </div>
@@ -250,7 +250,7 @@ export default function ConnectUniversityStep({
                   >
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                     <p className="text-xs">
-                      Request sent — SMART will follow up with{' '}
+                      Request sent — HireKiwi will follow up with{' '}
                       <span className="font-medium">{query.trim()}</span>. You don&apos;t need to
                       submit another request.
                     </p>
@@ -295,7 +295,7 @@ export default function ConnectUniversityStep({
                     onClick={() => setContactRequestState('confirming')}
                     className="text-xs font-medium text-foreground underline underline-offset-2 hover:opacity-80"
                   >
-                    Ask SMART to contact {query.trim()}
+                    Ask HireKiwi to contact {query.trim()}
                   </button>
                 )}
               </div>
@@ -398,7 +398,7 @@ function isPartneredBadge(
             <p className="font-semibold">Institution Not Yet Partnered</p>
             <p className="mt-1 text-sm opacity-90">
               <span className="font-medium">{status.institutionName}</span> is not currently
-              partnered with SMART.
+              partnered with HireKiwi.
             </p>
             <p className="mt-1 text-xs opacity-80">
               You can connect to an eligible partner university below to unlock campus placements,

@@ -115,13 +115,13 @@ export function TpoSidebar({ mobileOpen, onMobileOpenChange, collapsed = true }:
         >
           <Link
             href="/"
-            aria-label="SMART home"
-            title="SMART Portal"
+            aria-label="HireKiwi home"
+            title="HireKiwi Portal"
             className="flex items-center gap-2.5"
           >
             <Image
               src={smartLogoImg}
-              alt="SMART logo"
+              alt="HireKiwi logo"
               width={28}
               height={28}
               priority

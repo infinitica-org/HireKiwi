@@ -91,7 +91,7 @@ export function RegisterForm() {
       if (isSmartApiError(err)) {
         if (err.code === 'unregistered_university_domain') {
           setError(
-            'Your university domain is not registered on SMART. Please contact your placement administrator.',
+            'Your university domain is not registered on HireKiwi. Please contact your placement administrator.',
           );
         } else if (err.code === 'personal_email_not_allowed') {
           setError(

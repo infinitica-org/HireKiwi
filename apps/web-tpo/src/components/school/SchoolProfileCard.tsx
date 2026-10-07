@@ -148,7 +148,7 @@ export function SchoolProfileCard({
             <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-600">
               <span className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-zinc-700">
                 <Users className="size-3.5 text-zinc-500" />
-                {studentCount} students on SMART
+                {studentCount} students on HireKiwi
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-zinc-700">
                 4-year institution

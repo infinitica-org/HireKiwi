@@ -65,3 +65,37 @@ jobs:
       - name: build
         # Uses default concurrency for GitHub-hosted runner
         run: pnpm exec turbo run build
+
+  # S8-TN-05: Database migration verification + schema drift detection gate.
+  # Executes all Prisma migrations against a clean PostgreSQL (pgvector) container,
+  # checks that migrations match schema.prisma with zero drift, and verifies seeds.
+  # Prevents arbitrary column changes or broken migrations from entering `dev`.
+  db-migrations:
+    name: db-migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: smart
+          POSTGRES_PASSWORD: smart
+          POSTGRES_DB: smart
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-node-pnpm
+
+      - name: verify db migrations, schema drift & seeds
+        env:
+          DATABASE_URL: postgresql://smart:smart@127.0.0.1:5432/smart?schema=public
+        run: node scripts/verify-db-migrations.mjs

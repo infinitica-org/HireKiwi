@@ -20,8 +20,10 @@ Concurrent migrations from six engineers will break local and VPS databases.
 - Others open an issue/ticket with table, field, type, and ticket ID; he batches forward-only migrations.
 - No destructive down-migrations in production path without an explicit ADR amend.
 - Schema lives with `api-core`; generated client is not hand-edited.
+- **Sprint 8 Amendment (S8-TN-05):** Mechanical CI Quality Gate (`db-migrations`) runs on every PR using a `pgvector` container. Replays all migrations sequentially (`prisma migrate deploy`), enforces zero schema drift (`prisma migrate diff`), and validates `db:seed`. Safe column renaming policy mandates `ALTER TABLE ... RENAME COLUMN` rather than destructive `DROP`/`ADD`.
 
 ## Consequences
 
-- Faster, safer schema evolution.
-- Feature PRs that need columns must wait on the batched migration or pair with VV in-sprint.
+- Faster, safer schema evolution with zero manual-only honor-system reliance.
+- PRs that introduce column changes without migrations or create breaking migrations are blocked mechanically in CI before reaching `dev`.
+- Prevents local database drift and eliminates the need for frequent local `db:reset`.
