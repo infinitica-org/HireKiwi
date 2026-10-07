@@ -15,8 +15,9 @@ const prod = { NEXT_PUBLIC_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://sma
 describe('landing SEO config', () => {
   it('keeps titles and descriptions within search-result limits', () => {
     expect(HOME_TITLE.length).toBeLessThanOrEqual(60);
-    for (const page of Object.values(PAGES)) {
-      expect(`${page.title} | SMART`.length, page.path).toBeLessThanOrEqual(60);
+    for (const [key, page] of Object.entries(PAGES)) {
+      const fullTitle = key === 'home' ? page.title : `${page.title} | HireKiwi`;
+      expect(fullTitle.length, page.path).toBeLessThanOrEqual(60);
       expect(page.description.length, page.path).toBeLessThanOrEqual(155);
     }
   });

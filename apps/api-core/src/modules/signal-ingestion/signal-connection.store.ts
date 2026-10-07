@@ -17,6 +17,12 @@ export interface StoredSignalConnection {
   readonly lastFetchedAt: string | null;
   readonly lastError: string | null;
   readonly metadata: Record<string, unknown>;
+  /**
+   * AES-256-GCM-encrypted OAuth access token (currently GITHUB's `repo`-scope
+   * token only). Never included in `toSummary()` — it must never reach the
+   * frontend. Decrypt with secret-cipher.util.ts + GITHUB_TOKEN_ENCRYPTION_KEY.
+   */
+  readonly encryptedAccessToken: string | null;
 }
 
 interface StoredSignalConnectionMutable extends StoredSignalConnection {
@@ -63,9 +69,10 @@ export class SignalConnectionStore {
   }
 
   async upsert(
-    row: Omit<StoredSignalConnection, 'lastFetchedAt' | 'lastError'> & {
+    row: Omit<StoredSignalConnection, 'lastFetchedAt' | 'lastError' | 'encryptedAccessToken'> & {
       lastFetchedAt?: string | null;
       lastError?: string | null;
+      encryptedAccessToken?: string | null;
     },
   ): Promise<StoredSignalConnection> {
     const existing = await this.get(row.userId, row.sourceId);
@@ -80,6 +87,10 @@ export class SignalConnectionStore {
       lastFetchedAt: row.lastFetchedAt ?? existing?.lastFetchedAt ?? null,
       lastError: row.lastError ?? existing?.lastError ?? null,
       metadata: { ...(existing?.metadata ?? {}), ...(row.metadata ?? {}) },
+      encryptedAccessToken:
+        row.encryptedAccessToken !== undefined
+          ? row.encryptedAccessToken
+          : (existing?.encryptedAccessToken ?? null),
     };
     await this.redis.set(redisKey(row.userId, row.sourceId), JSON.stringify(stored));
     return stored;

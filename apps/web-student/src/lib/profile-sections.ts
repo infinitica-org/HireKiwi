@@ -139,7 +139,7 @@ export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
         icon: CodeXml,
         title: 'Skills',
         description:
-          'Select skills from the SMART catalog to assess and build verified credentials.',
+          'Select skills from the HireKiwi catalog to assess and build verified credentials.',
       },
     ],
   },
@@ -163,7 +163,7 @@ export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
         label: 'Resume',
         icon: FileUser,
         title: 'Resume',
-        description: 'Upload your resume — SMART can parse it to help pre-fill profile details.',
+        description: 'Upload your resume — HireKiwi can parse it to help pre-fill profile details.',
       },
     ],
   },

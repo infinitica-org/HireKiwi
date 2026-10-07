@@ -238,7 +238,7 @@ export default function JobPreferencesStep({
           className="mt-0.5 rounded border-border bg-background text-foreground focus:ring-foreground"
         />
         <span className="text-sm text-foreground/90">
-          I consent to SMART processing my personal data as described in the{' '}
+          I consent to HireKiwi processing my personal data as described in the{' '}
           <Link
             href="/dpdp-policy"
             target="_blank"

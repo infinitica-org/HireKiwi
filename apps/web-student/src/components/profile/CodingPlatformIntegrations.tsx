@@ -447,7 +447,7 @@ export function CodingPlatformIntegrations({
                 Connect with {active.name}
               </h4>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Your profile must be public for SMART to read it.
+                Your profile must be public for HireKiwi to read it.
               </p>
             </div>
 

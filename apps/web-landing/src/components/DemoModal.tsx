@@ -219,7 +219,7 @@ export default function DemoModal() {
                   id="demo-modal-title"
                   className="mt-2 font-manrope text-2xl font-bold tracking-tight text-zinc-950"
                 >
-                  Experience SMART in Action
+                  Experience HireKiwi in Action
                 </h3>
                 <p className="mt-1 text-sm text-zinc-500">
                   See how verified credentials transform hiring pipelines and student outcomes.

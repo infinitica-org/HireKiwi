@@ -15,10 +15,10 @@ export default function Footer() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
             <Link
               href="/"
-              aria-label="SMART home"
+              aria-label="HireKiwi home"
               className="inline-block transition-opacity hover:opacity-85"
             >
-              <Image src={smartTextImg} alt="SMART" className="h-7 w-auto object-contain" />
+              <Image src={smartTextImg} alt="HireKiwi" className="h-7 w-auto object-contain" />
             </Link>
             <span className="hidden sm:inline text-zinc-200" aria-hidden="true">
               |
@@ -59,7 +59,7 @@ export default function Footer() {
 
         {/* Minimal Sub-bar */}
         <div className="mt-8 pt-6 border-t border-zinc-100 items-center gap-3 text-xs text-zinc-500">
-          <div>© {new Date().getFullYear()} SMART. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} HireKiwi. All rights reserved.</div>
         </div>
       </div>
     </footer>

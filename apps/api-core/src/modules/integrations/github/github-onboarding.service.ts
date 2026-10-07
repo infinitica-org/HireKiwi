@@ -46,10 +46,22 @@ export class GithubOnboardingService {
    * ranked, share-weighted language breakdown — the source for suggested
    * skill tags. Never throws: a repo whose languages call fails just
    * contributes nothing, so one flaky lookup doesn't blank the whole tab.
+   *
+   * `accessToken`, when given, reads with the student's own OAuth grant
+   * (private repos included) instead of the shared app-level token.
    */
-  async repoLanguages(repoFullNames: string[]): Promise<RepoLanguagesResponse> {
+  async repoLanguages(
+    repoFullNames: string[],
+    accessToken?: string,
+  ): Promise<RepoLanguagesResponse> {
     const unique = Array.from(new Set(repoFullNames)).slice(0, MAX_SELECTED_REPOS);
-    const settled = await Promise.allSettled(unique.map((name) => this.github.repoLanguages(name)));
+    const settled = await Promise.allSettled(
+      unique.map((name) =>
+        accessToken
+          ? this.github.repoLanguagesAuthenticated(name, accessToken)
+          : this.github.repoLanguages(name),
+      ),
+    );
 
     const totals = new Map<string, { bytes: number; repoCount: number }>();
     let grandTotal = 0;

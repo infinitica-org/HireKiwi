@@ -226,7 +226,7 @@ export default function PhoneVerificationStep({
             className="mt-0.5 rounded border-border bg-muted text-black focus:ring-black dark:text-white dark:focus:ring-white"
           />
           <span className="text-xs sm:text-[13px] text-foreground leading-snug">
-            I consent to SMART processing my personal data as described in the{' '}
+            I consent to HireKiwi processing my personal data as described in the{' '}
             <Link
               href="/dpdp-policy"
               target="_blank"

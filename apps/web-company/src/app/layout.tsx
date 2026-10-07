@@ -9,8 +9,8 @@ import { TooltipProvider } from '@hirekiwi/ui/tooltip';
 export const metadata: Metadata = {
   icons: portalIcons,
   title: {
-    default: 'Company Portal · SMART',
-    template: '%s · SMART Employers',
+    default: 'Company Portal · HireKiwi',
+    template: '%s · HireKiwi Employers',
   },
   description: 'Post jobs, find verified students, and manage your hiring pipeline.',
   // Authenticated portal: keep out of search indexes (Th6-598).

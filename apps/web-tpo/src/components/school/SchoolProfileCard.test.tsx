@@ -13,7 +13,7 @@ describe('SchoolProfileCard', () => {
           candidateUsage: 4812,
           candidateCapacity: 5000,
           tagline: 'Tagline',
-          about: 'Riverdale partners with SMART to connect students to verified opportunities.',
+          about: 'Riverdale partners with HireKiwi to connect students to verified opportunities.',
           website: null,
           location: null,
           careersEmail: null,
@@ -27,7 +27,7 @@ describe('SchoolProfileCard', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Riverdale State University' })).toBeTruthy();
-    expect(screen.getByText(/4,812 students on SMART/i)).toBeTruthy();
+    expect(screen.getByText(/4,812 students on HireKiwi/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Upload school logo' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Upload cover banner' })).toBeTruthy();
     expect(screen.getByText('312')).toBeTruthy();

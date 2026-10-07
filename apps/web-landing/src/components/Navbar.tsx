@@ -94,15 +94,15 @@ export default function Navbar() {
             isScrolled ? 'h-14 sm:h-15 px-5 sm:px-7' : 'h-18 sm:h-20 px-6 sm:px-10 lg:px-12'
           }`}
         >
-          {/* Left: SMART Logo -> '/' */}
+          {/* Left: HireKiwi Logo -> '/' */}
           <Link
             href="/"
             className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-90"
-            aria-label="SMART home"
+            aria-label="HireKiwi home"
           >
             <Image
               src={smartTextImg}
-              alt="SMART"
+              alt="HireKiwi"
               priority
               className={`${
                 isScrolled ? 'h-7 sm:h-8' : 'h-8 sm:h-9'

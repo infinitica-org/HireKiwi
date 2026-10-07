@@ -14,7 +14,7 @@ export default function TermsPage() {
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link href="/login" className="flex items-center gap-2">
-            <SmartLogo kind="text" className="h-7 w-auto" title="SMART" />
+            <SmartLogo kind="text" className="h-7 w-auto" title="HireKiwi" />
           </Link>
           <Link
             href="/login"
@@ -39,26 +39,26 @@ export default function TermsPage() {
 
           <div className="prose prose-slate max-w-none pt-8 leading-relaxed text-slate-700">
             <p>
-              Welcome to <strong>SMART</strong> (&quot;SMART&quot;, &quot;we&quot;, &quot;us&quot;,
-              or &quot;our&quot;). These Terms &amp; Conditions (&quot;Terms&quot;) govern your
-              access to and use of the SMART website, application, platform, products, and services
-              (collectively, the &quot;Platform&quot;).
+              Welcome to <strong>HireKiwi</strong> (&quot;HireKiwi&quot;, &quot;we&quot;,
+              &quot;us&quot;, or &quot;our&quot;). These Terms &amp; Conditions (&quot;Terms&quot;)
+              govern your access to and use of the HireKiwi website, application, platform,
+              products, and services (collectively, the &quot;Platform&quot;).
             </p>
 
             <p className="font-medium text-slate-800">
-              By accessing, registering on, or using SMART, you agree to be bound by these Terms. If
-              you do not agree with these Terms, please do not use the Platform.
+              By accessing, registering on, or using HireKiwi, you agree to be bound by these Terms.
+              If you do not agree with these Terms, please do not use the Platform.
             </p>
 
             <hr className="my-8 border-slate-100" />
 
-            <h2 className="text-xl font-bold text-slate-900">1. About SMART</h2>
+            <h2 className="text-xl font-bold text-slate-900">1. About HireKiwi</h2>
             <p>
-              SMART is a platform designed to connect students, freshers, educational institutions,
-              and employers through career opportunities, skill assessments, candidate profiles, and
-              verification services.
+              HireKiwi is a platform designed to connect students, freshers, educational
+              institutions, and employers through career opportunities, skill assessments, candidate
+              profiles, and verification services.
             </p>
-            <p>SMART may provide services including:</p>
+            <p>HireKiwi may provide services including:</p>
             <ul className="list-disc space-y-1.5 pl-6">
               <li>Job and internship opportunities</li>
               <li>Candidate profiles</li>
@@ -73,27 +73,27 @@ export default function TermsPage() {
             </ul>
 
             <h2 className="mt-8 text-xl font-bold text-slate-900">2. Eligibility</h2>
-            <p>You must meet the applicable age and eligibility requirements to use SMART.</p>
-            <p>By using SMART, you confirm that:</p>
+            <p>You must meet the applicable age and eligibility requirements to use HireKiwi.</p>
+            <p>By using HireKiwi, you confirm that:</p>
             <ul className="list-disc space-y-1.5 pl-6">
               <li>The information you provide is accurate and complete.</li>
               <li>You have the legal capacity to agree to these Terms.</li>
-              <li>You will use SMART only for lawful purposes.</li>
+              <li>You will use HireKiwi only for lawful purposes.</li>
               <li>You will comply with all applicable laws and regulations.</li>
             </ul>
 
             <h2 className="mt-8 text-xl font-bold text-slate-900">3. Account Registration</h2>
-            <p>Certain features of SMART may require you to create an account.</p>
+            <p>Certain features of HireKiwi may require you to create an account.</p>
             <p>You are responsible for:</p>
             <ul className="list-disc space-y-1.5 pl-6">
               <li>Providing accurate information.</li>
               <li>Keeping your account credentials confidential.</li>
               <li>Maintaining the security of your account.</li>
               <li>Not sharing your account with another person.</li>
-              <li>Informing SMART of any unauthorised access to your account.</li>
+              <li>Informing HireKiwi of any unauthorised access to your account.</li>
             </ul>
             <p>
-              SMART reserves the right to suspend or terminate accounts containing false,
+              HireKiwi reserves the right to suspend or terminate accounts containing false,
               misleading, or fraudulent information.
             </p>
 
@@ -118,8 +118,8 @@ export default function TermsPage() {
             </p>
 
             <h2 className="mt-8 text-xl font-bold text-slate-900">5. Job Opportunities</h2>
-            <p>SMART may provide job and internship listings from employers.</p>
-            <p>SMART does not guarantee:</p>
+            <p>HireKiwi may provide job and internship listings from employers.</p>
+            <p>HireKiwi does not guarantee:</p>
             <ul className="list-disc space-y-1.5 pl-6">
               <li>Employment or placement</li>
               <li>Interview selection</li>
@@ -131,7 +131,7 @@ export default function TermsPage() {
 
             <h2 className="mt-8 text-xl font-bold text-slate-900">6. Assessments</h2>
             <p>
-              SMART may provide assessments to evaluate skills, knowledge, reasoning, coding
+              HireKiwi may provide assessments to evaluate skills, knowledge, reasoning, coding
               ability, communication, domain knowledge, and other competencies.
             </p>
 
@@ -143,34 +143,34 @@ export default function TermsPage() {
 
             <h2 className="mt-8 text-xl font-bold text-slate-900">8. Verification Services</h2>
             <p>
-              SMART may provide verification services for projects, credentials, certificates, and
-              work experience submitted by candidates. Verification results depend on available data
-              and sources.
+              HireKiwi may provide verification services for projects, credentials, certificates,
+              and work experience submitted by candidates. Verification results depend on available
+              data and sources.
             </p>
 
             <h2 className="mt-8 text-xl font-bold text-slate-900">9. User-Submitted Content</h2>
             <p>
-              You retain ownership of content that you submit to SMART, subject to the rights
-              required for SMART to provide its services.
+              You retain ownership of content that you submit to HireKiwi, subject to the rights
+              required for HireKiwi to provide its services.
             </p>
 
             <h2 className="mt-8 text-xl font-bold text-slate-900">10. Artificial Intelligence</h2>
             <p>
-              SMART may use artificial intelligence and automated technologies for assessment
+              HireKiwi may use artificial intelligence and automated technologies for assessment
               evaluation, recommendations, verification workflows, and feedback generation.
             </p>
 
             <h2 className="mt-8 text-xl font-bold text-slate-900">11. Employer Responsibilities</h2>
             <p>
-              Employers using SMART must provide accurate job information, use candidate data only
-              for legitimate recruitment, and comply with all applicable privacy laws.
+              Employers using HireKiwi must provide accurate job information, use candidate data
+              only for legitimate recruitment, and comply with all applicable privacy laws.
             </p>
 
             <h2 className="mt-8 text-xl font-bold text-slate-900">12. Privacy</h2>
             <p>
               The collection and processing of personal information are governed by the{' '}
               <Link href="/privacy" className="font-semibold text-blue-600 underline">
-                SMART Privacy Policy
+                HireKiwi Privacy Policy
               </Link>
               .
             </p>
@@ -184,8 +184,11 @@ export default function TermsPage() {
             <h2 className="mt-8 text-xl font-bold text-slate-900">14. Contact Us</h2>
             <p>
               If you have questions regarding these Terms, contact us at{' '}
-              <a href="mailto:support@smart.com" className="font-semibold text-blue-600 underline">
-                support@smart.com
+              <a
+                href="mailto:support@hirekiwi.com"
+                className="font-semibold text-blue-600 underline"
+              >
+                support@hirekiwi.com
               </a>
               .
             </p>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { describeApiError } from '@hirekiwi/api-client';
 import {
   COMPANY_SIZE_BANDS,
@@ -50,6 +51,7 @@ function errorMessage(err: unknown, fallback: string): string {
 }
 
 export function CompanyRegisterWizard() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>('account');
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,7 +59,7 @@ export function CompanyRegisterWizard() {
   const [emailCode, setEmailCode] = useState('');
 
   const [fullName, setFullName] = useState('');
-  const [workEmail, setWorkEmail] = useState('');
+  const [workEmail, setWorkEmail] = useState(searchParams.get('email') ?? '');
   const [website, setWebsite] = useState('https://');
 
   const [companyQuery, setCompanyQuery] = useState('');
@@ -340,7 +342,7 @@ export function CompanyRegisterWizard() {
   return (
     <section className="mx-auto w-full max-w-xl px-4 py-10">
       <div className="flex flex-col items-center text-center">
-        <SmartLogo kind="text" tone="on-light" className="h-8 w-auto" title="SMART" />
+        <SmartLogo kind="text" tone="on-light" className="h-8 w-auto" title="HireKiwi" />
         <h1 className="mt-8 text-2xl font-bold tracking-tight text-[#111827]">
           Register your company
         </h1>
@@ -364,7 +366,7 @@ export function CompanyRegisterWizard() {
       {step === 'account' ? (
         <form onSubmit={onAccount} className="mt-8 space-y-4">
           <p className="text-sm text-[#64748b]">
-            This is the master login for your company on SMART. You can invite teammates later.
+            This is the master login for your company on HireKiwi. You can invite teammates later.
           </p>
           <div>
             <label htmlFor="fullName" className={labelClass}>
@@ -428,8 +430,8 @@ export function CompanyRegisterWizard() {
           <div className="rounded-[11px] border border-dashed border-[#d1d5db] p-4">
             <p className="text-sm font-semibold text-[#111827]">Company not listed?</p>
             <p className="mt-1 text-sm text-[#6b7280]">
-              Create it and become its first admin. SMART verifies every new company before it can
-              post jobs.
+              Create it and become its first admin. HireKiwi verifies every new company before it
+              can post jobs.
             </p>
             <div className="mt-3 flex flex-wrap gap-3">
               <button
@@ -650,7 +652,7 @@ export function CompanyRegisterWizard() {
 
       {step === 'documents' && reviewFeedback ? (
         <div className="mt-8 space-y-2 rounded-lg border border-[#fde68a] bg-[#fffbeb] px-4 py-3 text-sm text-[#92400e]">
-          <p className="font-semibold">Changes requested by the SMART review team</p>
+          <p className="font-semibold">Changes requested by the HireKiwi review team</p>
           {reviewFeedback.reason ? <p>{reviewFeedback.reason}</p> : null}
           {reviewFeedback.rejectedDocuments.length > 0 ? (
             <>
@@ -706,7 +708,7 @@ export function CompanyRegisterWizard() {
             { label: 'Master account created', detail: workEmail || undefined, state: 'done' },
             { label: 'Company details and work email verified', state: 'done' },
             {
-              label: 'SMART verification review',
+              label: 'HireKiwi verification review',
               detail: 'Our team checks your company details and documents.',
               state: 'current',
             },

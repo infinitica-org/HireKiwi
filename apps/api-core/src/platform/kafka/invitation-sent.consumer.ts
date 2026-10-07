@@ -37,16 +37,16 @@ export class InvitationSentConsumer implements OnModuleInit {
             const template = event.template as EmailTemplateName;
             const title =
               template === 'company-portal-invite'
-                ? `Set up your ${event.institutionName} account on SMART`
+                ? `Set up your ${event.institutionName} account on HireKiwi`
                 : template === 'institution-admin-invite'
                   ? `Invitation to manage ${event.institutionName}`
                   : `Invitation to join ${event.institutionName}`;
             const body =
               template === 'company-portal-invite'
-                ? `${event.institutionName} has been approved on SMART. Set a password to access your company portal.`
+                ? `${event.institutionName} has been approved on HireKiwi. Set a password to access your company portal.`
                 : template === 'institution-admin-invite'
                   ? `You have been invited as an institution admin for ${event.institutionName}.`
-                  : `You have been invited to join ${event.institutionName} on SMART.`;
+                  : `You have been invited to join ${event.institutionName} on HireKiwi.`;
 
             await this.notifications.notify({
               userId: event.userId,

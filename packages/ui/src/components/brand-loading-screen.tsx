@@ -21,7 +21,7 @@ export function BrandLoadingScreen({ message, className = '' }: BrandLoadingScre
       <div className="flex flex-col items-center justify-center gap-6">
         {/* Squircle Brand Logo Badge using Smart-logo.png */}
         <div className="relative flex size-20 sm:size-22 items-center justify-center overflow-hidden rounded-[22px] bg-[#d9f953] p-3 shadow-md shadow-lime-500/15 border border-black/5">
-          <img src={logoSrc} alt="SMART" className="size-full object-contain" />
+          <img src={logoSrc} alt="HireKiwi" className="size-full object-contain" />
         </div>
 
         {/* Minimalist Circular Ring Spinner (Matching screenshot) */}

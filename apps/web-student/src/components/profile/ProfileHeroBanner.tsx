@@ -303,7 +303,7 @@ export function ProfileHeroBanner({
               <div className="flex items-center gap-2">
                 <SmartVerifiedBadge className="size-5 shrink-0" />
                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-white">
-                  SMART Verified Profile
+                  HireKiwi Verified Profile
                 </span>
               </div>
               <button

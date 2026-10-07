@@ -19,7 +19,7 @@ test.describe('landing SEO tags', () => {
         expect(metaContent(html, 'property', key), key).toBeTruthy();
       }
       expect(metaContent(html, 'property', 'og:type')).toBe('website');
-      expect(metaContent(html, 'property', 'og:site_name')).toBe('SMART');
+      expect(metaContent(html, 'property', 'og:site_name')).toBe('HireKiwi');
       expect(metaContent(html, 'name', 'twitter:card')).toBe('summary_large_image');
       expect(metaContent(html, 'name', 'twitter:image')).toBeTruthy();
       expect(metaContent(html, 'name', 'description')?.length ?? 0).toBeLessThanOrEqual(155);
@@ -31,7 +31,7 @@ test.describe('landing SEO tags', () => {
 
   test('home has title, JSON-LD and a 1200x630 share image', async ({ request }) => {
     const html = await (await request.get('/')).text();
-    expect(html).toContain('<title>SMART – Verified skills. The right fit, faster.</title>');
+    expect(html).toContain('<title>HireKiwi – Verified skills. The right fit, faster.</title>');
     expect(html).toContain('"@type":"Organization"');
     expect(html).toContain('"@type":"WebSite"');
 

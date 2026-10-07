@@ -56,10 +56,10 @@ export default function EmployerLoginPage() {
       {/* Main Login / Signup Card */}
       <main className="mx-auto w-full max-w-[440px] px-2 py-6">
         <div className="mb-8 flex justify-center">
-          <Link href="/" aria-label="SMART home">
+          <Link href="/" aria-label="HireKiwi home">
             <Image
               src={textLogo}
-              alt="SMART"
+              alt="HireKiwi"
               width={120}
               height={32}
               priority
@@ -158,7 +158,7 @@ export default function EmployerLoginPage() {
           {/* Registration Link */}
           <div className="border-t border-zinc-200 pt-4 text-center text-xs sm:text-sm text-zinc-500 space-y-2">
             <div>
-              New to SMART?{' '}
+              New to HireKiwi?{' '}
               <a
                 href={
                   process.env.NEXT_PUBLIC_AUTH_URL

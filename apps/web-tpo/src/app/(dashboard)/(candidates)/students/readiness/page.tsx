@@ -4,7 +4,7 @@ import { Users } from 'lucide-react';
 import { StudentReadinessRoster } from '../../../../../components/readiness/StudentReadinessRoster';
 import { TpoBentoPageHeader } from '../../../../../components/tpo-bento/TpoBentoPageHeader';
 
-export const metadata = { title: 'Student readiness · SMART TPO' };
+export const metadata = { title: 'Student readiness · HireKiwi TPO' };
 
 /** UNI-04 (Th6-437/438/439) — the student readiness roster. */
 export default function StudentReadinessPage() {

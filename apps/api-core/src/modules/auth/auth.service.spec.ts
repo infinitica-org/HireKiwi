@@ -34,6 +34,42 @@ function userRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+describe('AuthService identify', () => {
+  it('reports exists: true for a registered email, case-insensitively', async () => {
+    const findUnique = vi.fn().mockResolvedValue({ id: randomUUID() });
+    const prisma = { user: { findUnique } };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn() } as never,
+      { getSignedDownloadUrl: vi.fn() } as never,
+      mockAuditPublisher() as never,
+    );
+
+    const result = await auth.identify('Student@Example.com');
+
+    expect(result).toEqual({ exists: true });
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { email: 'student@example.com' },
+      select: { id: true },
+    });
+  });
+
+  it('reports exists: false for an unregistered email', async () => {
+    const findUnique = vi.fn().mockResolvedValue(null);
+    const prisma = { user: { findUnique } };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn() } as never,
+      { getSignedDownloadUrl: vi.fn() } as never,
+      mockAuditPublisher() as never,
+    );
+
+    const result = await auth.identify('nobody@example.com');
+
+    expect(result).toEqual({ exists: false });
+  });
+});
+
 describe('AuthService refresh rotation', () => {
   it('issues a session with a hashed refresh token', async () => {
     const created: unknown[] = [];

@@ -141,3 +141,10 @@ export const LinkedinOauthUrlResponseSchema = z.object({
   url: z.string(),
 });
 export type LinkedinOauthUrlResponse = z.infer<typeof LinkedinOauthUrlResponseSchema>;
+
+/* -------------------------------- GitHub OAuth ------------------------------ */
+
+export const GithubOauthUrlResponseSchema = z.object({
+  url: z.string(),
+});
+export type GithubOauthUrlResponse = z.infer<typeof GithubOauthUrlResponseSchema>;

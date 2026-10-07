@@ -46,7 +46,7 @@ const TONE: Record<EmailTone, { fg: string; bg: string }> = {
 
 // packages/ui/src/assets/brand/mark-coloured.svg, flattened to a single fill so
 // it stays legible without the gradient defs some email clients strip.
-const BRAND_MARK = `<svg width="18" height="19" viewBox="0 0 202.67 211.56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SMART">
+const BRAND_MARK = `<svg width="18" height="19" viewBox="0 0 202.67 211.56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HireKiwi">
 <path fill="${TOKENS.teal}" d="M138.45,73.34l-24.78,25.1c3.92,5.59,3.41,13.35-1.56,18.38-4.96,5.02-12.71,5.63-18.34,1.78l-35.17,35.63-35.29,35.79h48.38l11.43-11.57,30.73-31.18,24.22-24.42,46.91,46.35v-49.9l-46.51-45.97ZM131.32,23.09l-11.43,11.57-30.72,31.18-24.22,24.42L18.03,43.9v49.89l46.51,45.97,25.11-25.44c-3.47-5.54-2.81-12.91,1.97-17.76,4.78-4.83,12.14-5.57,17.72-2.19l35.05-35.51,35.3-35.79h-48.38Z"/>
 </svg>`;
 
@@ -251,7 +251,7 @@ export function renderEmailLayout(options: EmailLayoutOptions): string {
               <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto;">
                 <tr>
                   <td style="padding-right:7px;vertical-align:middle;line-height:0;">${BRAND_MARK}</td>
-                  <td style="vertical-align:middle;font-size:14px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:${TOKENS.tealDeep};">SMART</td>
+                  <td style="vertical-align:middle;font-size:14px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:${TOKENS.tealDeep};">HireKiwi</td>
                 </tr>
               </table>
             </td>

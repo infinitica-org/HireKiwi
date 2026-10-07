@@ -22,7 +22,7 @@ async function loadCompany(slug: string) {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const { profile } = await loadCompany(slug);
-  return { title: profile ? `${profile.displayName} · SMART` : 'Company · SMART' };
+  return { title: profile ? `${profile.displayName} · HireKiwi` : 'Company · HireKiwi' };
 }
 
 export default async function Page({ params }: PageProps) {

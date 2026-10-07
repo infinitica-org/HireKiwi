@@ -129,7 +129,7 @@ describe('renderEmailTemplate', () => {
       expiresAtFormatted: 'Thu, 01 Oct 2026 00:00:00 GMT',
     });
 
-    expect(email.subject).toBe('Changes needed for Acme <Corp> on SMART');
+    expect(email.subject).toBe('Changes needed for Acme <Corp> on HireKiwi');
     expect(email.html).toContain('Acme &lt;Corp&gt;');
     expect(email.html).toContain('the &lt;certificate&gt;.');
     expect(email.html).not.toContain('<certificate>');

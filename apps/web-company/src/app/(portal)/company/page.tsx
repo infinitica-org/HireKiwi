@@ -178,7 +178,8 @@ export default function CompanyProfilePage() {
 
       {!profile.isVerified ? (
         <Alert tone="info" title="Your public page is not live yet">
-          Your company page becomes public once SMART verifies your company. You can prepare it now.
+          Your company page becomes public once HireKiwi verifies your company. You can prepare it
+          now.
         </Alert>
       ) : null}
       {banner ? (

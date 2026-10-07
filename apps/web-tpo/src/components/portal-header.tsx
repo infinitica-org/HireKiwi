@@ -13,7 +13,7 @@ export function PortalHeader() {
             href="/"
             className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600"
           >
-            SMART · Placement
+            HireKiwi · Placement
           </Link>
           <nav aria-label="TPO portal" className="flex gap-4 text-sm">
             <Link href="/" className="hover:underline">

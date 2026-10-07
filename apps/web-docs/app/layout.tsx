@@ -10,7 +10,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL('https://docs.becomesmart.online'),
   title: {
-    template: '%s | SMART Documentation',
+    template: '%s | HireKiwi Documentation',
     default: 'HireKiwi Platform — Architecture & Engineering Documentation',
   },
   description:

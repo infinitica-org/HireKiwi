@@ -156,7 +156,7 @@ export function WhitelistWorkspace() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      document.title = 'Whitelist · SMART TPO';
+      document.title = 'Whitelist · HireKiwi TPO';
     }
     void loadScaffold();
   }, []); // loadScaffold intentionally omitted — it only runs on mount

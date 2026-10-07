@@ -34,7 +34,7 @@ export default function Page() {
           <CardTitle>Verify a Credential</CardTitle>
           <CardDescription>
             Enter a cryptographically signed Certificate ID below to view the competency levels
-            validated by SMART.
+            validated by HireKiwi.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-6">

@@ -203,7 +203,7 @@ export interface TpoContactFormProps {
 
 export default function TpoContactForm({
   title = "Let's Connect",
-  description = 'Discover how SMART can help transform your campus career center outcomes and placement pipeline.',
+  description = 'Discover how HireKiwi can help transform your campus career center outcomes and placement pipeline.',
   compact = false,
   className = '',
   onSuccess,

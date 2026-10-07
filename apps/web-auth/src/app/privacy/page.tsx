@@ -14,7 +14,7 @@ export default function PrivacyPage() {
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link href="/login" className="flex items-center gap-2">
-            <SmartLogo kind="text" className="h-7 w-auto" title="SMART" />
+            <SmartLogo kind="text" className="h-7 w-auto" title="HireKiwi" />
           </Link>
           <Link
             href="/login"
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
 
           <div className="prose prose-slate max-w-none pt-8 leading-relaxed text-slate-700">
             <p>
-              At <strong>SMART</strong> (&quot;SMART&quot;, &quot;we&quot;, &quot;us&quot;, or
+              At <strong>HireKiwi</strong> (&quot;HireKiwi&quot;, &quot;we&quot;, &quot;us&quot;, or
               &quot;our&quot;), we respect your privacy and are committed to protecting your
               personal information. This Privacy Policy explains how we collect, use, disclose, and
               safeguard your information when you access or use the SMART platform.
@@ -115,16 +115,19 @@ export default function PrivacyPage() {
             <h2 className="mt-8 text-xl font-bold text-slate-900">5. Your Rights &amp; Choices</h2>
             <p>
               You have the right to access, update, or request the deletion of your personal data
-              stored on SMART. You may also opt out of promotional emails using the unsubscribe link
-              provided in our communications.
+              stored on HireKiwi. You may also opt out of promotional emails using the unsubscribe
+              link provided in our communications.
             </p>
 
             <h2 className="mt-8 text-xl font-bold text-slate-900">6. Contact Privacy Team</h2>
             <p>
               For privacy-related inquiries or data subject requests, please contact our Data
               Protection team at{' '}
-              <a href="mailto:privacy@smart.com" className="font-semibold text-blue-600 underline">
-                privacy@smart.com
+              <a
+                href="mailto:privacy@hirekiwi.com"
+                className="font-semibold text-blue-600 underline"
+              >
+                privacy@hirekiwi.com
               </a>
               .
             </p>

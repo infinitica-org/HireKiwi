@@ -164,7 +164,7 @@ export default function WorkExperienceVerificationPage({ params }: PageProps) {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">Work Experience Verification Request</h1>
-            <p className="text-xs text-white/50">SMART Verified Credentials System</p>
+            <p className="text-xs text-white/50">HireKiwi Verified Credentials System</p>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { isSmartApiError } from '@hirekiwi/api-client';
 import { isDisallowedEndorserEmailDomain } from '@hirekiwi/contracts';
 import type { SelectableInstitutionDto } from '@hirekiwi/contracts';
@@ -19,13 +20,14 @@ const COUNTRY_CODES = [
 ];
 
 export function RegisterForm() {
+  const searchParams = useSearchParams();
   const [institutions, setInstitutions] = useState<SelectableInstitutionDto[]>([]);
   const [institutionsError, setInstitutionsError] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneCountryCode, setPhoneCountryCode] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(searchParams.get('email') ?? '');
   const [institutionId, setInstitutionId] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -89,7 +91,7 @@ export function RegisterForm() {
       if (isSmartApiError(err)) {
         if (err.code === 'unregistered_university_domain') {
           setError(
-            'Your university domain is not registered on SMART. Please contact your placement administrator.',
+            'Your university domain is not registered on HireKiwi. Please contact your placement administrator.',
           );
         } else if (err.code === 'personal_email_not_allowed') {
           setError(

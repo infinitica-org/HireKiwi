@@ -248,6 +248,7 @@ import {
   AuthTokenResponseSchema,
   AuthenticatedUserSchema,
   CompanyPortalAccountSchema,
+  IdentifyResponseSchema,
   UserHoldResponseSchema,
   RegisterResponseSchema,
   BatchDtoSchema,
@@ -290,6 +291,7 @@ import {
   BulkOperationResultSchema,
   InvitationDtoSchema,
   InvitationPreviewDtoSchema,
+  GithubOauthUrlResponseSchema,
   JobAcceptedSchema,
   LinkedinOauthUrlResponseSchema,
   SelectableInstitutionDtoSchema,
@@ -455,6 +457,12 @@ export function authApi(client: SmartApiClient) {
     login: (body: { email: string; password: string }) =>
       client.post(prefixed('/auth/login'), body, { schema: AuthTokenResponseSchema }),
 
+    identify: (body: { email: string }) =>
+      client.post(prefixed('/auth/identify'), body, {
+        schema: IdentifyResponseSchema,
+        anonymous: true,
+      }),
+
     registerStudent: (body: RegisterStudentRequest) =>
       client.post(prefixed('/auth/register'), body, {
         schema: RegisterResponseSchema,
@@ -596,6 +604,12 @@ export function usersApi(client: SmartApiClient) {
     linkedinOauthUrl: () =>
       client.get(prefixed('/users/me/onboarding/linkedin/oauth-url'), {
         schema: LinkedinOauthUrlResponseSchema,
+      }),
+
+    /** Begins "Sign in with GitHub" — open the returned URL to grant private-repo access. */
+    githubOauthUrl: () =>
+      client.get(prefixed('/users/me/onboarding/github/oauth-url'), {
+        schema: GithubOauthUrlResponseSchema,
       }),
 
     fetchGithubProfile: (body: FetchGithubProfileRequest) =>

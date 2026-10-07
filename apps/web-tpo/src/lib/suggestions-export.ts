@@ -88,10 +88,10 @@ export function buildSuggestionsPdf(opening: JobOpeningDto, rows: SuggestionExpo
   doc.setTextColor(SMART_DARK);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);
-  doc.text('SMART', 10, 9.5);
+  doc.text('HireKiwi', 10, 9.5);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.text('Intellectual Talent Network & Readiness Certification', 30, 9.5);
+  doc.text('Intellectual Talent Network & Readiness Certification', 35, 9.5);
 
   doc.setTextColor(SMART_DARK);
   doc.setFont('helvetica', 'bold');
@@ -136,7 +136,7 @@ export function buildSuggestionsPdf(opening: JobOpeningDto, rows: SuggestionExpo
     doc.setFontSize(8);
     doc.setTextColor(SMART_MUTED);
     doc.text(
-      `SMART · Generated ${new Date().toLocaleDateString()} · Page ${page} of ${pageCount}`,
+      `HireKiwi · Generated ${new Date().toLocaleDateString()} · Page ${page} of ${pageCount}`,
       10,
       doc.internal.pageSize.getHeight() - 6,
     );

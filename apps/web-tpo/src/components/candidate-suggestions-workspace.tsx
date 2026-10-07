@@ -61,6 +61,7 @@ function errorMessage(caught: unknown, fallback: string): string {
 function matchMethodLabel(method: MatchMethod | undefined): string {
   if (method === 'RULES') return 'Rules-ranked';
   if (method === 'SKILL_CAPABILITY') return 'Skill + capability match';
+  if (method === 'VECTOR_PREVIEW') return 'Similarity preview (unscored)';
   return 'Matched';
 }
 
@@ -542,7 +543,7 @@ export function CandidateSuggestionsWorkspace({
                 type="button"
                 className={secondaryButtonClass}
                 onClick={handleExportPdf}
-                title="Download a SMART-branded PDF of this shortlist"
+                title="Download a HireKiwi-branded PDF of this shortlist"
               >
                 <FileText className="h-4 w-4" /> PDF
               </button>
