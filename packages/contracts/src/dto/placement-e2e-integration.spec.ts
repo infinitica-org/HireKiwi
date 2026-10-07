@@ -16,7 +16,7 @@ describe('Evidence Quality Metrics DTO', () => {
     const metrics = {
       constructCoverage: 0.8,
       interRaterReliability: 0.92,
-      sourceReliability: 0.9,
+      sourceAuthorityWeight: 0.9,
       recencyDays: 30,
       decayFactor: 0.98,
       compositeValidityScore: 0.895,
@@ -30,7 +30,7 @@ describe('Evidence Quality Metrics DTO', () => {
     const metrics = {
       constructCoverage: 0.85,
       interRaterReliability: 0.9,
-      sourceReliability: 0.9,
+      sourceAuthorityWeight: 0.9,
       recencyDays: 15,
       decayFactor: 0.99,
       compositeValidityScore: 0.9,
@@ -38,6 +38,19 @@ describe('Evidence Quality Metrics DTO', () => {
 
     const result = EvidenceQualityMetricsSchema.parse(metrics);
     expect(result.compositeValidityScore).toBe(0.9);
+  });
+
+  it('accepts null for unmeasured rater agreement, recency and decay', () => {
+    const result = EvidenceQualityMetricsSchema.parse({
+      constructCoverage: 0.85,
+      interRaterReliability: null,
+      sourceAuthorityWeight: 0.9,
+      recencyDays: null,
+      decayFactor: null,
+      compositeValidityScore: 0.9,
+    });
+    expect(result.interRaterReliability).toBeNull();
+    expect(result.recencyDays).toBeNull();
   });
 });
 
@@ -146,7 +159,7 @@ describe('CandidateMatchDto with E2E Data', () => {
           {
             constructCoverage: 0.85,
             interRaterReliability: 0.94,
-            sourceReliability: 0.9,
+            sourceAuthorityWeight: 0.9,
             recencyDays: 15,
             decayFactor: 0.99,
             compositeValidityScore: 0.906,

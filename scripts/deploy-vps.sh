@@ -66,10 +66,13 @@ done
 
 echo "==> ${ENV_NAME}: apply Prisma migrations (migrate deploy — no new migrations authored here)"
 "${COMPOSE[@]}" --profile apps exec -T api npx prisma migrate deploy
+"${COMPOSE[@]}" --profile apps exec -T credential-verifier npx prisma migrate deploy
 
 echo "==> ${ENV_NAME}: health check"
 "${COMPOSE[@]}" --profile apps exec -T api \
   node -e "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+"${COMPOSE[@]}" --profile apps exec -T credential-verifier \
+  node -e "fetch('http://127.0.0.1:3100/api/docs-json').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 echo
 echo "Environment: ${ENV_NAME} — deployed, migrated, healthy."

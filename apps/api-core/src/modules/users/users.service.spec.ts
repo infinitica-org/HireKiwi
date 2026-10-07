@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsersService } from './users.service.js';
 
@@ -815,6 +815,16 @@ describe('UsersService saveOnboardingDraft', () => {
   });
 
   describe('UsersService resume operations', () => {
+    const validResumePdfBuffer = Buffer.from(
+      '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+        'Vishal Bharath R\nEmail: vishal@example.com\n' +
+        'Education: B.Tech in Artificial Intelligence, KEC\n' +
+        'Technical Skills: TypeScript, React, Python, PostgreSQL, Node.js\n' +
+        'Work Experience: Software Engineer Intern at Infinitica\n' +
+        'Projects: HireKiwi Talent Discovery Platform\n' +
+        'endstream\nendobj\n%%EOF',
+    );
+
     it('uploads initial resume for student without existing resume', async () => {
       const user = studentRow({ onboardingDetails: {} });
       prisma.user.findUnique.mockResolvedValueOnce(user);
@@ -822,7 +832,7 @@ describe('UsersService saveOnboardingDraft', () => {
       storage.upload.mockResolvedValueOnce(`resumes/${user.id}/resume.pdf`);
 
       const file = {
-        buffer: Buffer.from('PDF content mock'),
+        buffer: validResumePdfBuffer,
         fileName: 'resume.pdf',
         mimeType: 'application/pdf',
       };
@@ -844,7 +854,7 @@ describe('UsersService saveOnboardingDraft', () => {
       });
     });
 
-    it('replaces existing resume with newly uploaded resume and maintains max 1 active resume', async () => {
+    it('rejects direct replacement/upload if a resume already exists', async () => {
       const oldResume = {
         fileName: 'old-cv.pdf',
         objectKey: 'resumes/u1/old-key.pdf',
@@ -861,32 +871,59 @@ describe('UsersService saveOnboardingDraft', () => {
       });
 
       prisma.user.findUnique.mockResolvedValueOnce(user);
-      prisma.user.update.mockResolvedValueOnce(user);
-      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/new-cv.pdf`);
 
       const file = {
-        buffer: Buffer.from('New PDF content'),
+        buffer: validResumePdfBuffer,
         fileName: 'new-cv.pdf',
         mimeType: 'application/pdf',
       };
 
-      const result = await service.uploadResume(user.id, file);
+      await expect(service.uploadResume(user.id, file)).rejects.toThrow(
+        'Remove your existing resume before uploading a new one.',
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
 
-      expect(result.resumeFile.fileName).toBe('new-cv.pdf');
-      expect(result.resumeFiles).toHaveLength(1);
-      expect(result.resumeFiles[0]?.fileName).toBe('new-cv.pdf');
-
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: user.id },
-        data: {
-          onboardingDetails: expect.objectContaining({
-            resumeFile: expect.objectContaining({ fileName: 'new-cv.pdf' }),
-            resumeFiles: [expect.objectContaining({ fileName: 'new-cv.pdf' })],
-          }),
+    it('supports remove-then-upload flow', async () => {
+      const oldResume = {
+        fileName: 'old-cv.pdf',
+        objectKey: 'resumes/u1/old-key.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 1024,
+        uploadedAt: '2026-09-01T10:00:00.000Z',
+        lastParsedAt: null,
+      };
+      const userWithResume = studentRow({
+        onboardingDetails: {
+          resumeFile: oldResume,
+          resumeFiles: [oldResume],
         },
       });
 
-      expect(storage.deleteObject).toHaveBeenCalledWith('resumes/u1/old-key.pdf');
+      prisma.user.findUnique.mockResolvedValueOnce(userWithResume);
+      prisma.user.update.mockResolvedValueOnce(userWithResume);
+
+      // 1. Delete existing resume
+      const deleteResult = await service.deleteResume(userWithResume.id, {
+        objectKey: oldResume.objectKey,
+      });
+      expect(deleteResult.resumeFiles).toHaveLength(0);
+
+      // 2. Upload new resume
+      const emptyUser = studentRow({ onboardingDetails: { resumeFiles: [] } });
+      prisma.user.findUnique.mockResolvedValueOnce(emptyUser);
+      prisma.user.update.mockResolvedValueOnce(emptyUser);
+      storage.upload.mockResolvedValueOnce(`resumes/${emptyUser.id}/new-cv.pdf`);
+
+      const file = {
+        buffer: validResumePdfBuffer,
+        fileName: 'new-cv.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const uploadResult = await service.uploadResume(emptyUser.id, file);
+      expect(uploadResult.resumeFiles).toHaveLength(1);
+      expect(uploadResult.resumeFile.fileName).toBe('new-cv.pdf');
     });
 
     it('rejects upload from non-student user', async () => {
@@ -894,7 +931,7 @@ describe('UsersService saveOnboardingDraft', () => {
       prisma.user.findUnique.mockResolvedValueOnce(user);
 
       const file = {
-        buffer: Buffer.from('PDF content'),
+        buffer: validResumePdfBuffer,
         fileName: 'resume.pdf',
         mimeType: 'application/pdf',
       };
@@ -902,7 +939,7 @@ describe('UsersService saveOnboardingDraft', () => {
       await expect(service.uploadResume(user.id, file)).rejects.toThrow();
     });
 
-    it('rejects invalid file types', async () => {
+    it('rejects invalid file types without .pdf extension', async () => {
       const user = studentRow();
       prisma.user.findUnique.mockResolvedValueOnce(user);
 
@@ -912,7 +949,24 @@ describe('UsersService saveOnboardingDraft', () => {
         mimeType: 'application/x-msdownload',
       };
 
-      await expect(service.uploadResume(user.id, file)).rejects.toThrow(BadRequestException);
+      await expect(service.uploadResume(user.id, file)).rejects.toThrow(
+        'Only PDF resumes are allowed.',
+      );
+    });
+
+    it('rejects non-PDF files such as DOCX or TXT even if labeled .pdf if magic bytes fail', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const fakePdf = {
+        buffer: Buffer.from('This is actually a plain text file pretending to be pdf.'),
+        fileName: 'fake.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await expect(service.uploadResume(user.id, fakePdf)).rejects.toThrow(
+        'Only PDF resumes are allowed.',
+      );
     });
 
     it('rejects files exceeding 5MB', async () => {
@@ -925,22 +979,474 @@ describe('UsersService saveOnboardingDraft', () => {
         mimeType: 'application/pdf',
       };
 
-      await expect(service.uploadResume(user.id, file)).rejects.toThrow(BadRequestException);
+      await expect(service.uploadResume(user.id, file)).rejects.toThrow(
+        'Resume must be 5 MB or smaller.',
+      );
+    });
+
+    it('rejects corrupted or truncated PDF files', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const corruptPdf = {
+        buffer: Buffer.from('%PDF-1.4 [corrupted stream data without trailer or text]'),
+        fileName: 'corrupted.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await expect(service.uploadResume(user.id, corruptPdf)).rejects.toThrow(
+        'This PDF appears to be corrupted or unreadable.',
+      );
+    });
+
+    it('rejects non-resume documents such as certificates or invoices', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const certificatePdf = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'Certificate of Completion\n' +
+            'This is to certify that John Doe has completed the Machine Learning Course.\n' +
+            'Issued by Coursera on October 2026.\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'certificate.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await expect(service.uploadResume(user.id, certificatePdf)).rejects.toThrow(
+        "The uploaded document doesn't appear to be a resume.",
+      );
+    });
+
+    it('rejects academic marksheets', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const marksheetPdf = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'Statement of Marks and Semester Grade Report\n' +
+            'Student Name: Jane Doe | Roll No: 12345\n' +
+            'Subject Code: CS101 - Grade: A - SGPA: 8.9\n' +
+            'Provisional Certificate Issued by University Controller of Examinations.\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'marksheet.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await expect(service.uploadResume(user.id, marksheetPdf)).rejects.toThrow(
+        "The uploaded document doesn't appear to be a resume.",
+      );
+    });
+
+    it('rejects offer letters and appointment letters', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const offerLetterPdf = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'Offer of Employment - Letter of Appointment\n' +
+            'Dear Candidate, we are pleased to offer you the position of Software Engineer\n' +
+            'with an annual fixed CTC of 8 LPA. Please sign and return acceptance.\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'offer-letter.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await expect(service.uploadResume(user.id, offerLetterPdf)).rejects.toThrow(
+        "The uploaded document doesn't appear to be a resume.",
+      );
+    });
+
+    it('rejects invoices and billing receipts', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const invoicePdf = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'Tax Invoice\n' +
+            'Invoice No: INV-2026-001\n' +
+            'Bill To: ABC Technologies Pvt Ltd\n' +
+            'GSTIN: 33AAAAA0000A1Z5\n' +
+            'Total Amount Due: INR 50,000 | Payment Receipt\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'invoice.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await expect(service.uploadResume(user.id, invoicePdf)).rejects.toThrow(
+        "The uploaded document doesn't appear to be a resume.",
+      );
+    });
+
+    it('rejects random non-resume PDF articles or essays', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const articlePdf = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'The Quantum Theory of Light and Electrodynamics\n' +
+            'In physics, radiation is the emission or transmission of energy in the form of waves or particles through space.\n' +
+            'Electromagnetic radiation consists of photons which are synchronized oscillations of electric and magnetic fields.\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'article.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      await expect(service.uploadResume(user.id, articlePdf)).rejects.toThrow(
+        "The uploaded document doesn't appear to be a resume.",
+      );
+    });
+
+    it('accepts resume with only Experience and Skills', async () => {
+      const user = studentRow({ onboardingDetails: {} });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/exp-skills.pdf`);
+
+      const file = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'John Doe\n' +
+            'Email: john@example.com | Phone: 9876543210\n' +
+            'Professional Experience\n' +
+            'Senior Backend Engineer at TechCorp (2020 - Present)\n' +
+            'Technical Skills\n' +
+            'TypeScript, Node.js, PostgreSQL, Redis, Docker, Kafka\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'exp-skills.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const result = await service.uploadResume(user.id, file);
+      expect(result.resumeFile.fileName).toBe('exp-skills.pdf');
+    });
+
+    it('accepts resume with Education, Skills, and Projects', async () => {
+      const user = studentRow({ onboardingDetails: {} });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/edu-skills-proj.pdf`);
+
+      const file = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'Priya Sharma\n' +
+            'Email: priya@example.com | Phone: 9123456780\n' +
+            'Education\n' +
+            'B.Tech in Artificial Intelligence, KEC\n' +
+            'Technical Skills\n' +
+            'Python, PyTorch, Fastify, React, PostgreSQL\n' +
+            'Projects\n' +
+            'HireKiwi Intelligent Talent Discovery Engine\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'edu-skills-proj.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const result = await service.uploadResume(user.id, file);
+      expect(result.resumeFile.fileName).toBe('edu-skills-proj.pdf');
+    });
+
+    it('accepts resume without Summary', async () => {
+      const user = studentRow({ onboardingDetails: {} });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/no-summary.pdf`);
+
+      const file = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'Alex Miller\n' +
+            'alex@example.com | +1 555 123 4567\n' +
+            'Work Experience\n' +
+            'Full Stack Engineer at WebScale (2022 - Present)\n' +
+            'Education\n' +
+            'B.S. in Computer Science\n' +
+            'Skills\n' +
+            'React, TypeScript, GraphQL, Next.js, Node.js\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'no-summary.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const result = await service.uploadResume(user.id, file);
+      expect(result.resumeFile.fileName).toBe('no-summary.pdf');
+    });
+
+    it('accepts resume without Projects', async () => {
+      const user = studentRow({ onboardingDetails: {} });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/no-projects.pdf`);
+
+      const file = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'Ananya Sen\n' +
+            'ananya@example.com\n' +
+            'Professional Summary\n' +
+            'Experienced QA automation engineer with 4 years in testing.\n' +
+            'Work Experience\n' +
+            'SDET II at FinTech Ltd (2022 - Present)\n' +
+            'Education\n' +
+            'B.E. Information Technology\n' +
+            'Technical Skills\n' +
+            'Playwright, Cypress, Vitest, Jest, Python\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'no-projects.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const result = await service.uploadResume(user.id, file);
+      expect(result.resumeFile.fileName).toBe('no-projects.pdf');
+    });
+
+    it('accepts resume without Certifications', async () => {
+      const user = studentRow({ onboardingDetails: {} });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/no-cert.pdf`);
+
+      const file = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'David Kim\n' +
+            'david@example.com\n' +
+            'Work Experience\n' +
+            'Frontend Developer at CloudBase\n' +
+            'Education\n' +
+            'B.S. Computer Science\n' +
+            'Skills\n' +
+            'HTML5, CSS3, JavaScript, Vue.js, Tailwind\n' +
+            'Projects\n' +
+            'Personal portfolio site and open-source UI libraries\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'no-cert.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const result = await service.uploadResume(user.id, file);
+      expect(result.resumeFile.fileName).toBe('no-cert.pdf');
+    });
+
+    it('rejects document when AI classification finds no resume structure with very low confidence', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      // A PDF that has enough keywords to pass the heuristic Layer A (email, phone,
+      // education, skills) — so it passes Layer A — but the AI comes back with empty
+      // sections and very low confidence, indicating it isn't actually a resume.
+      const ambiguousPdf = {
+        buffer: Buffer.from(
+          '%PDF-1.4\n1 0 obj\n<< /Length 200 >>\nstream\n' +
+            'Contact: candidate@email.com Phone: 9876543210\n' +
+            'Education: Bachelor Degree field of study\n' +
+            'Skills: some technical skills listed here for testing purposes\n' +
+            'Summary: professional with experience in industry\n' +
+            'endstream\nendobj\n%%EOF',
+        ),
+        fileName: 'ambiguous.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const mockResumeParse = {
+        parse: vi.fn().mockResolvedValue({
+          status: 'PARSED',
+          draft: {
+            education: [],
+            experiences: [],
+            skills: [],
+            licenses: [],
+            basicInfo: undefined,
+            parseConfidence: 0.1,
+            missingFields: ['education', 'experiences', 'skills', 'basicInfo'],
+          },
+        }),
+      };
+
+      const aiService = new UsersService(
+        prisma as never,
+        auth as never,
+        outbox as never,
+        storage as never,
+        auditPublisher as never,
+        mockResumeParse as never,
+      );
+
+      await expect(aiService.uploadResume(user.id, ambiguousPdf)).rejects.toThrow(
+        "The uploaded document doesn't appear to be a resume.",
+      );
+      expect(mockResumeParse.parse).toHaveBeenCalled();
+    });
+
+    it('does NOT reject genuine resume when AI returns FAILED status (provider failed closed)', async () => {
+      // CRITICAL: status === 'FAILED' means the AI gateway/provider failed,
+      // NOT that the document is not a resume.  Must not reject the upload.
+      const user = studentRow({ onboardingDetails: {} });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/resume.pdf`);
+
+      const mockResumeParse = {
+        parse: vi.fn().mockResolvedValue({
+          status: 'FAILED',
+          draft: null,
+        }),
+      };
+
+      const aiService = new UsersService(
+        prisma as never,
+        auth as never,
+        outbox as never,
+        storage as never,
+        auditPublisher as never,
+        mockResumeParse as never,
+      );
+
+      const file = {
+        buffer: validResumePdfBuffer,
+        fileName: 'resume.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      // Must succeed — AI failed-closed is NOT a reason to reject the upload.
+      const result = await aiService.uploadResume(user.id, file);
+      expect(result.resumeFile.fileName).toBe('resume.pdf');
+      expect(mockResumeParse.parse).toHaveBeenCalled();
+    });
+
+    it('returns 503 ServiceUnavailable when AI provider throws (not NOT_A_RESUME)', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+
+      const mockResumeParse = {
+        parse: vi.fn().mockRejectedValue(new Error('no providers configured')),
+      };
+
+      const aiService = new UsersService(
+        prisma as never,
+        auth as never,
+        outbox as never,
+        storage as never,
+        auditPublisher as never,
+        mockResumeParse as never,
+      );
+
+      const file = {
+        buffer: validResumePdfBuffer,
+        fileName: 'resume.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const err = await aiService.uploadResume(user.id, file).catch((e: unknown) => e);
+      // Must be a ServiceUnavailableException (503) not a BadRequestException (400).
+      expect(err).toMatchObject({ status: 503 });
+      expect(JSON.stringify(err)).not.toContain("doesn't appear to be a resume");
+    });
+
+    it('invokes ResumeParseService and accepts when AI extracts a valid resume draft', async () => {
+      const user = studentRow();
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/valid.pdf`);
+
+      const mockResumeParse = {
+        parse: vi.fn().mockResolvedValue({
+          status: 'PARSED',
+          draft: {
+            basicInfo: { firstName: 'Jane', lastName: 'Doe' },
+            education: [{ institutionName: 'MIT' }],
+            experiences: [{ role: 'Engineer', company: 'Google' }],
+            skills: [{ type: 'technical', name: 'TypeScript', proficiency: 'PROFICIENT' }],
+            licenses: [],
+            parseConfidence: 0.9,
+            missingFields: [],
+          },
+        }),
+      };
+
+      const aiService = new UsersService(
+        prisma as never,
+        auth as never,
+        outbox as never,
+        storage as never,
+        auditPublisher as never,
+        mockResumeParse as never,
+      );
+
+      const file = {
+        buffer: validResumePdfBuffer,
+        fileName: 'valid-resume.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      const result = await aiService.uploadResume(user.id, file);
+      expect(result.resumeFile.fileName).toBe('valid-resume.pdf');
+      expect(mockResumeParse.parse).toHaveBeenCalled();
+    });
+
+    it('accepts genuine resume even when some sections are absent from AI draft', async () => {
+      // A real resume might only have basicInfo + skills; it must still be accepted.
+      const user = studentRow({ onboardingDetails: {} });
+      prisma.user.findUnique.mockResolvedValueOnce(user);
+      prisma.user.update.mockResolvedValueOnce(user);
+      storage.upload.mockResolvedValueOnce(`resumes/${user.id}/resume.pdf`);
+
+      const mockResumeParse = {
+        parse: vi.fn().mockResolvedValue({
+          status: 'PARSED',
+          draft: {
+            basicInfo: { firstName: 'Arun', lastName: 'Kumar' },
+            education: [],
+            experiences: [],
+            skills: [{ type: 'technical', name: 'Python', proficiency: 'INTERMEDIATE' }],
+            licenses: [],
+            parseConfidence: 0.7,
+            missingFields: ['education', 'experiences'],
+          },
+        }),
+      };
+
+      const aiService = new UsersService(
+        prisma as never,
+        auth as never,
+        outbox as never,
+        storage as never,
+        auditPublisher as never,
+        mockResumeParse as never,
+      );
+
+      const file = {
+        buffer: validResumePdfBuffer,
+        fileName: 'sparse-resume.pdf',
+        mimeType: 'application/pdf',
+      };
+
+      // Must succeed — partial AI parse is not grounds for rejection.
+      const result = await aiService.uploadResume(user.id, file);
+      expect(result.resumeFile.fileName).toBe('sparse-resume.pdf');
     });
 
     it('preserves existing database state if storage upload fails', async () => {
-      const oldResume = {
-        fileName: 'existing.pdf',
-        objectKey: 'resumes/u1/existing.pdf',
-        mimeType: 'application/pdf',
-        fileSizeBytes: 1024,
-        uploadedAt: '2026-09-01T10:00:00.000Z',
-        lastParsedAt: null,
-      };
       const user = studentRow({
         onboardingDetails: {
-          resumeFile: oldResume,
-          resumeFiles: [oldResume],
+          resumeFile: null,
+          resumeFiles: [],
         },
       });
 
@@ -948,12 +1454,14 @@ describe('UsersService saveOnboardingDraft', () => {
       storage.upload.mockRejectedValueOnce(new Error('S3 connection timed out'));
 
       const file = {
-        buffer: Buffer.from('New content'),
+        buffer: validResumePdfBuffer,
         fileName: 'new.pdf',
         mimeType: 'application/pdf',
       };
 
-      await expect(service.uploadResume(user.id, file)).rejects.toThrow('S3 connection timed out');
+      await expect(service.uploadResume(user.id, file)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 

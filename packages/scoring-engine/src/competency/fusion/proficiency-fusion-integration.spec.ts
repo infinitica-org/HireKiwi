@@ -123,8 +123,62 @@ describe('Evidence Validator Integration in Proficiency Fusion', () => {
     const projectMetrics = result.evidenceValidationMetrics[0];
     expect(projectMetrics.evidenceType).toBe('PROJECT');
     expect(projectMetrics.interRaterReliability).toBeGreaterThan(0.7);
-    expect(projectMetrics.sourceReliability).toBe(0.7); // PROVISIONAL = 0.7
+    expect(projectMetrics.sourceAuthorityWeight).toBe(0.7); // PROVISIONAL = 0.7
     expect(projectMetrics.recencyDays).toBe(180);
+  });
+
+  it('reports unknown reliability without changing the level for single-rater or unrated projects', async () => {
+    const run = (scores: { raterRatings?: number[] } | undefined) =>
+      Effect.runPromise(
+        fuseDomainCapability({
+          competencyModel: [
+            {
+              competencyId: COMPETENCY_ID,
+              skillCode: 'SQL',
+              capability: 'Query optimization',
+              role: 'critical',
+              difficulty: 'ADVANCED',
+            },
+          ],
+          proficiencyRequirements: [
+            {
+              level: 'INTERMEDIATE',
+              requiredCompetencyIds: [COMPETENCY_ID],
+              criticalCompetencyIds: [COMPETENCY_ID],
+              realWorldApplicationRequired: false,
+              substantialApplicationRequired: false,
+              interviewRequired: false,
+            },
+          ],
+          sources: [
+            {
+              sourceId: 'PROJECT',
+              available: true,
+              trustTier: 'PROVISIONAL',
+              observations: [
+                {
+                  competencyId: COMPETENCY_ID,
+                  capability: 'Query optimization',
+                  claimedStatus: 'DEMONSTRATED',
+                  evidence: ['project submission 1'],
+                },
+              ],
+              metadata: { testedItemCount: 1, projectReport: { scores, ageDays: 180 } },
+            },
+          ],
+          targetProficiency: 'INTERMEDIATE',
+        } as FusionInput),
+      );
+
+    const multi = await run({ raterRatings: [4, 4, 5] });
+    const single = await run({ raterRatings: [4] });
+    const unrated = await run(undefined);
+
+    expect(multi.evidenceValidationMetrics[0].interRaterReliability).not.toBeNull();
+    expect(single.evidenceValidationMetrics[0].interRaterReliability).toBeNull();
+    expect(unrated.evidenceValidationMetrics[0].interRaterReliability).toBeNull();
+    expect(single.inferredDomainProficiency).toBe(multi.inferredDomainProficiency);
+    expect(unrated.inferredDomainProficiency).toBe(multi.inferredDomainProficiency);
   });
 
   it('includes metrics for both assessment and project bundles when both available', async () => {
@@ -336,7 +390,7 @@ describe('Evidence Validator Integration in Proficiency Fusion', () => {
     const trustedResult = await Effect.runPromise(fuseDomainCapability(trustedInput));
     const untrustedResult = await Effect.runPromise(fuseDomainCapability(untrustedInput));
 
-    expect(trustedResult.evidenceValidationMetrics[0].sourceReliability).toBe(0.9);
-    expect(untrustedResult.evidenceValidationMetrics[0].sourceReliability).toBe(0.5);
+    expect(trustedResult.evidenceValidationMetrics[0].sourceAuthorityWeight).toBe(0.9);
+    expect(untrustedResult.evidenceValidationMetrics[0].sourceAuthorityWeight).toBe(0.5);
   });
 });

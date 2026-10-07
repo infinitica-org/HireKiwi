@@ -8,6 +8,7 @@ import { ROLES_KEY } from '../../common/guards/roles.decorator.js';
 import { MatchingService } from './matching.service.js';
 import { PlacementMatchController } from './placement-match.controller.js';
 import { resolveTenantId } from '../../common/decorators/tenant-id.decorator.js';
+import { SKILL_CAPABILITY_RANKER_VERSION } from './skill-capability-ranker.js';
 
 const institutionId = randomUUID();
 const otherInstitutionId = randomUUID();
@@ -1329,7 +1330,7 @@ describe('Gap 5: MatchRun.rankerVersion tracking with scoring-engine version', (
       const mockRun = {
         id: randomUUID(),
         status: 'PENDING',
-        rankerVersion: 'skill-capability-v1.0', // Expected legacy version
+        rankerVersion: SKILL_CAPABILITY_RANKER_VERSION, // Expected legacy version
       };
 
       prisma.matchRun.create.mockResolvedValueOnce(mockRun);
@@ -1345,7 +1346,7 @@ describe('Gap 5: MatchRun.rankerVersion tracking with scoring-engine version', (
       expect(prisma.matchRun.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            rankerVersion: 'v1.2.0', // Legacy version
+            rankerVersion: SKILL_CAPABILITY_RANKER_VERSION, // Legacy version
           }),
         }),
       );

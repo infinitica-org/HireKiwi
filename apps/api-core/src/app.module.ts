@@ -54,6 +54,7 @@ import { KafkaModule } from './platform/kafka/kafka.module.js';
 import { MailerModule } from './platform/mailer/mailer.module.js';
 import { PrismaModule } from './platform/prisma/prisma.module.js';
 import { QueueModule } from './platform/queue/queue.module.js';
+import { ReferenceDataCacheModule } from './platform/cache/reference-data-cache.module.js';
 import { RedisModule } from './platform/redis/redis.module.js';
 import { StorageModule } from './platform/storage/storage.module.js';
 
@@ -72,6 +73,7 @@ import { StorageModule } from './platform/storage/storage.module.js';
     AuditModule,
     PrismaModule,
     RedisModule,
+    ReferenceDataCacheModule,
     StorageModule,
     KafkaModule,
     MailerModule,

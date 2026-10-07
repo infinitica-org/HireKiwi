@@ -1,27 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import {
-  AccredibleAdapter,
-  AwsAdapter,
-  CredlyAdapter,
-  GoogleAdapter,
-  MicrosoftAdapter,
-  type Tier1Input,
-  type Tier1IssuerAdapter,
-  type TierVerificationResult,
+import { Inject, Injectable } from '@nestjs/common';
+import { CredentialVerifierClientAdapter } from './credential-verifier-client.js';
+import type {
+  Tier1Input,
+  Tier1IssuerAdapter,
+  TierVerificationResult,
 } from './tier1-issuer-adapter.js';
 
 @Injectable()
 export class Tier1IssuerRegistry {
   private readonly adapters: Tier1IssuerAdapter[];
 
-  constructor() {
-    this.adapters = [
-      new CredlyAdapter(),
-      new AccredibleAdapter(),
-      new AwsAdapter(),
-      new GoogleAdapter(),
-      new MicrosoftAdapter(),
-    ];
+  constructor(
+    @Inject(CredentialVerifierClientAdapter) credentialVerifier: CredentialVerifierClientAdapter,
+  ) {
+    this.adapters = [credentialVerifier];
   }
 
   getAdapter(issuer: string): Tier1IssuerAdapter | null {

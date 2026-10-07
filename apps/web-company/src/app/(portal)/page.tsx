@@ -48,7 +48,7 @@ function StatCard({
   label,
   value,
   hint,
-  icon: _Icon,
+  icon: _icon,
   href,
   loading,
 }: {

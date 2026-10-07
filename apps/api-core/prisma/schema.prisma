@@ -633,6 +633,11 @@ model User {
   @@index([institutionId])
   @@index([batchId])
   @@index([companyId])
+  /// S6-VV-132 (#587) — matching.service.ts searchStudents() filters every employer search by
+  /// role + discoverableToEmployers, then (when the caller is institution-scoped) institutionId.
+  /// A composite covering those, in that order, turns the leading WHERE clauses into an index
+  /// scan instead of a sequential scan over all users.
+  @@index([role, discoverableToEmployers, institutionId], name: "idx_users_employer_search_scope")
   @@map("users")
 }
 

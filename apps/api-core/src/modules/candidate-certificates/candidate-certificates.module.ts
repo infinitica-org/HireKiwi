@@ -5,13 +5,7 @@ import { PublicCertificateEndorsementController } from './public-certificate-end
 import { CandidateCertificatesAdminController } from './candidate-certificates-admin.controller.js';
 import { CandidateCertificatesService } from './candidate-certificates.service.js';
 import { CertificateSourceVerificationService } from './verification/certificate-source-verification.service.js';
-import {
-  AccredibleAdapter,
-  AwsAdapter,
-  CredlyAdapter,
-  GoogleAdapter,
-  MicrosoftAdapter,
-} from './verification/tier1-issuer-adapter.js';
+import { CredentialVerifierClientAdapter } from './verification/credential-verifier-client.js';
 import { Tier1IssuerRegistry } from './verification/tier1-issuer-registry.js';
 import { Tier2PublicUrlVerifier } from './verification/tier2-public-url-verifier.js';
 import { Tier3OcrVerifier } from './verification/tier3-ocr-verifier.js';
@@ -30,11 +24,7 @@ import { PublicProfileModule } from '../public-profile/public-profile.module.js'
     CandidateCertificatesService,
     CertificateSourceVerificationService,
     Tier1IssuerRegistry,
-    CredlyAdapter,
-    AccredibleAdapter,
-    AwsAdapter,
-    GoogleAdapter,
-    MicrosoftAdapter,
+    CredentialVerifierClientAdapter,
     Tier2PublicUrlVerifier,
     Tier3OcrVerifier,
     CredentialDedupService,
