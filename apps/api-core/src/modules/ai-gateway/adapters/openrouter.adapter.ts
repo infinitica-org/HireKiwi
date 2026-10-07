@@ -100,7 +100,7 @@ export class OpenRouterAdapter implements AiProviderAdapter {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
         'HTTP-Referer': 'https://smart.infinitica.io',
-        'X-Title': 'HireKiwi Platform',
+        'X-Title': 'SMART',
       },
       body: JSON.stringify(
         openRouterChatPayload({

@@ -22,7 +22,7 @@ describe('SkillsSection', () => {
     for (const link of screen.getAllByRole('link', { name: /Add skills/i })) {
       expect(link.getAttribute('href')).toBe('/skills');
     }
-    expect(screen.getAllByRole('link', { name: /Add skills/i })).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: /Add skills/i })).toHaveLength(1);
   });
 
   it('lists only the skills the student has added', async () => {

@@ -2,85 +2,43 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronRight, GraduationCap, Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+import { ChevronDown, FileText, GraduationCap, Menu, Settings, Shield, X } from 'lucide-react';
 import type { AuthenticatedUser } from '@hirekiwi/contracts';
-import { UserMenu } from '@hirekiwi/ui';
+import { UserMenu, cn } from '@hirekiwi/ui';
+import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
 import { api } from '../lib/api';
 import { signOut } from '../lib/auth';
+import {
+  TPO_TOP_NAV,
+  isNavLinkActive,
+  isTopNavLinkActive,
+  type TpoTopNavLink,
+} from '../lib/tpo-nav';
 
-type Breadcrumb = { label: string; href?: string };
+const AUTH_URL = (process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005').replace(/\/+$/, '');
 
-function getBreadcrumbs(pathname: string): Breadcrumb[] {
-  if (pathname === '/' || pathname === '/dashboard') {
-    return [{ label: 'Dashboard' }];
-  }
+const MOBILE_NAV = [...TPO_TOP_NAV, { name: 'Settings', href: '/settings', icon: Settings }];
 
-  const segments = pathname.split('/').filter(Boolean);
-  const crumbs: Breadcrumb[] = [];
+/** Links tucked under Students: they open from its hover menu instead of sitting in the bar. */
+const STUDENTS_MENU_NAMES = ['Whitelist', 'Reports'];
+const STUDENTS_MENU: TpoTopNavLink[] = TPO_TOP_NAV.filter((link) =>
+  STUDENTS_MENU_NAMES.includes(link.name),
+);
+const BAR_NAV: TpoTopNavLink[] = TPO_TOP_NAV.filter(
+  (link) => !STUDENTS_MENU_NAMES.includes(link.name),
+);
 
-  const first = segments[0] ?? '';
-  if (['students', 'batches', 'whitelist', 'provisioning', 'onboarding'].includes(first)) {
-    crumbs.push({ label: 'Candidates', href: '/students' });
-    if (first === 'students') crumbs.push({ label: 'Students' });
-    else if (first === 'batches') {
-      if (segments.length > 1) {
-        crumbs.push({ label: 'Batches', href: '/batches' });
-        crumbs.push({ label: 'Batch Details' });
-      } else {
-        crumbs.push({ label: 'Batches' });
-      }
-    } else if (first === 'whitelist') crumbs.push({ label: 'Whitelist' });
-    return crumbs;
-  }
+const focusRing =
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white';
 
-  if (
-    ['openings', 'companies', 'opportunities', 'suggestions', 'review', 'company', 'ats'].includes(
-      first,
-    )
-  ) {
-    crumbs.push({ label: 'Placement', href: '/openings' });
-    if (first === 'openings') {
-      if (segments[1] === 'create') {
-        crumbs.push({ label: 'Openings', href: '/openings' });
-        crumbs.push({ label: 'Create Opening' });
-      } else {
-        crumbs.push({ label: 'Openings' });
-      }
-    } else if (first === 'companies') {
-      if (segments.length > 1) {
-        crumbs.push({ label: 'Companies', href: '/companies' });
-        crumbs.push({ label: 'Company Profile' });
-      } else {
-        crumbs.push({ label: 'Companies' });
-      }
-    } else if (first === 'opportunities') crumbs.push({ label: 'Opportunities' });
-    else if (first === 'suggestions') crumbs.push({ label: 'Suggestions' });
-    else if (first === 'review') crumbs.push({ label: 'Review' });
-    return crumbs;
-  }
-
-  if (first === 'reports') return [{ label: 'Reports & Analytics' }];
-  if (first === 'calendar') return [{ label: 'Placement Calendar' }];
-  if (first === 'settings') return [{ label: 'Settings' }];
-  if (first === 'school-profile') return [{ label: 'School Profile' }];
-  if (first === 'skill-verification') return [{ label: 'Skill Verification' }];
-  if (first === 'work-experience-verification') return [{ label: 'Work Experience Verification' }];
-
-  return segments.map((seg, i) => ({
-    label: seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, ' '),
-    href: i < segments.length - 1 ? `/${segments.slice(0, i + 1).join('/')}` : undefined,
-  }));
-}
-
-type TpoTopbarProps = {
-  onToggleSidebar: () => void;
-  collapsed?: boolean;
-};
-
-export function TpoTopbar({ onToggleSidebar, collapsed = true }: TpoTopbarProps) {
+/** Single-row console header: logo, centred pill navigation, account actions. */
+export function TpoTopbar() {
   const router = useRouter();
+  const pathname = usePathname() || '/';
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,70 +53,227 @@ export function TpoTopbar({ onToggleSidebar, collapsed = true }: TpoTopbarProps)
     };
   }, []);
 
-  const pathname = usePathname() || '/';
-  const breadcrumbs = getBreadcrumbs(pathname);
+  // A route change (or Escape) closes the mobile menu.
+  useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [menuOpen]);
+
+  const settingsActive = isNavLinkActive(pathname, '/settings');
+
+  const openLegal = (path: '/privacy' | '/terms') =>
+    window.open(`${AUTH_URL}${path}`, '_blank', 'noopener,noreferrer');
 
   const tpoMenuItems = [
     { label: 'Profile', icon: GraduationCap, onClick: () => router.push('/school-profile') },
     { label: 'Settings', icon: Settings, onClick: () => router.push('/settings') },
+    { label: 'Privacy Policy', icon: Shield, onClick: () => openLegal('/privacy') },
+    { label: 'Terms & Conditions', icon: FileText, onClick: () => openLegal('/terms') },
   ];
 
-  const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
-
   return (
-    <header className="sticky top-0 z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white/80 backdrop-blur-md px-4 sm:px-6 font-sans antialiased select-none dark:border-zinc-800/80 dark:bg-[#111111]/80">
-      <div className="flex h-full items-center gap-3">
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          aria-label="Toggle navigation sidebar"
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="flex size-8 items-center justify-center rounded-md  text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:border-zinc-800 dark:bg-zinc-800/40 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          <ToggleIcon className="size-4 text-zinc-600 dark:text-zinc-300" strokeWidth={1.75} />
-        </button>
+    <header className="sticky top-0 z-40 w-full shrink-0 font-sans antialiased select-none">
+      <div className="relative border-b border-zinc-200/80 bg-white/90 backdrop-blur-md dark:border-zinc-800/80 dark:bg-[#111111]/90">
+        <div className="flex h-16 w-full items-center gap-3 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2 lg:gap-5">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={menuOpen}
+              aria-controls="tpo-mobile-nav"
+              className={cn(
+                'flex size-9 items-center justify-center rounded-xl text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 lg:hidden dark:text-zinc-300 dark:hover:bg-zinc-800',
+                focusRing,
+              )}
+            >
+              {menuOpen ? (
+                <X className="size-[18px]" strokeWidth={1.75} />
+              ) : (
+                <Menu className="size-[18px]" strokeWidth={1.75} />
+              )}
+            </button>
 
-        {/* Dynamic Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center">
-          <ol className="flex items-center gap-1.5 text-xs sm:text-[13px]">
-            {breadcrumbs.map((crumb, idx) => {
-              const isLast = idx === breadcrumbs.length - 1;
-              return (
-                <li key={crumb.label + idx} className="flex items-center gap-1.5">
-                  {idx > 0 && (
-                    <ChevronRight className="size-3.5 text-zinc-400 shrink-0" aria-hidden />
-                  )}
-                  {crumb.href && !isLast ? (
-                    <Link
-                      href={crumb.href}
-                      className="font-medium text-zinc-500 hover:text-zinc-900 transition-colors truncate max-w-[120px] sm:max-w-none"
-                    >
-                      {crumb.label}
-                    </Link>
-                  ) : (
-                    <span className="font-semibold text-zinc-900 truncate max-w-[160px] sm:max-w-none">
-                      {crumb.label}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
-      </div>
+            <Link
+              href="/"
+              aria-label="SMART home"
+              title="SMART Portal"
+              className={cn('group flex shrink-0 items-center gap-3 rounded-xl')}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center  ">
+                <Image
+                  src={smartLogoImg}
+                  alt="SMART logo"
+                  width={34}
+                  height={34}
+                  priority
+                  className="h-10  w-9 object-contain"
+                />
+              </span>
+              <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
+                SMART
+              </span>
+            </Link>
 
-      <div className="flex items-center gap-4">
-        {/* User Profile Menu */}
-        <UserMenu
-          user={{
-            name: user?.fullName ?? 'Pilot TPO',
-            email: user?.email ?? 'tpo@institution.edu',
-            avatarUrl: null,
-            role: 'INSTITUTION_ADMIN',
-          }}
-          menuItems={tpoMenuItems}
-          onSignOut={() => void signOut()}
-        />
+            <nav aria-label="University console" className="hidden lg:block">
+              <ul className="flex items-center gap-1">
+                {BAR_NAV.map((link) => {
+                  const isStudents = link.name === 'Students';
+                  const childActive = isStudents
+                    ? STUDENTS_MENU.some((child) => isTopNavLinkActive(pathname, child))
+                    : false;
+                  const active = isTopNavLinkActive(pathname, link);
+                  return (
+                    <li key={link.name} className={isStudents ? 'group relative' : undefined}>
+                      <Link
+                        href={link.href}
+                        aria-current={active ? 'page' : undefined}
+                        aria-haspopup={isStudents ? 'menu' : undefined}
+                        className={cn(
+                          'flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm no-underline transition-colors duration-200 motion-reduce:transition-none',
+                          // Thin (1px) underline on hover, set a little below the text.
+                          'underline-offset-[4px] decoration-1 decoration-zinc-900 hover:underline dark:decoration-white',
+                          focusRing,
+                          active || childActive
+                            ? ''
+                            : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white',
+                        )}
+                      >
+                        <link.icon
+                          className="size-4 shrink-0 opacity-70"
+                          strokeWidth={1.75}
+                          aria-hidden
+                        />
+                        {link.name}
+                        {isStudents ? (
+                          <ChevronDown
+                            className="size-3.5 transition-transform group-focus-within:rotate-180 group-hover:rotate-180"
+                            strokeWidth={1.75}
+                            aria-hidden
+                          />
+                        ) : null}
+                      </Link>
+                      {isStudents ? (
+                        <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-opacity duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                          <ul
+                            role="menu"
+                            aria-label="Students menu"
+                            className="min-w-44 rounded-md border border-zinc-200/80 bg-white p-1.5 shadow-lg dark:border-zinc-800 dark:bg-[#111111]"
+                          >
+                            {STUDENTS_MENU.map((child) => {
+                              const ChildIcon = child.icon;
+                              const childIsActive = isTopNavLinkActive(pathname, child);
+                              return (
+                                <li key={child.name} role="none">
+                                  <Link
+                                    href={child.href}
+                                    role="menuitem"
+                                    aria-current={childIsActive ? 'page' : undefined}
+                                    className={cn(
+                                      'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm no-underline transition-colors',
+                                      focusRing,
+                                      childIsActive
+                                        ? 'bg-zinc-100 font-medium text-zinc-900 dark:bg-zinc-800 dark:text-white'
+                                        : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-white',
+                                    )}
+                                  >
+                                    <ChildIcon
+                                      className="size-4 shrink-0 text-zinc-400"
+                                      strokeWidth={1.75}
+                                    />
+                                    {child.name}
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </div>
+
+          <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              title="Settings"
+              aria-current={settingsActive ? 'page' : undefined}
+              className={cn(
+                'hidden size-9 items-center justify-center rounded-xl border transition-colors lg:flex',
+                focusRing,
+                settingsActive
+                  ? 'border-zinc-200 bg-white text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white'
+                  : 'border-transparent text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white',
+              )}
+            >
+              <Settings className="size-[18px]" strokeWidth={1.75} />
+            </Link>
+            <UserMenu
+              variant="detailed"
+              roleLabel="TPO Administrator"
+              user={{
+                name: user?.fullName ?? 'Pilot TPO',
+                email: user?.email ?? 'tpo@institution.edu',
+                avatarUrl: null,
+                role: 'INSTITUTION_ADMIN',
+              }}
+              menuItems={tpoMenuItems}
+              onSignOut={() => void signOut()}
+            />
+          </div>
+        </div>
+
+        {menuOpen ? (
+          <>
+            <button
+              type="button"
+              aria-label="Dismiss navigation menu"
+              tabIndex={-1}
+              className="fixed inset-0 top-16 -z-10 bg-zinc-900/30 lg:hidden"
+              onClick={() => setMenuOpen(false)}
+            />
+            <nav
+              id="tpo-mobile-nav"
+              aria-label="University console (mobile)"
+              className="absolute inset-x-0 top-full border-b border-zinc-200/80 bg-white p-2 shadow-lg lg:hidden dark:border-zinc-800 dark:bg-[#111111]"
+            >
+              <ul className="grid gap-1 sm:grid-cols-2">
+                {MOBILE_NAV.map((link) => {
+                  const active =
+                    link.name === 'Settings' ? settingsActive : isTopNavLinkActive(pathname, link);
+                  const Icon = link.icon;
+                  return (
+                    <li key={link.name}>
+                      <Link
+                        href={link.href}
+                        aria-current={active ? 'page' : undefined}
+                        className={cn(
+                          'flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors',
+                          focusRing,
+                          active
+                            ? 'border-zinc-200 bg-white font-medium text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white'
+                            : 'border-transparent text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60',
+                        )}
+                      >
+                        <Icon className="size-4 shrink-0 text-zinc-400" strokeWidth={1.75} />
+                        {link.name}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </>
+        ) : null}
       </div>
     </header>
   );

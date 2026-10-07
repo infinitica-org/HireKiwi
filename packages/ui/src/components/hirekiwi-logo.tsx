@@ -42,7 +42,7 @@ export type SmartLogoProps = HireKiwiLogoProps;
 export function HireKiwiLogo({
   kind = 'text',
   tone: _tone = 'auto',
-  title = 'HireKiwi',
+  title = 'SMART',
   className,
   ...props
 }: HireKiwiLogoProps) {

@@ -149,7 +149,7 @@ export class InvitationsService {
       });
     }
 
-    let institutionName = params.tenantName ?? 'HireKiwi Platform';
+    let institutionName = params.tenantName ?? 'SMART';
     if (params.institutionId) {
       const institution = await this.prisma.institution.findUnique({
         where: { id: params.institutionId },
@@ -248,7 +248,7 @@ export class InvitationsService {
 
     await this.enqueueEmail(
       updated,
-      invitation.institution?.name ?? 'HireKiwi Platform',
+      invitation.institution?.name ?? 'SMART',
       raw,
       inviteTemplateForRole(invitation.role as UserRole),
     );
@@ -361,7 +361,7 @@ export class InvitationsService {
       });
       await this.enqueueEmail(
         updated,
-        invitation.institution?.name ?? 'HireKiwi Platform',
+        invitation.institution?.name ?? 'SMART',
         raw,
         'student-invite',
       );
@@ -426,7 +426,7 @@ export class InvitationsService {
     if (invitation.role === 'COMPANY') {
       return invitation.user?.company?.name ?? 'Your company';
     }
-    return invitation.institution?.name ?? 'HireKiwi Platform';
+    return invitation.institution?.name ?? 'SMART';
   }
 
   private async assertCompanyInvitationEligible(userId: string): Promise<void> {

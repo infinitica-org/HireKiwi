@@ -25,6 +25,8 @@ import { UniversityStudentsService } from './university-students.service.js';
 import { InstitutionsCampusesController } from './institutions-campuses.controller.js';
 import { CampusesService } from './campuses.service.js';
 import { InstitutionsService } from './institutions.service.js';
+import { TpoContactController } from './tpo-contact.controller.js';
+import { TpoContactService } from './tpo-contact.service.js';
 import { OrganizationsService } from './organizations.service.js';
 import { BulkWhitelistImportProcessor } from './bulk-whitelist-import.processor.js';
 
@@ -46,11 +48,13 @@ import { BulkWhitelistImportProcessor } from './bulk-whitelist-import.processor.
     InstitutionsStudentController,
     InstitutionsPublicController,
     InstitutionsPartnershipController,
+    TpoContactController,
     CompaniesAdminController,
     PublicCompanyOnboardingController,
   ],
   providers: [
     InstitutionsService,
+    TpoContactService,
     UniversityStudentsService,
     UniversityReadinessAnalyticsService,
     CampusesService,

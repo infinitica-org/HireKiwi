@@ -187,7 +187,7 @@ export function CredentialsSection() {
         evidenceType="CREDENTIAL"
         description={meta.description}
         action={
-          !loading ? (
+          !loading && credentials.length > 0 ? (
             <button
               type="button"
               onClick={() => setShowForm(true)}

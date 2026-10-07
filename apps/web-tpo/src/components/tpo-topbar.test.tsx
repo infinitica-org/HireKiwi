@@ -1,10 +1,12 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TpoTopbar } from './tpo-topbar';
+
+const navState = vi.hoisted(() => ({ pathname: '/' }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
-  usePathname: () => '/',
+  usePathname: () => navState.pathname,
 }));
 
 vi.mock('../lib/api', () => ({
@@ -15,30 +17,93 @@ vi.mock('../lib/api', () => ({
   openingsApi: { list: vi.fn().mockResolvedValue({ openings: [] }) },
 }));
 
+beforeEach(() => {
+  navState.pathname = '/';
+});
+
 afterEach(() => {
   cleanup();
 });
 
-describe('TpoTopbar', () => {
-  it('has breadcrumb navigation and profile menu', () => {
-    render(<TpoTopbar onToggleSidebar={vi.fn()} />);
-    expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toBeDefined();
-    expect(screen.getByText('Dashboard')).toBeDefined();
+function primaryNav() {
+  return screen.getByRole('navigation', { name: 'University console' });
+}
+
+describe('TpoTopbar brand', () => {
+  it('shows the SMART logo linking home', () => {
+    render(<TpoTopbar />);
+    expect(screen.getByRole('link', { name: 'SMART home' }).getAttribute('href')).toBe('/');
+    expect(screen.getByRole('img', { name: 'SMART logo' })).toBeDefined();
+  });
+});
+
+describe('TpoTopbar navigation', () => {
+  it.each([
+    ['Home', '/'],
+    ['Students', '/students'],
+    ['Recruiters', '/companies'],
+  ])('links %s to %s in the bar', (name, href) => {
+    render(<TpoTopbar />);
+    expect(within(primaryNav()).getByRole('link', { name }).getAttribute('href')).toBe(href);
   });
 
-  it('opens sidebar via toggle button', () => {
-    const onToggle = vi.fn();
-    render(<TpoTopbar onToggleSidebar={onToggle} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Toggle navigation sidebar' }));
-    expect(onToggle).toHaveBeenCalled();
+  it.each([
+    ['Whitelist', '/whitelist'],
+    ['Reports', '/reports'],
+  ])('opens %s from the Students menu at %s', (name, href) => {
+    render(<TpoTopbar />);
+    const menu = screen.getByRole('menu', { name: 'Students menu' });
+    expect(within(menu).getByRole('menuitem', { name }).getAttribute('href')).toBe(href);
   });
 
-  it('opens profile menu with account options', async () => {
-    render(<TpoTopbar onToggleSidebar={vi.fn()} />);
-    const menuBtn = screen.getByRole('button', { name: /User menu for/i });
-    expect(menuBtn).toBeDefined();
-    fireEvent.click(menuBtn);
+  it('links Settings from the topbar', () => {
+    render(<TpoTopbar />);
+    expect(screen.getByRole('link', { name: 'Settings' }).getAttribute('href')).toBe('/settings');
+  });
+
+  it.each([
+    ['/', 'Home'],
+    ['/students', 'Students'],
+    ['/batches', 'Students'],
+    ['/onboarding', 'Whitelist'],
+    ['/openings/create', 'Recruiters'],
+    ['/reports', 'Reports'],
+  ] as const)('marks %s as current for %s', (pathname, label) => {
+    navState.pathname = pathname;
+    render(<TpoTopbar />);
+    const current = [
+      ...within(primaryNav()).getAllByRole('link'),
+      ...within(primaryNav()).queryAllByRole('menuitem'),
+    ]
+      .filter((link) => link.getAttribute('aria-current') === 'page')
+      .map((link) => link.textContent);
+    expect(current).toEqual([label]);
+  });
+});
+
+describe('TpoTopbar mobile menu', () => {
+  it('opens a menu with every link and closes it when a link is chosen', () => {
+    render(<TpoTopbar />);
+    expect(screen.queryByRole('navigation', { name: 'University console (mobile)' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation menu' }));
+    const mobile = screen.getByRole('navigation', { name: 'University console (mobile)' });
+    for (const name of ['Home', 'Students', 'Whitelist', 'Recruiters', 'Reports', 'Settings']) {
+      expect(within(mobile).getByRole('link', { name })).toBeDefined();
+    }
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('navigation', { name: 'University console (mobile)' })).toBeNull();
+  });
+});
+
+describe('TpoTopbar profile menu', () => {
+  it('opens profile menu with account and legal options', () => {
+    render(<TpoTopbar />);
+    fireEvent.click(screen.getByRole('button', { name: /User menu for/i }));
     expect(screen.getByText('Profile')).toBeDefined();
-    expect(screen.getByText('Settings')).toBeDefined();
+    expect(screen.getAllByText('Settings').length).toBeGreaterThan(0);
+    expect(screen.getByText('Privacy Policy')).toBeDefined();
+    expect(screen.getByText('Terms & Conditions')).toBeDefined();
   });
 });

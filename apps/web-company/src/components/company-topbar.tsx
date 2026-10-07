@@ -1,76 +1,81 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  ChevronRight,
   Building2,
-  Settings,
+  ChevronDown,
   CreditCard,
+  FileText,
+  Menu,
+  MessageSquare,
+  Settings,
+  Shield,
   UserRound,
   Users,
-  PanelLeftOpen,
-  PanelLeftClose,
+  X,
 } from 'lucide-react';
-import { useCompanyAccount } from '@/lib/use-company-account';
+import { NotificationsMenu, UserMenu, cn, useUnreadMessageCount } from '@hirekiwi/ui';
+import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
 import { signOut } from '@/lib/auth';
-import { NotificationsMenu, UserMenu } from '@hirekiwi/ui';
+import { useCompanyAccount } from '@/lib/use-company-account';
+import { companyNavItems, isCompanyNavActive } from '@/navigation/sidebar-items';
 
-type Breadcrumb = { label: string; href?: string };
+const AUTH_URL = (process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005').replace(/\/+$/, '');
 
-function getCompanyBreadcrumbs(pathname: string): Breadcrumb[] {
-  if (pathname === '/' || pathname === '/overview') {
-    return [{ label: 'Overview' }];
-  }
+const MOBILE_NAV = [
+  ...companyNavItems,
+  { title: 'Settings', url: '/settings', icon: Settings } as (typeof companyNavItems)[number],
+];
 
-  const segments = pathname.split('/').filter(Boolean);
-  const crumbs: Breadcrumb[] = [{ label: 'Home', href: '/' }];
-  const first = segments[0] ?? '';
+/** Links tucked under Applicants: they open from its hover menu instead of sitting in the bar. */
+const APPLICANTS_MENU_URLS = ['/students'];
+const APPLICANTS_MENU = companyNavItems.filter((item) => APPLICANTS_MENU_URLS.includes(item.url));
+const BAR_NAV = companyNavItems.filter((item) => !APPLICANTS_MENU_URLS.includes(item.url));
 
-  if (first === 'jobs') {
-    crumbs.push({ label: 'Job Openings', href: '/jobs' });
-    if (segments[1] === 'new') crumbs.push({ label: 'Post a Job' });
-    else if (segments[2] === 'edit') crumbs.push({ label: 'Edit Job' });
-  } else if (first === 'applicants') {
-    crumbs.push({ label: 'Applicants & Pipeline', href: '/applicants' });
-  } else if (first === 'students' || first === 'candidates') {
-    crumbs.push({ label: 'Search Candidates', href: '/students' });
-  } else if (first === 'messages') {
-    crumbs.push({ label: 'Messages', href: '/messages' });
-  } else if (first === 'analytics') {
-    crumbs.push({ label: 'Hiring Analytics', href: '/analytics' });
-  } else if (first === 'team') {
-    crumbs.push({ label: 'Teammates', href: '/team' });
-  } else if (first === 'company' || first === 'profile') {
-    crumbs.push({ label: 'Company Profile', href: '/company' });
-  } else if (first === 'reviews') {
-    crumbs.push({ label: 'Reviews', href: '/reviews' });
-  } else if (first === 'billing') {
-    crumbs.push({ label: 'Billing & Plan', href: '/billing' });
-  } else if (first === 'settings') {
-    crumbs.push({ label: 'Settings', href: '/settings' });
-  } else {
-    crumbs.push({
-      label: first.charAt(0).toUpperCase() + first.slice(1).replace(/-/g, ' '),
-    });
-  }
+const focusRing =
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white';
 
-  return crumbs;
+function UnreadBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      aria-label={`${count} unread messages`}
+      className="ml-0.5 rounded-full bg-emerald-600 px-1.5 text-[11px] font-semibold leading-5 text-white"
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  );
 }
 
-export type CompanyTopbarProps = {
-  onToggleSidebar: () => void;
-  collapsed?: boolean;
-};
-
-export function CompanyTopbar({ onToggleSidebar, collapsed = true }: CompanyTopbarProps) {
+/** Single-row console header, matching the TPO console: logo, centred navigation, account actions. */
+export function CompanyTopbar() {
   const router = useRouter();
   const pathname = usePathname() || '/';
   const { data: account } = useCompanyAccount();
+  const unreadMessages = useUnreadMessageCount();
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const breadcrumbs = getCompanyBreadcrumbs(pathname);
+  // A route change (or Escape) closes the mobile menu.
+  useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [menuOpen]);
+
   const companyName = account?.companyName || 'Employer Partner';
   const representativeName = account?.fullName || 'Representative';
+  const settingsActive = isCompanyNavActive(pathname, '/settings');
+  const messagesActive = isCompanyNavActive(pathname, '/messages');
+
+  const openLegal = (path: '/privacy' | '/terms') =>
+    window.open(`${AUTH_URL}${path}`, '_blank', 'noopener,noreferrer');
 
   const companyMenuItems = [
     { label: 'My account', icon: UserRound, onClick: () => router.push('/account') },
@@ -78,73 +83,236 @@ export function CompanyTopbar({ onToggleSidebar, collapsed = true }: CompanyTopb
     { label: 'Team', icon: Users, onClick: () => router.push('/team') },
     { label: 'Billing & plan', icon: CreditCard, onClick: () => router.push('/billing') },
     { label: 'Settings', icon: Settings, onClick: () => router.push('/settings') },
+    { label: 'Privacy Policy', icon: Shield, onClick: () => openLegal('/privacy') },
+    { label: 'Terms & Conditions', icon: FileText, onClick: () => openLegal('/terms') },
   ];
 
-  const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
-
   return (
-    <header className="sticky top-0 z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur-md font-sans antialiased select-none sm:px-6">
-      {/* Left: Sidebar Toggle & Breadcrumbs */}
-      <div className="flex h-full items-center gap-3">
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          aria-label="Toggle navigation sidebar"
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="flex size-8 items-center justify-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
-        >
-          <ToggleIcon className="size-4 text-zinc-600" strokeWidth={1.75} />
-        </button>
+    <header className="sticky top-0 z-40 w-full shrink-0 font-sans antialiased select-none">
+      <div className="relative border-b border-zinc-200/80 bg-white/90 backdrop-blur-md">
+        <div className="flex h-16 w-full items-center gap-3 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2 xl:gap-5">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={menuOpen}
+              aria-controls="company-mobile-nav"
+              className={cn(
+                'flex size-9 items-center justify-center rounded-xl text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 xl:hidden',
+                focusRing,
+              )}
+            >
+              {menuOpen ? (
+                <X className="size-[18px]" strokeWidth={1.75} />
+              ) : (
+                <Menu className="size-[18px]" strokeWidth={1.75} />
+              )}
+            </button>
 
-        {/* Dynamic Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center">
-          <ol className="flex items-center gap-1.5 text-xs sm:text-[13px]">
-            {breadcrumbs.map((crumb, idx) => {
-              const isLast = idx === breadcrumbs.length - 1;
-              return (
-                <li key={crumb.label + idx} className="flex items-center gap-1.5">
-                  {idx > 0 && (
-                    <ChevronRight className="size-3.5 text-zinc-400 shrink-0" aria-hidden />
-                  )}
-                  {crumb.href && !isLast ? (
-                    <Link
-                      href={crumb.href}
-                      className="font-medium text-zinc-500 hover:text-zinc-900 transition-colors truncate max-w-[120px] sm:max-w-none"
-                    >
-                      {crumb.label}
-                    </Link>
-                  ) : (
-                    <span className="font-semibold text-zinc-900 truncate max-w-[160px] sm:max-w-none">
-                      {crumb.label}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
-      </div>
+            <Link
+              href="/"
+              aria-label="SMART home"
+              title="SMART Portal"
+              className={cn('group flex shrink-0 items-center gap-3 rounded-xl', focusRing)}
+            >
+              <Image
+                src={smartLogoImg}
+                alt="SMART logo"
+                width={34}
+                height={34}
+                priority
+                className="h-10 w-9 object-contain"
+              />
+              <span className="text-lg font-bold tracking-tight text-zinc-900">SMART</span>
+            </Link>
 
-      {/* Right: Quick Search, Notifications & Account Dropdown */}
-      <div className="flex items-center gap-3">
-        {/* Notifications: shared bell + pop-up (GET /me/notifications) */}
-        <NotificationsMenu
-          onNavigate={(path) => router.push(path)}
-          emptyHint="New applicants, campus access updates and messages show up here."
-        />
+            <nav aria-label="Company portal navigation" className="hidden xl:block">
+              <ul className="flex items-center gap-1">
+                {BAR_NAV.map((item) => {
+                  const hasMenu = item.url === '/applicants';
+                  const childActive = hasMenu
+                    ? APPLICANTS_MENU.some((child) => isCompanyNavActive(pathname, child.url))
+                    : false;
+                  const active = isCompanyNavActive(pathname, item.url) || childActive;
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.url} className={hasMenu ? 'group relative' : undefined}>
+                      <Link
+                        href={item.url}
+                        aria-current={isCompanyNavActive(pathname, item.url) ? 'page' : undefined}
+                        aria-haspopup={hasMenu ? 'menu' : undefined}
+                        className={cn(
+                          'flex items-center gap-2 whitespace-nowrap px-3.5 py-2 text-sm no-underline transition-colors duration-200 motion-reduce:transition-none',
+                          // Thin (1px) underline on hover, set a little below the text.
+                          'underline-offset-[4px] decoration-1 decoration-zinc-900 hover:underline',
+                          focusRing,
+                          active
+                            ? 'font-semibold text-zinc-900 underline'
+                            : 'text-zinc-600 hover:text-zinc-900',
+                        )}
+                      >
+                        <Icon
+                          className="size-4 shrink-0 opacity-70"
+                          strokeWidth={1.75}
+                          aria-hidden
+                        />
+                        {item.title}
+                        {item.url === '/messages' ? <UnreadBadge count={unreadMessages} /> : null}
+                        {hasMenu ? (
+                          <ChevronDown
+                            className="size-3.5 transition-transform group-focus-within:rotate-180 group-hover:rotate-180"
+                            strokeWidth={1.75}
+                            aria-hidden
+                          />
+                        ) : null}
+                      </Link>
+                      {hasMenu ? (
+                        <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-opacity duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                          <ul
+                            role="menu"
+                            aria-label="Applicants menu"
+                            className="min-w-48 rounded-md border border-zinc-200/80 bg-white p-1.5 shadow-lg"
+                          >
+                            {APPLICANTS_MENU.map((child) => {
+                              const ChildIcon = child.icon;
+                              const childIsActive = isCompanyNavActive(pathname, child.url);
+                              return (
+                                <li key={child.url} role="none">
+                                  <Link
+                                    href={child.url}
+                                    role="menuitem"
+                                    aria-current={childIsActive ? 'page' : undefined}
+                                    className={cn(
+                                      'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm no-underline transition-colors',
+                                      focusRing,
+                                      childIsActive
+                                        ? 'bg-zinc-100 font-medium text-zinc-900'
+                                        : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900',
+                                    )}
+                                  >
+                                    <ChildIcon
+                                      className="size-4 shrink-0 text-zinc-400"
+                                      strokeWidth={1.75}
+                                    />
+                                    {child.title}
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </div>
 
-        {/* Employer User Avatar Dropdown */}
-        <UserMenu
-          user={{
-            name: representativeName || companyName,
-            email: account?.email ?? '',
-            avatarUrl: null,
-            role: 'COMPANY_ADMIN',
-            organizationName: companyName,
-          }}
-          menuItems={companyMenuItems}
-          onSignOut={() => void signOut()}
-        />
+          <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
+            <Link
+              href="/messages"
+              aria-label={
+                unreadMessages > 0 ? `Messages, ${String(unreadMessages)} unread` : 'Messages'
+              }
+              title="Messages"
+              aria-current={messagesActive ? 'page' : undefined}
+              className={cn(
+                'relative flex size-9 items-center justify-center rounded-xl border transition-colors',
+                focusRing,
+                messagesActive
+                  ? 'border-zinc-200 bg-white text-zinc-900 shadow-sm'
+                  : 'border-transparent text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900',
+              )}
+            >
+              <MessageSquare className="size-[18px]" strokeWidth={1.75} />
+              {unreadMessages > 0 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] leading-none font-semibold text-white ring-2 ring-white dark:ring-[#0c0c0c]"
+                >
+                  {unreadMessages > 99 ? '99+' : unreadMessages}
+                </span>
+              ) : null}
+            </Link>
+            <NotificationsMenu
+              onNavigate={(path) => router.push(path)}
+              emptyHint="New applicants, campus access updates and messages show up here."
+            />
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              title="Settings"
+              aria-current={settingsActive ? 'page' : undefined}
+              className={cn(
+                'hidden size-9 items-center justify-center rounded-xl border transition-colors xl:flex',
+                focusRing,
+                settingsActive
+                  ? 'border-zinc-200 bg-white text-zinc-900 shadow-sm'
+                  : 'border-transparent text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900',
+              )}
+            >
+              <Settings className="size-[18px]" strokeWidth={1.75} />
+            </Link>
+            <UserMenu
+              variant="detailed"
+              roleLabel={companyName}
+              user={{
+                name: representativeName,
+                email: account?.email ?? '',
+                avatarUrl: null,
+                role: 'COMPANY_ADMIN',
+                organizationName: companyName,
+              }}
+              menuItems={companyMenuItems}
+              onSignOut={() => void signOut()}
+            />
+          </div>
+        </div>
+
+        {menuOpen ? (
+          <>
+            <button
+              type="button"
+              aria-label="Dismiss navigation menu"
+              tabIndex={-1}
+              className="fixed inset-0 top-16 -z-10 bg-zinc-900/30 xl:hidden"
+              onClick={() => setMenuOpen(false)}
+            />
+            <nav
+              id="company-mobile-nav"
+              aria-label="Company portal navigation (mobile)"
+              className="absolute inset-x-0 top-full border-b border-zinc-200/80 bg-white p-2 shadow-lg xl:hidden"
+            >
+              <ul className="grid gap-1 sm:grid-cols-2">
+                {MOBILE_NAV.map((item) => {
+                  const active = isCompanyNavActive(pathname, item.url);
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.url}>
+                      <Link
+                        href={item.url}
+                        aria-current={active ? 'page' : undefined}
+                        className={cn(
+                          'flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors',
+                          focusRing,
+                          active
+                            ? 'border-zinc-200 bg-white font-medium text-zinc-900 shadow-sm'
+                            : 'border-transparent text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900',
+                        )}
+                      >
+                        <Icon className="size-4 shrink-0 text-zinc-400" strokeWidth={1.75} />
+                        {item.title}
+                        {item.url === '/messages' ? <UnreadBadge count={unreadMessages} /> : null}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </>
+        ) : null}
       </div>
     </header>
   );

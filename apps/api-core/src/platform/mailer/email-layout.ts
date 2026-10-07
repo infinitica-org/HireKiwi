@@ -21,7 +21,7 @@ export interface EmailLayoutOptions {
 }
 
 const BRAND = {
-  name: 'HireKiwi Platform',
+  name: 'SMART',
   supportEmail: 'support@smart.local',
 } as const;
 

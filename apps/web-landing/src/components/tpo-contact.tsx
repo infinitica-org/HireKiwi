@@ -212,6 +212,7 @@ export default function TpoContactForm({
     institutionName: '',
     location: '',
     firstName: '',
+    middleName: '',
     lastName: '',
     email: '',
     phone: '',
@@ -221,6 +222,7 @@ export default function TpoContactForm({
 
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
@@ -231,17 +233,47 @@ export default function TpoContactForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
+    setSubmitError('');
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+      // Anonymous public form: there is no session, and web-landing does not use @hirekiwi/api-client.
+      // eslint-disable-next-line no-restricted-globals
+      const res = await fetch(`${apiUrl}/api/v1/partnerships/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          institutionName: formData.institutionName,
+          location: formData.location,
+          firstName: formData.firstName,
+          middleName: formData.middleName || undefined,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          role: formData.role,
+          message: formData.message || undefined,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(res.status === 429 ? 'rate_limited' : `status_${res.status}`);
+      }
       setSubmitted(true);
       if (onSuccess) {
         onSuccess();
       }
-    }, 700);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error && error.message === 'rate_limited'
+          ? 'Too many requests from this network. Please try again in a few minutes.'
+          : 'We could not send your request. Please check your details and connection, then try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -274,7 +306,8 @@ export default function TpoContactForm({
           <p className="text-sm sm:text-base text-emerald-800 max-w-md mx-auto leading-relaxed">
             Your inquiry for <strong>{formData.institutionName || 'your institution'}</strong> has
             been received. Our university partnerships team will get in touch with you shortly to
-            schedule your personalized platform walkthrough.
+            schedule your personalized platform walkthrough. A confirmation email is on its way to
+            your inbox.
           </p>
           <div className="pt-2">
             <button
@@ -285,6 +318,7 @@ export default function TpoContactForm({
                   institutionName: '',
                   location: '',
                   firstName: '',
+                  middleName: '',
                   lastName: '',
                   email: '',
                   phone: '',
@@ -299,8 +333,9 @@ export default function TpoContactForm({
           </div>
         </motion.div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-5 text-left">
-          {/* 1. College Details FIRST: Institution Name & Location (Full Width Long Inputs) */}
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6 text-left">
+          {/* 1. College details */}
+
           <div>
             <label
               htmlFor="tpo-institution"
@@ -340,8 +375,9 @@ export default function TpoContactForm({
             />
           </div>
 
-          {/* 2. Contact Person Details: First Name & Last Name */}
-          <div className="grid gap-5 sm:grid-cols-2">
+          {/* 2. Contact person */}
+
+          <div className="grid gap-6 sm:grid-cols-3">
             <div>
               <label
                 htmlFor="tpo-first-name"
@@ -356,6 +392,23 @@ export default function TpoContactForm({
                 required
                 placeholder="E.g. Kristen"
                 value={formData.firstName}
+                onChange={handleChange}
+                className="w-full h-12 rounded-lg border border-slate-200 bg-slate-50/60 px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="tpo-middle-name"
+                className="block text-sm font-semibold text-slate-800 mb-2"
+              >
+                Middle name
+              </label>
+              <input
+                id="tpo-middle-name"
+                type="text"
+                name="middleName"
+                placeholder="Optional"
+                value={formData.middleName}
                 onChange={handleChange}
                 className="w-full h-12 rounded-lg border border-slate-200 bg-slate-50/60 px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
               />
@@ -380,8 +433,8 @@ export default function TpoContactForm({
             </div>
           </div>
 
-          {/* 3. Contact Coordinates: Email & Phone Number */}
-          <div className="grid gap-5 sm:grid-cols-2">
+          {/* 3. Email & phone */}
+          <div className="grid gap-6 sm:grid-cols-2">
             <div>
               <label
                 htmlFor="tpo-email"
@@ -420,7 +473,8 @@ export default function TpoContactForm({
             </div>
           </div>
 
-          {/* 4. Role Select */}
+          {/* 4. Role */}
+
           <NeatSelect
             id="tpo-role"
             label="What best describes your role?"
@@ -464,9 +518,14 @@ export default function TpoContactForm({
                   <span>Submitting request…</span>
                 </>
               ) : (
-                <span>Schedule a demo</span>
+                <span>Send request</span>
               )}
             </button>
+            {submitError ? (
+              <p role="alert" className="mt-3 text-sm font-medium text-red-600">
+                {submitError}
+              </p>
+            ) : null}
           </div>
         </form>
       )}

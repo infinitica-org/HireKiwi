@@ -212,7 +212,7 @@ export function PublicProfilePreview({ embedded = false }: { embedded?: boolean 
         .filter(Boolean)
         .join(' · ')
     : '';
-  const headline = trackLabel ? `${trackLabel} candidate` : 'HireKiwi candidate';
+  const headline = trackLabel ? `${trackLabel} candidate` : 'SMART candidate';
 
   const q = query.trim();
   const hidden = (section: string) => profile?.hiddenSections?.includes(section) ?? false;

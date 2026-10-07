@@ -235,7 +235,7 @@ export default function SearchStudentsPage() {
           {/* Scope by Active Opening (I404) */}
           <div>
             <label htmlFor="scoped-job" className={label}>
-              Scope to Active Opening (I404)
+              Scope to Active Opening
             </label>
             <select
               id="scoped-job"
@@ -285,7 +285,7 @@ export default function SearchStudentsPage() {
 
           <div>
             <label htmlFor="filter-univ" className={label}>
-              University / Institute (I399)
+              University / Institute
             </label>
             <input
               id="filter-univ"
@@ -299,7 +299,7 @@ export default function SearchStudentsPage() {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label htmlFor="filter-grad" className={label}>
-                Grad Year (I399)
+                Grad Year
               </label>
               <select
                 id="filter-grad"
@@ -315,7 +315,7 @@ export default function SearchStudentsPage() {
             </div>
             <div>
               <label htmlFor="filter-avail" className={label}>
-                Availability (I399)
+                Availability
               </label>
               <select
                 id="filter-avail"

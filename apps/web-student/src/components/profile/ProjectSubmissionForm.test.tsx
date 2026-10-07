@@ -78,7 +78,7 @@ function renderForm(): ReturnType<typeof render> {
 }
 
 async function openAddProjectModal() {
-  const addBtn = (await screen.findAllByRole('button', { name: 'Add project' })).at(
+  const addBtn = (await screen.findAllByRole('button', { name: /^Add project$/i })).at(
     -1,
   ) as HTMLElement;
   fireEvent.click(addBtn);

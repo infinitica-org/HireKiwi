@@ -639,7 +639,7 @@ export function WorkExperienceSection() {
         evidenceType="WORK_EXPERIENCE"
         description={meta.description}
         action={
-          !loading ? (
+          !loading && experiences.length > 0 ? (
             <button
               type="button"
               onClick={openAddModal}

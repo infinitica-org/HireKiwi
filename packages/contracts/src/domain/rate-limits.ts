@@ -459,6 +459,16 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     rationale: 'S6-VB-01 connect/disconnect external signal sources.',
   },
   {
+    key: 'partnerships.contact',
+    scope: 'IP',
+    limit: 5,
+    windowSeconds: 600,
+    burst: 2,
+    redisKey: 'rl:partnerships:contact:ip:{id}',
+    rationale: 'Public landing form: stops one address from flooding admins and the mailer.',
+    onViolation: 'ALERT',
+  },
+  {
     key: 'signals.lookup',
     scope: 'USER',
     limit: 30,

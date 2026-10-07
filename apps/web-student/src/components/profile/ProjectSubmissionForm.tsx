@@ -325,7 +325,7 @@ export function ProjectSubmissionForm() {
         evidenceType="PROJECT"
         description={meta.description}
         action={
-          canSubmitProjects ? (
+          canSubmitProjects && displayProjects.length > 0 ? (
             <button
               type="button"
               onClick={() => openForm()}

@@ -22,9 +22,27 @@ export interface UserMenuProps {
   onSignOut?: () => void;
   menuItems?: UserMenuItem[];
   className?: string;
+  /** `detailed` shows initials, name and role beside the avatar; `compact` (default) is avatar + chevron. */
+  variant?: 'compact' | 'detailed';
+  /** Human-readable role shown under the name in the `detailed` trigger. */
+  roleLabel?: string;
 }
 
-export function UserMenu({ user, onSignOut, menuItems, className = '' }: UserMenuProps) {
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/u).filter(Boolean);
+  const first = parts[0]?.[0] ?? '';
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
+  return `${first}${last}`.toUpperCase();
+}
+
+export function UserMenu({
+  user,
+  onSignOut,
+  menuItems,
+  className = '',
+  variant = 'compact',
+  roleLabel,
+}: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -60,33 +78,74 @@ export function UserMenu({ user, onSignOut, menuItems, className = '' }: UserMen
 
   return (
     <div ref={menuRef} className={`relative inline-block text-left ${className}`}>
-      {/* Trigger Button: Profile Avatar Icon + Dropdown Chevron Icon (no text) */}
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-1.5   p-1 pr-2 text-left transition-all  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ds-primary)]"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={`User menu for ${name}`}
-      >
-        {user?.avatarUrl ? (
-          <img
-            src={user.avatarUrl}
-            alt={name}
-            className="size-8 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-zinc-700 shadow-2xs shrink-0"
-          />
-        ) : (
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-2xs">
-            <UserRound className="size-4" aria-hidden />
+      {variant === 'detailed' ? (
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          className="flex items-center gap-2.5 rounded-xl border border-zinc-200 bg-white py-1 pl-1 pr-2.5 text-left shadow-xs transition-colors hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:focus-visible:outline-white"
+          aria-expanded={open}
+          aria-haspopup="menu"
+          aria-label={`User menu for ${name}`}
+        >
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt=""
+              className="size-8 shrink-0 rounded-lg object-cover ring-1 ring-zinc-200 dark:ring-zinc-700"
+            />
+          ) : (
+            <span
+              aria-hidden
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-[11px] font-bold tracking-wide text-white dark:bg-zinc-100 dark:text-zinc-900"
+            >
+              {initialsOf(name) || <UserRound className="size-4" />}
+            </span>
+          )}
+          <span className="hidden min-w-0 flex-col leading-tight md:flex">
+            <span className="max-w-[150px] truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
+              {name}
+            </span>
+            {roleLabel ? (
+              <span className="max-w-[150px] truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                {roleLabel}
+              </span>
+            ) : null}
           </span>
-        )}
-        <ChevronDown
-          className={`size-4 text-zinc-500 dark:text-zinc-400 shrink-0 transition-transform duration-200 ${
-            open ? 'rotate-180' : ''
-          }`}
-          aria-hidden
-        />
-      </button>
+          <ChevronDown
+            className={`size-4 shrink-0 text-zinc-400 transition-transform duration-200 ${
+              open ? 'rotate-180' : ''
+            }`}
+            aria-hidden
+          />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          className="flex items-center gap-1.5   p-1 pr-2 text-left transition-all  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ds-primary)]"
+          aria-expanded={open}
+          aria-haspopup="menu"
+          aria-label={`User menu for ${name}`}
+        >
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={name}
+              className="size-8 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-zinc-700 shadow-2xs shrink-0"
+            />
+          ) : (
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-2xs">
+              <UserRound className="size-4" aria-hidden />
+            </span>
+          )}
+          <ChevronDown
+            className={`size-4 text-zinc-500 dark:text-zinc-400 shrink-0 transition-transform duration-200 ${
+              open ? 'rotate-180' : ''
+            }`}
+            aria-hidden
+          />
+        </button>
+      )}
 
       {/* Opened Dropdown Menu (Image 2) */}
       {open && (

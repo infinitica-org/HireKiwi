@@ -11,7 +11,7 @@ import {
 describe('HireKiwiLogo', () => {
   it('renders the plain text logo by default', () => {
     render(<HireKiwiLogo />);
-    const img = screen.getByRole('img', { name: 'HireKiwi' });
+    const img = screen.getByRole('img', { name: 'SMART' });
     expect(img).toBeDefined();
     expect(img.getAttribute('src')).toBe(HIREKIWI_TEXT_LOGO_SRC);
   });

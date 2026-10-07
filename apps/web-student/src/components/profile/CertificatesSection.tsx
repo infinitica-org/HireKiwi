@@ -56,14 +56,16 @@ export function CertificatesSection() {
         evidenceType="CREDENTIAL"
         description="External credentials from AWS, Coursera, Google, and other providers — verified and shown on your public profile."
         action={
-          <button
-            type="button"
-            onClick={() => openWizard(null)}
-            className={`${profilePrimaryButtonSmClass} justify-center px-4 py-2.5 text-[13px] font-semibold tracking-[-0.01em]`}
-          >
-            <Plus className="size-4" strokeWidth={2} aria-hidden />
-            Add certificate
-          </button>
+          certificates.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => openWizard(null)}
+              className={`${profilePrimaryButtonSmClass} justify-center px-4 py-2.5 text-[13px] font-semibold tracking-[-0.01em]`}
+            >
+              <Plus className="size-4" strokeWidth={2} aria-hidden />
+              Add certificate
+            </button>
+          ) : null
         }
       />
 

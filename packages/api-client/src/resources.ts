@@ -273,7 +273,12 @@ import {
   InstitutionDtoSchema,
   PartnerUniversityOptionDtoSchema,
   StudentInstitutionPartnershipStatusDtoSchema,
+  TpoContactRequestDtoSchema,
+  ListTpoContactRequestsResponseSchema,
+  ApproveTpoContactResponseSchema,
   UniversityContactRequestDtoSchema,
+  type ListTpoContactRequestsQuery,
+  type TpoContactRequestStatus,
   type ConnectPartnerUniversityRequest,
   type RequestUniversityContactRequest,
   type SetRateLimitOverrideRequest,
@@ -971,6 +976,28 @@ export function onboardingApi(client: SmartApiClient) {
         schema: z.array(InstitutionDtoSchema),
         query,
       }),
+
+    /** Landing-page "Let's Connect" requests from placement officers. */
+    listTpoContactRequests: (query?: Partial<ListTpoContactRequestsQuery>) =>
+      client.get(prefixed('/admin/partnerships/contact-requests'), {
+        schema: ListTpoContactRequestsResponseSchema,
+        query: { status: query?.status, query: query?.query },
+      }),
+
+    /** Creates the university and emails the contact a link to set their own password. */
+    approveTpoContactRequest: (id: string, body: { domain?: string } = {}) =>
+      client.post(prefixed(`/admin/partnerships/contact-requests/${id}/approve`), body, {
+        schema: ApproveTpoContactResponseSchema,
+      }),
+
+    updateTpoContactRequestStatus: (id: string, status: TpoContactRequestStatus) =>
+      client.patch(
+        prefixed(`/admin/partnerships/contact-requests/${id}/status`),
+        { status },
+        {
+          schema: TpoContactRequestDtoSchema,
+        },
+      ),
 
     getInstitution: (institutionId: string) =>
       client.get(prefixed(`/admin/institutions/${institutionId}`), {

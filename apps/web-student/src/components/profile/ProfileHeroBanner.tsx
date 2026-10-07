@@ -109,7 +109,7 @@ interface ProfileHeroBannerProps {
 }
 
 const HERO_AVATAR_CLASS =
-  'h-28 w-28 sm:h-32 sm:w-32 shrink-0 rounded-full border-2 border-zinc-100 bg-zinc-100 text-3xl font-extrabold text-zinc-900 shadow-sm dark:border-zinc-800 dark:bg-zinc-800 dark:text-white';
+  'h-30 w-30 sm:h-36 sm:w-36 shrink-0 rounded-full border-2 border-zinc-100 bg-zinc-100 text-3xl font-extrabold text-zinc-900 shadow-sm dark:border-zinc-800 dark:bg-zinc-800 dark:text-white';
 
 export function ProfileHeroBanner({
   user,
@@ -157,7 +157,7 @@ export function ProfileHeroBanner({
       data-testid="profile-hero-banner"
       className="w-full font-sans select-none"
     >
-      <div className=" p-4 sm:p-6 dark:bg-[#161616]">
+      <div className="relative flex w-full flex-col items-center p-6 text-center shadow-2xs sm:p-8 dark:border-zinc-800 dark:bg-[#161616]">
         {/* Profile Avatar Photo */}
         <div className="relative flex items-center shrink-0">
           <ProfilePhotoEditControl
@@ -169,11 +169,11 @@ export function ProfileHeroBanner({
         </div>
 
         {/* Candidate Details */}
-        <div className="mt-5 space-y-2 text-left">
+        <div className="mt-5 flex w-full flex-col items-center space-y-2 text-center">
           {/* Name Row: Name + Badges on Left, Share & Edit Buttons STRAIGHT OPPOSITE on Right */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col items-center gap-4">
             {/* Left: Name & Official Verified Badges */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <h1 className="font-medium text-2xl sm:text-3xl   text-zinc-950 dark:text-white">
                 {fullName}
               </h1>
@@ -226,9 +226,51 @@ export function ProfileHeroBanner({
                 </span>
               )}
             </div>
+          </div>
 
-            {/* Right (Straight opposite to Name): Share & Edit Profile Buttons */}
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          {/* Username Handle */}
+          {handle ? (
+            <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500">@{handle}</p>
+          ) : null}
+
+          <div className="!mt-5 flex w-full flex-col gap-5 border-t border-zinc-100 pt-5 text-left sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+            <div className="min-w-0 space-y-2">
+              {/* Tagline / Bio Quote */}
+              <p className="text-xs sm:text-sm font-normal text-zinc-600 dark:text-zinc-300 max-w-xl leading-relaxed">
+                &ldquo;{headline}&rdquo;
+              </p>
+
+              {/* Department */}
+              {departmentName ? (
+                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+                  {departmentName}
+                </p>
+              ) : hasEducation ? (
+                <p className="text-xs text-zinc-400">Department not added yet</p>
+              ) : null}
+
+              {/* Experience, Batch & College Info */}
+              <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="inline-flex items-center gap-1.5 font-medium text-zinc-600 dark:text-zinc-300">
+                  <Briefcase className="size-3.5 text-zinc-400" />0 years of experience
+                </span>
+
+                {batchLabel && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-zinc-600 dark:text-zinc-300">
+                    <GraduationCap className="size-3.5 text-zinc-400" />
+                    {batchLabel}
+                  </span>
+                )}
+
+                {collegeName && (
+                  <span className="inline-flex items-center gap-1 font-medium text-zinc-600 dark:text-zinc-300">
+                    <Building2 className="size-3.5 text-zinc-400" />
+                    {collegeName}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2.5">
               {/* Share Profile Button */}
               <button
                 type="button"
@@ -248,46 +290,6 @@ export function ProfileHeroBanner({
                 Edit Profile
               </Link>
             </div>
-          </div>
-
-          {/* Username Handle */}
-          {handle ? (
-            <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500">@{handle}</p>
-          ) : null}
-
-          {/* Tagline / Bio Quote */}
-          <p className="text-xs sm:text-sm font-normal text-zinc-600 dark:text-zinc-300 max-w-2xl leading-relaxed">
-            &ldquo;{headline}&rdquo;
-          </p>
-
-          {/* Department */}
-          {departmentName ? (
-            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
-              {departmentName}
-            </p>
-          ) : hasEducation ? (
-            <p className="text-xs text-zinc-400">Department not added yet</p>
-          ) : null}
-
-          {/* Experience, Batch & College Info */}
-          <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            <span className="inline-flex items-center gap-1.5 font-medium text-zinc-600 dark:text-zinc-300">
-              <Briefcase className="size-3.5 text-zinc-400" />0 years of experience
-            </span>
-
-            {batchLabel && (
-              <span className="inline-flex items-center gap-1 font-semibold text-zinc-600 dark:text-zinc-300">
-                <GraduationCap className="size-3.5 text-zinc-400" />
-                {batchLabel}
-              </span>
-            )}
-
-            {collegeName && (
-              <span className="inline-flex items-center gap-1 font-medium text-zinc-600 dark:text-zinc-300">
-                <Building2 className="size-3.5 text-zinc-400" />
-                {collegeName}
-              </span>
-            )}
           </div>
         </div>
       </div>

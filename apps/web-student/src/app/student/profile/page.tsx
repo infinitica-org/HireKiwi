@@ -1,6 +1,8 @@
 'use client';
 
 import { Suspense } from 'react';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 import { useQuery } from '@hirekiwi/ui';
 
 import { CertificatesSection } from '@/components/profile/CertificatesSection';
@@ -9,16 +11,21 @@ import { EducationSection } from '@/components/profile/EducationSection';
 import { LanguagesSection } from '@/components/profile/LanguagesSection';
 import { ProfessionalLinksSection } from '@/components/profile/ProfessionalLinksSection';
 import { ProfileHeroBanner } from '@/components/profile/ProfileHeroBanner';
-import { ProfileTopNav } from '@/components/profile/ProfileTopNav';
+import { ProfileSectionHeader } from '@/components/profile/ProfileSectionChrome';
+import { ProfileSidebar } from '@/components/profile/ProfileSidebar';
 import { ProfileSurface } from '@/components/profile/ProfileSurface';
 import { ProjectSubmissionForm } from '@/components/profile/ProjectSubmissionForm';
 import { ResumeSection } from '@/components/profile/ResumeSection';
 import { SkillsSection } from '@/components/profile/SkillsSection';
 import { WorkExperienceSection } from '@/components/profile/WorkExperienceSection';
+import { PROFILE_AREA_IDS } from '@/lib/profile-progress';
 import { api } from '@/lib/api';
 import { useCurrentUser } from '@/lib/candidate-identity';
-import { PROFILE_AREA_IDS } from '@/lib/profile-progress';
-import { type ProfileSectionId } from '@/lib/profile-sections';
+import {
+  PROFILE_AREA_TO_SECTION,
+  profileSectionMeta,
+  type ProfileSectionId,
+} from '@/lib/profile-sections';
 import { useProfileSection } from '@/lib/use-profile-section';
 import { useProfileProgress } from '@/lib/use-profile-progress';
 import { studentWarningBannerClass } from '@/lib/student-ui-classes';
@@ -38,7 +45,7 @@ export default function ProfilePage() {
 }
 
 function ProfileWorkspace() {
-  const { section, setSection } = useProfileSection();
+  const { section } = useProfileSection();
   const { data: user } = useCurrentUser();
   const { data: usernameStatus } = useQuery({
     queryKey: ['me', 'username'] as const,
@@ -51,15 +58,25 @@ function ProfileWorkspace() {
   const { loading, error, progress, input, linkedinVerified, githubVerified } =
     useProfileProgress();
 
+  const completedSections = new Set<ProfileSectionId>(
+    (
+      Object.entries(PROFILE_AREA_TO_SECTION) as [
+        keyof typeof PROFILE_AREA_TO_SECTION,
+        ProfileSectionId,
+      ][]
+    )
+      .filter(([area]) => progress?.areaStatus[area])
+      .map(([, id]) => id),
+  );
+
   const completedCount = progress
     ? PROFILE_AREA_IDS.filter((id) => progress.areaStatus[id]).length
     : null;
 
-  const sectionContent = renderSection(section);
+  const meta = profileSectionMeta(section);
 
-  return (
-    <div className="mx-auto w-full max-w-[1400px] space-y-6 px-2 sm:px-4 md:px-6 py-6 pb-16 font-sans select-none">
-      {/* SaaS Profile Identity & Readiness Hero Banner */}
+  const sectionContent =
+    section === 'profile' ? (
       <ProfileHeroBanner
         user={user}
         education={input?.education ?? []}
@@ -72,28 +89,66 @@ function ProfileWorkspace() {
         username={usernameStatus?.username ?? null}
         publicLinkUrl={publicLink?.url ?? null}
       />
+    ) : (
+      renderSection(section)
+    );
 
-      <ProfileTopNav activeSection={section} onSelect={setSection} />
+  return (
+    <div className="grid w-full gap-5 pb-16 font-sans select-none lg:grid-cols-[240px_minmax(0,1fr)]">
+      <ProfileSidebar
+        activeSection={section}
+        user={user}
+        username={usernameStatus?.username ?? null}
+        publicLinkUrl={publicLink?.url ?? null}
+        percent={progress?.percent ?? null}
+        completedSections={completedSections}
+      />
 
-      {error ? <p className={`mt-4 ${studentWarningBannerClass}`}>{error}</p> : null}
-
-      {/* Active Section Content */}
-      <div className="min-w-0 max-w-none">
-        {section === 'experience' ||
-        section === 'projects' ||
-        section === 'education' ||
-        section === 'certifications' ||
-        section === 'credentials' ||
-        section === 'languages' ||
-        section === 'skills' ||
-        section === 'links' ||
-        section === 'resume' ? (
-          sectionContent
-        ) : (
-          <div className="max-w-3xl">
-            <ProfileSurface>{sectionContent}</ProfileSurface>
+      <div className="min-w-0">
+        <nav aria-label="Breadcrumb" data-testid="profile-breadcrumbs" className="mb-3">
+          <ol className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+            <li>
+              <Link
+                href="/student/profile?section=profile"
+                className="hover:text-zinc-950 dark:hover:text-white"
+              >
+                My profile
+              </Link>
+            </li>
+            <li aria-hidden="true">
+              <ChevronRight className="size-3" />
+            </li>
+            <li aria-current="page" className="font-medium text-zinc-950 dark:text-white">
+              {meta.label}
+            </li>
+          </ol>
+        </nav>
+        {section === 'profile' ? (
+          <div className="mb-5">
+            <ProfileSectionHeader title={meta.title} description={meta.description} />
           </div>
-        )}
+        ) : null}
+        {error ? <p className={`mt-4 ${studentWarningBannerClass}`}>{error}</p> : null}
+
+        {/* Active Section Content */}
+        <div className="min-w-0 max-w-none">
+          {section === 'profile' ||
+          section === 'experience' ||
+          section === 'projects' ||
+          section === 'education' ||
+          section === 'certifications' ||
+          section === 'credentials' ||
+          section === 'languages' ||
+          section === 'skills' ||
+          section === 'links' ||
+          section === 'resume' ? (
+            sectionContent
+          ) : (
+            <div className="max-w-3xl">
+              <ProfileSurface>{sectionContent}</ProfileSurface>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
