@@ -11,7 +11,7 @@ import {
   isFreeMailDomain,
   type CompanySizeBand,
 } from '@hirekiwi/contracts';
-import { SmartLogo } from '@hirekiwi/ui';
+import { HireKiwiLogo } from '@hirekiwi/ui';
 import { api } from '../../../lib/api';
 import { sanitizePhoneInput } from '../../../lib/phone-input';
 import {
@@ -342,7 +342,7 @@ export function CompanyRegisterWizard() {
   return (
     <section className="mx-auto w-full max-w-xl px-4 py-10">
       <div className="flex flex-col items-center text-center">
-        <SmartLogo kind="text" tone="on-light" className="h-8 w-auto" title="HireKiwi" />
+        <HireKiwiLogo kind="text" tone="on-light" className="h-8 w-auto" title="HireKiwi" />
         <h1 className="mt-8 text-2xl font-bold tracking-tight text-[#111827]">
           Register your company
         </h1>

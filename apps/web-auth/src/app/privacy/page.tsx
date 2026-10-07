@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SmartLogo } from '@hirekiwi/ui';
+import { HireKiwiLogo } from '@hirekiwi/ui';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy · SMART',
-  description: 'Privacy Policy governing your data and information on the SMART platform.',
+  title: 'Privacy Policy · HireKiwi',
+  description: 'Privacy Policy governing your data and information on the HireKiwi platform.',
 };
 
 export default function PrivacyPage() {
@@ -14,7 +14,7 @@ export default function PrivacyPage() {
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link href="/login" className="flex items-center gap-2">
-            <SmartLogo kind="text" className="h-7 w-auto" title="HireKiwi" />
+            <HireKiwiLogo kind="text" className="h-7 w-auto" title="HireKiwi" />
           </Link>
           <Link
             href="/login"
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
               At <strong>HireKiwi</strong> (&quot;HireKiwi&quot;, &quot;we&quot;, &quot;us&quot;, or
               &quot;our&quot;), we respect your privacy and are committed to protecting your
               personal information. This Privacy Policy explains how we collect, use, disclose, and
-              safeguard your information when you access or use the SMART platform.
+              safeguard your information when you access or use the HireKiwi platform.
             </p>
 
             <hr className="my-8 border-slate-100" />

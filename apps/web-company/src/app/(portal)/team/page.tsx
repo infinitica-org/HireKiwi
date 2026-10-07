@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Users } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { CompanyMember, CompanyMemberRole } from '@hirekiwi/contracts';
 import {
   Alert,
@@ -39,7 +39,7 @@ const STATUS_TONE = { ACTIVE: 'green', INVITED: 'amber', DEACTIVATED: 'red' } as
 
 /** Server error → one readable line (last-owner, domain mismatch, etc. all carry a message). */
 function messageFrom(error: unknown, fallback: string): string {
-  return isSmartApiError(error) && error.message ? error.message : fallback;
+  return isHireKiwiApiError(error) && error.message ? error.message : fallback;
 }
 
 export default function TeammatesPage() {

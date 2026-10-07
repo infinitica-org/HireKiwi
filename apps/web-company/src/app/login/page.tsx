@@ -39,7 +39,7 @@ export default function EmployerLoginPage() {
     setLoading(true);
     try {
       // In dev environment or SSO
-      await loginWithPassword('company@smart.local', 'Password123!');
+      await loginWithPassword('company@hirekiwi.local', 'Password123!');
       router.push('/');
     } catch {
       router.push('/');

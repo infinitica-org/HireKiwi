@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { NotificationsMenu, UserMenu, cn, useUnreadMessageCount } from '@hirekiwi/ui';
-import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
+import hirekiwiLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/HireKiwi-logo.png';
 import { signOut } from '@/lib/auth';
 import { useCompanyAccount } from '@/lib/use-company-account';
 import { companyNavItems, isCompanyNavActive } from '@/navigation/sidebar-items';
@@ -112,19 +112,19 @@ export function CompanyTopbar() {
 
             <Link
               href="/"
-              aria-label="SMART home"
-              title="SMART Portal"
+              aria-label="HireKiwi home"
+              title="HireKiwi Portal"
               className={cn('group flex shrink-0 items-center gap-3 rounded-xl', focusRing)}
             >
               <Image
-                src={smartLogoImg}
-                alt="SMART logo"
+                src={hirekiwiLogoImg}
+                alt="HireKiwi logo"
                 width={34}
                 height={34}
                 priority
                 className="h-10 w-9 object-contain"
               />
-              <span className="text-lg font-bold tracking-tight text-zinc-900">SMART</span>
+              <span className="text-lg font-bold tracking-tight text-zinc-900">HireKiwi</span>
             </Link>
 
             <nav aria-label="Company portal navigation" className="hidden xl:block">

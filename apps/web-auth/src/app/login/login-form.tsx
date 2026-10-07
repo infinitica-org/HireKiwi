@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { EMAIL_NOT_VERIFIED_ERROR } from '@hirekiwi/contracts';
 import { EyeIcon, EyeOffIcon } from '../../components/auth-icons';
 import { ResendVerification } from '../../components/resend-verification';
@@ -55,11 +55,11 @@ export function LoginForm() {
       storeSession(result.accessToken);
       redirectForRole(result.user.role, result.accessToken, searchParams.get('returnTo'));
     } catch (err) {
-      if (isSmartApiError(err) && err.code === EMAIL_NOT_VERIFIED_ERROR) {
+      if (isHireKiwiApiError(err) && err.code === EMAIL_NOT_VERIFIED_ERROR) {
         setError(err.message);
         setUnverifiedEmail(email);
       } else if (
-        isSmartApiError(err) &&
+        isHireKiwiApiError(err) &&
         (err.code === 'institution_held' ||
           err.code === 'institution_deactivated' ||
           err.code === 'account_held')

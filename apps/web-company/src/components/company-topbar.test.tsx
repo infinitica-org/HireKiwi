@@ -38,10 +38,10 @@ function primaryNav() {
 }
 
 describe('CompanyTopbar', () => {
-  it('shows the SMART logo linking home', () => {
+  it('shows the HireKiwi logo linking home', () => {
     render(<CompanyTopbar />);
-    expect(screen.getByRole('link', { name: 'SMART home' }).getAttribute('href')).toBe('/');
-    expect(screen.getByRole('img', { name: 'SMART logo' })).toBeDefined();
+    expect(screen.getByRole('link', { name: 'HireKiwi home' }).getAttribute('href')).toBe('/');
+    expect(screen.getByRole('img', { name: 'HireKiwi logo' })).toBeDefined();
   });
 
   it.each([
