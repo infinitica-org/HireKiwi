@@ -50,11 +50,6 @@ export function EducationDegreeDetailsSection({
     ],
   );
 
-  const rows = useMemo(
-    () => syncSemesterRows(totalSemesters, values.degreeDetails.semesterRows),
-    [totalSemesters, values.degreeDetails.semesterRows],
-  );
-
   const semesterOptions = useMemo(
     () => Array.from({ length: totalSemesters }, (_, i) => i + 1),
     [totalSemesters],
