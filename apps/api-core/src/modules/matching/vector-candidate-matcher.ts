@@ -146,6 +146,36 @@ export function buildJobThresholdVector(jd: JdThresholdVector): number[] {
   return vec;
 }
 
+/** Default baseline used only when a search has no scoped job to derive a real vector from. */
+export const UNSCOPED_SEARCH_BASELINE_VECTOR: readonly number[] = [0.7, 0.7, 0.6, 0.5, 0.5, 0.67];
+
+/**
+ * Builds a Stage 1 target vector from a scoped job opening's actual required skills, so the
+ * vector pass narrows the pool toward *this* job instead of a fixed constant baseline.
+ *
+ * `buildCandidateDomainVector` currently can't place a verified skill into a specific A-E
+ * domain axis — `skill_claims.domain` holds taxonomy strings (e.g. "SOFTWARE_IT"), never a
+ * literal A-E code, so every domain ends up receiving the same aggregate signal (see
+ * vector-candidate-matcher.spec.ts's fixtures, which fabricate 'A'/'C' domain values that don't
+ * occur in real data). Until that domain-tagging gap is closed, this builder matches that same
+ * flattened behavior — one overall required-proficiency scalar repeated across all 5 axes — so
+ * the comparison stays internally consistent with how candidate vectors are actually computed
+ * today, rather than inventing per-domain job weights the candidate side can't honor.
+ */
+export function buildJobVectorFromRequiredSkills(
+  requiredSkills: readonly { readonly minProficiency?: string }[],
+): number[] {
+  if (requiredSkills.length === 0) {
+    return [...UNSCOPED_SEARCH_BASELINE_VECTOR];
+  }
+  const avg =
+    requiredSkills.reduce(
+      (sum, skill) => sum + proficiencyToNormalizedScore(skill.minProficiency),
+      0,
+    ) / requiredSkills.length;
+  return [avg, avg, avg, avg, avg, avg];
+}
+
 /** Mean share of each required dimension the candidate meets, each capped at 1. */
 export function requirementCoverage(
   candidate: readonly number[],

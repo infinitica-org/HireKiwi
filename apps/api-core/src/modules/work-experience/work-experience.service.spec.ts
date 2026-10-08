@@ -94,6 +94,7 @@ describe('WorkExperienceService', () => {
         create: vi.fn(),
         update: vi.fn(),
         delete: vi.fn(),
+        count: vi.fn().mockResolvedValue(0),
       },
       workExperienceDocument: {
         findUnique: vi.fn(),
@@ -139,6 +140,13 @@ describe('WorkExperienceService', () => {
           id: mockStudentId,
           fullName: 'John Doe',
           email: 'john.doe@example.com',
+          hasNoWorkExperience: null,
+          updatedAt: new Date(),
+        }),
+        update: vi.fn().mockResolvedValue({
+          id: mockStudentId,
+          hasNoWorkExperience: false,
+          updatedAt: new Date(),
         }),
       },
       $transaction: vi.fn().mockImplementation(async (promises) => Promise.all(promises)),
@@ -3420,6 +3428,87 @@ describe('WorkExperienceService', () => {
           service.submitManagerEndorsement('short-token', { confirmed: true }),
         ).rejects.toBeInstanceOf(NotFoundException);
         expect(prisma.workExperienceManagerEndorsement.findUnique).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Declaration ("I don\'t have work experience")', () => {
+      it('returns unanswered status when hasNoWorkExperience is null', async () => {
+        prisma.user.findUnique.mockResolvedValue({
+          hasNoWorkExperience: null,
+        });
+
+        const result = await service.getDeclaration(mockStudentId);
+
+        expect(result).toEqual({
+          hasNoWorkExperience: null,
+        });
+      });
+
+      it('returns declared status when hasNoWorkExperience is true', async () => {
+        prisma.user.findUnique.mockResolvedValue({
+          hasNoWorkExperience: true,
+        });
+
+        const result = await service.getDeclaration(mockStudentId);
+
+        expect(result).toEqual({
+          hasNoWorkExperience: true,
+        });
+      });
+
+      it('throws NotFoundException if user is not found on getDeclaration', async () => {
+        prisma.user.findUnique.mockResolvedValue(null);
+
+        await expect(service.getDeclaration(mockStudentId)).rejects.toBeInstanceOf(
+          NotFoundException,
+        );
+      });
+
+      it('allows declaring no work experience when student has zero entries', async () => {
+        prisma.workExperience.count.mockResolvedValue(0);
+        prisma.user.update.mockResolvedValue({
+          hasNoWorkExperience: true,
+        });
+
+        const result = await service.setDeclaration(mockStudentId, true);
+
+        expect(prisma.workExperience.count).toHaveBeenCalledWith({
+          where: { studentId: mockStudentId },
+        });
+        expect(prisma.user.update).toHaveBeenCalledWith({
+          where: { id: mockStudentId },
+          data: { hasNoWorkExperience: true },
+          select: { hasNoWorkExperience: true },
+        });
+        expect(result).toEqual({
+          hasNoWorkExperience: true,
+        });
+      });
+
+      it('rejects declaring no work experience when student has existing entries', async () => {
+        prisma.workExperience.count.mockResolvedValue(2);
+
+        await expect(service.setDeclaration(mockStudentId, true)).rejects.toBeInstanceOf(
+          BadRequestException,
+        );
+        expect(prisma.user.update).not.toHaveBeenCalled();
+      });
+
+      it('allows clearing declaration (setting to null) even with zero entries', async () => {
+        prisma.user.update.mockResolvedValue({
+          hasNoWorkExperience: null,
+        });
+
+        const result = await service.setDeclaration(mockStudentId, null);
+
+        expect(prisma.user.update).toHaveBeenCalledWith({
+          where: { id: mockStudentId },
+          data: { hasNoWorkExperience: null },
+          select: { hasNoWorkExperience: true },
+        });
+        expect(result).toEqual({
+          hasNoWorkExperience: null,
+        });
       });
     });
   });

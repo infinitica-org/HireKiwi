@@ -142,6 +142,7 @@ describe('ProfilePage', () => {
     expect(screen.getAllByText('Ada Lovelace').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Profile' }).getAttribute('aria-current')).toBe('page');
     expect(screen.queryByText('Education section')).toBeNull();
+    expect(screen.getByRole('button', { name: /Edit Profile/i })).toBeTruthy();
     expect(screen.queryByText('Skills section')).toBeNull();
     expect(screen.queryByText('Resume section')).toBeNull();
   });

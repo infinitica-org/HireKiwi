@@ -63,6 +63,11 @@ export function useProfileProgress(): UseProfileProgressResult {
     queryKey: [...queryKeys.myWorkExperiences(), refreshToken],
     queryFn: () => api.users.listWorkExperiences(),
   });
+  const declarationQuery = useQuery({
+    ...queryOpts,
+    queryKey: [...queryKeys.myWorkExperienceDeclaration(), refreshToken],
+    queryFn: () => api.users.getWorkExperienceDeclaration(),
+  });
   const languagesQuery = useQuery({
     ...queryOpts,
     queryKey: [...queryKeys.myLanguages(), refreshToken],
@@ -78,15 +83,22 @@ export function useProfileProgress(): UseProfileProgressResult {
     queryKey: [...queryKeys.myCandidateCertificates(), refreshToken],
     queryFn: () => api.candidateCertificates.listMine().then((res) => res.certificates ?? []),
   });
+  const certificateDeclarationQuery = useQuery({
+    ...queryOpts,
+    queryKey: [...queryKeys.myCandidateCertificateDeclaration(), refreshToken],
+    queryFn: () => api.candidateCertificates.getDeclaration(),
+  });
 
   const queryResults = [
     onboardingQuery,
     skillClaimsQuery,
     educationQuery,
     experiencesQuery,
+    declarationQuery,
     languagesQuery,
     projectsQuery,
     certificatesQuery,
+    certificateDeclarationQuery,
   ];
 
   const loading = queryResults.some((query) => query.isLoading);
@@ -100,9 +112,11 @@ export function useProfileProgress(): UseProfileProgressResult {
   const claims = skillClaimsQuery.data ?? [];
   const education = educationQuery.data ?? [];
   const experiences = experiencesQuery.data ?? [];
+  const hasNoWorkExperience = declarationQuery.data?.hasNoWorkExperience ?? null;
   const languages = languagesQuery.data ?? [];
   const projects = projectsQuery.data ?? [];
   const certificates = certificatesQuery.data ?? [];
+  const hasNoCertifications = certificateDeclarationQuery.data?.hasNoCertifications ?? null;
 
   const input: ProfileProgressInput | null = loading
     ? null
@@ -113,8 +127,10 @@ export function useProfileProgress(): UseProfileProgressResult {
         languages,
         education,
         experiences,
+        hasNoWorkExperience,
         projects,
         certificates,
+        hasNoCertifications,
         hasProfilePhoto: Boolean(onboarding.profilePhotoUrl),
       };
 

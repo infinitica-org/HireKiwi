@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { EmailVerificationService } from './email-verification.service.js';
 import { hashEmailVerificationToken } from './email-verification-token.util.js';
+import { env } from '../../platform/config/env.js';
 
 describe('EmailVerificationService.sendForUser', () => {
   it('persists a hashed token and enqueues the verification email', async () => {
@@ -216,5 +217,250 @@ describe('EmailVerificationService.resend', () => {
     await service.resend('student@example.com');
 
     expect(emailQueue.add).not.toHaveBeenCalled();
+  });
+});
+
+describe('EmailVerificationService.sendOtpForUser', () => {
+  it('generates 6-digit code, saves token hash, and queues email', async () => {
+    const audit = { record: vi.fn() };
+    const userId = randomUUID();
+    const created: unknown[] = [];
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({
+          id: userId,
+          email: 'student@example.com',
+          fullName: 'Test Student',
+          emailVerified: false,
+        })),
+      },
+      emailVerificationToken: {
+        findFirst: vi.fn(async () => null),
+        deleteMany: vi.fn(async () => ({ count: 0 })),
+        create: vi.fn(async ({ data }: { data: unknown }) => {
+          created.push(data);
+          return data;
+        }),
+      },
+    };
+    const emailQueue = { add: vi.fn() };
+    const service = new EmailVerificationService(
+      prisma as never,
+      emailQueue as never,
+      audit as never,
+    );
+
+    const result = await service.sendOtpForUser(userId);
+
+    expect(result.expiresAt).toBeDefined();
+    expect(result.resendAvailableAt).toBeDefined();
+    expect(prisma.emailVerificationToken.deleteMany).toHaveBeenCalledWith({
+      where: { userId, consumedAt: null },
+    });
+    expect(created).toHaveLength(1);
+    const tokenRow = created[0] as { userId: string; tokenHash: string; expiresAt: Date };
+    expect(tokenRow.userId).toBe(userId);
+    expect(tokenRow.tokenHash).toHaveLength(64); // SHA-256 hex string
+    expect(emailQueue.add).toHaveBeenCalledWith(
+      'send',
+      expect.objectContaining({
+        to: 'student@example.com',
+        template: 'student-email-otp',
+        data: expect.objectContaining({
+          fullName: 'Test Student',
+          verificationCode: expect.stringMatching(/^\d{6}$/),
+        }),
+      }),
+    );
+  });
+
+  it('rejects if user is already verified', async () => {
+    const userId = randomUUID();
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({
+          id: userId,
+          email: 'student@example.com',
+          fullName: 'Test Student',
+          emailVerified: true,
+        })),
+      },
+    };
+    const service = new EmailVerificationService(prisma as never, { add: vi.fn() } as never);
+
+    await expect(service.sendOtpForUser(userId)).rejects.toMatchObject({
+      response: { statusCode: 400 },
+    });
+  });
+
+  it('enforces 60-second resend cooldown', async () => {
+    const userId = randomUUID();
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({
+          id: userId,
+          email: 'student@example.com',
+          fullName: 'Test Student',
+          emailVerified: false,
+        })),
+      },
+      emailVerificationToken: {
+        findFirst: vi.fn(async () => ({
+          createdAt: new Date(Date.now() - 15_000), // 15 seconds ago
+        })),
+      },
+    };
+    const service = new EmailVerificationService(prisma as never, { add: vi.fn() } as never);
+
+    await expect(service.sendOtpForUser(userId)).rejects.toMatchObject({
+      response: { statusCode: 409 },
+    });
+  });
+});
+
+describe('EmailVerificationService.verifyOtpForUser', () => {
+  it('marks user verified and records audit log for valid OTP', async () => {
+    const audit = { record: vi.fn() };
+    const userId = randomUUID();
+    const tokenId = randomUUID();
+    const code = '654321';
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({
+          id: userId,
+          email: 'student@example.com',
+          emailVerified: false,
+        })),
+        update: vi.fn(),
+      },
+      emailVerificationToken: {
+        findFirst: vi.fn(async () => ({
+          id: tokenId,
+          userId,
+          tokenHash: hashEmailVerificationToken(code),
+          expiresAt: new Date(Date.now() + 60_000),
+          consumedAt: null,
+        })),
+        update: vi.fn(),
+      },
+      $transaction: vi.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
+    };
+    const service = new EmailVerificationService(
+      prisma as never,
+      { add: vi.fn() } as never,
+      audit as never,
+    );
+
+    const result = await service.verifyOtpForUser(userId, code);
+
+    expect(result).toEqual({ verified: true });
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: userId,
+        action: 'auth.email_verified',
+        resourceId: userId,
+        reasonCode: 'otp_verified',
+      }),
+    );
+  });
+
+  it('returns verified: true immediately if user is already verified', async () => {
+    const userId = randomUUID();
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({
+          id: userId,
+          emailVerified: true,
+        })),
+      },
+    };
+    const service = new EmailVerificationService(prisma as never, { add: vi.fn() } as never);
+
+    const result = await service.verifyOtpForUser(userId, '123456');
+    expect(result).toEqual({ verified: true });
+  });
+
+  it('rejects invalid format code', async () => {
+    const userId = randomUUID();
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({
+          id: userId,
+          emailVerified: false,
+        })),
+      },
+    };
+    const service = new EmailVerificationService(prisma as never, { add: vi.fn() } as never);
+
+    await expect(service.verifyOtpForUser(userId, 'abc')).rejects.toMatchObject({
+      response: { statusCode: 400 },
+    });
+  });
+
+  it('rejects expired OTP with 410', async () => {
+    const userId = randomUUID();
+    const code = '654321';
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => ({
+          id: userId,
+          emailVerified: false,
+        })),
+      },
+      emailVerificationToken: {
+        findFirst: vi.fn(async () => ({
+          id: randomUUID(),
+          userId,
+          tokenHash: hashEmailVerificationToken(code),
+          expiresAt: new Date(Date.now() - 60_000), // Expired
+          consumedAt: null,
+        })),
+      },
+    };
+    const service = new EmailVerificationService(prisma as never, { add: vi.fn() } as never);
+
+    await expect(service.verifyOtpForUser(userId, code)).rejects.toMatchObject({
+      response: { statusCode: 410 },
+    });
+  });
+
+  it('strictly rejects fallback 123456 in production environment when hash does not match', async () => {
+    const originalEnv = env.NODE_ENV;
+    (env as { NODE_ENV: string }).NODE_ENV = 'production';
+    try {
+      const userId = randomUUID();
+      const prisma = {
+        user: {
+          findUnique: vi.fn(async () => ({
+            id: userId,
+            emailVerified: false,
+          })),
+        },
+        emailVerificationToken: {
+          findFirst: vi.fn(async ({ where }: { where: { tokenHash?: string } }) => {
+            // In production, findFirst is called with tokenHash.
+            // 123456 hash will not match the genuine 999999 token.
+            if (where.tokenHash === hashEmailVerificationToken('999999')) {
+              return {
+                id: randomUUID(),
+                userId,
+                tokenHash: hashEmailVerificationToken('999999'),
+                expiresAt: new Date(Date.now() + 60_000),
+                consumedAt: null,
+              };
+            }
+            return null;
+          }),
+        },
+      };
+      const service = new EmailVerificationService(prisma as never, { add: vi.fn() } as never);
+
+      await expect(service.verifyOtpForUser(userId, '123456')).rejects.toMatchObject({
+        response: { statusCode: 400, error: 'invalid_code' },
+      });
+    } finally {
+      (env as { NODE_ENV: string }).NODE_ENV = originalEnv;
+    }
   });
 });

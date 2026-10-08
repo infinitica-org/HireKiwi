@@ -5,6 +5,7 @@ import {
   CreateCandidateEducationSchema,
   CreateCandidateLanguageSchema,
   RejectCandidateEducationSchema,
+  UpdateCandidateProfileRequestSchema,
 } from './candidate-profile.dto.js';
 
 describe('Candidate Education & Language DTO Schemas', () => {
@@ -117,6 +118,63 @@ describe('Candidate Education & Language DTO Schemas', () => {
       updatedAt: new Date().toISOString(),
     };
     const parsed = CandidateLanguageSchema.safeParse(fullItem);
+    expect(parsed.success).toBe(true);
+  });
+});
+
+describe('UpdateCandidateProfileRequestSchema', () => {
+  it('accepts valid profileHeadline', () => {
+    const parsed = UpdateCandidateProfileRequestSchema.safeParse({
+      profileHeadline: 'Final-year CS student passionate about backend systems.',
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.profileHeadline).toBe(
+        'Final-year CS student passionate about backend systems.',
+      );
+    }
+  });
+
+  it('accepts empty object when profileHeadline is optional', () => {
+    const parsed = UpdateCandidateProfileRequestSchema.safeParse({});
+    expect(parsed.success).toBe(true);
+  });
+
+  it('trims leading/trailing whitespace', () => {
+    const parsed = UpdateCandidateProfileRequestSchema.safeParse({
+      profileHeadline: '   Passionate developer   ',
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.profileHeadline).toBe('Passionate developer');
+    }
+  });
+
+  it('rejects profileHeadline shorter than 3 characters', () => {
+    const parsed = UpdateCandidateProfileRequestSchema.safeParse({
+      profileHeadline: 'ab',
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects whitespace-only profileHeadline that trims to <3 chars', () => {
+    const parsed = UpdateCandidateProfileRequestSchema.safeParse({
+      profileHeadline: '    ',
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects profileHeadline exceeding 300 characters', () => {
+    const parsed = UpdateCandidateProfileRequestSchema.safeParse({
+      profileHeadline: 'a'.repeat(301),
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('accepts profileHeadline with exactly 300 characters', () => {
+    const parsed = UpdateCandidateProfileRequestSchema.safeParse({
+      profileHeadline: 'a'.repeat(300),
+    });
     expect(parsed.success).toBe(true);
   });
 });

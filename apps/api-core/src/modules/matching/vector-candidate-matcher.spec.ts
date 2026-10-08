@@ -4,6 +4,8 @@ import {
   requirementCoverage,
   matchCandidatesWithVectorSimilarity,
   toCandidateMatchDtoFromVector,
+  buildJobVectorFromRequiredSkills,
+  UNSCOPED_SEARCH_BASELINE_VECTOR,
   type CandidateVectorProfile,
 } from './vector-candidate-matcher.js';
 
@@ -132,5 +134,31 @@ describe('Th6-I611: Semantic Vector Candidate Matcher with Privacy Opt-Out Enfor
   it('weights similarity by how much of each requirement is met', () => {
     expect(requirementCoverage([0.9, 0.9], [0.8, 0.6])).toBe(1);
     expect(requirementCoverage([0.4, 0.6], [0.8, 0.6])).toBeCloseTo(0.75);
+  });
+
+  describe('S8-RM-XX follow-up: buildJobVectorFromRequiredSkills', () => {
+    it('falls back to the unscoped baseline when the search has no job to derive a vector from', () => {
+      expect(buildJobVectorFromRequiredSkills([])).toEqual([...UNSCOPED_SEARCH_BASELINE_VECTOR]);
+    });
+
+    it('derives a higher target vector for a job requiring senior proficiency than one requiring beginner', () => {
+      const seniorVector = buildJobVectorFromRequiredSkills([
+        { minProficiency: 'PROFESSIONAL' },
+        { minProficiency: 'ADVANCED' },
+      ]);
+      const juniorVector = buildJobVectorFromRequiredSkills([{ minProficiency: 'BEGINNER' }]);
+
+      expect(seniorVector.every((v) => v > (juniorVector[0] ?? 0))).toBe(true);
+      // Flattened across all 5 domain axes + tier (see function doc: skill_claims.domain never
+      // actually holds an A-E code, so candidate vectors can't be compared per-domain yet).
+      expect(new Set(seniorVector).size).toBe(1);
+      expect(seniorVector).toHaveLength(6);
+    });
+
+    it('ignores an unset minProficiency as a neutral/low signal rather than crashing', () => {
+      const vector = buildJobVectorFromRequiredSkills([{}]);
+      expect(vector).toHaveLength(6);
+      expect(vector.every((v) => v >= 0 && v <= 1)).toBe(true);
+    });
   });
 });
