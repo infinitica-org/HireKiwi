@@ -135,7 +135,11 @@ export function MessagesWorkspace({
             : 'hidden md:flex md:flex-col md:items-center md:justify-center',
         )}
       >
-        {activeId && me.data ? (
+        {activeId && me.isPending ? (
+          <LoadingState message="Opening conversation…" />
+        ) : activeId && me.isError ? (
+          <ErrorState message={messageErrorText(me.error)} onRetry={() => void me.refetch()} />
+        ) : activeId && me.data ? (
           <Thread
             key={activeId}
             conversationId={activeId}
