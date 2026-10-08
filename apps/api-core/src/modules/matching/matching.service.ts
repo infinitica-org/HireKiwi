@@ -19,7 +19,7 @@ import {
   PlacementMatchedDataSchema,
   SKILL_CODE_SET,
   ShortlistDtoSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   TIER_RANK,
   TrackCodeSchema,
   VerifiedSkillSummarySchema,
@@ -56,11 +56,12 @@ import {
   filterEmployerDiscoverableStudentIds,
   studentUnavailableToEmployers,
 } from '../../common/employer-visibility.js';
-import { QlixSmartAssessmentSchema } from '../evaluation/qlix-client.js';
+import { QlixHireKiwiAssessmentSchema } from '../evaluation/qlix-client.js';
 import { buildSkillCapabilityJob } from './job-profile.js';
 import {
   jobRequirementsFromProfile,
   mapVerifiedSkillsSummary,
+  skillNameForCode,
   toCandidateMatchDto,
 } from './matching-fit.mapper.js';
 import {
@@ -201,27 +202,34 @@ function scoreStudentAgainstJobWithCorroboration(
  * Gap 2 Task 2A.3: Bridges scoring-engine output to existing UI contracts.
  * Maintains backward compatibility by mapping PJF dimensions to skill-capability fields.
  */
+/** Inverse of PROFICIENCY_RANK (1-5) back to its name, for display/schema purposes. */
+const RANK_TO_PROFICIENCY: Record<number, ProficiencyName> = Object.fromEntries(
+  Object.entries(PROFICIENCY_RANK).map(([name, rank]) => [rank, name as ProficiencyName]),
+);
+
+function rankToProficiency(rank: number): ProficiencyName {
+  return RANK_TO_PROFICIENCY[Math.max(1, Math.min(5, Math.round(rank)))] ?? 'BEGINNER';
+}
+
 function adaptPersonJobFitToSkillCapabilityScore(
   pjfScore: PersonJobFitMatchScore,
   inferredCapabilities: readonly InferredCapabilityRow[] = [],
 ): SkillCapabilityScore {
-  // Map PJF skill breakdown to SkillCapabilityScore's skillFit format
-  const skillFit = pjfScore.skillFitBreakdown.map((fit) => {
-    const skillCode = fit.skillCode as unknown as SkillFitRowInternal['skillCode'];
-    return {
-      skillCode,
-      status: fit.isMet ? ('MET' as const) : ('GAP' as const),
-      importance:
-        fit.importance === 'must_have' ? ('MUST_HAVE' as const) : ('NICE_TO_HAVE' as const),
-      requiredRank: fit.requiredRank,
-      demonstratedRank: fit.demonstratedRank,
-      rankDelta: fit.demonstratedRank - fit.requiredRank,
-      sourceDiscrepancy: fit.sourceDiscrepancy,
-    };
-  });
+  // Map PJF skill breakdown to SkillCapabilityScore's skillFit format. This must match
+  // SkillFitRowInternal (and, downstream, SkillFitRowSchema) exactly — the previous version of
+  // this adapter emitted a different shape (requiredRank/demonstratedRank numbers, GAP status)
+  // laundered past the type checker with `as unknown as`, which threw a ZodError the moment
+  // real PJF output reached toCandidateMatchDto.
+  const skillFit: SkillFitRowInternal[] = pjfScore.skillFitBreakdown.map((fit) => ({
+    skillCode: fit.skillCode,
+    skillName: skillNameForCode(fit.skillCode),
+    status: fit.isMet ? 'MET' : fit.demonstratedRank > 0 ? 'PARTIAL' : 'MISSING',
+    requiredProficiency: rankToProficiency(fit.requiredRank),
+    actualProficiency: fit.demonstratedRank > 0 ? rankToProficiency(fit.demonstratedRank) : null,
+  }));
 
   const requiredSkillsHeld = skillFit.filter((s) => s.status === 'MET').length;
-  const requiredSkillsMissing = skillFit.filter((s) => s.status === 'GAP').length;
+  const requiredSkillsMissing = skillFit.filter((s) => s.status !== 'MET').length;
 
   // Capability fit: map inferred capabilities to CapabilityFitRowInternal shape
   // Note: InferredCapabilityRow has limited info; we use it to compute capability coverage
@@ -252,14 +260,16 @@ function adaptPersonJobFitToSkillCapabilityScore(
     capabilityScore: capabilityCoveragePct,
     skillCoveragePct: pjfScore.coverageOfMustHaves,
     capabilityCoveragePct,
-    potentialFit: pjfScore.mustHavesMet ? 'HIGH' : 'MEDIUM', // simplistic, can be refined
+    // PotentialFitSchema only allows STRONG/MODERATE/STRETCH (not HIGH/MEDIUM, the previous
+    // value here) — simplistic, can be refined.
+    potentialFit: pjfScore.mustHavesMet ? 'STRONG' : 'STRETCH',
     requiredSkillsHeld,
     requiredSkillsMissing,
     transferSkills: [], // PJF doesn't compute transfer skills; can be added in future
-    skillFit: skillFit as unknown as readonly SkillFitRowInternal[],
+    skillFit,
     capabilityFit: capabilityFit as unknown as readonly CapabilityFitRowInternal[],
-    strongCompetencies: pjfScore.strongCompetencies as unknown as readonly string[],
-    gapCompetencies: pjfScore.gapCompetencies as unknown as readonly string[],
+    strongCompetencies: pjfScore.strongCompetencies,
+    gapCompetencies: pjfScore.gapCompetencies,
     why: pjfScore.why,
   } as unknown as SkillCapabilityScore;
 }
@@ -1316,7 +1326,7 @@ export class MatchingService {
           isActive: true,
           qlixCheckResult: { isNot: null },
         },
-        include: { qlixCheckResult: { select: { smartAssessmentJson: true } } },
+        include: { qlixCheckResult: { select: { hirekiwiAssessmentJson: true } } },
       }),
     ]);
 
@@ -1373,8 +1383,8 @@ export class MatchingService {
     }
 
     for (const project of projects) {
-      const parsed = QlixSmartAssessmentSchema.safeParse(
-        project.qlixCheckResult?.smartAssessmentJson,
+      const parsed = QlixHireKiwiAssessmentSchema.safeParse(
+        project.qlixCheckResult?.hirekiwiAssessmentJson,
       );
       if (!parsed.success) continue;
       const bucket = qlixByStudent.get(project.studentId) ?? [];
@@ -1414,9 +1424,9 @@ export class MatchingService {
       generatedAt: params.generatedAt,
     });
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.placementMatched,
+      topic: HIREKIWI_TOPICS.placementMatched,
       partitionKey: params.jdId,
-      eventType: SMART_TOPICS.placementMatched,
+      eventType: HIREKIWI_TOPICS.placementMatched,
       source: 'placement',
       data,
     });
@@ -1480,7 +1490,7 @@ export class MatchingService {
           qlixCheckResult: {
             select: {
               gaps: true,
-              smartAssessmentJson: true,
+              hirekiwiAssessmentJson: true,
             },
           },
         },
@@ -1506,7 +1516,7 @@ export class MatchingService {
       bucket.push({
         skillCodes: project.skillMappings.map((mapping) => mapping.skillCode),
         gaps: project.qlixCheckResult.gaps,
-        smartAssessmentJson: project.qlixCheckResult.smartAssessmentJson,
+        hirekiwiAssessmentJson: project.qlixCheckResult.hirekiwiAssessmentJson,
       });
       qlixProjectsByStudent.set(project.studentId, bucket);
     }
@@ -1971,7 +1981,12 @@ export class MatchingService {
         certificateId: string | null;
         highestLevelCleared: number | null;
         headlineTier: string | null;
-        skills: Array<{ code: string; domain?: string; proficiency?: string }> | null;
+        skills: Array<{
+          code: string;
+          domain?: string;
+          proficiency?: string;
+          claimConfidence?: number | null;
+        }> | null;
       }>
     >(Prisma.sql`
       SELECT
@@ -1995,7 +2010,8 @@ export class MatchingService {
         SELECT json_agg(json_build_object(
           'code', sk.code,
           'domain', sk.domain,
-          'proficiency', COALESCE(sc.final_proficiency::text, sc.proficiency::text)
+          'proficiency', COALESCE(sc.final_proficiency::text, sc.proficiency::text),
+          'claimConfidence', sc.claim_confidence
         )) AS skills
         FROM skill_claims sc
         JOIN skills sk ON sk.id = sc.skill_id
@@ -2031,10 +2047,95 @@ export class MatchingService {
       };
     });
 
+    // Stage 1: vector similarity narrows the (already SQL-filtered) pool down to a ranked
+    // shortlist. This is deliberately a rough pass — see Stage 2 below for the authoritative score.
     const targetVector = [0.7, 0.7, 0.6, 0.5, 0.5, 0.67]; // Standard threshold baseline
     const vectorMatches = matchCandidatesWithVectorSimilarity(candidateProfiles, targetVector);
 
     const profileById = new Map(candidateProfiles.map((profile) => [profile.studentId, profile]));
+
+    // Stage 2: when the search is scoped to a real job opening, re-score only the Stage 1
+    // shortlist with the same structured, explainable scorer the formal match pipeline uses
+    // (calculatePersonJobFit). That score — not the raw cosine number — becomes matchScore.
+    const scopedJobId = query.scopedJobId?.trim();
+    const requiredSkillsForScoring = scopedJobId
+      ? (
+          await this.prisma.jobOpeningSkill.findMany({
+            where: { openingId: scopedJobId },
+            include: { skill: { select: { code: true } } },
+          })
+        ).map((row) => ({ code: row.skill.code, minProficiency: row.minProficiency }))
+      : [];
+
+    const claimConfidenceByStudentSkill = new Map<string, Map<string, number | null>>();
+    for (const row of rows) {
+      const bySkill = new Map<string, number | null>();
+      for (const skill of row.skills ?? []) {
+        bySkill.set(skill.code, skill.claimConfidence ?? null);
+      }
+      claimConfidenceByStudentSkill.set(row.id, bySkill);
+    }
+
+    if (requiredSkillsForScoring.length > 0) {
+      const shortlistIds = vectorMatches.ranked.map((match) => match.studentId);
+      const contradictions = await loadCorroborationContradictions(this.prisma, shortlistIds);
+
+      const scored = vectorMatches.ranked.map((match) => {
+        const profile = profileById.get(match.studentId);
+        const confidenceBySkill = claimConfidenceByStudentSkill.get(match.studentId);
+        const contradictionFlags = contradictions.get(match.studentId) ?? new Set<string>();
+        const pjfScore = scoreStudentAgainstJobWithCorroboration(
+          match.studentId,
+          requiredSkillsForScoring.map((skill) => ({
+            code: skill.code,
+            name: skill.code,
+            minRank: proficiencyRank(skill.minProficiency),
+            minProficiency: skill.minProficiency,
+            importance: 'must_have',
+          })),
+          (profile?.verifiedSkills ?? []).map((skill) => ({
+            code: skill.code,
+            proficiency: skill.proficiency,
+            claimConfidence: confidenceBySkill?.get(skill.code) ?? null,
+          })),
+          contradictionFlags,
+          false,
+          undefined,
+        );
+        return { match, adapted: adaptPersonJobFitToSkillCapabilityScore(pjfScore) };
+      });
+
+      // Stage 2's structured score decides the final order — Stage 1's vector order was only
+      // ever a cheap first pass to shrink the pool.
+      scored.sort((a, b) => b.adapted.matchScore - a.adapted.matchScore);
+
+      return scored.map(({ match, adapted }) => {
+        const profile = profileById.get(match.studentId);
+        const verifiedSkills = profile?.verifiedSkills ?? [];
+        const certIdValid =
+          match.certificateId && UuidSchema.safeParse(match.certificateId).success
+            ? match.certificateId
+            : null;
+        const dto = toCandidateMatchDto({
+          score: adapted,
+          studentName: match.studentName,
+          trackCode: match.trackCode,
+          certificateId: certIdValid,
+          highestLevelCleared: match.highestLevelCleared,
+          headlineTier: match.headlineTier,
+          verifiedSkills: verifiedSkills.filter(
+            (s) => SKILL_CODE_SET.has(s.code) && VerifiedSkillSummarySchema.safeParse(s).success,
+          ),
+          method: 'HYBRID',
+        });
+        // toCandidateMatchDto hardcodes similarityScore 0 (it has no vector context); restore
+        // the real Stage 1 cosine value here so it still surfaces for transparency.
+        return { ...dto, similarityScore: Math.round(match.cosineSimilarity * 100) / 100 };
+      });
+    }
+
+    // No job to score against (pure free-text/filter browsing): return the Stage 1 vector
+    // ranking only, labeled honestly as an unscored similarity preview — never as a match decision.
     return vectorMatches.ranked.map((match) => {
       // The candidate's real verified skills, not the radar axes ("Domain A" is not a skill code):
       // Filter by both SKILL_CODE_SET and VerifiedSkillSummarySchema validation to ensure
@@ -2060,7 +2161,7 @@ export class MatchingService {
         headlineTier: match.headlineTier,
         similarityScore: Math.round(match.cosineSimilarity * 100) / 100,
         matchScore: Math.min(1, Math.round(match.fitScore * 100) / 100),
-        method: 'HYBRID',
+        method: 'VECTOR_PREVIEW',
         explanation: {
           thresholdsMet: [],
           thresholdsMissed: [],

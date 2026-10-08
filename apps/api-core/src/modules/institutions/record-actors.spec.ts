@@ -13,7 +13,7 @@ describe('resolveRecordActors (S6-VV-105)', () => {
 
   it('resolves both ids in one query and tolerates a deleted user', async () => {
     const prisma = {
-      user: { findMany: vi.fn().mockResolvedValue([{ id: 'u1', email: 'one@smart.test' }]) },
+      user: { findMany: vi.fn().mockResolvedValue([{ id: 'u1', email: 'one@hirekiwi.test' }]) },
     };
 
     const actors = await resolveRecordActors(prisma as never, {
@@ -26,7 +26,7 @@ describe('resolveRecordActors (S6-VV-105)', () => {
       select: { id: true, email: true },
     });
     expect(actors).toEqual({
-      createdBy: { userId: 'u1', email: 'one@smart.test' },
+      createdBy: { userId: 'u1', email: 'one@hirekiwi.test' },
       updatedBy: null,
     });
   });

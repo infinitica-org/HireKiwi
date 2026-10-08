@@ -70,6 +70,8 @@ function setup(
     useRulesRanker?: boolean;
     /** Students that are now deactivated or held (S6-VV-148). */
     hiddenStudentIds?: string[];
+    /** searchStudents Stage 2: required skills on the scoped job opening (Th6-I611 follow-up). */
+    jobOpeningSkills?: unknown[];
   } = {},
 ) {
   const hidden = new Set(options.hiddenStudentIds ?? []);
@@ -125,6 +127,9 @@ function setup(
           ...data,
         }),
       ),
+    },
+    jobOpeningSkill: {
+      findMany: vi.fn().mockResolvedValue(options.jobOpeningSkills ?? []),
     },
   };
   const outbox = { enqueueEnvelope: vi.fn().mockResolvedValue(undefined) };
@@ -355,7 +360,7 @@ describe('SE-T05 POST /placement/match', () => {
         skillMappings: [{ skillCode: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT' }],
         qlixCheckResult: {
           gaps: ['Missing Dockerfile'],
-          smartAssessmentJson: {
+          hirekiwiAssessmentJson: {
             appliedProficiencyCeiling: 'INTERMEDIATE',
             competencyObservations: [],
           },
@@ -720,8 +725,62 @@ describe('S6-VV-148 employer visibility', () => {
       expect(candidates).toHaveLength(1);
       expect(candidates[0]?.studentId).toBe(studentId);
       expect(candidates[0]?.similarityScore).toBeGreaterThan(0);
-      expect(candidates[0]?.method).toBe('HYBRID');
+      // No scopedJobId here, so there's no real job to score against — this must be labeled
+      // as an unscored similarity preview, never as an authoritative HYBRID match (see Th6-I611
+      // follow-up: HYBRID is now reserved for the two-stage path scored against a real opening).
+      expect(candidates[0]?.method).toBe('VECTOR_PREVIEW');
       expect(candidates[0]?.explanation.verifiedSkills).toBeDefined();
+    });
+
+    it('Th6-I611 follow-up: scopedJobId runs Stage 2 (calculatePersonJobFit) as the authoritative score', async () => {
+      const { service, prisma } = setup({
+        jobOpeningSkills: [
+          {
+            minProficiency: 'INTERMEDIATE',
+            skill: { code: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION' },
+          },
+          { minProficiency: 'BEGINNER', skill: { code: 'SQL_QUERY_OPTIMIZATION' } },
+        ],
+      });
+      prisma.$queryRaw.mockResolvedValueOnce([
+        {
+          id: studentId,
+          fullName: 'Alice Developer',
+          primaryTrackCode: 'TECH_FULLSTACK',
+          certificateId: '0c3a1f6e-2b8d-4c5e-9a7f-3d2e1b0c9a8f',
+          highestLevelCleared: 3,
+          headlineTier: 'GOLD',
+          skills: [
+            {
+              code: 'ALGORITHMIC_COMPLEXITY_PERFORMANCE_OPTIMIZATION',
+              domain: 'SOFTWARE_IT',
+              proficiency: 'PROFESSIONAL',
+              claimConfidence: 0.9,
+            },
+            {
+              code: 'SQL_QUERY_OPTIMIZATION',
+              domain: 'SOFTWARE_IT',
+              proficiency: 'PROFESSIONAL',
+              claimConfidence: 0.9,
+            },
+          ],
+        },
+      ]);
+
+      const candidates = await service.searchStudents(
+        { sub: actorId, role: 'COMPANY', inst: undefined } as never,
+        { q: 'developer', scopedJobId: openingId },
+      );
+
+      expect(prisma.jobOpeningSkill.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { openingId } }),
+      );
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]?.studentId).toBe(studentId);
+      // Stage 2's structured scorer is authoritative here, not the raw cosine number.
+      expect(candidates[0]?.method).toBe('HYBRID');
+      expect(candidates[0]?.similarityScore).toBeGreaterThan(0);
+      expect(candidates[0]?.matchScore).toBeGreaterThan(0);
     });
   });
 });

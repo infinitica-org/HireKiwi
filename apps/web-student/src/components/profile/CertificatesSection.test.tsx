@@ -39,7 +39,7 @@ describe('CertificatesSection', () => {
 
     expect(screen.getByRole('heading', { name: 'Certifications' })).toBeTruthy();
     expect(screen.getByText(/No certifications yet/i)).toBeTruthy();
-    expect(screen.getAllByRole('link', { name: /Add certificate/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /Add certificate/i }).length).toBeGreaterThan(0);
   });
 
   it('renders bento cards when certificates exist', () => {
@@ -89,10 +89,8 @@ describe('CertificatesSection', () => {
     expect(screen.getByText('Google Data Analytics')).toBeTruthy();
     expect(screen.getByText('Verified')).toBeTruthy();
     expect(screen.getByText('SQL')).toBeTruthy();
-    const manageLink = screen.getByRole('link', { name: 'View details' });
-    expect(manageLink.getAttribute('href')).toBe(
-      '/student/certificates/add?id=00000000-0000-4000-8000-000000000001',
-    );
+    expect(screen.getByRole('button', { name: 'View' })).toBeTruthy();
+    expect(screen.queryByRole('img', { name: /badge/i })).toBeNull();
   });
 
   it('shows a loading message and no empty state while certificates load', () => {
@@ -132,7 +130,7 @@ describe('CertificatesSection', () => {
     expect(screen.getByText('Failed to load candidate certificates.')).toBeTruthy();
   });
 
-  it('links every add action to the add-certificate flow', () => {
+  it('offers a single add action in the empty box', () => {
     vi.mocked(useQuery).mockReturnValue({
       data: { certificates: [] },
       isLoading: false,
@@ -141,9 +139,54 @@ describe('CertificatesSection', () => {
 
     render(<CertificatesSection />);
 
-    const links = screen.getAllByRole('link', { name: /Add (your first )?certificate/i });
-    expect(links.length).toBeGreaterThanOrEqual(2);
-    for (const link of links) expect(link.getAttribute('href')).toBe('/student/certificates/add');
+    expect(screen.getAllByRole('button', { name: /Add (your first )?certificate/i })).toHaveLength(
+      1,
+    );
+  });
+
+  it('shows the Credly badge picture on a verified certificate', () => {
+    vi.mocked(useQuery).mockReturnValue({
+      data: {
+        certificates: [
+          {
+            certificateId: '00000000-0000-4000-8000-000000000001',
+            candidateId: '00000000-0000-4000-8000-000000000002',
+            title: 'AWS Cloud Practitioner',
+            issuer: 'Amazon Web Services',
+            status: 'VERIFIED',
+            sourceStatus: 'source_verified',
+            certificateNumber: null,
+            verificationUrl: 'https://www.credly.com/badges/abc',
+            previewImageUrl: 'https://images.credly.com/images/abc/image.png',
+            verificationMethod: 'ENDORSEMENT',
+            certificateFileUrl: null,
+            certificateFileName: null,
+            fileMimeType: null,
+            fileSizeBytes: null,
+            learningDescription: null,
+            tools: [],
+            practicalApplied: null,
+            practicalDescription: null,
+            skills: [],
+            skillsClaimedSnapshot: null,
+            trackCode: null,
+            agendaLines: [],
+            retryAvailableAt: null,
+            lockedUntil: null,
+            taxonomyVersionSnapshot: null,
+            createdAt: '2025-01-01T00:00:00.000Z',
+            updatedAt: '2025-01-01T00:00:00.000Z',
+          },
+        ],
+      },
+      isLoading: false,
+      error: null,
+    } as never);
+
+    render(<CertificatesSection />);
+
+    const picture = screen.getByRole('img', { name: 'AWS Cloud Practitioner badge' });
+    expect(picture.getAttribute('src')).toBe('https://images.credly.com/images/abc/image.png');
   });
 
   it('renders declared no certifications state when hasNoCertifications is true', () => {

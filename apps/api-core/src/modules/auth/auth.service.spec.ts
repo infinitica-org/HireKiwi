@@ -34,6 +34,42 @@ function userRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+describe('AuthService identify', () => {
+  it('reports exists: true for a registered email, case-insensitively', async () => {
+    const findUnique = vi.fn().mockResolvedValue({ id: randomUUID() });
+    const prisma = { user: { findUnique } };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn() } as never,
+      { getSignedDownloadUrl: vi.fn() } as never,
+      mockAuditPublisher() as never,
+    );
+
+    const result = await auth.identify('Student@Example.com');
+
+    expect(result).toEqual({ exists: true });
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { email: 'student@example.com' },
+      select: { id: true },
+    });
+  });
+
+  it('reports exists: false for an unregistered email', async () => {
+    const findUnique = vi.fn().mockResolvedValue(null);
+    const prisma = { user: { findUnique } };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn() } as never,
+      { getSignedDownloadUrl: vi.fn() } as never,
+      mockAuditPublisher() as never,
+    );
+
+    const result = await auth.identify('nobody@example.com');
+
+    expect(result).toEqual({ exists: false });
+  });
+});
+
 describe('AuthService refresh rotation', () => {
   it('issues a session with a hashed refresh token', async () => {
     const created: unknown[] = [];
@@ -105,7 +141,7 @@ describe('AuthService refresh rotation', () => {
       storage as never,
       mockAuditPublisher() as never,
     );
-    const request = { cookies: { smart_refresh: raw } };
+    const request = { cookies: { hirekiwi_refresh: raw } };
     const reply = { setCookie: vi.fn(), clearCookie: vi.fn() };
 
     const result = await auth.refresh(request as never, reply as never);
@@ -141,7 +177,7 @@ describe('AuthService refresh rotation', () => {
     const reply = { setCookie: vi.fn(), clearCookie: vi.fn() };
 
     await expect(
-      auth.refresh({ cookies: { smart_refresh: raw } } as never, reply as never),
+      auth.refresh({ cookies: { hirekiwi_refresh: raw } } as never, reply as never),
     ).rejects.toBeInstanceOf(UnauthorizedException);
     expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
       where: { familyId, revokedAt: null },
@@ -178,7 +214,7 @@ describe('AuthService refresh rotation', () => {
 
     await expect(
       auth.refresh(
-        { cookies: { smart_refresh: raw } } as never,
+        { cookies: { hirekiwi_refresh: raw } } as never,
         { setCookie: vi.fn(), clearCookie: vi.fn() } as never,
       ),
     ).rejects.toBeInstanceOf(UnauthorizedException);
@@ -213,7 +249,7 @@ describe('AuthService refresh rotation', () => {
       {
         response: {
           error: 'institution_held',
-          message: 'This institution is on hold. You cannot use SMART until it is released.',
+          message: 'This institution is on hold. You cannot use HireKiwi until it is released.',
         },
       },
     );
@@ -760,7 +796,7 @@ describe('AuthService email verification gate (#156)', () => {
     const reply = { setCookie: vi.fn(), clearCookie: vi.fn() };
 
     await expect(
-      auth.refresh({ cookies: { smart_refresh: raw } } as never, reply as never),
+      auth.refresh({ cookies: { hirekiwi_refresh: raw } } as never, reply as never),
     ).rejects.toMatchObject({ response: expect.objectContaining({ error: 'email_not_verified' }) });
     expect(reply.clearCookie).toHaveBeenCalled();
     expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -801,5 +837,65 @@ describe('company portal account status (S6-VV-139)', () => {
     );
 
     expect(user.sessionHold).toMatchObject({ code: 'company_held' });
+  });
+});
+
+describe('AuthService session revocation marker (Th6-614)', () => {
+  function build(redis: { setex: ReturnType<typeof vi.fn> } | undefined) {
+    const familyId = randomUUID();
+    const userId = randomUUID();
+    const raw = 'live-refresh-token';
+    const existing = { id: randomUUID(), familyId, userId, tokenHash: hashRefreshToken(raw) };
+    const prisma = {
+      refreshToken: {
+        findUnique: vi.fn(async () => existing),
+        updateMany: vi.fn(async () => ({ count: 1 })),
+        findMany: vi.fn(async () => [{ familyId }]),
+      },
+    };
+    const auth = new AuthService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      mockAuditPublisher() as never,
+      redis as never,
+    );
+    return { auth, prisma, familyId, userId, raw };
+  }
+
+  it('logout revokes the family AND marks it so its access tokens stop working', async () => {
+    const redis = { setex: vi.fn(async () => 'OK') };
+    const { auth, familyId, raw } = build(redis);
+    const reply = { clearCookie: vi.fn() };
+    await auth.logout({ cookies: { hirekiwi_refresh: raw } } as never, reply as never);
+    expect(redis.setex).toHaveBeenCalledWith(`auth:revoked-family:${familyId}`, 960, '1');
+    expect(reply.clearCookie).toHaveBeenCalled();
+  });
+
+  it('revoking every session of a user marks each family', async () => {
+    const redis = { setex: vi.fn(async () => 'OK') };
+    const { auth, familyId, userId } = build(redis);
+    await auth.revokeAllForUser(userId);
+    expect(redis.setex).toHaveBeenCalledWith(`auth:revoked-family:${familyId}`, 960, '1');
+  });
+
+  it('still logs out when Redis is unavailable', async () => {
+    const redis = {
+      setex: vi.fn(async () => {
+        throw new Error('redis down');
+      }),
+    };
+    const { auth, prisma, raw } = build(redis);
+    const reply = { clearCookie: vi.fn() };
+    await auth.logout({ cookies: { hirekiwi_refresh: raw } } as never, reply as never);
+    expect(prisma.refreshToken.updateMany).toHaveBeenCalled();
+    expect(reply.clearCookie).toHaveBeenCalled();
+  });
+
+  it('works without a Redis service (refresh rows remain the source of truth)', async () => {
+    const { auth, prisma, raw } = build(undefined);
+    const reply = { clearCookie: vi.fn() };
+    await auth.logout({ cookies: { hirekiwi_refresh: raw } } as never, reply as never);
+    expect(prisma.refreshToken.updateMany).toHaveBeenCalled();
   });
 });

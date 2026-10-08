@@ -8,7 +8,7 @@ import { apiAs, login, seededInstitutionId, uniqueSuffix, waitForMail } from '..
  */
 test.describe.serial('student self-serve signup', () => {
   let api: APIRequestContext;
-  const email = `e2e-${uniqueSuffix()}@${e2eEnv.studentEmail.split('@')[1] ?? 'smart.local'}`;
+  const email = `e2e-${uniqueSuffix()}@${e2eEnv.studentEmail.split('@')[1] ?? 'hirekiwi.local'}`;
   const password = `E2e!${uniqueSuffix()}`;
 
   test.beforeAll(async () => {

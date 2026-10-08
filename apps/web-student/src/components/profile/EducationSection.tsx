@@ -158,7 +158,7 @@ export function EducationSection() {
         title={meta.title}
         description={meta.description}
         action={
-          !loading ? (
+          !loading && educationList.length > 0 ? (
             <button
               type="button"
               onClick={openCreateModal}

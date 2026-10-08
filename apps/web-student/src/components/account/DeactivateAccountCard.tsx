@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { signOut } from '@/lib/auth';
 import { fieldClass, SettingsCard, StatusMessage } from './account-ui';
@@ -20,7 +20,7 @@ export function DeactivateAccountCard() {
       await signOut();
     } catch (err) {
       setError(
-        isSmartApiError(err) ? err.message : 'Could not deactivate your account. Try again.',
+        isHireKiwiApiError(err) ? err.message : 'Could not deactivate your account. Try again.',
       );
       setBusy(false);
     }

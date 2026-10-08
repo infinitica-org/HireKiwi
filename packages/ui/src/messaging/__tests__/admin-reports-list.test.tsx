@@ -6,7 +6,7 @@ const api = vi.hoisted(() => ({ messaging: { adminListReports: vi.fn() } }));
 
 vi.mock('../../api-provider', async () => {
   const rq = await import('@tanstack/react-query');
-  return { useQuery: rq.useQuery, useSmartApi: () => api };
+  return { useQuery: rq.useQuery, useHireKiwiApi: () => api };
 });
 
 import { AdminReportsList } from '../admin-reports-list';

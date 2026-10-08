@@ -8,7 +8,7 @@ import {
   createRefreshAccessToken,
   getAccessToken,
 } from '@hirekiwi/api-client';
-import { SessionHoldWall, SmartApiProvider } from '@hirekiwi/ui';
+import { SessionHoldWall, HireKiwiApiProvider } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { signOut } from '@/lib/auth';
 
@@ -25,7 +25,7 @@ export function CompanyPortalProviders({ children }: { children: ReactNode }) {
         pollMe={() => api.auth.companyAccount()}
         onSignOut={signOut}
       >
-        <SmartApiProvider
+        <HireKiwiApiProvider
           baseUrl={baseUrl}
           getAccessToken={getAccessToken}
           refreshAccessToken={createRefreshAccessToken(() => api.auth.refresh())}
@@ -35,7 +35,7 @@ export function CompanyPortalProviders({ children }: { children: ReactNode }) {
           }}
         >
           {children}
-        </SmartApiProvider>
+        </HireKiwiApiProvider>
       </SessionHoldWall>
     </QueryClientProvider>
   );

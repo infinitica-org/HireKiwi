@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { queryKeys } from '@hirekiwi/api-client';
 import type { NotificationDto, NotificationKind } from '@hirekiwi/contracts';
-import { useQuery, useQueryClient, useSmartApi } from '../api-provider';
+import { useQuery, useQueryClient, useHireKiwiApi } from '../api-provider';
 import { cn } from '../lib/cn';
 
 const REFRESH_MS = 60_000;
@@ -86,7 +86,7 @@ export function NotificationsMenu({
   onNavigate,
   emptyHint = 'Updates on applications, verifications and messages show up here.',
 }: NotificationsMenuProps) {
-  const api = useSmartApi();
+  const api = useHireKiwiApi();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);

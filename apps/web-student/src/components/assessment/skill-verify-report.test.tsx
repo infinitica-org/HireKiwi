@@ -117,57 +117,44 @@ const assessmentResult: AssessmentResultView = {
 };
 
 describe('SkillVerifyReport', () => {
-  it('shows intelligence-first summary with competency map and navigation', () => {
+  it('shows the under-verification message without revealing results, and navigates back', () => {
     const onDone = vi.fn();
 
     render(
       <SkillVerifyReport
         grade={grade}
-
         assessmentResult={assessmentResult}
-
         catalogSkillCode="SQL_QUERY_OPTIMIZATION"
-
         onDone={onDone}
       />,
     );
 
     expect(screen.getByText(/Assessment complete/)).toBeDefined();
+    expect(screen.getByText(/This skill is under verification/)).toBeDefined();
 
-    expect(screen.getByText(/Assessment-supported proficiency/)).toBeDefined();
-
-    expect(screen.getByText(/Level 2/)).toBeDefined();
-
-    expect(screen.getByText(/Competency map/)).toBeDefined();
-
-    expect(screen.getByText(/Targeted follow-up skipped/)).toBeDefined();
-
+    // Results stay hidden until verification finishes.
     expect(screen.queryByText(/80%/)).toBeNull();
-
-    expect(screen.getByRole('button', { name: /back to skills/i })).toBeDefined();
+    expect(screen.queryByText(/Competency map/)).toBeNull();
 
     expect(screen.getByRole('link', { name: /view assessments/i }).getAttribute('href')).toBe(
-      '/student/assessment',
+      '/student/assessments',
     );
 
     fireEvent.click(screen.getByRole('button', { name: /back to skills/i }));
-
     expect(onDone).toHaveBeenCalled();
   });
 
-  it('falls back to score summary when competency results are absent', () => {
+  it('shows the same under-verification message when competency results are absent', () => {
     render(
       <SkillVerifyReport
         grade={grade}
-
         catalogSkillCode="SQL_QUERY_OPTIMIZATION"
-
         onDone={vi.fn()}
       />,
     );
 
-    expect(screen.getByText(/80%/)).toBeDefined();
-
+    expect(screen.getByText(/This skill is under verification/)).toBeDefined();
+    expect(screen.queryByText(/80%/)).toBeNull();
     expect(screen.queryByText(/Competency map/)).toBeNull();
   });
 });

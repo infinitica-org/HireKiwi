@@ -31,7 +31,7 @@ export async function renderOgImage(key: PageKey): Promise<ImageResponse> {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
         <img src={logoSrc} width={88} height={88} alt="" style={{ borderRadius: 22 }} />
-        <span style={{ fontSize: 64, fontWeight: 700, letterSpacing: '-0.03em' }}>smart</span>
+        <span style={{ fontSize: 64, fontWeight: 700, letterSpacing: '-0.03em' }}>hirekiwi</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>

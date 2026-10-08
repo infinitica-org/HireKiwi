@@ -10,23 +10,24 @@ import {
   sitemapEntries,
 } from './seo';
 
-const prod = { NEXT_PUBLIC_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://smart.test' };
+const prod = { NEXT_PUBLIC_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://hirekiwi.test' };
 
 describe('landing SEO config', () => {
   it('keeps titles and descriptions within search-result limits', () => {
     expect(HOME_TITLE.length).toBeLessThanOrEqual(60);
-    for (const page of Object.values(PAGES)) {
-      expect(`${page.title} | SMART`.length, page.path).toBeLessThanOrEqual(60);
+    for (const [key, page] of Object.entries(PAGES)) {
+      const fullTitle = key === 'home' ? page.title : `${page.title} | HireKiwi`;
+      expect(fullTitle.length, page.path).toBeLessThanOrEqual(60);
       expect(page.description.length, page.path).toBeLessThanOrEqual(155);
     }
   });
 
   it('is indexable only in production', () => {
     expect(isIndexable(prod)).toBe(true);
-    expect(isIndexable({ SMART_ENV: 'prod' })).toBe(true);
+    expect(isIndexable({ HIREKIWI_ENV: 'prod' })).toBe(true);
     expect(isIndexable({ VERCEL_ENV: 'production' })).toBe(true);
     expect(isIndexable({})).toBe(false);
-    expect(isIndexable({ NEXT_PUBLIC_ENV: 'staging', SMART_ENV: 'prod' })).toBe(false);
+    expect(isIndexable({ NEXT_PUBLIC_ENV: 'staging', HIREKIWI_ENV: 'prod' })).toBe(false);
     expect(isIndexable({ VERCEL_ENV: 'preview' })).toBe(false);
   });
 
@@ -39,18 +40,18 @@ describe('landing SEO config', () => {
   it('allows public routes and points to the sitemap in production', () => {
     const robots = robotsRules(prod);
     expect(robots.rules).toMatchObject({ allow: '/', disallow: ['/api/', '/health'] });
-    expect(robots.sitemap).toBe('https://smart.test/sitemap.xml');
+    expect(robots.sitemap).toBe('https://hirekiwi.test/sitemap.xml');
     expect(rootMetadata(prod).robots).toMatchObject({ index: true, follow: true });
   });
 
   it('lists every public route in the sitemap with absolute URLs', () => {
     const urls = sitemapEntries(prod).map((e) => e.url);
     expect(urls).toEqual([
-      'https://smart.test/',
-      'https://smart.test/students',
-      'https://smart.test/universities',
-      'https://smart.test/company',
-      'https://smart.test/universities/contact',
+      'https://hirekiwi.test/',
+      'https://hirekiwi.test/students',
+      'https://hirekiwi.test/universities',
+      'https://hirekiwi.test/company',
+      'https://hirekiwi.test/universities/contact',
     ]);
   });
 

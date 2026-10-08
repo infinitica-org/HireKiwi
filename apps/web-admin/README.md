@@ -1,6 +1,6 @@
-# SMART Administration Console (`web-admin`)
+# HireKiwi Administration Console (`web-admin`)
 
-System operator console for SMART. Access is restricted to `SUPER_ADMIN` (and the portal role gate in `PortalAuthGate`).
+System operator console for HireKiwi. Access is restricted to `SUPER_ADMIN` (and the portal role gate in `PortalAuthGate`).
 
 The UI follows the Studio Admin shell: collapsible Lucide sidebar, sticky header with command search (`⌘J`) and light/dark/system theme, shadcn cards/tables.
 

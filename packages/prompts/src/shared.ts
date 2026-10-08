@@ -15,7 +15,7 @@
  * a raw score; `scoring-engine.assignTier()` converts that score to a tier using
  * cut scores set by a human panel. If the model were allowed to award tiers, the
  * certificate's defensibility would rest on a model's opinion instead of on
- * practitioner-set standards — which is the exact failure SMART exists to fix.
+ * practitioner-set standards — which is the exact failure HireKiwi exists to fix.
  */
 export const NO_TIER_AUTHORITY = `
 AUTHORITY LIMIT
@@ -31,7 +31,7 @@ is advisory input, not a verdict.`.trim();
  *
  * LLM raters drift generous, especially on confident-sounding but shallow
  * answers. Naming the failure mode explicitly measurably reduces it, and
- * "confident tone is not evidence" is the specific pattern that breaks SMART's
+ * "confident tone is not evidence" is the specific pattern that breaks HireKiwi's
  * promise, so it is called out by name.
  */
 export const NO_INFLATION = `

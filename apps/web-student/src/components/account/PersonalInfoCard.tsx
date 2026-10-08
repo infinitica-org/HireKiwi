@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@hirekiwi/ui';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { UpdatePersonalInfoRequestSchema } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import { fieldClass, primaryButtonClass, SettingsCard, StatusMessage } from './account-ui';
@@ -55,7 +55,7 @@ export function PersonalInfoCard() {
       await Promise.all([refetch(), queryClient.invalidateQueries({ queryKey: ['me'] })]);
       setSaved(true);
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not save your details. Try again.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not save your details. Try again.');
     } finally {
       setSaving(false);
     }

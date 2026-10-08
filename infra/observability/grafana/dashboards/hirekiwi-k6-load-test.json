@@ -11,8 +11,8 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": true,
-      "tags": ["smart"],
-      "title": "SMART dashboards",
+      "tags": ["hirekiwi"],
+      "title": "HireKiwi dashboards",
       "type": "dashboards"
     }
   ],
@@ -262,11 +262,11 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["smart", "k6", "load-test"],
+  "tags": ["hirekiwi", "k6", "load-test"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timezone": "browser",
-  "title": "SMART / k6 Load Test",
-  "uid": "smart-k6-load-test",
+  "title": "HireKiwi / k6 Load Test",
+  "uid": "hirekiwi-k6-load-test",
   "version": 1
 }

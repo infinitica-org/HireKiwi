@@ -41,7 +41,7 @@ const dataJson = JSON.stringify({ categories: CATEGORIES, templates: DATA }).rep
 );
 
 const html = `<!doctype html>
-<title>SMART Email Templates</title>
+<title>HireKiwi Email Templates</title>
 <style>
 :root{
   --ink:#1c1c1e; --paper:#faf9f7; --card:#ffffff; --border:#e4e2dd; --border-soft:#f1efec;
@@ -163,7 +163,7 @@ iframe{display:block; width:100%; border:none; background:#fff;}
 
 <div class="topbar">
   <div>
-    <span class="eyebrow">SMART · Transactional Email Review</span>
+    <span class="eyebrow">HireKiwi · Transactional Email Review</span>
     <h1>8 templates &times; 3 themes = 24 variants</h1>
   </div>
   <div class="meta">Static design-review build — same sample data per email, rendered three ways. Not yet wired into the live mailer.</div>
@@ -179,7 +179,7 @@ iframe{display:block; width:100%; border:none; background:#fff;}
     <p class="theme-blurb" id="theme-blurb"></p>
     <div class="inbox-bar">
       <div class="subject" id="inbox-subject"></div>
-      <div class="from">HireKiwi Platform &lt;support@smart.infinitica.com&gt;</div>
+      <div class="from">HireKiwi Platform &lt;support@hirekiwi.infinitica.com&gt;</div>
     </div>
     <div class="frame-wrap"><iframe id="frame" title="Email preview" scrolling="no"></iframe></div>
     <details class="source-toggle">
@@ -193,7 +193,7 @@ iframe{display:block; width:100%; border:none; background:#fff;}
 const DATA = ${dataJson};
 const THEME_BLURB = {
   classic: 'Formal letterhead layout: sharp corners, a bordered detail table, uppercase CTA — reads as an official institutional notice.',
-  minimal: "Mirrors SMART's own product theme: warm paper canvas, single teal accent, generous whitespace, rounded card, pill button.",
+  minimal: "Mirrors HireKiwi's own product theme: warm paper canvas, single teal accent, generous whitespace, rounded card, pill button.",
   genz: 'Bold rounded card with a gradient hero in the brand mark\\'s own teal gradient, pill CTA, casual-but-professional tone.',
 };
 const THEME_LABEL = { classic: 'Classic', minimal: 'Minimal', genz: 'Genz' };

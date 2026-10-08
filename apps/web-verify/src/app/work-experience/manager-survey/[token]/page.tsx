@@ -146,7 +146,7 @@ export default function ManagerSurveyPage({ params }: PageProps) {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">Manager Endorsement Request</h1>
-            <p className="text-xs text-white/50">SMART Profile Calibration & Verification</p>
+            <p className="text-xs text-white/50">HireKiwi Profile Calibration & Verification</p>
           </div>
         </div>
 

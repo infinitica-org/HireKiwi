@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { TierBadge } from '@hirekiwi/ui';
 import type { PublicCandidateProfileDto } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
@@ -71,7 +71,7 @@ export default function PublicCandidateProfilePage({ params }: PageProps) {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        if (isSmartApiError(err) && err.statusCode === 404) {
+        if (isHireKiwiApiError(err) && err.statusCode === 404) {
           setNotFound(true);
         } else {
           setError('Could not load this profile right now.');
@@ -88,8 +88,8 @@ export default function PublicCandidateProfilePage({ params }: PageProps) {
         <Icon path={ICON_PATH.searchX} className="h-10 w-10 text-[var(--text-muted)]" />
         <h1 className="text-lg font-semibold">No profile at this link</h1>
         <p className="text-sm text-[var(--text-muted)]">
-          This share link doesn&apos;t match a SMART candidate profile. Double-check the link with
-          whoever sent it to you.
+          This share link doesn&apos;t match a HireKiwi candidate profile. Double-check the link
+          with whoever sent it to you.
         </p>
       </div>
     );
@@ -114,7 +114,7 @@ export default function PublicCandidateProfilePage({ params }: PageProps) {
   const trackLabel = [profile.trackCategory === 'MBA' ? 'MBA' : null, profile.trackName]
     .filter(Boolean)
     .join(' · ');
-  const headline = trackLabel ? `${trackLabel} candidate` : 'SMART candidate';
+  const headline = trackLabel ? `${trackLabel} candidate` : 'HireKiwi candidate';
 
   return (
     <div className="mx-auto max-w-3xl pb-16">
@@ -138,7 +138,7 @@ export default function PublicCandidateProfilePage({ params }: PageProps) {
               {profile.skills.length > 0 ? (
                 <div className="flex items-center gap-1.5 rounded-full border border-[#14b8a6]/30 bg-[#14b8a6]/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[#00967c] dark:text-[#14b8a6]">
                   <Icon path={ICON_PATH.checkCircle} className="h-4 w-4" />
-                  SMART Verified
+                  HireKiwi Verified
                 </div>
               ) : null}
             </div>

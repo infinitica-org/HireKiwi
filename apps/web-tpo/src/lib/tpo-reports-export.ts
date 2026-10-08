@@ -152,7 +152,7 @@ export function exportVerificationByMajorCsv(rows: VerificationByMajorRow[]): vo
     ]),
   );
   const today = new Date().toISOString().slice(0, 10);
-  downloadCsv(`smart_verification_by_major_${today}.csv`, csv);
+  downloadCsv(`hirekiwi_verification_by_major_${today}.csv`, csv);
 }
 
 export function exportPlacementOpportunitiesCsv(summary: PlacementOpportunitiesSummary): void {
@@ -166,7 +166,7 @@ export function exportPlacementOpportunitiesCsv(summary: PlacementOpportunitiesS
     ],
   );
   const today = new Date().toISOString().slice(0, 10);
-  downloadCsv(`smart_placement_opportunities_${today}.csv`, csv);
+  downloadCsv(`hirekiwi_placement_opportunities_${today}.csv`, csv);
 }
 
 export function exportEmployerEngagementCsv(rows: EmployerEngagementRow[]): void {
@@ -175,5 +175,5 @@ export function exportEmployerEngagementCsv(rows: EmployerEngagementRow[]): void
     rows.map((r) => [r.employerName, r.activeOpenings, r.totalOpenings, r.applications]),
   );
   const today = new Date().toISOString().slice(0, 10);
-  downloadCsv(`smart_employer_engagement_${today}.csv`, csv);
+  downloadCsv(`hirekiwi_employer_engagement_${today}.csv`, csv);
 }

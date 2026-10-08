@@ -132,8 +132,8 @@ describe('ambient log context', () => {
   });
 
   it('mixes correlation into shared pino base options', () => {
-    const options = buildPinoBaseOptions({ serviceName: 'smart-api-core', environment: 'test' });
-    expect(options.base).toMatchObject({ service: 'smart-api-core', env: 'test' });
+    const options = buildPinoBaseOptions({ serviceName: 'hirekiwi-api-core', environment: 'test' });
+    expect(options.base).toMatchObject({ service: 'hirekiwi-api-core', env: 'test' });
     expect(options.redact).toMatchObject({ paths: expect.arrayContaining(['password']) });
     expect(options.formatters?.level?.('info')).toEqual({ level: 'info' });
 
@@ -157,7 +157,7 @@ describe('pino-http options', () => {
 
   it('attaches ALS context via customProps and keeps serializers tight', () => {
     const http = buildPinoHttpOptions({
-      serviceName: 'smart-api-core',
+      serviceName: 'hirekiwi-api-core',
       level: 'info',
       version: '0.1.0',
       environment: 'test',
@@ -193,7 +193,7 @@ describe('pino-http options', () => {
 
   it('adds pretty transport without changing redact paths', () => {
     const http = buildPinoHttpOptions({
-      serviceName: 'smart-api-core',
+      serviceName: 'hirekiwi-api-core',
       pretty: true,
     });
     expect(http.transport).toMatchObject({ target: 'pino-pretty' });
@@ -202,18 +202,18 @@ describe('pino-http options', () => {
 });
 
 describe('metric registry', () => {
-  it('exposes every metric under the smart_ prefix', async () => {
+  it('exposes every metric under the hirekiwi_ prefix', async () => {
     resetMetrics();
     rateLimitRejections.inc({ policy: 'STUDENT', role: 'STUDENT', route: '/v1/attempts' });
     tierDistribution.set({ track_code: 'TECH_FULLSTACK', level_number: '1', tier: 'GOLD' }, 0.18);
 
     const scraped = await collectMetrics();
 
-    expect(scraped).toContain('smart_rate_limit_rejections_total');
-    expect(scraped).toContain('smart_tier_distribution_ratio');
+    expect(scraped).toContain('hirekiwi_rate_limit_rejections_total');
+    expect(scraped).toContain('hirekiwi_tier_distribution_ratio');
     // A metric outside the prefix breaks the Grafana dashboards' selectors.
     for (const line of scraped.split('\n').filter((l) => l.startsWith('# TYPE'))) {
-      expect(line, line).toMatch(/^# TYPE smart_/u);
+      expect(line, line).toMatch(/^# TYPE hirekiwi_/u);
     }
   });
 
@@ -224,15 +224,15 @@ describe('metric registry', () => {
 
     const scraped = await collectMetrics();
 
-    expect(scraped).toContain('smart_tpo_batch_import_rows_total{outcome="imported"} 3');
-    expect(scraped).toContain('smart_tpo_batch_import_rows_total{outcome="skipped"} 1');
+    expect(scraped).toContain('hirekiwi_tpo_batch_import_rows_total{outcome="imported"} 3');
+    expect(scraped).toContain('hirekiwi_tpo_batch_import_rows_total{outcome="skipped"} 1');
     expect(scraped).not.toContain('email=');
   });
 
   it('keeps the kappa circuit-breaker gauges registered', async () => {
     const scraped = await collectMetrics();
-    expect(scraped).toContain('smart_inter_rater_kappa');
-    expect(scraped).toContain('smart_automated_scoring_paused');
+    expect(scraped).toContain('hirekiwi_inter_rater_kappa');
+    expect(scraped).toContain('hirekiwi_automated_scoring_paused');
   });
 });
 
@@ -271,7 +271,7 @@ describe('log event catalog', () => {
   });
 
   it('keeps nestjs-pino options on the redaction contract', () => {
-    const http = buildPinoHttpOptions({ serviceName: 'smart-api-core' });
+    const http = buildPinoHttpOptions({ serviceName: 'hirekiwi-api-core' });
     const paths = (http.redact as { paths: string[] }).paths;
     for (const path of [
       'req.headers.authorization',

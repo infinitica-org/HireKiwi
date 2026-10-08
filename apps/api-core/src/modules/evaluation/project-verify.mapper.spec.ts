@@ -50,6 +50,6 @@ describe('project-verify mapper', () => {
     });
     expect(dto.explanation).toBe('Clean write-up with tests in CI.');
     expect(dto.flags).toEqual(['SNAPSHOT_UNAVAILABLE']);
-    expect(dto.explanation).not.toContain('smart-verify');
+    expect(dto.explanation).not.toContain('hirekiwi-verify');
   });
 });

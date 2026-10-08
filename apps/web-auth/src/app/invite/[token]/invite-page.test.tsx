@@ -127,7 +127,7 @@ describe('InvitePage', () => {
       expect(screen.getByText(/Account Already Activated/i)).toBeDefined();
     });
 
-    expect(screen.getByRole('link', { name: /Sign In to SMART/i })).toBeDefined();
+    expect(screen.getByRole('link', { name: /Sign In to HireKiwi/i })).toBeDefined();
   });
 
   it('displays expired error message when link is invalid/expired', async () => {

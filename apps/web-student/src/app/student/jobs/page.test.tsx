@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import type { StudentJobCard } from '@hirekiwi/contracts';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -324,7 +324,7 @@ describe('Jobs page (Th6-379..386)', () => {
       studentJobs.list.mockResolvedValue(page([job(1)]));
       studentJobs.report
         .mockRejectedValueOnce(
-          new SmartApiError({
+          new HireKiwiApiError({
             error: 'server_error',
             message: 'Try later',
             statusCode: 500,

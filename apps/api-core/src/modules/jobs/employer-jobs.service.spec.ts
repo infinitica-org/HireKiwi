@@ -74,7 +74,6 @@ describe('EmployerJobsService (JOB-01)', () => {
           heldAt: null,
         })),
       },
-      universityEmployerAccess: { findUnique: vi.fn(async () => ({ status: 'ACTIVE' })) },
       skill: { findMany: vi.fn(async () => [{ id: 'skill-1', code: skillCode }]) },
       jobOpening: {
         findFirst: vi.fn(async () => jobRow()),
@@ -125,12 +124,9 @@ describe('EmployerJobsService (JOB-01)', () => {
     );
   });
 
-  it('refuses a campus that has not approved the company', async () => {
-    prisma.universityEmployerAccess.findUnique.mockResolvedValueOnce({ status: 'REVOKED' });
-    await expect(service.create(IDS.recruiter, createBody())).rejects.toMatchObject({
-      status: 403,
-    });
-    expect(prisma.jobOpening.create).not.toHaveBeenCalled();
+  it('creates a job for any campus without campus approval', async () => {
+    await service.create(IDS.recruiter, createBody());
+    expect(prisma.jobOpening.create).toHaveBeenCalledTimes(1);
   });
 
   it("scopes every read to the caller's company, so another company's job is a 404", async () => {
@@ -142,7 +138,7 @@ describe('EmployerJobsService (JOB-01)', () => {
     });
   });
 
-  it('publishes a draft only after verification, campus access and the ACTIVE_JOBS quota', async () => {
+  it('publishes a draft only after verification and the ACTIVE_JOBS quota', async () => {
     const job = await service.publish(IDS.recruiter, JOB);
     expect(billing.assertQuotaAvailable).toHaveBeenCalledWith(IDS.companyA, 'ACTIVE_JOBS');
     expect(prisma.jobOpening.update.mock.calls[0][0].data).toEqual({ status: 'OPEN' });
@@ -179,11 +175,8 @@ describe('EmployerJobsService (JOB-01)', () => {
     expect(prisma.jobOpening.delete).toHaveBeenCalledWith({ where: { id: JOB } });
   });
 
-  it('duplicates into a new draft for another approved campus', async () => {
+  it('duplicates into a new draft for another campus', async () => {
     await service.duplicate(IDS.recruiter, JOB, { institutionId: OTHER_CAMPUS });
-    expect(prisma.universityEmployerAccess.findUnique.mock.calls[0][0].where).toEqual({
-      institutionId_companyId: { institutionId: OTHER_CAMPUS, companyId: IDS.companyA },
-    });
     const data = prisma.jobOpening.create.mock.calls[0][0].data;
     expect(data).toMatchObject({ institutionId: OTHER_CAMPUS, companyId: IDS.companyA });
     expect(data.status).toBeUndefined();

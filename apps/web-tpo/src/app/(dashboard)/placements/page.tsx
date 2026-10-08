@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { JobOpeningDto, JobOpeningStatus } from '@hirekiwi/contracts';
 import {
   Briefcase,
@@ -30,7 +30,7 @@ import {
 import { inputClass, secondaryButtonClass, selectClass } from '../../../lib/tpo-ui';
 
 function errorMessage(caught: unknown, fallback: string): string {
-  if (isSmartApiError(caught) || caught instanceof Error) return caught.message;
+  if (isHireKiwiApiError(caught) || caught instanceof Error) return caught.message;
   return fallback;
 }
 

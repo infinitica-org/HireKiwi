@@ -8,7 +8,7 @@ description: System topology, Single High-End VPS deployment, Blue-Green zero-do
 HireKiwi is engineered as a clean **Modular Monolith** in TypeScript, maximizing developer velocity and transactional integrity while maintaining strict boundary separation.
 
 ```
-smart/
+hirekiwi/
 ├── apps/
 │   ├── api-core/       # Fastify + NestJS Modular Backend API Core (Port 3000)
 │   ├── web-student/    # Next.js 16 Student Assessment & Profile Portal (Port 3001)
@@ -57,16 +57,16 @@ HireKiwi operates on a dedicated **High-Performance Linux VPS (Ubuntu 24.04 LTS)
 
 | Slot / Project        | API Core                        | Web Applications (`web-*`)                      | CV Sidecar | Environment Binding                       |
 | :-------------------- | :------------------------------ | :---------------------------------------------- | :--------- | :---------------------------------------- |
-| **Prod Blue Slot**    | `3000`                          | `3001`–`3008` (Student, TPO, Admin, Verify, Auth, Company, Landing, Docs) | `8091`     | `becomesmart.online` (via Caddy upstream) |
+| **Prod Blue Slot**    | `3000`                          | `3001`–`3008` (Student, TPO, Admin, Verify, Auth, Company, Landing, Docs) | `8091`     | `hirekiwi.online` (via Caddy upstream) |
 | **Prod Green Slot**   | `3010`                          | `3011`–`3018` (Standby mirrors)                 | `8092`     | Standby / deploy target during releases   |
-| **Dev Isolated Slot** | `3020`                          | `3021`–`3028` (Dev mirrors)                     | `8093`     | `dev.becomesmart.online`                  |
+| **Dev Isolated Slot** | `3020`                          | `3021`–`3028` (Dev mirrors)                     | `8093`     | `dev.hirekiwi.online`                  |
 | **Internal Data**     | `5432`, `6432`, `6379`, `19092`, `9000` | Bound strictly to `127.0.0.1` (SSH Tunnel only) |
 
 ---
 
 ## 18.3 Automated Blue-Green Zero-Downtime Engine
 
-Deployments land via [`scripts/blue-green-deploy.sh`](file:///d:/Work's/Infinitica/smart/scripts/blue-green-deploy.sh):
+Deployments land via [`scripts/blue-green-deploy.sh`](file:///d:/Work's/Infinitica/hirekiwi/scripts/blue-green-deploy.sh):
 
 1. **State Inspection:** Script identifies currently active production color from `.deploy_state_prod`.
 2. **Target Inactive Slot:** Prepares candidate environment file (e.g., `.env.prod.green`).

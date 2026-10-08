@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { BatchMemberDto, BatchDto } from '@hirekiwi/contracts';
 import { TpoBentoPageHeader } from '../../../../../components/tpo-bento/TpoBentoPageHeader';
 import { BatchImportWizard } from '../../../../../components/batch-import-wizard';
@@ -50,7 +50,7 @@ import {
 } from 'lucide-react';
 
 function safeMsg(err: unknown, fallback: string): string {
-  if (isSmartApiError(err)) return err.message;
+  if (isHireKiwiApiError(err)) return err.message;
   if (err instanceof Error) return err.message;
   return fallback;
 }

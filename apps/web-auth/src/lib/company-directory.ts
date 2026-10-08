@@ -1,5 +1,5 @@
 import { API_PREFIX } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { apiClient } from './api';
 
 /**
@@ -71,7 +71,7 @@ export async function searchCompanies(
       items: items.map(parseResult).filter((r): r is CompanySearchResult => r !== null),
     };
   } catch (err) {
-    if (isSmartApiError(err) && (err.statusCode === 404 || err.statusCode === 501)) {
+    if (isHireKiwiApiError(err) && (err.statusCode === 404 || err.statusCode === 501)) {
       return { available: false };
     }
     throw err;

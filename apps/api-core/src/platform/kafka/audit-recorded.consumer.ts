@@ -1,6 +1,6 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { AuditRecordedEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { AuditRecordedEventSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
 import type { Prisma } from '../../generated/prisma/index.js';
 import { env } from '../config/env.js';
@@ -20,7 +20,7 @@ export class AuditRecordedConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.auditRecorded,
+        topic: HIREKIWI_TOPICS.auditRecorded,
         module: 'platform',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {

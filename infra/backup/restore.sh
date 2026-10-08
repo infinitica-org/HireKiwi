@@ -6,7 +6,7 @@
 #
 # Default = the monthly drill: take the newest complete backup, verify the
 # checksums in its manifest, decrypt, restore into a scratch database
-# (smart_restore_check), require the manifest's row counts and latest
+# (hirekiwi_restore_check), require the manifest's row counts and latest
 # migration to match exactly, then drop the scratch database. Exits non-zero
 # on any mismatch.
 #
@@ -21,7 +21,7 @@ set -Eeuo pipefail
 
 RUN="latest"
 TIER="daily"
-TARGET_DB="smart_restore_check"
+TARGET_DB="hirekiwi_restore_check"
 KEEP=false
 WITH_OBJECTS=false
 RESTORE_OBJECTS=false
@@ -44,7 +44,7 @@ done
 IDENTITY="${BACKUP_AGE_IDENTITY:-/run/secrets/backup_age_key}"
 ENV_NAME="${BACKUP_ENV_NAME:-local}"
 METRICS_DIR="${BACKUP_METRICS_DIR:-/metrics}"
-MINIO_SOURCE="${BACKUP_MINIO_SOURCE:-minio:${MINIO_BUCKET:-smart}}"
+MINIO_SOURCE="${BACKUP_MINIO_SOURCE:-minio:${MINIO_BUCKET:-hirekiwi}}"
 TIER_ROOT="${BACKUP_DEST%/}/${ENV_NAME}/${TIER}"
 
 log() { echo "restore[${ENV_NAME}]: $*"; }
@@ -163,10 +163,10 @@ fi
 if [[ "$TARGET_DB" != "$PGDATABASE" ]]; then
   mkdir -p "$METRICS_DIR"
   {
-    echo '# HELP smart_backup_last_restore_test_timestamp_seconds Unix time of the last passing restore drill.'
-    echo '# TYPE smart_backup_last_restore_test_timestamp_seconds gauge'
-    echo "smart_backup_last_restore_test_timestamp_seconds{env=\"${ENV_NAME}\"} $(date -u +%s)"
-  } >"${METRICS_DIR}/.smart_backup_restore.prom.tmp"
-  mv "${METRICS_DIR}/.smart_backup_restore.prom.tmp" "${METRICS_DIR}/smart_backup_restore.prom"
+    echo '# HELP hirekiwi_backup_last_restore_test_timestamp_seconds Unix time of the last passing restore drill.'
+    echo '# TYPE hirekiwi_backup_last_restore_test_timestamp_seconds gauge'
+    echo "hirekiwi_backup_last_restore_test_timestamp_seconds{env=\"${ENV_NAME}\"} $(date -u +%s)"
+  } >"${METRICS_DIR}/.hirekiwi_backup_restore.prom.tmp"
+  mv "${METRICS_DIR}/.hirekiwi_backup_restore.prom.tmp" "${METRICS_DIR}/hirekiwi_backup_restore.prom"
 fi
 log "PASS: ${SOURCE} restored and verified$([[ "$KEEP" == "true" ]] && echo " (kept '${TARGET_DB}')")"

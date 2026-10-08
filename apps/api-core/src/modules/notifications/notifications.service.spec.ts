@@ -27,7 +27,7 @@ describe('NotificationsService', () => {
     const service = new NotificationsService(prisma as never, emailQueue as never);
     const dto = await service.notifyOpportunityShortlisted({
       userId,
-      email: 'student@smart.local',
+      email: 'student@hirekiwi.local',
       fullName: 'Alex Student',
       companyName: 'Infinitica Labs',
       roleTitle: 'Backend Engineer',
@@ -67,7 +67,7 @@ describe('NotificationsService', () => {
 
       const dto = await service.notifyStageChange({
         userId: randomUUID(),
-        email: 'student@smart.local',
+        email: 'student@hirekiwi.local',
         fullName: 'Alex Student',
         companyName: 'Infinitica Labs',
         roleTitle: 'Backend Engineer',
@@ -109,7 +109,7 @@ describe('NotificationsService', () => {
 
     const dto = await service.notifySkillInferenceLevelChange({
       userId,
-      email: 'student@smart.local',
+      email: 'student@hirekiwi.local',
       fullName: 'Alex Student',
       skillCode: 'SQL_QUERY_OPTIMIZATION',
       previousLevel: 'BEGINNER',
@@ -135,7 +135,7 @@ describe('NotificationsService', () => {
     });
     const params = () => ({
       userId: randomUUID(),
-      email: 'student@smart.local',
+      email: 'student@hirekiwi.local',
       fullName: 'Alex Student',
       companyName: 'Acme',
       roleTitle: 'Engineer',
@@ -250,7 +250,7 @@ describe('NotificationsService', () => {
       const keyOf = () => prisma.notification.create.mock.calls[0]?.[0].data.dedupeKey;
       return { prisma, emailQueue, service, keyOf };
     }
-    const student = { userId: 'u-1', email: 'student@smart.local', fullName: 'Alex Student' };
+    const student = { userId: 'u-1', email: 'student@hirekiwi.local', fullName: 'Alex Student' };
 
     it('keys a verification result on its Kafka event id', async () => {
       const { service, keyOf } = harness();

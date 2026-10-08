@@ -13,7 +13,7 @@ import { mean, roundTo, standardDeviation } from '../statistics.js';
  *
  *     Cut_tier = mu_panel  +/-  sigma_panel
  *
- * That sigma is not a footnote — it is the mechanism by which SMART is honest
+ * That sigma is not a footnote — it is the mechanism by which HireKiwi is honest
  * about its own precision, and it is why a candidate can be told "borderline
  * Gold/Silver" instead of being silently rounded one way or the other.
  *
@@ -63,7 +63,7 @@ export function deriveCutScore(
           required: MIN_PANELISTS,
           message:
             `Cannot derive a ${tier} cut score from ${panelistEstimates.length} panelist estimate(s). ` +
-            `SMART requires at least ${MIN_PANELISTS} practitioners (recommended ${RECOMMENDED_PANELISTS}).`,
+            `HireKiwi requires at least ${MIN_PANELISTS} practitioners (recommended ${RECOMMENDED_PANELISTS}).`,
         }),
       );
     }

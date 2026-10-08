@@ -5,7 +5,7 @@ description: Complete platform glossary, domain terminology, acronym index, stat
 
 ## 30.1 PRD Glossary & Core Terminology
 
-Authentic definitions synthesised from `smart.ai_PRD_Functional_and_Non-Functional_Requirements.xlsx` and platform foundations:
+Authentic definitions synthesised from `hirekiwi.ai_PRD_Functional_and_Non-Functional_Requirements.xlsx` and platform foundations:
 
 | Term | Enterprise Definition |
 | :--- | :-------------------- |
@@ -57,13 +57,13 @@ Authentic definitions synthesised from `smart.ai_PRD_Functional_and_Non-Function
 
 | HTTP Status | Error Code | Description | User Remedy |
 | :---------- | :--------- | :---------- | :---------- |
-| `401` | `SMART_401_AUTH_EXPIRED` | JWT bearer token has expired or is invalid. | Re-authenticate via institutional SSO. |
-| `403` | `SMART_403_TENANT_FORBIDDEN` | User does not hold permissions within target organization tenant. | Contact campus or employer organization admin. |
-| `403` | `SMART_403_QUOTA_EXCEEDED` | Employer has exhausted plan entitlement for jobs, searches, or messages. | Upgrade employer subscription plan (`BIL-01.06`). |
-| `422` | `SMART_422_COMPETENCY_FLOOR` | Candidate does not satisfy mandatory competency floor for requisition. | Complete recommended practice project or defense. |
-| `422` | `SMART_422_INVALID_DOCUMENT` | Uploaded file is an offer/joining letter rather than completion certificate. | Upload official relieving or internship completion letter. |
-| `429` | `SMART_429_RATE_LIMITED` | Sliding window rate limit exceeded on search or API endpoint. | Back off requests for 60 seconds. |
-| `503` | `SMART_503_INFERENCE_DEGRADED` | External LLM unavailable; deterministic fallback scoring active. | System operating in deterministic fallback mode. |
+| `401` | `HIREKIWI_401_AUTH_EXPIRED` | JWT bearer token has expired or is invalid. | Re-authenticate via institutional SSO. |
+| `403` | `HIREKIWI_403_TENANT_FORBIDDEN` | User does not hold permissions within target organization tenant. | Contact campus or employer organization admin. |
+| `403` | `HIREKIWI_403_QUOTA_EXCEEDED` | Employer has exhausted plan entitlement for jobs, searches, or messages. | Upgrade employer subscription plan (`BIL-01.06`). |
+| `422` | `HIREKIWI_422_COMPETENCY_FLOOR` | Candidate does not satisfy mandatory competency floor for requisition. | Complete recommended practice project or defense. |
+| `422` | `HIREKIWI_422_INVALID_DOCUMENT` | Uploaded file is an offer/joining letter rather than completion certificate. | Upload official relieving or internship completion letter. |
+| `429` | `HIREKIWI_429_RATE_LIMITED` | Sliding window rate limit exceeded on search or API endpoint. | Back off requests for 60 seconds. |
+| `503` | `HIREKIWI_503_INFERENCE_DEGRADED` | External LLM unavailable; deterministic fallback scoring active. | System operating in deterministic fallback mode. |
 
 ---
 
@@ -83,7 +83,7 @@ Authentic definitions synthesised from `smart.ai_PRD_Functional_and_Non-Function
 
 ## 30.5 Sprint 7 Epic & Story Index
 
-Tracked in [`SMART_Sprint7_Enterprise_Hardening_Tickets.xlsx`](file:///d:/Work's/Infinitica/smart/SMART_Sprint7_Enterprise_Hardening_Tickets.xlsx):
+Tracked in [`HIREKIWI_Sprint7_Enterprise_Hardening_Tickets.xlsx`](file:///d:/Work's/Infinitica/hirekiwi/HIREKIWI_Sprint7_Enterprise_Hardening_Tickets.xlsx):
 
 - **S7-VV-01:** University IdP SAML/OIDC Authentication
 - **S7-VV-02:** Single High-End VPS Blue-Green Zero-Downtime Deployment

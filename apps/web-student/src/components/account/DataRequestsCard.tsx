@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useQuery } from '@hirekiwi/ui';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   CreateDataRequestSchema,
   type DataExportDownload,
@@ -38,7 +38,7 @@ export function DataRequestsCard() {
       setDownload(links);
       window.open(links.bundleUrl, '_blank', 'noopener');
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not open this export.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not open this export.');
     }
   }
 
@@ -58,7 +58,7 @@ export function DataRequestsCard() {
       setSubmitted(true);
       await refetch();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not submit your request. Try again.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not submit your request. Try again.');
     } finally {
       setBusy(false);
     }

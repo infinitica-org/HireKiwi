@@ -79,7 +79,7 @@ describe('AuthService.registerStudent', () => {
     ).rejects.toThrow(UnprocessableEntityException);
   });
 
-  it('rejects registration when the university domain is not registered on SMART', async () => {
+  it('rejects registration when the university domain is not registered on HireKiwi', async () => {
     const prisma = {
       institution: { findMany: vi.fn(async () => [{ id: randomUUID(), domain: 'psgtech.ac.in' }]) },
     };

@@ -29,7 +29,7 @@ import { scoreOpeningForStudent, type OpeningFit } from '../matching/opening-fit
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { PublicProfileService } from '../public-profile/public-profile.service.js';
 import {
-  companyVisibleWhere,
+  studentScopeWhere,
   isAcceptingApplications,
   isCompanyVerified,
   isJobAllowedForStudent,
@@ -435,9 +435,8 @@ export class ApplicationService {
     const job = await this.prisma.jobOpening.findFirst({
       where: {
         id: jobId,
-        institutionId: student.institutionId,
         status: { in: ['OPEN', 'CLOSED'] },
-        AND: [companyVisibleWhere(student.institutionId)],
+        AND: [studentScopeWhere(student.institutionId)],
       },
       select: JOB_SELECT,
     });

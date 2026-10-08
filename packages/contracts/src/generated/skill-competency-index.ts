@@ -1,6 +1,6 @@
 /**
  * AUTO-GENERATED from tools/content-pipeline/src/skill-registry-data.ts
- * Regenerate: pnpm --filter @smart/content-pipeline codegen:competencies
+ * Regenerate: pnpm --filter @hirekiwi/content-pipeline codegen:competencies
  * DO NOT EDIT MANUALLY.
  */
 import type { SkillBlueprint } from '../domain/evidence/skill-blueprint.js';
@@ -5671,7 +5671,7 @@ export const SKILL_COMPETENCY_INDEX: Readonly<Record<string, SkillBlueprint>> = 
       {
         competencyId: '3a8af3d1-5416-403f-ade3-8a9747fe2cd2',
         skillCode: 'BLOCKCHAIN_SMART_CONTRACT_DEVELOPMENT',
-        capability: 'Smart contract languages (Solidity/Rust)',
+        capability: 'HireKiwi contract languages (Solidity/Rust)',
         observableBehaviours: [
           'Explains smart contract languages (solidity/rust) accurately under assessment conditions',
           'Applies smart contract languages (solidity/rust) to bounded practical problems',

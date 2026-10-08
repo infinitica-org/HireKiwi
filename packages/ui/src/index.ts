@@ -5,7 +5,7 @@
  * step here; the four web apps compile this with their own bundler.
  *
  * Shadcn primitives live under subpaths (`@hirekiwi/ui/button`, `@hirekiwi/ui/sidebar`)
- * so they do not collide with the SMART Button / Card / Alert used by existing
+ * so they do not collide with the HireKiwi Button / Card / Alert used by existing
  * portals. Shared theme + `bg-background` / `text-foreground` tokens ship via
  * `@hirekiwi/ui/styles.css`.
  *
@@ -27,8 +27,6 @@ export {
   type BrandLoadingScreenProps,
 } from './components/brand-loading-screen';
 export const HIREKIWI_HTML_CLASS = 'dark';
-/** Apply on `<html>` in every portal so class-based `dark:` utilities match the product theme. */
-export const SMART_HTML_CLASS = HIREKIWI_HTML_CLASS;
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './components/button';
 export {
   TierBadge,
@@ -101,15 +99,10 @@ export {
 export * from './navigation/role-nav-config';
 export {
   HireKiwiLogo,
-  SmartLogo,
   type HireKiwiLogoKind,
-  type SmartLogoKind,
   type HireKiwiLogoProps,
-  type SmartLogoProps,
   type HireKiwiLogoTone,
-  type SmartLogoTone,
   HIREKIWI_MARK_TEAL,
-  SMART_MARK_TEAL,
 } from './components/hirekiwi-logo';
 export { SignOutButton, type SignOutButtonProps } from './components/sign-out-button';
 export { SessionBootstrap } from './session-bootstrap';

@@ -40,7 +40,7 @@
 
 ## 1. System Vision & Core Philosophy
 
-SMART is an **Intellectual Talent Network** and role-specific readiness verification platform. It operates as the verified infrastructure layer connecting candidates, academic institutions, and employers. Instead of trusting unverified resumes or opaque aptitude scores, SMART ensures every skill claim is backed by unfakeable evidence (repositories, vouchers, and proctored tasks), assessed against real competency requirements for specific job tracks, and certified on a criterion-referenced **Gold / Silver / Bronze** grid:
+HireKiwi is an **Intellectual Talent Network** and role-specific readiness verification platform. It operates as the verified infrastructure layer connecting candidates, academic institutions, and employers. Instead of trusting unverified resumes or opaque aptitude scores, HireKiwi ensures every skill claim is backed by unfakeable evidence (repositories, vouchers, and proctored tasks), assessed against real competency requirements for specific job tracks, and certified on a criterion-referenced **Gold / Silver / Bronze** grid:
 
 - **Evidence-backed & unfakeable**: Profiles and claims anchored by verified projects, manager vouchers, and server-authoritative assessments.
 - **Transparent** about its own methodology and scoring anchors.
@@ -51,11 +51,11 @@ SMART is an **Intellectual Talent Network** and role-specific readiness verifica
 
 ### 1.1 Product Statement
 
-SMART is an Intellectual Talent Network that certifies role-specific readiness against verified evidence, issues tamper-proof cryptographic credentials, and connects verified candidates directly to high-fit job opportunities.
+HireKiwi is an Intellectual Talent Network that certifies role-specific readiness against verified evidence, issues tamper-proof cryptographic credentials, and connects verified candidates directly to high-fit job opportunities.
 
 ### 1.2 Placement Infrastructure & Talent Network Positioning
 
-SMART sits directly between academia, industry, and enterprise talent pools. It certifies readiness per specialization track based on real competencies that hiring managers demand, powering both institutional campus placements and enterprise workforce mobility. The ultimate metric for SMART is **Placement Conversion & Retention Rate** — tracked via whether certified candidates achieve higher interview-to-offer rates and on-the-job performance than non-certified baselines.
+HireKiwi sits directly between academia, industry, and enterprise talent pools. It certifies readiness per specialization track based on real competencies that hiring managers demand, powering both institutional campus placements and enterprise workforce mobility. The ultimate metric for HireKiwi is **Placement Conversion & Retention Rate** — tracked via whether certified candidates achieve higher interview-to-offer rates and on-the-job performance than non-certified baselines.
 
 ### 1.3 Core Values
 
@@ -82,9 +82,9 @@ To ensure high security while protecting backend databases from token validation
 #### 1.4.2 Dual API Access & External Webhook Infrastructure
 
 - **Internal Platform APIs (90% of traffic)**: Protected by JWT claims, CORS policies, and CSRF protection. Serves Next.js frontend applications (`web-student`, `web-tpo`, `web-admin`).
-- **Public Verification Endpoint**: `GET /api/v1/verify/:certificate_id` (`verify.smart.com`) is **publicly accessible** without authentication, enforced by Redis IP sliding-window rate limiters (20 req/min).
-- **B2B API Key Access (`X-SMART-API-KEY`)**: Dedicated, rate-limited REST endpoints for institutional ERPs and recruiting partners to query candidate readiness scorecards and verified badge metadata.
-- **Outbound Webhooks Engine**: Real-time HTTP event dispatchers (`smart.certificate.issued`, `smart.placement.matched`) sending cryptographically signed HMAC-SHA256 payloads to registered university & calibration employer endpoints.
+- **Public Verification Endpoint**: `GET /api/v1/verify/:certificate_id` (`verify.hirekiwi.com`) is **publicly accessible** without authentication, enforced by Redis IP sliding-window rate limiters (20 req/min).
+- **B2B API Key Access (`X-HireKiwi-API-KEY`)**: Dedicated, rate-limited REST endpoints for institutional ERPs and recruiting partners to query candidate readiness scorecards and verified badge metadata.
+- **Outbound Webhooks Engine**: Real-time HTTP event dispatchers (`hirekiwi.certificate.issued`, `hirekiwi.placement.matched`) sending cryptographically signed HMAC-SHA256 payloads to registered university & calibration employer endpoints.
 
 ---
 
@@ -92,13 +92,13 @@ To ensure high security while protecting backend databases from token validation
 
 > **Architecture Directives:**
 >
-> 1. **Orion Decoupling:** Orion RAG is developed separately by a parallel team. SMART does not depend on, and does not wait for, Orion APIs.
-> 2. **Claude AI Engine & Gemini Fallback:** SMART directly integrates with **Anthropic's Claude 5 Sonnet & Claude 4.7 API** as its core intelligence layer, backed by automatic failover to the **Google Gemini API (Gemini 2.5 Pro / Flash)**.
-> 3. **Native Vector RAG:** SMART manages its own RAG vector store using Postgres **`pgvector`** (or ChromaDB in local development) to store domain competency blueprints, Angoff rubrics, and evaluation benchmarks.
+> 1. **Orion Decoupling:** Orion RAG is developed separately by a parallel team. HireKiwi does not depend on, and does not wait for, Orion APIs.
+> 2. **Claude AI Engine & Gemini Fallback:** HireKiwi directly integrates with **Anthropic's Claude 5 Sonnet & Claude 4.7 API** as its core intelligence layer, backed by automatic failover to the **Google Gemini API (Gemini 2.5 Pro / Flash)**.
+> 3. **Native Vector RAG:** HireKiwi manages its own RAG vector store using Postgres **`pgvector`** (or ChromaDB in local development) to store domain competency blueprints, Angoff rubrics, and evaluation benchmarks.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│               SMART AI ENGINE (CLAUDE + GEMINI FALLBACK)                    │
+│               HireKiwi AI ENGINE (CLAUDE + GEMINI FALLBACK)                    │
 │                                                                             │
 │  ┌──────────────────────┐    ┌──────────────────────┐    ┌───────────────┐  │
 │  │     Claude 4.7       │    │   Claude 5 Sonnet    │    │   Postgres /  │  │
@@ -129,18 +129,18 @@ To ensure high security while protecting backend databases from token validation
 ## 3. System Architecture & Scalability (1M Scale)
 
 > **Monorepo & Services Blueprints:**  
-> • For complete file-level repository structure and stack details, see [REPOSITORY_STRUCTURE.md](file:///mnt/Data/Work%27s/Grad360%20/smart/REPOSITORY_STRUCTURE.md).  
-> • For decoupled microservices, Kafka interfaces, and developer work item assignments, see [SERVICES_VIEW.md](file:///mnt/Data/Work%27s/Grad360%20/smart/SERVICES_VIEW.md).
+> • For complete file-level repository structure and stack details, see [REPOSITORY_STRUCTURE.md](file:///mnt/Data/Work%27s/Grad360%20/hirekiwi/REPOSITORY_STRUCTURE.md).  
+> • For decoupled microservices, Kafka interfaces, and developer work item assignments, see [SERVICES_VIEW.md](file:///mnt/Data/Work%27s/Grad360%20/hirekiwi/SERVICES_VIEW.md).
 
 Target Capacity: **1 Million Active Candidates per Placement Season** with a peak concurrency of **50,000 active test takers**.
 
 ### 3.0 Infrastructure Hosting Topology — Unified High-End Linux VPS with Blue-Green Deployment
 
-> **Infrastructure Directive:** SMART is deployed on a dedicated, high-performance Linux VPS (Ubuntu 24.04: 32 vCPU, 128 GB RAM, NVMe storage), hosting both Production and Development in strictly isolated Docker Compose projects with automated **Blue-Green Zero-Downtime Deployment**.
+> **Infrastructure Directive:** HireKiwi is deployed on a dedicated, high-performance Linux VPS (Ubuntu 24.04: 32 vCPU, 128 GB RAM, NVMe storage), hosting both Production and Development in strictly isolated Docker Compose projects with automated **Blue-Green Zero-Downtime Deployment**.
 >
 > - **Unified Host:** Single high-end VPS running Caddy reverse proxy on host ports 80/443.
-> - **Production Slice (`becomesmart.online`):** Managed via `smart-prod-blue` and `smart-prod-green` slices. Caddy dynamically shifts live traffic between Blue and Green slots upon health check pass (`GET /health`), ensuring 0 ms downtime and instant rollback capability.
-> - **Development Slice (`dev.becomesmart.online`):** Managed via `smart-dev`, completely isolated on its own network and separate PostgreSQL/Redis volumes on the same host.
+> - **Production Slice (`hirekiwi.online`):** Managed via `hirekiwi-prod-blue` and `hirekiwi-prod-green` slices. Caddy dynamically shifts live traffic between Blue and Green slots upon health check pass (`GET /health`), ensuring 0 ms downtime and instant rollback capability.
+> - **Development Slice (`dev.hirekiwi.online`):** Managed via `hirekiwi-dev`, completely isolated on its own network and separate PostgreSQL/Redis volumes on the same host.
 > - **Network Isolation:** PostgreSQL 16 (5432), Redis 7 (6379), Redpanda (19092), and MinIO (9000) are strictly bound to `127.0.0.1` and accessible only via SSH tunnels (`ssh -L`).
 > - **Edge Protection:** Cloudflare Edge Anycast DNS, TLS 1.3, WAF, and DDoS mitigation ahead of Caddy.
 > - **AWS Cloud-Migration Bridge:** Built following 12-factor cloud principles. All database connections, object storage, and event streams use decoupled environment variables (`DATABASE_URL`, `REDIS_URL`, `KAFKA_BROKERS`, `S3_ENDPOINT`), enabling a seamless zero-code-change migration to AWS (ECS Fargate, RDS PostgreSQL Multi-AZ with pgvector, ElastiCache, MSK, and S3).
@@ -208,12 +208,12 @@ Target Capacity: **1 Million Active Candidates per Placement Season** with a pea
 | **User Login & Token Refresh** | **Synchronous (HTTP)** | < 150 ms | NestJS Auth REST API | Immediate session setup required for UI render. |
 | **Fetch Next L1 MCQ Item** | **Synchronous (HTTP)** | < 50 ms | Redis Warm Cache (`items:form:*`) | Candidate test player speed; zero DB query hit. |
 | **Save L1 Answer Draft** | **Synchronous (HTTP)** | < 30 ms | Redis Session Hash (`session:assessment:*`)| Immediate answer draft receipt response. |
-| **Public Certificate Lookup** | **Synchronous (HTTP)** | < 80 ms | Redis Verification Cache (`verify:cert:*`)| Instant load on `verify.smart.com` for employers. |
+| **Public Certificate Lookup** | **Synchronous (HTTP)** | < 80 ms | Redis Verification Cache (`verify:cert:*`)| Instant load on `verify.hirekiwi.com` for employers. |
 | **L2 Code / SQL Sandbox Execution**| **Asynchronous (BullMQ)** | 1.0 – 3.0 sec | `bull:queue:sandbox_execution` | Isolated Docker execution prevents CPU starvation on API workers. Returns `job_id` for polling/WebSocket. |
 | **L3 Audio Spoken Response Upload** | **Asynchronous (Direct Cloudflare R2)** | 500 ms (Upload) | Cloudflare R2 Presigned URL | Direct client-to-R2 upload bypasses backend API payload overhead. |
-| **Claude 5 Sonnet BARS Audio Grading**| **Asynchronous (BullMQ + Kafka)** | 2.0 – 6.0 sec | `bull:queue:audio_evaluation` & `smart.eval.requested` | LLM inference latency budget exceeds HTTP sync timeout. |
+| **Claude 5 Sonnet BARS Audio Grading**| **Asynchronous (BullMQ + Kafka)** | 2.0 – 6.0 sec | `bull:queue:audio_evaluation` & `hirekiwi.eval.requested` | LLM inference latency budget exceeds HTTP sync timeout. |
 | **PDF Certificate Generation** | **Asynchronous (BullMQ)** | 1.5 – 4.0 sec | `bull:queue:pdf_generation` | Puppeteer PDF render & Cloudflare R2 upload runs asynchronously post-scoring. |
-| **Candidate-JD Vector Matching** | **Asynchronous (Kafka Event)** | 1.0 – 3.0 sec | Kafka Topic `smart.placement.matched` | Postgres `pgvector` batch matrix computation runs in background. |
+| **Candidate-JD Vector Matching** | **Asynchronous (Kafka Event)** | 1.0 – 3.0 sec | Kafka Topic `hirekiwi.placement.matched` | Postgres `pgvector` batch matrix computation runs in background. |
 
 ---
 
@@ -229,7 +229,7 @@ Target Capacity: **1 Million Active Candidates per Placement Season** with a pea
   3. **LLM Proxy Engine**: Enforces token-per-minute (TPM) and request-per-minute (RPM) bucket constraints on the Anthropic Claude API.
 
 ### 4.2 Standard HTTP Rate Limit Headers
-Every response returned by the SMART API MUST include the following headers:
+Every response returned by the HireKiwi API MUST include the following headers:
 ```http
 X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 59
@@ -303,7 +303,7 @@ When a client exceeds their rate limit, the API immediately returns HTTP status 
 | **Auth Token & User Session**   | `auth:token:{user_id}` (String)             | Decoded JWT claims, institution ID, assigned track, RBAC permissions.                 | 15 Minutes         | ~800 Bytes       | **~40 MB** (50,000 active user tokens)       |
 | **L1 Active Item Bank Forms**   | `items:form:{track_id}:{level_id}` (String) | Pre-compiled active item sets per track form (eliminates DB joins during test start). | 24 Hours           | ~45 KB           | **~4.5 MB** (100 track/level active forms)   |
 | **Cut Scores & Angoff Rubrics** | `cut_scores:track:{track_id}` (Hash)        | Panel cut scores ($\mu, \sigma$), BARS rubrics per competency.                        | 7 Days             | ~15 KB           | **~0.3 MB** (20 track/level matrices)        |
-| **Public Certificate Payload**  | `verify:cert:{certificate_id}` (String)     | Cached JSON payload for public verification (`verify.smart.com/cert/<UUID>`).         | 1 Hour             | ~4 KB            | **~80 MB** (20,000 concurrent verifications) |
+| **Public Certificate Payload**  | `verify:cert:{certificate_id}` (String)     | Cached JSON payload for public verification (`verify.hirekiwi.com/cert/<UUID>`).      | 1 Hour             | ~4 KB            | **~80 MB** (20,000 concurrent verifications) |
 | **Company JD Vector Cache**     | `match:company:{jd_id}` (String)            | Parsed JD threshold vectors & embedding representation.                               | 30 Minutes         | ~12 KB           | **~12 MB** (1,000 active JDs)                |
 | **BullMQ Async Worker Queues**  | `bull:queue:{queue_name}` (Stream)          | Redis job queue buffers for L2 code sandbox and L3 audio evaluation jobs.             | Managed by Queue   | Variable         | **~50 MB** (Buffered background jobs)        |
 
@@ -316,13 +316,13 @@ When a client exceeds their rate limit, the API immediately returns HTTP status 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                      EVENT-DRIVEN CACHE INVALIDATION                        │
 │                                                                             │
-│  [Candidate Submits Test] ──▶ Kafka Event: smart.assessment.submitted       │
+│  [Candidate Submits Test] ──▶ Kafka Event: hirekiwi.assessment.submitted       │
 │                                           │                                 │
 │                                           ▼                                 │
 │                                 DEL session:assessment:{id}                 │
 │                                 DEL student:results:{student_id}            │
 │                                                                             │
-│  [Admin Updates Cut Score]──▶ Kafka Event: smart.track.updated              │
+│  [Admin Updates Cut Score]──▶ Kafka Event: hirekiwi.track.updated              │
 │                                           │                                 │
 │                                           ▼                                 │
 │                                 DEL cut_scores:track:{track_id}             │
@@ -332,10 +332,10 @@ When a client exceeds their rate limit, the API immediately returns HTTP status 
 1. **Passive Time-To-Live (TTL) Eviction**:
    - Every key stored in Redis MUST carry an explicit TTL. Keys without expiration are explicitly forbidden to prevent memory leaks.
 2. **Event-Driven Proactive Invalidation (Kafka → Redis Handler)**:
-   - **On Assessment Submission (`smart.assessment.submitted`)**: Instantly invalidates candidate active session `DEL session:assessment:{attempt_id}` and clears stale dashboard cache.
-   - **On Certificate Issuance (`smart.certificate.issued`)**: Purges stale candidate scorecards and updates `verify:cert:{certificate_id}` with new tier trail.
-   - **On Cut Score / Rubric Calibration Update (`smart.track.updated`)**: Triggers pattern invalidation `DEL cut_scores:track:{track_id}` across all API workers.
-   - **On Student Retest Approval (`smart.student.retested`)**: Flushes student scorecard cache `DEL student:results:{student_id}`.
+   - **On Assessment Submission (`hirekiwi.assessment.submitted`)**: Instantly invalidates candidate active session `DEL session:assessment:{attempt_id}` and clears stale dashboard cache.
+   - **On Certificate Issuance (`hirekiwi.certificate.issued`)**: Purges stale candidate scorecards and updates `verify:cert:{certificate_id}` with new tier trail.
+   - **On Cut Score / Rubric Calibration Update (`hirekiwi.track.updated`)**: Triggers pattern invalidation `DEL cut_scores:track:{track_id}` across all API workers.
+   - **On Student Retest Approval (`hirekiwi.student.retested`)**: Flushes student scorecard cache `DEL student:results:{student_id}`.
 3. **Cache-Aside (Lazy Loading) Read Pattern**:
    - API checks Redis first ──▶ If hit (95%+ target ratio), return RAM payload.
    - If miss ──▶ Fetch from PostgreSQL ──▶ Populate Redis with standard TTL ──▶ Return payload.
@@ -509,7 +509,7 @@ CREATE TABLE claude_evaluation_audits (
 
 ## 6. The Level × Tier Scoring Engine
 
-SMART evaluates candidates on a **2-Axis Grid**:
+HireKiwi evaluates candidates on a **2-Axis Grid**:
 
 ```
                        TIER (Performance Quality)
@@ -581,7 +581,7 @@ To prevent hitting Anthropic API limits, all LLM traffic routes through the `Cla
 
 ```json
 {
-  "system_prompt": "You are the SMART BARS Evaluation Engine. Evaluate the candidate's spoken transcript against the anchor rubrics for the given competency. Return JSON only.",
+  "system_prompt": "You are the HireKiwi BARS Evaluation Engine. Evaluate the candidate's spoken transcript against the anchor rubrics for the given competency. Return JSON only.",
   "competency": "Domain E: Technical Communication & Trade-offs",
   "anchors": {
     "GOLD": "Explicitly articulates trade-offs, identifies failure modes, states assumptions clearly.",
@@ -680,7 +680,7 @@ Taken once by all MBA students: Business Communication, Quantitative Data Interp
 ### 10.1 JD NLP Ingestion Pipeline
 
 - Employers or TPOs upload unstructured Job Descriptions (PDF/Text).
-- **Claude 5 Sonnet** parses JDs into structured SMART threshold vectors:
+- **Claude 5 Sonnet** parses JDs into structured HireKiwi threshold vectors:
   ```json
   {
     "company_name": "Goldman Sachs",
@@ -705,7 +705,7 @@ Taken once by all MBA students: Business Communication, Quantitative Data Interp
 
 ## 11. Public Verification & Trust Chain Pipeline
 
-- **Public Certificate URL:** `verify.smart.com/cert/<UUID>`
+- **Public Certificate URL:** `verify.hirekiwi.com/cert/<UUID>`
 - **Public Verification Display Components:**
   1. **Candidate Identity & Issued Date**
   2. **Specialization Track Certified**
@@ -837,14 +837,14 @@ Taken once by all MBA students: Business Communication, Quantitative Data Interp
 
 **Sprint Goal:** Build the public verification pipeline, QR code generation, the Angoff cut-score confidence note calculator, edge gateway rate-limit tuning, and complete microservices integration.
 
-| Ticket ID  | Story Title                                     | Description & Acceptance Criteria                                                                              | Owner               | Points | Priority |
-| ---------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------- | ------ | -------- |
-| **US-4.1** | Public Certificate Generation Pipeline          | Build service to generate shareable certificate records with Tier Trail JSON and unique UUIDs.                 | Full-Stack Engineer | 8 pts  | Critical |
-| **US-4.2** | Public Verification Portal (`verify.smart.com`) | Build public responsive page displaying certified tier, methodology, calibration credits, and confidence note. | Full-Stack Engineer | 8 pts  | Critical |
-| **US-4.3** | Dynamic QR Code & PDF Exporter                  | Implement cryptographically signed QR code generator and PDF certificate exporter.                             | Full-Stack Engineer | 5 pts  | High     |
-| **US-4.4** | Confidence Note & SD Calculator Engine          | Implement automated calculation of Angoff standard deviation confidence bands and Cronbach's alpha.            | AI Engineer         | 5 pts  | High     |
-| **US-4.5** | Kong / Edge Gateway Integration & Tuning        | Configure Edge API Gateway rate limits, Cloudflare DDoS rules, and SSL termination.                            | System Architect    | 8 pts  | Critical |
-| **US-4.6** | End-to-End Service Integration                  | Interconnect all microservices, message queues, and caching layers into a unified release candidate build.     | System Architect    | 8 pts  | Critical |
+| Ticket ID  | Story Title                                        | Description & Acceptance Criteria                                                                              | Owner               | Points | Priority |
+| ---------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------- | ------ | -------- |
+| **US-4.1** | Public Certificate Generation Pipeline             | Build service to generate shareable certificate records with Tier Trail JSON and unique UUIDs.                 | Full-Stack Engineer | 8 pts  | Critical |
+| **US-4.2** | Public Verification Portal (`verify.hirekiwi.com`) | Build public responsive page displaying certified tier, methodology, calibration credits, and confidence note. | Full-Stack Engineer | 8 pts  | Critical |
+| **US-4.3** | Dynamic QR Code & PDF Exporter                     | Implement cryptographically signed QR code generator and PDF certificate exporter.                             | Full-Stack Engineer | 5 pts  | High     |
+| **US-4.4** | Confidence Note & SD Calculator Engine             | Implement automated calculation of Angoff standard deviation confidence bands and Cronbach's alpha.            | AI Engineer         | 5 pts  | High     |
+| **US-4.5** | Kong / Edge Gateway Integration & Tuning           | Configure Edge API Gateway rate limits, Cloudflare DDoS rules, and SSL termination.                            | System Architect    | 8 pts  | Critical |
+| **US-4.6** | End-to-End Service Integration                     | Interconnect all microservices, message queues, and caching layers into a unified release candidate build.     | System Architect    | 8 pts  | Critical |
 
 **Sprint 4 Summary:** 6 Stories · 42 Story Points · Deliverable: Feature-complete HireKiwi platform ready for Sprint 5 testing.
 
@@ -905,17 +905,17 @@ Taken once by all MBA students: Business Communication, Quantitative Data Interp
 
 ```yaml
 groups:
-  - name: smart_rate_limiting_alerts
+  - name: hirekiwi_rate_limiting_alerts
     rules:
       - alert: HighRateLimitViolations
-        expr: rate(smart_rate_limit_violations_total[5m]) > 50
+        expr: rate(hirekiwi_rate_limit_violations_total[5m]) > 50
         for: 2m
         labels:
           severity: warning
         annotations:
           summary: 'High rate limit violations detected on {{ $labels.endpoint }}'
       - alert: ClaudeAPITokenBucketExhausted
-        expr: smart_claude_token_bucket_remaining < 1000
+        expr: hirekiwi_claude_token_bucket_remaining < 1000
         for: 1m
         labels:
           severity: critical
@@ -933,7 +933,7 @@ groups:
 | **AI Management** | Native Claude 5 Sonnet / 4.7 Engine            | External Orion Integration (when ready) |
 | **Rate Limiting** | Full Redis Sliding Window + Gateway Throttling | AI Dynamic Adaptive Throttling          |
 | **Evaluation**    | 5-Level Battery (L1 MCQ → L5 Capstone)         | Adaptive IRT 2-Parameter Testing        |
-| **Verification**  | Public URL (`verify.smart.com`) + QR Code      | Blockchain Verification Proofs          |
+| **Verification**  | Public URL (`verify.hirekiwi.com`) + QR Code   | Blockchain Verification Proofs          |
 | **Dashboards**    | Super Admin, TPO, Student, Verification        | Employer Paid Search Portal             |
 
 ---

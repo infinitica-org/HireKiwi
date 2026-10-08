@@ -45,10 +45,23 @@ export class InsufficientSampleError extends Data.TaggedError('InsufficientSampl
   readonly message: string;
 }> {}
 
+export class InsufficientItemCoverageError extends Data.TaggedError(
+  'InsufficientItemCoverageError',
+)<{
+  readonly underCovered: ReadonlyArray<{
+    readonly competencyId: string;
+    readonly role: string;
+    readonly itemCount: number;
+    readonly required: number;
+  }>;
+  readonly message: string;
+}> {}
+
 export type ScoringError =
   | UnpublishedCutScoresError
   | InsufficientPanelError
   | InvalidScoreError
   | InvalidWeightsError
   | NonMonotonicCutScoresError
-  | InsufficientSampleError;
+  | InsufficientSampleError
+  | InsufficientItemCoverageError;

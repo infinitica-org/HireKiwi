@@ -229,7 +229,7 @@ export default function SkillsProfilePage() {
               Skills & Competencies
             </h1>
             <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm dark:text-zinc-400">
-              Verified competency levels evaluated by Smart&apos;s readiness model — never
+              Verified competency levels evaluated by HireKiwi&apos;s readiness model — never
               self-declared
             </p>
           </div>
@@ -252,7 +252,7 @@ export default function SkillsProfilePage() {
         <HelpCircle className="size-4 text-zinc-400 shrink-0" />
         <span>
           <strong className="text-zinc-900 dark:text-white">Note:</strong> Skill levels are decided
-          by Smart&apos;s evaluation model based on submitted code defenses, certifications, and
+          by HireKiwi&apos;s evaluation model based on submitted code defenses, certifications, and
           work endorsements — never self-declared.
         </span>
       </div>
@@ -309,7 +309,7 @@ export default function SkillsProfilePage() {
               No skills in this category
             </p>
             <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-              Add skills from the catalog to allow Smart to calculate your diagnostic readiness
+              Add skills from the catalog to allow HireKiwi to calculate your diagnostic readiness
               score.
             </p>
             <button
@@ -623,7 +623,7 @@ export default function SkillsProfilePage() {
                 Add Skills to Your Profile
               </h2>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Select competencies from the catalog. Smart will automatically calculate and
+                Select competencies from the catalog. HireKiwi will automatically calculate and
                 benchmark your proficiency levels.
               </p>
 

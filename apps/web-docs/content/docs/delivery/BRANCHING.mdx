@@ -1,9 +1,9 @@
 ---
-title: 'SMART — Enterprise Branching Model'
+title: 'HireKiwi — Enterprise Branching Model'
 description: 'Delivery & Engineering Protocols - BRANCHING'
 ---
 
-# SMART — Enterprise Branching Model
+# HireKiwi — Enterprise Branching Model
 
 > **Owner:** Tino (System Architect) · Ticket: S0-TN-03
 > **Canonical long-lived branches:** `main` · `qa` · `dev`
@@ -31,9 +31,9 @@ main  ──── always production-ready. Gated & merged by @brittytino (or re
 
 | Branch     | Purpose                                                             | Who reviews                                             | Who merges                               | Deploy target                                                                          |
 | ---------- | ------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------- |
-| **`dev`**  | Daily integration. Feature PRs require module owner approval.       | **Module Owner** (per CODEOWNERS) + Architect for seams | **`@brittytino` / `@vis465`** (after CI) | **Single VPS** `smart-dev` (`dev.becomesmart.online`, Caddy TLS, auto-deploy)          |
-| **`qa`**   | Freeze candidate for UAT / pilot. No feature work — promotion only. | **Tino** (System Architect)                             | **Only `@brittytino`**                   | **Single VPS** `smart-qa`                                                              |
-| **`main`** | Production / GA truth. Always deployable.                           | **Tino** (System Architect)                             | **Only `@brittytino`**                   | **Single VPS** `smart-prod` (`becomesmart.online`, Blue-Green Zero-Downtime Switching) |
+| **`dev`**  | Daily integration. Feature PRs require module owner approval.       | **Module Owner** (per CODEOWNERS) + Architect for seams | **`@brittytino` / `@vis465`** (after CI) | **Single VPS** `hirekiwi-dev` (`dev.hirekiwi.online`, Caddy TLS, auto-deploy)          |
+| **`qa`**   | Freeze candidate for UAT / pilot. No feature work — promotion only. | **Tino** (System Architect)                             | **Only `@brittytino`**                   | **Single VPS** `hirekiwi-qa`                                                              |
+| **`main`** | Production / GA truth. Always deployable.                           | **Tino** (System Architect)                             | **Only `@brittytino`**                   | **Single VPS** `hirekiwi-prod` (`hirekiwi.online`, Blue-Green Zero-Downtime Switching) |
 
 Engineers **never** commit directly to `main`, `qa`, or `dev`.
 Every change lands via a **pull request**, verified by CI and reviewed per the ownership matrix.

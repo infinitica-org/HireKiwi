@@ -2,8 +2,8 @@
 
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
-import { SmartLogo } from '@hirekiwi/ui';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
+import { HireKiwiLogo } from '@hirekiwi/ui';
 import { EyeIcon, EyeOffIcon } from '../../../components/auth-icons';
 import { api } from '../../../lib/api';
 import { LoginShell } from '../../login/login-shell';
@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
       setDone(true);
     } catch (err) {
       setError(
-        isSmartApiError(err) && (err.code === 'not_found' || err.code === 'conflict')
+        isHireKiwiApiError(err) && (err.code === 'not_found' || err.code === 'conflict')
           ? 'This reset link is invalid or has expired. Request a new one.'
           : 'Could not reset your password. Try again.',
       );
@@ -48,7 +48,7 @@ export default function ResetPasswordPage() {
   return (
     <LoginShell>
       <section className="flex w-full max-w-[420px] flex-col items-center text-center">
-        <SmartLogo kind="text" tone="on-light" className="mx-auto h-8 w-auto" title="SMART" />
+        <HireKiwiLogo kind="text" tone="on-light" className="mx-auto h-8 w-auto" title="HireKiwi" />
 
         <h1 className="mt-8 text-[1.75rem] font-bold leading-tight tracking-tight text-[#111827] sm:text-[2rem]">
           {done ? 'Password reset' : 'Choose a new password'}

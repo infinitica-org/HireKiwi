@@ -18,7 +18,7 @@ Org billing: failed card or spending limit. Hosted jobs never run. See `docs/del
 
 ## Seed / VPS login
 
-Seeded users are only `admin@smart.local`, `tpo@smart.local`, `student@smart.local` — password `ChangeMe!Dev`. Run seed as `deploy` (`~/smart`), not `root` (`/root/smart` does not exist).
+Seeded users are only `admin@hirekiwi.local`, `tpo@hirekiwi.local`, `student@hirekiwi.local` — password `ChangeMe!Dev`. Run seed as `deploy` (`~/hirekiwi`), not `root` (`/root/hirekiwi` does not exist).
 
 ## Escalation (Allen)
 

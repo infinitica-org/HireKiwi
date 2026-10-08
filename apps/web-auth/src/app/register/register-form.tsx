@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { useSearchParams } from 'next/navigation';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { isDisallowedEndorserEmailDomain } from '@hirekiwi/contracts';
 import type { SelectableInstitutionDto } from '@hirekiwi/contracts';
-import { SmartLogo } from '@hirekiwi/ui';
+import { HireKiwiLogo } from '@hirekiwi/ui';
 import { EyeIcon, EyeOffIcon } from '../../components/auth-icons';
 import { ResendVerification } from '../../components/resend-verification';
 import { api } from '../../lib/api';
@@ -19,13 +20,14 @@ const COUNTRY_CODES = [
 ];
 
 export function RegisterForm() {
+  const searchParams = useSearchParams();
   const [institutions, setInstitutions] = useState<SelectableInstitutionDto[]>([]);
   const [institutionsError, setInstitutionsError] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneCountryCode, setPhoneCountryCode] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(searchParams.get('email') ?? '');
   const [institutionId, setInstitutionId] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -86,10 +88,10 @@ export function RegisterForm() {
       // No session yet: the account is usable once the emailed link is confirmed.
       setRegisteredEmail(result.email);
     } catch (err) {
-      if (isSmartApiError(err)) {
+      if (isHireKiwiApiError(err)) {
         if (err.code === 'unregistered_university_domain') {
           setError(
-            'Your university domain is not registered on SMART. Please contact your placement administrator.',
+            'Your university domain is not registered on HireKiwi. Please contact your placement administrator.',
           );
         } else if (err.code === 'personal_email_not_allowed') {
           setError(
@@ -119,7 +121,7 @@ export function RegisterForm() {
       {/* Top Header Logo */}
       <header className="mx-auto flex w-full max-w-5xl shrink-0 items-center justify-between">
         <div className="flex items-center gap-3">
-          <SmartLogo tone="on-light" className="h-8 w-auto" />
+          <HireKiwiLogo tone="on-light" className="h-8 w-auto" />
         </div>
       </header>
 
@@ -379,7 +381,7 @@ function CheckInbox({ email }: { email: string }) {
   return (
     <div className="flex min-h-dvh w-full flex-col bg-white px-6 py-8 text-[#111827] font-sans sm:px-12 sm:py-10">
       <header className="mx-auto flex w-full max-w-5xl items-center">
-        <SmartLogo tone="on-light" className="h-8 w-auto" />
+        <HireKiwiLogo tone="on-light" className="h-8 w-auto" />
       </header>
       <main className="mx-auto my-auto w-full max-w-[460px] py-6">
         <h1 className="text-3xl font-bold tracking-tight text-[#111827] sm:text-[2.25rem]">

@@ -156,16 +156,16 @@ describe('L1McqPlayer', () => {
   });
 
   it('surfaces 404 empty-bank and 429 errors', async () => {
-    const { SmartApiError } = await import('@hirekiwi/api-client');
+    const { HireKiwiApiError } = await import('@hirekiwi/api-client');
     sessionMock.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'not_found',
         message: 'Item bank for form A is empty.',
         statusCode: 404,
       }),
     );
     nextItemMock.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'not_found',
         message: 'Item bank for form A is empty.',
         statusCode: 404,
@@ -175,7 +175,7 @@ describe('L1McqPlayer', () => {
     await waitFor(() => expect(screen.getByText('Question bank unavailable')).toBeDefined());
 
     sessionMock.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'rate_limit_exceeded',
         message: 'Slow down.',
         statusCode: 429,
@@ -183,7 +183,7 @@ describe('L1McqPlayer', () => {
       }),
     );
     nextItemMock.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'rate_limit_exceeded',
         message: 'Slow down.',
         statusCode: 429,

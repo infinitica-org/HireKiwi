@@ -121,7 +121,7 @@ export function SkillVerifyPendingStep({
           <strong>
             {assessmentResult.highestAssessmentSupportedProficiency ?? 'partial competency'}
           </strong>{' '}
-          capability. One more step is required before SMART can confidently verify this claim.
+          capability. One more step is required before HireKiwi can confidently verify this claim.
         </p>
         <Button type="button" variant="outline" onClick={onDone}>
           Back to Skills

@@ -5,7 +5,7 @@ import { SkillDiscoverySchema, SocialVerificationSchema } from './candidate-soci
 /**
  * CN-T01 — candidate onboarding completion payload.
  *
- * Progressive onboarding model: completion means the student has entered SMART
+ * Progressive onboarding model: completion means the student has entered HireKiwi
  * with a broad interest domain and minimum identity/contact fields — not that
  * they finished their professional profile, declared skills, or enrolled in a
  * certification track.
@@ -78,7 +78,7 @@ export const CandidateOnboardingLanguageSchema = z.object({
 /** Catalog skill code, e.g. `REACT_FRONTEND` — the standardized 10-track competency taxonomy. */
 export const SkillCatalogCodeSchema = z
   .string()
-  .regex(/^[A-Z][A-Z0-9_]{1,63}$/, 'Choose a skill from the SMART skill catalog.');
+  .regex(/^[A-Z][A-Z0-9_]{1,63}$/, 'Choose a skill from the HireKiwi skill catalog.');
 
 /**
  * Th6-600 — a technical skill is a catalog pick only: no free-text names and no self-rated

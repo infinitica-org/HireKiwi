@@ -19,7 +19,7 @@
 import { spawnSync } from 'node:child_process';
 
 const PNPM_PIN = '11.22.0';
-const REEXEC = 'SMART_PNPM_REEXEC';
+const REEXEC = 'HIREKIWI_PNPM_REEXEC';
 
 const argv = process.argv.slice(2);
 const strict = argv[0] === '--strict';
@@ -38,7 +38,7 @@ function pnpmMajor() {
 
 function tip(major) {
   return `
-[smart] pnpm >= 11 required (packageManager = pnpm@${PNPM_PIN}). PATH has pnpm ${major}.x.
+[hirekiwi] pnpm >= 11 required (packageManager = pnpm@${PNPM_PIN}). PATH has pnpm ${major}.x.
 
 Windows (this shell):
   $env:Path = "$env:APPDATA\\npm;" + $env:Path
@@ -58,7 +58,7 @@ function reexecWithPnpm11() {
     ? ['--yes', `pnpm@${PNPM_PIN}`, 'run', script]
     : ['--yes', `pnpm@${PNPM_PIN}`, ...cmdArgs];
 
-  console.warn(`[smart] Re-running with pnpm@${PNPM_PIN} …`);
+  console.warn(`[hirekiwi] Re-running with pnpm@${PNPM_PIN} …`);
   const result = spawnSync('npx', args, {
     stdio: 'inherit',
     shell: true,
@@ -94,11 +94,11 @@ if (major > 0 && major < 11) {
   }
 
   if (strict) {
-    console.error('[smart] Still on pnpm < 11 after re-exec — fix PATH / corepack, then retry.');
+    console.error('[hirekiwi] Still on pnpm < 11 after re-exec — fix PATH / corepack, then retry.');
     process.exit(1);
   }
 
-  console.warn('[smart] Continuing under pnpm < 11 (not recommended).');
+  console.warn('[hirekiwi] Continuing under pnpm < 11 (not recommended).');
 }
 
 runCommand(cmdArgs);

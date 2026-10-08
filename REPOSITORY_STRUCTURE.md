@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary & Architectural Decisions
 
-SMART is an Intellectual Talent Network and role-specific readiness verification platform designed to support high-volume candidate throughput, strict API rate-limiting, real-time code execution, LLM-based evaluation, semantic vector candidate matching, and public cryptographic certificate verification. To maximize code reuse, enforce typed boundaries between services, and keep local and CI builds fast, the platform is organized as a **Turborepo-managed pnpm workspace monorepo**.
+HireKiwi is an Intellectual Talent Network and role-specific readiness verification platform designed to support high-volume candidate throughput, strict API rate-limiting, real-time code execution, LLM-based evaluation, semantic vector candidate matching, and public cryptographic certificate verification. To maximize code reuse, enforce typed boundaries between services, and keep local and CI builds fast, the platform is organized as a **Turborepo-managed pnpm workspace monorepo**.
 
 ### 1.1 Key Stack Choices
 
@@ -21,7 +21,7 @@ SMART is an Intellectual Talent Network and role-specific readiness verification
 
 ## 2. Backend Framework Rationale: NestJS with an Effect.ts Functional Core
 
-An evaluation was conducted between NestJS and Effect.ts to determine the primary backend foundation for SMART's API and domain modules.
+An evaluation was conducted between NestJS and Effect.ts to determine the primary backend foundation for HireKiwi's API and domain modules.
 
 ### 2.1 Framework Comparison
 
@@ -46,7 +46,7 @@ Effect.ts is embedded as the functional core of `packages/scoring-engine`, where
 
 All infrastructure components are open-source or self-hostable, with the exception of the managed AI provider APIs and (in production) object storage.
 
-| Layer / Subsystem                | Technology                                                                          | Function & Purpose in SMART                                                                                                                                                      |
+| Layer / Subsystem                | Technology                                                                          | Function & Purpose in HireKiwi                                                                                                                                                   |
 | -------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Frontend UI**                  | Next.js 16 (App Router)                                                             | Server-side rendering, portal dashboards, and public certificate pages.                                                                                                          |
 | **Styling & components**         | Tailwind CSS + shadcn/ui (Radix primitives)                                         | Shared design system and accessible component primitives, distributed via `packages/ui`.                                                                                         |
@@ -65,7 +65,7 @@ All infrastructure components are open-source or self-hostable, with the excepti
 
 ### 3.1 Capacity Planning & Cache Invalidation Strategy
 
-Because Redis memory footprint directly informs cache-node sizing, SMART maintains an explicit memory budget and invalidation model for planning purposes. The figures below are an illustrative sizing model for a representative peak-load scenario (50,000 concurrent candidates) and should be re-derived against observed production metrics rather than treated as fixed limits.
+Because Redis memory footprint directly informs cache-node sizing, HireKiwi maintains an explicit memory budget and invalidation model for planning purposes. The figures below are an illustrative sizing model for a representative peak-load scenario (50,000 concurrent candidates) and should be re-derived against observed production metrics rather than treated as fixed limits.
 
 **Indicative RAM inventory at peak concurrency:**
 
@@ -79,7 +79,7 @@ Because Redis memory footprint directly informs cache-node sizing, SMART maintai
 **Invalidation strategy:**
 
 1. **Passive eviction** — every cached key carries a mandatory TTL.
-2. **Event-driven invalidation** — Kafka/Redpanda topics (e.g. `smart.assessment.submitted`, `smart.track.updated`) trigger immediate Redis deletions to purge stale assessment and cut-score caches.
+2. **Event-driven invalidation** — Kafka/Redpanda topics (e.g. `hirekiwi.assessment.submitted`, `hirekiwi.track.updated`) trigger immediate Redis deletions to purge stale assessment and cut-score caches.
 3. **Eviction policy** — `volatile-lru`, so that active session keys are protected under memory pressure while other volatile keys are purged first.
 
 ---
@@ -87,7 +87,7 @@ Because Redis memory footprint directly informs cache-node sizing, SMART maintai
 ## 4. Monorepo Repository Structure
 
 ```
-smart/
+hirekiwi/
 ├── .github/                        # CI/CD workflows and repository automation
 │   ├── actions/
 │   │   └── setup-node-pnpm/        # Composite action: pnpm + Node toolchain setup
@@ -126,7 +126,7 @@ smart/
 │   └── web-verify/                 # Next.js 16 — public certificate verification portal
 │
 ├── packages/                       # Shared internal libraries
-│   ├── api-client/                 # Typed HTTP client for the SMART API (contract-validated)
+│   ├── api-client/                 # Typed HTTP client for the HireKiwi API (contract-validated)
 │   ├── config-eslint/              # Shared ESLint 9 flat config (`@hirekiwi/eslint-config`)
 │   ├── config-next/                # Shared Next.js configuration (`@hirekiwi/next-config`)
 │   ├── config-tailwind/            # Shared Tailwind CSS 4 theme tokens (`@hirekiwi/tailwind-config`)
@@ -184,24 +184,24 @@ Domain modules within `apps/api-core` communicate asynchronously through Redpand
 ┌───────────────────────────────────────────────────────────────────────────┐
 │                    EVENT-DRIVEN MESSAGING (Redpanda)                      │
 │                                                                           │
-│  [Assessment module] ──▶ smart.assessment.submitted ──┐                  │
+│  [Assessment module] ──▶ hirekiwi.assessment.submitted ──┐                  │
 │                                                        │                  │
-│  [AI Gateway]         ◄── smart.eval.requested ───────┤                  │
-│  [Evaluation module]  ──▶ smart.eval.completed ───────┤                  │
+│  [AI Gateway]         ◄── hirekiwi.eval.requested ───────┤                  │
+│  [Evaluation module]  ──▶ hirekiwi.eval.completed ───────┤                  │
 │                                                        ▼                  │
-│  [Certificate module] ◄── (issues) smart.certificate.issued ─┐           │
+│  [Certificate module] ◄── (issues) hirekiwi.certificate.issued ─┐           │
 │                                                                ▼          │
-│  [Placement module]   ◄── smart.placement.matched ── [PostgreSQL 16]     │
+│  [Placement module]   ◄── hirekiwi.placement.matched ── [PostgreSQL 16]     │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 5.1 Representative Kafka Topics
 
-1. `smart.assessment.submitted` — emitted by the assessment module when a candidate completes an assessment level.
-2. `smart.eval.requested` — triggers asynchronous LLM-based grading via the AI gateway.
-3. `smart.eval.completed` — emitted by the evaluation module once grading resolves.
-4. `smart.certificate.issued` — emitted when a candidate completes a certification track.
-5. `smart.placement.matched` / `smart.track.updated` — consumed by the placement module for matching and cut-score cache invalidation.
+1. `hirekiwi.assessment.submitted` — emitted by the assessment module when a candidate completes an assessment level.
+2. `hirekiwi.eval.requested` — triggers asynchronous LLM-based grading via the AI gateway.
+3. `hirekiwi.eval.completed` — emitted by the evaluation module once grading resolves.
+4. `hirekiwi.certificate.issued` — emitted when a candidate completes a certification track.
+5. `hirekiwi.placement.matched` / `hirekiwi.track.updated` — consumed by the placement module for matching and cut-score cache invalidation.
 
 The complete, authoritative topic and payload catalog is defined in `packages/contracts/src/events`; this section is illustrative rather than exhaustive.
 
@@ -214,7 +214,7 @@ The commands below reflect the scripts defined in the workspace root `package.js
 ```bash
 # 1. Clone the repository and install dependencies
 git clone <repository-url>
-cd smart
+cd hirekiwi
 
 # 2. One-command bootstrap: installs dependencies, builds shared packages,
 #    starts local infrastructure (Postgres, Redis, Redpanda, MinIO, Mailpit),
@@ -243,4 +243,4 @@ Additional workspace scripts of note: `pnpm doctor` (environment diagnostics), `
 
 ---
 
-_This document establishes the adopted monorepo layout, technology stack, and NestJS + Effect.ts backend architecture for SMART. It is kept in sync with the actual repository structure; discrepancies should be corrected in the same change that introduces them._
+_This document establishes the adopted monorepo layout, technology stack, and NestJS + Effect.ts backend architecture for HireKiwi. It is kept in sync with the actual repository structure; discrepancies should be corrected in the same change that introduces them._

@@ -47,7 +47,7 @@ describe('LanguagesSection', () => {
     createLanguage.mockResolvedValueOnce(mockLangItem);
 
     renderWithQueryClient(<LanguagesSection />);
-    const addButton = (await screen.findAllByRole('button', { name: 'Add language' })).at(
+    const addButton = (await screen.findAllByRole('button', { name: /^Add language$/i })).at(
       -1,
     ) as HTMLElement;
     fireEvent.click(addButton);
@@ -56,7 +56,10 @@ describe('LanguagesSection', () => {
       target: { value: 'French' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /^Add language$/i }));
+    // The modal's submit button shares its label with the section's add button; it renders last.
+    fireEvent.click(
+      screen.getAllByRole('button', { name: /^Add language$/i }).at(-1) as HTMLElement,
+    );
 
     await waitFor(() => expect(createLanguage).toHaveBeenCalledTimes(1));
     expect(createLanguage).toHaveBeenCalledWith({

@@ -1,4 +1,4 @@
-# SMART on Unified High-End VPS — Production (Blue-Green) & Development
+# HireKiwi on Unified High-End VPS — Production (Blue-Green) & Development
 
 **Policy:** [`docs/delivery/BRANCHING.md`](../../docs/delivery/BRANCHING.md) · **Database:** [`docs/delivery/DATABASE.md`](../../docs/delivery/DATABASE.md) · **ADR-0009**
 
@@ -6,16 +6,16 @@
 
 ## 1. Executive Topology Overview
 
-SMART runs on a single, high-performance Linux VPS (Ubuntu 24.04: 32 vCPU, 128 GB RAM, NVMe storage) hosting **both Production and Development in strictly isolated Docker Compose networks**.
+HireKiwi runs on a single, high-performance Linux VPS (Ubuntu 24.04: 32 vCPU, 128 GB RAM, NVMe storage) hosting **both Production and Development in strictly isolated Docker Compose networks**.
 
 Production utilizes an automated **Blue-Green Zero-Downtime Deployment Engine** driven by Caddy, ensuring 0 ms connection drops and instant automated rollback.
 
 The architecture is built on 12-factor cloud-native principles, functioning as a direct bridge for our scheduled lift-and-shift migration to AWS (ECS/RDS/ElastiCache).
 
-| Environment                  | Compose Project              | Public TLS (Caddy)            | Domains Served                                                                                         |
-| :--------------------------- | :--------------------------- | :---------------------------- | :----------------------------------------------------------------------------------------------------- |
-| **Production (Active Slot)** | `smart-prod-blue` or `green` | Yes — Automated Let's Encrypt | `becomesmart.online`, `app.`, `api.`, `tpo.`, `admin.`, `verify.`, `docs.`                             |
-| **Development**              | `smart-dev`                  | Yes — Automated Let's Encrypt | `dev.becomesmart.online`, `dev.app.`, `dev.api.`, `dev.tpo.`, `dev.admin.`, `dev.verify.`, `dev.docs.` |
+| Environment                  | Compose Project                 | Public TLS (Caddy)            | Domains Served                                                                                      |
+| :--------------------------- | :------------------------------ | :---------------------------- | :-------------------------------------------------------------------------------------------------- |
+| **Production (Active Slot)** | `hirekiwi-prod-blue` or `green` | Yes — Automated Let's Encrypt | `hirekiwi.online`, `app.`, `api.`, `tpo.`, `admin.`, `verify.`, `docs.`                             |
+| **Development**              | `hirekiwi-dev`                  | Yes — Automated Let's Encrypt | `dev.hirekiwi.online`, `dev.app.`, `dev.api.`, `dev.tpo.`, `dev.admin.`, `dev.verify.`, `dev.docs.` |
 
 ---
 
@@ -32,8 +32,8 @@ All DNS A-records point to the single VPS public IP through Cloudflare (Proxy en
 [ Host Caddy Reverse Proxy ]
         │
    ┌────┴──────────────────────────────────────────┐
-   ▼ (*.becomesmart.online)                        ▼ (*.dev.becomesmart.online)
-[ Production Active Slot: Blue or Green ]        [ Isolated Dev Stack: smart-dev ]
+   ▼ (*.hirekiwi.online)                        ▼ (*.dev.hirekiwi.online)
+[ Production Active Slot: Blue or Green ]        [ Isolated Dev Stack: hirekiwi-dev ]
 - Blue: api:3000, web:3001-3006                  - api:3020, web:3021-3026
 - Green: api:3010, web:3011-3016                 - Isolated Postgres 16 Dev DB
 ```

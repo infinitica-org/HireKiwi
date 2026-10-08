@@ -1,4 +1,4 @@
-# SMART local knowledge base (`.cursor`)
+# HireKiwi local knowledge base (`.cursor`)
 
 **Tracked (git):** team rules + shared cheat sheets.  
 **Gitignored:** your identity, **preferences**, and working memory under `.cursor/local/` (examples + README stay tracked).

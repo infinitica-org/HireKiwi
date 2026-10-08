@@ -2,10 +2,20 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, BadgeCheck, CheckCircle2, Loader2, Plus, ShieldCheck } from 'lucide-react';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQuery, useQueryClient } from '@hirekiwi/ui';
-import { CREDENTIAL_TYPES, type CredentialType } from '@hirekiwi/contracts';
+import {
+  CREDENTIAL_TYPES,
+  type CredentialType,
+  type ProfessionalCredentialDto,
+} from '@hirekiwi/contracts';
+import { CredentialDetailModal } from '@/components/profile/CredentialDetailModal';
 import { CredentialEntryCard } from '@/components/profile/CredentialEntryCard';
+import { PopupSection, ProfilePopup } from '@/components/profile/ProfilePopup';
+import {
+  experienceInputClass,
+  experienceLabelClass,
+} from '@/components/profile/work-experience/work-experience-ui';
 import {
   ProfileBentoEmptyPanel,
   ProfileSectionError,
@@ -91,6 +101,7 @@ export function CredentialsSection() {
 
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [viewing, setViewing] = useState<ProfessionalCredentialDto | null>(null);
   const [form, setForm] = useState<NewCredentialForm>(emptyForm());
   const [saving, setSaving] = useState(false);
   const [isDeclaring, setIsDeclaring] = useState(false);
@@ -119,7 +130,7 @@ export function CredentialsSection() {
         queryClient.invalidateQueries({ queryKey: queryKeys.myCredentialDeclaration() }),
       ]);
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to update credentials declaration.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to update credentials declaration.');
     } finally {
       setIsDeclaring(false);
     }
@@ -136,7 +147,7 @@ export function CredentialsSection() {
         queryClient.invalidateQueries({ queryKey: queryKeys.myCredentialDeclaration() }),
       ]);
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to update credentials declaration.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to update credentials declaration.');
     } finally {
       setIsDeclaring(false);
     }
@@ -165,7 +176,7 @@ export function CredentialsSection() {
         queryClient.invalidateQueries({ queryKey: queryKeys.myCredentialDeclaration() }),
       ]);
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not add credential.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not add credential.');
     } finally {
       setSaving(false);
     }
@@ -200,10 +211,15 @@ export function CredentialsSection() {
         refetchCredentials(),
       ]);
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Document upload failed.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Document upload failed.');
     } finally {
       setUploadingId(null);
     }
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setForm(emptyForm());
   };
 
   const displayError =
@@ -224,21 +240,14 @@ export function CredentialsSection() {
         evidenceType="CREDENTIAL"
         description={meta.description}
         action={
-          !loading ? (
+          !loading && credentials.length > 0 ? (
             <button
               type="button"
-              onClick={() => {
-                if (showForm) {
-                  setShowForm(false);
-                  setForm(emptyForm());
-                } else {
-                  setShowForm(true);
-                }
-              }}
+              onClick={() => setShowForm(true)}
               className={`${profilePrimaryButtonSmClass} justify-center px-4 py-2.5 text-[13px] font-semibold tracking-[-0.01em]`}
             >
-              {showForm ? null : <Plus className="size-4" strokeWidth={2} aria-hidden />}
-              {showForm ? 'Cancel' : 'Add credential'}
+              <Plus className="size-4" strokeWidth={2} aria-hidden />
+              Add credential
             </button>
           ) : null
         }
@@ -253,83 +262,130 @@ export function CredentialsSection() {
         </ProfileSectionError>
       ) : null}
 
-      {showForm ? (
-        <div className="flex w-full flex-col gap-3 overflow-hidden rounded-[18px] border border-[var(--ds-border)] bg-[var(--ds-surface)] p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-[var(--ds-text-secondary)]">Issuer</span>
-              <input
-                type="text"
-                value={form.issuer}
-                onChange={(e) => setForm((f) => ({ ...f, issuer: e.target.value }))}
-                placeholder="e.g. Amazon Web Services"
-                className="rounded-[10px] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2.5 text-[var(--ds-text)] outline-none ring-0 placeholder:text-[var(--ds-text-subtle)] focus:border-[var(--ds-green)]/40"
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-[var(--ds-text-secondary)]">Credential name</span>
-              <input
-                type="text"
-                value={form.credentialName}
-                onChange={(e) => setForm((f) => ({ ...f, credentialName: e.target.value }))}
-                placeholder="e.g. AWS Certified Solutions Architect"
-                className="rounded-[10px] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2.5 text-[var(--ds-text)] outline-none placeholder:text-[var(--ds-text-subtle)] focus:border-[var(--ds-green)]/40"
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-[var(--ds-text-secondary)]">Type</span>
-              <select
-                value={form.credentialType}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, credentialType: e.target.value as CredentialType }))
-                }
-                className="rounded-[10px] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2.5 text-[var(--ds-text)] focus:border-[var(--ds-green)]/40"
-              >
-                {SELECTABLE_CREDENTIAL_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {CREDENTIAL_TYPE_LABELS[type]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-[var(--ds-text-secondary)]">
-                Credential / license number
-              </span>
-              <input
-                type="text"
-                value={form.externalCredentialId}
-                onChange={(e) => setForm((f) => ({ ...f, externalCredentialId: e.target.value }))}
-                placeholder="Optional"
-                className="rounded-[10px] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2.5 text-[var(--ds-text)] outline-none placeholder:text-[var(--ds-text-subtle)] focus:border-[var(--ds-green)]/40"
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-              <span className="font-medium text-[var(--ds-text-secondary)]">
-                Public verification URL
-              </span>
-              <input
-                type="url"
-                value={form.verificationSource}
-                onChange={(e) => setForm((f) => ({ ...f, verificationSource: e.target.value }))}
-                placeholder="Optional — the issuer's public lookup page for this credential"
-                className="rounded-[10px] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2.5 text-[var(--ds-text)] outline-none placeholder:text-[var(--ds-text-subtle)] focus:border-[var(--ds-green)]/40"
-              />
-            </label>
-          </div>
-          <div>
+      <ProfilePopup
+        open={showForm}
+        size="lg"
+        icon={<BadgeCheck className="size-5" />}
+        title="Add credential"
+        subtitle="A license, certification, badge or membership. We verify it against the issuer where we can."
+        onClose={closeForm}
+        footerAlign="between"
+        footer={
+          <>
+            <button type="button" onClick={closeForm} className={profileSecondaryButtonSmClass}>
+              Cancel
+            </button>
             <button
-              type="button"
+              type="submit"
+              form="credential-form"
               disabled={saving}
-              onClick={() => void handleCreate()}
               className={`${profilePrimaryButtonSmClass} disabled:opacity-60`}
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {saving ? 'Adding…' : 'Add credential'}
             </button>
-          </div>
-        </div>
-      ) : null}
+          </>
+        }
+      >
+        <form
+          id="credential-form"
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleCreate();
+          }}
+          className="flex flex-col gap-5"
+        >
+          {error ? (
+            <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <span>{error}</span>
+            </div>
+          ) : null}
+
+          <PopupSection title="Credential" description="What it is and who issued it.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="credential-issuer" className={experienceLabelClass}>
+                  Issuer<span className="text-red-600"> *</span>
+                </label>
+                <input
+                  id="credential-issuer"
+                  type="text"
+                  value={form.issuer}
+                  onChange={(e) => setForm((f) => ({ ...f, issuer: e.target.value }))}
+                  placeholder="e.g. Amazon Web Services"
+                  className={experienceInputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="credential-name" className={experienceLabelClass}>
+                  Credential name<span className="text-red-600"> *</span>
+                </label>
+                <input
+                  id="credential-name"
+                  type="text"
+                  value={form.credentialName}
+                  onChange={(e) => setForm((f) => ({ ...f, credentialName: e.target.value }))}
+                  placeholder="e.g. AWS Certified Solutions Architect"
+                  className={experienceInputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="credential-type" className={experienceLabelClass}>
+                  Type
+                </label>
+                <select
+                  id="credential-type"
+                  value={form.credentialType}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, credentialType: e.target.value as CredentialType }))
+                  }
+                  className={experienceInputClass}
+                >
+                  {SELECTABLE_CREDENTIAL_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {CREDENTIAL_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="credential-number" className={experienceLabelClass}>
+                  Credential / license number
+                </label>
+                <input
+                  id="credential-number"
+                  type="text"
+                  value={form.externalCredentialId}
+                  onChange={(e) => setForm((f) => ({ ...f, externalCredentialId: e.target.value }))}
+                  placeholder="Optional"
+                  className={experienceInputClass}
+                />
+              </div>
+            </div>
+          </PopupSection>
+
+          <PopupSection
+            title="Verification"
+            description="The issuer's public lookup page lets us check it automatically."
+          >
+            <div>
+              <label htmlFor="credential-url" className={experienceLabelClass}>
+                Public verification URL
+              </label>
+              <input
+                id="credential-url"
+                type="url"
+                value={form.verificationSource}
+                onChange={(e) => setForm((f) => ({ ...f, verificationSource: e.target.value }))}
+                placeholder="Optional — the issuer's public lookup page for this credential"
+                className={experienceInputClass}
+              />
+            </div>
+          </PopupSection>
+        </form>
+      </ProfilePopup>
 
       {loading ? <p className="text-sm text-[var(--ds-text-muted)]">Loading credentials…</p> : null}
 
@@ -414,6 +470,7 @@ export function CredentialsSection() {
                 preview={preview}
                 fileName={fileName}
                 uploading={busy}
+                onView={() => setViewing(credential)}
                 onUploadClick={() => fileInputRefs.current[credential.credentialId]?.click()}
                 fileInput={
                   <input
@@ -435,6 +492,16 @@ export function CredentialsSection() {
           })}
         </div>
       ) : null}
+      <CredentialDetailModal
+        credential={viewing}
+        fileName={
+          viewing
+            ? (documentPreviews[viewing.credentialId]?.fileName ??
+              (viewing.documentObjectKey ? fileNameFromObjectKey(viewing.documentObjectKey) : null))
+            : null
+        }
+        onClose={() => setViewing(null)}
+      />
     </section>
   );
 }

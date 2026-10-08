@@ -9,6 +9,7 @@ import {
   ACTIVE_TAXONOMY_VERSION,
   type ConnectSignalSourceRequest,
   type RawSignalEnvelope,
+  type SignalProfilePreview,
 } from '@hirekiwi/contracts';
 import { LeetcodeStatsClient } from '../clients/leetcode-stats.client.js';
 import { SignalCircuitOpenError } from '../signal-circuit-breaker.js';
@@ -52,6 +53,42 @@ export class LeetcodeSignalAdapter implements SignalSourceAdapter {
       });
     }
     return { externalAccountId: username, consentScope: CONSENT_SCOPE };
+  }
+
+  async lookupProfile(rawUsername: string): Promise<SignalProfilePreview> {
+    const username = assertSafePublicUsername(rawUsername, 'username');
+    let found;
+    try {
+      found = await this.client.lookupProfile(username);
+    } catch (error) {
+      if (error instanceof SignalCircuitOpenError) {
+        throw new ServiceUnavailableException({
+          error: 'leetcode_unavailable',
+          message: 'LeetCode is temporarily unavailable. Try again later.',
+          statusCode: 503,
+        });
+      }
+      throw new ServiceUnavailableException({
+        error: 'leetcode_unavailable',
+        message: 'Could not reach LeetCode right now. Try again in a moment.',
+        statusCode: 503,
+      });
+    }
+    if (!found) {
+      throw new NotFoundException({
+        error: 'leetcode_user_not_found',
+        message: `No public LeetCode profile found for "${username}".`,
+        statusCode: 404,
+      });
+    }
+    return {
+      sourceId: 'LEETCODE',
+      username: found.username,
+      displayName: found.displayName,
+      avatarUrl: found.avatarUrl,
+      profileUrl: `https://leetcode.com/u/${encodeURIComponent(found.username)}/`,
+      summary: found.solvedTotal === null ? null : `${found.solvedTotal} problems solved`,
+    };
   }
 
   async fetchRaw(ctx: AdapterFetchContext): Promise<RawSignalEnvelope> {

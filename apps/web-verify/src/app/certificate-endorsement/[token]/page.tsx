@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   proficiencyLevelUiLabel,
   type GetCertificateEndorsementResponse,
@@ -56,7 +56,7 @@ export default function CertificateEndorsementPage({ params }: PageProps) {
       .catch((err: unknown) => {
         if (cancelled) return;
         setLoadError(
-          isSmartApiError(err) && err.statusCode === 404
+          isHireKiwiApiError(err) && err.statusCode === 404
             ? 'This endorsement link is invalid.'
             : 'Could not load this endorsement request right now.',
         );

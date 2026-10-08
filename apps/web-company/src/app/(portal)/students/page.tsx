@@ -235,7 +235,7 @@ export default function SearchStudentsPage() {
           {/* Scope by Active Opening (I404) */}
           <div>
             <label htmlFor="scoped-job" className={label}>
-              Scope to Active Opening (I404)
+              Scope to Active Opening
             </label>
             <select
               id="scoped-job"
@@ -285,7 +285,7 @@ export default function SearchStudentsPage() {
 
           <div>
             <label htmlFor="filter-univ" className={label}>
-              University / Institute (I399)
+              University / Institute
             </label>
             <input
               id="filter-univ"
@@ -299,7 +299,7 @@ export default function SearchStudentsPage() {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label htmlFor="filter-grad" className={label}>
-                Grad Year (I399)
+                Grad Year
               </label>
               <select
                 id="filter-grad"
@@ -315,7 +315,7 @@ export default function SearchStudentsPage() {
             </div>
             <div>
               <label htmlFor="filter-avail" className={label}>
-                Availability (I399)
+                Availability
               </label>
               <select
                 id="filter-avail"
@@ -556,7 +556,7 @@ export default function SearchStudentsPage() {
                     <div className="mt-3 rounded-md border border-blue-100 bg-blue-50/70 p-3.5 text-xs text-zinc-700 space-y-2.5 animate-fadeIn">
                       <div>
                         <p className="font-semibold text-blue-900">
-                          SMART Verified Proof & Match Breakdown:
+                          HireKiwi Verified Proof & Match Breakdown:
                         </p>
                         {candidate.explanation?.recruiterSummary ? (
                           <p className="mt-1 text-xs text-zinc-700 italic border-l-2 border-blue-400 pl-2">
@@ -639,9 +639,9 @@ export default function SearchStudentsPage() {
 
                       {/* Responsible AI Gate Notice (I568) */}
                       <div className="mt-2 rounded bg-zinc-100 p-2 text-[10px] text-zinc-600 italic">
-                        <strong>Responsible AI Notice:</strong> SMART scores and fit recommendations
-                        are evaluative signals only. All final interview, shortlisting, and hiring
-                        decisions remain solely at employer discretion.
+                        <strong>Responsible AI Notice:</strong> HireKiwi scores and fit
+                        recommendations are evaluative signals only. All final interview,
+                        shortlisting, and hiring decisions remain solely at employer discretion.
                       </div>
                     </div>
                   ) : null}

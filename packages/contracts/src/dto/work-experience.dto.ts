@@ -656,7 +656,7 @@ export const ManagerSkillRatingSchema = z.object({
 export type ManagerSkillRatingDto = z.infer<typeof ManagerSkillRatingSchema>;
 
 /**
- * Request body: candidate asks SMART to send a manager endorsement email.
+ * Request body: candidate asks HireKiwi to send a manager endorsement email.
  * manager_email must be a corporate address; server-side domain matching
  * against the offer-letter domain or Organization.domain is also performed.
  */

@@ -15,7 +15,7 @@ import {
   PROCTORING_SNAPSHOT_KEY_PREFIX,
   PROCTORING_WARNING_LIMIT_DEFAULT,
   REDIS_TTL_SECONDS,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   TECHNICAL_VIOLATION_KINDS,
   type BlobWsPayload,
   type IntegrityFlag,
@@ -441,9 +441,9 @@ export class ProctoringService {
 
     void this.outbox
       .enqueueEnvelope({
-        topic: SMART_TOPICS.proctoringSnapshotReady,
+        topic: HIREKIWI_TOPICS.proctoringSnapshotReady,
         partitionKey: body.attemptId,
-        eventType: SMART_TOPICS.proctoringSnapshotReady,
+        eventType: HIREKIWI_TOPICS.proctoringSnapshotReady,
         source: 'proctoring',
         data: { attemptId: body.attemptId, objectKey: body.objectKey },
       })

@@ -17,12 +17,16 @@ import { InstitutionsPublicController } from './institutions-public.controller.j
 import { InstitutionsPartnershipController } from './institutions-partnership.controller.js';
 import { InstitutionsStudentController } from './institutions-student.controller.js';
 import { InstitutionsTpoController } from './institutions-tpo.controller.js';
+import { UniversityReadinessAnalyticsController } from './university-readiness-analytics.controller.js';
+import { UniversityReadinessAnalyticsService } from './university-readiness-analytics.service.js';
 import { UniversityStudentsController } from './university-students.controller.js';
 import { IdempotencyService } from '../company-profile/idempotency.service.js';
 import { UniversityStudentsService } from './university-students.service.js';
 import { InstitutionsCampusesController } from './institutions-campuses.controller.js';
 import { CampusesService } from './campuses.service.js';
 import { InstitutionsService } from './institutions.service.js';
+import { TpoContactController } from './tpo-contact.controller.js';
+import { TpoContactService } from './tpo-contact.service.js';
 import { OrganizationsService } from './organizations.service.js';
 import { BulkWhitelistImportProcessor } from './bulk-whitelist-import.processor.js';
 
@@ -39,16 +43,20 @@ import { BulkWhitelistImportProcessor } from './bulk-whitelist-import.processor.
     InstitutionsAdminController,
     InstitutionsTpoController,
     UniversityStudentsController,
+    UniversityReadinessAnalyticsController,
     InstitutionsCampusesController,
     InstitutionsStudentController,
     InstitutionsPublicController,
     InstitutionsPartnershipController,
+    TpoContactController,
     CompaniesAdminController,
     PublicCompanyOnboardingController,
   ],
   providers: [
     InstitutionsService,
+    TpoContactService,
     UniversityStudentsService,
+    UniversityReadinessAnalyticsService,
     CampusesService,
     AuditLogExportService,
     CompaniesService,

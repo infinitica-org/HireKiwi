@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Seed the database on a single High-End Linux VPS from a named environment file.
 #
-#   bash scripts/seed-vps.sh dev    # Single VPS — smart-dev
-#   bash scripts/seed-vps.sh qa     # Single VPS — smart-qa
-#   bash scripts/seed-vps.sh prod   # Single VPS — smart-prod
+#   bash scripts/seed-vps.sh dev    # Single VPS — hirekiwi-dev
+#   bash scripts/seed-vps.sh qa     # Single VPS — hirekiwi-qa
+#   bash scripts/seed-vps.sh prod   # Single VPS — hirekiwi-prod
 #
-# Run this from the deploy checkout (~deploy/smart on the server — NOT ~root,
+# Run this from the deploy checkout (~deploy/hirekiwi on the server — NOT ~root,
 # and NOT a fresh `git clone`; deploys land there via CI rsync, there is no
 # .git here to pull).
 #
@@ -20,9 +20,9 @@ cd "$(dirname "$0")/.."
 ENV_NAME="${1:-}"
 if [[ -z "$ENV_NAME" || ! "$ENV_NAME" =~ ^(dev|qa|prod)$ ]]; then
   echo "Usage: bash scripts/seed-vps.sh <dev|qa|prod>"
-  echo "  dev  → Single VPS smart-dev"
-  echo "  qa   → Single VPS smart-qa"
-  echo "  prod → Single VPS smart-prod"
+  echo "  dev  → Single VPS hirekiwi-dev"
+  echo "  qa   → Single VPS hirekiwi-qa"
+  echo "  prod → Single VPS hirekiwi-prod"
   exit 1
 fi
 
@@ -33,7 +33,7 @@ test -f "$ENV_FILE" || {
 }
 
 COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml)
-IMAGE_TAG="smart-api-seed-tmp"
+IMAGE_TAG="hirekiwi-api-seed-tmp"
 
 echo "==> ${ENV_NAME}: locate the running postgres network"
 POSTGRES_CID="$("${COMPOSE[@]}" --profile apps ps -q postgres)"
@@ -55,7 +55,7 @@ SEED_PASSWORD="$(grep -oP '^SEED_PASSWORD=\K.*' "$ENV_FILE" || true)"
 
 echo "==> ${ENV_NAME}: seed"
 docker run --rm --network "$NETWORK" \
-  -e DATABASE_URL="postgresql://smart:${PGPW}@postgres:5432/smart?schema=public" \
+  -e DATABASE_URL="postgresql://hirekiwi:${PGPW}@postgres:5432/hirekiwi?schema=public" \
   -e SEED_EMAIL_DOMAIN="${SEED_EMAIL_DOMAIN:-}" \
   -e SEED_PASSWORD="${SEED_PASSWORD:-}" \
   -w /app/apps/api-core \

@@ -10,8 +10,8 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": true,
-      "tags": ["smart"],
-      "title": "SMART dashboards",
+      "tags": ["hirekiwi"],
+      "title": "HireKiwi dashboards",
       "type": "dashboards"
     }
   ],
@@ -88,7 +88,7 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["smart", "logging", "loki"],
+  "tags": ["hirekiwi", "logging", "loki"],
   "templating": {
     "list": [
       {
@@ -104,7 +104,7 @@
   },
   "time": { "from": "now-1h", "to": "now" },
   "timezone": "browser",
-  "title": "SMART API logs",
-  "uid": "smart-api-logs",
+  "title": "HireKiwi API logs",
+  "uid": "hirekiwi-api-logs",
   "version": 1
 }

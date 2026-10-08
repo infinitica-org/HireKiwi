@@ -4,7 +4,7 @@ Condensed shared knowledge. Canonical detail stays in repo docs.
 
 | Sheet                                            | When to open                                                          |
 | ------------------------------------------------ | --------------------------------------------------------------------- |
-| [product.md](./product.md)                       | What SMART is                                                         |
+| [product.md](./product.md)                       | What HireKiwi is                                                      |
 | [architecture-cheat.md](./architecture-cheat.md) | Stack, ports, sync/async                                              |
 | [ownership.md](./ownership.md)                   | Who owns paths / topics — deep dive: `TEAM.md` + `ENGINEER_GUIDES.md` |
 | [seams.md](./seams.md)                           | Four integration seams                                                |

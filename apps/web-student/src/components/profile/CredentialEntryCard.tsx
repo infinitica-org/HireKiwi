@@ -1,12 +1,12 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { FileText, Loader2, Sparkles, Upload } from 'lucide-react';
+import { Eye, FileText, Loader2, Sparkles, Upload } from 'lucide-react';
 import type { CredentialType, ProfessionalCredentialDto } from '@hirekiwi/contracts';
 
 import { CERTIFICATE_CARD_ACCENTS } from '@/lib/certificate-entry-presenters';
 
-const CREDENTIAL_TYPE_LABELS: Record<CredentialType, string> = {
+export const CREDENTIAL_TYPE_LABELS: Record<CredentialType, string> = {
   CERTIFICATION: 'Certification',
   LICENSE: 'License',
   DEGREE: 'Degree',
@@ -25,7 +25,7 @@ const STATUS_BADGE: Record<string, string> = {
     'bg-[var(--student-error-soft)] text-[var(--student-error)] ring-1 ring-[var(--student-error-border)]',
 };
 
-const STATUS_LABELS: Record<string, string> = {
+export const CREDENTIAL_STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Verified',
   PENDING_VERIFICATION: 'Pending verification',
   EXPIRED: 'Expired',
@@ -49,6 +49,8 @@ interface CredentialEntryCardProps {
   uploading: boolean;
   onUploadClick: () => void;
   fileInput: ReactNode;
+  /** Opens the See popup with every detail of this credential. */
+  onView?: () => void;
 }
 
 export function CredentialEntryCard({
@@ -59,6 +61,7 @@ export function CredentialEntryCard({
   uploading,
   onUploadClick,
   fileInput,
+  onView,
 }: CredentialEntryCardProps) {
   const accent =
     CERTIFICATE_CARD_ACCENTS[accentIndex % CERTIFICATE_CARD_ACCENTS.length] ??
@@ -90,7 +93,7 @@ export function CredentialEntryCard({
         <span
           className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ${statusClass}`}
         >
-          {STATUS_LABELS[credential.status] ?? credential.status}
+          {CREDENTIAL_STATUS_LABELS[credential.status] ?? credential.status}
         </span>
       </div>
 
@@ -146,6 +149,19 @@ export function CredentialEntryCard({
             All verification runs on our backend — we&apos;ll update this status as soon as the
             issuer check completes.
           </p>
+        </div>
+      ) : null}
+
+      {onView ? (
+        <div className="border-t border-[var(--ds-border-subtle)]/80 px-4 py-2.5">
+          <button
+            type="button"
+            onClick={onView}
+            className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--ds-text)] hover:underline"
+          >
+            <Eye className="size-3.5" aria-hidden />
+            View details
+          </button>
         </div>
       ) : null}
     </article>

@@ -55,7 +55,7 @@ export const PublicCertificateSchema = z.object({
 });
 export type PublicCertificate = z.infer<typeof PublicCertificateSchema>;
 
-/** An externally-issued certificate (AWS, Coursera, etc.) verified via endorsement or LLM — distinct from SMART's own issued `certificate` above. */
+/** An externally-issued certificate (AWS, Coursera, etc.) verified via endorsement or LLM — distinct from HireKiwi's own issued `certificate` above. */
 export const PublicExternalCertificateSchema = z.object({
   title: z.string(),
   issuer: z.string(),

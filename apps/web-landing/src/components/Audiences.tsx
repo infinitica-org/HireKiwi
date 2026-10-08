@@ -158,7 +158,7 @@ export default function Audiences() {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="font-manrope font-bold text-4xl sm:text-5xl lg:text-6xl leading-[1.08] tracking-tight max-w-4xl text-zinc-950"
           >
-            <span>SMART&apos;s proven</span> <br />
+            <span>HireKiwi&apos;s proven</span> <br />
             <span className="relative inline-block mt-1">
               <span className="relative z-10">Performance at scale.</span>
               <span

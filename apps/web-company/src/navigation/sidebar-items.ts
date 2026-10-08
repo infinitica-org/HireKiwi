@@ -1,13 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import {
-  Briefcase,
-  Building2,
-  GraduationCap,
-  LayoutDashboard,
-  MessageSquare,
-  UserCheck,
-  Users,
-} from 'lucide-react';
+import { Briefcase, LayoutDashboard, UserCheck, Users } from 'lucide-react';
 
 export type CompanyNavItem = {
   title: string;
@@ -22,7 +14,10 @@ export const companyNavItems: CompanyNavItem[] = [
   { title: 'Jobs', url: '/jobs', icon: Briefcase },
   { title: 'Applicants', url: '/applicants', icon: UserCheck },
   { title: 'Search students', url: '/students', icon: Users },
-  { title: 'Messages', url: '/messages', icon: MessageSquare },
-  { title: 'Campus access', url: '/campus-access', icon: GraduationCap },
-  { title: 'Company profile', url: '/company', icon: Building2 },
 ];
+
+/** Whether a nav link is current; `/` only matches the home page itself. */
+export function isCompanyNavActive(pathname: string, url: string): boolean {
+  if (url === '/') return pathname === '/';
+  return pathname === url || pathname.startsWith(`${url}/`);
+}

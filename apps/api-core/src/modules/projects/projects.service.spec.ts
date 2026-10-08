@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { SMART_TOPICS } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod';
 import { ROLES_KEY } from '../../common/guards/roles.decorator.js';
@@ -114,7 +114,7 @@ describe('CN-T08 project submission', () => {
     expect(outbox.enqueueEnvelope).not.toHaveBeenCalled();
   });
 
-  it('persists the template, queues smart.project.submitted, and marks interview-eligible', async () => {
+  it('persists the template, queues hirekiwi.project.submitted, and marks interview-eligible', async () => {
     const { service, prisma, outbox, verifyRunner, interviewGate } = setup();
     const dto = await service.create(studentId, template);
 
@@ -129,9 +129,9 @@ describe('CN-T08 project submission', () => {
     });
     expect(outbox.enqueueEnvelope).toHaveBeenCalledTimes(1);
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith({
-      topic: SMART_TOPICS.projectSubmitted,
+      topic: HIREKIWI_TOPICS.projectSubmitted,
       partitionKey: projectId,
-      eventType: SMART_TOPICS.projectSubmitted,
+      eventType: HIREKIWI_TOPICS.projectSubmitted,
       source: 'platform',
       data: { projectId, studentId },
     });

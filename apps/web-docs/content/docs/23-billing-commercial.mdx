@@ -83,7 +83,7 @@ Employer subscriptions transition through an automated, audit-logged lifecycle m
 Usage quotas are asserted in real time by `BillingService.assertQuota(companyId, dimension)`:
 - Quotas are resolved from the company's active `SubscriptionPlan` or override `EnterpriseContract` (`FR-BIL-01.10`).
 - Atomic increments and reservation tokens prevent race conditions across distributed recruiter seats.
-- When an entitlement limit is reached, the API returns a structured HTTP `403 FORBIDDEN` with error code `SMART_403_QUOTA_EXCEEDED` and the specific dimension exceeded, prompting the employer to upgrade (`FR-BIL-01.06`).
+- When an entitlement limit is reached, the API returns a structured HTTP `403 FORBIDDEN` with error code `HIREKIWI_403_QUOTA_EXCEEDED` and the specific dimension exceeded, prompting the employer to upgrade (`FR-BIL-01.06`).
 
 ---
 

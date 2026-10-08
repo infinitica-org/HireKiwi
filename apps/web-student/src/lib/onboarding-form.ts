@@ -101,7 +101,7 @@ export const emptyAcademicProgram = (): OnboardingProfileForm['academicProgram']
   graduationYear: '',
 });
 
-export const ONBOARDING_DRAFT_STORAGE_KEY = 'smart.candidate.onboarding.draft';
+export const ONBOARDING_DRAFT_STORAGE_KEY = 'hirekiwi.candidate.onboarding.draft';
 
 export function emptyOnboardingForm(): OnboardingProfileForm {
   return {
@@ -403,10 +403,18 @@ function normalizeOptionalUrl(value: string): string | undefined {
 /** Professional links tab — normalized URLs + optional social verification snapshot. */
 export function buildProfessionalLinksSavePayload(
   form: OnboardingProfileForm,
+  /**
+   * Links the student is removing. An empty link is normally left out of the request (so a stale
+   * form can never wipe a saved link), but the server only keeps what it is sent; to actually
+   * remove one, the request must carry an explicit empty string.
+   */
+  clear: ReadonlyArray<'linkedinUrl' | 'githubUrl'> = [],
 ): Pick<SaveCandidateOnboardingDraftRequest, 'linkedinUrl' | 'githubUrl' | 'socialVerification'> {
   return {
-    linkedinUrl: normalizeOptionalUrl(form.linkedinUrl),
-    githubUrl: normalizeOptionalUrl(form.githubUrl),
+    linkedinUrl:
+      normalizeOptionalUrl(form.linkedinUrl) ?? (clear.includes('linkedinUrl') ? '' : undefined),
+    githubUrl:
+      normalizeOptionalUrl(form.githubUrl) ?? (clear.includes('githubUrl') ? '' : undefined),
     socialVerification: form.socialVerification,
   };
 }

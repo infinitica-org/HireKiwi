@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Gauge, RotateCcw, Sliders, Building2, CheckCircle2 } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { InstitutionDto, RateLimitPolicyItemDto } from '@hirekiwi/contracts';
 import { Badge } from '@hirekiwi/ui/badge';
 import { PageHeader } from '@/components/page-header';
@@ -21,7 +21,7 @@ import {
 import { api } from '@/lib/api';
 
 function formatApiError(err: unknown, fallback: string): string {
-  return isSmartApiError(err) ? err.message : fallback;
+  return isHireKiwiApiError(err) ? err.message : fallback;
 }
 
 export default function RateLimitsPage() {

@@ -7,7 +7,7 @@ import {
   type ExecutionContext,
 } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
-import { SMART_TOPICS } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { ROLES_KEY } from '../../common/guards/roles.decorator.js';
 import { PlacementController } from './placement.controller.js';
@@ -292,7 +292,7 @@ describe('AC-T06 send-to-company', () => {
     expect(outbox.enqueueEnvelope).not.toHaveBeenCalled();
   });
 
-  it('moves SHORTLISTED → AI_VERIFIED and reuses smart.application.stage_changed', async () => {
+  it('moves SHORTLISTED → AI_VERIFIED and reuses hirekiwi.application.stage_changed', async () => {
     const { controller, prisma, outbox } = setup();
 
     const result = await controller.sendToCompany(
@@ -324,9 +324,9 @@ describe('AC-T06 send-to-company', () => {
     });
     expect(outbox.enqueueEnvelope).toHaveBeenCalledTimes(1);
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith({
-      topic: SMART_TOPICS.applicationStageChanged,
+      topic: HIREKIWI_TOPICS.applicationStageChanged,
       partitionKey: applicationId,
-      eventType: SMART_TOPICS.applicationStageChanged,
+      eventType: HIREKIWI_TOPICS.applicationStageChanged,
       source: 'applications',
       data: expect.objectContaining({
         applicationId,

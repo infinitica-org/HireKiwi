@@ -112,7 +112,7 @@ export default function AdminHomePage() {
           {firstName ? `, ${firstName}` : ''}
         </h1>
         <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm">
-          Here’s what needs your attention across SMART today.
+          Here’s what needs your attention across HireKiwi today.
         </p>
       </header>
       {/* Key numbers — platform size and the queues that need an admin */}

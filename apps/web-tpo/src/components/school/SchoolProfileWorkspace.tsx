@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { Building2 } from 'lucide-react';
 import type { TenantEntitlementsDto } from '@hirekiwi/contracts';
 import { TpoBentoPageHeader } from '../tpo-bento/TpoBentoPageHeader';
@@ -71,7 +71,7 @@ export function SchoolProfileWorkspace() {
         setForm(defaults);
       }
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to load school profile.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to load school profile.');
     } finally {
       setLoading(false);
     }

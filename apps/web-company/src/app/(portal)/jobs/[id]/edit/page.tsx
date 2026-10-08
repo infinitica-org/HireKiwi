@@ -50,6 +50,7 @@ export default function EditJobPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [institutionId, setInstitutionId] = useState('');
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -58,6 +59,7 @@ export default function EditJobPage() {
       try {
         const res = await companyJobsApi.get(params.id);
         if (res) {
+          setInstitutionId(res.institutionId);
           setTitle(res.roleTitle || '');
           if (res.status) setStatus([res.status === 'OPEN' ? 'Active' : 'Closed']);
           if (res.location) setLocation(res.location);
@@ -82,6 +84,7 @@ export default function EditJobPage() {
           const listRes = await companyJobsApi.list();
           const found = listRes?.openings?.find((j) => j.openingId === params.id);
           if (found) {
+            setInstitutionId(found.institutionId);
             setTitle(found.roleTitle || '');
             if (found.status) setStatus([found.status === 'OPEN' ? 'Active' : 'Closed']);
             if (found.location) setLocation(found.location);
@@ -160,6 +163,7 @@ export default function EditJobPage() {
             : 'FULL_TIME';
 
       await companyJobsApi.create({
+        institutionId,
         companyName: 'Company',
         roleTitle: `${title.trim()} (Copy)`,
         domain: 'SOFTWARE_IT',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { CandidateAcademicScores } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 
@@ -85,7 +85,7 @@ export function AcademicScoresSection() {
       await api.users.saveOnboarding({ academicScores: parsed });
       setSuccess('Academic scores saved.');
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not save academic scores.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not save academic scores.');
     } finally {
       setSaving(false);
     }

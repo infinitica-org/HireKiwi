@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { describeApiError, GENERIC_VALIDATION_MESSAGE, SmartApiError } from './errors.js';
+import { describeApiError, GENERIC_VALIDATION_MESSAGE, HireKiwiApiError } from './errors.js';
 
 function apiError(message: string, details: { path: string; message: string }[] = []) {
-  return new SmartApiError({
+  return new HireKiwiApiError({
     error: 'validation_failed',
     message,
     statusCode: 422,

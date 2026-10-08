@@ -35,9 +35,12 @@ import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { env } from '../../platform/config/env.js';
 import { ResumeParseService } from '../ai-gateway/resume-parse.service.js';
+import { GithubOauthService } from '../auth/github-oauth.service.js';
 import { LinkedinOauthService } from '../auth/linkedin-oauth.service.js';
 import { GeocodingOnboardingService } from '../integrations/geocoding/geocoding-onboarding.service.js';
 import { GithubOnboardingService } from '../integrations/github/github-onboarding.service.js';
+import { encryptSecret } from '../../platform/crypto/secret-cipher.util.js';
+import { SignalIngestionService } from '../signal-ingestion/signal-ingestion.service.js';
 import { UsersService } from './users.service.js';
 
 const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024;
@@ -50,9 +53,11 @@ export class UsersController {
     @Inject(UsersService) private readonly service: UsersService,
     @Inject(ResumeParseService) private readonly resumeParse: ResumeParseService,
     @Inject(LinkedinOauthService) private readonly linkedinOauth: LinkedinOauthService,
+    @Inject(GithubOauthService) private readonly githubOauth: GithubOauthService,
     @Inject(GithubOnboardingService) private readonly githubOnboarding: GithubOnboardingService,
     @Inject(GeocodingOnboardingService)
     private readonly geocodingOnboarding: GeocodingOnboardingService,
+    @Inject(SignalIngestionService) private readonly signalIngestion: SignalIngestionService,
   ) {}
 
   @Get('me')
@@ -278,6 +283,60 @@ export class UsersController {
         providerSub: identity.providerSub,
         name: identity.name,
         pictureUrl: identity.pictureUrl,
+      });
+      reply.redirect(redirectTo(true), 302);
+    } catch {
+      reply.redirect(redirectTo(false), 302);
+    }
+  }
+
+  @Get('me/onboarding/github/oauth-url')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Begin "Sign in with GitHub" to grant read access to private repos.',
+  })
+  async githubOauthUrl(@CurrentUser() user: RequestUser) {
+    return { url: await this.githubOauth.createAuthorizationUrl(user.sub) };
+  }
+
+  @Public()
+  @Get('onboarding/github/callback')
+  @ApiOperation({
+    summary: 'GitHub OAuth redirect target — not called by the frontend directly.',
+  })
+  async githubCallback(
+    @Query('code') code: string | undefined,
+    @Query('state') state: string | undefined,
+    @Query('error') error: string | undefined,
+    @Res() reply: FastifyReply,
+  ) {
+    const redirectTo = (ok: boolean) =>
+      `${env.STUDENT_APP_URL}/student/profile?githubRepoAccess=${ok ? '1' : '0'}`;
+
+    if (error || !code || !state) {
+      reply.redirect(redirectTo(false), 302);
+      return;
+    }
+
+    const userId = await this.githubOauth.consumeState(state);
+    if (!userId || !env.GITHUB_TOKEN_ENCRYPTION_KEY) {
+      reply.redirect(redirectTo(false), 302);
+      return;
+    }
+
+    try {
+      const identity = await this.githubOauth.exchangeCode(code);
+      const encryptedAccessToken = encryptSecret(
+        identity.accessToken,
+        env.GITHUB_TOKEN_ENCRYPTION_KEY,
+      );
+      await this.signalIngestion.connectGithubViaOauth(userId, {
+        login: identity.login,
+        name: identity.name,
+        avatarUrl: identity.avatarUrl,
+        encryptedAccessToken,
+        scopes: identity.scopes,
       });
       reply.redirect(redirectTo(true), 302);
     } catch {

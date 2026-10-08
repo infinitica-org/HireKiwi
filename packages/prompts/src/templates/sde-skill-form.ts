@@ -510,7 +510,7 @@ export const sdeSkillOpenBatchGraderTemplate: PromptTemplate<SdeOpenBatchGraderV
   variablesSchema: SdeOpenBatchGraderVariables,
   render: (variables) => ({
     system: [
-      'Grade every open item in this SMART SDE v4 form. Assessment-only; no certification tier.',
+      'Grade every open item in this HireKiwi SDE v4 form. Assessment-only; no certification tier.',
       'Return one grades[] entry per item index. Award 0-maxMarks. Integers or half-marks. Do not inflate.',
       'For CODING: mentally execute the candidate code against each hiddenTests case. Set testsPassed/testsTotal. List failed cases in missedTests with input, expected, and a short reason. Marks should track how many hidden tests would pass, plus a small rubric share for clarity.',
       'For non-coding items omit testsPassed or set them to 0/0.',
@@ -692,7 +692,7 @@ export const sdeSkillOpenGraderTemplate: PromptTemplate<SdeOpenGraderVariables> 
   variablesSchema: SdeOpenGraderVariables,
   render: (variables) => ({
     system: [
-      'Grade one SMART SDE v4 skill-verification answer. Assessment-only; no certification tier.',
+      'Grade one HireKiwi SDE v4 skill-verification answer. Assessment-only; no certification tier.',
       `Award 0-${String(variables.maxMarks)} marks against the rubric. Integers or half-marks.`,
       'Do not inflate. Empty or off-topic is 0.',
       INJECTION_GUARD,

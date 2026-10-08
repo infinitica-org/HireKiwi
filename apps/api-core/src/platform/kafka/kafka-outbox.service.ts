@@ -4,7 +4,7 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   type AssessmentSubmittedEvent,
   AssessmentSubmittedEventSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   type VerificationEventDto,
   type VerificationEventStatus,
 } from '@hirekiwi/contracts';
@@ -56,7 +56,7 @@ export class KafkaOutboxService implements OnModuleInit, OnModuleDestroy {
   async enqueueAssessmentSubmitted(event: AssessmentSubmittedEvent): Promise<void> {
     const parsed = AssessmentSubmittedEventSchema.parse(event);
     await this.enqueue({
-      topic: SMART_TOPICS.assessmentSubmitted,
+      topic: HIREKIWI_TOPICS.assessmentSubmitted,
       partitionKey: parsed.data.attemptId,
       payload: parsed,
       source: 'assessment',

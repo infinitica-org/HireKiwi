@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, FileText, Loader2, Trash2 } from 'lucide-react';
+import { FileText, Loader2, Trash2 } from 'lucide-react';
 import type { CandidateResumeFile } from '@hirekiwi/contracts';
 
 import { formatResumeSize } from '@/lib/resume-list';
@@ -21,29 +21,22 @@ export function ResumeEntryCard({ file, deleting, onDelete }: ResumeEntryCardPro
   });
 
   return (
-    <article className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white p-4 shadow-2xs transition-shadow hover:shadow-xs font-[family-name:var(--tpo-font-sans)] select-none dark:border-zinc-800 dark:bg-[#161616]">
+    <article className="overflow-hidden rounded-lg border border-zinc-200/90 bg-white p-4 shadow-2xs transition-shadow hover:shadow-xs font-[family-name:var(--tpo-font-sans)] select-none dark:border-zinc-800 dark:bg-[#161616]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3.5 min-w-0">
           {/* PDF icon badge */}
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-rose-200/80 bg-rose-50 text-rose-600 shadow-2xs dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-400">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-md border border-rose-200/80 bg-rose-50 text-rose-600 shadow-2xs dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-400">
             <FileText className="size-5" strokeWidth={1.75} aria-hidden />
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3
-                className="truncate text-[15px] font-bold tracking-tight text-zinc-950 dark:text-white"
+                className="truncate text-[15px] font-medium font-body tracking-tight text-zinc-950 dark:text-white"
                 title={file.fileName}
               >
                 {file.fileName}
               </h3>
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/90 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                <CheckCircle2
-                  className="size-3 text-emerald-600 dark:text-emerald-400"
-                  aria-hidden
-                />
-                Active Resume
-              </span>
             </div>
 
             <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -63,7 +56,7 @@ export function ResumeEntryCard({ file, deleting, onDelete }: ResumeEntryCardPro
         </div>
 
         {/* Remove button */}
-        <div className="flex items-center justify-end sm:shrink-0">
+        <div className="flex items-center font-display  justify-end sm:shrink-0">
           <button
             type="button"
             onClick={onDelete}

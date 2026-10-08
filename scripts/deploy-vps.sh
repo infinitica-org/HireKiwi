@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Deploy SMART on a single High-End Linux VPS from a named environment file.
+# Deploy HireKiwi on a single High-End Linux VPS from a named environment file.
 #
-#   bash scripts/deploy-vps.sh dev    # Single VPS — dev stack (dev.becomesmart.online)
-#   bash scripts/deploy-vps.sh qa     # Single VPS — qa stack (smart-qa)
+#   bash scripts/deploy-vps.sh dev    # Single VPS — dev stack (dev.hirekiwi.online)
+#   bash scripts/deploy-vps.sh qa     # Single VPS — qa stack (hirekiwi-qa)
 #   bash scripts/deploy-vps.sh prod   # Single VPS — calls scripts/blue-green-deploy.sh prod
 #
 # On the server: copy .env.<name>.example → .env.<name>, fill secrets, then run.
@@ -14,9 +14,9 @@ cd "$(dirname "$0")/.."
 ENV_NAME="${1:-}"
 if [[ -z "$ENV_NAME" || ! "$ENV_NAME" =~ ^(dev|qa|prod)$ ]]; then
   echo "Usage: bash scripts/deploy-vps.sh <dev|qa|prod>"
-  echo "  dev  → Single VPS dev stack (dev.becomesmart.online)"
+  echo "  dev  → Single VPS dev stack (dev.hirekiwi.online)"
   echo "  qa   → Single VPS qa stack"
-  echo "  prod → Automated Blue-Green deployment (becomesmart.online)"
+  echo "  prod → Automated Blue-Green deployment (hirekiwi.online)"
   exit 1
 fi
 

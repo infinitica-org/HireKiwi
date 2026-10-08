@@ -2,7 +2,7 @@
  * GitHub issue body formatter — shared by Sprint 0 and Sprint 1 backlogs.
  */
 export function formatStoryDescription(story, { zohoUrl } = {}) {
-  const gh = `https://github.com/infinitica-org/smart/issues/${story.github}`;
+  const gh = `https://github.com/infinitica-org/HireKiwi/issues/${story.github}`;
   const zoho =
     zohoUrl ||
     '_Zoho item linked in manifest — agents do not update Zoho; edit backlog.mjs + sync GitHub._';

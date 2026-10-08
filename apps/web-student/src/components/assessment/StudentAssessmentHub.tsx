@@ -86,7 +86,7 @@ export function StudentAssessmentHub() {
       const isVerified = claim.status === 'VERIFIED';
       const skillStatus = getSkillStatus(claim);
       const name = `${skillNameForCode(claim.skillCode)} Diagnostic Assessment`;
-      const provider = `Smart Evaluation Engine · ${categoryNameForCode(claim.skillCode)}`;
+      const provider = `HireKiwi Evaluation Engine · ${categoryNameForCode(claim.skillCode)}`;
 
       return {
         id: `ass-${claim.claimId}`,

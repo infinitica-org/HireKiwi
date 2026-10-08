@@ -31,7 +31,7 @@ describe('S6-VV-119 storage encryption', () => {
         },
       }),
     };
-    await expect(assertBucketEncrypted(client as never, 'smart')).resolves.toBeUndefined();
+    await expect(assertBucketEncrypted(client as never, 'hirekiwi')).resolves.toBeUndefined();
   });
 
   it('fails fast when the bucket has no encryption config', async () => {
@@ -39,8 +39,8 @@ describe('S6-VV-119 storage encryption', () => {
       name: 'ServerSideEncryptionConfigurationNotFoundError',
     });
     const client = { send: vi.fn().mockRejectedValue(missing) };
-    await expect(assertBucketEncrypted(client as never, 'smart')).rejects.toThrow(
-      /S3_ENCRYPTION=required but bucket "smart" has no default encryption/,
+    await expect(assertBucketEncrypted(client as never, 'hirekiwi')).rejects.toThrow(
+      /S3_ENCRYPTION=required but bucket "hirekiwi" has no default encryption/,
     );
   });
 });
@@ -53,7 +53,7 @@ describe('rewriteSignedUrlForBrowser', () => {
   });
 
   it('returns the signed URL unchanged when no public endpoint is configured', async () => {
-    const signed = 'http://minio:9000/smart/project-defense/p1/turn.webm?X-Amz-Signature=abc';
+    const signed = 'http://minio:9000/hirekiwi/project-defense/p1/turn.webm?X-Amz-Signature=abc';
     expect(rewriteSignedUrlForBrowser(signed)).toBe(signed);
   });
 
@@ -61,9 +61,9 @@ describe('rewriteSignedUrlForBrowser', () => {
     const { env } = await import('../config/env.js');
     env.S3_PUBLIC_ENDPOINT = 'http://127.0.0.1:9000';
 
-    const signed = 'http://minio:9000/smart/project-defense/p1/turn.webm?X-Amz-Signature=abc';
+    const signed = 'http://minio:9000/hirekiwi/project-defense/p1/turn.webm?X-Amz-Signature=abc';
     expect(rewriteSignedUrlForBrowser(signed)).toBe(
-      'http://127.0.0.1:9000/smart/project-defense/p1/turn.webm?X-Amz-Signature=abc',
+      'http://127.0.0.1:9000/hirekiwi/project-defense/p1/turn.webm?X-Amz-Signature=abc',
     );
   });
 });

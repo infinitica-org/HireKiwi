@@ -157,10 +157,18 @@ async function openAddExperienceModal() {
   listWorkExperiences.mockResolvedValueOnce([]);
   const view = renderWithQueryClient(<WorkExperienceSection />);
   fireEvent.click(
-    (await screen.findAllByRole('button', { name: 'Add experience' })).at(-1) as HTMLElement,
+    (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(-1) as HTMLElement,
   );
   await screen.findByRole('heading', { name: /Add Work Experience/i });
   return view;
+}
+
+/** Labels render the required marker in its own span, so match on the combined text. */
+function requiredLabelCount(label: string): number {
+  return screen.queryAllByText((_content, element) => {
+    const text = element?.textContent?.replace(/\s+/g, ' ').trim();
+    return text === `${label} *` && element?.querySelector('span') !== null;
+  }).length;
 }
 
 describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
@@ -195,7 +203,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     listWorkExperiences.mockResolvedValueOnce([]);
     renderWithQueryClient(<WorkExperienceSection />);
 
-    const addButton = (await screen.findAllByRole('button', { name: 'Add experience' })).at(
+    const addButton = (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(
       -1,
     ) as HTMLElement;
     fireEvent.click(addButton);
@@ -210,7 +218,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     listWorkExperiences.mockResolvedValueOnce([]);
     renderWithQueryClient(<WorkExperienceSection />);
 
-    const addButton = (await screen.findAllByRole('button', { name: 'Add experience' })).at(
+    const addButton = (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(
       -1,
     ) as HTMLElement;
     fireEvent.click(addButton);
@@ -223,7 +231,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
   it('shows proof document upload controls in the add experience modal', async () => {
     await openAddExperienceModal();
 
-    expect(screen.getByText(/Proof documents/i).textContent).toContain('*');
+    expect(requiredLabelCount('Proof documents')).toBeGreaterThan(0);
     expect(screen.getByLabelText('Proof document')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Add file/i })).toBeTruthy();
   });
@@ -602,7 +610,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
 
     expect(await screen.findByText(/No work experience yet/i)).toBeTruthy();
     expect(
-      screen.getAllByRole('button', { name: 'Add experience' }).at(-1) as HTMLElement,
+      screen.getAllByRole('button', { name: /^Add experience$/i }).at(-1) as HTMLElement,
     ).toBeTruthy();
   });
 
@@ -677,7 +685,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
   it('marks Professional Domain as required', async () => {
     await openAddExperienceModal();
-    expect(screen.getByText(/Professional domain/i).textContent).toContain('*');
+    expect(requiredLabelCount('Professional domain')).toBeGreaterThan(0);
   });
 
   it('prevents save when domain is empty', async () => {
@@ -718,7 +726,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
   it('marks End Date as required when employment has ended', async () => {
     await openAddExperienceModal();
-    expect(screen.getByText(/End date/i).textContent).toContain('*');
+    expect(requiredLabelCount('End date')).toBeGreaterThan(0);
   });
 
   it('prevents save for ended employment when End Date is missing', async () => {
@@ -744,7 +752,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container, {}, { isCurrent: true });
-    expect(screen.queryByText('End date *')).toBeNull();
+    expect(requiredLabelCount('End date')).toBe(0);
     expect(screen.getByText(/^End date$/i)).toBeTruthy();
     selectCatalogSkill('Git & Version Control');
 

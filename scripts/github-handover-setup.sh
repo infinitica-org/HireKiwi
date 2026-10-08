@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# One-time GitHub repo setup for pilot handover (requires admin on infinitica-org/smart).
+# One-time GitHub repo setup for pilot handover (requires admin on infinitica-org/HireKiwi).
 set -euo pipefail
 
-REPO="${GITHUB_REPO:-infinitica-org/smart}"
+REPO="${GITHUB_REPO:-infinitica-org/HireKiwi}"
 
 echo "==> Creating develop branch from main (if missing)"
 if ! gh api "repos/$REPO/branches/develop" >/dev/null 2>&1; then

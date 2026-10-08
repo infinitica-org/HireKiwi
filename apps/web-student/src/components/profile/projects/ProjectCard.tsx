@@ -133,7 +133,7 @@ export function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
 
       {project.status === 'VERIFIED' && project.report ? (
         <div className="mt-4 border-t border-[var(--ds-border-subtle)] pt-3 text-xs text-[var(--ds-text-secondary)]">
-          <p className="font-semibold text-[var(--ds-text)]">SMART verification</p>
+          <p className="font-semibold text-[var(--ds-text)]">HireKiwi verification</p>
           <p className="mt-1">
             Score {Math.round(project.report.score)}/100 · {statusCopy.body}
           </p>

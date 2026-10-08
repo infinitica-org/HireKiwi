@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Award, Calendar, CheckCircle2, FileText, Sparkles, Clock } from 'lucide-react';
+import { Award, Calendar, CheckCircle2, Eye, FileText, Sparkles, Clock } from 'lucide-react';
 import type { CandidateCertificateDto } from '@hirekiwi/contracts';
 
 import {
@@ -28,9 +28,13 @@ function formatDisplayDate(raw: string | null | undefined): string {
 interface CertificateEntryCardProps {
   certificate: CandidateCertificateDto;
   accentIndex?: number;
+  /** Opens the See popup with every detail of this certificate. */
+  onView?: () => void;
+  /** Opens the add/manage popup; without it the button links to the page. */
+  onManage?: () => void;
 }
 
-export function CertificateEntryCard({ certificate }: CertificateEntryCardProps) {
+export function CertificateEntryCard({ certificate, onView, onManage }: CertificateEntryCardProps) {
   const proof = certificateProofSummary(certificate);
   const skillCount = certificate.skills.length;
   const manageHref = `/student/certificates/add?id=${certificate.certificateId}`;
@@ -45,9 +49,19 @@ export function CertificateEntryCard({ certificate }: CertificateEntryCardProps)
       {/* Header */}
       <div className="flex items-start justify-between gap-3 border-b border-zinc-100 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-[#161616]">
         <div className="flex items-start gap-3 min-w-0">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 shadow-2xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-            <Award className="size-4.5" />
-          </div>
+          {certificate.previewImageUrl ? (
+            // Credly serves the badge from its own host, so a plain img is used.
+            <img
+              src={certificate.previewImageUrl}
+              alt={`${certificate.title} badge`}
+              referrerPolicy="no-referrer"
+              className="size-12 shrink-0 rounded-lg border border-zinc-200/80 bg-white object-contain p-0.5 dark:border-zinc-700"
+            />
+          ) : (
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 text-zinc-800 shadow-2xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+              <Award className="size-4.5" />
+            </div>
+          )}
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -82,12 +96,34 @@ export function CertificateEntryCard({ certificate }: CertificateEntryCardProps)
           </div>
         </div>
 
-        <Link
-          href={manageHref}
-          className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-        >
-          {certificateManageCtaLabel(certificate.status)}
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          {onView ? (
+            <button
+              type="button"
+              onClick={onView}
+              className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+            >
+              <Eye className="size-3.5" aria-hidden />
+              View
+            </button>
+          ) : null}
+          {onManage ? (
+            <button
+              type="button"
+              onClick={onManage}
+              className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+            >
+              {certificateManageCtaLabel(certificate.status)}
+            </button>
+          ) : (
+            <Link
+              href={manageHref}
+              className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+            >
+              {certificateManageCtaLabel(certificate.status)}
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Bento Tiles */}

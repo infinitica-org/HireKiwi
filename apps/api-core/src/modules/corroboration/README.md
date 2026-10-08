@@ -21,8 +21,8 @@ Playbook §5.5: passive signal is corroborating weight only.
 
 ## Kafka
 
-- Consumes: `smart.candidate.skills_discovered` (via signal-encoder), `smart.skill.verification.completed`
-- Produces: `smart.corroboration.updated`, `smart.signal.encoded` (encoder)
+- Consumes: `hirekiwi.candidate.skills_discovered` (via signal-encoder), `hirekiwi.skill.verification.completed`
+- Produces: `hirekiwi.corroboration.updated`, `hirekiwi.signal.encoded` (encoder)
 
 ## Security (S6-RM-11)
 

@@ -51,7 +51,7 @@ jobs:
             --exclude='**/dist' \
             --exclude='.env*' \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
-            ./ "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}:~/smart/"
+            ./ "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}:~/hirekiwi/"
 
       - name: Write .env.prod from GitHub secret
         env:
@@ -59,25 +59,25 @@ jobs:
         run: |
           set -euo pipefail
           test -n "${PROD_ENV_FILE}" || {
-            echo "PROD_ENV_FILE secret is empty — Production needs ~/smart/.env.prod"
+            echo "PROD_ENV_FILE secret is empty — Production needs ~/hirekiwi/.env.prod"
             exit 1
           }
           printf '%s\n' "${PROD_ENV_FILE}" | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
             "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}" \
-            'umask 077; mkdir -p ~/smart; cat > ~/smart/.env.prod; chmod 600 ~/smart/.env.prod'
+            'umask 077; mkdir -p ~/hirekiwi; cat > ~/hirekiwi/.env.prod; chmod 600 ~/hirekiwi/.env.prod'
 
       - name: Blue-Green Zero-Downtime Deploy + migrate + health check
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
             "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}" \
-            'cd ~/smart && bash scripts/blue-green-deploy.sh prod'
+            'cd ~/hirekiwi && bash scripts/blue-green-deploy.sh prod'
 
       - name: Seed production accounts
         if: github.event_name == 'workflow_dispatch' && inputs.seed
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
             "${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}" \
-            'cd ~/smart && bash scripts/seed-vps.sh prod'
+            'cd ~/hirekiwi && bash scripts/seed-vps.sh prod'
 
       - name: Cleanup
         if: always()

@@ -7,7 +7,7 @@ import { base } from './base.js';
  *
  * `eslint-config-next` is applied by each app through its own flat config so
  * that Next can resolve its plugins relative to the app root; this file adds
- * the SMART-specific frontend rules on top of the shared base.
+ * the HireKiwi-specific frontend rules on top of the shared base.
  */
 export const next = tseslint.config(...base, {
   files: ['**/*.{ts,tsx}'],

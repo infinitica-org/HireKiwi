@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { SEND_TO_COMPANY_STAGE } from '@hirekiwi/contracts';
 import type { ApplicationConfidenceDto, ApplicationDto, JobOpeningDto } from '@hirekiwi/contracts';
 import { Alert, Button } from '@hirekiwi/ui';
@@ -21,7 +21,7 @@ import { PlacementEmptyState } from './placement/PlacementEmptyState';
 import { PlacementPageHeader } from './placement/PlacementPageHeader';
 
 function errorMessage(caught: unknown, fallback: string): string {
-  if (isSmartApiError(caught) || caught instanceof Error) return caught.message;
+  if (isHireKiwiApiError(caught) || caught instanceof Error) return caught.message;
   return fallback;
 }
 

@@ -12,13 +12,13 @@ description: 'Master Framework & Playbook'
 | **Document type** | Engineering & Product Playbook                                    |
 | **Status**        | Active reference — supersedes all prior flow/spec drafts          |
 | **Owner**         | Platform Engineering                                              |
-| **Scope**         | Full-stack reference for building, extending, and governing SMART |
+| **Scope**         | Full-stack reference for building, extending, and governing HireKiwi |
 
 ---
 
 ## 1. Purpose
 
-This playbook is the single reference for how SMART is built, verified, and scaled as an **Intellectual Talent Network**. It defines the product's non-negotiable principles, the standards that resolve every ambiguous design question raised during specification, the end-to-end flows, the data and service architecture, and the roadmap to the platform's target end-state. SMART unites candidates, academic placement infrastructure, and enterprise talent ecosystems on a foundation of unfakeable evidence, cryptographic credentials, and semantic vector matching.
+This playbook is the single reference for how HireKiwi is built, verified, and scaled as an **Intellectual Talent Network**. It defines the product's non-negotiable principles, the standards that resolve every ambiguous design question raised during specification, the end-to-end flows, the data and service architecture, and the roadmap to the platform's target end-state. HireKiwi unites candidates, academic placement infrastructure, and enterprise talent ecosystems on a foundation of unfakeable evidence, cryptographic credentials, and semantic vector matching.
 
 It is written to be built from directly. Where a decision has been made, it is stated as a standard, not a suggestion. Where a decision genuinely belongs to business or legal rather than engineering, it is named explicitly in §12 rather than left ambiguous.
 
@@ -27,7 +27,7 @@ It is written to be built from directly. Where a decision has been made, it is s
 ## 2. Product Principles
 
 **2.1 Verification is the product.**
-SMART does not compete on having an assessment engine or an interview tool — every serious competitor has those. SMART competes on the claim that every skill on a profile is backed by evidence that cannot be self-asserted into existence. Three failure modes define what the platform must resist:
+HireKiwi does not compete on having an assessment engine or an interview tool — every serious competitor has those. HireKiwi competes on the claim that every skill on a profile is backed by evidence that cannot be self-asserted into existence. Three failure modes define what the platform must resist:
 
 - Anyone can claim any skill on a resume or profile.
 - A matching engine built on unverified claims produces unverified matches — it does not matter how good the algorithm is if the input is fiction.
@@ -36,10 +36,10 @@ SMART does not compete on having an assessment engine or an interview tool — e
 Every module in this playbook exists to answer one question for a given skill claim: _is this backed by something that cannot be faked?_ Any feature that weakens that guarantee, even for the sake of onboarding speed or completion rate, is a regression, not a trade-off.
 
 **2.2 Two distinct deployment models, one core engine.**
-SMART has two end states running in parallel, and they must not be built as two products:
+HireKiwi has two end states running in parallel, and they must not be built as two products:
 
-- **Embedded in academia** — SMART is the system of record a college's placement office runs on, verifying students against _external_ evidence (public repos, external employers, external platforms).
-- **Embedded in companies** — SMART is installed inside a company as an internal tool run on its _own_ employees, verifying against evidence the company already owns (HRIS org charts, internal repos, internal review cycles).
+- **Embedded in academia** — HireKiwi is the system of record a college's placement office runs on, verifying students against _external_ evidence (public repos, external employers, external platforms).
+- **Embedded in companies** — HireKiwi is installed inside a company as an internal tool run on its _own_ employees, verifying against evidence the company already owns (HRIS org charts, internal repos, internal review cycles).
 
 The verification, trust-scoring, and assessment logic is identical in both cases. Only the evidence-source adapters differ. Section 7 formalizes this as a tenant-type split. If a future feature cannot be built without forking core logic between these two modes, that is a signal the tenant abstraction has been violated and needs to be fixed before the feature ships.
 
@@ -64,7 +64,7 @@ The verification, trust-scoring, and assessment logic is identical in both cases
 
 ```mermaid
 flowchart TB
-    subgraph Core[SMART Core — Shared, Tenant-Agnostic Services]
+    subgraph Core[HireKiwi Core — Shared, Tenant-Agnostic Services]
         TAX[Taxonomy Service]
         VER[Verification Engine]
         ASM[Assessment Engine]
@@ -125,14 +125,14 @@ flowchart TD
 
 **Standard:** the Domain → Stream → Skill → Subskill taxonomy is admin-configurable, not hardcoded. Self-declared proficiency captured here is stored as `SELF_DECLARED` status and is never merged with verified status fields — the distinction between claimed and confirmed is the product's core asset and must remain queryable as such throughout the stack.
 
-**Standard — Licenses & certifications:** the profile and resume-parse draft must carry a first-class `licenses` list (name, issuer, optional id / dates / url). This is not a skill claim and not a SMART certificate. Sathesh renders it on CN-T01/CN-T03; Ramansh extracts it on CN-T02.
+**Standard — Licenses & certifications:** the profile and resume-parse draft must carry a first-class `licenses` list (name, issuer, optional id / dates / url). This is not a skill claim and not a HireKiwi certificate. Sathesh renders it on CN-T01/CN-T03; Ramansh extracts it on CN-T02.
 
 ### 5.3 Verification Pillar One — Work Experience
 
 ```mermaid
 sequenceDiagram
     participant C as Candidate
-    participant SYS as SMART System
+    participant SYS as HireKiwi System
     participant V as Voucher
 
     C->>SYS: Declare skill + source + voucher
@@ -391,7 +391,7 @@ flowchart LR
 | 0     | Single/few institution pilots, manual admin operations                                                     |
 | 1     | Tenant isolation, self-serve institutional onboarding, white-labeling per college                          |
 | 2     | Job matching live; employers onboard as lightweight consuming accounts                                     |
-| 3     | Enterprise-Embedded Mode live; companies run SMART on their own workforce                                  |
+| 3     | Enterprise-Embedded Mode live; companies run HireKiwi on their own workforce                                  |
 | 4     | Public API, HRIS/ATS/LMS integration marketplace, dedicated-VPC option, embeddable verified-profile widget |
 
 **Sequencing rule:** Phase 3 follows Phase 2, not the reverse. The verification and trust engine must be proven against external fraud incentives before it is trusted with internal enterprise use cases, where the failure mode shifts from external misrepresentation to internal politics around promotion-readiness scoring.

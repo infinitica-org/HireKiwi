@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { ProjectReviewDetailDto, ProjectReviewQueueItemDto } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { ClipboardList } from 'lucide-react';
 import { Button } from '@hirekiwi/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
@@ -39,7 +39,7 @@ export default function ProjectReviewPage() {
     try {
       setSelected(await api.onboarding.projectReviewDetail(projectId));
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to load project detail.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to load project detail.');
     }
   }
 
@@ -57,7 +57,7 @@ export default function ProjectReviewPage() {
       setReason('');
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Resolve failed.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Resolve failed.');
     }
   }
 

@@ -1,9 +1,9 @@
 ---
-title: 'SMART — Agile Delivery Plan'
+title: 'HireKiwi — Agile Delivery Plan'
 description: 'Delivery & Engineering Protocols - AGILE_PLAN'
 ---
 
-# SMART — Agile Delivery Plan
+# HireKiwi — Agile Delivery Plan
 
 > **Version:** v3.0
 > **Framework:** Scrum with a hard, fixed release date
@@ -162,7 +162,7 @@ rate-limited API; the AI gateway answers and **provably fails over to Gemini**.
 | S1-VV-03 | OAuth (Google, GitHub) + SAML 2.0/OIDC institutional SSO with domain→institution mapping                            | Vishal V         |  8  | P0  |
 | S1-VV-04 | Redis sliding-window + token-bucket Lua guard; `X-RateLimit-*` + `Retry-After`; 429 body per §4.2                   | Vishal V         |  5  | P0  |
 | S1-VV-05 | Full endpoint throttle matrix from `ARCHITECTURE.md` §4.4 as declarative config                                     | Vishal V         |  3  | P0  |
-| S1-VV-06 | B2B `X-SMART-API-KEY` auth + per-key quota (500/hour) + key issuance admin API                                      | Vishal V         |  5  | P1  |
+| S1-VV-06 | B2B `X-HireKiwi-API-KEY` auth + per-key quota (500/hour) + key issuance admin API                                      | Vishal V         |  5  | P1  |
 | S1-VV-07 | Kafka producer/consumer base + outbox pattern + DLQ; all 8 topics registered from contracts                         | Vishal V         |  5  | P0  |
 | S1-SV-01 | Student auth flow UI: SSO buttons, institution picker, track enrollment wizard                                      | Satheswaran V    |  5  | P0  |
 | S1-SV-02 | Student dashboard shell: level stepper, tier trail, next-action card                                                | Satheswaran V    |  5  | P0  |
@@ -196,7 +196,7 @@ result via Gemini; Finance + Business Analytics have published cut scores in the
 | S2-VV-01 | Docker sandbox runner: non-networked, 256 MB / 1 CPU / 5 s, ephemeral, seccomp profile                       | Vishal V         |  8  | P0  |
 | S2-VV-02 | SQL executor against a throwaway schema with statement timeout + row cap                                     | Vishal V         |  5  | P0  |
 | S2-VV-03 | BullMQ queues + workers entrypoint: `sandbox_execution`, `audio_evaluation`, `pdf_generation` with retry/DLQ | Vishal V         |  5  | P0  |
-| S2-VV-04 | Event-driven Redis invalidation on `smart.assessment.submitted` / `smart.track.updated`                      | Vishal V         |  3  | P0  |
+| S2-VV-04 | Event-driven Redis invalidation on `hirekiwi.assessment.submitted` / `hirekiwi.track.updated`                      | Vishal V         |  3  | P0  |
 | S2-VV-05 | Prometheus metrics + Grafana dashboards: latency, 429s, queue depth, AI token spend                          | Vishal V         |  5  | P1  |
 | S2-SV-01 | L1 MCQ player: server-authoritative timer, autosave, resume-after-refresh, auto-submit on expiry             | Satheswaran V    |  8  | P0  |
 | S2-SV-02 | L2 code/SQL workspace: editor, run against sandbox, poll `job_id`, render results                            | Satheswaran V    |  8  | P0  |
@@ -204,7 +204,7 @@ result via Gemini; Finance + Business Analytics have published cut scores in the
 | S2-SV-04 | L4 defense UI: turn-based chat with the simulation, per-turn timer                                           | Satheswaran V    |  5  | P0  |
 | S2-SV-05 | L5 capstone submission: file/repo-URL upload, checklist preview, presentation link                           | Satheswaran V    |  3  | P1  |
 | S2-VB-01 | Server-authoritative timer service + auto-submit on expiry (client clock is never trusted)                   | Vishal Bharath R |  5  | P0  |
-| S2-VB-02 | `POST /assessment/complete` → emit `smart.assessment.submitted`, close session                               | Vishal Bharath R |  3  | P0  |
+| S2-VB-02 | `POST /assessment/complete` → emit `hirekiwi.assessment.submitted`, close session                               | Vishal Bharath R |  3  | P0  |
 | S2-VB-03 | L2/L3/L4/L5 submission handlers routing to the right async queue                                             | Vishal Bharath R |  8  | P0  |
 | S2-VB-04 | Integrity event log + `integrity_flag` state machine; flagged attempt blocks certificate issuance            | Vishal Bharath R |  5  | P0  |
 | S2-VB-05 | `GET /evaluation/results/:attempt_id` — itemized breakdown, &lt; 80 ms                                       | Vishal Bharath R |  3  | P0  |
@@ -212,7 +212,7 @@ result via Gemini; Finance + Business Analytics have published cut scores in the
 | S2-RM-02 | L4 interactive defense simulation: stateful multi-turn, follow-up depth probing, P1 queue                    | Ramansh          |  8  | P0  |
 | S2-RM-03 | L5 split scoring: 50 % checklist auto-check + 30 % rubric + 20 % presentation                                | Ramansh          |  5  | P0  |
 | S2-RM-04 | Cohen's κ monitor vs. human-rated hold-out; **auto-pause automated scoring below κ 0.65**                    | Ramansh          |  5  | P0  |
-| S2-RM-05 | `smart.eval.completed` producer with full itemized payload                                                   | Ramansh          |  3  | P0  |
+| S2-RM-05 | `hirekiwi.eval.completed` producer with full itemized payload                                                   | Ramansh          |  3  | P0  |
 | S2-VG-01 | Item banks for the 5 IT tracks: 30+ items each, Domains A–E weighted                                         | Vedika G         |  8  | P0  |
 | S2-VG-02 | Item banks for the 3 newer MBA tracks (Marketing, Operations, HR)                                            | Vedika G         |  5  | P1  |
 | S2-VG-03 | BARS anchor sets (Gold/Silver/Bronze) for every L3/L4 competency across 10 tracks                            | Vedika G         |  8  | P0  |
@@ -242,7 +242,7 @@ track issues a certificate.
 | S3-SV-02 | Shortlist table: filters, match-score column, explainability drawer, CSV/PDF export                 | Satheswaran V    |  8  | P0  |
 | S3-SV-03 | JD upload UI with parse preview and threshold editor                                                | Satheswaran V    |  5  | P0  |
 | S3-SV-04 | Student growth portal: itemized gap feedback, competency radar, retest scheduler                    | Satheswaran V    |  5  | P0  |
-| S3-VB-01 | Certificate issuance: Tier Trail JSON, headline tier, verification UUID, `smart.certificate.issued` | Vishal Bharath R |  8  | P0  |
+| S3-VB-01 | Certificate issuance: Tier Trail JSON, headline tier, verification UUID, `hirekiwi.certificate.issued` | Vishal Bharath R |  8  | P0  |
 | S3-VB-02 | Puppeteer PDF render → R2 via BullMQ; signed SHA-256 dynamic QR                                     | Vishal Bharath R |  5  | P0  |
 | S3-VB-03 | Outbound HMAC-SHA256 webhook dispatcher: registry, signing, retry, DLQ, replay                      | Vishal Bharath R |  5  | P0  |
 | S3-VB-04 | Admin integrity review queue: approve/deny certificate release on flagged attempts                  | Vishal Bharath R |  3  | P1  |

@@ -75,7 +75,7 @@ describe('routing', () => {
     ).toContain('SNAPSHOT_UNAVAILABLE');
   });
 
-  it('flags a public-web match separately from a prior SMART submission', () => {
+  it('flags a public-web match separately from a prior HireKiwi submission', () => {
     expect(
       collectFlags({
         duplicate: 0,

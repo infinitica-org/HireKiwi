@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, FileText, Loader2, Plus, Upload } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   RESUME_MAX_FILE_SIZE_BYTES,
   RESUME_VALIDATION_MESSAGES,
@@ -39,7 +39,7 @@ export function ResumeSection() {
       const response = await api.users.getResume();
       setResumeFiles(normalizeResumeFiles(response));
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not load resume status.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not load resume status.');
     } finally {
       setLoading(false);
     }
@@ -124,7 +124,7 @@ export function ResumeSection() {
       if (err instanceof DOMException && err.name === 'AbortError') {
         message =
           'The upload timed out. Please try again with a smaller file or better connection.';
-      } else if (isSmartApiError(err)) {
+      } else if (isHireKiwiApiError(err)) {
         message = err.message;
       } else if (err instanceof Error) {
         message = err.message;
@@ -150,7 +150,7 @@ export function ResumeSection() {
       const response = await api.users.deleteResume(objectKey);
       setResumeFiles(response.resumeFiles);
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not remove resume.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not remove resume.');
     } finally {
       setDeletingKey(null);
     }

@@ -39,5 +39,5 @@ export function headlineFor(
   const streamRole = headlineRoleForPrimaryTrack(user.primaryTrack);
   if (streamRole) return `${streamRole} candidate`;
   const trackName = trackNameFor(tracks, user.primaryTrack);
-  return trackName ? `${trackName} candidate` : 'SMART candidate';
+  return trackName ? `${trackName} candidate` : 'HireKiwi candidate';
 }

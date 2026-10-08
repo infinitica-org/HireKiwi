@@ -7,8 +7,8 @@ const studentId = randomUUID();
 const checkId = 'qlix-check-1';
 
 describe('CapabilityInferenceService', () => {
-  it('persists baseline capabilities from QLIX smartAssessment observations', async () => {
-    const smartAssessmentJson = {
+  it('persists baseline capabilities from QLIX hirekiwiAssessment observations', async () => {
+    const hirekiwiAssessmentJson = {
       appliedProficiencyCeiling: 'INTERMEDIATE',
       competencyObservations: [
         {
@@ -47,7 +47,7 @@ describe('CapabilityInferenceService', () => {
           qlixCheckResult: {
             checkId,
             skillsJson: { totals: { analyzedTokens: 4200 } },
-            smartAssessmentJson,
+            hirekiwiAssessmentJson,
           },
         }),
       },
@@ -86,7 +86,7 @@ describe('CapabilityInferenceService', () => {
   });
 
   it('maps demonstrated QLIX proficiency ceiling PROFICIENT to claim proficiency', async () => {
-    const smartAssessmentJson = {
+    const hirekiwiAssessmentJson = {
       appliedProficiencyCeiling: 'PROFICIENT',
       competencyObservations: [
         {
@@ -124,7 +124,7 @@ describe('CapabilityInferenceService', () => {
           qlixCheckResult: {
             checkId,
             skillsJson: { totals: { analyzedTokens: 900 } },
-            smartAssessmentJson,
+            hirekiwiAssessmentJson,
           },
         }),
       },

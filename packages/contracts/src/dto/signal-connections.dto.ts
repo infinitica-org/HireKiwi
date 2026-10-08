@@ -130,3 +130,29 @@ export function assertConnectBodyMatchesSource(
     throw new Error('CREDLY connect requires badgeIdOrUrl');
   }
 }
+
+/**
+ * Check a username BEFORE connecting: does the public profile exist, and whose is it?
+ * Shown to the student so they can confirm it is really their account.
+ */
+export const LookupSignalProfileRequestSchema = z.object({
+  username: z.string().trim().min(1).max(80),
+});
+export type LookupSignalProfileRequest = z.infer<typeof LookupSignalProfileRequestSchema>;
+
+export const SignalProfilePreviewSchema = z.object({
+  sourceId: ConnectableSignalSourceIdSchema,
+  username: z.string().min(1).max(120),
+  /** The name shown on the public profile, when the platform shares one. */
+  displayName: z.string().max(200).nullable(),
+  /** https only, so a profile can never make the page load a non-secure image. */
+  avatarUrl: z
+    .string()
+    .url()
+    .refine((value) => value.startsWith('https://'), 'avatarUrl must be https')
+    .nullable(),
+  profileUrl: z.string().url(),
+  /** One short line of public stats, e.g. "312 problems solved". */
+  summary: z.string().max(200).nullable(),
+});
+export type SignalProfilePreview = z.infer<typeof SignalProfilePreviewSchema>;

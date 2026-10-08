@@ -39,9 +39,9 @@ merged, none of it yet emitting/consuming traces.
    — tracing the Next.js layer would mostly show static-shell delivery, not
    the load path this exists to diagnose.
 4. **Wire three previously-declared-but-dead Prometheus metrics** —
-   `smart_cache_operations_total` (item-bank cache-aside hit/miss),
-   `smart_db_query_duration_seconds` (Prisma query event), and
-   `smart_kafka_events_consumed_total` / `smart_kafka_consumer_lag_messages`
+   `hirekiwi_cache_operations_total` (item-bank cache-aside hit/miss),
+   `hirekiwi_db_query_duration_seconds` (Prisma query event), and
+   `hirekiwi_kafka_events_consumed_total` / `hirekiwi_kafka_consumer_lag_messages`
    (consumer outcome + a periodic admin-API lag poll) — because the
    cache-stampede and Kafka-backpressure scenarios this suite adds have
    nothing real to assert against otherwise (`infra/observability/README.md`
@@ -65,7 +65,7 @@ merged, none of it yet emitting/consuming traces.
 - Distributed tracing exists only for api-core's own fan-out
   (HTTP -> Postgres/Redis/Kafka); a trace does not currently start at k6 or
   at a Next.js app, since neither propagates or emits W3C trace context.
-- `smart_db_query_duration_seconds`'s `model` label is always `"all"` —
+- `hirekiwi_db_query_duration_seconds`'s `model` label is always `"all"` —
   Prisma's query event doesn't reliably carry per-model attribution across
   driver adapters; per-model breakdown was not worth a larger Prisma Client
   Extension rewrite of `PrismaService` for this change.

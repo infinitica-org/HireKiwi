@@ -20,12 +20,12 @@ const job = (attemptsMade: number, attempts = 5) => ({
 
 async function durationCount(outcome: string): Promise<number> {
   const metric = (await registry.getMetricsAsJSON()).find(
-    (m) => m.name === 'smart_queue_job_duration_seconds',
+    (m) => m.name === 'hirekiwi_queue_job_duration_seconds',
   );
   return (
     metric?.values.find(
       (v) =>
-        v.metricName === 'smart_queue_job_duration_seconds_count' &&
+        v.metricName === 'hirekiwi_queue_job_duration_seconds_count' &&
         v.labels.queue === 'credential_verification' &&
         v.labels.outcome === outcome,
     )?.value ?? 0

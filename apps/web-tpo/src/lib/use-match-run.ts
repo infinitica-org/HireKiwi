@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { MatchRunDto, MatchRequest } from '@hirekiwi/contracts';
 import { matchingApi } from './api';
 
@@ -12,7 +12,7 @@ function isTerminal(status: MatchRunDto['status']): boolean {
 /**
  * Triggers an async, batch-scoped match run (S6-VV-76) and polls its status every
  * `POLL_INTERVAL_MS` until it reaches a terminal state. No `@hirekiwi/ui` `useQuery` here since
- * web-tpo doesn't wrap its app in a `SmartApiProvider`/`QueryClientProvider` today.
+ * web-tpo doesn't wrap its app in a `HireKiwiApiProvider`/`QueryClientProvider` today.
  */
 export function useMatchRun(pollIntervalMs: number = POLL_INTERVAL_MS) {
   const [run, setRun] = useState<MatchRunDto | null>(null);
@@ -59,7 +59,7 @@ export function useMatchRun(pollIntervalMs: number = POLL_INTERVAL_MS) {
             .catch((caught) => {
               stopPolling();
               setError(
-                isSmartApiError(caught) || caught instanceof Error
+                isHireKiwiApiError(caught) || caught instanceof Error
                   ? caught.message
                   : 'Could not check match run status.',
               );
@@ -67,7 +67,7 @@ export function useMatchRun(pollIntervalMs: number = POLL_INTERVAL_MS) {
         }, pollIntervalMs);
       } catch (caught) {
         setError(
-          isSmartApiError(caught) || caught instanceof Error
+          isHireKiwiApiError(caught) || caught instanceof Error
             ? caught.message
             : 'Could not start matching.',
         );

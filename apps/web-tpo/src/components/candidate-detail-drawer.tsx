@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { X, Info, User } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import { api } from '../lib/api';
 import { CandidateRepositoryProfileView } from './candidates/CandidateRepositoryProfileView';
@@ -36,7 +36,7 @@ export function CandidateDetailDrawer({
       })
       .catch((caught: unknown) => {
         if (!cancelled) {
-          setError(isSmartApiError(caught) ? caught.message : 'Could not load skill claims.');
+          setError(isHireKiwiApiError(caught) ? caught.message : 'Could not load skill claims.');
         }
       })
       .finally(() => {

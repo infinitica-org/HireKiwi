@@ -1,3 +1,4 @@
+import { portalIcons } from '@hirekiwi/ui/brand/portal-icons';
 import type { Metadata, MetadataRoute, Viewport } from 'next';
 
 /**
@@ -6,11 +7,11 @@ import type { Metadata, MetadataRoute, Viewport } from 'next';
  * `app/robots.ts`, `app/sitemap.ts` and the OG image routes all read from here.
  */
 
-export const SITE_NAME = 'SMART';
+export const SITE_NAME = 'HireKiwi';
 
 // TODO(Th6-598): confirm the production domain. CookieYes is registered for
-// becomesmart.online; set NEXT_PUBLIC_SITE_URL in each deploy environment.
-const FALLBACK_SITE_URL = 'https://smart.example';
+// hirekiwi.online; set NEXT_PUBLIC_SITE_URL in each deploy environment.
+const FALLBACK_SITE_URL = 'https://hirekiwi.example';
 
 export const THEME_COLOR = '#ffffff';
 export const BRAND_LIME = '#d9fa61';
@@ -25,7 +26,7 @@ const BUILD_ENV: SeoEnv = {
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   VERCEL_ENV: process.env.VERCEL_ENV,
-  SMART_ENV: process.env.SMART_ENV,
+  HIREKIWI_ENV: process.env.HIREKIWI_ENV,
 };
 
 export function siteUrl(env: SeoEnv = BUILD_ENV): URL {
@@ -35,17 +36,17 @@ export function siteUrl(env: SeoEnv = BUILD_ENV): URL {
 
 /**
  * Only production is indexable. Precedence: NEXT_PUBLIC_ENV, then VERCEL_ENV,
- * then the repo-wide SMART_ENV. Anything else (unset, preview, staging, dev, qa)
+ * then the repo-wide HIREKIWI_ENV. Anything else (unset, preview, staging, dev, qa)
  * gets `Disallow: /` and noindex so non-production hosts never get indexed.
  */
 export function isIndexable(env: SeoEnv = BUILD_ENV): boolean {
-  const value = (env.NEXT_PUBLIC_ENV || env.VERCEL_ENV || env.SMART_ENV || '').toLowerCase();
+  const value = (env.NEXT_PUBLIC_ENV || env.VERCEL_ENV || env.HIREKIWI_ENV || '').toLowerCase();
   return value === 'production' || value === 'prod';
 }
 
 export interface PageSeo {
   path: string;
-  /** `<title>` segment; the root layout template appends " | SMART". */
+  /** `<title>` segment; the root layout template appends " | HireKiwi". */
   title: string;
   description: string;
   /** Headline and tagline rendered into the page's 1200×630 share card. */
@@ -55,14 +56,14 @@ export interface PageSeo {
   priority: number;
 }
 
-export const HOME_TITLE = 'SMART – Verified skills. The right fit, faster.';
+export const HOME_TITLE = 'HireKiwi – Verified skills. The right fit, faster.';
 
 export const PAGES = {
   home: {
     path: '/',
     title: HOME_TITLE,
     description:
-      'SMART connects students, universities and employers through verified skills – endorsed experience, signed credentials and AI-defended projects.',
+      'HireKiwi connects students, universities and employers through verified skills – endorsed experience, signed credentials and AI-defended projects.',
     ogHeadline: 'The right fit. Faster.',
     ogTagline: 'Verified skills connecting students, universities and employers.',
     changeFrequency: 'weekly',
@@ -80,7 +81,7 @@ export const PAGES = {
   },
   universities: {
     path: '/universities',
-    title: 'For Universities & TPOs – Prove placement outcomes',
+    title: 'For Universities & TPOs – Placement outcomes',
     description:
       'Cohort readiness analytics, verified placement data and accreditation-ready reports for placement offices and career centres.',
     ogHeadline: 'Get your students hired.',
@@ -102,7 +103,7 @@ export const PAGES = {
     path: '/universities/contact',
     title: 'Contact us – Universities & TPOs',
     description:
-      'Talk to the SMART partnerships team about verified skills, placement workflows and readiness analytics for your campus.',
+      'Talk to the HireKiwi partnerships team about verified skills, placement workflows and readiness analytics for your campus.',
     ogHeadline: "Let's connect.",
     ogTagline: 'Bring verified skills and placement analytics to your campus.',
     changeFrequency: 'yearly',
@@ -133,6 +134,7 @@ export function rootMetadata(env: SeoEnv = BUILD_ENV): Metadata {
     title: { default: home.title, template: `%s | ${SITE_NAME}` },
     description: home.description,
     manifest: '/manifest.webmanifest',
+    icons: portalIcons,
     formatDetection: { telephone: false, email: false, address: false },
     robots: indexable
       ? { index: true, follow: true }

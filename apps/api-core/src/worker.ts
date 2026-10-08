@@ -18,7 +18,7 @@ import { AppModule } from './app.module.js';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.createApplicationContext(AppModule, { bufferLogs: true });
   app.enableShutdownHooks();
-  Logger.log('SMART worker process started (BullMQ processors + Kafka outbox/consumer)');
+  Logger.log('HireKiwi worker process started (BullMQ processors + Kafka outbox/consumer)');
 }
 
 bootstrap().catch((error: unknown) => {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { GithubRepoSummary, ProjectDto } from '@hirekiwi/contracts';
 import { AlertCircle, CheckCircle2, GitBranch, Plus, X } from 'lucide-react';
 import { ProjectDetailModal } from '@/components/profile/projects/ProjectDetailModal';
@@ -180,7 +180,7 @@ export function ProjectSubmissionForm() {
         .listGithubRepos({ login: githubLogin })
         .then((res) => setRepos(res.repos))
         .catch((err: unknown) => {
-          if (isSmartApiError(err) && err.message) {
+          if (isHireKiwiApiError(err) && err.message) {
             setReposError(err.message);
             return;
           }
@@ -325,7 +325,7 @@ export function ProjectSubmissionForm() {
         evidenceType="PROJECT"
         description={meta.description}
         action={
-          canSubmitProjects ? (
+          canSubmitProjects && displayProjects.length > 0 ? (
             <button
               type="button"
               onClick={() => openForm()}

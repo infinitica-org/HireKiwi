@@ -339,7 +339,7 @@ export type CreateMatchRunResponse = z.infer<typeof CreateMatchRunResponseSchema
 
 /**
  * Real hiring outcomes written back so the predictive validity of the Gold tier
- * can be measured rather than asserted. This closes SMART's core feedback loop.
+ * can be measured rather than asserted. This closes HireKiwi's core feedback loop.
  */
 export const PlacementRecordDtoSchema = z.object({
   recordId: UuidSchema,
@@ -757,7 +757,7 @@ export const WebhookEndpointDtoSchema = z.object({
   endpointId: UuidSchema,
   institutionId: UuidSchema.nullable(),
   url: z.url(),
-  events: z.array(z.enum(['smart.certificate.issued', 'smart.placement.matched'])).min(1),
+  events: z.array(z.enum(['hirekiwi.certificate.issued', 'hirekiwi.placement.matched'])).min(1),
   active: z.boolean(),
   /** Only the prefix is returned; the signing secret is write-once. */
   secretPrefix: z.string(),
@@ -767,12 +767,12 @@ export type WebhookEndpointDto = z.infer<typeof WebhookEndpointDtoSchema>;
 
 /** Header names for outbound HMAC-SHA256 signed webhook delivery. */
 export const WEBHOOK_HEADERS = {
-  signature: 'x-smart-signature',
-  timestamp: 'x-smart-timestamp',
-  eventId: 'x-smart-event-id',
-  eventType: 'x-smart-event-type',
+  signature: 'x-hirekiwi-signature',
+  timestamp: 'x-hirekiwi-timestamp',
+  eventId: 'x-hirekiwi-event-id',
+  eventType: 'x-hirekiwi-event-type',
   /** Partners must dedupe on this — retries reuse the same key. */
-  idempotencyKey: 'x-smart-idempotency-key',
+  idempotencyKey: 'x-hirekiwi-idempotency-key',
 } as const;
 
 export const SHORTLIST_EXPORT_FORMATS = ['CSV', 'PDF', 'XLSX'] as const;

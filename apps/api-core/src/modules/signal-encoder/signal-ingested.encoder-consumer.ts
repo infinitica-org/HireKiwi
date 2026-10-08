@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   SignalEncodedEventSchema,
   SignalIngestedEventSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   type RawSignalEnvelope,
 } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
@@ -33,7 +33,7 @@ export class SignalIngestedEncoderConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.signalIngested,
+        topic: HIREKIWI_TOPICS.signalIngested,
         module: 'signal-encoder',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {
@@ -50,7 +50,7 @@ export class SignalIngestedEncoderConsumer implements OnModuleInit {
             const encodedEvent = SignalEncodedEventSchema.parse({
               meta: {
                 eventId: crypto.randomUUID(),
-                eventType: SMART_TOPICS.signalEncoded,
+                eventType: HIREKIWI_TOPICS.signalEncoded,
                 version: 1 as const,
                 occurredAt: new Date().toISOString(),
                 traceId: parsed.data.meta.traceId,
@@ -60,9 +60,9 @@ export class SignalIngestedEncoderConsumer implements OnModuleInit {
             });
 
             await this.outbox.enqueueEnvelope({
-              topic: SMART_TOPICS.signalEncoded,
+              topic: HIREKIWI_TOPICS.signalEncoded,
               partitionKey: envelope.userId,
-              eventType: SMART_TOPICS.signalEncoded,
+              eventType: HIREKIWI_TOPICS.signalEncoded,
               source: 'signal-encoder',
               data: encodedEvent.data,
             });

@@ -79,7 +79,7 @@ export const capstoneReviewTemplate: PromptTemplate<CapstoneReviewVariables> = {
   render: (variables) => ({
     system: [
       `You are a senior ${variables.trackName} practitioner reviewing a capstone submission`,
-      `for the SMART readiness certification.`,
+      `for the HireKiwi readiness certification.`,
       '',
       'SCOPE OF THIS REVIEW',
       'You are scoring ONE component: the practitioner rubric, worth 30% of the',

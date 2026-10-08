@@ -40,11 +40,11 @@ export function SessionHoldWall({
       const detail = (event as CustomEvent<SessionHoldState>).detail;
       if (detail?.message) setHold(detail);
     };
-    window.addEventListener('smart:session-hold', onHold);
+    window.addEventListener('hirekiwi:session-hold', onHold);
     void refreshHold();
     const timer = window.setInterval(() => void refreshHold(), 15_000);
     return () => {
-      window.removeEventListener('smart:session-hold', onHold);
+      window.removeEventListener('hirekiwi:session-hold', onHold);
       window.clearInterval(timer);
     };
   }, [refreshHold]);

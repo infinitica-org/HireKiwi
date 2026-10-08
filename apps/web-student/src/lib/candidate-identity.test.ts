@@ -4,7 +4,7 @@ import { headlineFor } from './candidate-identity';
 
 const baseUser: AuthenticatedUser = {
   userId: '00000000-0000-4000-8000-000000000001',
-  email: 'student@smart.local',
+  email: 'student@hirekiwi.local',
   fullName: 'Test Student',
   role: 'STUDENT',
   institutionId: null,
@@ -39,7 +39,7 @@ describe('headlineFor', () => {
     ).toBe('Finance Analyst candidate');
   });
 
-  it('returns SMART candidate when track is unset', () => {
-    expect(headlineFor(baseUser, [])).toBe('SMART candidate');
+  it('returns HireKiwi candidate when track is unset', () => {
+    expect(headlineFor(baseUser, [])).toBe('HireKiwi candidate');
   });
 });

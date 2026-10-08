@@ -9,15 +9,15 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import {
-  SmartApiClient,
-  type SmartClientOptions,
-  createSmartApi,
-  type SmartApi,
+  HireKiwiApiClient,
+  type HireKiwiClientOptions,
+  createHireKiwiApi,
+  type HireKiwiApi,
 } from '@hirekiwi/api-client';
 
-const SmartApiContext = createContext<SmartApi | null>(null);
+const HireKiwiApiContext = createContext<HireKiwiApi | null>(null);
 
-export interface SmartApiProviderProps extends Omit<SmartClientOptions, 'fetchImpl'> {
+export interface HireKiwiApiProviderProps extends Omit<HireKiwiClientOptions, 'fetchImpl'> {
   children: React.ReactNode;
 }
 
@@ -25,13 +25,13 @@ export interface SmartApiProviderProps extends Omit<SmartClientOptions, 'fetchIm
  * Initializes the typed API client and a TanStack QueryClient, providing both
  * to the React tree.
  */
-export function SmartApiProvider({ children, ...options }: SmartApiProviderProps) {
+export function HireKiwiApiProvider({ children, ...options }: HireKiwiApiProviderProps) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
-            retry: false, // Let the SmartApiClient handle 429 retries
+            retry: false, // Let the HireKiwiApiClient handle 429 retries
             refetchOnWindowFocus: false,
           },
         },
@@ -39,8 +39,8 @@ export function SmartApiProvider({ children, ...options }: SmartApiProviderProps
   );
 
   const api = useMemo(() => {
-    const client = new SmartApiClient(options);
-    return createSmartApi(client);
+    const client = new HireKiwiApiClient(options);
+    return createHireKiwiApi(client);
   }, [
     options.baseUrl,
     options.getAccessToken,
@@ -50,19 +50,19 @@ export function SmartApiProvider({ children, ...options }: SmartApiProviderProps
   ]);
 
   return (
-    <SmartApiContext.Provider value={api}>
+    <HireKiwiApiContext.Provider value={api}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </SmartApiContext.Provider>
+    </HireKiwiApiContext.Provider>
   );
 }
 
 /**
- * Hook to access the fully typed SMART API client.
+ * Hook to access the fully typed HireKiwi API client.
  */
-export function useSmartApi(): SmartApi {
-  const api = useContext(SmartApiContext);
+export function useHireKiwiApi(): HireKiwiApi {
+  const api = useContext(HireKiwiApiContext);
   if (!api) {
-    throw new Error('useSmartApi must be used within a SmartApiProvider');
+    throw new Error('useHireKiwiApi must be used within a HireKiwiApiProvider');
   }
   return api;
 }

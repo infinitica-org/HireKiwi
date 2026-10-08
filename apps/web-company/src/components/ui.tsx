@@ -102,7 +102,7 @@ export function Modal({
 export type { SkillReq };
 
 /**
- * Removable skill tags with a minimum level. Skills can only be chosen from the SMART skill
+ * Removable skill tags with a minimum level. Skills can only be chosen from the HireKiwi skill
  * catalog, so the API always receives a real skill code.
  */
 export function SkillsEditor({
@@ -164,7 +164,7 @@ export function SkillsEditor({
             aria-label="Skill"
             className={`${input} max-w-[280px]`}
           >
-            <option value="">Choose a skill from the SMART catalog…</option>
+            <option value="">Choose a skill from the HireKiwi catalog…</option>
             {SKILL_CATALOG_GROUPS.map((group) => {
               const available = group.skills.filter((skill) => !chosen.has(skill.code));
               if (available.length === 0) return null;

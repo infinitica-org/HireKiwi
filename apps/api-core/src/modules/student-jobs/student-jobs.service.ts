@@ -27,7 +27,7 @@ import {
   type EvidenceInput,
 } from '../readiness/readiness.service.js';
 import {
-  companyVisibleWhere,
+  studentScopeWhere,
   acceptingOpeningWhere,
   isAcceptingApplications,
   isCompanyVerified,
@@ -306,8 +306,7 @@ export class StudentJobsService {
       where: {
         studentId,
         job: {
-          institutionId: student.institutionId,
-          AND: [companyVisibleWhere(student.institutionId)],
+          AND: [studentScopeWhere(student.institutionId)],
         },
       },
       orderBy: { savedAt: 'desc' },
@@ -415,9 +414,8 @@ export class StudentJobsService {
     const row = await this.prisma.jobOpening.findFirst({
       where: {
         id: uuid.data,
-        institutionId: student.institutionId,
         status: { in: ['OPEN', 'CLOSED'] },
-        AND: [companyVisibleWhere(student.institutionId)],
+        AND: [studentScopeWhere(student.institutionId)],
       },
       select: OPENING_SELECT,
     });

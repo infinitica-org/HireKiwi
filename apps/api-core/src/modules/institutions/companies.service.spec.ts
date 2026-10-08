@@ -243,14 +243,14 @@ describe('CompaniesService', () => {
     it('returns who created and last modified the company on the detail view', async () => {
       prismaMock.company.findUnique.mockResolvedValue(companyRow);
       prismaMock.user.findMany = vi.fn().mockResolvedValue([
-        { id: 'admin-a', email: 'a@smart.test' },
-        { id: 'admin-b', email: 'b@smart.test' },
+        { id: 'admin-a', email: 'a@hirekiwi.test' },
+        { id: 'admin-b', email: 'b@hirekiwi.test' },
       ]);
 
       const dto = await service.getCompany('company-9');
 
-      expect(dto.createdBy).toEqual({ userId: 'admin-a', email: 'a@smart.test' });
-      expect(dto.updatedBy).toEqual({ userId: 'admin-b', email: 'b@smart.test' });
+      expect(dto.createdBy).toEqual({ userId: 'admin-a', email: 'a@hirekiwi.test' });
+      expect(dto.updatedBy).toEqual({ userId: 'admin-b', email: 'b@hirekiwi.test' });
     });
   });
 });

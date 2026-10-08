@@ -18,7 +18,9 @@ function service(overrides: { storageUp?: boolean; smtp?: () => Promise<boolean>
 }
 
 async function up(integration: string): Promise<number | undefined> {
-  const metric = (await registry.getMetricsAsJSON()).find((m) => m.name === 'smart_integration_up');
+  const metric = (await registry.getMetricsAsJSON()).find(
+    (m) => m.name === 'hirekiwi_integration_up',
+  );
   return metric?.values.find((v) => v.labels.integration === integration)?.value;
 }
 

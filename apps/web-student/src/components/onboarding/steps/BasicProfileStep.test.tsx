@@ -6,6 +6,7 @@ import { emptyOnboardingForm } from '@/lib/onboarding-form';
 import type * as ProfilePhotoModule from '@/lib/profile-photo';
 
 const uploadProfilePhoto = vi.fn();
+
 vi.mock('@/lib/api', () => ({
   api: { users: { uploadProfilePhoto: (...args: unknown[]) => uploadProfilePhoto(...args) } },
 }));

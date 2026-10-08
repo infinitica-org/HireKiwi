@@ -10,7 +10,7 @@ export interface LevelStepperProps {
 }
 
 /**
- * L1–L5 progression. A locked level is not clickable — SMART does not let a
+ * L1–L5 progression. A locked level is not clickable — HireKiwi does not let a
  * candidate skip to the capstone.
  */
 export function LevelStepper({ unlockedThrough, current }: LevelStepperProps) {

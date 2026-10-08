@@ -5,7 +5,7 @@ description: Modular monolith topology, High-End VPS deployment, bounded context
 
 # System Architecture & Topology
 
-SMART's backend is architected as a high-performance **modular monolith**, implemented in NestJS 11 and Fastify (`apps/api-core`).
+HireKiwi's backend is architected as a high-performance **modular monolith**, implemented in NestJS 11 and Fastify (`apps/api-core`).
 
 All modules run inside a single unified process, share an in-memory execution context, and are deployed via Docker Compose onto hardened, dedicated High-End Linux VPS servers behind Caddy and Cloudflare.
 
@@ -20,7 +20,7 @@ All modules run inside a single unified process, share an in-memory execution co
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                 SINGLE HIGH-END DEDICATED LINUX VPS HOST                    │
-│   Unified Server (32 vCPU / 128 GB RAM) · dev.becomesmart.online / apex     │
+│   Unified Server (32 vCPU / 128 GB RAM) · dev.hirekiwi.online / apex     │
 │                                                                             │
 │   [ Caddy Reverse Proxy ] — Owns ports 80/443, Automatic Let's Encrypt TLS  │
 │          Dynamic Upstream Routing (Prod Blue/Green + Dev Slices)            │
@@ -44,12 +44,12 @@ All modules run inside a single unified process, share an in-memory execution co
 
 ## Single High-End VPS Deployment Model & Blue-Green Engine
 
-SMART is deployed on a dedicated, high-performance Linux VPS instance (Ubuntu 24.04: 32 vCPU, 128 GB RAM, NVMe storage), running both Production and Development in strictly isolated Docker Compose networks:
+HireKiwi is deployed on a dedicated, high-performance Linux VPS instance (Ubuntu 24.04: 32 vCPU, 128 GB RAM, NVMe storage), running both Production and Development in strictly isolated Docker Compose networks:
 
 | Environment     | Deployment Slice                       | Public Domain            | Zero-Downtime Traffic Routing                                                         |
 | :-------------- | :------------------------------------- | :----------------------- | :------------------------------------------------------------------------------------ |
-| **Production**  | `smart-prod-blue` & `smart-prod-green` | `becomesmart.online`     | Caddy dynamic upstream switches between Blue and Green upon passing `/health` checks. |
-| **Development** | `smart-dev`                            | `dev.becomesmart.online` | Dedicated compose project with isolated database volumes and dev app ports.           |
+| **Production**  | `hirekiwi-prod-blue` & `hirekiwi-prod-green` | `hirekiwi.online`     | Caddy dynamic upstream switches between Blue and Green upon passing `/health` checks. |
+| **Development** | `hirekiwi-dev`                            | `dev.hirekiwi.online` | Dedicated compose project with isolated database volumes and dev app ports.           |
 
 ### Blue-Green Zero-Downtime Switchover Protocol
 

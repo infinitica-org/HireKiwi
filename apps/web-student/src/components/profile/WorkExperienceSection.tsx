@@ -12,7 +12,7 @@ import {
   type WorkExperienceDocumentDto,
   type WorkExperienceProofValidationResult,
 } from '@hirekiwi/contracts';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQuery, useQueryClient } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
@@ -34,7 +34,7 @@ import {
 } from '@/lib/work-experience-save-validation';
 
 function workExperienceSaveErrorMessage(err: unknown, fallback: string): string {
-  if (isSmartApiError(err)) {
+  if (isHireKiwiApiError(err)) {
     if (err.requiresLogin) {
       return 'Your session has expired. Sign in again to save and send verification.';
     }
@@ -140,7 +140,7 @@ export function WorkExperienceSection() {
       );
       await fetchExperiences();
     } catch (err: unknown) {
-      if (isSmartApiError(err) && err.statusCode === 429 && err.retryAfterSeconds) {
+      if (isHireKiwiApiError(err) && err.statusCode === 429 && err.retryAfterSeconds) {
         startManagerResendCooldown(experienceId, err.retryAfterSeconds * 1000);
       }
       setError(
@@ -357,7 +357,7 @@ export function WorkExperienceSection() {
       }
       await fetchExperiences();
     } catch (err: unknown) {
-      if (isSmartApiError(err) && err.statusCode === 429 && err.retryAfterSeconds) {
+      if (isHireKiwiApiError(err) && err.statusCode === 429 && err.retryAfterSeconds) {
         startVerificationResendCooldown(experienceId, err.retryAfterSeconds * 1000);
       }
       setError(workExperienceSaveErrorMessage(err, 'Failed to send verification request.'));
@@ -692,7 +692,7 @@ export function WorkExperienceSection() {
         evidenceType="WORK_EXPERIENCE"
         description={meta.description}
         action={
-          !loading && !declarationLoading ? (
+          !loading && !declarationLoading && experiences.length > 0 ? (
             <button
               type="button"
               onClick={openAddModal}

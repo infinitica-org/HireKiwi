@@ -12,6 +12,7 @@ import {
   HttpException,
   HttpStatus,
   Inject,
+  Optional,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -26,6 +27,7 @@ import {
   type AuthTokenResponse,
   type AuthenticatedUser,
   type CompanyPortalAccount,
+  type IdentifyResponse,
   type ListActiveSessionsQuery,
   type RegisterRequest,
   type RegisterStudentRequest,
@@ -34,11 +36,17 @@ import {
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { env } from '../../platform/config/env.js';
+import { RedisService } from '../../platform/redis/redis.service.js';
+import {
+  revokedFamilyKey,
+  revokedFamilyTtlSeconds,
+} from '../../common/guards/session-revocation.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { resolveSessionHold } from '../../common/session-hold.js';
 import { toAuthenticatedUserWithPhoto } from '../users/profile-photo.util.js';
+import type { GoogleIdentity } from './google-oauth.service.js';
 import { clearRefreshCookie, setRefreshCookie } from './refresh-cookie.js';
 
 const scrypt = promisify(scryptCallback);
@@ -83,6 +91,7 @@ export class AuthService {
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(StorageService) private readonly storage: StorageService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
+    @Optional() @Inject(RedisService) private readonly redis?: RedisService,
   ) {}
 
   tryVerifyAccessToken(header?: string): RequestUser | null {
@@ -94,6 +103,15 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  /** Identify-first login step. Deliberately reveals existence — see IdentifyResponseSchema. */
+  async identify(email: string): Promise<IdentifyResponse> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true },
+    });
+    return { exists: Boolean(user) };
   }
 
   async login(email: string, password: string, reply: FastifyReply): Promise<AuthTokenResponse> {
@@ -285,6 +303,102 @@ export class AuthService {
     return this.issueSession(user, reply);
   }
 
+  /**
+   * "Sign in with Google" — student-only. Company accounts always use their
+   * verified work-domain email + password and are never created or signed in
+   * here; self-serve company signup goes through the verification wizard
+   * (PR #290).
+   */
+  async loginOrRegisterWithGoogle(
+    identity: GoogleIdentity,
+    reply: FastifyReply,
+  ): Promise<AuthTokenResponse> {
+    if (!identity.emailVerified) {
+      throw new ForbiddenException({
+        error: 'google_email_unverified',
+        message: 'That Google account email is not verified.',
+        statusCode: 403,
+      });
+    }
+
+    const email = identity.email.toLowerCase();
+    const include = {
+      institution: true,
+      company: true,
+      primaryTrack: true,
+      secondaryTrack: true,
+    } as const;
+
+    let user = await this.prisma.user.findUnique({ where: { email }, include });
+
+    if (user && user.role !== 'STUDENT') {
+      throw new UnauthorizedException({
+        error: 'google_role_mismatch',
+        message: 'This email is not registered as a student account.',
+        statusCode: 401,
+      });
+    }
+
+    if (!user) {
+      try {
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            fullName: identity.name?.trim() || email,
+            role: 'STUDENT',
+            provider: 'GOOGLE',
+            emailVerified: true,
+          },
+          include,
+        });
+      } catch (err: unknown) {
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'code' in err &&
+          (err as { code: string }).code === 'P2002'
+        ) {
+          // Lost a race with a concurrent signup for the same email; use the winner's row.
+          user = await this.prisma.user.findUniqueOrThrow({ where: { email }, include });
+        } else {
+          throw err;
+        }
+      }
+      await this.auditPublisher.record({
+        actorId: user.id,
+        action: 'auth.register',
+        resourceType: 'user',
+        resourceId: user.id,
+        reasonCode: 'google_oauth',
+      });
+    } else if (!user.emailVerified) {
+      // Google's attestation is stronger than our own email-verification link.
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true },
+        include,
+      });
+    }
+
+    if (!user) {
+      throw unauthorized('Could not resolve a user for this Google account.');
+    }
+
+    assertTenantLoginAllowed(user);
+    if (user.deactivatedAt) {
+      throw unauthorized('This account has been deactivated.');
+    }
+
+    await this.auditPublisher.record({
+      actorId: user.id,
+      action: 'auth.login',
+      resourceType: 'user',
+      resourceId: user.id,
+      reasonCode: 'google_oauth',
+    });
+    return this.issueSession(user, reply);
+  }
+
   async registerStudent(
     dto: RegisterStudentRequest,
     reply: FastifyReply,
@@ -321,7 +435,7 @@ export class AuthService {
       throw new UnprocessableEntityException({
         error: 'unregistered_university_domain',
         message:
-          'Your university domain is not registered on SMART. Please contact your placement administrator.',
+          'Your university domain is not registered on HireKiwi. Please contact your placement administrator.',
         statusCode: 422,
       });
     }
@@ -478,10 +592,16 @@ export class AuthService {
   }
 
   async revokeAllForUser(userId: string): Promise<void> {
+    const live = await this.prisma.refreshToken.findMany({
+      where: { userId, revokedAt: null },
+      select: { familyId: true },
+      distinct: ['familyId'],
+    });
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    await Promise.all(live.map((row) => this.markFamilyRevoked(row.familyId)));
   }
 
   /** S6-VV-93 — one row per active session, for the SUPER_ADMIN sessions panel. */
@@ -543,6 +663,24 @@ export class AuthService {
       where: { familyId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    await this.markFamilyRevoked(familyId);
+  }
+
+  /**
+   * Th6-614 - also cut off the session's access tokens, which are otherwise valid until they
+   * expire. The refresh-token rows above stay the source of truth; this marker is best effort.
+   */
+  private async markFamilyRevoked(familyId: string): Promise<void> {
+    if (!this.redis) return;
+    try {
+      await this.redis.setex(
+        revokedFamilyKey(familyId),
+        revokedFamilyTtlSeconds(env.JWT_ACCESS_TTL_SECONDS),
+        '1',
+      );
+    } catch {
+      // Redis is down: the refresh token is revoked in the database; access tokens expire on their own.
+    }
   }
 
   async getCompanyPortalAccount(userId: string): Promise<CompanyPortalAccount> {

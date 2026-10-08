@@ -1,6 +1,6 @@
 ---
 title: Production Release Notes v2.1.0
-description: Official release record for SMART v2.1.0 (Sprint 6 GA Promotion).
+description: Official release record for HireKiwi v2.1.0 (Sprint 6 GA Promotion).
 ---
 
 # Production Release Notes v2.1.0
@@ -19,7 +19,7 @@ Release v2.1.0 marks the conclusion of our Sprint 6 delivery cycle. Over the pas
 This release delivers three foundational architectural requirements for our institutional campus rollout:
 
 1. **Server-Authoritative Anti-Cheating Timer:** Replaced client-driven countdown clocks with a BullMQ delayed-job force-submit processor that terminates and evaluates attempts at the server deadline, regardless of candidate network state.
-2. **Cryptographic Certificate Trust Chain:** Added HMAC-SHA256 signature hashes to all issued candidate certificates, validated on our public verification portal (`verify.smart.com`) with automated tamper alerts and QR routing.
+2. **Cryptographic Certificate Trust Chain:** Added HMAC-SHA256 signature hashes to all issued candidate certificates, validated on our public verification portal (`verify.hirekiwi.com`) with automated tamper alerts and QR routing.
 3. **Deterministic Placement Matching Engine:** Deployed PostgreSQL `pgvector` cosine similarity matching between candidate competency vectors and incoming Job Descriptions, backed by a deterministic keyword fallback parser to guarantee zero match downtime.
 
 ---

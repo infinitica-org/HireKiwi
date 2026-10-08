@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@hirekiwi/ui';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type {
   NotificationChannel,
   NotificationKind,
@@ -53,7 +53,7 @@ export function NotificationPreferencesCard() {
       });
       queryClient.setQueryData<NotificationPreferencesResponse>(QUERY_KEY, next);
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not update this setting.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not update this setting.');
     } finally {
       setBusyKey(null);
     }

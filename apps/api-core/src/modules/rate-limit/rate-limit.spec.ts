@@ -50,7 +50,7 @@ describe('identity resolution', () => {
     const longKey = 'a'.repeat(40);
     expect(
       resolveRateLimitIdentity('API_KEY', {
-        headers: { 'x-smart-api-key': [longKey] },
+        headers: { 'x-hirekiwi-api-key': [longKey] },
       } as never),
     ).toBe(longKey.slice(0, 32));
     expect(resolveRateLimitIdentity('API_KEY', { headers: {} } as never)).toBe('anon');
@@ -79,7 +79,7 @@ describe('RateLimitService', () => {
     expect(denied).toMatchObject({ allowed: false, count: 10, retryAfterSeconds: 60 });
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
       expect.objectContaining({
-        topic: 'smart.rate_limit.exceeded',
+        topic: 'hirekiwi.rate_limit.exceeded',
         partitionKey: '1.2.3.4',
       }),
     );
@@ -121,7 +121,7 @@ describe('RateLimitService', () => {
     expect(decision.allowed).toBe(false);
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
       expect.objectContaining({
-        topic: 'smart.rate_limit.exceeded',
+        topic: 'hirekiwi.rate_limit.exceeded',
         partitionKey: attemptId,
       }),
     );

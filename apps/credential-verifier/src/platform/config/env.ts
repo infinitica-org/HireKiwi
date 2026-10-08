@@ -12,11 +12,11 @@ const EnvSchema = z.object({
   APP_VERSION: z.string().default('0.1.0'),
 
   // Same shared Postgres instance as api-core (infra/docker/docker-compose.yml, host
-  // port 5432, user smart/smart) — own database (credential_verifier) on that instance.
+  // port 5432, user hirekiwi/hirekiwi) — own database (credential_verifier) on that instance.
   DATABASE_URL: z
     .string()
     .min(1)
-    .default('postgresql://smart:smart@127.0.0.1:5432/credential_verifier?schema=public'),
+    .default('postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/credential_verifier?schema=public'),
 
   REDIS_URL: z.string().min(1).default('redis://127.0.0.1:6380'),
 

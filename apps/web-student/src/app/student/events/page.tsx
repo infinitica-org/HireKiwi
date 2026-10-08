@@ -1,6 +1,6 @@
 import { EventsList } from '@/components/events/EventsList';
 
-export const metadata = { title: 'Events · SMART' };
+export const metadata = { title: 'Events · HireKiwi' };
 
 /** UNI-05 (Th6-451) — career events from the student's own university. */
 export default function EventsPage() {

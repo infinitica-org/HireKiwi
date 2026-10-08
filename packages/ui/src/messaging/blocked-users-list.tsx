@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { BlockedUser } from '@hirekiwi/contracts';
 import { UserX } from 'lucide-react';
-import { useMutation, useQuery, useQueryClient, useSmartApi } from '../api-provider';
+import { useMutation, useQuery, useQueryClient, useHireKiwiApi } from '../api-provider';
 import { Button } from '../components/button';
 import { ConfirmDialog } from '../components/confirm-dialog';
 import { EmptyState, ErrorState, LoadingState } from '../components/common-states';
@@ -14,7 +14,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
 /** Th6-427 — the people I blocked, each with an Unblock button behind a confirm dialog. */
 export function BlockedUsersList() {
-  const api = useSmartApi();
+  const api = useHireKiwiApi();
   const queryClient = useQueryClient();
   const [target, setTarget] = useState<BlockedUser | null>(null);
   const [notice, setNotice] = useState<string | null>(null);

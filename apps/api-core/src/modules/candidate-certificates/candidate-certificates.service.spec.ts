@@ -402,13 +402,13 @@ describe('CandidateCertificatesService', () => {
     expect(result.status).toBe('APPROVED');
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
       expect.objectContaining({
-        topic: 'smart.credential.verified',
+        topic: 'hirekiwi.credential.verified',
         data: expect.objectContaining({ sourceId: 'EXTERNALCERT', entityId: certificateId }),
       }),
     );
   });
 
-  it('does not publish smart.credential.verified when an endorsement is rejected', async () => {
+  it('does not publish hirekiwi.credential.verified when an endorsement is rejected', async () => {
     const { prisma, service, outbox } = setup();
     prisma.certificateEndorsement.findUnique.mockResolvedValue({
       id: randomUUID(),
@@ -511,7 +511,7 @@ describe('CandidateCertificatesService', () => {
   });
 
   describe('adminApprove', () => {
-    it('publishes smart.credential.verified when a super admin force-approves a certificate', async () => {
+    it('publishes hirekiwi.credential.verified when a super admin force-approves a certificate', async () => {
       const { prisma, service, outbox } = setup();
       prisma.candidateCertificate.update.mockResolvedValue(baseCertificateRow());
       prisma.candidateCertificate.findUniqueOrThrow.mockResolvedValue(
@@ -522,7 +522,7 @@ describe('CandidateCertificatesService', () => {
 
       expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
         expect.objectContaining({
-          topic: 'smart.credential.verified',
+          topic: 'hirekiwi.credential.verified',
           data: expect.objectContaining({
             userId: candidateId,
             sourceId: 'EXTERNALCERT',

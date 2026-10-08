@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
 import type { InstitutionDto, InstitutionListStatus, PlanCode } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   Check,
   CheckCircle2,
@@ -33,12 +33,13 @@ import {
   controlButtonClassName,
 } from '@/components/admin-ui';
 import { api } from '@/lib/api';
+import { PartnershipRequestsQueue } from './partnership-requests-queue';
 
 function formatApiError(error: unknown, fallback: string): string {
-  if (isSmartApiError(error) && error.details.length > 0) {
+  if (isHireKiwiApiError(error) && error.details.length > 0) {
     return error.details.map((detail) => `${detail.path}: ${detail.message}`).join(' ');
   }
-  if (isSmartApiError(error)) return error.message;
+  if (isHireKiwiApiError(error)) return error.message;
   return fallback;
 }
 
@@ -48,6 +49,7 @@ export default function InstitutionsPage() {
   const [selectedQueueIds, setSelectedQueueIds] = useState<Set<string>>(new Set());
   const [queueNotice, setQueueNotice] = useState<string | null>(null);
   const [_loading, setLoading] = useState(true);
+  const [requestCount, setRequestCount] = useState(0);
 
   const [name, setName] = useState('');
   const [domain, setDomain] = useState('');
@@ -192,7 +194,7 @@ export default function InstitutionsPage() {
           }`}
         >
           Provisioning Queue
-          {pendingQueue.length > 0 ? (
+          {pendingQueue.length + requestCount > 0 ? (
             <span
               className={`ml-2 rounded-md px-1.5 py-0.2 text-[10px] ${
                 activeTab === 'queue'
@@ -200,7 +202,7 @@ export default function InstitutionsPage() {
                   : 'bg-rose-500 text-white font-bold'
               }`}
             >
-              {pendingQueue.length}
+              {pendingQueue.length + requestCount}
             </span>
           ) : null}
         </button>
@@ -239,8 +241,8 @@ export default function InstitutionsPage() {
                 University Provisioning Queue
               </h3>
               <p className="text-xs text-zinc-500">
-                Review pending institution signups, verify official domains, and provision TPO
-                workspaces.
+                Partnership requests from the landing page and pending university signups. Approve
+                to create the university and email the contact a link to set their password.
               </p>
             </div>
 
@@ -270,88 +272,92 @@ export default function InstitutionsPage() {
             ) : null}
           </div>
 
-          <DataTable
-            headers={[
-              '',
-              'University & Domain',
-              'Enrolled Students',
-              'Pending Invites',
-              'Status',
-              'Actions',
-            ]}
-            empty={pendingQueue.length === 0}
-            emptyIcon={GraduationCap}
-          >
-            {pendingQueue.map((inst) => {
-              const isSelected = selectedQueueIds.has(inst.institutionId);
-              const initials =
-                inst.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .join('')
-                  .toUpperCase() || 'UN';
+          <PartnershipRequestsQueue onApproved={() => void loadData()} onCount={setRequestCount} />
 
-              return (
-                <TableRow key={inst.institutionId} className={isSelected ? 'bg-zinc-100/70' : ''}>
-                  <TableCell className="w-10">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleSelectOne(inst.institutionId)}
-                      aria-label={`Select ${inst.name}`}
-                      className="rounded border-zinc-300 accent-zinc-900 cursor-pointer"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-zinc-200/80 bg-zinc-900 text-xs font-bold text-white shadow-2xs">
-                        {initials}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="font-bold text-zinc-900 text-xs">{inst.name}</div>
-                        <div className="font-mono text-[11px] text-zinc-500">{inst.domain}</div>
+          {pendingQueue.length > 0 || requestCount === 0 ? (
+            <DataTable
+              headers={[
+                '',
+                'University & Domain',
+                'Enrolled Students',
+                'Pending Invites',
+                'Status',
+                'Actions',
+              ]}
+              empty={pendingQueue.length === 0}
+              emptyIcon={GraduationCap}
+            >
+              {pendingQueue.map((inst) => {
+                const isSelected = selectedQueueIds.has(inst.institutionId);
+                const initials =
+                  inst.name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .join('')
+                    .toUpperCase() || 'UN';
+
+                return (
+                  <TableRow key={inst.institutionId} className={isSelected ? 'bg-zinc-100/70' : ''}>
+                    <TableCell className="w-10">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectOne(inst.institutionId)}
+                        aria-label={`Select ${inst.name}`}
+                        className="rounded border-zinc-300 accent-zinc-900 cursor-pointer"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-zinc-200/80 bg-zinc-900 text-xs font-bold text-white shadow-2xs">
+                          {initials}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="font-bold text-zinc-900 text-xs">{inst.name}</div>
+                          <div className="font-mono text-[11px] text-zinc-500">{inst.domain}</div>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs font-medium text-zinc-700">
-                    {inst.studentCount}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-zinc-500">
-                    {inst.invitePendingCount}
-                  </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 shadow-2xs">
-                      <span className="size-1.5 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)] animate-pulse" />
-                      Pending Review
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 border-zinc-200 bg-white px-2.5 text-[11px] font-semibold text-zinc-900 hover:bg-zinc-50 hover:border-zinc-300 shadow-2xs gap-1"
-                        onClick={() => void handleSingleAction(inst.institutionId, 'REJECTED')}
-                      >
-                        <XCircle className="h-3.5 w-3.5" />
-                        Reject
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-7 bg-zinc-900 text-white hover:bg-black px-2.5 text-[11px] font-semibold gap-1 shadow-2xs"
-                        onClick={() => void handleSingleAction(inst.institutionId, 'APPROVED')}
-                      >
-                        <UserCheck className="h-3.5 w-3.5" />
-                        Provision
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </DataTable>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs font-medium text-zinc-700">
+                      {inst.studentCount}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-zinc-500">
+                      {inst.invitePendingCount}
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 shadow-2xs">
+                        <span className="size-1.5 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)] animate-pulse" />
+                        Pending Review
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 border-zinc-200 bg-white px-2.5 text-[11px] font-semibold text-zinc-900 hover:bg-zinc-50 hover:border-zinc-300 shadow-2xs gap-1"
+                          onClick={() => void handleSingleAction(inst.institutionId, 'REJECTED')}
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          Reject
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-7 bg-zinc-900 text-white hover:bg-black px-2.5 text-[11px] font-semibold gap-1 shadow-2xs"
+                          onClick={() => void handleSingleAction(inst.institutionId, 'APPROVED')}
+                        >
+                          <UserCheck className="h-3.5 w-3.5" />
+                          Provision
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </DataTable>
+          ) : null}
         </div>
       )}
 

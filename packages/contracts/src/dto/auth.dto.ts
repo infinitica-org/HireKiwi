@@ -22,6 +22,21 @@ export const PasswordLoginRequestSchema = z.object({
 });
 export type PasswordLoginRequest = z.infer<typeof PasswordLoginRequestSchema>;
 
+/**
+ * Identify-first login: resolve whether an email has an account before asking for a
+ * password. Deliberately reveals existence (unlike password-reset) — bounded by the
+ * auth.identify rate limit policy. Response carries nothing beyond the boolean.
+ */
+export const IdentifyRequestSchema = z.object({
+  email: EmailSchema,
+});
+export type IdentifyRequest = z.infer<typeof IdentifyRequestSchema>;
+
+export const IdentifyResponseSchema = z.object({
+  exists: z.boolean(),
+});
+export type IdentifyResponse = z.infer<typeof IdentifyResponseSchema>;
+
 /* ---------------------------- self-serve register -------------------------- */
 
 export const RegisterStudentRequestSchema = z.object({
@@ -202,7 +217,7 @@ export const CreateApiKeyResponseSchema = z.object({
 });
 export type CreateApiKeyResponse = z.infer<typeof CreateApiKeyResponseSchema>;
 
-export const API_KEY_HEADER = 'x-smart-api-key' as const;
+export const API_KEY_HEADER = 'x-hirekiwi-api-key' as const;
 
 /* ------------------------------- role assignment -------------------------- */
 

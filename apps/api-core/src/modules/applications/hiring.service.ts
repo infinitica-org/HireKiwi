@@ -8,7 +8,7 @@ import {
 import {
   ApplicationStageChangedDataSchema,
   EMPLOYER_APPLICATION_STATUS_LABELS,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   STAGE_FOR_STATUS,
   allowedNextStatuses,
   canTransition,
@@ -295,9 +295,9 @@ export class HiringService {
     toStage: AtsStage,
   ): Promise<void> {
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.applicationStageChanged,
+      topic: HIREKIWI_TOPICS.applicationStageChanged,
       partitionKey: row.id,
-      eventType: SMART_TOPICS.applicationStageChanged,
+      eventType: HIREKIWI_TOPICS.applicationStageChanged,
       source: 'applications',
       data: ApplicationStageChangedDataSchema.parse({
         applicationId: row.id,

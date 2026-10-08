@@ -5,7 +5,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type InboxOutcome = 'processed' | 'duplicate';
 
-/** `meta.eventId` of a SMART event envelope, or null for payloads that don't carry one. */
+/** `meta.eventId` of a HireKiwi event envelope, or null for payloads that don't carry one. */
 export function eventIdOf(payload: unknown): string | null {
   const meta = (payload as { meta?: { eventId?: unknown } } | null)?.meta;
   return typeof meta?.eventId === 'string' && UUID.test(meta.eventId) ? meta.eventId : null;

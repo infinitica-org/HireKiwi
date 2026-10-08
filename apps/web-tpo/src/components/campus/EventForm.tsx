@@ -16,7 +16,7 @@ import {
   type CreateCareerEvent,
   type UpdateCareerEvent,
 } from '@hirekiwi/contracts';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 
 const AUDIENCE_LABEL: Record<CareerEventAudience, string> = {
   STUDENTS: 'Students only',
@@ -166,7 +166,7 @@ export function EventForm({
     try {
       await onSubmit(body);
     } catch (failure) {
-      if (failure instanceof SmartApiError && Object.keys(failure.fieldErrors).length > 0) {
+      if (failure instanceof HireKiwiApiError && Object.keys(failure.fieldErrors).length > 0) {
         const mapped: Record<string, string> = {};
         for (const [path, message] of Object.entries(failure.fieldErrors))
           mapped[fieldFor(path)] = message;

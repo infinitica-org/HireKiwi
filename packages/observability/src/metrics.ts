@@ -8,14 +8,14 @@ import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from 'prom
  * inside a request handler is a crash waiting for the second request — and
  * central declaration also means the Grafana dashboards have a fixed contract.
  *
- * Naming follows Prometheus convention: `smart_<subsystem>_<thing>_<unit>`.
+ * Naming follows Prometheus convention: `hirekiwi_<subsystem>_<thing>_<unit>`.
  *
  * Owner: Vishal V. New metrics: add here, then add the panel.
  */
 
 export const registry = new Registry();
 
-collectDefaultMetrics({ register: registry, prefix: 'smart_' });
+collectDefaultMetrics({ register: registry, prefix: 'hirekiwi_' });
 
 /* ------------------------------ HTTP surface ------------------------------ */
 
@@ -27,7 +27,7 @@ collectDefaultMetrics({ register: registry, prefix: 'smart_' });
 const LATENCY_BUCKETS_SECONDS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 5, 10];
 
 export const httpRequestDuration = new Histogram({
-  name: 'smart_http_request_duration_seconds',
+  name: 'hirekiwi_http_request_duration_seconds',
   help: 'HTTP request duration by route and status.',
   labelNames: ['method', 'route', 'status_code', 'module'] as const,
   buckets: LATENCY_BUCKETS_SECONDS,
@@ -35,7 +35,7 @@ export const httpRequestDuration = new Histogram({
 });
 
 export const httpRequestsTotal = new Counter({
-  name: 'smart_http_requests_total',
+  name: 'hirekiwi_http_requests_total',
   help: 'Total HTTP requests by route and status.',
   labelNames: ['method', 'route', 'status_code'] as const,
   registers: [registry],
@@ -45,7 +45,7 @@ export const httpRequestsTotal = new Counter({
 
 /** S6-VV-120 — upload malware scans by outcome (clean / infected / error). */
 export const fileScansTotal = new Counter({
-  name: 'smart_file_scans_total',
+  name: 'hirekiwi_file_scans_total',
   help: 'Upload malware scans by result.',
   labelNames: ['result'] as const,
   registers: [registry],
@@ -59,7 +59,7 @@ export const fileScansTotal = new Counter({
  * for failed logins, from their closed set of reason codes.
  */
 export const securityEventsTotal = new Counter({
-  name: 'smart_security_events_total',
+  name: 'hirekiwi_security_events_total',
   help: 'Security-relevant audit events by action (and login failure reason).',
   labelNames: ['action', 'reason'] as const,
   registers: [registry],
@@ -67,7 +67,7 @@ export const securityEventsTotal = new Counter({
 
 /** S6-VV-126 — requests refused by RolesGuard (role or permission), by route template. */
 export const authzDeniedTotal = new Counter({
-  name: 'smart_authz_denied_total',
+  name: 'hirekiwi_authz_denied_total',
   help: 'Requests refused by the role/permission guard, by route template and caller role.',
   labelNames: ['route', 'role'] as const,
   registers: [registry],
@@ -77,7 +77,7 @@ export const authzDeniedTotal = new Counter({
 
 /** S6-VV-129 — 1 when the last probe of a configured integration succeeded, 0 when it failed. */
 export const integrationUp = new Gauge({
-  name: 'smart_integration_up',
+  name: 'hirekiwi_integration_up',
   help: 'Third-party integration reachable on the last probe (1) or not (0); configured ones only.',
   labelNames: ['integration'] as const,
   registers: [registry],
@@ -85,7 +85,7 @@ export const integrationUp = new Gauge({
 
 /** S6-VV-129 — how long each integration probe took. */
 export const integrationProbeDuration = new Histogram({
-  name: 'smart_integration_probe_duration_seconds',
+  name: 'hirekiwi_integration_probe_duration_seconds',
   help: 'Duration of third-party integration health probes.',
   labelNames: ['integration'] as const,
   buckets: [0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
@@ -95,7 +95,7 @@ export const integrationProbeDuration = new Histogram({
 /* ------------------------------ rate limiting ----------------------------- */
 
 export const rateLimitRejections = new Counter({
-  name: 'smart_rate_limit_rejections_total',
+  name: 'hirekiwi_rate_limit_rejections_total',
   help: 'Requests rejected with 429, by policy and role.',
   labelNames: ['policy', 'role', 'route'] as const,
   registers: [registry],
@@ -109,7 +109,7 @@ export const rateLimitRejections = new Counter({
  * after a TPO is locked out mid-shortlist.
  */
 export const rateLimitUtilisation = new Gauge({
-  name: 'smart_rate_limit_utilisation_ratio',
+  name: 'hirekiwi_rate_limit_utilisation_ratio',
   help: 'Peak observed consumption of a rate-limit budget, 0-1.',
   labelNames: ['policy', 'role'] as const,
   registers: [registry],
@@ -118,14 +118,14 @@ export const rateLimitUtilisation = new Gauge({
 /* --------------------------------- AI cost -------------------------------- */
 
 export const aiCallsTotal = new Counter({
-  name: 'smart_ai_calls_total',
+  name: 'hirekiwi_ai_calls_total',
   help: 'AI gateway calls by prompt, provider and outcome.',
   labelNames: ['prompt_ref', 'provider', 'outcome', 'priority'] as const,
   registers: [registry],
 });
 
 export const aiCallDuration = new Histogram({
-  name: 'smart_ai_call_duration_seconds',
+  name: 'hirekiwi_ai_call_duration_seconds',
   help: 'AI provider latency by prompt and provider.',
   labelNames: ['prompt_ref', 'provider'] as const,
   buckets: [0.5, 1, 2, 4, 6, 10, 20, 40, 60],
@@ -140,14 +140,14 @@ export const aiCallDuration = new Histogram({
  * behind it is a ceiling nobody notices until the invoice.
  */
 export const aiSpendUsd = new Counter({
-  name: 'smart_ai_spend_usd_total',
+  name: 'hirekiwi_ai_spend_usd_total',
   help: 'Estimated AI spend in USD by provider and prompt.',
   labelNames: ['provider', 'prompt_ref'] as const,
   registers: [registry],
 });
 
 export const aiFallbackTotal = new Counter({
-  name: 'smart_ai_fallback_total',
+  name: 'hirekiwi_ai_fallback_total',
   help: 'Calls served by the fallback provider after a primary failure.',
   labelNames: ['from_provider', 'to_provider', 'reason'] as const,
   registers: [registry],
@@ -158,7 +158,7 @@ export const aiFallbackTotal = new Counter({
  * A climbing rate on one prompt means that prompt needs rewording.
  */
 export const aiGuardrailOutcomes = new Counter({
-  name: 'smart_ai_guardrail_outcomes_total',
+  name: 'hirekiwi_ai_guardrail_outcomes_total',
   help: 'Model output validation outcomes by prompt.',
   labelNames: ['prompt_ref', 'outcome'] as const,
   registers: [registry],
@@ -167,21 +167,21 @@ export const aiGuardrailOutcomes = new Counter({
 /* ---------------------------- assessment domain --------------------------- */
 
 export const attemptsStarted = new Counter({
-  name: 'smart_attempts_started_total',
+  name: 'hirekiwi_attempts_started_total',
   help: 'Assessment attempts started by track and level.',
   labelNames: ['track_code', 'level_number'] as const,
   registers: [registry],
 });
 
 export const attemptsCompleted = new Counter({
-  name: 'smart_attempts_completed_total',
+  name: 'hirekiwi_attempts_completed_total',
   help: 'Assessment attempts completed by track, level and awarded tier.',
   labelNames: ['track_code', 'level_number', 'tier'] as const,
   registers: [registry],
 });
 
 export const draftsSaved = new Counter({
-  name: 'smart_drafts_saved_total',
+  name: 'hirekiwi_drafts_saved_total',
   help: 'Answer drafts saved by track and level.',
   labelNames: ['track_code', 'level_number'] as const,
   registers: [registry],
@@ -191,18 +191,18 @@ export const draftsSaved = new Counter({
  * Tier distribution as a gauge.
  *
  * This is the platform's honesty dashboard. If Gold share drifts upward without
- * a recalibration, the standard has slipped, and that is the failure mode SMART
+ * a recalibration, the standard has slipped, and that is the failure mode HireKiwi
  * exists to prevent. Watched, alerted on, and reviewed at every sprint review.
  */
 export const tierDistribution = new Gauge({
-  name: 'smart_tier_distribution_ratio',
+  name: 'hirekiwi_tier_distribution_ratio',
   help: 'Share of results at each tier, per track and level, 0-1.',
   labelNames: ['track_code', 'level_number', 'tier'] as const,
   registers: [registry],
 });
 
 export const integrityFlags = new Counter({
-  name: 'smart_integrity_flags_total',
+  name: 'hirekiwi_integrity_flags_total',
   help: 'Integrity signals raised during attempts, by flag type.',
   labelNames: ['flag', 'track_code', 'level_number'] as const,
   registers: [registry],
@@ -213,14 +213,14 @@ export const integrityFlags = new Counter({
  * Alert on this dropping below 0.65: it means grading must route to humans.
  */
 export const interRaterKappa = new Gauge({
-  name: 'smart_inter_rater_kappa',
+  name: 'hirekiwi_inter_rater_kappa',
   help: "Cohen's kappa between automated and human raters, by track and level.",
   labelNames: ['track_code', 'level_number'] as const,
   registers: [registry],
 });
 
 export const automatedScoringPaused = new Gauge({
-  name: 'smart_automated_scoring_paused',
+  name: 'hirekiwi_automated_scoring_paused',
   help: '1 when automated scoring is paused for a track/level, else 0.',
   labelNames: ['track_code', 'level_number'] as const,
   registers: [registry],
@@ -229,14 +229,14 @@ export const automatedScoringPaused = new Gauge({
 /* ------------------------------ infrastructure ---------------------------- */
 
 export const kafkaEventsProduced = new Counter({
-  name: 'smart_kafka_events_produced_total',
+  name: 'hirekiwi_kafka_events_produced_total',
   help: 'Kafka events produced by topic.',
   labelNames: ['topic', 'producer_module'] as const,
   registers: [registry],
 });
 
 export const kafkaEventsConsumed = new Counter({
-  name: 'smart_kafka_events_consumed_total',
+  name: 'hirekiwi_kafka_events_consumed_total',
   help: 'Kafka events consumed by topic, consumer group and outcome.',
   labelNames: ['topic', 'consumer_group', 'outcome'] as const,
   registers: [registry],
@@ -249,7 +249,7 @@ export const kafkaEventsConsumed = new Counter({
  * start asking why their result has not appeared.
  */
 export const kafkaConsumerLag = new Gauge({
-  name: 'smart_kafka_consumer_lag_messages',
+  name: 'hirekiwi_kafka_consumer_lag_messages',
   help: 'Consumer lag in messages by topic and consumer group.',
   labelNames: ['topic', 'consumer_group'] as const,
   registers: [registry],
@@ -259,7 +259,7 @@ export const kafkaConsumerLag = new Gauge({
 
 /** S6-VV-127 — jobs per BullMQ queue (and DLQ) by state, polled every 15 s. */
 export const queueJobs = new Gauge({
-  name: 'smart_queue_jobs',
+  name: 'hirekiwi_queue_jobs',
   help: 'BullMQ jobs by queue and state (waiting, active, delayed, failed).',
   labelNames: ['queue', 'state'] as const,
   registers: [registry],
@@ -267,7 +267,7 @@ export const queueJobs = new Gauge({
 
 /** S6-VV-127 — age of the oldest waiting job; a stalled worker shows here before depth does. */
 export const queueOldestWaitingSeconds = new Gauge({
-  name: 'smart_queue_oldest_waiting_seconds',
+  name: 'hirekiwi_queue_oldest_waiting_seconds',
   help: 'Age in seconds of the oldest waiting job per BullMQ queue (0 when empty).',
   labelNames: ['queue'] as const,
   registers: [registry],
@@ -275,7 +275,7 @@ export const queueOldestWaitingSeconds = new Gauge({
 
 /** S6-VV-128 — BullMQ job run time by queue and outcome (completed / retrying / failed). */
 export const queueJobDuration = new Histogram({
-  name: 'smart_queue_job_duration_seconds',
+  name: 'hirekiwi_queue_job_duration_seconds',
   help: 'Background job run time by queue and outcome.',
   labelNames: ['queue', 'outcome'] as const,
   buckets: [0.05, 0.25, 1, 5, 15, 60, 300],
@@ -283,14 +283,14 @@ export const queueJobDuration = new Histogram({
 });
 
 export const cacheOperations = new Counter({
-  name: 'smart_cache_operations_total',
+  name: 'hirekiwi_cache_operations_total',
   help: 'Redis cache operations by namespace and result.',
   labelNames: ['namespace', 'result'] as const,
   registers: [registry],
 });
 
 export const dbQueryDuration = new Histogram({
-  name: 'smart_db_query_duration_seconds',
+  name: 'hirekiwi_db_query_duration_seconds',
   help: 'Database query duration by operation.',
   labelNames: ['operation', 'model'] as const,
   buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5],
@@ -298,21 +298,21 @@ export const dbQueryDuration = new Histogram({
 });
 
 export const quotaExceeded = new Counter({
-  name: 'smart_quota_exceeded_total',
+  name: 'hirekiwi_quota_exceeded_total',
   help: 'Actions blocked by a plan quota, by tenant type, plan code and quota dimension.',
   labelNames: ['tenant_type', 'plan_code', 'dimension'] as const,
   registers: [registry],
 });
 
 export const certificatesIssued = new Counter({
-  name: 'smart_certificates_issued_total',
+  name: 'hirekiwi_certificates_issued_total',
   help: 'Certificates issued by track and headline tier.',
   labelNames: ['track_code', 'tier'] as const,
   registers: [registry],
 });
 
 export const verificationLookups = new Counter({
-  name: 'smart_verification_lookups_total',
+  name: 'hirekiwi_verification_lookups_total',
   help: 'Public certificate verification lookups by result.',
   labelNames: ['result'] as const,
   registers: [registry],
@@ -321,14 +321,14 @@ export const verificationLookups = new Counter({
 /* ------------------------ QLIX recalibration (ORION) ----------------------- */
 
 export const qlixRecalibrationRuns = new Counter({
-  name: 'smart_qlix_recalibration_runs_total',
+  name: 'hirekiwi_qlix_recalibration_runs_total',
   help: 'Monthly QLIX weight recalibration batch runs.',
   labelNames: ['published'] as const,
   registers: [registry],
 });
 
 export const qlixRecalibrationWeightVersion = new Gauge({
-  name: 'smart_qlix_recalibration_weight',
+  name: 'hirekiwi_qlix_recalibration_weight',
   help: 'Published QLIX.default corroboration weight after recalibration.',
   labelNames: ['predictor'] as const,
   registers: [registry],
@@ -337,7 +337,7 @@ export const qlixRecalibrationWeightVersion = new Gauge({
 /* --------------------------- TPO provisioning ---------------------------- */
 
 export const batchImportRows = new Counter({
-  name: 'smart_tpo_batch_import_rows_total',
+  name: 'hirekiwi_tpo_batch_import_rows_total',
   help: 'Candidate rows processed by bulk provisioning outcome.',
   labelNames: ['outcome'] as const,
   registers: [registry],

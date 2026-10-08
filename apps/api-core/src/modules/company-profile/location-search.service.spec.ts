@@ -15,7 +15,7 @@ describe('LocationSearchService (Th6-350)', () => {
     expect(await service.search('Pune')).toEqual(['Pune, India']);
     expect(await service.search('  pune ')).toEqual(['Pune, India']);
     expect(fetchFn).toHaveBeenCalledTimes(1);
-    expect(fetchFn.mock.calls[0]?.[1].headers['User-Agent']).toContain('SMART');
+    expect(fetchFn.mock.calls[0]?.[1].headers['User-Agent']).toContain('HireKiwi');
   });
 
   it('returns [] for short queries without calling the provider', async () => {
