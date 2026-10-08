@@ -25,17 +25,17 @@ export function ProjectList({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <h2 className="text-sm font-semibold text-[var(--ds-text)]">
+        <h2 className="font-heading text-sm font-semibold tracking-tight text-zinc-950 dark:text-white">
           Your projects
-          <span className="ml-1.5 font-normal text-[var(--ds-text-muted)]">
+          <span className="ml-1.5 font-normal text-zinc-500 dark:text-zinc-400">
             ({projects.length})
           </span>
         </h2>
       </div>
 
       {topStack.length > 0 ? (
-        <p className="text-xs text-[var(--ds-text-muted)]">
-          <span className="font-medium text-[var(--ds-text-secondary)]">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="font-medium text-zinc-700 dark:text-zinc-300">
             Your technology stack ·{' '}
           </span>
           {topStack.map(({ tag, count }, index) => (
@@ -61,12 +61,12 @@ export function ProjectList({
           <button
             type="button"
             onClick={onAdd}
-            className="flex min-h-[220px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface-hover)]/30 px-4 py-8 text-center transition-colors hover:border-[var(--ds-green)] hover:bg-[var(--ds-green-muted)]/40"
+            className="flex min-h-[220px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 px-4 py-8 text-center font-sans transition-colors hover:border-teal-600 hover:bg-teal-50/40 dark:border-zinc-700 dark:hover:border-teal-500 dark:hover:bg-teal-950/20"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--ds-border)] bg-[var(--ds-surface)] text-[var(--ds-green)]">
+            <span className="flex size-9 items-center justify-center rounded-md bg-zinc-100 text-teal-600 dark:bg-zinc-800 dark:text-teal-400">
               <Plus className="h-5 w-5" aria-hidden="true" />
             </span>
-            <span className="text-sm font-medium text-[var(--ds-text-secondary)]">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Add another project
             </span>
           </button>

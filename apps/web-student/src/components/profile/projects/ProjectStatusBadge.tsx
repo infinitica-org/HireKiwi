@@ -3,18 +3,12 @@
 import type { ProjectDto } from '@hirekiwi/contracts';
 import { AlertCircle, CheckCircle2, Clock, Loader2 } from 'lucide-react';
 import { needsOwnershipInterview, processingStateCopy } from '@/lib/project-submission';
-import {
-  studentBadgeErrorClass,
-  studentBadgeInProgressClass,
-  studentBadgePendingClass,
-  studentBadgeVerifiedClass,
-} from '@/lib/student-ui-classes';
-
 const TONE_CLASS: Record<'info' | 'success' | 'warning' | 'danger', string> = {
-  info: studentBadgeInProgressClass,
-  success: studentBadgeVerifiedClass,
-  warning: studentBadgePendingClass,
-  danger: studentBadgeErrorClass,
+  info: 'border-transparent bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300',
+  success:
+    'border-transparent bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+  warning: 'border-transparent bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
+  danger: 'border-transparent bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300',
 };
 
 export function ProjectStatusBadge({ project }: { project: ProjectDto }) {
@@ -39,7 +33,7 @@ export function ProjectStatusBadge({ project }: { project: ProjectDto }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${TONE_CLASS[tone]}`}
+      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium ${TONE_CLASS[tone]}`}
     >
       <Icon
         className={`h-3 w-3 shrink-0 ${awaitingVerify ? 'animate-spin' : ''}`}

@@ -19,15 +19,17 @@ export function ProjectDefenseInterviewDialog({ project }: { project: ProjectDto
   }
 
   return (
-    <div className="mt-3 overflow-hidden rounded-2xl border border-[#00fad0]/20 bg-gradient-to-br from-[#00fad0]/8 via-card to-[#004c63]/5 p-4">
+    <div className="mt-3 rounded-lg border border-teal-100 bg-teal-50/60 p-4 font-sans dark:border-teal-900/50 dark:bg-teal-950/20">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#00fad0]/15 text-[#00967c]">
-            <Mic className="h-5 w-5" />
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white text-teal-600 ring-1 ring-teal-100 dark:bg-zinc-900 dark:text-teal-400 dark:ring-teal-900/50">
+            <Mic className="size-[18px]" strokeWidth={1.75} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">Ownership interview required</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            <p className="font-heading text-sm font-semibold tracking-tight text-zinc-950 dark:text-white">
+              Ownership interview required
+            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
               Automated checks finished. Complete a short voice interview to verify you built this
               project.
             </p>
@@ -35,7 +37,7 @@ export function ProjectDefenseInterviewDialog({ project }: { project: ProjectDto
         </div>
         <Link
           href={projectDefenseInterviewHref(project.projectId)}
-          className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#00fad0] px-5 py-2.5 text-sm font-semibold text-[#131313] transition hover:bg-[#33ffdd]"
+          className="inline-flex shrink-0 items-center justify-center rounded-md bg-teal-600 px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-teal-700"
         >
           Start interview
         </Link>

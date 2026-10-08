@@ -163,18 +163,6 @@ export function ResumeSection() {
     >
       <ProfileSectionHeader title={meta.title} description={meta.description} />
 
-      {!loading && !hasResume ? (
-        <div className="flex flex-wrap items-center gap-2 select-none">
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200/90 bg-zinc-100/90 px-3 py-1 text-xs font-bold tracking-tight text-zinc-900 shadow-2xs dark:border-zinc-700/80 dark:bg-zinc-800/90 dark:text-zinc-100">
-            <FileText className="size-3.5 text-zinc-700 dark:text-zinc-300" aria-hidden />
-            PDF only
-          </span>
-          <span className="inline-flex items-center rounded-lg border border-zinc-200/90 bg-zinc-100/90 px-3 py-1 text-xs font-bold tracking-tight text-zinc-900 shadow-2xs dark:border-zinc-700/80 dark:bg-zinc-800/90 dark:text-zinc-100">
-            Maximum size: 5 MB
-          </span>
-        </div>
-      ) : null}
-
       {loading ? <p className="text-sm text-[var(--ds-text-muted)]">Loading resume…</p> : null}
 
       {!loading && !hasResume ? (
