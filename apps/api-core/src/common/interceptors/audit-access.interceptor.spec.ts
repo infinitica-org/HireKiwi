@@ -8,8 +8,8 @@ import { ProjectReviewAdminController } from '../../modules/evaluation/project-r
 import { CompaniesAdminController } from '../../modules/institutions/companies-admin.controller.js';
 import { InstitutionsAdminController } from '../../modules/institutions/institutions-admin.controller.js';
 import { InstitutionsTpoController } from '../../modules/institutions/institutions-tpo.controller.js';
+import { CandidateInspectionController } from '../../modules/candidate-inspection/candidate-inspection.controller.js';
 import { PlacementMatchController } from '../../modules/matching/placement-match.controller.js';
-import { PlacementController } from '../../modules/placement/placement.controller.js';
 import {
   AUDIT_ACCESS_THROTTLE_SECONDS,
   AuditAccessInterceptor,
@@ -241,9 +241,11 @@ describe('routes that expose one person or tenant to an admin carry @AuditAccess
   });
 
   it.each(['listCandidateEvidenceVersions', 'getCandidateEvidenceVersion'])(
-    'PlacementController.%s logs evidence access against the student (S6-VV-104)',
+    'CandidateInspectionController.%s logs evidence access against the student (S6-VV-104)',
     (handler) => {
-      const method = (PlacementController.prototype as unknown as Record<string, object>)[handler];
+      const method = (CandidateInspectionController.prototype as unknown as Record<string, object>)[
+        handler
+      ];
       expect(Reflect.getMetadata(AUDIT_ACCESS_KEY, method as object)).toEqual({
         resourceType: 'evidence',
         idParam: 'evidenceId',
