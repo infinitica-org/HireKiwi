@@ -48,7 +48,6 @@ export function ResumeEntryCard({ file, deleting, onDelete }: ResumeEntryCardPro
             </p>
           </div>
         </div>
-
         <button
           type="button"
           onClick={onDelete}
