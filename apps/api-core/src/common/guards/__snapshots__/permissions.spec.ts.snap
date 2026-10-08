@@ -11,6 +11,7 @@ exports[`permission matrix (S6-VV-99) > changes only through a reviewed snapshot
   "SUPER_ADMIN": [
     "user.role.assign",
     "user.access.manage",
+    "user.mfa.manage",
     "session.read",
     "session.revoke",
     "audit.read",

@@ -246,6 +246,7 @@ import {
   CertVerifySessionDtoSchema,
   ActiveSessionDtoSchema,
   AuditLogDtoSchema,
+  AdminMfaResetResponseSchema,
   AssignRoleResponseSchema,
   AuthTokenResponseSchema,
   AuthenticatedUserSchema,
@@ -1539,6 +1540,16 @@ export function onboardingApi(client: HireKiwiApiClient) {
     releaseUserHold: (userId: string, body: TenantActionReason) =>
       client.post(prefixed(`/admin/users/${userId}/release-hold`), body, {
         schema: UserHoldResponseSchema,
+      }),
+
+    /** SUPER_ADMIN view of any user's MFA enrollment (not just the caller's own). */
+    adminMfaStatus: (userId: string) =>
+      client.get(prefixed(`/admin/users/${userId}/mfa`), { schema: MfaStatusResponseSchema }),
+
+    /** Force-disables a locked-out user's MFA — no second factor required. */
+    adminResetMfa: (userId: string, body: TenantActionReason) =>
+      client.post(prefixed(`/admin/users/${userId}/mfa/reset`), body, {
+        schema: AdminMfaResetResponseSchema,
       }),
 
     resendAdminInvitation: (invitationId: string) =>

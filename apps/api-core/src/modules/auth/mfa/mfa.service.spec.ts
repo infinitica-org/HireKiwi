@@ -15,7 +15,12 @@ function buildPrisma() {
   }> = [];
   const userStore = new Map<
     string,
-    { mfaEnabled: boolean; mfaSecretEncrypted: string | null; email: string }
+    {
+      mfaEnabled: boolean;
+      mfaSecretEncrypted: string | null;
+      email: string;
+      mfaEnabledAt?: Date | null;
+    }
   >();
 
   return {
@@ -26,6 +31,9 @@ function buildPrisma() {
         const row = userStore.get(id);
         if (!row) throw new Error('not found');
         return row;
+      }),
+      findUnique: vi.fn(async ({ where: { id } }: { where: { id: string } }) => {
+        return userStore.get(id) ?? null;
       }),
       update: vi.fn(async ({ where: { id }, data }: { where: { id: string }; data: object }) => {
         const row = userStore.get(id);
@@ -262,6 +270,63 @@ describe('MfaService', () => {
       vi.mocked(jwt.verifyAsync).mockRejectedValueOnce(new Error('jwt expired'));
 
       await expect(mfa.resolveChallenge('whatever')).rejects.toMatchObject({ status: 401 });
+    });
+  });
+
+  describe('admin override', () => {
+    it('adminStatus reports a user not on file as 404', async () => {
+      const { mfa } = buildService();
+      await expect(mfa.adminStatus(userId)).rejects.toMatchObject({ status: 404 });
+    });
+
+    it('adminStatus reflects the stored enrollment', async () => {
+      const { mfa, prisma } = buildService();
+      const enabledAt = new Date('2026-01-01T00:00:00.000Z');
+      prisma.userStore.set(userId, {
+        mfaEnabled: true,
+        mfaSecretEncrypted: 'whatever',
+        email: 'student@example.com',
+        mfaEnabledAt: enabledAt,
+      });
+
+      await expect(mfa.adminStatus(userId)).resolves.toEqual({ enabled: true, enabledAt });
+    });
+
+    it('adminReset 404s for a user not on file', async () => {
+      const { mfa } = buildService();
+      await expect(mfa.adminReset(userId)).rejects.toMatchObject({ status: 404 });
+    });
+
+    it('adminReset is a no-op reporting wasEnabled: false when MFA was already off', async () => {
+      const { mfa, prisma } = buildService();
+      prisma.userStore.set(userId, {
+        mfaEnabled: false,
+        mfaSecretEncrypted: null,
+        email: 'student@example.com',
+      });
+
+      await expect(mfa.adminReset(userId)).resolves.toEqual({ wasEnabled: false });
+    });
+
+    it('adminReset force-disables MFA and wipes recovery codes without needing a code', async () => {
+      const { mfa, prisma } = buildService();
+      prisma.userStore.set(userId, {
+        mfaEnabled: true,
+        mfaSecretEncrypted: encryptSecret(generateTotpSecret(), env.MFA_SECRET_ENCRYPTION_KEY),
+        email: 'student@example.com',
+      });
+      prisma.recoveryCodeRows.push({
+        id: randomUUID(),
+        userId,
+        codeHash: await hashPassword('AAAAA-BBBBB'),
+        usedAt: null,
+      });
+
+      await expect(mfa.adminReset(userId)).resolves.toEqual({ wasEnabled: true });
+
+      expect(prisma.userStore.get(userId)?.mfaEnabled).toBe(false);
+      expect(prisma.userStore.get(userId)?.mfaSecretEncrypted).toBeNull();
+      expect(prisma.recoveryCodeRows).toHaveLength(0);
     });
   });
 });

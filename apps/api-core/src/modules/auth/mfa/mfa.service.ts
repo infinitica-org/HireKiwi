@@ -1,4 +1,10 @@
-import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import QRCode from 'qrcode';
 import type { MfaSetupResponse } from '@hirekiwi/contracts';
@@ -130,6 +136,52 @@ export class MfaService {
       }),
       this.prisma.mfaRecoveryCode.deleteMany({ where: { userId } }),
     ]);
+  }
+
+  /** Admin view of any user's enrollment — same shape as `status`, but 404s on a bad userId. */
+  async adminStatus(userId: string): Promise<{ enabled: boolean; enabledAt: Date | null }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { mfaEnabled: true, mfaEnabledAt: true },
+    });
+    if (!user) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'User not found.',
+        statusCode: 404,
+      });
+    }
+    return { enabled: user.mfaEnabled, enabledAt: user.mfaEnabledAt };
+  }
+
+  /**
+   * SUPER_ADMIN override for a locked-out user: force-disables MFA with no second factor
+   * required, unlike the self-service `disable`. The caller is responsible for auditing
+   * this and revoking the user's sessions — this method only touches MFA state.
+   */
+  async adminReset(userId: string): Promise<{ wasEnabled: boolean }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { mfaEnabled: true },
+    });
+    if (!user) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'User not found.',
+        statusCode: 404,
+      });
+    }
+    if (!user.mfaEnabled) {
+      return { wasEnabled: false };
+    }
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { mfaEnabled: false, mfaSecretEncrypted: null, mfaEnabledAt: null },
+      }),
+      this.prisma.mfaRecoveryCode.deleteMany({ where: { userId } }),
+    ]);
+    return { wasEnabled: true };
   }
 
   /** Short-lived, single-purpose token: proves "password already checked out", nothing more. */

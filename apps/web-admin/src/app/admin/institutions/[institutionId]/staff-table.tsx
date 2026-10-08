@@ -104,6 +104,33 @@ export function StaffTable({
     });
   }
 
+  async function resetMfa(member: InstitutionAdminDto) {
+    const why = reasonOrError();
+    if (!why) return;
+    if (
+      !window.confirm(
+        `Force-disable two-factor authentication for ${member.fullName}? Only do this after verifying their identity through another channel.`,
+      )
+    ) {
+      return;
+    }
+    setBusyUserId(member.userId);
+    try {
+      const { wasEnabled } = await api.onboarding.adminResetMfa(member.userId, { reason: why });
+      onMessage(
+        wasEnabled
+          ? `${member.fullName}'s two-factor authentication has been reset.`
+          : `${member.fullName} didn't have two-factor authentication enabled.`,
+      );
+      setReason('');
+      await onChanged();
+    } catch (err) {
+      onError(describeApiError(err, "Could not reset this staff member's two-factor setup."));
+    } finally {
+      setBusyUserId(null);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <Field label="Reason for a role change, hold or release (required, 8+ characters, audited)">
@@ -173,6 +200,15 @@ export function StaffTable({
                     Resend
                   </Button>
                 ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => void resetMfa(member)}
+                >
+                  Reset MFA
+                </Button>
                 <Button
                   type="button"
                   size="sm"

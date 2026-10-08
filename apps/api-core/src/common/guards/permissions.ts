@@ -16,6 +16,7 @@ import type { UserRole } from '@hirekiwi/contracts';
 export const PERMISSIONS = [
   'user.role.assign',
   'user.access.manage',
+  'user.mfa.manage',
   'session.read',
   'session.revoke',
   'audit.read',

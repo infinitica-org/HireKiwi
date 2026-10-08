@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { env } from '../../platform/config/env.js';
 import { InvitationsModule } from '../invitations/invitations.module.js';
+import { AdminMfaController } from './mfa/admin-mfa.controller.js';
 import { AdminSessionsController } from './admin-sessions.controller.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
@@ -22,7 +23,7 @@ import { PasswordResetService } from './password-reset.service.js';
       signOptions: { expiresIn: env.JWT_ACCESS_TTL_SECONDS },
     }),
   ],
-  controllers: [AuthController, AdminSessionsController, MfaController],
+  controllers: [AuthController, AdminSessionsController, MfaController, AdminMfaController],
   providers: [
     AuthService,
     LinkedinOauthService,

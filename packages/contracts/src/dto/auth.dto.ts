@@ -354,3 +354,9 @@ export const MfaStatusResponseSchema = z.object({
   enabledAt: IsoDateTimeSchema.nullable(),
 });
 export type MfaStatusResponse = z.infer<typeof MfaStatusResponseSchema>;
+
+/** SUPER_ADMIN override: force-disabling a locked-out user's MFA needs no second factor. */
+export const AdminMfaResetResponseSchema = z.object({
+  wasEnabled: z.boolean(),
+});
+export type AdminMfaResetResponse = z.infer<typeof AdminMfaResetResponseSchema>;
