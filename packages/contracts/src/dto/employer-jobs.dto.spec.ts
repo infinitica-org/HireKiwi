@@ -30,9 +30,9 @@ describe('JOB-01 employer job contracts', () => {
     expect(CreateEmployerJobRequestSchema.safeParse(validCreate()).success).toBe(true);
   });
 
-  it('requires the target campus', () => {
+  it('allows no target campus for a normal, every-university company job', () => {
     const { institutionId: _omit, ...body } = validCreate();
-    expect(CreateEmployerJobRequestSchema.safeParse(body).success).toBe(false);
+    expect(CreateEmployerJobRequestSchema.safeParse(body).success).toBe(true);
   });
 
   it('never takes the company name or drive fields from the body', () => {
