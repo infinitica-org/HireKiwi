@@ -1,11 +1,4 @@
-import {
-  createHash,
-  randomBytes,
-  randomUUID,
-  scrypt as scryptCallback,
-  timingSafeEqual,
-} from 'node:crypto';
-import { promisify } from 'node:util';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import {
   ConflictException,
   ForbiddenException,
@@ -29,6 +22,7 @@ import {
   type CompanyPortalAccount,
   type IdentifyResponse,
   type ListActiveSessionsQuery,
+  type LoginResponse,
   type RegisterRequest,
   type RegisterStudentRequest,
   type SelectableInstitutionDto,
@@ -47,9 +41,9 @@ import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { resolveSessionHold } from '../../common/session-hold.js';
 import { toAuthenticatedUserWithPhoto } from '../users/profile-photo.util.js';
 import type { GoogleIdentity } from './google-oauth.service.js';
+import { MfaService } from './mfa/mfa.service.js';
+import { hashPassword, verifyPassword } from './password-hash.util.js';
 import { clearRefreshCookie, setRefreshCookie } from './refresh-cookie.js';
-
-const scrypt = promisify(scryptCallback);
 
 /** S6-VV-92 — account lockout, independent of the IP-based 'auth.login' rate-limit policy. */
 const MAX_FAILED_LOGIN_ATTEMPTS = 5;
@@ -66,6 +60,8 @@ export type UserWithAuthIncludes = {
   createdAt: Date;
   passwordHash: string | null;
   heldAt: Date | null;
+  mfaEnabled: boolean;
+  mfaSecretEncrypted: string | null;
   onboardingCompleted?: boolean;
   profilePhotoObjectKey?: string | null;
   institution: {
@@ -91,6 +87,7 @@ export class AuthService {
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(StorageService) private readonly storage: StorageService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
+    @Inject(MfaService) private readonly mfa: MfaService,
     @Optional() @Inject(RedisService) private readonly redis?: RedisService,
   ) {}
 
@@ -114,7 +111,7 @@ export class AuthService {
     return { exists: Boolean(user) };
   }
 
-  async login(email: string, password: string, reply: FastifyReply): Promise<AuthTokenResponse> {
+  async login(email: string, password: string, reply: FastifyReply): Promise<LoginResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase() },
       include: { institution: true, company: true, primaryTrack: true, secondaryTrack: true },
@@ -174,6 +171,56 @@ export class AuthService {
     await this.auditPublisher.record({
       actorId: user.id,
       action: 'auth.login',
+      resourceType: 'user',
+      resourceId: user.id,
+      reasonCode: null,
+    });
+
+    if (user.mfaEnabled) {
+      return this.mfa.createChallenge(user.id);
+    }
+    return this.issueSession(user, reply);
+  }
+
+  /**
+   * The second step of an MFA-gated login: `mfaToken` proves the password
+   * already checked out (see `login` above); `code` proves the second
+   * factor. Re-runs the same tenant/deactivation checks as `login` because
+   * nothing else has re-verified them since the password step.
+   */
+  async completeMfaChallenge(
+    mfaToken: string,
+    code: string,
+    reply: FastifyReply,
+  ): Promise<AuthTokenResponse> {
+    const userId = await this.mfa.resolveChallenge(mfaToken);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { institution: true, company: true, primaryTrack: true, secondaryTrack: true },
+    });
+    if (!user) {
+      throw unauthorized('Account no longer exists.');
+    }
+    assertTenantLoginAllowed(user);
+    if (user.deactivatedAt) {
+      throw unauthorized('This account has been deactivated.');
+    }
+
+    const verified = await this.mfa.verifyFactorAndConsume(user.id, code, user.mfaSecretEncrypted);
+    if (!verified) {
+      await this.auditPublisher.record({
+        actorId: user.id,
+        action: 'auth.mfa_challenge_failed',
+        resourceType: 'user',
+        resourceId: user.id,
+        reasonCode: null,
+      });
+      throw unauthorized('That code is incorrect.');
+    }
+
+    await this.auditPublisher.record({
+      actorId: user.id,
+      action: 'auth.mfa_challenge_verified',
       resourceType: 'user',
       resourceId: user.id,
       reasonCode: null,
@@ -811,20 +858,7 @@ export function buildAccessTokenClaims(
   return claims;
 }
 
-export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16);
-  const derived = (await scrypt(password, salt, 64)) as Buffer;
-  return `${salt.toString('hex')}:${derived.toString('hex')}`;
-}
-
-export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [saltHex, hashHex] = stored.split(':');
-  if (!saltHex || !hashHex) return false;
-  const derived = (await scrypt(password, Buffer.from(saltHex, 'hex'), 64)) as Buffer;
-  const expected = Buffer.from(hashHex, 'hex');
-  if (derived.length !== expected.length) return false;
-  return timingSafeEqual(derived, expected);
-}
+export { hashPassword, verifyPassword } from './password-hash.util.js';
 
 /** Prisma returns `cgpa`/`sscPercentage`/`hscPercentage` as `Decimal`; duck-type rather than import generated internals. */
 type Decimalish = { toNumber?: () => number } | number;

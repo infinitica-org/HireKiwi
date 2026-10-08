@@ -143,6 +143,17 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     onViolation: 'ALERT',
   },
   {
+    key: 'auth.mfaVerify',
+    scope: 'IP',
+    limit: 10,
+    windowSeconds: 60,
+    burst: 3,
+    redisKey: 'rl:auth_mfa_verify:ip:{id}',
+    rationale:
+      'A 6-digit TOTP (or recovery code) brute-force target, same shape as auth.login — the challenge token already proves the password checked out, so this is the only remaining guard.',
+    onViolation: 'ALERT',
+  },
+  {
     key: 'auth.refresh',
     scope: 'USER',
     limit: 20,

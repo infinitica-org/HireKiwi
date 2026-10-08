@@ -521,6 +521,12 @@ model User {
   failedLoginAttempts    Int                       @default(0) @map("failed_login_attempts")
   /// S6-VV-92 — set once failedLoginAttempts hits the threshold; login is refused until this passes.
   loginLockedUntil       DateTime?                 @map("login_locked_until") @db.Timestamptz(6)
+  /// S8-VV-P0 — TOTP MFA. True only once the user has confirmed a code against mfaSecretEncrypted.
+  mfaEnabled             Boolean                   @default(false) @map("mfa_enabled")
+  /// S8-VV-P0 — AES-256-GCM ciphertext (see secret-cipher.util.ts), set on enroll, cleared on disable.
+  /// Present with mfaEnabled=false during the brief enroll-but-not-yet-confirmed window.
+  mfaSecretEncrypted     String?                   @map("mfa_secret_encrypted")
+  mfaEnabledAt           DateTime?                 @map("mfa_enabled_at") @db.Timestamptz(6)
   role                   UserRole
   provider               AuthProvider              @default(PASSWORD)
   emailVerified          Boolean                   @default(false) @map("email_verified")
@@ -596,6 +602,7 @@ model User {
   refreshTokens                        RefreshToken[]
   emailVerificationTokens              EmailVerificationToken[]
   passwordResetTokens                  PasswordResetToken[]
+  mfaRecoveryCodes                     MfaRecoveryCode[]
   attempts                             Attempt[]
   certificates                         Certificate[]
   placements                           PlacementRecord[]
@@ -717,6 +724,20 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+/// S8-VV-P0 — one-time-use MFA recovery codes, issued as a batch when MFA is enabled.
+/// Codes are hashed with the same scrypt scheme as passwords (never stored or logged in plaintext).
+model MfaRecoveryCode {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String    @map("code_hash")
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("mfa_recovery_codes")
 }
 
 model ApiKey {

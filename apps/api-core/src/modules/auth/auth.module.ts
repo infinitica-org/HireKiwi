@@ -9,6 +9,8 @@ import { EmailVerificationService } from './email-verification.service.js';
 import { GithubOauthService } from './github-oauth.service.js';
 import { GoogleOauthService } from './google-oauth.service.js';
 import { LinkedinOauthService } from './linkedin-oauth.service.js';
+import { MfaController } from './mfa/mfa.controller.js';
+import { MfaService } from './mfa/mfa.service.js';
 import { PasswordResetService } from './password-reset.service.js';
 
 @Module({
@@ -20,7 +22,7 @@ import { PasswordResetService } from './password-reset.service.js';
       signOptions: { expiresIn: env.JWT_ACCESS_TTL_SECONDS },
     }),
   ],
-  controllers: [AuthController, AdminSessionsController],
+  controllers: [AuthController, AdminSessionsController, MfaController],
   providers: [
     AuthService,
     LinkedinOauthService,
@@ -28,6 +30,7 @@ import { PasswordResetService } from './password-reset.service.js';
     GithubOauthService,
     EmailVerificationService,
     PasswordResetService,
+    MfaService,
   ],
   exports: [AuthService, LinkedinOauthService, GoogleOauthService, GithubOauthService],
 })
