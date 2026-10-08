@@ -49,18 +49,17 @@ describe('StudentTopbar', () => {
 
   it.each([
     ['Home', '/student/dashboard'],
-    ['Jobs', '/student/matches'],
+    ['Jobs', '/student/jobs'],
     ['My profile', '/student/profile'],
-    ['Assessments', '/student/assessments'],
   ])('links %s to %s in the bar', (name, href) => {
     render(<StudentTopbar />);
     expect(within(primaryNav()).getByRole('link', { name }).getAttribute('href')).toBe(href);
   });
 
   it.each([
+    ['Jobs menu', 'Saved', '/student/jobs?view=saved'],
+    ['Jobs menu', 'Applied', '/student/applications'],
     ['Jobs menu', 'Opportunities', '/student/opportunities'],
-    ['My profile menu', 'Skills', '/student/skills'],
-    ['Assessments menu', 'Interviews', '/student/interviews'],
   ])('opens %s item %s at %s', (menuName, name, href) => {
     render(<StudentTopbar />);
     const menu = screen.getByRole('menu', { name: menuName });
@@ -70,9 +69,8 @@ describe('StudentTopbar', () => {
 
   it.each([
     ['/student/dashboard', 'Home'],
-    ['/student/matches', 'Jobs'],
+    ['/student/jobs', 'Jobs'],
     ['/student/profile', 'My profile'],
-    ['/student/assessments', 'Assessments'],
   ] as const)('marks %s as current for %s', (pathname, label) => {
     navState.pathname = pathname;
     render(<StudentTopbar />);
@@ -84,15 +82,23 @@ describe('StudentTopbar', () => {
   });
 
   it('keeps a parent lit on a page in its menu', () => {
-    navState.pathname = '/student/skills';
+    navState.pathname = '/student/opportunities';
     render(<StudentTopbar />);
-    const menu = screen.getByRole('menu', { name: 'My profile menu' });
+    const menu = screen.getByRole('menu', { name: 'Jobs menu' });
     expect(
-      within(menu).getByRole('menuitem', { name: 'Skills' }).getAttribute('aria-current'),
+      within(menu).getByRole('menuitem', { name: 'Opportunities' }).getAttribute('aria-current'),
     ).toBe('page');
-    expect(within(primaryNav()).getByRole('link', { name: 'My profile' }).className).toContain(
+    expect(within(primaryNav()).getByRole('link', { name: 'Jobs' }).className).toContain(
       'font-semibold',
     );
+  });
+
+  it('shows Messages with its label on the right, not in the main bar', () => {
+    render(<StudentTopbar />);
+    expect(within(primaryNav()).queryByRole('link', { name: /Messages/ })).toBeNull();
+    const link = screen.getByRole('link', { name: /Messages/ });
+    expect(link.getAttribute('href')).toBe('/student/messages');
+    expect(link.textContent).toContain('Messages');
   });
 
   it('opens a mobile menu with every link plus Settings and closes it on Escape', () => {
@@ -101,16 +107,7 @@ describe('StudentTopbar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open navigation menu' }));
     const mobile = screen.getByRole('navigation', { name: 'Student navigation (mobile)' });
-    for (const name of [
-      'Home',
-      'Jobs',
-      'Opportunities',
-      'My profile',
-      'Skills',
-      'Assessments',
-      'Interviews',
-      'Settings',
-    ]) {
+    for (const name of ['Home', 'Jobs', 'Opportunities', 'My profile', 'Settings']) {
       expect(within(mobile).getByRole('link', { name })).toBeDefined();
     }
 
