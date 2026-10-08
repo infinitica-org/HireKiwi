@@ -362,10 +362,10 @@ export default function ConnectUniversityStep({
           disabled={submitting}
           className="font-axiforma text-sm text-zinc-400 transition-colors hover:text-foreground disabled:opacity-40"
         >
-          {isCurrentPartnered ? 'Continue' : 'Skip for now'}
+          Skip
         </button>
         {isCurrentPartnered && selectedId === partnershipStatus?.institutionId ? (
-          <PrimaryButton onClick={onContinue}>Continue</PrimaryButton>
+          <PrimaryButton onClick={onContinue}>Continue →</PrimaryButton>
         ) : (
           <PrimaryButton
             data-testid="connect-university-submit"

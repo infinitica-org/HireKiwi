@@ -555,6 +555,12 @@ model User {
   hscPercentage          Decimal?                  @map("hsc_percentage") @db.Decimal(5, 2)
   /// Active academic backlog (placement eligibility).
   hasActiveBacklog       Boolean?                  @map("has_active_backlog")
+  /// Student declaration of no work experience (null = unanswered, true = explicitly no experience, false = has/had experience).
+  hasNoWorkExperience    Boolean?                  @map("has_no_work_experience")
+  /// Student declaration of no external certifications (null = unanswered, true = explicitly no certifications, false = has/had certifications).
+  hasNoCertifications    Boolean?                  @map("has_no_certifications")
+  /// Student declaration of no professional credentials/licenses (null = unanswered, true = explicitly no credentials, false = has/had credentials).
+  hasNoCredentials       Boolean?                  @map("has_no_credentials")
   /// Study program (e.g. "B.Tech CSE") + graduation year, collected during onboarding.
   /// graduationYear is denormalized onto User (like cgpa/sscPercentage above) so placement
   /// pool filtering (packages/contracts/src/dto/placement.dto.ts filters.graduationYear)

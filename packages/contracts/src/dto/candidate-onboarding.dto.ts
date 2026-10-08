@@ -134,6 +134,8 @@ export type CandidateAcademicScores = z.infer<typeof CandidateAcademicScoresSche
  */
 export const CandidateAcademicProgramSchema = z.object({
   studyProgram: z.string().min(1).max(120).optional(),
+  degree: z.string().min(1).max(120).optional(),
+  specialization: z.string().min(1).max(120).optional(),
   graduationYear: z
     .number()
     .int()
@@ -183,6 +185,7 @@ export const CompleteCandidateOnboardingRequestSchema = z.object({
   /** Broad area-of-interest — not a certification track or career role. */
   interestDomain: InterestDomainSchema,
   firstName: z.string().min(1).max(50),
+  middleName: z.string().max(50).optional(),
   lastName: z.string().min(1).max(50),
   gender: z.string().max(40).optional(),
   dateOfBirth: z.string().max(32).optional(),
@@ -231,6 +234,7 @@ export type CandidateOnboardingProfile = z.infer<typeof CandidateOnboardingProfi
 export const CandidateOnboardingDraftSchema = z.object({
   interestDomain: InterestDomainSchema.optional(),
   firstName: z.string().max(50).optional(),
+  middleName: z.string().max(50).optional(),
   lastName: z.string().max(50).optional(),
   gender: z.string().max(40).optional(),
   dateOfBirth: z.string().max(32).optional(),

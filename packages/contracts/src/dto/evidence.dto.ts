@@ -243,3 +243,17 @@ export const EvidenceSkillDisputeRowSchema = z.object({
   evidence: z.any().optional(),
 });
 export type EvidenceSkillDisputeRow = z.infer<typeof EvidenceSkillDisputeRowSchema>;
+
+export const ProfessionalCredentialDeclarationResponseDtoSchema = z.object({
+  hasNoCredentials: z.boolean().nullable(),
+});
+export type ProfessionalCredentialDeclarationResponseDto = z.infer<
+  typeof ProfessionalCredentialDeclarationResponseDtoSchema
+>;
+
+export const UpdateProfessionalCredentialDeclarationDtoSchema = z.object({
+  hasNoCredentials: z.boolean().nullable(),
+});
+export type UpdateProfessionalCredentialDeclarationDto = z.infer<
+  typeof UpdateProfessionalCredentialDeclarationDtoSchema
+>;

@@ -66,6 +66,7 @@ function saveMockOnboardingState(): void {
 const initialMockOnboardingState = loadMockOnboardingState();
 let mockOnboardingCompleted = initialMockOnboardingState.completed;
 let mockPrimaryTrack: string | null = null;
+let mockProfileHeadline: string | null = null;
 let mockOnboardingProfile: unknown = initialMockOnboardingState.profile;
 let mockOnboardingDraft: unknown = initialMockOnboardingState.draft;
 let mockSkillClaims: Array<{
@@ -238,6 +239,7 @@ function mockStudentUser(overrides: Record<string, unknown> = {}) {
     createdAt: new Date().toISOString(),
     sessionHold: null,
     onboardingCompleted: mockOnboardingCompleted,
+    profileHeadline: mockProfileHeadline ?? null,
     ...overrides,
   };
 }
@@ -494,6 +496,17 @@ const mockFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<
   // credentials, …) registered later in this function, since those GETs would
   // match this condition first and never reach their own handler below.
   if (/\/users\/me(\?|$)/u.test(url) && method === 'GET') {
+    return new Response(JSON.stringify(mockStudentUser()), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (url.includes('/users/me/profile') && method === 'PATCH') {
+    const body = init?.body ? (JSON.parse(String(init.body)) as { profileHeadline?: string }) : {};
+    if (body.profileHeadline !== undefined) {
+      mockProfileHeadline = body.profileHeadline.trim() || null;
+    }
     return new Response(JSON.stringify(mockStudentUser()), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

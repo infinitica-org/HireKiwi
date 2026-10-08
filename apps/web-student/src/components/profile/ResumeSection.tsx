@@ -24,13 +24,23 @@ type UploadStatus = 'idle' | 'uploading' | 'parsing' | 'success' | 'failed';
 
 export function ResumeSection() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isUploadingRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [resumeFiles, setResumeFiles] = useState<CandidateResumeFile[]>([]);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
+  const [retryCooldown, setRetryCooldown] = useState(0);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [parseMessage, setParseMessage] = useState<string | null>(null);
   const meta = profileSectionMeta('resume');
+
+  useEffect(() => {
+    if (retryCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setRetryCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [retryCooldown]);
 
   const loadResume = async () => {
     setLoading(true);
@@ -51,9 +61,11 @@ export function ResumeSection() {
 
   const hasResume = resumeFiles.length > 0;
   const busy = uploadStatus === 'uploading' || uploadStatus === 'parsing';
+  const isActionDisabled = busy || retryCooldown > 0;
 
   const startUpload = async (file: File) => {
-    if (busy) return;
+    if (isActionDisabled || isUploadingRef.current) return;
+    isUploadingRef.current = true;
 
     // --- Cheap, synchronous client-side validation ---
     // These checks never enter the uploading state — they show the error
@@ -61,6 +73,7 @@ export function ResumeSection() {
 
     if (hasResume) {
       setError(RESUME_VALIDATION_MESSAGES.REMOVE_EXISTING_FIRST);
+      isUploadingRef.current = false;
       return;
     }
 
@@ -73,11 +86,13 @@ export function ResumeSection() {
     const isPdfExt = /\.pdf$/i.test(file.name);
     if (!isPdfExt || (!isPdfMime && file.type !== '')) {
       setError(RESUME_VALIDATION_MESSAGES.ONLY_PDF_ALLOWED);
+      isUploadingRef.current = false;
       return;
     }
 
     if (file.size > RESUME_MAX_FILE_SIZE_BYTES) {
       setError(RESUME_VALIDATION_MESSAGES.MAX_SIZE_EXCEEDED);
+      isUploadingRef.current = false;
       return;
     }
 
@@ -125,7 +140,21 @@ export function ResumeSection() {
         message =
           'The upload timed out. Please try again with a smaller file or better connection.';
       } else if (isHireKiwiApiError(err)) {
-        message = err.message;
+        if (
+          err.statusCode === 503 ||
+          err.code === 'storage_unavailable' ||
+          err.code === 'validation_service_unavailable'
+        ) {
+          message =
+            err.message ||
+            'Object storage is temporarily unavailable. Please retry in a few moments.';
+        } else if (err.statusCode === 429 || err.code === 'rate_limit_exceeded') {
+          const waitSec = err.retryAfterSeconds ?? 10;
+          setRetryCooldown(waitSec);
+          message = `Too many upload attempts. Please wait ${waitSec} seconds before retrying.`;
+        } else {
+          message = err.message;
+        }
       } else if (err instanceof Error) {
         message = err.message;
       }
@@ -134,6 +163,7 @@ export function ResumeSection() {
       setUploadStatus('failed');
     } finally {
       clearTimeout(timeout);
+      isUploadingRef.current = false;
     }
   };
 
@@ -190,7 +220,7 @@ export function ResumeSection() {
             <div className="flex flex-col items-center gap-2">
               <button
                 type="button"
-                disabled={busy}
+                disabled={isActionDisabled}
                 onClick={() => fileInputRef.current?.click()}
                 className={`${profilePrimaryButtonSmClass} justify-center px-5 py-2.5 text-[13px] disabled:opacity-50`}
               >
@@ -199,7 +229,7 @@ export function ResumeSection() {
                 ) : (
                   <Plus className="size-4" strokeWidth={2} aria-hidden />
                 )}
-                Upload your resume
+                {retryCooldown > 0 ? `Wait ${retryCooldown}s to retry` : 'Upload your resume'}
               </button>
               <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
                 PDF only • Maximum size: 5 MB
@@ -231,6 +261,7 @@ export function ResumeSection() {
       <input
         ref={fileInputRef}
         type="file"
+        disabled={isActionDisabled}
         className="hidden"
         accept=".pdf,application/pdf"
         onChange={(event) => {
