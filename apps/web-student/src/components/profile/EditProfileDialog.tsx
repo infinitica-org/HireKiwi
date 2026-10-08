@@ -114,10 +114,6 @@ export function EditProfileDialog({ isOpen, onClose, user, imageLoader }: EditPr
   };
 
   const handleSave = async () => {
-    if (!hasPhoto) {
-      setPhotoError('A profile photo is required to complete your profile.');
-      return;
-    }
     if (isDescriptionTooLong) {
       setDescriptionError('Profile description must be at most 300 characters.');
       return;
@@ -144,8 +140,7 @@ export function EditProfileDialog({ isOpen, onClose, user, imageLoader }: EditPr
     }
   };
 
-  const isSaveDisabled =
-    saving || uploadingPhoto || !hasPhoto || isDescriptionTooLong || isDescriptionTooShort;
+  const isSaveDisabled = saving || uploadingPhoto || isDescriptionTooLong || isDescriptionTooShort;
 
   return (
     <>

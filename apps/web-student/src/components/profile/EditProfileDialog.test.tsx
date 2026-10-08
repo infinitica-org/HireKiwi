@@ -204,14 +204,32 @@ describe('EditProfileDialog', () => {
     expect(saveBtn.disabled).toBe(true);
   });
 
-  it('enforces mandatory profile photo when user has no photo', () => {
-    renderDialog({ user: mockUser({ profilePhotoUrl: null }) });
+  it('displays photo requirement badge but allows saving description when photo is missing', async () => {
+    updateProfile.mockResolvedValue(
+      mockUser({ profilePhotoUrl: null, profileHeadline: 'Updated without photo' }),
+    );
+
+    const { onClose } = renderDialog({
+      user: mockUser({ profilePhotoUrl: null, profileHeadline: 'Old headline' }),
+    });
 
     expect(screen.getByText('Required')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Upload photo/i })).toBeTruthy();
 
+    const textarea = screen.getByTestId('profile-description-input');
+    fireEvent.change(textarea, { target: { value: 'Updated without photo' } });
+
     const saveBtn = screen.getByTestId('save-profile-btn') as HTMLButtonElement;
-    expect(saveBtn.disabled).toBe(true);
+    expect(saveBtn.disabled).toBe(false);
+
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(updateProfile).toHaveBeenCalledWith({
+        profileHeadline: 'Updated without photo',
+      });
+      expect(onClose).toHaveBeenCalled();
+    });
   });
 
   it('does not force re-upload when user already has a valid photo', () => {
@@ -273,8 +291,6 @@ describe('EditProfileDialog', () => {
     });
 
     expect(uploadProfilePhoto).not.toHaveBeenCalled();
-    const saveBtn = screen.getByTestId('save-profile-btn') as HTMLButtonElement;
-    expect(saveBtn.disabled).toBe(true);
   });
 
   it('blocks upload when face check detects multiple faces', async () => {
