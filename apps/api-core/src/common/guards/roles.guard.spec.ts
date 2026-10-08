@@ -108,7 +108,7 @@ describe('RolesGuard with @RequirePermission (S6-VV-99)', () => {
   it('counts each refusal by route template and role (S6-VV-126)', async () => {
     const denied = async () =>
       (await registry.getMetricsAsJSON())
-        .find((m) => m.name === 'smart_authz_denied_total')
+        .find((m) => m.name === 'hirekiwi_authz_denied_total')
         ?.values.find(
           (v) => v.labels.route === '/api/v1/admin/users/:id' && v.labels.role === 'STUDENT',
         )?.value ?? 0;

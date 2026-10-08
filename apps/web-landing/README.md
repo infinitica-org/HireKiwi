@@ -12,15 +12,15 @@ Open http://localhost:3007
 
 Included in `pnpm dev:web` (`@hirekiwi/web-*`).
 
-## Adding your SMART_Landing_Page code
+## Adding your HIREKIWI_Landing_Page code
 
-1. In OneDrive, right-click `SMART_Landing_Page` → **Always keep on this device** (files must exist on disk).
+1. In OneDrive, right-click `HIREKIWI_Landing_Page` → **Always keep on this device** (files must exist on disk).
 2. Copy the project into this app:
 
    ```powershell
    Copy-Item -Recurse -Force `
-     "C:\Users\sathe\OneDrive\Desktop\Smart Landing page\SMART_Landing_Page\*" `
-     "F:\smart\smart\apps\web-landing\_import\"
+     "C:\Users\sathe\OneDrive\Desktop\HireKiwi Landing page\HIREKIWI_Landing_Page\*" `
+     "F:\hirekiwi\hirekiwi\apps\web-landing\_import\"
    ```
 
 3. Move React/TSX sections into `src/components/landing/` and wire them from `src/app/page.tsx`.

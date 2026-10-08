@@ -47,7 +47,7 @@ lines.push(
 for (const s of STORIES) {
   const zohoId = config.itemIds?.[s.id] || '_pending_';
   lines.push(
-    `| ${s.id} | [#${s.github}](https://github.com/infinitica-org/smart/issues/${s.github}) | ${s.points} | ${s.priority} | ${s.owner} | ${s.epic} | ${zohoId} |`,
+    `| ${s.id} | [#${s.github}](https://github.com/infinitica-org/HireKiwi/issues/${s.github}) | ${s.points} | ${s.priority} | ${s.owner} | ${s.epic} | ${zohoId} |`,
   );
 }
 

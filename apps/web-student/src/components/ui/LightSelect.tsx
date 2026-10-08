@@ -61,7 +61,7 @@ export function LightSelect({
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        const menu = document.getElementById('smart-light-select-menu');
+        const menu = document.getElementById('hirekiwi-light-select-menu');
         if (menu?.contains(e.target as Node)) return;
         setIsOpen(false);
       }
@@ -111,7 +111,7 @@ export function LightSelect({
         isOpen &&
         createPortal(
           <div
-            id="smart-light-select-menu"
+            id="hirekiwi-light-select-menu"
             style={{
               position: 'fixed',
               left: menuBox.left,

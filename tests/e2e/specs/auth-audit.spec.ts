@@ -2,8 +2,8 @@
 import { randomInt } from 'node:crypto';
 import { expect, test, type BrowserContext, type Page, type Response } from '@playwright/test';
 import {
-  SmartApiClient,
-  SmartApiError,
+  HireKiwiApiClient,
+  HireKiwiApiError,
   describeApiError,
 } from '../../../packages/api-client/dist/index.js';
 import { apiV1, e2eEnv } from '../helpers/env.js';
@@ -17,7 +17,7 @@ import { uniqueSuffix } from '../helpers/flows.js';
  * web-student :3001, Postgres/Redis/Mailpit, and the seeded student account.
  */
 
-const ACCESS_TOKEN_KEY = 'smart.accessToken';
+const ACCESS_TOKEN_KEY = 'hirekiwi.accessToken';
 const TABS = 5;
 
 function fakeIp(): string {
@@ -152,7 +152,7 @@ test.describe('auth audit (Th6-614)', () => {
       seen.push({ status: response.status, headers });
       return response;
     };
-    const client = new SmartApiClient({ baseUrl: e2eEnv.apiUrl, fetchImpl: recordingFetch });
+    const client = new HireKiwiApiClient({ baseUrl: e2eEnv.apiUrl, fetchImpl: recordingFetch });
 
     let caught: unknown;
     for (let attempt = 0; attempt < 40 && !caught; attempt += 1) {
@@ -163,7 +163,7 @@ test.describe('auth audit (Th6-614)', () => {
           { anonymous: true },
         );
       } catch (error) {
-        if (error instanceof SmartApiError && error.statusCode === 429) caught = error;
+        if (error instanceof HireKiwiApiError && error.statusCode === 429) caught = error;
       }
     }
     expect(
@@ -206,7 +206,7 @@ test.describe('auth audit (Th6-614)', () => {
     expect(remaining[0]).toBeGreaterThan(remaining[remaining.length - 1] ?? 0);
 
     // api-client turns the 429 into an error a user can act on.
-    const error = caught as SmartApiError;
+    const error = caught as HireKiwiApiError;
     expect(error.statusCode).toBe(429);
     expect(error.retryAfterSeconds, 'retryAfterSeconds on the parsed error').toBeGreaterThan(0);
     expect(Math.abs((error.retryAfterSeconds ?? 0) - asNumber('retry-after'))).toBeLessThanOrEqual(

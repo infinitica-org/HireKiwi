@@ -3,7 +3,7 @@
 import { useLayoutEffect, useState, type ReactNode } from 'react';
 import {
   decodeAccessTokenRole,
-  getAccessToken,
+  getUnexpiredAccessToken,
   reconcileAccessTokenFromCookie,
 } from '@hirekiwi/api-client';
 import { apiBaseUrl, redirectForRole } from '../lib/api';
@@ -29,7 +29,8 @@ export function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
 
     const check = async (): Promise<void> => {
       if (!cancelled) setChecked(false);
-      const liveToken = (await reconcileAccessTokenFromCookie(apiBaseUrl)) ?? getAccessToken();
+      const liveToken =
+        (await reconcileAccessTokenFromCookie(apiBaseUrl)) ?? getUnexpiredAccessToken();
       if (cancelled) return;
       const role = liveToken ? decodeAccessTokenRole(liveToken) : null;
       if (liveToken && role) {

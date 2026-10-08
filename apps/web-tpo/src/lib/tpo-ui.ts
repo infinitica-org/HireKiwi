@@ -1,7 +1,7 @@
 /**
  * Shared TPO console surface classes. Mirrors the student profile workspace
  * (apps/web-student/src/lib/profile-ui-classes.ts) so both consoles share one
- * visual language, with SMART teal --tpo-accent carrying active/primary states.
+ * visual language, with HireKiwi teal --tpo-accent carrying active/primary states.
  */
 
 export const surfaceClass =

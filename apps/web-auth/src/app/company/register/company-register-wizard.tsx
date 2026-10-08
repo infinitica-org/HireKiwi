@@ -11,7 +11,7 @@ import {
   isFreeMailDomain,
   type CompanySizeBand,
 } from '@hirekiwi/contracts';
-import { SmartLogo } from '@hirekiwi/ui';
+import { HireKiwiLogo } from '@hirekiwi/ui';
 import { AuthSplitShell } from '../../../components/auth-split-shell';
 import { MailIcon, PhoneIcon, UserIcon } from '../../../components/auth-icons';
 import { api } from '../../../lib/api';
@@ -353,7 +353,7 @@ export function CompanyRegisterWizard() {
     <AuthSplitShell variant="company">
       <div className="flex h-dvh max-h-dvh w-full flex-1 flex-col overflow-y-auto bg-white px-4 py-8 sm:px-6">
         <header className="mx-auto flex w-full max-w-xl items-center lg:hidden">
-          <SmartLogo tone="on-light" className="h-8 w-auto" />
+          <HireKiwiLogo kind="text" tone="on-light" className="h-8 w-auto" title="HireKiwi" />
         </header>
 
         <section className="mx-auto w-full max-w-xl py-6">
@@ -384,7 +384,7 @@ export function CompanyRegisterWizard() {
             {step === 'account' ? (
               <form onSubmit={onAccount} className="space-y-4">
                 <p className="text-sm text-[#64748b]">
-                  This is the master login for your company on SMART. You can invite teammates
+                  This is the master login for your company on HireKiwi. You can invite teammates
                   later.
                 </p>
                 <div>
@@ -455,8 +455,8 @@ export function CompanyRegisterWizard() {
                 <div className="rounded-xl border border-dashed border-[#d1d5db] p-4">
                   <p className="text-sm font-semibold text-[#111827]">Company not listed?</p>
                   <p className="mt-1 text-sm text-[#6b7280]">
-                    Create it and become its first admin. SMART verifies every new company before it
-                    can post jobs.
+                    Create it and become its first admin. HireKiwi verifies every new company before
+                    it can post jobs.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-3">
                     <button
@@ -686,7 +686,7 @@ export function CompanyRegisterWizard() {
 
             {step === 'documents' && reviewFeedback ? (
               <div className="mb-4 space-y-2 rounded-xl border border-[#fde68a] bg-[#fffbeb] px-4 py-3 text-sm text-[#92400e]">
-                <p className="font-semibold">Changes requested by the SMART review team</p>
+                <p className="font-semibold">Changes requested by the HireKiwi review team</p>
                 {reviewFeedback.reason ? <p>{reviewFeedback.reason}</p> : null}
                 {reviewFeedback.rejectedDocuments.length > 0 ? (
                   <>
@@ -765,7 +765,7 @@ export function CompanyRegisterWizard() {
                   },
                   { label: 'Company details and work email verified', state: 'done' },
                   {
-                    label: 'SMART verification review',
+                    label: 'HireKiwi verification review',
                     detail: 'Our team checks your company details and documents.',
                     state: 'current',
                   },

@@ -7,13 +7,13 @@ describe('alignS3CredentialsWithMinioRoot', () => {
     const base = loadEnv({
       NODE_ENV: 'development',
       JWT_SECRET: 'local-dev-jwt-secret-change-me-now!!',
-      S3_ACCESS_KEY: 'smart_dev',
+      S3_ACCESS_KEY: 'hirekiwi_dev',
       S3_SECRET_KEY: 'wrong-secret',
-      MINIO_ROOT_USER: 'smart_dev',
+      MINIO_ROOT_USER: 'hirekiwi_dev',
       MINIO_ROOT_PASSWORD: 'correct-minio-password',
     });
     const aligned = alignS3CredentialsWithMinioRoot(base, {
-      MINIO_ROOT_USER: 'smart_dev',
+      MINIO_ROOT_USER: 'hirekiwi_dev',
       MINIO_ROOT_PASSWORD: 'correct-minio-password',
     });
     expect(aligned.S3_SECRET_KEY).toBe('correct-minio-password');
@@ -23,8 +23,8 @@ describe('alignS3CredentialsWithMinioRoot', () => {
     const base = loadEnv({
       NODE_ENV: 'development',
       JWT_SECRET: 'local-dev-jwt-secret-change-me-now!!',
-      S3_ACCESS_KEY: 'smart',
-      S3_SECRET_KEY: 'smartsecret',
+      S3_ACCESS_KEY: 'hirekiwi',
+      S3_SECRET_KEY: 'hirekiwisecret',
     });
     expect(alignS3CredentialsWithMinioRoot(base, {})).toEqual(base);
   });

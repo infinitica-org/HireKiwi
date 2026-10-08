@@ -38,7 +38,7 @@ export function CustomSelect({
     maxHeight: 240,
   });
   const containerRef = useRef<HTMLDivElement>(null);
-  const menuId = 'smart-select-menu';
+  const menuId = 'hirekiwi-select-menu';
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -69,7 +69,7 @@ export function CustomSelect({
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        const menu = document.getElementById('smart-select-menu');
+        const menu = document.getElementById('hirekiwi-select-menu');
         if (menu?.contains(e.target as Node)) return;
         setIsOpen(false);
       }

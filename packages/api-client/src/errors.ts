@@ -10,7 +10,7 @@ import type { ApiError, ApiErrorCode } from '@hirekiwi/contracts';
  * Owner: Satheswaran V.
  */
 
-export class SmartApiError extends Error {
+export class HireKiwiApiError extends Error {
   readonly code: ApiErrorCode | string;
   readonly statusCode: number;
   /** Correlation id. Surface this in any error UI — it is how support finds the log. */
@@ -20,7 +20,7 @@ export class SmartApiError extends Error {
 
   constructor(body: ApiError) {
     super(body.message);
-    this.name = 'SmartApiError';
+    this.name = 'HireKiwiApiError';
     this.code = body.error;
     this.statusCode = body.statusCode;
     this.traceId = body.traceId;
@@ -54,14 +54,14 @@ export class SmartApiError extends Error {
 /**
  * Network-level failure: the request never got an HTTP response.
  *
- * Distinguished from `SmartApiError` because the UI response is different — an
+ * Distinguished from `HireKiwiApiError` because the UI response is different — an
  * offline candidate mid-assessment needs "your connection dropped, we saved your
  * answers", not a server error.
  */
-export class SmartNetworkError extends Error {
+export class HireKiwiNetworkError extends Error {
   constructor(message: string, cause?: unknown) {
     super(message, { cause });
-    this.name = 'SmartNetworkError';
+    this.name = 'HireKiwiNetworkError';
   }
 }
 
@@ -72,7 +72,7 @@ export class SmartNetworkError extends Error {
  * response shape becomes a runtime crash deep in a component tree. Failing at
  * the boundary means the bug report names the endpoint.
  */
-export class SmartContractViolationError extends Error {
+export class HireKiwiContractViolationError extends Error {
   constructor(
     readonly route: string,
     readonly issues: unknown,
@@ -82,12 +82,12 @@ export class SmartContractViolationError extends Error {
         `are out of sync — check the contract version before working around this. ` +
         `Issues: ${JSON.stringify(issues)}`,
     );
-    this.name = 'SmartContractViolationError';
+    this.name = 'HireKiwiContractViolationError';
   }
 }
 
-export function isSmartApiError(error: unknown): error is SmartApiError {
-  return error instanceof SmartApiError;
+export function isHireKiwiApiError(error: unknown): error is HireKiwiApiError {
+  return error instanceof HireKiwiApiError;
 }
 
 /** The message the API sends when it only knows "the body did not validate". */
@@ -122,7 +122,7 @@ export const CONTRACT_ERROR_MESSAGE = 'Something went wrong on our end. Please t
  * - A specific server message ("Verify your corporate email before submitting.") is shown as is.
  * - The generic "Request failed validation." is replaced by the actual field problems, so the
  *   user learns which field to fix.
- * - A `SmartNetworkError`/`SmartContractViolationError` carries internal detail (endpoint path,
+ * - A `HireKiwiNetworkError`/`HireKiwiContractViolationError` carries internal detail (endpoint path,
  *   timeout, raw contract-mismatch payload) meant for logs, not the page — those get a fixed,
  *   friendly sentence instead of `error.message`.
  * - Anything else unrecognised falls back to `fallback`.
@@ -131,7 +131,7 @@ export function describeApiError(
   error: unknown,
   fallback = 'Something went wrong. Please try again.',
 ): string {
-  if (error instanceof SmartApiError) {
+  if (error instanceof HireKiwiApiError) {
     const specific = error.message && error.message !== GENERIC_VALIDATION_MESSAGE;
     if (specific) return error.message;
 
@@ -148,8 +148,8 @@ export function describeApiError(
     }
     return error.message || fallback;
   }
-  if (error instanceof SmartNetworkError) return NETWORK_ERROR_MESSAGE;
-  if (error instanceof SmartContractViolationError) return CONTRACT_ERROR_MESSAGE;
+  if (error instanceof HireKiwiNetworkError) return NETWORK_ERROR_MESSAGE;
+  if (error instanceof HireKiwiContractViolationError) return CONTRACT_ERROR_MESSAGE;
   if (error instanceof Error && error.message) return error.message;
   return fallback;
 }

@@ -12,7 +12,7 @@ import {
   AdminReviewFlagsResponseSchema,
   AssessmentPerformanceVectorSchema,
   ResolveReviewFlagResponseSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   StudentCorroborationResponseSchema,
   isValidConsentScope,
   type AssessmentPerformanceVector,
@@ -376,9 +376,9 @@ export class CorroborationService {
     if (!shouldEmit) return;
 
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.corroborationUpdated,
+      topic: HIREKIWI_TOPICS.corroborationUpdated,
       partitionKey: userId,
-      eventType: SMART_TOPICS.corroborationUpdated,
+      eventType: HIREKIWI_TOPICS.corroborationUpdated,
       source: 'corroboration',
       data: snapshot,
     });

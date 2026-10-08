@@ -12,7 +12,7 @@ vi.mock('../../api-provider', async () => {
     useQuery: rq.useQuery,
     useMutation: rq.useMutation,
     useQueryClient: rq.useQueryClient,
-    useSmartApi: () => api,
+    useHireKiwiApi: () => api,
   };
 });
 

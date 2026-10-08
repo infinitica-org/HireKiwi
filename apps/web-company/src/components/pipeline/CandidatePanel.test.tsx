@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import type { EmployerApplicantCard } from '@hirekiwi/contracts';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -21,6 +21,7 @@ const REC = 'b0000000-0000-4000-8000-000000000001';
 const applicant = (status: EmployerApplicantCard['status']): EmployerApplicantCard => ({
   applicationId: APP,
   candidateName: 'Candidate 1',
+  photoUrl: null,
   fit: null,
   fitRecalculated: false,
   status,
@@ -118,7 +119,7 @@ describe('CandidatePanel (Th6-416/417/420)', () => {
 
   it('records an offer outcome and explains a refusal', async () => {
     employer.recordOutcome.mockRejectedValueOnce(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'validation_failed',
         message: 'Move the candidate to Offered first.',
         statusCode: 422,

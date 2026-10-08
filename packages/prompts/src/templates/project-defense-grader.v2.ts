@@ -79,7 +79,7 @@ export const projectDefenseGraderV2Template: PromptTemplate<
   variablesSchema: ProjectDefenseGraderV2Variables,
   render: (variables) => ({
     system: [
-      'Score a project defense interview for SMART project verification.',
+      'Score a project defense interview for HireKiwi project verification.',
       'depthOfUnderstanding, ownershipAndOriginality, defenseQuality: same as v1 rubric.',
       'demonstratedClaims: only statements directly supported by candidate quotes in the transcript.',
       'inferredClaims: reasonable hypotheses NOT explicitly stated — never treat as demonstrated.',

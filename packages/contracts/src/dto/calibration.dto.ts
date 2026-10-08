@@ -110,7 +110,7 @@ export const ReliabilityDtoSchema = z.object({
 export type ReliabilityDto = z.infer<typeof ReliabilityDtoSchema>;
 
 /**
- * The Confidence Note — SMART's honesty mechanism. Every result and every
+ * The Confidence Note — HireKiwi's honesty mechanism. Every result and every
  * certificate carries one. It states sample size, reliability and calibration
  * maturity, and it downgrades itself automatically rather than waiting for
  * someone to remember.

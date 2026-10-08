@@ -71,20 +71,20 @@ ENV HOSTNAME=0.0.0.0
 
 WORKDIR /app
 
-RUN useradd --system --uid 10001 smart
+RUN useradd --system --uid 10001 hirekiwi
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/apps/${APP}/.next/standalone ./
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/apps/${APP}/.next/static \
     ./apps/${APP}/.next/static
 
-COPY --from=build --chown=smart:smart \
+COPY --from=build --chown=hirekiwi:hirekiwi \
     /app/apps/${APP}/public \
     ./apps/${APP}/public
 
-USER smart
+USER hirekiwi
 
 EXPOSE 3000
 

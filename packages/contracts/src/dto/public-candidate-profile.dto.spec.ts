@@ -3,11 +3,11 @@ import { buildLinkedInAddCertificationUrl } from './public-candidate-profile.dto
 
 describe('buildLinkedInAddCertificationUrl (CN-T07)', () => {
   it('builds a LinkedIn add-certification deep link with required name', () => {
-    const url = buildLinkedInAddCertificationUrl({ name: 'SMART Gold — Business Analytics' });
+    const url = buildLinkedInAddCertificationUrl({ name: 'HireKiwi Gold — Business Analytics' });
 
     expect(url).toContain('https://www.linkedin.com/profile/add');
     expect(url).toContain('startTask=CERTIFICATION_NAME');
-    expect(url).toContain('name=SMART+Gold');
+    expect(url).toContain('name=HireKiwi+Gold');
   });
 
   it('includes optional organization, dates, cert URL, and cert id when provided', () => {
@@ -16,7 +16,7 @@ describe('buildLinkedInAddCertificationUrl (CN-T07)', () => {
       organizationName: 'Amazon Web Services',
       issueYear: 2024,
       issueMonth: 3,
-      certUrl: 'https://verify.smart.example/cert/abc',
+      certUrl: 'https://verify.hirekiwi.example/cert/abc',
       certId: 'abc-123',
     });
 
@@ -24,7 +24,7 @@ describe('buildLinkedInAddCertificationUrl (CN-T07)', () => {
     expect(parsed.searchParams.get('organizationName')).toBe('Amazon Web Services');
     expect(parsed.searchParams.get('issueYear')).toBe('2024');
     expect(parsed.searchParams.get('issueMonth')).toBe('3');
-    expect(parsed.searchParams.get('certUrl')).toBe('https://verify.smart.example/cert/abc');
+    expect(parsed.searchParams.get('certUrl')).toBe('https://verify.hirekiwi.example/cert/abc');
     expect(parsed.searchParams.get('certId')).toBe('abc-123');
   });
 });

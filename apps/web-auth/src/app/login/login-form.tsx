@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { EMAIL_NOT_VERIFIED_ERROR } from '@hirekiwi/contracts';
 import { EyeIcon, EyeOffIcon } from '../../components/auth-icons';
 import {
@@ -60,11 +60,11 @@ export function LoginForm() {
       storeSession(result.accessToken);
       redirectForRole(result.user.role, result.accessToken, searchParams.get('returnTo'));
     } catch (err) {
-      if (isSmartApiError(err) && err.code === EMAIL_NOT_VERIFIED_ERROR) {
+      if (isHireKiwiApiError(err) && err.code === EMAIL_NOT_VERIFIED_ERROR) {
         setError(err.message);
         setUnverifiedEmail(email);
       } else if (
-        isSmartApiError(err) &&
+        isHireKiwiApiError(err) &&
         (err.code === 'institution_held' ||
           err.code === 'institution_deactivated' ||
           err.code === 'account_held')
@@ -91,7 +91,7 @@ export function LoginForm() {
         {stage === 'choose-signup' ? (
           <WelcomeIllustration className="h-20 w-auto" />
         ) : (
-          <img src="/icon.png" alt="SMART" className="mx-auto h-11 w-11 object-contain" />
+          <img src="/icon.png" alt="HireKiwi" className="mx-auto h-11 w-11 object-contain" />
         )}
 
         <h1 className="mt-4 text-[1.65rem] font-bold leading-tight tracking-tight text-[#111827] sm:text-[1.85rem]">
@@ -250,7 +250,7 @@ export function LoginForm() {
           <div className="mt-8 w-full max-w-2xl space-y-6 text-center mx-auto">
             <p className="text-sm text-[#6b7280]">
               We couldn&apos;t find an account for <span className="font-medium">{email}</span>. How
-              would you like to join SMART?
+              would you like to join HireKiwi?
             </p>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

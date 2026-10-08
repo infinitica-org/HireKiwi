@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { ErrorState } from '@hirekiwi/ui';
 import { CompanyPublicView } from '../../../components/company-public-view';
 import { api } from '../../../lib/api';
@@ -14,7 +14,7 @@ async function loadCompany(slug: string) {
     return { profile: await api.companies.getPublic(slug) };
   } catch (error) {
     // Unverified, held, deactivated and unknown companies all answer 404: there is no public page.
-    if (isSmartApiError(error) && error.statusCode === 404) notFound();
+    if (isHireKiwiApiError(error) && error.statusCode === 404) notFound();
     return { profile: null };
   }
 }
@@ -22,7 +22,7 @@ async function loadCompany(slug: string) {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const { profile } = await loadCompany(slug);
-  return { title: profile ? `${profile.displayName} · SMART` : 'Company · SMART' };
+  return { title: profile ? `${profile.displayName} · HireKiwi` : 'Company · HireKiwi' };
 }
 
 export default async function Page({ params }: PageProps) {

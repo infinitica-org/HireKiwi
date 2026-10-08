@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SmartApiError, SmartNetworkError } from '@hirekiwi/api-client';
+import { HireKiwiApiError, HireKiwiNetworkError } from '@hirekiwi/api-client';
 import type { AttemptSessionDto, DeliverableItemDto } from '@hirekiwi/contracts';
 import {
   buildMcqDraftPayload,
@@ -148,7 +148,7 @@ describe('l1-mcq helpers', () => {
   it('maps 403/404/429 and network failures', () => {
     expect(
       playerErrorFromUnknown(
-        new SmartApiError({
+        new HireKiwiApiError({
           error: 'level_locked',
           message: 'Level 1 is locked.',
           statusCode: 403,
@@ -157,7 +157,7 @@ describe('l1-mcq helpers', () => {
     ).toBe('level_locked');
     expect(
       playerErrorFromUnknown(
-        new SmartApiError({
+        new HireKiwiApiError({
           error: 'not_found',
           message: 'Item bank for form A is empty.',
           statusCode: 404,
@@ -166,7 +166,7 @@ describe('l1-mcq helpers', () => {
     ).toBe('not_found');
     expect(
       playerErrorFromUnknown(
-        new SmartApiError({
+        new HireKiwiApiError({
           error: 'rate_limit_exceeded',
           message: 'Slow down.',
           statusCode: 429,
@@ -178,6 +178,6 @@ describe('l1-mcq helpers', () => {
       message: 'Too many answer saves. Wait before trying again.',
       retryAfterSeconds: 12,
     });
-    expect(playerErrorFromUnknown(new SmartNetworkError('offline')).kind).toBe('network');
+    expect(playerErrorFromUnknown(new HireKiwiNetworkError('offline')).kind).toBe('network');
   });
 });

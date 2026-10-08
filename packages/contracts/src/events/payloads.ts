@@ -16,7 +16,7 @@ import { IsoDateTimeSchema, ScoreSchema, UuidSchema } from '../dto/common.js';
 import { LanguageBreakdownEntrySchema } from '../dto/candidate-social.dto.js';
 import { RawSignalEnvelopeSchema } from '../dto/raw-signals.dto.js';
 import { CorroborationSnapshotSchema, VectorizedSignalSchema } from '../dto/signals.dto.js';
-import { SMART_TOPICS } from './topics.js';
+import { HIREKIWI_TOPICS } from './topics.js';
 
 /**
  * Kafka event payloads.
@@ -61,7 +61,7 @@ export const UserCreatedDataSchema = z.object({
   primaryTrack: TrackCodeSchema.nullable(),
 });
 export const UserCreatedEventSchema = envelopeSchema(
-  SMART_TOPICS.userCreated,
+  HIREKIWI_TOPICS.userCreated,
   UserCreatedDataSchema,
 );
 export type UserCreatedEvent = z.infer<typeof UserCreatedEventSchema>;
@@ -73,7 +73,7 @@ export const UserUpdatedDataSchema = z.object({
   secondaryTrack: TrackCodeSchema.nullable(),
 });
 export const UserUpdatedEventSchema = envelopeSchema(
-  SMART_TOPICS.userUpdated,
+  HIREKIWI_TOPICS.userUpdated,
   UserUpdatedDataSchema,
 );
 export type UserUpdatedEvent = z.infer<typeof UserUpdatedEventSchema>;
@@ -94,7 +94,7 @@ export const AssessmentStartedDataSchema = z.object({
   expiresAt: IsoDateTimeSchema,
 });
 export const AssessmentStartedEventSchema = envelopeSchema(
-  SMART_TOPICS.assessmentStarted,
+  HIREKIWI_TOPICS.assessmentStarted,
   AssessmentStartedDataSchema,
 );
 export type AssessmentStartedEvent = z.infer<typeof AssessmentStartedEventSchema>;
@@ -129,7 +129,7 @@ export const AssessmentSubmittedDataSchema = z.object({
   ),
 });
 export const AssessmentSubmittedEventSchema = envelopeSchema(
-  SMART_TOPICS.assessmentSubmitted,
+  HIREKIWI_TOPICS.assessmentSubmitted,
   AssessmentSubmittedDataSchema,
 );
 export type AssessmentSubmittedEvent = z.infer<typeof AssessmentSubmittedEventSchema>;
@@ -150,7 +150,7 @@ export const EvalRequestedDataSchema = z.object({
   priority: z.enum(['P1_REALTIME', 'P2_ASYNC_EVAL', 'P3_BATCH']),
 });
 export const EvalRequestedEventSchema = envelopeSchema(
-  SMART_TOPICS.evalRequested,
+  HIREKIWI_TOPICS.evalRequested,
   EvalRequestedDataSchema,
 );
 export type EvalRequestedEvent = z.infer<typeof EvalRequestedEventSchema>;
@@ -182,7 +182,7 @@ export const EvalCompletedDataSchema = z.object({
   evaluatedAt: IsoDateTimeSchema,
 });
 export const EvalCompletedEventSchema = envelopeSchema(
-  SMART_TOPICS.evalCompleted,
+  HIREKIWI_TOPICS.evalCompleted,
   EvalCompletedDataSchema,
 );
 export type EvalCompletedEvent = z.infer<typeof EvalCompletedEventSchema>;
@@ -204,7 +204,7 @@ export const TrackUpdatedDataSchema = z.object({
   invalidateKeys: z.array(z.string()),
 });
 export const TrackUpdatedEventSchema = envelopeSchema(
-  SMART_TOPICS.trackUpdated,
+  HIREKIWI_TOPICS.trackUpdated,
   TrackUpdatedDataSchema,
 );
 export type TrackUpdatedEvent = z.infer<typeof TrackUpdatedEventSchema>;
@@ -224,7 +224,7 @@ export const CertificateIssuedDataSchema = z.object({
   issuedAt: IsoDateTimeSchema,
 });
 export const CertificateIssuedEventSchema = envelopeSchema(
-  SMART_TOPICS.certificateIssued,
+  HIREKIWI_TOPICS.certificateIssued,
   CertificateIssuedDataSchema,
 );
 export type CertificateIssuedEvent = z.infer<typeof CertificateIssuedEventSchema>;
@@ -247,7 +247,7 @@ export const PlacementMatchedDataSchema = z.object({
   generatedAt: IsoDateTimeSchema,
 });
 export const PlacementMatchedEventSchema = envelopeSchema(
-  SMART_TOPICS.placementMatched,
+  HIREKIWI_TOPICS.placementMatched,
   PlacementMatchedDataSchema,
 );
 export type PlacementMatchedEvent = z.infer<typeof PlacementMatchedEventSchema>;
@@ -261,7 +261,7 @@ export const ApplicationStageChangedDataSchema = z.object({
   changedAt: IsoDateTimeSchema,
 });
 export const ApplicationStageChangedEventSchema = envelopeSchema(
-  SMART_TOPICS.applicationStageChanged,
+  HIREKIWI_TOPICS.applicationStageChanged,
   ApplicationStageChangedDataSchema,
 );
 export type ApplicationStageChangedEvent = z.infer<typeof ApplicationStageChangedEventSchema>;
@@ -284,7 +284,7 @@ export const InvitationSentDataSchema = z.object({
   batchName: z.string().nullable(),
 });
 export const InvitationSentEventSchema = envelopeSchema(
-  SMART_TOPICS.invitationSent,
+  HIREKIWI_TOPICS.invitationSent,
   InvitationSentDataSchema,
 );
 export type InvitationSentEvent = z.infer<typeof InvitationSentEventSchema>;
@@ -303,7 +303,7 @@ export const SkillVerificationCompletedDataSchema = z.object({
   passed: z.boolean().optional(),
 });
 export const SkillVerificationCompletedEventSchema = envelopeSchema(
-  SMART_TOPICS.skillVerificationCompleted,
+  HIREKIWI_TOPICS.skillVerificationCompleted,
   SkillVerificationCompletedDataSchema,
 );
 export type SkillVerificationCompletedEvent = z.infer<typeof SkillVerificationCompletedEventSchema>;
@@ -322,7 +322,7 @@ export const AuditRecordedDataSchema = z.object({
   recordedAt: IsoDateTimeSchema,
 });
 export const AuditRecordedEventSchema = envelopeSchema(
-  SMART_TOPICS.auditRecorded,
+  HIREKIWI_TOPICS.auditRecorded,
   AuditRecordedDataSchema,
 );
 export type AuditRecordedEvent = z.infer<typeof AuditRecordedEventSchema>;
@@ -344,7 +344,7 @@ export const AiCompletionRecordedDataSchema = z.object({
   recordedAt: IsoDateTimeSchema,
 });
 export const AiCompletionRecordedEventSchema = envelopeSchema(
-  SMART_TOPICS.aiCompletionRecorded,
+  HIREKIWI_TOPICS.aiCompletionRecorded,
   AiCompletionRecordedDataSchema,
 );
 export type AiCompletionRecordedEvent = z.infer<typeof AiCompletionRecordedEventSchema>;
@@ -365,7 +365,7 @@ export const RateLimitExceededDataSchema = z.object({
   attemptId: UuidSchema.nullable(),
 });
 export const RateLimitExceededEventSchema = envelopeSchema(
-  SMART_TOPICS.rateLimitExceeded,
+  HIREKIWI_TOPICS.rateLimitExceeded,
   RateLimitExceededDataSchema,
 );
 export type RateLimitExceededEvent = z.infer<typeof RateLimitExceededEventSchema>;
@@ -379,7 +379,7 @@ export const ProjectSubmittedDataSchema = z.object({
   studentId: UuidSchema,
 });
 export const ProjectSubmittedEventSchema = envelopeSchema(
-  SMART_TOPICS.projectSubmitted,
+  HIREKIWI_TOPICS.projectSubmitted,
   ProjectSubmittedDataSchema,
 );
 export type ProjectSubmittedEvent = z.infer<typeof ProjectSubmittedEventSchema>;
@@ -389,7 +389,7 @@ export const ProjectSnapshotReadyDataSchema = z.object({
   snapshotVersion: z.number().int().positive(),
 });
 export const ProjectSnapshotReadyEventSchema = envelopeSchema(
-  SMART_TOPICS.projectSnapshotReady,
+  HIREKIWI_TOPICS.projectSnapshotReady,
   ProjectSnapshotReadyDataSchema,
 );
 export type ProjectSnapshotReadyEvent = z.infer<typeof ProjectSnapshotReadyEventSchema>;
@@ -402,7 +402,7 @@ export const ProjectVerifyCompletedDataSchema = z.object({
   flags: z.array(ProjectVerifyFlagSchema),
 });
 export const ProjectVerifyCompletedEventSchema = envelopeSchema(
-  SMART_TOPICS.projectVerifyCompleted,
+  HIREKIWI_TOPICS.projectVerifyCompleted,
   ProjectVerifyCompletedDataSchema,
 );
 export type ProjectVerifyCompletedEvent = z.infer<typeof ProjectVerifyCompletedEventSchema>;
@@ -414,7 +414,7 @@ export const ProjectDefenseCompletedDataSchema = z.object({
   defenseScore: ScoreSchema,
 });
 export const ProjectDefenseCompletedEventSchema = envelopeSchema(
-  SMART_TOPICS.projectDefenseCompleted,
+  HIREKIWI_TOPICS.projectDefenseCompleted,
   ProjectDefenseCompletedDataSchema,
 );
 export type ProjectDefenseCompletedEvent = z.infer<typeof ProjectDefenseCompletedEventSchema>;
@@ -424,7 +424,7 @@ export const ProctoringSnapshotReadyDataSchema = z.object({
   objectKey: z.string().min(8).max(512),
 });
 export const ProctoringSnapshotReadyEventSchema = envelopeSchema(
-  SMART_TOPICS.proctoringSnapshotReady,
+  HIREKIWI_TOPICS.proctoringSnapshotReady,
   ProctoringSnapshotReadyDataSchema,
 );
 export type ProctoringSnapshotReadyEvent = z.infer<typeof ProctoringSnapshotReadyEventSchema>;
@@ -439,7 +439,7 @@ export const CandidateSkillsDiscoveredDataSchema = z.object({
   selectedSkillNames: z.array(z.string().min(1).max(80)).max(30),
 });
 export const CandidateSkillsDiscoveredEventSchema = envelopeSchema(
-  SMART_TOPICS.candidateSkillsDiscovered,
+  HIREKIWI_TOPICS.candidateSkillsDiscovered,
   CandidateSkillsDiscoveredDataSchema,
 );
 export type CandidateSkillsDiscoveredEvent = z.infer<typeof CandidateSkillsDiscoveredEventSchema>;
@@ -459,7 +459,7 @@ export const SkillInferenceUpdatedDataSchema = z.object({
   computedAt: IsoDateTimeSchema,
 });
 export const SkillInferenceUpdatedEventSchema = envelopeSchema(
-  SMART_TOPICS.skillInferenceUpdated,
+  HIREKIWI_TOPICS.skillInferenceUpdated,
   SkillInferenceUpdatedDataSchema,
 );
 export type SkillInferenceUpdatedEvent = z.infer<typeof SkillInferenceUpdatedEventSchema>;
@@ -470,21 +470,21 @@ export type SkillInferenceUpdatedEvent = z.infer<typeof SkillInferenceUpdatedEve
 
 export const SignalIngestedDataSchema = RawSignalEnvelopeSchema;
 export const SignalIngestedEventSchema = envelopeSchema(
-  SMART_TOPICS.signalIngested,
+  HIREKIWI_TOPICS.signalIngested,
   SignalIngestedDataSchema,
 );
 export type SignalIngestedEvent = z.infer<typeof SignalIngestedEventSchema>;
 
 export const SignalEncodedDataSchema = VectorizedSignalSchema;
 export const SignalEncodedEventSchema = envelopeSchema(
-  SMART_TOPICS.signalEncoded,
+  HIREKIWI_TOPICS.signalEncoded,
   SignalEncodedDataSchema,
 );
 export type SignalEncodedEvent = z.infer<typeof SignalEncodedEventSchema>;
 
 export const CorroborationUpdatedDataSchema = CorroborationSnapshotSchema;
 export const CorroborationUpdatedEventSchema = envelopeSchema(
-  SMART_TOPICS.corroborationUpdated,
+  HIREKIWI_TOPICS.corroborationUpdated,
   CorroborationUpdatedDataSchema,
 );
 export type CorroborationUpdatedEvent = z.infer<typeof CorroborationUpdatedEventSchema>;
@@ -496,7 +496,7 @@ export const CredentialVerifiedDataSchema = z.object({
   entityId: UuidSchema,
 });
 export const CredentialVerifiedEventSchema = envelopeSchema(
-  SMART_TOPICS.credentialVerified,
+  HIREKIWI_TOPICS.credentialVerified,
   CredentialVerifiedDataSchema,
 );
 export type CredentialVerifiedEvent = z.infer<typeof CredentialVerifiedEventSchema>;
@@ -511,34 +511,34 @@ export type CredentialVerifiedEvent = z.infer<typeof CredentialVerifiedEventSche
  * producer's own CI rather than in someone else's consumer at 2 a.m.
  */
 export const EVENT_SCHEMA_BY_TOPIC = {
-  [SMART_TOPICS.userCreated]: UserCreatedEventSchema,
-  [SMART_TOPICS.userUpdated]: UserUpdatedEventSchema,
-  [SMART_TOPICS.assessmentStarted]: AssessmentStartedEventSchema,
-  [SMART_TOPICS.assessmentSubmitted]: AssessmentSubmittedEventSchema,
-  [SMART_TOPICS.evalRequested]: EvalRequestedEventSchema,
-  [SMART_TOPICS.evalCompleted]: EvalCompletedEventSchema,
-  [SMART_TOPICS.trackUpdated]: TrackUpdatedEventSchema,
-  [SMART_TOPICS.certificateIssued]: CertificateIssuedEventSchema,
-  [SMART_TOPICS.placementMatched]: PlacementMatchedEventSchema,
-  [SMART_TOPICS.applicationStageChanged]: ApplicationStageChangedEventSchema,
-  [SMART_TOPICS.invitationSent]: InvitationSentEventSchema,
-  [SMART_TOPICS.skillVerificationCompleted]: SkillVerificationCompletedEventSchema,
-  [SMART_TOPICS.auditRecorded]: AuditRecordedEventSchema,
-  [SMART_TOPICS.aiCompletionRecorded]: AiCompletionRecordedEventSchema,
-  [SMART_TOPICS.rateLimitExceeded]: RateLimitExceededEventSchema,
-  [SMART_TOPICS.projectSubmitted]: ProjectSubmittedEventSchema,
-  [SMART_TOPICS.projectSnapshotReady]: ProjectSnapshotReadyEventSchema,
-  [SMART_TOPICS.projectVerifyCompleted]: ProjectVerifyCompletedEventSchema,
-  [SMART_TOPICS.projectDefenseCompleted]: ProjectDefenseCompletedEventSchema,
-  [SMART_TOPICS.proctoringSnapshotReady]: ProctoringSnapshotReadyEventSchema,
-  [SMART_TOPICS.candidateSkillsDiscovered]: CandidateSkillsDiscoveredEventSchema,
-  [SMART_TOPICS.signalIngested]: SignalIngestedEventSchema,
-  [SMART_TOPICS.signalEncoded]: SignalEncodedEventSchema,
-  [SMART_TOPICS.corroborationUpdated]: CorroborationUpdatedEventSchema,
-  [SMART_TOPICS.credentialVerified]: CredentialVerifiedEventSchema,
+  [HIREKIWI_TOPICS.userCreated]: UserCreatedEventSchema,
+  [HIREKIWI_TOPICS.userUpdated]: UserUpdatedEventSchema,
+  [HIREKIWI_TOPICS.assessmentStarted]: AssessmentStartedEventSchema,
+  [HIREKIWI_TOPICS.assessmentSubmitted]: AssessmentSubmittedEventSchema,
+  [HIREKIWI_TOPICS.evalRequested]: EvalRequestedEventSchema,
+  [HIREKIWI_TOPICS.evalCompleted]: EvalCompletedEventSchema,
+  [HIREKIWI_TOPICS.trackUpdated]: TrackUpdatedEventSchema,
+  [HIREKIWI_TOPICS.certificateIssued]: CertificateIssuedEventSchema,
+  [HIREKIWI_TOPICS.placementMatched]: PlacementMatchedEventSchema,
+  [HIREKIWI_TOPICS.applicationStageChanged]: ApplicationStageChangedEventSchema,
+  [HIREKIWI_TOPICS.invitationSent]: InvitationSentEventSchema,
+  [HIREKIWI_TOPICS.skillVerificationCompleted]: SkillVerificationCompletedEventSchema,
+  [HIREKIWI_TOPICS.auditRecorded]: AuditRecordedEventSchema,
+  [HIREKIWI_TOPICS.aiCompletionRecorded]: AiCompletionRecordedEventSchema,
+  [HIREKIWI_TOPICS.rateLimitExceeded]: RateLimitExceededEventSchema,
+  [HIREKIWI_TOPICS.projectSubmitted]: ProjectSubmittedEventSchema,
+  [HIREKIWI_TOPICS.projectSnapshotReady]: ProjectSnapshotReadyEventSchema,
+  [HIREKIWI_TOPICS.projectVerifyCompleted]: ProjectVerifyCompletedEventSchema,
+  [HIREKIWI_TOPICS.projectDefenseCompleted]: ProjectDefenseCompletedEventSchema,
+  [HIREKIWI_TOPICS.proctoringSnapshotReady]: ProctoringSnapshotReadyEventSchema,
+  [HIREKIWI_TOPICS.candidateSkillsDiscovered]: CandidateSkillsDiscoveredEventSchema,
+  [HIREKIWI_TOPICS.signalIngested]: SignalIngestedEventSchema,
+  [HIREKIWI_TOPICS.signalEncoded]: SignalEncodedEventSchema,
+  [HIREKIWI_TOPICS.corroborationUpdated]: CorroborationUpdatedEventSchema,
+  [HIREKIWI_TOPICS.credentialVerified]: CredentialVerifiedEventSchema,
 } as const;
 
-export type SmartEvent =
+export type HireKiwiEvent =
   | UserCreatedEvent
   | UserUpdatedEvent
   | AssessmentStartedEvent

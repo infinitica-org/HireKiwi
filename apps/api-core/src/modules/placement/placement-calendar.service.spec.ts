@@ -108,7 +108,7 @@ describe('Epic S6-VG-302 (PLACEMENT-CALENDAR-01) — Placement Calendar & CTC An
         offeredCtcLpa: 14.5,
         designation: 'Software Development Engineer',
         joiningDate: '2026-11-01',
-        offerLetterUrl: 'https://storage.smart.edu/offer-letters/student1.pdf',
+        offerLetterUrl: 'https://storage.hirekiwi.edu/offer-letters/student1.pdf',
       });
 
       expect(res.success).toBe(true);

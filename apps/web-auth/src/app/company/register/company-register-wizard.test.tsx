@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { COMPANY_SIZE_BANDS, COMPANY_WORK_EMAIL_REQUIRED_MESSAGE } from '@hirekiwi/contracts';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 
 const getSession = vi.fn();
 const updateDraft = vi.fn();
@@ -81,7 +81,7 @@ describe('CompanyRegisterWizard details step', () => {
   it('shows which fields failed instead of a generic validation message', async () => {
     const phone = await openDetailsStep();
     updateDraft.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         statusCode: 422,
         error: 'validation_failed',
         message: 'Request failed validation.',

@@ -25,9 +25,9 @@
  * flush Redis first (`docker compose ... exec redis redis-cli FLUSHDB`,
  * local/dev only — never on a shared or production Redis).
  *
- * Watch smart_cache_operations_total{namespace="items_form"} (hit vs miss) and
- * smart_db_query_duration_seconds_count in the API Metrics Grafana dashboard
- * while this runs — see infra/observability/grafana/dashboards/smart-api-metrics.json.
+ * Watch hirekiwi_cache_operations_total{namespace="items_form"} (hit vs miss) and
+ * hirekiwi_db_query_duration_seconds_count in the API Metrics Grafana dashboard
+ * while this runs — see infra/observability/grafana/dashboards/hirekiwi-api-metrics.json.
  */
 import { check } from 'k6';
 import { API_PREFIX, urls } from '../config/index.js';
@@ -84,7 +84,7 @@ export default function () {
   );
   const gotItem = check(itemRes, { 'stampede: item served': (r) => r.status === 200 });
 
-  // This test cannot see the app's own smart_cache_operations_total counter
+  // This test cannot see the app's own hirekiwi_cache_operations_total counter
   // directly (that requires reading Prometheus, not this response) — these
   // Counters are a same-run, k6-side proxy: `x-response-time` alone can't
   // distinguish hit/miss, so treat these as "requests completed", and read

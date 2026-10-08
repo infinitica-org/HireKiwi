@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQueryClient } from '@hirekiwi/ui';
 import { Loader2, Plus } from 'lucide-react';
 import {
@@ -22,7 +22,6 @@ import {
   ConsentNotice,
   IntegrationCard,
 } from '@/components/profile/CodingPlatformIntegrations';
-import { GithubPrivateRepoIntegration } from '@/components/profile/GithubPrivateRepoIntegration';
 import { profileSectionMeta } from '@/lib/profile-sections';
 import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
 import { useOnboarding } from '@/lib/use-onboarding';
@@ -88,7 +87,7 @@ const PLATFORMS: PlatformConfig[] = [
   // },
 ];
 
-/** The only data SMART reads from each profile (shown in the consent notice). */
+/** The only data HireKiwi reads from each profile (shown in the consent notice). */
 const PLATFORM_READS: Record<PlatformKey, string> = {
   github: 'your profile name and photo, public repositories, languages and contribution activity',
   linkedin: 'your public profile link and the sections you choose to import',
@@ -148,7 +147,7 @@ export function ProfessionalLinksSection() {
   useEffect(() => {
     if (isError) {
       setError(
-        isSmartApiError(queryError)
+        isHireKiwiApiError(queryError)
           ? queryError.message
           : 'Could not load saved professional links.',
       );
@@ -214,7 +213,7 @@ export function ProfessionalLinksSection() {
       setSuccess(successMessage);
       await queryClient.invalidateQueries({ queryKey: queryKeys.myOnboarding() });
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not save professional links.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not save professional links.');
     } finally {
       setSaving(false);
     }
@@ -371,7 +370,6 @@ export function ProfessionalLinksSection() {
               pickerOpen={pickerOpen}
               onPickerOpenChange={setPickerOpen}
             />
-            <GithubPrivateRepoIntegration />
           </div>
 
           {/* Test and Automation Bridge */}

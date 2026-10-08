@@ -44,7 +44,7 @@ function setupAdminEpicTest() {
       findMany: vi.fn().mockResolvedValue([
         {
           id: adminUserId,
-          email: 'admin@smart.test',
+          email: 'admin@hirekiwi.test',
           fullName: 'Super Admin',
           role: 'SUPER_ADMIN',
           emailVerified: true,
@@ -52,14 +52,14 @@ function setupAdminEpicTest() {
       ]),
       findUnique: vi.fn().mockResolvedValue({
         id: adminUserId,
-        email: 'admin@smart.test',
+        email: 'admin@hirekiwi.test',
         fullName: 'Super Admin',
         role: 'SUPER_ADMIN',
         emailVerified: true,
       }),
       findFirstOrThrow: vi.fn().mockResolvedValue({
         id: adminUserId,
-        email: 'newadmin@smart.test',
+        email: 'newadmin@hirekiwi.test',
         fullName: 'Platform Admin',
         role: 'SUPER_ADMIN',
         emailVerified: false,
@@ -89,7 +89,7 @@ function setupAdminEpicTest() {
           resourceId: institutionId,
           reasonCode: 'administrative_hold',
           createdAt: new Date(),
-          actor: { email: 'admin@smart.test', role: 'SUPER_ADMIN' },
+          actor: { email: 'admin@hirekiwi.test', role: 'SUPER_ADMIN' },
         },
       ]),
       count: vi.fn().mockResolvedValue(1),
@@ -294,7 +294,7 @@ describe('Epic ADMIN-01: Superadmin Platform Governance & Audit Logging (Th6-I50
     const { service, prisma, auditPublisher } = setupAdminEpicTest();
     const admin = await service.invitePlatformAdmin(
       {
-        email: 'newadmin@smart.test',
+        email: 'newadmin@hirekiwi.test',
         fullName: 'Platform Admin',
         reason: 'Superadmin staff provisioning',
       },
@@ -302,7 +302,7 @@ describe('Epic ADMIN-01: Superadmin Platform Governance & Audit Logging (Th6-I50
     );
 
     expect(admin).toBeDefined();
-    expect(admin.email).toBe('newadmin@smart.test');
+    expect(admin.email).toBe('newadmin@hirekiwi.test');
     expect(prisma.user.findFirstOrThrow).toHaveBeenCalled();
     expect(auditPublisher.record).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'platform_admin.invited' }),

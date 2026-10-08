@@ -58,3 +58,52 @@ describe('CandidateCertificateDtoSchema (CV-T01)', () => {
     expect(AdminCertificateReviewRequestSchema.safeParse({}).success).toBe(true);
   });
 });
+
+describe('CandidateCertificate declaration schemas', () => {
+  it('accepts boolean true, false, and null for declaration response', async () => {
+    const { CandidateCertificateDeclarationResponseDtoSchema } =
+      await import('./candidate-certificate.dto.js');
+    expect(
+      CandidateCertificateDeclarationResponseDtoSchema.safeParse({ hasNoCertifications: true })
+        .success,
+    ).toBe(true);
+    expect(
+      CandidateCertificateDeclarationResponseDtoSchema.safeParse({ hasNoCertifications: false })
+        .success,
+    ).toBe(true);
+    expect(
+      CandidateCertificateDeclarationResponseDtoSchema.safeParse({ hasNoCertifications: null })
+        .success,
+    ).toBe(true);
+    expect(
+      CandidateCertificateDeclarationResponseDtoSchema.safeParse({
+        hasNoCertifications: 'invalid',
+      }).success,
+    ).toBe(false);
+    expect(
+      CandidateCertificateDeclarationResponseDtoSchema.safeParse({ hasNoCertifications: 123 })
+        .success,
+    ).toBe(false);
+  });
+
+  it('accepts boolean true, false, and null for declaration update', async () => {
+    const { UpdateCandidateCertificateDeclarationDtoSchema } =
+      await import('./candidate-certificate.dto.js');
+    expect(
+      UpdateCandidateCertificateDeclarationDtoSchema.safeParse({ hasNoCertifications: true })
+        .success,
+    ).toBe(true);
+    expect(
+      UpdateCandidateCertificateDeclarationDtoSchema.safeParse({ hasNoCertifications: false })
+        .success,
+    ).toBe(true);
+    expect(
+      UpdateCandidateCertificateDeclarationDtoSchema.safeParse({ hasNoCertifications: null })
+        .success,
+    ).toBe(true);
+    expect(
+      UpdateCandidateCertificateDeclarationDtoSchema.safeParse({ hasNoCertifications: 'yes' })
+        .success,
+    ).toBe(false);
+  });
+});

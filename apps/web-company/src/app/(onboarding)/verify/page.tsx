@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-export const metadata = { title: 'Verify your company · SMART' };
+export const metadata = { title: 'Verify your company · HireKiwi' };
 
 export default function VerifyCompanyPage() {
   return (

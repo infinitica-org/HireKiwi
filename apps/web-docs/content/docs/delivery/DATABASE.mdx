@@ -1,20 +1,20 @@
 ---
-title: 'SMART — Database (Postgres)'
+title: 'HireKiwi — Database (Postgres)'
 description: 'Delivery & Engineering Protocols - DATABASE'
 ---
 
-# SMART — Database (Postgres)
+# HireKiwi — Database (Postgres)
 
 > Owner: Vishal V (schema / migrations) · Tino (this policy)  
 > Runtime client: **Prisma 7** in `apps/api-core`. There is no second ORM.
 
 ## One database engine
 
-SMART talks to **PostgreSQL 16+ with `pgvector`**, self-hosted via Docker on every environment. Application code always uses `DATABASE_URL`.
+HireKiwi talks to **PostgreSQL 16+ with `pgvector`**, self-hosted via Docker on every environment. Application code always uses `DATABASE_URL`.
 
 | Host                            | When to use                         | What you set                                            |
 | ------------------------------- | ----------------------------------- | ------------------------------------------------------- |
-| Docker `pgvector/pgvector:pg16` | Laptop, Single High-End VPS Compose | `DATABASE_URL=postgresql://smart:…@postgres:5432/smart` |
+| Docker `pgvector/pgvector:pg16` | Laptop, Single High-End VPS Compose | `DATABASE_URL=postgresql://hirekiwi:…@postgres:5432/hirekiwi` |
 
 Prisma stays the only write path — no separate data-access SDK.
 
@@ -48,9 +48,9 @@ Never point `dev`, `qa`, and `prod` at the same database.
 | Environment | Git branch | VPS Host / Topology                                     | Database Storage       |
 | ----------- | ---------- | ------------------------------------------------------- | ---------------------- |
 | local       | feature    | laptop Docker                                           | local volume           |
-| **dev**     | `dev`      | **Single VPS** (`COMPOSE_PROJECT_NAME=smart-dev`)       | isolated volume        |
-| **qa**      | `qa`       | **Single VPS** (`COMPOSE_PROJECT_NAME=smart-qa`)        | isolated volume        |
-| **prod**    | `main`     | **Single VPS** (`smart-prod-blue` / `smart-prod-green`) | persistent prod volume |
+| **dev**     | `dev`      | **Single VPS** (`COMPOSE_PROJECT_NAME=hirekiwi-dev`)       | isolated volume        |
+| **qa**      | `qa`       | **Single VPS** (`COMPOSE_PROJECT_NAME=hirekiwi-qa`)        | isolated volume        |
+| **prod**    | `main`     | **Single VPS** (`hirekiwi-prod-blue` / `hirekiwi-prod-green`) | persistent prod volume |
 
 ## Env files
 
@@ -64,9 +64,39 @@ Never point `dev`, `qa`, and `prod` at the same database.
 
 Copy the matching example on the VPS, fill secrets, never commit.
 
-## Migrations
+## Migrations & Schema Governance
 
-Only Vishal V authors Prisma migrations (ADR-0007). On a server:
+Only Vishal V authors Prisma migrations ([ADR-0007](file:///d:/Work's/Infinitica/HireKiwi/apps/web-docs/content/docs/adr/0007-migration-stewardship.mdx)).
+
+### Mechanical CI Quality Gate (`db-migrations`)
+
+Every PR into `dev`, `qa`, and `main` is mechanically verified in CI against a real `pgvector/pgvector:pg16` database service container:
+
+1. **Forward Migration Execution:** Replays all migrations sequentially (`prisma migrate deploy`) to ensure zero SQL syntax or constraint failures.
+2. **Schema Drift Detection:** Executes `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code`. If any developer changes columns or models in `schema.prisma` without generating a valid migration, CI fails immediately with exit code 2 and outputs the exact SQL diff.
+3. **Seed Integrity:** Verifies `db:seed` against the newly migrated schema.
+
+### Local Verification Commands
+
+```bash
+pnpm db:verify      # Runs full migration deploy, drift check, and seed against local Postgres
+pnpm db:diff        # Inspects pending schema drift between database and schema.prisma
+```
+
+### Safe Column Changes & Renames (Anti-Destruction Policy)
+
+When renaming a column (e.g. `user_id` to `candidate_id`):
+
+- **Never allow destructive `DROP COLUMN` + `ADD COLUMN`:** By default, Prisma CLI generates drop and add statements, wiping production and local development data and breaking active environments.
+- **Manual Migration Edit:** Always modify the generated migration SQL to:
+  ```sql
+  ALTER TABLE "table_name" RENAME COLUMN "old_name" TO "new_name";
+  ```
+- **Non-nullable Columns:** When adding a new non-nullable column to an existing table, provide a sensible `DEFAULT` value or add it as nullable first.
+
+### VPS Migration Deployment
+
+On a server:
 
 ```bash
 docker compose -f infra/docker/docker-compose.yml --profile apps exec api \
@@ -79,5 +109,5 @@ Local: `pnpm bootstrap` (or `pnpm --filter @hirekiwi/api-core db:seed`).
 
 VPS: the `api` container is a slim production image — no `pnpm`, no
 TypeScript source — so `prisma/seed.ts` cannot run via `docker compose exec`.
-Use `bash scripts/seed-vps.sh &lt;dev|qa|prod>` from `~deploy/smart` instead; see
+Use `bash scripts/seed-vps.sh &lt;dev|qa|prod>` from `~deploy/hirekiwi` instead; see
 `infra/vps/README.md`.

@@ -39,7 +39,7 @@ export class LocationSearchService {
       const res = await this.fetchFn(`${ENDPOINT}?${params.toString()}`, {
         headers: {
           Accept: 'application/json',
-          'User-Agent': 'SMART-platform/1.0 (company profile)',
+          'User-Agent': 'HireKiwi-platform/1.0 (company profile)',
         },
         signal: AbortSignal.timeout(4000),
       });

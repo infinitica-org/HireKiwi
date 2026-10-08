@@ -153,7 +153,7 @@ async function resolveOrCreateCompanyUser(
   throw new ConflictException({
     error: 'conflict',
     message:
-      'The representative email is already registered with a different SMART account type. Use another email or resolve the account conflict manually.',
+      'The representative email is already registered with a different HireKiwi account type. Use another email or resolve the account conflict manually.',
     statusCode: 409,
   });
 }

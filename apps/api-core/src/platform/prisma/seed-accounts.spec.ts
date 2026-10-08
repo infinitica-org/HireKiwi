@@ -25,8 +25,8 @@ describe('seed account env', () => {
   });
 
   it('uses production domain and password from env', () => {
-    expect(resolveSeedEmailDomain({ SEED_EMAIL_DOMAIN: 'becomesmart.online' })).toBe(
-      'becomesmart.online',
+    expect(resolveSeedEmailDomain({ SEED_EMAIL_DOMAIN: 'hirekiwi.online' })).toBe(
+      'hirekiwi.online',
     );
     expect(resolveSeedPassword({ SEED_PASSWORD: 'ProdOnly!Pass' })).toBe('ProdOnly!Pass');
     expect(resolveSeedInstitutionName({ SEED_INSTITUTION_NAME: 'Acme University' })).toBe(
@@ -36,11 +36,11 @@ describe('seed account env', () => {
   });
 
   it('builds the login emails on that domain', () => {
-    expect(seedAccountEmails('becomesmart.online')).toEqual({
-      admin: 'admin@becomesmart.online',
-      tpo: 'tpo@becomesmart.online',
-      student: 'student@becomesmart.online',
-      company: 'company@becomesmart.online',
+    expect(seedAccountEmails('hirekiwi.online')).toEqual({
+      admin: 'admin@hirekiwi.online',
+      tpo: 'tpo@hirekiwi.online',
+      student: 'student@hirekiwi.online',
+      company: 'company@hirekiwi.online',
     });
   });
 });

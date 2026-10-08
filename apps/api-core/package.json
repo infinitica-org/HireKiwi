@@ -2,7 +2,7 @@
   "name": "@hirekiwi/api-core",
   "version": "0.1.0",
   "private": true,
-  "description": "SMART NestJS API: platform core plus owned domain modules. Owners: Vishal V (platform), plus module owners in TEAM.md.",
+  "description": "HireKiwi NestJS API: platform core plus owned domain modules. Owners: Vishal V (platform), plus module owners in TEAM.md.",
   "type": "commonjs",
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.json",
@@ -21,7 +21,7 @@
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed:jobs": "tsx prisma/seed-jobs.ts",
+    "db:diff": "prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma",
     "db:seed:load-test": "tsx prisma/seed-load-test.ts",
     "match:e2e": "tsx scripts/run-match-engine-e2e.ts",
     "db:seed:project-defense-demo": "tsx prisma/seed-project-defense-demo.ts",

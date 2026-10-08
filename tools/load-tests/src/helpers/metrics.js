@@ -19,5 +19,5 @@ export const businessFlowErrors = new Rate('business_flow_errors');
 export const cacheStampedeMisses = new Counter('cache_stampede_misses');
 export const cacheStampedeHits = new Counter('cache_stampede_hits');
 
-/** Kafka backpressure scenario: attempts completed (each triggers one smart.assessment.submitted produce). */
+/** Kafka backpressure scenario: attempts completed (each triggers one hirekiwi.assessment.submitted produce). */
 export const kafkaEventsTriggered = new Counter('kafka_events_triggered');

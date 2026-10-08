@@ -10,7 +10,7 @@ import type {
   CertifiableTier,
   TrackCode,
 } from '@hirekiwi/contracts';
-import { CertificateIssuedDataSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { CertificateIssuedDataSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { env } from '../../platform/config/env.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
@@ -183,7 +183,7 @@ export class CertificateService {
       );
     }
 
-    // 10. AC4: Dispatch smart.certificate.issued Kafka event
+    // 10. AC4: Dispatch hirekiwi.certificate.issued Kafka event
     const issuedPayload = CertificateIssuedDataSchema.parse({
       certificateId: certificate.id,
       studentId: data.studentId,
@@ -196,9 +196,9 @@ export class CertificateService {
     });
 
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.certificateIssued,
+      topic: HIREKIWI_TOPICS.certificateIssued,
       partitionKey: certificate.id,
-      eventType: SMART_TOPICS.certificateIssued,
+      eventType: HIREKIWI_TOPICS.certificateIssued,
       source: 'certificate',
       data: issuedPayload,
     });

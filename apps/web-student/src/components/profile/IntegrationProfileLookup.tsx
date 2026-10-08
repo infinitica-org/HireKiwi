@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { Check, ExternalLink, Loader2, RotateCw } from 'lucide-react';
 
 /** What the student sees for a platform account, whatever platform it came from. */
@@ -34,7 +34,7 @@ export const LOOKUP_DEBOUNCE_MS = 600;
  * the student their username is wrong in that case would be misleading.
  */
 function isNotFound(error: unknown): error is Error {
-  return isSmartApiError(error) && /user_not_found|profile_not_found/iu.test(error.code ?? '');
+  return isHireKiwiApiError(error) && /user_not_found|profile_not_found/iu.test(error.code ?? '');
 }
 
 /**

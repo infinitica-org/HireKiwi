@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { InvitationSentEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { InvitationSentEventSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 
 describe('InvitationSentEventSchema', () => {
   it('accepts company-portal-invite activation payloads', () => {
     const parsed = InvitationSentEventSchema.safeParse({
       meta: {
         eventId: '11111111-1111-4111-8111-111111111111',
-        eventType: SMART_TOPICS.invitationSent,
+        eventType: HIREKIWI_TOPICS.invitationSent,
         version: 1,
         occurredAt: '2026-09-21T12:00:00.000Z',
         traceId: '22222222-2222-4222-8222-222222222222',
@@ -31,7 +31,7 @@ describe('InvitationSentEventSchema', () => {
     const parsed = InvitationSentEventSchema.safeParse({
       meta: {
         eventId: '11111111-1111-4111-8111-111111111111',
-        eventType: SMART_TOPICS.invitationSent,
+        eventType: HIREKIWI_TOPICS.invitationSent,
         version: 1,
         occurredAt: '2026-09-21T12:00:00.000Z',
         traceId: '22222222-2222-4222-8222-222222222222',

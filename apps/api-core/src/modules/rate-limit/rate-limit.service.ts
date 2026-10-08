@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { SMART_TOPICS, getRateLimitPolicy, type RateLimitPolicy } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS, getRateLimitPolicy, type RateLimitPolicy } from '@hirekiwi/contracts';
 import {
   LOG_EVENTS,
   logEvent,
@@ -161,9 +161,9 @@ export class RateLimitService {
   ): Promise<void> {
     try {
       await this.outbox.enqueueEnvelope({
-        topic: SMART_TOPICS.rateLimitExceeded,
+        topic: HIREKIWI_TOPICS.rateLimitExceeded,
         partitionKey: identity,
-        eventType: SMART_TOPICS.rateLimitExceeded,
+        eventType: HIREKIWI_TOPICS.rateLimitExceeded,
         source: 'rate-limit',
         data: {
           identifier: identity,
@@ -178,7 +178,7 @@ export class RateLimitService {
       });
     } catch (error) {
       this.logger.warn(
-        `Failed to enqueue ${SMART_TOPICS.rateLimitExceeded}: ${error instanceof Error ? error.message : 'unknown'}`,
+        `Failed to enqueue ${HIREKIWI_TOPICS.rateLimitExceeded}: ${error instanceof Error ? error.message : 'unknown'}`,
       );
     }
   }

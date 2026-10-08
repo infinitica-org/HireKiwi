@@ -8,39 +8,39 @@
  * Owner: Tino (System Architect).
  */
 
-export const SMART_TOPICS = {
-  userCreated: 'smart.user.created',
-  userUpdated: 'smart.user.updated',
-  assessmentStarted: 'smart.assessment.started',
-  assessmentSubmitted: 'smart.assessment.submitted',
-  evalRequested: 'smart.eval.requested',
-  evalCompleted: 'smart.eval.completed',
-  trackUpdated: 'smart.track.updated',
-  certificateIssued: 'smart.certificate.issued',
-  placementMatched: 'smart.placement.matched',
-  applicationStageChanged: 'smart.application.stage_changed',
-  invitationSent: 'smart.invitation.sent',
-  skillVerificationCompleted: 'smart.skill.verification.completed',
-  auditRecorded: 'smart.audit.recorded',
-  aiCompletionRecorded: 'smart.ai.completion.recorded',
-  rateLimitExceeded: 'smart.rate_limit.exceeded',
-  projectSubmitted: 'smart.project.submitted',
-  projectSnapshotReady: 'smart.project.snapshot.ready',
-  projectVerifyCompleted: 'smart.project.verify.completed',
-  projectDefenseCompleted: 'smart.project.defense.completed',
-  proctoringSnapshotReady: 'smart.proctoring.snapshot.ready',
-  candidateSkillsDiscovered: 'smart.candidate.skills_discovered',
-  signalIngested: 'smart.signal.ingested',
-  signalEncoded: 'smart.signal.encoded',
-  corroborationUpdated: 'smart.corroboration.updated',
-  credentialVerified: 'smart.credential.verified',
-  skillInferenceUpdated: 'smart.skill.inference.updated',
+export const HIREKIWI_TOPICS = {
+  userCreated: 'hirekiwi.user.created',
+  userUpdated: 'hirekiwi.user.updated',
+  assessmentStarted: 'hirekiwi.assessment.started',
+  assessmentSubmitted: 'hirekiwi.assessment.submitted',
+  evalRequested: 'hirekiwi.eval.requested',
+  evalCompleted: 'hirekiwi.eval.completed',
+  trackUpdated: 'hirekiwi.track.updated',
+  certificateIssued: 'hirekiwi.certificate.issued',
+  placementMatched: 'hirekiwi.placement.matched',
+  applicationStageChanged: 'hirekiwi.application.stage_changed',
+  invitationSent: 'hirekiwi.invitation.sent',
+  skillVerificationCompleted: 'hirekiwi.skill.verification.completed',
+  auditRecorded: 'hirekiwi.audit.recorded',
+  aiCompletionRecorded: 'hirekiwi.ai.completion.recorded',
+  rateLimitExceeded: 'hirekiwi.rate_limit.exceeded',
+  projectSubmitted: 'hirekiwi.project.submitted',
+  projectSnapshotReady: 'hirekiwi.project.snapshot.ready',
+  projectVerifyCompleted: 'hirekiwi.project.verify.completed',
+  projectDefenseCompleted: 'hirekiwi.project.defense.completed',
+  proctoringSnapshotReady: 'hirekiwi.proctoring.snapshot.ready',
+  candidateSkillsDiscovered: 'hirekiwi.candidate.skills_discovered',
+  signalIngested: 'hirekiwi.signal.ingested',
+  signalEncoded: 'hirekiwi.signal.encoded',
+  corroborationUpdated: 'hirekiwi.corroboration.updated',
+  credentialVerified: 'hirekiwi.credential.verified',
+  skillInferenceUpdated: 'hirekiwi.skill.inference.updated',
 } as const;
 
-export type SmartTopic = (typeof SMART_TOPICS)[keyof typeof SMART_TOPICS];
+export type HireKiwiTopic = (typeof HIREKIWI_TOPICS)[keyof typeof HIREKIWI_TOPICS];
 
 export interface TopicSpec {
-  readonly topic: SmartTopic;
+  readonly topic: HireKiwiTopic;
   /** The single engineer accountable for this payload shape. */
   readonly producerOwner: string;
   readonly producerModule: string;
@@ -59,7 +59,7 @@ export interface TopicSpec {
  */
 export const TOPIC_SPECS: readonly TopicSpec[] = [
   {
-    topic: SMART_TOPICS.userCreated,
+    topic: HIREKIWI_TOPICS.userCreated,
     producerOwner: 'Vishal V',
     producerModule: 'auth',
     consumerModules: ['analytics'],
@@ -69,7 +69,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'New identity provisioned via SSO or invitation.',
   },
   {
-    topic: SMART_TOPICS.userUpdated,
+    topic: HIREKIWI_TOPICS.userUpdated,
     producerOwner: 'Vishal V',
     producerModule: 'users',
     consumerModules: ['analytics'],
@@ -79,7 +79,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Profile or track enrolment change.',
   },
   {
-    topic: SMART_TOPICS.assessmentStarted,
+    topic: HIREKIWI_TOPICS.assessmentStarted,
     producerOwner: 'Vishal Bharath R',
     producerModule: 'assessment',
     consumerModules: ['analytics', 'catalog'],
@@ -89,7 +89,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Attempt opened; drives item-exposure tracking and live dashboards.',
   },
   {
-    topic: SMART_TOPICS.assessmentSubmitted,
+    topic: HIREKIWI_TOPICS.assessmentSubmitted,
     producerOwner: 'Vishal Bharath R',
     producerModule: 'assessment',
     consumerModules: ['evaluation', 'platform', 'analytics'],
@@ -101,7 +101,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
       'assessment and evaluation — no direct service call in either direction.',
   },
   {
-    topic: SMART_TOPICS.evalRequested,
+    topic: HIREKIWI_TOPICS.evalRequested,
     producerOwner: 'Ramansh',
     producerModule: 'evaluation',
     consumerModules: ['ai-gateway'],
@@ -111,7 +111,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'One rubric-scored response queued for LLM grading.',
   },
   {
-    topic: SMART_TOPICS.evalCompleted,
+    topic: HIREKIWI_TOPICS.evalCompleted,
     producerOwner: 'Ramansh',
     producerModule: 'evaluation',
     consumerModules: ['certificate', 'placement', 'analytics'],
@@ -121,7 +121,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Level scored and tier assigned; triggers certificate and match recomputation.',
   },
   {
-    topic: SMART_TOPICS.trackUpdated,
+    topic: HIREKIWI_TOPICS.trackUpdated,
     producerOwner: 'Vedika G',
     producerModule: 'calibration',
     consumerModules: ['platform', 'certificate', 'catalog'],
@@ -131,7 +131,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Cut scores or rubrics republished; invalidates cut-score and item caches.',
   },
   {
-    topic: SMART_TOPICS.certificateIssued,
+    topic: HIREKIWI_TOPICS.certificateIssued,
     producerOwner: 'Vishal Bharath R',
     producerModule: 'certificate',
     consumerModules: ['webhooks', 'analytics', 'platform', 'notifications'],
@@ -141,7 +141,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Certificate live; fans out to institutional ERP webhooks and refreshes verify cache.',
   },
   {
-    topic: SMART_TOPICS.placementMatched,
+    topic: HIREKIWI_TOPICS.placementMatched,
     producerOwner: 'Vedika G',
     producerModule: 'placement',
     consumerModules: ['webhooks', 'analytics', 'notifications'],
@@ -151,7 +151,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Shortlist generated; fans out to employer webhooks.',
   },
   {
-    topic: SMART_TOPICS.applicationStageChanged,
+    topic: HIREKIWI_TOPICS.applicationStageChanged,
     producerOwner: 'Vishal Bharath R',
     producerModule: 'placement',
     consumerModules: ['placement', 'platform', 'users', 'notifications'],
@@ -161,7 +161,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'ATS column change; candidate My Applications stays in sync (idempotent).',
   },
   {
-    topic: SMART_TOPICS.invitationSent,
+    topic: HIREKIWI_TOPICS.invitationSent,
     producerOwner: 'Vishal V',
     producerModule: 'invitations',
     consumerModules: ['notifications'],
@@ -171,7 +171,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Invitation email queued; consumer writes in-app notification and BullMQ email job.',
   },
   {
-    topic: SMART_TOPICS.skillVerificationCompleted,
+    topic: HIREKIWI_TOPICS.skillVerificationCompleted,
     producerOwner: 'Vishal Bharath R',
     producerModule: 'assessment',
     consumerModules: ['notifications'],
@@ -181,7 +181,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Skill claim status finalized; consumer notifies student of pass/fail/lock.',
   },
   {
-    topic: SMART_TOPICS.auditRecorded,
+    topic: HIREKIWI_TOPICS.auditRecorded,
     producerOwner: 'Vishal V',
     producerModule: 'platform',
     consumerModules: ['platform'],
@@ -191,7 +191,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Admin audit trail; consumer persists to audit_logs.',
   },
   {
-    topic: SMART_TOPICS.aiCompletionRecorded,
+    topic: HIREKIWI_TOPICS.aiCompletionRecorded,
     producerOwner: 'Ramansh',
     producerModule: 'ai-gateway',
     consumerModules: ['ai-gateway'],
@@ -201,7 +201,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'LLM completion audit; consumer persists to ai_evaluation_audits.',
   },
   {
-    topic: SMART_TOPICS.rateLimitExceeded,
+    topic: HIREKIWI_TOPICS.rateLimitExceeded,
     producerOwner: 'Vishal V',
     producerModule: 'rate-limit',
     consumerModules: ['observability', 'assessment'],
@@ -211,17 +211,17 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Throttle violation; feeds abuse alerting and session integrity logging.',
   },
   {
-    topic: SMART_TOPICS.projectSubmitted,
+    topic: HIREKIWI_TOPICS.projectSubmitted,
     producerOwner: 'Vishal V',
     producerModule: 'platform',
     consumerModules: ['platform', 'evaluation'],
     partitions: 6,
     retentionHours: 168,
     partitionKey: 'projectId',
-    purpose: 'CN-T08 project row created; VV fetches a GitHub snapshot. Not smart.eval.*.',
+    purpose: 'CN-T08 project row created; VV fetches a GitHub snapshot. Not hirekiwi.eval.*.',
   },
   {
-    topic: SMART_TOPICS.projectSnapshotReady,
+    topic: HIREKIWI_TOPICS.projectSnapshotReady,
     producerOwner: 'Vishal V',
     producerModule: 'platform',
     consumerModules: ['evaluation'],
@@ -231,7 +231,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Snapshot JSON is in Postgres; evaluation may score. Payload is not on the bus.',
   },
   {
-    topic: SMART_TOPICS.projectVerifyCompleted,
+    topic: HIREKIWI_TOPICS.projectVerifyCompleted,
     producerOwner: 'Ramansh',
     producerModule: 'evaluation',
     consumerModules: ['analytics', 'platform'],
@@ -241,7 +241,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'SE-T03 report written. Never auto-rejects. Do not treat as a cert tier.',
   },
   {
-    topic: SMART_TOPICS.projectDefenseCompleted,
+    topic: HIREKIWI_TOPICS.projectDefenseCompleted,
     producerOwner: 'Ramansh',
     producerModule: 'evaluation',
     consumerModules: ['analytics', 'platform'],
@@ -251,7 +251,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Voice ownership defense completed; may route to human review.',
   },
   {
-    topic: SMART_TOPICS.proctoringSnapshotReady,
+    topic: HIREKIWI_TOPICS.proctoringSnapshotReady,
     producerOwner: 'Ramansh',
     producerModule: 'proctoring',
     consumerModules: ['proctoring'],
@@ -261,7 +261,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
     purpose: 'Webcam checkpoint object is ready for the CV sidecar. Not continuous video.',
   },
   {
-    topic: SMART_TOPICS.candidateSkillsDiscovered,
+    topic: HIREKIWI_TOPICS.candidateSkillsDiscovered,
     producerOwner: 'Vishal V',
     producerModule: 'users',
     consumerModules: ['assessment', 'signal-encoder'],
@@ -274,7 +274,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
       'BEGINNER SkillClaims tagged source=GITHUB_DERIVED. Never overwrites an existing claim.',
   },
   {
-    topic: SMART_TOPICS.signalIngested,
+    topic: HIREKIWI_TOPICS.signalIngested,
     producerOwner: 'Vishal Bharath R',
     producerModule: 'signal-ingestion',
     consumerModules: ['signal-encoder', 'analytics'],
@@ -285,7 +285,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
       'Normalized raw passive signal fetched from an external platform adapter. Encoder consumes and vectorizes.',
   },
   {
-    topic: SMART_TOPICS.signalEncoded,
+    topic: HIREKIWI_TOPICS.signalEncoded,
     producerOwner: 'Ramansh',
     producerModule: 'signal-encoder',
     consumerModules: ['corroboration', 'analytics'],
@@ -296,7 +296,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
       'Passive signal vectorized from external platform data. Observability + downstream fuse.',
   },
   {
-    topic: SMART_TOPICS.corroborationUpdated,
+    topic: HIREKIWI_TOPICS.corroborationUpdated,
     producerOwner: 'Ramansh',
     producerModule: 'corroboration',
     consumerModules: ['analytics'],
@@ -307,7 +307,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
       'Trust-weighted competency readout refreshed. Never promotes SkillClaim status; may carry review flags.',
   },
   {
-    topic: SMART_TOPICS.skillInferenceUpdated,
+    topic: HIREKIWI_TOPICS.skillInferenceUpdated,
     producerOwner: 'Ramansh',
     producerModule: 'evidence',
     consumerModules: ['notifications', 'analytics'],
@@ -318,7 +318,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
       'Evidence-to-skill fusion snapshot changed (proficiency or confidence). Not a verified claim.',
   },
   {
-    topic: SMART_TOPICS.credentialVerified,
+    topic: HIREKIWI_TOPICS.credentialVerified,
     producerOwner: 'Ramansh',
     // Emitted from candidate-certificates (endorsement/admin/assessment paths) and
     // evidence (professional credential auto-verification) — the shared payload
@@ -335,7 +335,7 @@ export const TOPIC_SPECS: readonly TopicSpec[] = [
   },
 ] as const;
 
-export function getTopicSpec(topic: SmartTopic): TopicSpec {
+export function getTopicSpec(topic: HireKiwiTopic): TopicSpec {
   const found = TOPIC_SPECS.find((spec) => spec.topic === topic);
   if (!found) {
     throw new Error(`Topic ${topic} is not registered in TOPIC_SPECS.`);
@@ -343,12 +343,12 @@ export function getTopicSpec(topic: SmartTopic): TopicSpec {
   return found;
 }
 
-/** Consumer group naming: `smart.<module>.<topic-suffix>` — stable across deploys. */
-export function consumerGroupFor(module: string, topic: SmartTopic): string {
-  return `smart.${module}.${topic.replace(/^smart\./, '')}`;
+/** Consumer group naming: `hirekiwi.<module>.<topic-suffix>` — stable across deploys. */
+export function consumerGroupFor(module: string, topic: HireKiwiTopic): string {
+  return `hirekiwi.${module}.${topic.replace(/^hirekiwi\./, '')}`;
 }
 
 /** Dead-letter topic convention. Every consumer registers one. */
-export function deadLetterTopicFor(topic: SmartTopic): string {
+export function deadLetterTopicFor(topic: HireKiwiTopic): string {
   return `${topic}.dlq`;
 }

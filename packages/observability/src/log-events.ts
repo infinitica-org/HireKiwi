@@ -16,8 +16,8 @@ export const LOG_EVENTS = {
   REDIS_DEGRADED: 'redis.degraded',
   POSTGRES_DEGRADED: 'postgres.degraded',
   AI_PROVIDER_FAILED: 'ai.provider_failed',
-  /** Pairs with Prometheus `smart_rate_limit_rejections_total`. */
-  RATE_LIMIT_EXCEEDED: 'smart.rate_limit.exceeded',
+  /** Pairs with Prometheus `hirekiwi_rate_limit_rejections_total`. */
+  RATE_LIMIT_EXCEEDED: 'hirekiwi.rate_limit.exceeded',
 } as const;
 
 export type LogEventName = (typeof LOG_EVENTS)[keyof typeof LOG_EVENTS];

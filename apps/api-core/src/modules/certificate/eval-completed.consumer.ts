@@ -1,6 +1,6 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { EvalCompletedEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { EvalCompletedEventSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import { KafkaService } from '../../platform/kafka/kafka.service.js';
@@ -19,7 +19,7 @@ export class EvalCompletedConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.evalCompleted,
+        topic: HIREKIWI_TOPICS.evalCompleted,
         module: 'certificate',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {

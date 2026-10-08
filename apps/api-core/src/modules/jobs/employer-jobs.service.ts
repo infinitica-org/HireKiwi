@@ -7,12 +7,14 @@ import {
   NotFoundException,
   Optional,
   ServiceUnavailableException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import {
   EmployerJobDtoSchema,
   type CreateEmployerJobRequest,
   type DuplicateEmployerJobRequest,
   type EmployerJobDto,
+  type EmployerJobVisibility,
   type ListEmployerJobsQuery,
   type ListEmployerJobsResponse,
   type SkillProficiency,
@@ -28,6 +30,11 @@ import { StorageService } from '../../platform/storage/storage.service.js';
 import { BillingService } from '../billing/billing.service.js';
 import { requireCompanyActor } from '../company-profile/company-access.js';
 import {
+  acceptingOpeningWhere,
+  isCompanyVerified,
+  utcToday,
+} from '../student-jobs/job-eligibility.js';
+import {
   isoDateToCalendarDate,
   normalizeOpeningRow,
   toJobOpeningDto,
@@ -42,6 +49,8 @@ const JOB_INCLUDE = {
 type JobRow = OpeningRow & {
   companyId: string | null;
   workMode: string | null;
+  details: Prisma.JsonValue | null;
+  internal: Prisma.JsonValue | null;
   _count: { applications: number };
 };
 
@@ -85,6 +94,8 @@ function jobColumns(body: Partial<EmployerJobFields>): Prisma.JobOpeningUnchecke
   }
   if (body.backlogsAllowed !== undefined) data.backlogsAllowed = body.backlogsAllowed;
   if (body.rawText !== undefined) data.rawText = body.rawText.trim() || null;
+  if (body.details !== undefined) data.details = body.details as Prisma.InputJsonValue;
+  if (body.internal !== undefined) data.internal = body.internal as Prisma.InputJsonValue;
   return data;
 }
 
@@ -121,8 +132,8 @@ export class EmployerJobsService {
 
   async create(userId: string, body: CreateEmployerJobRequest): Promise<EmployerJobDto> {
     const actor = await requireCompanyActor(this.prisma, userId, 'company.jobs.manage');
-    await this.assertCampusAccess(actor.companyId, body.institutionId);
-    const { institutionId, requiredSkills, ...fields } = body;
+    const { institutionId: requestedInstitutionId, requiredSkills, ...fields } = body;
+    const institutionId = requestedInstitutionId ?? (await this.defaultInstitutionId());
     const job = await this.insertJob(
       actor.companyId,
       userId,
@@ -132,6 +143,88 @@ export class EmployerJobsService {
     );
     await this.record(userId, 'employer_job.created', job.id, { institutionId });
     return this.toDto(job);
+  }
+
+  /**
+   * Is this job live for students? The verdict comes from the same query the student job list uses
+   * (acceptingOpeningWhere), so it can never disagree with what students actually see; the checks
+   * explain why.
+   */
+  async visibility(userId: string, jobId: string): Promise<EmployerJobVisibility> {
+    const actor = await requireCompanyActor(this.prisma, userId, 'company.jobs.view');
+    const job = await this.requireJob(actor.companyId, jobId);
+    const company = await this.prisma.company.findUnique({
+      where: { id: actor.companyId },
+      select: { verificationStatus: true, deactivatedAt: true, heldAt: true },
+    });
+    const today = utcToday();
+    const live = await this.prisma.jobOpening.count({
+      where: { id: job.id, ...acceptingOpeningWhere(job.institutionId, today) },
+    });
+
+    const deadline = job.lastDateToApply;
+    const deadlinePassed = deadline !== null && deadline < today;
+    const published = job.status === 'OPEN';
+    const verified = isCompanyVerified(company);
+
+    return {
+      jobId: job.id,
+      visible: live > 0,
+      checks: [
+        {
+          id: 'published',
+          label: 'The job is published',
+          ok: published,
+          message: published
+            ? null
+            : job.status === 'CLOSED'
+              ? 'This job is closed, so students no longer see it.'
+              : 'This job is still a draft or on hold. Publish it to show it to students.',
+        },
+        {
+          id: 'company_verified',
+          label: 'Your company is verified',
+          ok: verified,
+          message: verified
+            ? null
+            : 'Your company is not verified yet. Students only see jobs from verified companies.',
+        },
+        {
+          id: 'deadline_open',
+          label: 'The application deadline has not passed',
+          ok: !deadlinePassed,
+          message: deadlinePassed
+            ? `The deadline (${deadline.toISOString().slice(0, 10)}) has passed. Extend it to show the job again.`
+            : null,
+        },
+        {
+          id: 'all_students',
+          label: 'Open to students of every university',
+          ok: true,
+          message: null,
+        },
+      ],
+    };
+  }
+
+  /**
+   * Company jobs are visible to every student, but a row must still belong to one institution.
+   * Use the oldest active, approved one so the company never has to choose a university.
+   */
+  private async defaultInstitutionId(): Promise<string> {
+    const home = await this.prisma.institution.findFirst({
+      where: { verificationStatus: 'APPROVED', deactivatedAt: null, heldAt: null },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
+    });
+    if (!home) {
+      throw new UnprocessableEntityException({
+        error: 'no_institution_available',
+        message: 'There is no active university on the platform yet, so jobs cannot be posted.',
+        statusCode: 422,
+      });
+    }
+    return home.id;
   }
 
   async update(
@@ -154,7 +247,14 @@ export class EmployerJobsService {
       }
       return tx.jobOpening.update({
         where: { id: jobId },
-        data: { ...jobColumns(fields), ...(fields.rawText ? { jdParseStatus: 'PENDING' } : {}) },
+        data: {
+          ...jobColumns(fields),
+          ...(fields.rawText ? { jdParseStatus: 'PENDING' } : {}),
+          // On hold means students stop seeing it: an open job goes back to draft until republished.
+          ...(fields.details?.onHold === true && job.status === 'OPEN'
+            ? { status: 'DRAFT' as const }
+            : {}),
+        },
         include: JOB_INCLUDE,
       });
     });
@@ -190,7 +290,6 @@ export class EmployerJobsService {
         statusCode: 403,
       });
     }
-    await this.assertCampusAccess(actor.companyId, job.institutionId);
     await this.billing.assertQuotaAvailable(actor.companyId, 'ACTIVE_JOBS');
 
     const updated = await this.prisma.jobOpening.update({
@@ -223,7 +322,6 @@ export class EmployerJobsService {
     const actor = await requireCompanyActor(this.prisma, userId, 'company.jobs.manage');
     const source = await this.requireJob(actor.companyId, jobId);
     const institutionId = body.institutionId ?? source.institutionId;
-    await this.assertCampusAccess(actor.companyId, institutionId);
 
     const copy = await this.prisma.jobOpening.create({
       data: {
@@ -251,6 +349,8 @@ export class EmployerJobsService {
         minCollegePercentage: source.minCollegePercentage as Prisma.Decimal | null,
         backlogsAllowed: source.backlogsAllowed,
         rawText: source.rawText ?? null,
+        details: source.details === null ? undefined : (source.details as Prisma.InputJsonValue),
+        internal: source.internal === null ? undefined : (source.internal as Prisma.InputJsonValue),
         requiredSkills: {
           create: source.requiredSkills.map((requirement) => ({
             minProficiency: requirement.minProficiency as SkillProficiency,
@@ -333,21 +433,6 @@ export class EmployerJobsService {
     return job;
   }
 
-  /** UNI-05 / JOB-01.12 — a company may only post to a campus that has approved it. */
-  private async assertCampusAccess(companyId: string, institutionId: string): Promise<void> {
-    const access = await this.prisma.universityEmployerAccess.findUnique({
-      where: { institutionId_companyId: { institutionId, companyId } },
-      select: { status: true },
-    });
-    if (access?.status !== 'ACTIVE') {
-      throw new ForbiddenException({
-        error: 'campus_access_required',
-        message: 'This campus has not approved your company. Request campus access first.',
-        statusCode: 403,
-      });
-    }
-  }
-
   private async toDto(row: JobRow): Promise<EmployerJobDto> {
     const normalized = normalizeOpeningRow(row);
     let companyLogoUrl: string | undefined;
@@ -360,6 +445,8 @@ export class EmployerJobsService {
       ...toJobOpeningDto(normalized, { companyLogoUrl }),
       companyId: row.companyId,
       workMode: row.workMode,
+      details: row.details ?? null,
+      internal: row.internal ?? null,
       applicantCount: row._count.applications,
     });
   }

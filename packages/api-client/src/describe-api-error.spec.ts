@@ -3,14 +3,14 @@ import {
   CONTRACT_ERROR_MESSAGE,
   describeApiError,
   GENERIC_VALIDATION_MESSAGE,
+  HireKiwiApiError,
+  HireKiwiContractViolationError,
+  HireKiwiNetworkError,
   NETWORK_ERROR_MESSAGE,
-  SmartApiError,
-  SmartContractViolationError,
-  SmartNetworkError,
 } from './errors.js';
 
 function apiError(message: string, details: { path: string; message: string }[] = []) {
-  return new SmartApiError({
+  return new HireKiwiApiError({
     error: 'validation_failed',
     message,
     statusCode: 422,
@@ -73,7 +73,7 @@ describe('describeApiError', () => {
   });
 
   it('hides the raw endpoint/timeout detail of a network failure behind a friendly sentence', () => {
-    const error = new SmartNetworkError(
+    const error = new HireKiwiNetworkError(
       'Request to /api/v1/public/company/onboarding/sessions failed or timed out after 15000ms.',
     );
     expect(describeApiError(error)).toBe(NETWORK_ERROR_MESSAGE);
@@ -81,7 +81,7 @@ describe('describeApiError', () => {
   });
 
   it('hides the raw contract-mismatch payload behind a friendly sentence', () => {
-    const error = new SmartContractViolationError('/api/v1/students/me', [
+    const error = new HireKiwiContractViolationError('/api/v1/students/me', [
       { path: 'email', message: 'Required' },
     ]);
     expect(describeApiError(error)).toBe(CONTRACT_ERROR_MESSAGE);

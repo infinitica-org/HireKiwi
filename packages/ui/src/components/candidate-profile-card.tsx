@@ -222,7 +222,7 @@ export function CandidateProfileCard({
     >
       {/* Breadcrumb Header */}
       <div className="flex items-center gap-2 text-xs text-gray-400 font-medium px-1">
-        <span>SMART</span>
+        <span>HireKiwi</span>
         <span>&rsaquo;</span>
         <span>Candidates</span>
         <span>&rsaquo;</span>

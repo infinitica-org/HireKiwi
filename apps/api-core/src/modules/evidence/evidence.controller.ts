@@ -7,13 +7,18 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   Req,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Multipart, MultipartFile } from '@fastify/multipart';
 import type { FastifyRequest } from 'fastify';
-import { API_PREFIX, EvidenceSkillDisputeRequestSchema } from '@hirekiwi/contracts';
+import {
+  API_PREFIX,
+  EvidenceSkillDisputeRequestSchema,
+  UpdateProfessionalCredentialDeclarationDtoSchema,
+} from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
@@ -169,6 +174,27 @@ export class EvidenceController {
   @ApiBearerAuth()
   createCredential(@CurrentUser() user: RequestUser, @Body() body: unknown) {
     return this.evidence.createCredential(user.sub, body);
+  }
+
+  @Get('credentials/declaration')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get professional credential declaration status for the authenticated student.',
+  })
+  getCredentialDeclaration(@CurrentUser() user: RequestUser) {
+    return this.evidence.getCredentialDeclaration(user.sub);
+  }
+
+  @Put('credentials/declaration')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Set or clear professional credential declaration for the authenticated student.',
+  })
+  setCredentialDeclaration(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = UpdateProfessionalCredentialDeclarationDtoSchema.parse(body);
+    return this.evidence.setCredentialDeclaration(user.sub, parsed.hasNoCredentials);
   }
 
   @Post('credentials/:id/document/upload')

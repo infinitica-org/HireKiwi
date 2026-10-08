@@ -1,13 +1,13 @@
 ---
-title: 'SMART — Alerts and runbooks'
+title: 'HireKiwi — Alerts and runbooks'
 description: 'Delivery & Engineering Protocols - ALERTS'
 ---
 
-# SMART — Alerts and runbooks
+# HireKiwi — Alerts and runbooks
 
 > Owner: Vishal V · Tickets: S6-VV-125 (critical failures, Zoho #581) · Rules: `infra/observability/grafana/provisioning/alerting/hirekiwi-alerts.yml`
 
-Grafana evaluates every rule once a minute against Prometheus and sends to the **smart-team** contact point:
+Grafana evaluates every rule once a minute against Prometheus and sends to the **hirekiwi-team** contact point:
 email to `ALERT_EMAIL_TO` and a POST to `ALERT_WEBHOOK_URL` (Slack or Zoho Cliq incoming webhook). Critical
 alerts repeat hourly until resolved, warnings every 12 hours. The rules are provisioned from files, so edit the YAML
 in a PR rather than in the Grafana UI. Each alert's `runbook_url` points at its section below.
@@ -18,12 +18,12 @@ in a PR rather than in the Grafana UI. Each alert's `runbook_url` points at its 
 ## Critical
 
 ### api-not-scraped
-`up{job="smart-api"} < 1` for 2 minutes. Either api-core is down, or it rejects Prometheus's scrape.
+`up{job="hirekiwi-api"} < 1` for 2 minutes. Either api-core is down, or it rejects Prometheus's scrape.
 1. `curl -fsS https://<host>/api/v1/health` — if that fails, it's an outage: check `docker compose ps api` and the API logs in Loki.
 2. If health is fine, the scrape is rejected: `METRICS_SCRAPE_TOKEN` must be identical for the `api` and `prometheus` services. Recreate Prometheus after changing it.
 
 ### api-5xx-ratio
-More than 2% of requests return 5xx for 5 minutes. Open **SMART API metrics** to find the route, then the logs for
+More than 2% of requests return 5xx for 5 minutes. Open **HireKiwi API metrics** to find the route, then the logs for
 `event="http.unhandled_error"` on that route. A recent deploy is the usual cause: roll back first, debug second.
 
 ### postgres-down
@@ -36,7 +36,7 @@ their own once it's back.
 
 ### backup-stale
 Backups are enabled and the last successful run is more than 26 hours old. Check the `backup` service logs and
-`smart_backup_last_failure_timestamp_seconds`, then run a backup by hand (see **Backups**). Don't leave this
+`hirekiwi_backup_last_failure_timestamp_seconds`, then run a backup by hand (see **Backups**). Don't leave this
 overnight: until it clears, a disk loss loses data.
 
 ## Warning

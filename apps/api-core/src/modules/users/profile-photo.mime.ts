@@ -1,4 +1,4 @@
-const PROFILE_PHOTO_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+const PROFILE_PHOTO_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png']);
 
 /** Browsers on Windows often send `application/octet-stream` — infer from the file name. */
 export function normalizeProfilePhotoMimeType(fileName: string, mimeType: string): string {
@@ -9,7 +9,6 @@ export function normalizeProfilePhotoMimeType(fileName: string, mimeType: string
   const ext = fileName.split('.').pop()?.toLowerCase();
   if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
   if (ext === 'png') return 'image/png';
-  if (ext === 'webp') return 'image/webp';
   return trimmed;
 }
 

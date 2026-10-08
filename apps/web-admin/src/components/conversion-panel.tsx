@@ -5,13 +5,13 @@ import {
   ConversionMetricsCard,
   conversionRangeQuery,
   useQuery,
-  useSmartApi,
+  useHireKiwiApi,
   type ConversionRange,
 } from '@hirekiwi/ui';
 
-/** Th6-421 — platform-wide conversion. Needs a SmartApiProvider above it (MessagingProvider). */
+/** Th6-421 — platform-wide conversion. Needs a HireKiwiApiProvider above it (MessagingProvider). */
 export function ConversionPanel() {
-  const api = useSmartApi();
+  const api = useHireKiwiApi();
   const [range, setRange] = useState<ConversionRange>('90d');
   const query = useQuery({
     queryKey: ['admin', 'conversion', range],

@@ -7,7 +7,7 @@ import {
   type ConversationSummary,
   type Message,
 } from '@hirekiwi/contracts';
-import { useMutation, useQuery, useQueryClient, useSmartApi } from '../api-provider';
+import { useMutation, useQuery, useQueryClient, useHireKiwiApi } from '../api-provider';
 import { Alert } from '../components/alert';
 import { Button } from '../components/button';
 import { ConfirmDialog } from '../components/confirm-dialog';
@@ -43,7 +43,7 @@ export function MessagesWorkspace({
   initialConversationId,
   blockedUsersHref,
 }: MessagesWorkspaceProps) {
-  const api = useSmartApi();
+  const api = useHireKiwiApi();
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(initialConversationId ?? null);
   const [focusMessageId, setFocusMessageId] = useState<string | null>(null);
@@ -135,7 +135,11 @@ export function MessagesWorkspace({
             : 'hidden md:flex md:flex-col md:items-center md:justify-center',
         )}
       >
-        {activeId && me.data ? (
+        {activeId && me.isPending ? (
+          <LoadingState message="Opening conversation…" />
+        ) : activeId && me.isError ? (
+          <ErrorState message={messageErrorText(me.error)} onRetry={() => void me.refetch()} />
+        ) : activeId && me.data ? (
           <Thread
             key={activeId}
             conversationId={activeId}
@@ -286,7 +290,7 @@ function Thread(props: {
   onChanged: () => void;
 }) {
   const { conversationId, myId } = props;
-  const api = useSmartApi();
+  const api = useHireKiwiApi();
   const queryClient = useQueryClient();
   const [older, setOlder] = useState<Message[]>([]);
   const [olderCursor, setOlderCursor] = useState<string | null | undefined>(undefined);

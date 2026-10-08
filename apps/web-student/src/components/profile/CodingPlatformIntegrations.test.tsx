@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 
 const { listConnections, connect, disconnect, lookup, invalidateQueries } = vi.hoisted(() => ({
   listConnections: vi.fn(),
@@ -37,7 +37,7 @@ function profileFor(sourceId: string, username: string) {
 }
 
 function notFound(platform: string, username: string) {
-  return new SmartApiError({
+  return new HireKiwiApiError({
     error: `${platform}_user_not_found`,
     message: `No public profile found for "${username}".`,
     statusCode: 404,
@@ -110,7 +110,7 @@ describe('CodingPlatformIntegrations', () => {
       render(<CodingPlatformIntegrations pickerOpen={false} onPickerOpenChange={vi.fn()} />);
       fireEvent.click(screen.getByRole('button', { name: `Connect ${platform}` }));
       const dialog = screen.getByRole('dialog', { name: `Connect ${platform}` });
-      expect(dialog.textContent).toContain('What SMART will access');
+      expect(dialog.textContent).toContain('What HireKiwi will access');
       expect(dialog.textContent).toContain(`Only your own public ${platform} details`);
       expect(dialog.textContent).toContain('never ask for your password');
       expect(screen.getByRole('checkbox', { name: /I agree/ })).toBeTruthy();
@@ -131,11 +131,13 @@ describe('CodingPlatformIntegrations', () => {
   });
 
   it('does not call a missing API route a wrong username', async () => {
-    lookup
-      .mockReset()
-      .mockRejectedValue(
-        new SmartApiError({ error: 'Not Found', message: 'Cannot POST', statusCode: 404 } as never),
-      );
+    lookup.mockReset().mockRejectedValue(
+      new HireKiwiApiError({
+        error: 'Not Found',
+        message: 'Cannot POST',
+        statusCode: 404,
+      } as never),
+    );
     openAndType('LeetCode', 'ada_l');
     const alert = await screen.findByRole('alert', {}, FOUND_TIMEOUT);
     expect(alert.textContent).toContain('Could not check LeetCode right now');

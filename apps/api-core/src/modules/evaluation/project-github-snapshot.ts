@@ -28,7 +28,7 @@ export function parseGithubRepoUrl(
 async function fetchRepoHeadSha(fullName: string, token?: string): Promise<string | null> {
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github+json',
-    'User-Agent': 'smart-project-verify',
+    'User-Agent': 'hirekiwi-project-verify',
     'X-GitHub-Api-Version': '2022-11-28',
   };
   if (token) headers.Authorization = `Bearer ${token}`;

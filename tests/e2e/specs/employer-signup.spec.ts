@@ -101,7 +101,7 @@ test.describe.serial('employer self-serve onboarding', () => {
         file: {
           name: 'registration.pdf',
           mimeType: 'application/pdf',
-          buffer: Buffer.from('%PDF-1.4\n% SMART e2e registration certificate\n%%EOF\n'),
+          buffer: Buffer.from('%PDF-1.4\n% HireKiwi e2e registration certificate\n%%EOF\n'),
         },
       },
     });

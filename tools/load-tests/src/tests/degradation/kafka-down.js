@@ -60,7 +60,7 @@ export default function () {
     attemptId = undefined;
   }
   if (attemptId) {
-    // complete() emits smart.assessment.submitted — the one Kafka produce on
+    // complete() emits hirekiwi.assessment.submitted — the one Kafka produce on
     // this path. With Redpanda down this should error quickly, not hang.
     timedPost(
       `${urls.api}${API_PREFIX}/assessment/complete`,

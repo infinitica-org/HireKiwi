@@ -75,12 +75,14 @@ describe('Certificate Crypto Utilities', () => {
   it('10. Verification URL contains the signature as query parameter', () => {
     const signature = signCertificatePayload(basePayload, sampleSecret);
     const url = buildCertificateVerificationUrl(
-      'https://verify.smart.com',
+      'https://verify.hirekiwi.com',
       basePayload.certificateId,
       signature,
     );
 
-    expect(url).toBe(`https://verify.smart.com/cert/${basePayload.certificateId}?sig=${signature}`);
+    expect(url).toBe(
+      `https://verify.hirekiwi.com/cert/${basePayload.certificateId}?sig=${signature}`,
+    );
     expect(url).toContain(`sig=${signature}`);
   });
 });

@@ -84,7 +84,7 @@ export default function CampusAccessPage() {
       ) : data && data.universities.length === 0 ? (
         <EmptyState
           title="No partner universities yet"
-          description="Universities that partner with SMART will be listed here."
+          description="Universities that partner with HireKiwi will be listed here."
         />
       ) : (
         <ul className={`${card} divide-y divide-[var(--ds-border-subtle)]`}>

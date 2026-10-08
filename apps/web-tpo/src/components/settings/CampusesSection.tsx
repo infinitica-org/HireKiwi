@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Archive, Layers, Plus, RotateCcw, Star } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { CampusDto, UpdateCampusRequest } from '@hirekiwi/contracts';
 import { api } from '../../lib/api';
 import {
@@ -38,7 +38,7 @@ export function CampusesSection({
       setCampuses(rows);
       onCountChange?.(rows.filter((campus) => !campus.archivedAt).length);
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to load campuses.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to load campuses.');
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export function CampusesSection({
       await action();
       await load();
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not update campuses.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not update campuses.');
     } finally {
       setBusy(false);
     }

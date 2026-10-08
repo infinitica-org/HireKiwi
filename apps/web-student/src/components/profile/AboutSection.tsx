@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { FileText, Loader2, Pencil, UserRound } from 'lucide-react';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQueryClient } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import {
@@ -42,7 +42,7 @@ export function AboutSection({ presentation = 'default', editRequestId = 0 }: Ab
   useEffect(() => {
     if (isError) {
       setError(
-        isSmartApiError(queryError) ? queryError.message : 'Could not load your About section.',
+        isHireKiwiApiError(queryError) ? queryError.message : 'Could not load your About section.',
       );
     }
   }, [isError, queryError]);
@@ -94,7 +94,7 @@ export function AboutSection({ presentation = 'default', editRequestId = 0 }: Ab
       setSuccess('About section saved.');
       await queryClient.invalidateQueries({ queryKey: queryKeys.myOnboarding() });
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not save your About section.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not save your About section.');
     } finally {
       setSaving(false);
     }

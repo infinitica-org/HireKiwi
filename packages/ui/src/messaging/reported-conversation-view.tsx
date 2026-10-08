@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ADMIN_ACCESS_REASON_MIN_LENGTH } from '@hirekiwi/contracts';
-import { useQuery, useSmartApi } from '../api-provider';
+import { useQuery, useHireKiwiApi } from '../api-provider';
 import { Alert } from '../components/alert';
 import { Button } from '../components/button';
 import { ErrorState, LoadingState } from '../components/common-states';
@@ -20,7 +20,7 @@ export function ReportedConversationView({ reportId }: { reportId: string }) {
   const [reason, setReason] = useState('');
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
-  const api = useSmartApi();
+  const api = useHireKiwiApi();
   const tooShort = reason.trim().length < ADMIN_ACCESS_REASON_MIN_LENGTH;
 
   const view = useQuery({

@@ -8,7 +8,7 @@ alwaysApply: true
 Full checklist: `docs/delivery/DEFINITION_OF_DONE.md`. Agents must not treat a task as finished unless these hold:
 
 - Acceptance criteria + named failure modes handled (module non-negotiables in TEAM.md).
-- Types in `@smart/contracts` merged first; Zod-validated; no `any` at boundaries.
+- Types in `@hirekiwi/contracts` merged first; Zod-validated; no `any` at boundaries.
 - Unit + integration tests for I/O; LLM stubbed at gateway in CI; `pnpm test` green.
 - `pnpm lint` / `typecheck` / `build` / `format:check` clean.
 - RBAC + rate-limit tier declared; Redis keys have TTL; no secrets in code/logs.

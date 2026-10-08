@@ -10,11 +10,11 @@
  * WHERE it broke. Read the result together with Grafana:
  *   - error rate / p95 / p99 vs stage — this file's own summary
  *   - throughput plateau — RPS stops climbing while VUs keep climbing
- *   - Postgres saturation — smart-postgres.json (connections % of max, CPU)
- *   - Redis saturation — smart-redis.json (memory, evictions, ops/sec)
- *   - Kafka lag growth — smart-redpanda.json "Consumer lag" panel
- *   - app CPU/memory — smart-api-metrics.json (Node.js process panels) and
- *     smart-host-containers.json (cAdvisor per-container CPU/memory)
+ *   - Postgres saturation — hirekiwi-postgres.json (connections % of max, CPU)
+ *   - Redis saturation — hirekiwi-redis.json (memory, evictions, ops/sec)
+ *   - Kafka lag growth — hirekiwi-redpanda.json "Consumer lag" panel
+ *   - app CPU/memory — hirekiwi-api-metrics.json (Node.js process panels) and
+ *     hirekiwi-host-containers.json (cAdvisor per-container CPU/memory)
  */
 import { sleep } from 'k6';
 import { buildThresholds } from '../config/thresholds.js';

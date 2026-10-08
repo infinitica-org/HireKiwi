@@ -10,8 +10,8 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": true,
-      "tags": ["smart"],
-      "title": "SMART dashboards",
+      "tags": ["hirekiwi"],
+      "title": "HireKiwi dashboards",
       "type": "dashboards"
     }
   ],
@@ -153,7 +153,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (container_label_com_docker_compose_service) (rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_project=\"smart\"}[5m]))",
+          "expr": "sum by (container_label_com_docker_compose_service) (rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_project=\"hirekiwi\"}[5m]))",
           "legendFormat": "{{container_label_com_docker_compose_service}}",
           "refId": "A"
         }
@@ -174,7 +174,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (container_label_com_docker_compose_service) (container_memory_working_set_bytes{container_label_com_docker_compose_project=\"smart\"})",
+          "expr": "sum by (container_label_com_docker_compose_service) (container_memory_working_set_bytes{container_label_com_docker_compose_project=\"hirekiwi\"})",
           "legendFormat": "{{container_label_com_docker_compose_service}}",
           "refId": "A"
         }
@@ -195,14 +195,14 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (container_label_com_docker_compose_service) (rate(container_network_receive_bytes_total{container_label_com_docker_compose_project=\"smart\"}[5m]))",
+          "expr": "sum by (container_label_com_docker_compose_service) (rate(container_network_receive_bytes_total{container_label_com_docker_compose_project=\"hirekiwi\"}[5m]))",
           "legendFormat": "{{container_label_com_docker_compose_service}} rx",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (container_label_com_docker_compose_service) (rate(container_network_transmit_bytes_total{container_label_com_docker_compose_project=\"smart\"}[5m]))",
+          "expr": "sum by (container_label_com_docker_compose_service) (rate(container_network_transmit_bytes_total{container_label_com_docker_compose_project=\"hirekiwi\"}[5m]))",
           "legendFormat": "{{container_label_com_docker_compose_service}} tx",
           "refId": "B"
         }
@@ -223,7 +223,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "max by (container_label_com_docker_compose_service) (time() - container_start_time_seconds{container_label_com_docker_compose_project=\"smart\"})",
+          "expr": "max by (container_label_com_docker_compose_service) (time() - container_start_time_seconds{container_label_com_docker_compose_project=\"hirekiwi\"})",
           "legendFormat": "{{container_label_com_docker_compose_service}}",
           "refId": "A"
         }
@@ -233,11 +233,11 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["smart", "infra"],
+  "tags": ["hirekiwi", "infra"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timezone": "browser",
-  "title": "SMART / Host & Containers",
-  "uid": "smart-host-containers",
+  "title": "HireKiwi / Host & Containers",
+  "uid": "hirekiwi-host-containers",
   "version": 1
 }

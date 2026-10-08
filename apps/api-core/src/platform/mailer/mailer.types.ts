@@ -30,12 +30,36 @@ export type EmailTemplateName =
   /** APP-01: a company member is told a student applied to their job. */
   | 'application-received'
   /** APP-01: a company member is told an applicant withdrew. */
-  | 'application-withdrawn';
+  | 'application-withdrawn'
+  /** Student onboarding: 6-digit email OTP. */
+  | 'student-email-otp'
+  /** TPO "Let's Connect" form: acknowledgement to the person who submitted it. */
+  | 'partnership-request-received'
+  /** TPO "Let's Connect" form: alert to platform admins with the request details. */
+  | 'partnership-request-admin-alert';
+
+export interface StudentEmailOtpData {
+  readonly fullName: string;
+  readonly verificationCode: string;
+  readonly expiresAtFormatted: string;
+}
 
 export interface CompanyOnboardingEmailVerifyData {
   readonly fullName: string;
   readonly verificationCode: string;
   readonly expiresAtFormatted: string;
+}
+
+export interface PartnershipRequestEmailData {
+  readonly fullName: string;
+  readonly institutionName: string;
+  readonly location: string;
+  readonly email: string;
+  readonly phone: string;
+  readonly role: string;
+  readonly message: string | null;
+  /** Admin alert only: link to the partnership requests page. */
+  readonly adminUrl?: string;
 }
 
 export interface CompanyVerificationResubmitEmailData {
@@ -148,7 +172,9 @@ export type EmailTemplateData =
   | CertificateEndorsementRequestEmailData
   | WorkExperienceManagerEndorsementEmailData
   | CompanyOnboardingEmailVerifyData
-  | CompanyVerificationResubmitEmailData;
+  | CompanyVerificationResubmitEmailData
+  | StudentEmailOtpData
+  | PartnershipRequestEmailData;
 
 export interface EmailJobPayload {
   readonly to: string;

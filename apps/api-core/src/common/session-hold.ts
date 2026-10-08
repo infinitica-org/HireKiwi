@@ -5,7 +5,7 @@ export type SessionHold = { code: SessionHoldCode; message: string };
 
 /** S6-VV-139 — reuses `company_held` so no contract change is needed; the message says why. */
 export const COMPANY_UNVERIFIED_MESSAGE =
-  'This company is no longer verified. You cannot use SMART until verification is approved again.';
+  'This company is no longer verified. You cannot use HireKiwi until verification is approved again.';
 
 export function resolveSessionHold(user: {
   role: string;

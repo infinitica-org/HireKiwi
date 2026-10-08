@@ -38,17 +38,17 @@ describe('QueueMetricsCollector (S6-VV-127)', () => {
     });
     await collector.collect(NOW);
 
-    expect(await gauge('smart_queue_jobs', { queue: 'skill_verify_grade', state: 'waiting' })).toBe(
-      4,
-    );
-    expect(await gauge('smart_queue_jobs', { queue: 'skill_verify_grade', state: 'delayed' })).toBe(
-      2,
-    );
-    expect(await gauge('smart_queue_oldest_waiting_seconds', { queue: 'skill_verify_grade' })).toBe(
-      90,
-    );
     expect(
-      await gauge('smart_queue_jobs', { queue: 'skill_verify_grade.dlq', state: 'waiting' }),
+      await gauge('hirekiwi_queue_jobs', { queue: 'skill_verify_grade', state: 'waiting' }),
+    ).toBe(4);
+    expect(
+      await gauge('hirekiwi_queue_jobs', { queue: 'skill_verify_grade', state: 'delayed' }),
+    ).toBe(2);
+    expect(
+      await gauge('hirekiwi_queue_oldest_waiting_seconds', { queue: 'skill_verify_grade' }),
+    ).toBe(90);
+    expect(
+      await gauge('hirekiwi_queue_jobs', { queue: 'skill_verify_grade.dlq', state: 'waiting' }),
     ).toBe(3);
     expect(collector.snapshot().get('skill_verify_grade')?.counts.active).toBe(1);
   });
@@ -59,7 +59,7 @@ describe('QueueMetricsCollector (S6-VV-127)', () => {
       qlix_poll: fakeQueue({ waiting: 1, active: 0, delayed: 0, failed: 5 }),
     });
     await collector.collect(NOW);
-    expect(await gauge('smart_queue_jobs', { queue: 'qlix_poll', state: 'failed' })).toBe(5);
+    expect(await gauge('hirekiwi_queue_jobs', { queue: 'qlix_poll', state: 'failed' })).toBe(5);
     expect(collector.snapshot().has('broken')).toBe(false);
   });
 });

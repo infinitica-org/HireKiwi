@@ -1,10 +1,10 @@
 import type { HTMLAttributes } from 'react';
 import { cn } from '../lib/cn';
-import smartTextImg from '../assets/images/Logos/WebP/samrt-text.png';
-import smartLogoImg from '../assets/images/Logos/WebP/Smart-logo.jpg';
-import smartLogoTextImg from '../assets/images/Logos/WebP/smart-logo-text.jpg';
+import hirekiwiTextImg from '../assets/images/Logos/WebP/samrt-text.png';
+import hirekiwiLogoImg from '../assets/images/Logos/WebP/HireKiwi-logo.jpg';
+import hirekiwiLogoTextImg from '../assets/images/Logos/WebP/hirekiwi-logo-text.jpg';
 
-export { HIREKIWI_MARK_TEAL, SMART_MARK_TEAL } from '../brand/colors';
+export { HIREKIWI_MARK_TEAL } from '../brand/colors';
 
 export function resolveImageSource(asset: unknown): string {
   if (typeof asset === 'string') return asset;
@@ -19,13 +19,9 @@ export function resolveImageSource(asset: unknown): string {
   return '';
 }
 
-export const HIREKIWI_TEXT_LOGO_SRC: string = resolveImageSource(smartTextImg);
-export const HIREKIWI_LOGO_SRC: string = resolveImageSource(smartLogoImg);
-export const HIREKIWI_LOGO_TEXT_SRC: string = resolveImageSource(smartLogoTextImg);
-
-export const SMART_TEXT_LOGO_SRC: string = HIREKIWI_TEXT_LOGO_SRC;
-export const SMART_LOGO_SRC: string = HIREKIWI_LOGO_SRC;
-export const SMART_LOGO_TEXT_SRC: string = HIREKIWI_LOGO_TEXT_SRC;
+export const HIREKIWI_TEXT_LOGO_SRC: string = resolveImageSource(hirekiwiTextImg);
+export const HIREKIWI_LOGO_SRC: string = resolveImageSource(hirekiwiLogoImg);
+export const HIREKIWI_LOGO_TEXT_SRC: string = resolveImageSource(hirekiwiLogoTextImg);
 
 export type HireKiwiLogoKind = 'text' | 'wordmark' | 'mark';
 export type HireKiwiLogoTone = 'auto' | 'on-light' | 'on-dark';
@@ -34,10 +30,6 @@ export interface HireKiwiLogoProps extends Omit<HTMLAttributes<HTMLSpanElement>,
   tone?: HireKiwiLogoTone;
   title?: string;
 }
-
-export type SmartLogoKind = HireKiwiLogoKind;
-export type SmartLogoTone = HireKiwiLogoTone;
-export type SmartLogoProps = HireKiwiLogoProps;
 
 export function HireKiwiLogo({
   kind = 'text',
@@ -80,5 +72,3 @@ export function HireKiwiLogo({
     </span>
   );
 }
-
-export const SmartLogo = HireKiwiLogo;

@@ -2,11 +2,13 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { z } from 'zod';
 import {
   APPLICATION_STATUS_RANK,
+  PublicCandidateProfileDtoSchema,
   EMPLOYER_APPLICATION_STATUS_LABELS,
   allowedNextStatuses,
   toApplicationStatus,
@@ -14,10 +16,13 @@ import {
   type ApplicationStatus,
   type AtsStage,
   type EmployerApplicantCard,
+  type EmployerApplicantDetail,
   type ListEmployerApplicantsQuery,
   type ListEmployerApplicantsResponse,
 } from '@hirekiwi/contracts';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
+import { StorageService } from '../../platform/storage/storage.service.js';
+import { resolveProfilePhotoUrl } from '../users/profile-photo.util.js';
 import { requireCompanyActor } from '../company-profile/company-access.js';
 import { scoreOpeningForStudent } from '../matching/opening-fit.js';
 import { readSnapshotFit, readSnapshotName } from './application-snapshot.js';
@@ -79,7 +84,14 @@ const STAGES_BY_STATUS: Record<ApplicationStatus, AtsStage[]> = {
 /** Th6-390/391 — applicants for one job of the caller's own company, read from application snapshots. */
 @Injectable()
 export class EmployerApplicantsService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Optional() @Inject(StorageService) private readonly storage?: StorageService,
+  ) {}
+
+  private async photoUrl(objectKey: string | null | undefined): Promise<string | null> {
+    return this.storage ? resolveProfilePhotoUrl(this.storage, objectKey) : null;
+  }
 
   async list(
     userId: string,
@@ -145,6 +157,19 @@ export class EmployerApplicantsService {
       ]);
     }
 
+    const photoKeys = new Map(
+      (
+        await this.prisma.user.findMany({
+          where: { id: { in: rows.map((row) => row.studentId) } },
+          select: { id: true, profilePhotoObjectKey: true },
+        })
+      ).map((user) => [user.id, user.profilePhotoObjectKey]),
+    );
+    const photos = new Map<string, string | null>();
+    for (const row of rows) {
+      photos.set(row.studentId, await this.photoUrl(photoKeys.get(row.studentId)));
+    }
+
     const items = rows.map((row) => {
       const status = toApplicationStatus(row.stage as AtsStage);
       const fit = readSnapshotFit(row.snapshot?.fitJson);
@@ -156,6 +181,7 @@ export class EmployerApplicantsService {
       const card: EmployerApplicantCard = {
         applicationId: row.id,
         candidateName: readSnapshotName(row.snapshot?.profileJson),
+        photoUrl: photos.get(row.studentId) ?? null,
         fit,
         fitRecalculated:
           (current?.band ?? null) !== (fit?.band ?? null) ||
@@ -186,6 +212,50 @@ export class EmployerApplicantsService {
       applicants: page.map((item) => item.card),
       nextCursor: hasMore && last ? encodeApplicantCursor(last.key) : null,
       total: items.length,
+    };
+  }
+
+  /** One applicant in full, read from the snapshot taken when they applied. */
+  async detail(userId: string, applicationId: string): Promise<EmployerApplicantDetail> {
+    const actor = await requireCompanyActor(this.prisma, userId, 'company.applicants.view');
+    const row = await this.prisma.application.findFirst({
+      where: {
+        id: applicationId,
+        snapshot: { isNot: null },
+        // Another company's applicant is indistinguishable from a missing one.
+        opening: { companyId: actor.companyId },
+      },
+      select: {
+        id: true,
+        studentId: true,
+        stage: true,
+        coverNote: true,
+        createdAt: true,
+        opening: { select: { id: true, roleTitle: true } },
+        snapshot: { select: { profileJson: true, fitJson: true } },
+        student: { select: { profilePhotoObjectKey: true } },
+      },
+    });
+    const profile = PublicCandidateProfileDtoSchema.safeParse(row?.snapshot?.profileJson);
+    if (!row || !profile.success) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Applicant not found.',
+        statusCode: 404,
+      });
+    }
+    const status = toApplicationStatus(row.stage as AtsStage);
+    return {
+      applicationId: row.id,
+      jobId: row.opening.id,
+      roleTitle: row.opening.roleTitle,
+      profile: profile.data,
+      photoUrl: await this.photoUrl(row.student.profilePhotoObjectKey),
+      coverNote: row.coverNote,
+      fit: readSnapshotFit(row.snapshot?.fitJson),
+      status,
+      statusLabel: EMPLOYER_APPLICATION_STATUS_LABELS[status],
+      appliedAt: row.createdAt.toISOString(),
     };
   }
 }

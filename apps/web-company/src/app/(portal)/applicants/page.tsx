@@ -9,6 +9,8 @@ import {
   type ApplicationStatus,
   type EmployerApplicantCard,
 } from '@hirekiwi/contracts';
+import { MessageApplicantButton } from '../../../components/message-applicant-button';
+import { ApplicantDetailDrawer } from '../../../components/applicant-detail-drawer';
 import { api, companyJobsApi } from '../../../lib/api';
 
 /** Applicant lists are fetched per job; keep the fan-out bounded on this overview. */
@@ -67,6 +69,7 @@ export default function ApplicantsPage() {
   const [jobFilter, setJobFilter] = useState<string>('all');
   const [status, setStatus] = useState<StatusFilter>('ALL');
   const [query, setQuery] = useState('');
+  const [openApplication, setOpenApplication] = useState<string | null>(null);
 
   const { data: jobsData, isLoading: jobsLoading } = useQuery({
     queryKey: ['company', 'jobs'],
@@ -80,7 +83,7 @@ export default function ApplicantsPage() {
   const applicantQueries = useQueries({
     queries: jobs.map((job) => ({
       queryKey: ['company', 'jobs', job.openingId, 'applicants', 'overview'],
-      queryFn: () => api.employer.listApplicants(job.openingId, { limit: 100 }),
+      queryFn: () => api.employer.listApplicants(job.openingId, { limit: 50 }),
       staleTime: 30_000,
     })),
   });
@@ -203,7 +206,7 @@ export default function ApplicantsPage() {
       ) : null}
 
       <div className="overflow-hidden rounded-md border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
-        <div className="hidden grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_140px_120px_96px] gap-4 border-b border-zinc-100 bg-zinc-50/70 px-5 py-2.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase md:grid dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div className="hidden grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_140px_120px_270px] gap-4 border-b border-zinc-100 bg-zinc-50/70 px-5 py-2.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase md:grid dark:border-zinc-800 dark:bg-zinc-900/40">
           <span>Candidate</span>
           <span>Job</span>
           <span>Fit</span>
@@ -246,14 +249,20 @@ export default function ApplicantsPage() {
           <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {visible.map((r) => (
               <li key={r.applicationId}>
-                <Link
-                  href={`/jobs/${r.jobId}/applicants`}
-                  className="group grid grid-cols-1 gap-2 px-5 py-3.5 transition-colors hover:bg-zinc-50/70 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_140px_120px_96px] md:items-center md:gap-4 dark:hover:bg-zinc-800/40"
-                >
+                <div className="group grid grid-cols-1 gap-2 px-5 py-3.5 transition-colors hover:bg-zinc-50/70 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_140px_120px_270px] md:items-center md:gap-4 dark:hover:bg-zinc-800/40">
                   <span className="flex min-w-0 items-center gap-3">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-zinc-900">
-                      {initials(r.candidateName)}
-                    </span>
+                    {r.photoUrl ? (
+                      // Signed storage URL; not routed through next/image.
+                      <img
+                        src={r.photoUrl}
+                        alt=""
+                        className="size-9 shrink-0 rounded-full border border-zinc-200 object-cover dark:border-zinc-700"
+                      />
+                    ) : (
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-zinc-900">
+                        {initials(r.candidateName)}
+                      </span>
+                    )}
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-zinc-950 dark:text-white">
                         {r.candidateName}
@@ -296,16 +305,39 @@ export default function ApplicantsPage() {
                     </span>
                   </span>
 
-                  <span className="flex items-center justify-between gap-2 text-xs text-zinc-500 md:justify-end">
+                  <span className="flex items-center justify-between gap-3 text-xs text-zinc-500 md:justify-end">
                     {appliedOn(r.appliedAt)}
-                    <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-600" />
+                    <button
+                      type="button"
+                      onClick={() => setOpenApplication(r.applicationId)}
+                      className="rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    >
+                      View details
+                    </button>
+                    <MessageApplicantButton
+                      applicationId={r.applicationId}
+                      candidateName={r.candidateName}
+                    />
+                    <Link
+                      href={`/jobs/${r.jobId}/applicants`}
+                      aria-label={`Open ${r.roleTitle} pipeline`}
+                      title="Open job pipeline"
+                    >
+                      <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-600" />
+                    </Link>
                   </span>
-                </Link>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </div>
+      {openApplication ? (
+        <ApplicantDetailDrawer
+          applicationId={openApplication}
+          onClose={() => setOpenApplication(null)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -19,7 +19,7 @@ import {
   type ListAdminCutScoresResponse,
   type ListAdminItemsResponse,
   type ListAdminLevelsResponse,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
 } from '@hirekiwi/contracts';
 import { Prisma, type ItemType } from '../../generated/prisma/index.js';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
@@ -483,9 +483,9 @@ export class AssessmentAdminService {
     });
 
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.trackUpdated,
+      topic: HIREKIWI_TOPICS.trackUpdated,
       partitionKey: level.track.code,
-      eventType: 'smart.track.updated',
+      eventType: 'hirekiwi.track.updated',
       source: 'assessment',
       data: {
         trackCode: level.track.code,

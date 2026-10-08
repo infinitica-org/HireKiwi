@@ -265,6 +265,44 @@ describe('onboarding-form', () => {
       { type: 'technical', code: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT', name: 'Python' },
     ]);
   });
+
+  it('includes middleName, degree, and specialization in draft and complete payloads', () => {
+    const form = emptyOnboardingForm();
+    form.firstName = 'Ada';
+    form.middleName = 'Augusta';
+    form.lastName = 'King';
+    form.phoneNumber = '9876543210';
+    form.academicProgram = {
+      studyProgram: '',
+      degree: 'B.Tech / B.E.',
+      specialization: 'Computer Science and Engineering',
+      graduationYear: '2025',
+    };
+    form.dpdpConsent = true;
+
+    const draft = buildOnboardingDraftPayload(form);
+    expect(draft.firstName).toBe('Ada');
+    expect(draft.middleName).toBe('Augusta');
+    expect(draft.lastName).toBe('King');
+    expect(draft.academicProgram).toEqual({
+      studyProgram: 'B.Tech / B.E. - Computer Science and Engineering',
+      degree: 'B.Tech / B.E.',
+      specialization: 'Computer Science and Engineering',
+      graduationYear: 2025,
+    });
+
+    const complete = buildCompleteOnboardingRequest(form);
+    expect('error' in complete).toBe(false);
+    if ('error' in complete) return;
+    expect(complete.firstName).toBe('Ada');
+    expect(complete.middleName).toBe('Augusta');
+    expect(complete.lastName).toBe('King');
+    expect(complete.academicProgram?.degree).toBe('B.Tech / B.E.');
+    expect(complete.academicProgram?.specialization).toBe('Computer Science and Engineering');
+    expect(complete.academicProgram?.studyProgram).toBe(
+      'B.Tech / B.E. - Computer Science and Engineering',
+    );
+  });
 });
 
 describe('buildProfessionalLinksSavePayload clearing (disconnect)', () => {

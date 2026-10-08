@@ -5,7 +5,7 @@ description: Redis sliding-window rate limiting architecture, concurrency target
 
 # Rate Limiting & Performance SLAs
 
-SMART is engineered for a season-scale target of **1,000,000 active candidates** and a peak concurrency of **50,000 active test-takers** during coordinated university placement drives.
+HireKiwi is engineered for a season-scale target of **1,000,000 active candidates** and a peak concurrency of **50,000 active test-takers** during coordinated university placement drives.
 
 To protect backend databases, LLM token budgets, and worker threads from resource exhaustion, rate limiting is applied across multiple architectural tiers.
 
@@ -13,7 +13,7 @@ To protect backend databases, LLM token budgets, and worker threads from resourc
 
 ## Rate Limiting Architecture
 
-Rate limiting is governed by [ADR-0008](file:///d:/Work's/Infinitica/smart/docs/adr/0008-rate-limit-strategy.md) using a Redis sliding-window log algorithm executed via atomic Lua scripts.
+Rate limiting is governed by [ADR-0008](file:///d:/Work's/Infinitica/hirekiwi/docs/adr/0008-rate-limit-strategy.md) using a Redis sliding-window log algorithm executed via atomic Lua scripts.
 
 | Layer                     | Mechanism               | Scope                            | Limit                          |
 | :------------------------ | :---------------------- | :------------------------------- | :----------------------------- |
@@ -42,9 +42,9 @@ Rate limiting is governed by [ADR-0008](file:///d:/Work's/Infinitica/smart/docs/
 
 ## Observability & Prometheus Metrics
 
-Per [ADR-0015](file:///d:/Work's/Infinitica/smart/docs/adr/0015-perf-testing-observability.md), `apps/api-core` exposes Prometheus metrics scraped on port 3000:
+Per [ADR-0015](file:///d:/Work's/Infinitica/hirekiwi/docs/adr/0015-perf-testing-observability.md), `apps/api-core` exposes Prometheus metrics scraped on port 3000:
 
-- `smart_cache_operations_total`: Hit/miss ratios for item bank cache-aside reads.
-- `smart_db_query_duration_seconds`: Prisma query execution durations across all models.
-- `smart_kafka_events_consumed_total`: Throughput across Redpanda event consumers.
-- `smart_kafka_consumer_lag_messages`: Consumer group lag alerts for async workers.
+- `hirekiwi_cache_operations_total`: Hit/miss ratios for item bank cache-aside reads.
+- `hirekiwi_db_query_duration_seconds`: Prisma query execution durations across all models.
+- `hirekiwi_kafka_events_consumed_total`: Throughput across Redpanda event consumers.
+- `hirekiwi_kafka_consumer_lag_messages`: Consumer group lag alerts for async workers.

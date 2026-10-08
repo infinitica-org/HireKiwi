@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { KafkaOutboxService } from './kafka-outbox.service.js';
-import { SMART_TOPICS } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 
 describe('KafkaOutboxService', () => {
   it('writes assessment.submitted to the outbox table', async () => {
@@ -14,7 +14,7 @@ describe('KafkaOutboxService', () => {
     await outbox.enqueueAssessmentSubmitted({
       meta: {
         eventId: '33333333-3333-4333-8333-333333333333',
-        eventType: SMART_TOPICS.assessmentSubmitted,
+        eventType: HIREKIWI_TOPICS.assessmentSubmitted,
         version: 1,
         occurredAt: new Date().toISOString(),
         traceId: 'trace',
@@ -36,7 +36,7 @@ describe('KafkaOutboxService', () => {
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          topic: SMART_TOPICS.assessmentSubmitted,
+          topic: HIREKIWI_TOPICS.assessmentSubmitted,
           partitionKey: attemptId,
           source: 'assessment',
         }),
@@ -47,7 +47,7 @@ describe('KafkaOutboxService', () => {
   it('retries emit and marks rows published', async () => {
     const row = {
       id: '44444444-4444-4444-8444-444444444444',
-      topic: SMART_TOPICS.assessmentSubmitted,
+      topic: HIREKIWI_TOPICS.assessmentSubmitted,
       partitionKey: 'k',
       payload: { ok: true },
       source: 'assessment',
@@ -62,7 +62,7 @@ describe('KafkaOutboxService', () => {
     const outbox = new KafkaOutboxService(prisma as never, kafka as never);
     await outbox.drain();
     expect(kafka.emit).toHaveBeenCalledWith(
-      SMART_TOPICS.assessmentSubmitted,
+      HIREKIWI_TOPICS.assessmentSubmitted,
       'k',
       { ok: true },
       'assessment',

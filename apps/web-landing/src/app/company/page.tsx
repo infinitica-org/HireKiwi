@@ -116,7 +116,7 @@ export default function CompanyPage() {
               {/* Subhead */}
               <p className="mt-6 text-base sm:text-lg text-zinc-600 max-w-2xl leading-relaxed">
                 Stop burning hundreds of senior engineering hours filtering unvetted applications.
-                SMART gives your recruiters instant access to candidates with tamper-proof code
+                HireKiwi gives your recruiters instant access to candidates with tamper-proof code
                 sandboxes, objective BARS scores, and verified college credentials.
               </p>
 
@@ -171,7 +171,7 @@ export default function CompanyPage() {
                     <div className="size-3 rounded-full bg-amber-400" />
                     <div className="size-3 rounded-full bg-emerald-400" />
                     <span className="ml-2 text-xs font-semibold text-zinc-500">
-                      SMART Enterprise Sourcing
+                      HireKiwi Enterprise Sourcing
                     </span>
                   </div>
                   <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold border border-emerald-200">
@@ -265,7 +265,7 @@ export default function CompanyPage() {
               Enterprise Advantages
             </span>
             <h2 className="mt-2 font-manrope text-3xl sm:text-4xl font-extrabold text-zinc-950">
-              Why top engineering teams recruit with SMART
+              Why top engineering teams recruit with HireKiwi
             </h2>
             <p className="mt-3 text-base text-zinc-600">
               Move beyond keyword guessing and unverified resumes to a mathematically sound hiring
@@ -305,7 +305,7 @@ export default function CompanyPage() {
               Streamlined Process
             </span>
             <h2 className="mt-2 font-manrope text-3xl sm:text-4xl font-extrabold text-zinc-950">
-              How modern enterprises hire on SMART
+              How modern enterprises hire on HireKiwi
             </h2>
           </div>
 
@@ -389,8 +389,8 @@ export default function CompanyPage() {
               Ready to transform your technical hiring?
             </h2>
             <p className="relative z-10 mx-auto mt-4 max-w-xl text-sm sm:text-base text-zinc-300 leading-relaxed">
-              Book a live walkthrough with our enterprise talent solutions team to see how SMART can
-              integrate with your ATS and campus recruitment drives.
+              Book a live walkthrough with our enterprise talent solutions team to see how HireKiwi
+              can integrate with your ATS and campus recruitment drives.
             </p>
 
             <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-4">

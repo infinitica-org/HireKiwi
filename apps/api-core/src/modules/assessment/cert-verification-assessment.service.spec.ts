@@ -156,7 +156,7 @@ describe('CertVerificationAssessmentService', () => {
     expect(result.grade?.passed).toBe(true);
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
       expect.objectContaining({
-        topic: 'smart.credential.verified',
+        topic: 'hirekiwi.credential.verified',
         data: expect.objectContaining({
           userId: STUDENT_ID,
           sourceId: 'EXTERNALCERT',

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import RegisterPage from './page';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { api, redirectForRole, storeSession } from '../../lib/api';
 
 vi.mock('next/navigation', () => ({
@@ -65,7 +65,7 @@ describe('RegisterPage', () => {
 
   it('handles API error for conflicting account', async () => {
     vi.mocked(api.auth.register).mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'conflict',
         message: 'An account with this email already exists.',
         statusCode: 409,

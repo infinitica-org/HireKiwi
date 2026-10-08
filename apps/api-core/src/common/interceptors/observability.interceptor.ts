@@ -15,7 +15,7 @@ import type { RequestUser } from '../guards/jwt-auth.guard.js';
 export type RequestWithLogContext = FastifyRequest & {
   user?: RequestUser;
   /** Stashed for pino-http customProps when ALS is not active at access-log time. */
-  smartLogContext?: LoggerContext;
+  hirekiwiLogContext?: LoggerContext;
 };
 
 @Injectable()
@@ -37,7 +37,7 @@ export class ObservabilityInterceptor implements NestInterceptor {
       ...(request.user?.sub ? { userId: request.user.sub } : {}),
       ...(request.user?.inst ? { institutionId: request.user.inst } : {}),
     };
-    request.smartLogContext = logContext;
+    request.hirekiwiLogContext = logContext;
 
     // Re-enter ALS on each emission — RxJS can break the store after subscribe.
     return new Observable((subscriber) => {

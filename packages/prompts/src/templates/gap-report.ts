@@ -64,7 +64,7 @@ export const gapNarrativeTemplate: PromptTemplate<GapNarrativeVariables> = {
   variablesSchema: GapNarrativeVariables,
   render: (variables) => ({
     system: [
-      `You write the improvement plan a final-year student sees after a SMART`,
+      `You write the improvement plan a final-year student sees after a HireKiwi`,
       `${variables.trackName} assessment. They are early in their career and this`,
       `result affects how they feel about their prospects. Be useful, not kind.`,
       '',

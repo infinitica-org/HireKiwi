@@ -1,6 +1,6 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { SkillVerificationCompletedEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { SkillVerificationCompletedEventSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../config/env.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -24,7 +24,7 @@ export class SkillVerificationCompletedConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.skillVerificationCompleted,
+        topic: HIREKIWI_TOPICS.skillVerificationCompleted,
         module: 'notifications',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {

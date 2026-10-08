@@ -17,8 +17,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@hirekiwi/ui';
 import { motion, AnimatePresence } from 'motion/react';
-import { useProfileProgress } from '@/lib/use-profile-progress';
-import { skillNameForCode } from '@/lib/skill-declarations';
 
 export interface OpportunityItem {
   id: string;
@@ -39,7 +37,6 @@ export interface OpportunityItem {
 
 export default function OpportunitiesPage() {
   const router = useRouter();
-  const { skillClaims } = useProfileProgress();
   const [opportunities, setOpportunities] = useState<OpportunityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'NEW' | 'ACCEPTED' | 'DECLINED'>('NEW');
@@ -53,47 +50,12 @@ export default function OpportunitiesPage() {
   // Detail Modal State
   const [viewDetailTarget, setViewDetailTarget] = useState<OpportunityItem | null>(null);
 
-  const loadOpportunities = async () => {
-    setLoading(true);
-    try {
-      // Map verified database skill claims to active reach-out opportunities
-      if (skillClaims.length > 0) {
-        const verifiedClaims = skillClaims.filter((c) => c.status === 'VERIFIED');
-        const items: OpportunityItem[] = verifiedClaims.map((claim) => {
-          const name = skillNameForCode(claim.skillCode);
-          return {
-            id: `opp-${claim.claimId}`,
-            company: 'Campus Partner Placement Unit',
-            logoText: name.slice(0, 2).toUpperCase(),
-            role: `${name} Engineer Specialist`,
-            location: 'Bangalore / Hybrid',
-            salary: '₹15 - 22 LPA',
-            matchScore: 94,
-            whyPicked: `Shortlisted based on your verified ${name} skill claim and evaluated code defense.`,
-            recruiterMessagePreview: `Hi! Your verified ${name} credentials caught our attention. We invite you to interview for our enterprise engineering team.`,
-            recruiterName: 'Campus Hiring Team',
-            dateReceived: 'Active',
-            status: 'NEW',
-          };
-        });
-        setOpportunities(items);
-      } else {
-        setOpportunities([]);
-      }
-    } catch {
-      setOpportunities([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // `skillClaims` is a new array every render while empty (`data ?? []`), so depending on it
-  // directly loops forever. Re-run only when the claims themselves actually change.
-  const claimsKey = skillClaims.map((c) => `${c.claimId}:${c.status}`).join('|');
-
+  // Opportunities are recruiter outreach to this student. Nothing generates them here any more:
+  // the list stays empty until a real source is wired in (they used to be invented from skill claims).
   useEffect(() => {
-    void loadOpportunities();
-  }, [claimsKey]);
+    setOpportunities([]);
+    setLoading(false);
+  }, []);
 
   const handleAccept = (opp: OpportunityItem) => {
     setOpportunities((prev) =>

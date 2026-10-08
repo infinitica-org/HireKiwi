@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { notFound } from 'next/navigation';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import type { PublicVerificationDto } from '@hirekiwi/contracts';
 import Page from './page';
 
@@ -65,7 +65,7 @@ const mockValidCert: PublicVerificationDto = {
     generatedAt: '2026-09-29T10:00:00.000Z',
   },
   calibrationEmployers: ['Google', 'Microsoft', 'Amazon', 'Flipkart'],
-  methodologyUrl: 'https://smart.infinitica.io/methodology',
+  methodologyUrl: 'https://hirekiwi.infinitica.io/methodology',
   signatureValid: true,
   status: 'ISSUED',
 };
@@ -188,7 +188,7 @@ describe('Public Certificate Verification Page (/cert/[id])', () => {
 
   it('Test 5 — Not found: triggers Next.js notFound() on 404 API error', async () => {
     mockVerify.mockRejectedValueOnce(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'not_found',
         message: 'Certificate not found.',
         statusCode: 404,

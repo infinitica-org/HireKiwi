@@ -394,7 +394,7 @@ describe('AssessmentAdminService cut scores (T11)', () => {
 
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
       expect.objectContaining({
-        topic: 'smart.track.updated',
+        topic: 'hirekiwi.track.updated',
         partitionKey: 'IT_SE',
         data: expect.objectContaining({
           trackCode: 'IT_SE',

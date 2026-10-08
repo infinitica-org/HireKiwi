@@ -1,5 +1,5 @@
 /**
- * SMART Theme
+ * HireKiwi Theme
  * Tailwind CSS 4
  *
  * MAIN BRAND
@@ -209,7 +209,7 @@
 
 /*
  * Light is the CSS default (shadcn `:root`). Dark portals keep `class="dark"`
- * on `<html>` (see SMART_HTML_CLASS) so they still render the charcoal canvas.
+ * on `<html>` (see HIREKIWI_HTML_CLASS) so they still render the charcoal canvas.
  */
 :root,
 .light {

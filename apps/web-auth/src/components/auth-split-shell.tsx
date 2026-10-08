@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { SmartLogo } from '@hirekiwi/ui';
+import { HireKiwiLogo } from '@hirekiwi/ui';
 
 const COPY = {
   student: {
@@ -15,7 +15,7 @@ const COPY = {
         meets the right offer.
       </>
     ),
-    body: 'SMART verifies what students can actually do, so employers hire on evidence and candidates get seen for their work — not just their resume.',
+    body: 'HireKiwi verifies what students can actually do, so employers hire on evidence and candidates get seen for their work — not just their resume.',
     features: [
       {
         title: 'Evidence over resumes',
@@ -44,7 +44,7 @@ const COPY = {
         not on keywords.
       </>
     ),
-    body: 'SMART verifies what candidates can actually do, so you source from a pool that already cleared the bar — before you spend a single interview slot.',
+    body: 'HireKiwi verifies what candidates can actually do, so you source from a pool that already cleared the bar — before you spend a single interview slot.',
     features: [
       {
         title: 'Verified talent pool',
@@ -68,7 +68,7 @@ type AuthVariant = keyof typeof COPY;
  * Shared split-screen frame for the auth app: a branded story panel on the
  * left, the actual form on the right. Replaces the old plain centered-card
  * look across login/register/company-register — this is most people's first
- * impression of SMART. `variant` swaps the left panel's color and copy
+ * impression of HireKiwi. `variant` swaps the left panel's color and copy
  * between the student and employer framing.
  */
 export function AuthSplitShell({
@@ -89,7 +89,7 @@ export function AuthSplitShell({
         <BackgroundDecor blobA={copy.blobA} blobB={copy.blobB} />
 
         <div className="relative z-10 [&_img]:brightness-0 [&_img]:invert">
-          <SmartLogo tone="on-dark" className="h-8 w-auto" />
+          <HireKiwiLogo kind="text" tone="on-dark" className="h-8 w-auto" title="HireKiwi" />
         </div>
 
         <div className="relative z-10 mt-auto">
@@ -124,7 +124,7 @@ export function AuthSplitShell({
         </div>
 
         <p className="relative z-10 mt-10 text-xs text-white/35">
-          © 2026 SMART. All rights reserved.
+          © 2026 HireKiwi. All rights reserved.
         </p>
       </aside>
 

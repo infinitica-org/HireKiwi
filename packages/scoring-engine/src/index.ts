@@ -1,5 +1,5 @@
 /**
- * @hirekiwi/scoring-engine — SMART's psychometric core.
+ * @hirekiwi/scoring-engine — HireKiwi's psychometric core.
  *
  * Everything here is a pure function. No I/O, no clock, no randomness, no
  * database. That constraint is deliberate and load-bearing: a tier awarded
@@ -35,12 +35,16 @@ export * from './competency/item-mapping.js';
 export * from './competency/fusion/index.js';
 export * from './competency/evidence-validator.js';
 export * from './competency/person-job-fit.js';
+export * from './competency/intent-trajectory.js';
 
 /* ---------------------------- Reliability gates --------------------------- */
 export * from './reliability/agreement.js';
 
 /* ------------------------------ IRT (Phase 2) ----------------------------- */
 export * from './irt/two-parameter.js';
+export * from './irt/calibration.js';
+export * from './irt/validation.js';
+export * from './irt/recalibration.js';
 
 /* ------------------------ Passive signal corroboration -------------------- */
 export * from './corroboration/policy.js';

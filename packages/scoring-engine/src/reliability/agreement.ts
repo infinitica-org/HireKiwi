@@ -6,7 +6,7 @@ import { roundTo, variance } from '../statistics.js';
 /**
  * Reliability and inter-rater agreement.
  *
- * These two numbers are SMART's honesty mechanism in code form:
+ * These two numbers are HireKiwi's honesty mechanism in code form:
  *   - Cohen's kappa gates whether automated scoring is allowed to run at all.
  *   - Cronbach's alpha gates what the confidence note is allowed to claim.
  *

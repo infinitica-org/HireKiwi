@@ -55,7 +55,7 @@ export async function credlyBadgeImage(
     const response = await fetchImpl(key, {
       method: 'GET',
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SMART-Certificate-Preview/1.0)' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HireKiwi-Certificate-Preview/1.0)' },
       redirect: 'follow',
     });
     if (response.ok && isCredlyBadgeUrl(response.url || key)) {

@@ -3,6 +3,7 @@ import {
   buildLoginUrl,
   decodeAccessTokenRole,
   evaluatePortalAccess,
+  isAccessTokenExpired,
   isClearSessionPath,
   isPublicPortalPath,
   isSafeReturnTo,
@@ -74,6 +75,27 @@ describe('decodeAccessTokenRole', () => {
   it('rejects garbage JWTs', () => {
     expect(decodeAccessTokenRole('not-a-jwt')).toBeNull();
     expect(decodeAccessTokenRole(jwtWithPayload({ sub: 'x' }))).toBeNull();
+  });
+});
+
+describe('isAccessTokenExpired', () => {
+  const now = 1_700_000_500_000;
+
+  it('is true once the token exp has passed', () => {
+    expect(isAccessTokenExpired(jwtWithPayload({ role: 'STUDENT', exp: 1_700_000_400 }), now)).toBe(
+      true,
+    );
+  });
+
+  it('is false while the token is still valid', () => {
+    expect(isAccessTokenExpired(jwtWithPayload({ role: 'STUDENT', exp: 1_700_000_900 }), now)).toBe(
+      false,
+    );
+  });
+
+  it('leaves tokens without a readable exp to the API', () => {
+    expect(isAccessTokenExpired(jwtWithPayload({ role: 'STUDENT' }), now)).toBe(false);
+    expect(isAccessTokenExpired('not-a-jwt', now)).toBe(false);
   });
 });
 

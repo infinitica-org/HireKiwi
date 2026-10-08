@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { StudentJobCard, StudentJobDetail } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import { STUDENT_JOBS_KEY, jobDetailKey, patchCachedJob, savedJobsKey } from './job-cache';
@@ -15,7 +15,7 @@ export interface HiddenJobNotice {
 }
 
 function messageOf(error: unknown, fallback: string): string {
-  return isSmartApiError(error) && error.message ? error.message : fallback;
+  return isHireKiwiApiError(error) && error.message ? error.message : fallback;
 }
 
 /**

@@ -15,6 +15,11 @@ import type { SkillCapabilityScore } from './skill-capability-ranker.js';
 
 const skillNameByCode = new Map(SKILL_DEFINITIONS.map((skill) => [skill.code, skill.name]));
 
+/** Human-readable label for a skill code, falling back to the code itself if unknown. */
+export function skillNameForCode(code: string): string {
+  return skillNameByCode.get(code) ?? code;
+}
+
 /**
  * Declared policy weights per evidence source type (authority, not a measured reliability
  * coefficient). Unknown source types fall back to the INFERRED weight.

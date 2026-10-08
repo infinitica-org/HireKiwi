@@ -10,8 +10,8 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": true,
-      "tags": ["smart"],
-      "title": "SMART dashboards",
+      "tags": ["hirekiwi"],
+      "title": "HireKiwi dashboards",
       "type": "dashboards"
     }
   ],
@@ -46,7 +46,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "100 * sum(rate(smart_http_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(smart_http_requests_total[5m]))",
+          "expr": "100 * sum(rate(hirekiwi_http_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(hirekiwi_http_requests_total[5m]))",
           "legendFormat": "5xx rate",
           "refId": "A"
         }
@@ -71,7 +71,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(smart_http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(hirekiwi_http_request_duration_seconds_bucket[5m])) by (le))",
           "legendFormat": "p95",
           "refId": "A"
         }
@@ -171,7 +171,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(rate(smart_rate_limit_rejections_total[5m]))",
+          "expr": "sum(rate(hirekiwi_rate_limit_rejections_total[5m]))",
           "legendFormat": "rejections/sec",
           "refId": "A"
         }
@@ -277,7 +277,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (route) (rate(smart_http_requests_total[5m]))",
+          "expr": "sum by (route) (rate(hirekiwi_http_requests_total[5m]))",
           "legendFormat": "{{route}}",
           "refId": "A"
         }
@@ -298,7 +298,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(smart_http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(hirekiwi_http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "{{route}}",
           "refId": "A"
         }
@@ -318,7 +318,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "topk(8, sum by (container_label_com_docker_compose_service) (rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_project=\"smart\"}[5m])))",
+          "expr": "topk(8, sum by (container_label_com_docker_compose_service) (rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_project=\"hirekiwi\"}[5m])))",
           "legendFormat": "{{container_label_com_docker_compose_service}}",
           "refId": "A"
         }
@@ -339,7 +339,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "topk(8, sum by (container_label_com_docker_compose_service) (container_memory_working_set_bytes{container_label_com_docker_compose_project=\"smart\"}))",
+          "expr": "topk(8, sum by (container_label_com_docker_compose_service) (container_memory_working_set_bytes{container_label_com_docker_compose_project=\"hirekiwi\"}))",
           "legendFormat": "{{container_label_com_docker_compose_service}}",
           "refId": "A"
         }
@@ -408,7 +408,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (queue) (smart_queue_jobs{queue=~\"skill_verify_grade|score_recalculation|credential_verification|audio_evaluation|qlix_poll|jd_parse\",state=~\"waiting|active|delayed\"})",
+          "expr": "sum by (queue) (hirekiwi_queue_jobs{queue=~\"skill_verify_grade|score_recalculation|credential_verification|audio_evaluation|qlix_poll|jd_parse\",state=~\"waiting|active|delayed\"})",
           "legendFormat": "{{queue}}",
           "refId": "A"
         }
@@ -444,7 +444,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max by (queue) (smart_queue_oldest_waiting_seconds{queue=~\"skill_verify_grade|score_recalculation|credential_verification|audio_evaluation|qlix_poll|jd_parse\"})",
+          "expr": "max by (queue) (hirekiwi_queue_oldest_waiting_seconds{queue=~\"skill_verify_grade|score_recalculation|credential_verification|audio_evaluation|qlix_poll|jd_parse\"})",
           "legendFormat": "{{queue}}",
           "refId": "A"
         }
@@ -486,7 +486,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (queue) (smart_queue_jobs{queue=~\".*\\.dlq\",state=\"waiting\"})",
+          "expr": "sum by (queue) (hirekiwi_queue_jobs{queue=~\".*\\.dlq\",state=\"waiting\"})",
           "legendFormat": "{{queue}}",
           "refId": "A"
         }
@@ -496,11 +496,11 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["smart", "overview"],
+  "tags": ["hirekiwi", "overview"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timezone": "browser",
-  "title": "SMART / Platform Overview",
-  "uid": "smart-overview",
+  "title": "HireKiwi / Platform Overview",
+  "uid": "hirekiwi-overview",
   "version": 1
 }

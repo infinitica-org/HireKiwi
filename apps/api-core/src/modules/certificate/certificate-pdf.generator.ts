@@ -14,7 +14,7 @@ export interface CertificatePdfData {
 }
 
 /**
- * Generates an official SMART Readiness Certificate PDF document as a Buffer.
+ * Generates an official HireKiwi Readiness Certificate PDF document as a Buffer.
  */
 export async function generateCertificatePdfBuffer(data: CertificatePdfData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -24,8 +24,8 @@ export async function generateCertificatePdfBuffer(data: CertificatePdfData): Pr
         layout: 'landscape',
         margins: { top: 40, bottom: 40, left: 50, right: 50 },
         info: {
-          Title: `SMART Readiness Certificate - ${data.candidateName}`,
-          Author: 'HireKiwi Platform Certification Authority',
+          Title: `HireKiwi Readiness Certificate - ${data.candidateName}`,
+          Author: 'HireKiwi Certification Authority',
           Subject: `${data.trackName} Readiness Credential`,
         },
       });
@@ -55,7 +55,7 @@ export async function generateCertificatePdfBuffer(data: CertificatePdfData): Pr
         .fontSize(28)
         .font('Helvetica-Bold')
         .fillColor('#0f172a')
-        .text('SMART', 60, 55, { align: 'left' });
+        .text('HireKiwi', 60, 55, { align: 'left' });
       doc
         .fontSize(10)
         .font('Helvetica')

@@ -10,7 +10,7 @@ import {
   Loader2,
   UserSearch,
 } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   SKILL_DEFINITIONS,
   type BatchDto,
@@ -54,13 +54,14 @@ const statLabelClass = sectionLabelClass;
 const statValueClass = 'mt-1 text-sm font-semibold text-[var(--ds-text)]';
 
 function errorMessage(caught: unknown, fallback: string): string {
-  if (isSmartApiError(caught) || caught instanceof Error) return caught.message;
+  if (isHireKiwiApiError(caught) || caught instanceof Error) return caught.message;
   return fallback;
 }
 
 function matchMethodLabel(method: MatchMethod | undefined): string {
   if (method === 'RULES') return 'Rules-ranked';
   if (method === 'SKILL_CAPABILITY') return 'Skill + capability match';
+  if (method === 'VECTOR_PREVIEW') return 'Similarity preview (unscored)';
   return 'Matched';
 }
 
@@ -197,7 +198,7 @@ export function CandidateSuggestionsWorkspace({
     if (!selectedOpening) return;
     const today = new Date().toISOString().slice(0, 10);
     downloadTextFile(
-      `smart_suggestions_${selectedOpening.companyName}_${today}.csv`.replace(/\s+/g, '_'),
+      `hirekiwi_suggestions_${selectedOpening.companyName}_${today}.csv`.replace(/\s+/g, '_'),
       buildSuggestionsCsv(selectedOpening, exportRows()),
       'text/csv;charset=utf-8;',
     );
@@ -207,7 +208,9 @@ export function CandidateSuggestionsWorkspace({
     if (!selectedOpening) return;
     const today = new Date().toISOString().slice(0, 10);
     const doc = buildSuggestionsPdf(selectedOpening, exportRows());
-    doc.save(`smart_suggestions_${selectedOpening.companyName}_${today}.pdf`.replace(/\s+/g, '_'));
+    doc.save(
+      `hirekiwi_suggestions_${selectedOpening.companyName}_${today}.pdf`.replace(/\s+/g, '_'),
+    );
   }
 
   function toggleCandidate(studentId: string) {
@@ -251,7 +254,7 @@ export function CandidateSuggestionsWorkspace({
         sent += 1;
         newlySent.push(candidate.studentId);
       } catch (caught) {
-        if (isSmartApiError(caught) && caught.statusCode === 409) {
+        if (isHireKiwiApiError(caught) && caught.statusCode === 409) {
           duplicates += 1;
           newlySent.push(candidate.studentId);
         } else {
@@ -542,7 +545,7 @@ export function CandidateSuggestionsWorkspace({
                 type="button"
                 className={secondaryButtonClass}
                 onClick={handleExportPdf}
-                title="Download a SMART-branded PDF of this shortlist"
+                title="Download a HireKiwi-branded PDF of this shortlist"
               >
                 <FileText className="h-4 w-4" /> PDF
               </button>

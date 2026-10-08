@@ -29,7 +29,7 @@ export function NavUser() {
   }, []);
 
   const name = user?.fullName ?? 'Admin';
-  const email = user?.email ?? 'admin@smart.local';
+  const email = user?.email ?? 'admin@hirekiwi.local';
 
   return (
     <SidebarMenu>
@@ -80,7 +80,7 @@ export function NavUser() {
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Platform Admin
                   </span>
-                  <span className="font-mono text-[9px] text-zinc-400">SMART 2026</span>
+                  <span className="font-mono text-[9px] text-zinc-400">HireKiwi 2026</span>
                 </div>
               </div>
             </DropdownMenuLabel>

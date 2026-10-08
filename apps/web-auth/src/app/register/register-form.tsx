@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { isSmartApiError } from '@hirekiwi/api-client';
-import { SmartLogo } from '@hirekiwi/ui';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
+import { HireKiwiLogo } from '@hirekiwi/ui';
 import { AuthSplitShell } from '../../components/auth-split-shell';
 import {
   EyeIcon,
@@ -87,11 +87,11 @@ export function RegisterForm() {
       // No session yet: the account is usable once the emailed link is confirmed.
       setRegisteredEmail(result.email);
     } catch (err) {
-      if (isSmartApiError(err) && err.code === 'conflict') {
+      if (isHireKiwiApiError(err) && err.code === 'conflict') {
         setError('An account with this email already exists.');
       } else {
         setError(
-          isSmartApiError(err) && err.message
+          isHireKiwiApiError(err) && err.message
             ? err.message
             : 'Could not create your account. Check your details and try again.',
         );
@@ -111,7 +111,7 @@ export function RegisterForm() {
         {/* Top Header Logo (mobile only — the split shell carries branding on lg+) */}
         <header className="mx-auto flex w-full max-w-5xl shrink-0 items-center justify-between lg:hidden">
           <div className="flex items-center gap-3">
-            <SmartLogo tone="on-light" className="h-8 w-auto" />
+            <HireKiwiLogo kind="text" tone="on-light" className="h-8 w-auto" title="HireKiwi" />
           </div>
         </header>
 
@@ -378,7 +378,7 @@ function CheckInbox({ email }: { email: string }) {
     <AuthSplitShell>
       <div className="flex min-h-dvh w-full flex-1 flex-col bg-white px-6 py-8 text-[#111827] font-sans sm:px-12 sm:py-10">
         <header className="mx-auto flex w-full max-w-5xl items-center lg:hidden">
-          <SmartLogo tone="on-light" className="h-8 w-auto" />
+          <HireKiwiLogo kind="text" tone="on-light" className="h-8 w-auto" title="HireKiwi" />
         </header>
         <main className="mx-auto my-auto w-full max-w-[460px] py-6">
           <h1 className="text-3xl font-bold tracking-tight text-[#111827] sm:text-[2.25rem]">

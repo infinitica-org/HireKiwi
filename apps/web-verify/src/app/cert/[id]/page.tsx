@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   Alert,
   Button,
@@ -60,7 +60,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   try {
     certData = await api.certificates.verify(id, sig);
   } catch (err: unknown) {
-    if (isSmartApiError(err) && err.statusCode === 404) {
+    if (isHireKiwiApiError(err) && err.statusCode === 404) {
       notFound();
     }
     return (

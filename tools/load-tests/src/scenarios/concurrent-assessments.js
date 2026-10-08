@@ -26,7 +26,7 @@
  * Needs TEST_DATA_USERS >= CONCURRENT_VUS seeded accounts, each with a completed profile
  * (assertCompleteForSkillVerification gates /verify/start) — see db:seed:load-test.
  *
- * Watch smart_kafka_consumer_lag_messages and the VV-127 queue panels during the run and
+ * Watch hirekiwi_kafka_consumer_lag_messages and the VV-127 queue panels during the run and
  * record peak lag + drain time in tools/load-tests/CAPACITY_REPORT.md, per the ticket.
  */
 import { sleep } from 'k6';

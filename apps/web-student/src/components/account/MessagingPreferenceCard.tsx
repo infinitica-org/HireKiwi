@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@hirekiwi/ui';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { SettingsCard, StatusMessage } from './account-ui';
 
@@ -22,7 +22,7 @@ export function MessagingPreferenceCard() {
       await api.users.updateMessagingPreference({ allowEmployerMessages: !allowed });
       await refetch();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not update this setting.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not update this setting.');
     } finally {
       setBusy(false);
     }

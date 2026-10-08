@@ -62,7 +62,7 @@ const ACTIVITY_KIND_BY_PREFIX: ReadonlyArray<readonly [string, DashboardActivity
 const NEXT_ACTION_BY_AREA: Record<string, DashboardNextAction> = {
   skills: {
     title: 'Add your skills',
-    description: 'Tell SMART what you already know.',
+    description: 'Tell HireKiwi what you already know.',
     ctaLabel: 'Add skills',
     href: '/profile?section=skills',
   },

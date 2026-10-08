@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import type { AuthenticatedUser } from '@hirekiwi/contracts';
 import { useQueryClient } from '@hirekiwi/ui';
 
@@ -13,6 +13,7 @@ import {
   PROFILE_PHOTO_ACCEPT,
   profilePhotoDisplayUrl,
   validateProfilePhotoFile,
+  validateProfilePhotoImage,
 } from '@/lib/profile-photo';
 
 interface ProfilePhotoEditControlProps {
@@ -20,6 +21,8 @@ interface ProfilePhotoEditControlProps {
   profilePhotoUrl: string | null | undefined;
   avatarClassName?: string;
   fallbackClassName?: string;
+  /** Size classes for the camera button; defaults to a 32px button for large avatars. */
+  buttonSizeClassName?: string;
 }
 
 export function ProfilePhotoEditControl({
@@ -27,6 +30,7 @@ export function ProfilePhotoEditControl({
   profilePhotoUrl,
   avatarClassName,
   fallbackClassName,
+  buttonSizeClassName = 'h-8 w-8',
 }: ProfilePhotoEditControlProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -60,6 +64,11 @@ export function ProfilePhotoEditControl({
     setPendingFile(null);
     setUploading(true);
     try {
+      const faceValidation = await validateProfilePhotoImage(file);
+      if (!faceValidation.valid) {
+        setError(faceValidation.error ?? 'Please provide a valid profile photo.');
+        return;
+      }
       const response = await api.users.uploadProfilePhoto(file, file.name);
       const cacheKey = Date.now();
       const bustedUrl = profilePhotoDisplayUrl(response.profilePhotoUrl, cacheKey);
@@ -69,9 +78,13 @@ export function ProfilePhotoEditControl({
       );
       await queryClient.invalidateQueries({ queryKey: queryKeys.me() });
     } catch (err: unknown) {
-      if (isSmartApiError(err) && err.code === 'storage_unavailable') {
+      if (isHireKiwiApiError(err) && err.code === 'storage_unavailable') {
         setError(err.message);
-      } else if (isSmartApiError(err) && err.message && !err.message.startsWith('Request failed')) {
+      } else if (
+        isHireKiwiApiError(err) &&
+        err.message &&
+        !err.message.startsWith('Request failed')
+      ) {
         setError(err.message);
       } else {
         setError('Could not upload your profile photo. Try again.');
@@ -101,12 +114,15 @@ export function ProfilePhotoEditControl({
         disabled={uploading}
         aria-label={profilePhotoUrl ? 'Change profile photo' : 'Upload profile photo'}
         onClick={() => inputRef.current?.click()}
-        className="absolute bottom-0 right-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-[var(--ds-border)] bg-[var(--ds-surface)] text-[var(--ds-icon)] shadow-[var(--ds-card-shadow)] transition hover:bg-[var(--ds-surface-hover)] hover:text-[var(--ds-text)] disabled:opacity-60"
+        className={`absolute bottom-0 right-0 z-20 flex ${buttonSizeClassName} items-center justify-center rounded-full border border-[var(--ds-border)] bg-[var(--ds-surface)] text-[var(--ds-icon)] shadow-[var(--ds-card-shadow)] transition hover:bg-[var(--ds-surface-hover)] hover:text-[var(--ds-text)] disabled:opacity-60`}
       >
         {uploading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
         ) : (
-          <Camera className="h-3.5 w-3.5" aria-hidden="true" />
+          <Camera
+            className={buttonSizeClassName === 'h-8 w-8' ? 'h-3.5 w-3.5' : 'h-2.5 w-2.5'}
+            aria-hidden="true"
+          />
         )}
       </button>
       <input

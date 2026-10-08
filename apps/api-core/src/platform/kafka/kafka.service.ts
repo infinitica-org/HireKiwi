@@ -4,8 +4,8 @@ import { Kafka, type Admin, type Consumer, type Producer } from 'kafkajs';
 import {
   consumerGroupFor,
   deadLetterTopicFor,
-  SMART_TOPICS,
-  type SmartTopic,
+  HIREKIWI_TOPICS,
+  type HireKiwiTopic,
 } from '@hirekiwi/contracts';
 import {
   CORRELATION_KAFKA_HEADER,
@@ -24,7 +24,7 @@ import { ConsumerInbox } from './consumer-inbox.js';
 const LAG_POLL_INTERVAL_MS = 15_000;
 
 export interface KafkaSubscribeParams {
-  readonly topic: SmartTopic;
+  readonly topic: HireKiwiTopic;
   /** Module name used for consumer group id and DLQ attribution. */
   readonly module: string;
   readonly handler: (payload: unknown, headers: Record<string, string>) => Promise<void>;
@@ -232,7 +232,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     ) => Promise<void>,
   ): Promise<void> {
     await this.subscribe({
-      topic: SMART_TOPICS.assessmentSubmitted,
+      topic: HIREKIWI_TOPICS.assessmentSubmitted,
       module: 'platform',
       handler: async (payload, headers) => handler(payload, headers),
     });

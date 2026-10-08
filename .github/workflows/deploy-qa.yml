@@ -42,13 +42,13 @@ jobs:
             --exclude='**/dist' \
             --exclude='.env*' \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
-            ./ "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:~/smart/"
+            ./ "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:~/hirekiwi/"
 
       - name: Deploy + migrate + health check
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
             "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}" \
-            'cd ~/smart && bash scripts/deploy-vps.sh qa'
+            'cd ~/hirekiwi && bash scripts/deploy-vps.sh qa'
 
       - name: Cleanup
         if: always()

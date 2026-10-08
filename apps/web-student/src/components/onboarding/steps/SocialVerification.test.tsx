@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { emptyOnboardingForm } from '@/lib/onboarding-form';
 import SocialVerification from './SocialVerification';
 
@@ -23,7 +23,7 @@ describe('SocialVerification GitHub errors', () => {
 
   it('shows "No such user found" for github_user_not_found', async () => {
     vi.mocked(api.users.fetchGithubProfile).mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'github_user_not_found',
         message: 'No public GitHub profile found for "ghost-user".',
         statusCode: 404,
@@ -44,7 +44,7 @@ describe('SocialVerification GitHub errors', () => {
 
   it('shows integration-unavailable message for github_unavailable', async () => {
     vi.mocked(api.users.fetchGithubProfile).mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'github_unavailable',
         message: 'GitHub is unavailable right now. You can skip this and add it later.',
         statusCode: 503,

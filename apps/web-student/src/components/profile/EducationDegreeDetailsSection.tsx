@@ -50,11 +50,6 @@ export function EducationDegreeDetailsSection({
     ],
   );
 
-  const rows = useMemo(
-    () => syncSemesterRows(totalSemesters, values.degreeDetails.semesterRows),
-    [totalSemesters, values.degreeDetails.semesterRows],
-  );
-
   const semesterOptions = useMemo(
     () => Array.from({ length: totalSemesters }, (_, i) => i + 1),
     [totalSemesters],
@@ -65,11 +60,6 @@ export function EducationDegreeDetailsSection({
       ...next,
       semesterRows: syncSemesterRows(totalSemesters, next.semesterRows),
     });
-  }
-
-  function updateRow(index: number, patch: Partial<(typeof rows)[number]>) {
-    const nextRows = rows.map((row, i) => (i === index ? { ...row, ...patch } : row));
-    onPatchDegreeDetails({ semesterRows: nextRows });
   }
 
   return (
@@ -116,26 +106,6 @@ export function EducationDegreeDetailsSection({
             ))}
           </select>
         </div>
-        <div>
-          <label htmlFor="edu-sem-per-year" className={fieldLabelClass}>
-            Semesters per year
-          </label>
-          <select
-            id="edu-sem-per-year"
-            value={values.degreeDetails.semestersPerYear}
-            onChange={(e) =>
-              ensureRows({
-                ...values.degreeDetails,
-                semestersPerYear: e.target.value,
-              })
-            }
-            className={EDUCATION_MODAL_FIELD}
-          >
-            <option value="2">2 (typical)</option>
-            <option value="1">1</option>
-            <option value="3">3</option>
-          </select>
-        </div>
       </div>
 
       <label className="flex items-start gap-2.5 text-[13px] font-medium tracking-[-0.01em] text-[var(--ds-text-secondary)]">
@@ -152,54 +122,6 @@ export function EducationDegreeDetailsSection({
         />
         I am a lateral entry student in this course
       </label>
-
-      <div className="overflow-hidden rounded-[14px] ring-1 ring-[#101828]/[0.06]">
-        <div className="grid grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] gap-2 bg-[var(--ds-surface)] px-3 py-2 text-[11px] font-medium tracking-[-0.01em] text-[var(--ds-text-subtle)]">
-          <span>Performance</span>
-          <span className="text-center">Total</span>
-          <span className="text-center">Ongoing</span>
-        </div>
-        <div className="max-h-[220px] divide-y divide-[var(--ds-border-subtle)] overflow-y-auto bg-[var(--ds-surface)]">
-          {rows.map((row, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] items-center gap-2 px-3 py-2"
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="w-16 shrink-0 text-[12px] font-medium text-[var(--ds-text-muted)]">
-                  Sem {index + 1}
-                </span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={row.performance}
-                  onChange={(e) => updateRow(index, { performance: e.target.value })}
-                  placeholder="—"
-                  aria-label={`Semester ${index + 1} performance percent`}
-                  className="h-9 min-w-0 flex-1 rounded-[10px] border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-2.5 text-[13px] tabular-nums text-[var(--ds-text)] focus:border-[var(--ds-green)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green-soft)]"
-                />
-                <span className="text-[12px] text-[var(--ds-text-subtle)]">%</span>
-              </div>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={row.backlogsTotal}
-                onChange={(e) => updateRow(index, { backlogsTotal: e.target.value })}
-                aria-label={`Semester ${index + 1} total backlogs`}
-                className="h-9 rounded-[10px] border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-2 text-center text-[13px] tabular-nums text-[var(--ds-text)] focus:border-[var(--ds-green)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green-soft)]"
-              />
-              <input
-                type="text"
-                inputMode="numeric"
-                value={row.backlogsOngoing}
-                onChange={(e) => updateRow(index, { backlogsOngoing: e.target.value })}
-                aria-label={`Semester ${index + 1} ongoing backlogs`}
-                className="h-9 rounded-[10px] border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-2 text-center text-[13px] tabular-nums text-[var(--ds-text)] focus:border-[var(--ds-green)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-green-soft)]"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
 
       <div>
         <label htmlFor="edu-course-notes" className={fieldLabelClass}>

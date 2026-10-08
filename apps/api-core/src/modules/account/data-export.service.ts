@@ -242,7 +242,7 @@ export function collectStorageKeys(value: unknown, found = new Set<string>()): s
 
 function exportReadme(notIncluded: string[]): string {
   const lines = [
-    'Your SMART data export',
+    'Your HireKiwi data export',
     '',
     'data.json  every record we hold about you (profile, claims, assessment attempts, certificates,',
     '           applications, messages you sent, and your data requests).',

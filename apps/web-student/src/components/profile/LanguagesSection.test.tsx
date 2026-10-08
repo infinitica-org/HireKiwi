@@ -42,17 +42,22 @@ describe('LanguagesSection', () => {
     expect(screen.getByText('Full Professional')).toBeTruthy();
   });
 
-  it('opens create modal and adds new language', async () => {
+  it('opens create modal and adds new language using canonical select dropdown', async () => {
     listLanguages.mockResolvedValueOnce([]).mockResolvedValueOnce([mockLangItem]);
     createLanguage.mockResolvedValueOnce(mockLangItem);
 
     renderWithQueryClient(<LanguagesSection />);
-    const addButton = (await screen.findAllByRole('button', { name: 'Add language' })).at(
+    const addButton = (await screen.findAllByRole('button', { name: /^Add language$/i })).at(
       -1,
     ) as HTMLElement;
     fireEvent.click(addButton);
 
-    fireEvent.change(screen.getByPlaceholderText(/English, German, Spanish/i), {
+    const select = screen.getByRole('combobox', { name: /^Language/i });
+    expect(screen.getByRole('option', { name: 'Select language' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Hindi' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'French' })).toBeTruthy();
+
+    fireEvent.change(select, {
       target: { value: 'French' },
     });
 
@@ -66,5 +71,101 @@ describe('LanguagesSection', () => {
       language: 'French',
       proficiency: 'Professional Working',
     });
+  });
+
+  it('opens edit modal and updates language with changed selection and proficiency', async () => {
+    updateLanguage.mockResolvedValueOnce({
+      ...mockLangItem,
+      language: 'German',
+      proficiency: 'Native or Bilingual',
+    });
+
+    renderWithQueryClient(<LanguagesSection />);
+    expect(await screen.findByText('French')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /Edit French/i }));
+
+    const languageSelect = screen.getByRole('combobox', { name: /^Language/i });
+    expect((languageSelect as HTMLSelectElement).value).toBe('French');
+
+    fireEvent.change(languageSelect, {
+      target: { value: 'German' },
+    });
+
+    const proficiencySelect = screen.getByRole('combobox', { name: /^Proficiency/i });
+    fireEvent.change(proficiencySelect, {
+      target: { value: 'Native or Bilingual' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /^Save changes$/i }));
+
+    await waitFor(() => expect(updateLanguage).toHaveBeenCalledTimes(1));
+    expect(updateLanguage).toHaveBeenCalledWith('lang-123', {
+      language: 'German',
+      proficiency: 'Native or Bilingual',
+    });
+  });
+
+  it('preserves custom non-canonical language in options when editing', async () => {
+    const customLangItem = {
+      id: 'lang-custom',
+      studentId: 'user-1',
+      language: 'Esperanto',
+      proficiency: 'Elementary',
+      createdAt: '2026-09-01T00:00:00.000Z',
+      updatedAt: '2026-09-01T00:00:00.000Z',
+    };
+    listLanguages.mockReset().mockResolvedValue([customLangItem]);
+    updateLanguage.mockResolvedValueOnce(customLangItem);
+
+    renderWithQueryClient(<LanguagesSection />);
+    expect(await screen.findByText('Esperanto')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /Edit Esperanto/i }));
+
+    const languageSelect = screen.getByRole('combobox', { name: /^Language/i });
+    expect((languageSelect as HTMLSelectElement).value).toBe('Esperanto');
+    expect(screen.getByRole('option', { name: 'Esperanto' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Save changes$/i }));
+
+    await waitFor(() => expect(updateLanguage).toHaveBeenCalledTimes(1));
+    expect(updateLanguage).toHaveBeenCalledWith('lang-custom', {
+      language: 'Esperanto',
+      proficiency: 'Elementary',
+    });
+  });
+
+  it('validates that a language must be selected before submitting', async () => {
+    listLanguages.mockResolvedValueOnce([]);
+
+    renderWithQueryClient(<LanguagesSection />);
+    const addButton = (await screen.findAllByRole('button', { name: /^Add language$/i })).at(
+      -1,
+    ) as HTMLElement;
+    fireEvent.click(addButton);
+
+    // Attempt to submit without picking a language
+    const modalForm = screen.getByRole('dialog').querySelector('form');
+    expect(modalForm).not.toBeNull();
+    if (modalForm) {
+      fireEvent.submit(modalForm);
+    }
+
+    expect(await screen.findByText('Language name is required.')).toBeTruthy();
+    expect(createLanguage).not.toHaveBeenCalled();
+  });
+
+  it('deletes language entry after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    deleteLanguage.mockResolvedValueOnce(undefined);
+
+    renderWithQueryClient(<LanguagesSection />);
+    expect(await screen.findByText('French')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /Delete French/i }));
+
+    await waitFor(() => expect(deleteLanguage).toHaveBeenCalledTimes(1));
+    expect(deleteLanguage).toHaveBeenCalledWith('lang-123');
   });
 });

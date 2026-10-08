@@ -14,7 +14,6 @@ import {
   toJobsSearch,
   type JobsUrlState,
 } from '@/lib/jobs-url-state';
-import { FitTabs } from '@/components/jobs/FitTabs';
 import { HideJobDialog } from '@/components/jobs/HideJobDialog';
 import { JobCard } from '@/components/jobs/JobCard';
 import { JobFilters } from '@/components/jobs/JobFilters';
@@ -50,10 +49,10 @@ function JobsContent() {
   );
 
   const browse = useInfiniteQuery({
-    queryKey: [...STUDENT_JOBS_KEY, 'list', state.fit, state.type, state.mode, state.location],
+    queryKey: [...STUDENT_JOBS_KEY, 'list', state.type, state.mode, state.location],
     queryFn: ({ pageParam }) =>
       api.studentJobs.list({
-        fit: state.fit,
+        fit: 'ALL',
         type: state.type,
         mode: state.mode,
         location: state.location,
@@ -61,7 +60,7 @@ function JobsContent() {
       }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
-    enabled: state.view === 'browse',
+    enabled: state.view !== 'saved',
     retry: false,
   });
   const saved = useQuery({
@@ -71,49 +70,53 @@ function JobsContent() {
     retry: false,
   });
 
-  const active = state.view === 'browse' ? browse : saved;
+  const active = state.view === 'saved' ? saved : browse;
+  const browsed = browse.data?.pages.flatMap((page) => page.jobs) ?? [];
   const jobs: StudentJobCard[] =
-    state.view === 'browse'
-      ? (browse.data?.pages.flatMap((page) => page.jobs) ?? [])
-      : (saved.data?.jobs ?? []);
-  const counts = browse.data?.pages[0]?.counts;
+    state.view === 'saved'
+      ? (saved.data?.jobs ?? [])
+      : state.view === 'applied'
+        ? browsed.filter((job) => job.applied)
+        : browsed;
   const filtered = activeFilters(state).length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 pb-12">
+    <div className="mx-auto w-full max-w-7xl space-y-5 pb-12">
       <header>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl dark:text-white">
           Jobs
         </h1>
         <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm dark:text-zinc-400">
-          Openings from your university and verified companies, ranked by how well you fit.
+          Openings from your university and verified companies.
         </p>
       </header>
 
-      <div role="tablist" aria-label="View" className="flex gap-2">
-        {(['browse', 'saved'] as const).map((view) => (
-          <button
-            key={view}
-            type="button"
-            role="tab"
-            aria-selected={state.view === view}
-            onClick={() => setState({ ...state, view })}
-            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
-              state.view === view ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-700'
-            }`}
-          >
-            {view === 'browse' ? 'Browse' : 'Saved jobs'}
-          </button>
-        ))}
-      </div>
+      <nav
+        aria-label="Jobs sections"
+        className="flex items-center gap-1 overflow-x-auto border-b border-zinc-200 [scrollbar-width:none] dark:border-zinc-800 [&::-webkit-scrollbar]:hidden"
+      >
+        <div role="tablist" aria-label="View" className="flex items-center gap-1">
+          {(['browse', 'saved', 'applied'] as const).map((view) => (
+            <button
+              key={view}
+              type="button"
+              role="tab"
+              aria-selected={state.view === view}
+              onClick={() => setState({ ...state, view })}
+              className={`-mb-px shrink-0 border-b-2 px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors ${
+                state.view === view
+                  ? 'border-zinc-900 text-zinc-950 dark:border-white dark:text-white'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white'
+              }`}
+            >
+              {view === 'browse' ? 'Browse' : view === 'saved' ? 'Saved jobs' : 'Applied'}
+            </button>
+          ))}
+        </div>
+      </nav>
 
       {state.view === 'browse' ? (
         <>
-          <FitTabs
-            value={state.fit}
-            counts={counts}
-            onChange={(fit) => setState({ ...state, fit })}
-          />
           <JobFilters state={state} onChange={setState} />
         </>
       ) : null}
@@ -160,6 +163,12 @@ function JobsContent() {
             title="No saved jobs yet"
             description="Tap Save on a job to keep it here for later."
           />
+        ) : state.view === 'applied' ? (
+          <EmptyState
+            icon={Briefcase}
+            title="No applications yet"
+            description="Jobs you apply to will show up here."
+          />
         ) : (
           <EmptyState
             icon={Briefcase}
@@ -180,7 +189,7 @@ function JobsContent() {
         )
       ) : (
         <>
-          <ul className="space-y-3">
+          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {jobs.map((job) => (
               <JobCard
                 key={job.id}
@@ -191,7 +200,7 @@ function JobsContent() {
               />
             ))}
           </ul>
-          {state.view === 'browse' && browse.hasNextPage ? (
+          {state.view !== 'saved' && browse.hasNextPage ? (
             <div className="flex justify-center">
               <Button
                 variant="outline"

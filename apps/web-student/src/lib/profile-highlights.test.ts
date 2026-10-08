@@ -25,7 +25,7 @@ describe('buildProfileHighlights', () => {
         {
           id: '1',
           studentId: 's1',
-          institutionName: 'SMART University',
+          institutionName: 'HireKiwi University',
           degree: 'B.Tech',
           fieldOfStudy: 'Computer Science',
           startDate: null,

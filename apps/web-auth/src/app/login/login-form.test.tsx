@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { api, storeSession } from '../../lib/api';
 import { LoginForm } from './login-form';
 
@@ -72,7 +72,7 @@ describe('LoginForm identify-first flow', () => {
   it('explains why sign-in failed and offers a new verification link', async () => {
     vi.mocked(api.auth.identify).mockResolvedValue({ exists: true });
     vi.mocked(api.auth.login).mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'email_not_verified',
         message: 'Verify your email before signing in.',
         statusCode: 403,

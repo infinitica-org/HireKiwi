@@ -13,13 +13,13 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   HOST: z.string().default('0.0.0.0'),
   PORT: z.coerce.number().int().positive().default(3000),
-  APP_NAME: z.string().default('smart-api-core'),
+  APP_NAME: z.string().default('hirekiwi-api-core'),
   APP_VERSION: z.string().default('0.1.0'),
 
   DATABASE_URL: z
     .string()
     .min(1)
-    .default('postgresql://smart:smart@127.0.0.1:5432/smart?schema=public'),
+    .default('postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public'),
   /**
    * Transaction-mode PgBouncer endpoint for the app's own runtime pool.
    * `prisma migrate deploy`/the CLI always use DATABASE_URL (direct to
@@ -31,7 +31,7 @@ const EnvSchema = z.object({
   // Host 6380 matches infra/docker (Windows often already binds 6379).
   REDIS_URL: z.string().min(1).default('redis://127.0.0.1:6380'),
   KAFKA_BROKERS: z.string().default('127.0.0.1:19092'),
-  KAFKA_CLIENT_ID: z.string().default('smart-api-core'),
+  KAFKA_CLIENT_ID: z.string().default('hirekiwi-api-core'),
 
   JWT_SECRET: z.string().min(32).default('local-dev-jwt-secret-change-me-now!!'),
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
@@ -39,7 +39,7 @@ const EnvSchema = z.object({
     .string()
     .min(32)
     .default('local-dev-cert-master-secret-change-me-now!!'),
-  REFRESH_COOKIE_NAME: z.string().default('smart_refresh'),
+  REFRESH_COOKIE_NAME: z.string().default('hirekiwi_refresh'),
   REFRESH_TTL_SECONDS: z.coerce
     .number()
     .int()
@@ -63,7 +63,7 @@ const EnvSchema = z.object({
     .transform((value) => value === 'true'),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  SMTP_FROM: z.string().default('HireKiwi Platform <noreply@smart.local>'),
+  SMTP_FROM: z.string().default('HireKiwi <noreply@hirekiwi.local>'),
 
   AUTH_APP_URL: z.string().default('http://localhost:3005'),
   STUDENT_APP_URL: z.string().default('http://localhost:3001'),
@@ -80,9 +80,9 @@ const EnvSchema = z.object({
   /** Browser-reachable S3/MinIO base URL for presigned PUT/GET (defaults to S3_ENDPOINT). */
   S3_PUBLIC_ENDPOINT: z.string().optional(),
   S3_REGION: z.string().default('us-east-1'),
-  S3_BUCKET: z.string().default('smart'),
-  S3_ACCESS_KEY: z.string().default('smart'),
-  S3_SECRET_KEY: z.string().default('smartsecret'),
+  S3_BUCKET: z.string().default('hirekiwi'),
+  S3_ACCESS_KEY: z.string().default('hirekiwi'),
+  S3_SECRET_KEY: z.string().default('hirekiwisecret'),
   /**
    * S6-VV-119 — `required`: every server-side write asks for SSE and boot fails unless the bucket has
    * default encryption. Only switch it on after MinIO has a KMS key (docs/delivery/STORAGE_ENCRYPTION.md).

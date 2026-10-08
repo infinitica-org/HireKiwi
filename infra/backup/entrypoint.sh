@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the nightly backup on BACKUP_SCHEDULE (cron syntax, UTC) when
 # BACKUP_ENABLED=true; otherwise idles so an unconfigured environment deploys
-# cleanly and reports smart_backup_enabled 0. Any other argument is executed
+# cleanly and reports hirekiwi_backup_enabled 0. Any other argument is executed
 # as-is, e.g. `docker compose run --rm backup backup.sh` for an on-demand run.
 set -euo pipefail
 
@@ -14,13 +14,13 @@ ENV_NAME="${BACKUP_ENV_NAME:-local}"
 mkdir -p "$METRICS_DIR"
 
 write_enabled_metric() {
-  local tmp="${METRICS_DIR}/.smart_backup_enabled.prom.tmp"
+  local tmp="${METRICS_DIR}/.hirekiwi_backup_enabled.prom.tmp"
   {
-    echo '# HELP smart_backup_enabled 1 when scheduled backups are configured and running.'
-    echo '# TYPE smart_backup_enabled gauge'
-    echo "smart_backup_enabled{env=\"${ENV_NAME}\"} $1"
+    echo '# HELP hirekiwi_backup_enabled 1 when scheduled backups are configured and running.'
+    echo '# TYPE hirekiwi_backup_enabled gauge'
+    echo "hirekiwi_backup_enabled{env=\"${ENV_NAME}\"} $1"
   } >"$tmp"
-  mv "$tmp" "${METRICS_DIR}/smart_backup_enabled.prom"
+  mv "$tmp" "${METRICS_DIR}/hirekiwi_backup_enabled.prom"
 }
 
 if [[ "${BACKUP_ENABLED:-false}" != "true" ]]; then
@@ -30,7 +30,7 @@ if [[ "${BACKUP_ENABLED:-false}" != "true" ]]; then
 fi
 
 : "${BACKUP_AGE_RECIPIENT:?BACKUP_AGE_RECIPIENT (age public key) is required when BACKUP_ENABLED=true}"
-: "${BACKUP_DEST:?BACKUP_DEST (rclone destination, e.g. offsite:smart-backups) is required when BACKUP_ENABLED=true}"
+: "${BACKUP_DEST:?BACKUP_DEST (rclone destination, e.g. offsite:hirekiwi-backups) is required when BACKUP_ENABLED=true}"
 
 SCHEDULE="${BACKUP_SCHEDULE:-30 20 * * *}"
 # crond does not pass the container environment to jobs, so snapshot it (in

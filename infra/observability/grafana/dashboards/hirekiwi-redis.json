@@ -10,8 +10,8 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": true,
-      "tags": ["smart"],
-      "title": "SMART dashboards",
+      "tags": ["hirekiwi"],
+      "title": "HireKiwi dashboards",
       "type": "dashboards"
     }
   ],
@@ -256,11 +256,11 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["smart", "redis"],
+  "tags": ["hirekiwi", "redis"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timezone": "browser",
-  "title": "SMART / Redis",
-  "uid": "smart-redis",
+  "title": "HireKiwi / Redis",
+  "uid": "hirekiwi-redis",
   "version": 1
 }

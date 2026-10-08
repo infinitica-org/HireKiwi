@@ -42,7 +42,7 @@ export const DASHBOARD_AREA_LABELS: Record<ProfileAreaId, string> = {
 };
 
 const AREA_COUNT = PROFILE_AREA_IDS.length;
-const DISMISSAL_STORAGE_PREFIX = 'smart.profile.next-action.dismissed.';
+const DISMISSAL_STORAGE_PREFIX = 'hirekiwi.profile.next-action.dismissed.';
 export const RECOMMENDED_ACTION_DISMISSAL_MS = 7 * 24 * 60 * 60 * 1000;
 export const PROFILE_SKILL_VERIFICATION_UNLOCK_PERCENT = 10;
 
@@ -109,8 +109,10 @@ export interface ProfileProgressInput {
   languages: CandidateLanguageDto[];
   education: CandidateEducationDto[];
   experiences: WorkExperienceDto[];
+  hasNoWorkExperience?: boolean | null;
   projects: ProjectDto[];
   certificates: CandidateCertificateDto[];
+  hasNoCertifications?: boolean | null;
   hasProfilePhoto: boolean;
 }
 
@@ -164,7 +166,7 @@ export function isEducationAreaComplete(input: ProfileProgressInput): boolean {
 }
 
 export function isExperienceAreaComplete(input: ProfileProgressInput): boolean {
-  return input.experiences.length > 0;
+  return input.hasNoWorkExperience === true || input.experiences.length > 0;
 }
 
 export function isProjectsAreaComplete(input: ProfileProgressInput): boolean {
@@ -172,7 +174,7 @@ export function isProjectsAreaComplete(input: ProfileProgressInput): boolean {
 }
 
 export function isCertificationsAreaComplete(input: ProfileProgressInput): boolean {
-  return input.certificates.length > 0;
+  return input.hasNoCertifications === true || input.certificates.length > 0;
 }
 
 export function isProfessionalLinksAreaComplete(input: ProfileProgressInput): boolean {
@@ -227,7 +229,7 @@ function profileSectionActions(input: ProfileProgressInput): RecommendedAction[]
     actions.push({
       id: 'add-skills',
       title: 'Add your skills',
-      description: 'Tell SMART what you already know.',
+      description: 'Tell HireKiwi what you already know.',
       ctaLabel: 'Add skills',
       href: '/student/profile?section=skills',
     });
@@ -320,7 +322,7 @@ export function recommendNextActionCandidates(input: ProfileProgressInput): Reco
   actions.push({
     id: 'explore-public-profile',
     title: 'Explore your public profile',
-    description: 'See how employers will view your SMART profile.',
+    description: 'See how employers will view your HireKiwi profile.',
     ctaLabel: 'View public profile',
     href: '/student/public-profile',
   });
@@ -333,7 +335,7 @@ export function recommendNextAction(input: ProfileProgressInput): RecommendedAct
     recommendNextActionCandidates(input)[0] ?? {
       id: 'explore-public-profile',
       title: 'Explore your public profile',
-      description: 'See how employers will view your SMART profile.',
+      description: 'See how employers will view your HireKiwi profile.',
       ctaLabel: 'View public profile',
       href: '/student/public-profile',
     }

@@ -1,9 +1,9 @@
 /**
- * Kafka (Redpanda) backpressure test: generate `smart.assessment.submitted`
+ * Kafka (Redpanda) backpressure test: generate `hirekiwi.assessment.submitted`
  * events faster than the `evaluation` consumer group can process them, and
  * watch consumer lag grow.
  *
- * Each attempt completion is exactly one produce to `smart.assessment.submitted`
+ * Each attempt completion is exactly one produce to `hirekiwi.assessment.submitted`
  * (12 partitions, keyed by attemptId — packages/contracts/src/events/topics.ts).
  * This test skips the item-answering loop entirely (start -> complete
  * immediately) to maximise produce rate per second rather than per-request
@@ -17,10 +17,10 @@
  *   k6 run -e KAFKA_BACKPRESSURE_RATE=50 -e KAFKA_BACKPRESSURE_DURATION=3m \
  *     src/scenarios/kafka-backpressure.js
  *
- * Watch smart_kafka_events_produced_total, smart_kafka_events_consumed_total
+ * Watch hirekiwi_kafka_events_produced_total, hirekiwi_kafka_events_consumed_total
  * and (the signal that actually answers "is this backpressure?")
- * smart_kafka_consumer_lag_messages in the Redpanda Grafana dashboard
- * (infra/observability/grafana/dashboards/smart-redpanda.json) while this
+ * hirekiwi_kafka_consumer_lag_messages in the Redpanda Grafana dashboard
+ * (infra/observability/grafana/dashboards/hirekiwi-redpanda.json) while this
  * runs. Requires distinct seeded accounts — see cache-stampede.js's setup note.
  */
 import { check, sleep } from 'k6';

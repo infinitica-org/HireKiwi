@@ -18,9 +18,9 @@ export function ProfileSectionHeader({
   evidenceType?: EvidenceType;
 }) {
   return (
-    <div className="flex w-full flex-col gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between font-sans select-none">
+    <div className="flex w-full flex-col gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800 sm:flex-row sm:items-start sm:justify-between font-sans select-none">
       <div className="min-w-0 flex-1">
-        <h2 className="font-heading text-xl font-medium tracking-tight text-zinc-950 dark:text-white">
+        <h2 className="font-heading text-[22px] leading-7 font-semibold tracking-tight text-zinc-950 dark:text-white">
           {title}
         </h2>
         <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
@@ -56,7 +56,7 @@ export function ProfileBentoEmptyPanel({
   actions: ReactNode;
 }) {
   return (
-    <div className="w-full overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-800 dark:bg-[#161616] font-sans select-none">
+    <div className="w-full overflow-hidden rounded-lg border border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-[#161616] font-sans select-none">
       <div className="flex flex-col items-center px-6 py-10 text-center">
         <div className="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400 mb-3 dark:bg-zinc-800 dark:text-zinc-500">
           <EmptyIcon className="size-5 stroke-[1.5]" />

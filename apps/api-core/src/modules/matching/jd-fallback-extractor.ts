@@ -39,7 +39,7 @@ const PROFICIENCY_KEYWORDS: Array<{ level: SkillProficiency; patterns: RegExp[] 
 ];
 
 /**
- * Common alternative skill aliases mapped to SMART taxonomy codes.
+ * Common alternative skill aliases mapped to HireKiwi taxonomy codes.
  */
 const SKILL_ALIASES: Array<{ regex: RegExp; skillCode: string }> = [
   {
@@ -184,7 +184,7 @@ export function extractSkillsOfflineFallback(
 }
 
 /**
- * Maps extracted requirements onto SMART's standardized 10-track taxonomy
+ * Maps extracted requirements onto HireKiwi's standardized 10-track taxonomy
  * and generates a normalized threshold vector.
  */
 export function extract10TrackThresholdVector(

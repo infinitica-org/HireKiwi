@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ClipboardList, Search } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { ATS_STAGES, type ApplicationDto, type AtsStage } from '@hirekiwi/contracts';
 import { Alert } from '@hirekiwi/ui';
 import { applicationsApi, openingsApi } from '@/lib/api';
@@ -23,7 +23,7 @@ import { PlacementEmptyState } from '@/components/placement/PlacementEmptyState'
 import { PlacementPageHeader } from '@/components/placement/PlacementPageHeader';
 
 function errorMessage(caught: unknown, fallback: string): string {
-  if (isSmartApiError(caught) || caught instanceof Error) return caught.message;
+  if (isHireKiwiApiError(caught) || caught instanceof Error) return caught.message;
   return fallback;
 }
 

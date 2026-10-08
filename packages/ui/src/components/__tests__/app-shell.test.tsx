@@ -62,7 +62,7 @@ describe('AppShell & Responsive Shell Components', () => {
       <UserMenu
         user={{
           name: 'Tino Britty',
-          email: 'tino@smart.edu',
+          email: 'tino@hirekiwi.edu',
           role: 'INSTITUTION_ADMIN',
           organizationName: 'Oxford University',
         }}

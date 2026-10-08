@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type {
   CandidateEvidenceProvenanceResponse,
   EvidenceProvenanceItemDto,
@@ -43,7 +43,9 @@ export function CandidateEvidenceReviewPanel({ studentId }: { studentId: string 
       setProvenance(result);
       setSelectedEvidenceId((current) => current ?? result.items[0]?.evidenceId ?? null);
     } catch (caught: unknown) {
-      setLoadError(isSmartApiError(caught) ? caught.message : 'Could not load candidate evidence.');
+      setLoadError(
+        isHireKiwiApiError(caught) ? caught.message : 'Could not load candidate evidence.',
+      );
       setProvenance(null);
     } finally {
       setLoading(false);
@@ -88,7 +90,7 @@ export function CandidateEvidenceReviewPanel({ studentId }: { studentId: string 
     } catch (caught: unknown) {
       setUiState('failure');
       setSubmitError(
-        isSmartApiError(caught)
+        isHireKiwiApiError(caught)
           ? caught.message
           : caught instanceof Error
             ? caught.message

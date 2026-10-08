@@ -7,7 +7,11 @@ import {
 } from '@hirekiwi/prompts';
 import { AiGatewayService } from '../ai-gateway/ai-gateway.service.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
-import { QlixClient, QlixSmartAssessmentSchema, type QlixSmartAssessment } from './qlix-client.js';
+import {
+  QlixClient,
+  QlixHireKiwiAssessmentSchema,
+  type QlixHireKiwiAssessment,
+} from './qlix-client.js';
 
 const MODEL_VERSION = 'capability-inference-v1' as const;
 
@@ -60,8 +64,8 @@ export class CapabilityInferenceService {
     }
 
     const qlixRow = project.qlixCheckResult;
-    const smartAssessment = project.qlixCheckResult.smartAssessmentJson
-      ? QlixSmartAssessmentSchema.parse(project.qlixCheckResult.smartAssessmentJson)
+    const hirekiwiAssessment = project.qlixCheckResult.hirekiwiAssessmentJson
+      ? QlixHireKiwiAssessmentSchema.parse(project.qlixCheckResult.hirekiwiAssessmentJson)
       : null;
 
     const skillCode = project.skillMappings[0]?.skillCode ?? null;
@@ -69,8 +73,8 @@ export class CapabilityInferenceService {
     const blueprint = skillCode ? getSkillBlueprint(skillCode) : undefined;
     const category = definition?.categoryName ?? 'Project Evidence';
 
-    const baseline = this.inferFromSmartAssessment({
-      smartAssessment,
+    const baseline = this.inferFromHireKiwiAssessment({
+      hirekiwiAssessment,
       blueprintCompetencies: blueprint?.competencyModel ?? [],
       category,
       skillCode,
@@ -91,7 +95,7 @@ export class CapabilityInferenceService {
             qlixCheckResult: qlixRow,
           },
           qlixRow.checkId,
-          smartAssessment,
+          hirekiwiAssessment,
         );
         if (llm.length > 0) {
           capabilities = llm;
@@ -138,8 +142,8 @@ export class CapabilityInferenceService {
     return capabilities.length;
   }
 
-  private inferFromSmartAssessment(input: {
-    smartAssessment: QlixSmartAssessment | null;
+  private inferFromHireKiwiAssessment(input: {
+    hirekiwiAssessment: QlixHireKiwiAssessment | null;
     blueprintCompetencies: ReadonlyArray<{
       competencyId: string;
       capability: string;
@@ -156,8 +160,8 @@ export class CapabilityInferenceService {
     proficiency: ProficiencyLevel;
     evidenceRefs: string[];
   }> {
-    const observations = input.smartAssessment?.competencyObservations ?? [];
-    const ceiling = input.smartAssessment?.appliedProficiencyCeiling ?? null;
+    const observations = input.hirekiwiAssessment?.competencyObservations ?? [];
+    const ceiling = input.hirekiwiAssessment?.appliedProficiencyCeiling ?? null;
     const byId = new Map(input.blueprintCompetencies.map((row) => [row.competencyId, row]));
 
     return observations
@@ -193,11 +197,11 @@ export class CapabilityInferenceService {
       qlixCheckResult: {
         checkId: string;
         skillsJson: unknown;
-        smartAssessmentJson: unknown;
+        hirekiwiAssessmentJson: unknown;
       };
     },
     checkId: string,
-    smartAssessment: QlixSmartAssessment | null,
+    hirekiwiAssessment: QlixHireKiwiAssessment | null,
   ): Promise<
     Array<{
       capabilityLabel: string;
@@ -210,7 +214,7 @@ export class CapabilityInferenceService {
     const digest = this.qlix.buildDigest({
       checkId,
       status: 'completed',
-      smartAssessment: smartAssessment ?? undefined,
+      hirekiwiAssessment: hirekiwiAssessment ?? undefined,
     });
     const result = await this.gateway.complete({
       promptRef: CAPABILITY_INFERENCE_PROMPT_REF,
@@ -225,7 +229,9 @@ export class CapabilityInferenceService {
         ].join('\n'),
         stack: project.stack,
         qlixDigest: digest,
-        smartAssessmentJson: JSON.stringify(project.qlixCheckResult.smartAssessmentJson ?? {}),
+        hirekiwiAssessmentJson: JSON.stringify(
+          project.qlixCheckResult.hirekiwiAssessmentJson ?? {},
+        ),
         skillsDigest: JSON.stringify(project.qlixCheckResult.skillsJson ?? {}),
       },
       correlation: { responseId: project.title },

@@ -40,6 +40,7 @@ const card = (
 ): EmployerApplicantCard => ({
   applicationId: id,
   candidateName: `Candidate ${id}`,
+  photoUrl: null,
   fit: { band: 'STRONG', matchPercent: 90, topReason: null },
   fitRecalculated: false,
   status,

@@ -53,7 +53,7 @@ export default function DashboardPage() {
           {userLoading || !firstName ? greeting : `${greeting}, ${firstName}`}
         </h1>
         <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-          Here’s what’s new on your SMART profile today.
+          Here’s what’s new on your HireKiwi profile today.
         </p>
       </div>
 

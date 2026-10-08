@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { ResumeSection } from './ResumeSection';
 import { extractResumeRawText } from '@/lib/extract-resume-text';
 
@@ -239,7 +240,7 @@ describe('ResumeSection', () => {
     const apiError = Object.assign(
       new Error("The uploaded document doesn't appear to be a resume."),
       {
-        isSmartApiError: true,
+        isHireKiwiApiError: true,
         message: "The uploaded document doesn't appear to be a resume.",
       },
     );
@@ -316,5 +317,85 @@ describe('ResumeSection', () => {
     // API must NOT have been called
     expect(uploadResume).not.toHaveBeenCalled();
     expect(screen.queryByText(/Uploading resume/i)).toBeNull();
+  });
+
+  it('handles 503 storage unavailable error cleanly', async () => {
+    const error503 = new HireKiwiApiError({
+      message: 'Object storage is temporarily unavailable. Please retry in a few moments.',
+      statusCode: 503,
+      error: 'storage_unavailable',
+    });
+    uploadResume.mockRejectedValueOnce(error503);
+
+    render(<ResumeSection />);
+    await screen.findByText(/No resume yet/i);
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File([validResumeText], 'resume.pdf', { type: 'application/pdf' });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Uploading resume/i)).toBeNull();
+      expect(screen.getByText(/Object storage is temporarily unavailable/i)).toBeDefined();
+    });
+  });
+
+  it('handles 429 rate limit error with Retry-After and disables button during cooldown', async () => {
+    const error429 = new HireKiwiApiError({
+      message: 'Too many requests.',
+      statusCode: 429,
+      error: 'rate_limit_exceeded',
+      retryAfterSeconds: 15,
+    });
+    uploadResume.mockRejectedValueOnce(error429);
+
+    render(<ResumeSection />);
+    await screen.findByText(/No resume yet/i);
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File([validResumeText], 'resume.pdf', { type: 'application/pdf' });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Too many upload attempts. Please wait 15 seconds before retrying./i),
+      ).toBeDefined();
+    });
+
+    const button = screen.getByRole('button', { name: /Wait 15s to retry/i }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+  });
+
+  it('prevents duplicate simultaneous upload submissions while upload is in progress', async () => {
+    let resolveUpload: (val: unknown) => void = () => {};
+    uploadResume.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveUpload = resolve;
+        }),
+    );
+
+    render(<ResumeSection />);
+    await screen.findByText(/No resume yet/i);
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file1 = new File([validResumeText], 'resume.pdf', { type: 'application/pdf' });
+    fireEvent.change(input, { target: { files: [file1] } });
+
+    expect(screen.getByText(/Uploading resume/i)).toBeDefined();
+    expect(uploadResume).toHaveBeenCalledTimes(1);
+
+    // Attempt second upload while first is in-flight
+    const file2 = new File([validResumeText], 'resume2.pdf', { type: 'application/pdf' });
+    fireEvent.change(input, { target: { files: [file2] } });
+
+    // Should NOT call uploadResume a second time
+    expect(uploadResume).toHaveBeenCalledTimes(1);
+
+    // Resolve first upload
+    resolveUpload(mockUploadSuccess);
+    await waitFor(() => {
+      expect(screen.getByText('resume.pdf')).toBeDefined();
+    });
   });
 });

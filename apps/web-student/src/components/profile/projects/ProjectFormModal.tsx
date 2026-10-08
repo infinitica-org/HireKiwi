@@ -96,7 +96,7 @@ export function ProjectFormModal({
                   ? 'Pick a repository to import details from GitHub.'
                   : wizardStep === 'github-importing'
                     ? 'Fetching repository details…'
-                    : 'Complete your project story for SMART evaluation.'}
+                    : 'Complete your project story for HireKiwi evaluation.'}
             </p>
           </div>
           <button

@@ -15,9 +15,9 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 export function verifiedTooltip(verifiedAt?: string | null): string {
   const date = verifiedAt ? new Date(verifiedAt) : null;
-  if (!date || Number.isNaN(date.getTime())) return 'SMART verified this company';
+  if (!date || Number.isNaN(date.getTime())) return 'HireKiwi verified this company';
   const formatted = `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
-  return `SMART verified this company on ${formatted}`;
+  return `HireKiwi verified this company on ${formatted}`;
 }
 
 /** Verified-company indicator (Th6-354). Driven only by the server's verification status. */

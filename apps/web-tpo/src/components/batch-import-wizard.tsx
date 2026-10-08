@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   API_PREFIX,
   BatchImportMappingSchema,
@@ -57,7 +57,7 @@ export function toBatchImportMapping(mapping: MappingState): BatchImportMapping 
 }
 
 function safeMessage(caught: unknown, fallback: string) {
-  if (isSmartApiError(caught)) return caught.message;
+  if (isHireKiwiApiError(caught)) return caught.message;
   if (caught instanceof Error) return caught.message;
   return fallback;
 }
@@ -144,7 +144,7 @@ export function BatchImportWizard({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'smart-student-import-template.xlsx';
+      link.download = 'hirekiwi-student-import-template.xlsx';
       link.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -408,7 +408,7 @@ export function BatchImportWizard({
             {duplicate ? (
               <Alert
                 tone="danger"
-                title="Each SMART field must use a different uploaded column."
+                title="Each HireKiwi field must use a different uploaded column."
                 role="alert"
               />
             ) : null}
@@ -604,7 +604,7 @@ function ImportOutcome({
                 className="mt-1 accent-accent"
               />
               <span>
-                I confirm that SMART should queue {pending} invitation emails for this batch.
+                I confirm that HireKiwi should queue {pending} invitation emails for this batch.
               </span>
             </label>
           ) : (

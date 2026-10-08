@@ -24,6 +24,7 @@ import type {
   CompleteCandidateOnboardingRequest,
   EnrollTrackRequest,
   LinkedinVerification,
+  UpdateCandidateProfileRequest,
 } from '@hirekiwi/contracts';
 import {
   CandidateOnboardingDraftSchema,
@@ -38,7 +39,7 @@ import {
   RESUME_MAX_FILE_SIZE_BYTES,
   RESUME_VALIDATION_MESSAGES,
   SaveCandidateOnboardingDraftRequestSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   validateResumeDocumentText,
 } from '@hirekiwi/contracts';
 import type { Prisma } from '../../generated/prisma/index.js';
@@ -110,7 +111,7 @@ export class UsersService {
     if (!isAllowedProfilePhotoMimeType(contentType)) {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'Only JPEG, PNG, and WebP images are accepted.',
+        message: 'Only JPEG and PNG images are accepted.',
         statusCode: 400,
       });
     }
@@ -154,6 +155,40 @@ export class UsersService {
     }
 
     return { profilePhotoUrl };
+  }
+
+  async updateProfile(
+    userId: string,
+    data: UpdateCandidateProfileRequest,
+  ): Promise<AuthenticatedUser> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { institution: true, company: true, primaryTrack: true, secondaryTrack: true },
+    });
+    if (!user) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'User not found.',
+        statusCode: 404,
+      });
+    }
+    if (user.role !== 'STUDENT') {
+      throw new ForbiddenException({
+        error: 'forbidden',
+        message: 'Only students may update their student profile.',
+        statusCode: 403,
+      });
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.profileHeadline !== undefined ? { profileHeadline: data.profileHeadline } : {}),
+      },
+      include: { institution: true, company: true, primaryTrack: true, secondaryTrack: true },
+    });
+
+    return toAuthenticatedUserWithPhoto(this.storage, updated);
   }
 
   async getOnboarding(userId: string): Promise<CandidateOnboardingProfileResponse> {
@@ -650,7 +685,7 @@ export class UsersService {
     if (unknown.length > 0) {
       throw new BadRequestException({
         error: 'validation_error',
-        message: 'Choose skills from the SMART skill catalog.',
+        message: 'Choose skills from the HireKiwi skill catalog.',
         statusCode: 400,
         details: { unknownSkillCodes: unknown },
       });
@@ -694,7 +729,10 @@ export class UsersService {
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: {
-        fullName: `${request.firstName} ${request.lastName}`.trim(),
+        fullName: [request.firstName, request.middleName, request.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim(),
         onboardingCompleted: true,
         onboardingDetails: details as Prisma.InputJsonValue,
         dpdpConsentAt: consentTimestamp,
@@ -750,9 +788,9 @@ export class UsersService {
       // onboarding completion wait on it or fail because of it.
       await this.outbox
         .enqueueEnvelope({
-          topic: SMART_TOPICS.candidateSkillsDiscovered,
+          topic: HIREKIWI_TOPICS.candidateSkillsDiscovered,
           partitionKey: userId,
-          eventType: SMART_TOPICS.candidateSkillsDiscovered,
+          eventType: HIREKIWI_TOPICS.candidateSkillsDiscovered,
           source: 'users',
           data: { userId, languages, selectedSkillNames },
         })

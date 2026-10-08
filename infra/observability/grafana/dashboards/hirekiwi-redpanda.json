@@ -10,8 +10,8 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": true,
-      "tags": ["smart"],
-      "title": "SMART dashboards",
+      "tags": ["hirekiwi"],
+      "title": "HireKiwi dashboards",
       "type": "dashboards"
     }
   ],
@@ -229,7 +229,7 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "description": "smart_kafka_consumer_lag_messages — app-side gauge computed by api-core's KafkaService against broker high-water marks, not a Redpanda-native metric. The signal a Kafka backpressure test is watching for.",
+      "description": "hirekiwi_kafka_consumer_lag_messages — app-side gauge computed by api-core's KafkaService against broker high-water marks, not a Redpanda-native metric. The signal a Kafka backpressure test is watching for.",
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
       "id": 10,
@@ -241,7 +241,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "smart_kafka_consumer_lag_messages",
+          "expr": "hirekiwi_kafka_consumer_lag_messages",
           "legendFormat": "{{topic}} / {{consumer_group}}",
           "refId": "A"
         }
@@ -251,11 +251,11 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["smart", "redpanda", "kafka"],
+  "tags": ["hirekiwi", "redpanda", "kafka"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timezone": "browser",
-  "title": "SMART / Redpanda (Kafka)",
-  "uid": "smart-redpanda",
+  "title": "HireKiwi / Redpanda (Kafka)",
+  "uid": "hirekiwi-redpanda",
   "version": 1
 }

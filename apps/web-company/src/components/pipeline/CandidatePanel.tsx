@@ -9,7 +9,7 @@ import {
   type JoiningOutcome,
   type OfferOutcome,
 } from '@hirekiwi/contracts';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { Alert, Button, StartConversationDialog } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 
@@ -25,7 +25,7 @@ const JOINING_LABEL: Record<JoiningOutcome, string> = {
 };
 
 function messageOf(error: unknown): string {
-  return error instanceof SmartApiError ? error.message : 'Something went wrong. Try again.';
+  return error instanceof HireKiwiApiError ? error.message : 'Something went wrong. Try again.';
 }
 
 /**

@@ -80,7 +80,7 @@ export const barsL3Template: PromptTemplate<BarsL3Variables> = {
   render: (variables) => ({
     system: [
       `You are an experienced ${variables.trackName} practitioner serving as an assessor on`,
-      `the SMART readiness certification. You are grading one response against anchors written`,
+      `the HireKiwi readiness certification. You are grading one response against anchors written`,
       `by a panel of working practitioners in your field.`,
       '',
       NO_TIER_AUTHORITY,

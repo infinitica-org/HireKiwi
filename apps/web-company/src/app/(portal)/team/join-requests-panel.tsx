@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { CompanyJoinRequestDto } from '@hirekiwi/contracts';
 import { Alert } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
@@ -30,7 +30,9 @@ export function JoinRequestsPanel({ onInvited }: { onInvited: () => void }) {
     await queryClient.invalidateQueries({ queryKey: JOIN_REQUESTS_QUERY_KEY });
   };
   const onError = (err: unknown) =>
-    setError(isSmartApiError(err) && err.message ? err.message : 'Could not update the request.');
+    setError(
+      isHireKiwiApiError(err) && err.message ? err.message : 'Could not update the request.',
+    );
 
   const approve = useMutation({
     mutationFn: (id: string) => api.employer.approveJoinRequest(id),

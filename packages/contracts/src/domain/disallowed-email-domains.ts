@@ -1,5 +1,5 @@
 /**
- * Free / personal mailbox providers. Anywhere SMART needs a work email
+ * Free / personal mailbox providers. Anywhere HireKiwi needs a work email
  * (certificate endorsers, student registration, employer onboarding), an
  * address at one of these is rejected: anyone can create one, so it proves
  * nothing about the organization behind it. This is a denylist heuristic

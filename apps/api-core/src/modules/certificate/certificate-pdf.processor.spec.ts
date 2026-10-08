@@ -24,7 +24,7 @@ describe('PdfGenerationProcessor', () => {
 
     mockStorage = {
       putObjectBuffer: vi.fn().mockResolvedValue(undefined),
-      getSignedDownloadUrl: vi.fn().mockResolvedValue('https://storage.smart.local/signed-pdf'),
+      getSignedDownloadUrl: vi.fn().mockResolvedValue('https://storage.hirekiwi.local/signed-pdf'),
     };
 
     processor = new PdfGenerationProcessor(

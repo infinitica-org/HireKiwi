@@ -13,7 +13,7 @@ import {
   EvidenceFileConfirmSchema,
   ProjectSubmittedDataSchema,
   ReplaceProjectRequestSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   UuidSchema,
   type ListMyProjectsResponse,
   type ProjectDocumentDto,
@@ -39,7 +39,7 @@ import { toProjectDto, type ProjectRow } from '../evaluation/project-verify.mapp
 @Injectable()
 export class ProjectsService {
   readonly owner = 'Vishal V';
-  readonly purpose = 'CN-T08 project create + SE-T03 queue via smart.project.submitted.';
+  readonly purpose = 'CN-T08 project create + SE-T03 queue via hirekiwi.project.submitted.';
   private readonly logger = new Logger(ProjectsService.name);
 
   constructor(
@@ -206,9 +206,9 @@ export class ProjectsService {
     });
 
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.projectSubmitted,
+      topic: HIREKIWI_TOPICS.projectSubmitted,
       partitionKey: row.id,
-      eventType: SMART_TOPICS.projectSubmitted,
+      eventType: HIREKIWI_TOPICS.projectSubmitted,
       source: 'platform',
       data: ProjectSubmittedDataSchema.parse({ projectId: row.id, studentId }),
     });
@@ -219,7 +219,7 @@ export class ProjectsService {
     // Sync fallback when Kafka consumer is not running (local dev).
     await this.verifyRunner.runForProject(row.id, studentId);
 
-    this.logger.log(`Project ${row.id} queued on ${SMART_TOPICS.projectSubmitted}`);
+    this.logger.log(`Project ${row.id} queued on ${HIREKIWI_TOPICS.projectSubmitted}`);
     const refreshed = await this.loadRow(row.id);
     return this.toDtoWithInterview(refreshed ?? { ...row, isActive: true, report: null });
   }

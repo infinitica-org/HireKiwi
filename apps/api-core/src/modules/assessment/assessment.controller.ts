@@ -333,7 +333,7 @@ export class AssessmentController {
   @Post('complete')
   @ApiOperation({
     summary:
-      'Finalise an attempt: mark-weighted scoring, (with claimId) SE-T01 skill-claim settlement, emits smart.assessment.submitted.',
+      'Finalise an attempt: mark-weighted scoring, (with claimId) SE-T01 skill-claim settlement, emits hirekiwi.assessment.submitted.',
   })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Attempt scored; claim state, if any, updated' })

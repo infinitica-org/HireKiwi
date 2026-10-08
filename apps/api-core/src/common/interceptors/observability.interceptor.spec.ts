@@ -25,7 +25,7 @@ function mockContext(opts: {
     routeOptions: { url: opts.url ?? '/api/v1/catalog/tracks' },
     headers: opts.headers ?? {},
     user: opts.user,
-    smartLogContext: undefined as unknown,
+    hirekiwiLogContext: undefined as unknown,
   };
   const context = {
     switchToHttp: () => ({
@@ -48,7 +48,7 @@ describe('ObservabilityInterceptor', () => {
     await firstValueFrom(interceptor.intercept(context, next));
 
     expect(isValidCorrelationId(headers[CORRELATION_HEADER] ?? '')).toBe(true);
-    expect(request.smartLogContext).toMatchObject({
+    expect(request.hirekiwiLogContext).toMatchObject({
       correlationId: headers[CORRELATION_HEADER],
       requestId: 'req-42',
       module: 'api-core',
@@ -71,7 +71,7 @@ describe('ObservabilityInterceptor', () => {
     await firstValueFrom(interceptor.intercept(context, next));
 
     expect(seenUserId).toBe('user-1');
-    expect(request.smartLogContext).toMatchObject({
+    expect(request.hirekiwiLogContext).toMatchObject({
       userId: 'user-1',
       institutionId: 'inst-9',
     });

@@ -5,8 +5,8 @@ import {
   type UserRole,
 } from '@hirekiwi/contracts';
 
-/** Shared browser session key — all SMART portals read/write this. */
-export const ACCESS_TOKEN_KEY = 'smart.accessToken' as const;
+/** Shared browser session key — all HireKiwi portals read/write this. */
+export const ACCESS_TOKEN_KEY = 'hirekiwi.accessToken' as const;
 
 /** Roles allowed on each authenticated microfrontend (mirrors api-core RolesGuard). */
 export const PORTAL_ROLES = {
@@ -42,7 +42,7 @@ export function clearAccessToken(): void {
 /** Hidden iframe target so Sign out on one portal can wipe leftover JWTs on the others. */
 export const CLEAR_SESSION_PATH = '/auth/clear-session' as const;
 
-export const SESSION_LOGOUT_CHANNEL = 'smart.session.logout' as const;
+export const SESSION_LOGOUT_CHANNEL = 'hirekiwi.session.logout' as const;
 
 export function isClearSessionPath(pathname: string): boolean {
   return pathname === CLEAR_SESSION_PATH || pathname.startsWith(`${CLEAR_SESSION_PATH}/`);
@@ -116,6 +116,39 @@ function accessTokenIssuedAtMs(accessToken: string): number | null {
   }
 }
 
+/** `exp` claim of an access token, in ms; null when unreadable. */
+function accessTokenExpiresAtMs(accessToken: string): number | null {
+  const payload = accessToken.split('.')[1];
+  if (!payload) return null;
+  try {
+    const exp = (JSON.parse(utf8FromBase64Url(payload)) as { exp?: unknown }).exp;
+    return typeof exp === 'number' && Number.isFinite(exp) ? exp * 1_000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * True when the token's own `exp` has passed. A token without a readable `exp` is not treated as
+ * expired here; the API still decides. Used so a leftover JWT in storage is never mistaken for a
+ * live session (portals would reject it and bounce back to login, which would re-send it).
+ */
+export function isAccessTokenExpired(accessToken: string, now: number = Date.now()): boolean {
+  const expiresAt = accessTokenExpiresAtMs(accessToken);
+  return expiresAt !== null && expiresAt <= now;
+}
+
+/** The stored access token, or null (and cleared) when it has already expired. */
+export function getUnexpiredAccessToken(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+  if (isAccessTokenExpired(token)) {
+    clearAccessToken();
+    return null;
+  }
+  return token;
+}
+
 /** localStorage is shared by every tab of an origin; sessionStorage is per tab. */
 function sharedAccessToken(): string | null {
   try {
@@ -126,7 +159,7 @@ function sharedAccessToken(): string | null {
 }
 
 /** Web Lock name: one refresh at a time across all tabs of an origin. */
-export const REFRESH_LOCK_NAME = 'smart.auth.refresh' as const;
+export const REFRESH_LOCK_NAME = 'hirekiwi.auth.refresh' as const;
 /** A token minted this recently by another tab is reused instead of refreshing again. */
 export const REFRESH_REUSE_WINDOW_MS = 30_000;
 /** Longest a tab waits for another tab's refresh before refreshing on its own. */
@@ -135,7 +168,7 @@ export const REFRESH_LOCK_WAIT_MS = 10_000;
 /**
  * Th6-614 - run a token refresh at most once across ALL tabs of this origin.
  *
- * `SmartApiClient` already single-flights refresh inside one tab, but five tabs opened with the
+ * `HireKiwiApiClient` already single-flights refresh inside one tab, but five tabs opened with the
  * same stale token each rotated the refresh cookie on their own. Tabs now queue on a Web Lock;
  * the first one refreshes and stores the new token in localStorage, and every tab behind it adopts
  * that token instead of calling the API again. Without the Web Locks API (or if the lock holder
@@ -377,7 +410,7 @@ export async function signOutAndRedirect(options: {
  * a second call presenting the same now-already-rotated cookie reads as reuse
  * to the server, which revokes the *entire* session family, logging the user
  * straight back out immediately after a successful login. Single-flighting
- * this the same way `SmartApiClient.refreshOnce` does closes that race.
+ * this the same way `HireKiwiApiClient.refreshOnce` does closes that race.
  */
 let reconcileInFlight: Promise<string | null> | null = null;
 
@@ -406,18 +439,18 @@ async function reconcileOnce(apiBaseUrl: string): Promise<string | null> {
       clearAccessToken();
       return null;
     }
-    if (!res.ok) return getAccessToken();
+    if (!res.ok) return getUnexpiredAccessToken();
     const parsed = AuthTokenResponseSchema.safeParse(await res.json());
-    if (!parsed.success) return getAccessToken();
+    if (!parsed.success) return getUnexpiredAccessToken();
     storeAccessToken(parsed.data.accessToken);
     return parsed.data.accessToken;
   } catch {
-    return getAccessToken();
+    return getUnexpiredAccessToken();
   }
 }
 
 /**
- * Hook for SmartApiClient: rotate the access token using the HttpOnly refresh cookie.
+ * Hook for HireKiwiApiClient: rotate the access token using the HttpOnly refresh cookie.
  */
 export function createRefreshAccessToken(refresh: () => Promise<{ accessToken: string }>) {
   return (): Promise<string | null> =>

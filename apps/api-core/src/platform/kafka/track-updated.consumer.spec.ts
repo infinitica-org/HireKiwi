@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SMART_TOPICS, TrackUpdatedEventSchema } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS, TrackUpdatedEventSchema } from '@hirekiwi/contracts';
 import { env } from '../config/env.js';
 import type { KafkaService } from './kafka.service.js';
 import type { RedisService } from '../redis/redis.service.js';
@@ -10,7 +10,7 @@ describe('TrackUpdatedConsumer', () => {
     const payload = {
       meta: {
         eventId: '11111111-1111-4111-8111-111111111111',
-        eventType: SMART_TOPICS.trackUpdated,
+        eventType: HIREKIWI_TOPICS.trackUpdated,
         version: 1,
         occurredAt: '2026-09-30T10:00:00.000Z',
         traceId: '22222222-2222-4222-8222-222222222222',
@@ -28,12 +28,12 @@ describe('TrackUpdatedConsumer', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('subscribes to SMART_TOPICS.trackUpdated and invalidates all keys in Redis', async () => {
+  it('subscribes to HIREKIWI_TOPICS.trackUpdated and invalidates all keys in Redis', async () => {
     let handler: ((payload: unknown, headers: Record<string, string>) => Promise<void>) | undefined;
 
     const mockKafka: Partial<KafkaService> = {
       subscribe: vi.fn().mockImplementation(async (sub) => {
-        if (sub.topic === SMART_TOPICS.trackUpdated) {
+        if (sub.topic === HIREKIWI_TOPICS.trackUpdated) {
           handler = sub.handler;
         }
       }),
@@ -52,7 +52,7 @@ describe('TrackUpdatedConsumer', () => {
 
     expect(mockKafka.subscribe).toHaveBeenCalledWith(
       expect.objectContaining({
-        topic: SMART_TOPICS.trackUpdated,
+        topic: HIREKIWI_TOPICS.trackUpdated,
         module: 'platform',
       }),
     );
@@ -62,7 +62,7 @@ describe('TrackUpdatedConsumer', () => {
     const sampleEvent = {
       meta: {
         eventId: '11111111-1111-4111-8111-111111111111',
-        eventType: SMART_TOPICS.trackUpdated,
+        eventType: HIREKIWI_TOPICS.trackUpdated,
         version: 1,
         occurredAt: '2026-09-30T10:00:00.000Z',
         traceId: 'trace-1',
@@ -89,7 +89,7 @@ describe('TrackUpdatedConsumer', () => {
 
     const mockKafka: Partial<KafkaService> = {
       subscribe: vi.fn().mockImplementation(async (sub) => {
-        if (sub.topic === SMART_TOPICS.trackUpdated) {
+        if (sub.topic === HIREKIWI_TOPICS.trackUpdated) {
           handler = sub.handler;
         }
       }),
@@ -109,7 +109,7 @@ describe('TrackUpdatedConsumer', () => {
     const sampleEvent = {
       meta: {
         eventId: '11111111-1111-4111-8111-111111111111',
-        eventType: SMART_TOPICS.trackUpdated,
+        eventType: HIREKIWI_TOPICS.trackUpdated,
         version: 1,
         occurredAt: '2026-09-30T10:00:00.000Z',
         traceId: 'trace-1',

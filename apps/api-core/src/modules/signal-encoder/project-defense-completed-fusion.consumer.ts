@@ -1,6 +1,6 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ProjectDefenseCompletedEventSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { ProjectDefenseCompletedEventSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
 import { env } from '../../platform/config/env.js';
 import { KafkaService } from '../../platform/kafka/kafka.service.js';
@@ -33,13 +33,13 @@ export class ProjectDefenseCompletedFusionConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.projectDefenseCompleted,
+        topic: HIREKIWI_TOPICS.projectDefenseCompleted,
         module: 'signal-encoder',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {
             const parsed = ProjectDefenseCompletedEventSchema.safeParse(payload);
             if (!parsed.success) {
-              this.logger.warn('Ignored malformed smart.project.defense.completed payload');
+              this.logger.warn('Ignored malformed hirekiwi.project.defense.completed payload');
               return;
             }
 
