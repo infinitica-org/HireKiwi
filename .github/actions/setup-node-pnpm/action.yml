@@ -13,7 +13,7 @@ runs:
     - shell: bash
       run: pnpm install --frozen-lockfile
     - shell: bash
-      run: pnpm --filter @hirekiwi/contracts build
+      run: pnpm turbo run build --filter=@hirekiwi/api-core^... --filter=@hirekiwi/credential-verifier^...
     - shell: bash
       env:
         DATABASE_URL: postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public
