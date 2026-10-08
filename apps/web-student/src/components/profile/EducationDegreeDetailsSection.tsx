@@ -67,11 +67,6 @@ export function EducationDegreeDetailsSection({
     });
   }
 
-  function updateRow(index: number, patch: Partial<(typeof rows)[number]>) {
-    const nextRows = rows.map((row, i) => (i === index ? { ...row, ...patch } : row));
-    onPatchDegreeDetails({ semesterRows: nextRows });
-  }
-
   return (
     <div className="space-y-4 rounded-[16px] bg-[var(--ds-surface-muted)]/50 p-4 ring-1 ring-[#101828]/[0.06]">
       <div>

@@ -18,3 +18,7 @@ runs:
       env:
         DATABASE_URL: postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public
       run: pnpm --filter @hirekiwi/api-core db:generate
+    - shell: bash
+      env:
+        DATABASE_URL: postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public
+      run: pnpm --filter @hirekiwi/credential-verifier db:generate
