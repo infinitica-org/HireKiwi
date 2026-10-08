@@ -14,6 +14,7 @@ import { SupportModule } from './modules/support/support.module.js';
 import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module.js';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
 import { AssessmentModule } from './modules/assessment/assessment.module.js';
+import { IrtModule } from './modules/irt/irt.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { CandidateCertificatesModule } from './modules/candidate-certificates/candidate-certificates.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
@@ -97,6 +98,7 @@ import { StorageModule } from './platform/storage/storage.module.js';
     CampusModule,
     CatalogModule,
     AssessmentModule,
+    IrtModule,
     EvaluationModule,
     CorroborationModule,
     EvidenceModule,

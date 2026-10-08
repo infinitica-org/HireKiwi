@@ -786,11 +786,12 @@ model Level {
   itemCount       Int         @default(0) @map("item_count")
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  items     Item[]
-  attempts  Attempt[]
-  results   LevelResult[]
-  cutScores CutScore[]
-  panels    CalibrationPanel[]
+  items             Item[]
+  attempts          Attempt[]
+  results           LevelResult[]
+  cutScores         CutScore[]
+  panels            CalibrationPanel[]
+  irtCalibrationRuns IrtCalibrationRun[]
 
   @@unique([trackId, levelNumber])
   @@map("levels")
@@ -811,11 +812,21 @@ model Item {
   exposureCount Int           @default(0) @map("exposure_count")
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  /// IRT 2PL parameters (shadow use only — v1 scoring uses difficultyTag/weighted scoring, not these).
+  /// Null until the item has cleared IRT_CALIBRATION_MIN_RESPONSES real responses. Owner: Ramansh.
+  irtDiscrimination    Decimal?          @map("irt_discrimination") @db.Decimal(6, 4)
+  irtDifficulty        Decimal?          @map("irt_difficulty") @db.Decimal(6, 4)
+  irtCalibrationStatus CalibrationStatus @default(NOT_CALIBRATED) @map("irt_calibration_status")
+  irtSampleSize        Int?              @map("irt_sample_size")
+  irtCalibratedAt      DateTime?         @map("irt_calibrated_at") @db.Timestamptz(6)
+  irtModelVersion      String?           @map("irt_model_version")
+
   options   ItemOption[]
   responses Response[]
 
   @@index([levelId, active, formCode])
   @@index([competencyId])
+  @@index([irtCalibrationStatus])
   @@map("items")
 }
 
@@ -903,9 +914,53 @@ model Attempt {
   result                    LevelResult?
   events                    IntegrityEvent[]
   skillVerificationAttempts SkillVerificationAttempt[]
+  irtShadowEstimate         IrtShadowEstimate?
 
   @@index([userId, status])
   @@map("attempts")
+}
+
+/// One row per IRT calibration run against a level's item pool. Shadow
+/// infrastructure only — v1 scoring never reads this. Owner: Ramansh.
+model IrtCalibrationRun {
+  id               String   @id @default(uuid()) @db.Uuid
+  levelId          String   @map("level_id") @db.Uuid
+  level            Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  itemsCalibrated  Int      @map("items_calibrated")
+  itemsFrozen      Int      @map("items_frozen")
+  totalResponses   Int      @map("total_responses")
+  iterations       Int
+  converged        Boolean
+  modelVersion     String   @map("model_version")
+  checksum         String
+  triggeredBy      String   @map("triggered_by")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  shadowEstimates IrtShadowEstimate[]
+
+  @@index([levelId, createdAt])
+  @@map("irt_calibration_runs")
+}
+
+/// Shadow IRT ability estimate for one attempt. Never read by live scoring —
+/// exists only so Stage 3 validation (validateIrtAgainstV1) has real paired
+/// data to compare against LevelResult.rawScore. Owner: Ramansh.
+model IrtShadowEstimate {
+  id                       String             @id @default(uuid()) @db.Uuid
+  attemptId                String             @unique @map("attempt_id") @db.Uuid
+  attempt                  Attempt            @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  calibrationRunId         String?            @map("calibration_run_id") @db.Uuid
+  calibrationRun           IrtCalibrationRun? @relation(fields: [calibrationRunId], references: [id], onDelete: SetNull)
+  theta                    Decimal?           @db.Decimal(6, 4)
+  standardError            Decimal?           @map("standard_error") @db.Decimal(6, 4)
+  itemsUsed                Int                @map("items_used")
+  itemsSkippedUncalibrated Int                @map("items_skipped_uncalibrated")
+  inconclusive             Boolean            @default(false)
+  modelVersion             String             @map("model_version")
+  createdAt                DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([calibrationRunId])
+  @@map("irt_shadow_estimates")
 }
 
 model Response {
