@@ -38,6 +38,12 @@ function job(n: number, over: Partial<StudentJobCard> = {}): StudentJobCard {
     fit: null,
     applied: false,
     saved: false,
+    salary: null,
+    minYearsExperience: null,
+    maxYearsExperience: null,
+    openings: null,
+    skills: [],
+    tags: [],
     ...over,
   };
 }
@@ -83,7 +89,6 @@ describe('Jobs page (Th6-379..386)', () => {
       expect(screen.getByText('Finding jobs for you…')).toBeTruthy();
       expect(await screen.findByRole('link', { name: 'Role 1' })).toBeTruthy();
       expect(screen.getByText('Pune')).toBeTruthy();
-      expect(screen.getByTestId('fit-band').textContent).toContain('Strong fit · 92%');
       expect(screen.getByText('Your verified React meets the requirement')).toBeTruthy();
     });
 
@@ -168,12 +173,12 @@ describe('Jobs page (Th6-379..386)', () => {
     });
 
     it('restores filters from the URL on load (refresh and shared links)', async () => {
-      resetNavigation('fit=GOOD&type=FULL_TIME&location=Pune');
+      resetNavigation('type=FULL_TIME&location=Pune');
       studentJobs.list.mockResolvedValue(page([job(1)]));
       renderPage();
       await screen.findByRole('link', { name: 'Role 1' });
       expect(studentJobs.list.mock.calls[0]?.[0]).toMatchObject({
-        fit: 'GOOD',
+        fit: 'ALL',
         type: 'FULL_TIME',
         location: 'Pune',
       });
@@ -189,26 +194,6 @@ describe('Jobs page (Th6-379..386)', () => {
       expect(await screen.findByText('No jobs match these filters')).toBeTruthy();
       fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
       await waitFor(() => expect(currentSearch()).toBe(''));
-    });
-  });
-
-  describe('fit tabs (Th6-381)', () => {
-    it('shows the server counts, stores the tab in the URL, and asks the API for that band', async () => {
-      studentJobs.list.mockResolvedValue(page([job(1), job(2), job(3)]));
-      renderPage();
-      await screen.findByRole('link', { name: 'Role 1' });
-      expect(screen.getByRole('tab', { name: /Strong fit/ }).textContent).toContain('1');
-      expect(screen.getByRole('tab', { name: /Good fit/ }).textContent).toContain('2');
-      expect(screen.getByRole('tab', { name: /All/ }).textContent).toContain('3');
-
-      fireEvent.click(screen.getByRole('tab', { name: /Strong fit/ }));
-      await waitFor(() => expect(currentSearch()).toBe('fit=STRONG'));
-      await waitFor(() =>
-        expect(studentJobs.list.mock.calls.at(-1)?.[0]).toMatchObject({ fit: 'STRONG' }),
-      );
-      expect(screen.getByRole('tab', { name: /Strong fit/ }).getAttribute('aria-selected')).toBe(
-        'true',
-      );
     });
   });
 

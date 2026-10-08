@@ -1,12 +1,11 @@
 import {
-  BadgeCheck,
+  Bookmark,
+  ClipboardCheck,
   BriefcaseBusiness,
   CircleUserRound,
   Compass,
   House,
-  NotebookPen,
   Settings,
-  Video,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -26,23 +25,16 @@ export const STUDENT_NAV: StudentNavItem[] = [
   { name: 'Home', href: '/student/dashboard', icon: House },
   {
     name: 'Jobs',
-    href: '/student/matches',
+    href: '/student/jobs',
     icon: BriefcaseBusiness,
-    children: [{ name: 'Opportunities', href: '/student/opportunities', icon: Compass }],
+    children: [
+      { name: 'Saved', href: '/student/jobs?view=saved', icon: Bookmark },
+      { name: 'Applied', href: '/student/applications', icon: ClipboardCheck },
+      { name: 'Opportunities', href: '/student/opportunities', icon: Compass },
+    ],
   },
 
-  {
-    name: 'My profile',
-    href: '/student/profile',
-    icon: CircleUserRound,
-    children: [{ name: 'Skills', href: '/student/skills', icon: BadgeCheck }],
-  },
-  {
-    name: 'Assessments',
-    href: '/student/assessments',
-    icon: NotebookPen,
-    children: [{ name: 'Interviews', href: '/student/interviews', icon: Video }],
-  },
+  { name: 'My profile', href: '/student/profile', icon: CircleUserRound },
 ];
 
 export const STUDENT_SETTINGS_LINK: StudentNavLink = {

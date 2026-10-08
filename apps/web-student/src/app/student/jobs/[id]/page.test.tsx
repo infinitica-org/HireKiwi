@@ -51,6 +51,13 @@ function detail(over: Partial<StudentJobDetail> = {}): StudentJobDetail {
     applicationId: null,
     hidden: false,
     whyItMatches: ['Your verified Node meets the Intermediate requirement'],
+    salary: null,
+    minYearsExperience: null,
+    maxYearsExperience: null,
+    openings: null,
+    skills: [],
+    tags: [],
+    details: null,
     requirements: [
       {
         skillCode: 'NODE',

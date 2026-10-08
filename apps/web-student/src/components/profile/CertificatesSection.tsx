@@ -190,8 +190,8 @@ export function CertificatesSection() {
         )
       ) : null}
 
-      {!loading && !declarationLoading && certificates.length > 0 ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {!loading && certificates.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {certificates.map((cert, index) => (
             <CertificateEntryCard
               key={cert.certificateId}

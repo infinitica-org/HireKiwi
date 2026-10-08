@@ -72,6 +72,7 @@ import {
   ApplicationPreviewSchema,
   ApplyToJobResponseSchema,
   ListEmployerApplicantsResponseSchema,
+  EmployerApplicantDetailSchema,
   ListStudentApplicationsResponseSchema,
   StudentApplicationDetailSchema,
   type ApplyToJobRequest,
@@ -2681,6 +2682,12 @@ function employerApi(client: HireKiwiApiClient) {
           limit: query.limit,
         },
         schema: ListEmployerApplicantsResponseSchema,
+      }),
+
+    /** One applicant in full: the profile they confirmed when applying. */
+    applicantDetail: (applicationId: string) =>
+      client.get(prefixed(`/employer/applications/${applicationId}`), {
+        schema: EmployerApplicantDetailSchema,
       }),
 
     /** Th6-421 — conversion for one of my jobs, or (no jobId) my whole company. */

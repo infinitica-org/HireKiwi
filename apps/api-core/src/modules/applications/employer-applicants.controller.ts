@@ -15,6 +15,20 @@ export class EmployerApplicantsController {
     @Inject(EmployerApplicantsService) private readonly applicants: EmployerApplicantsService,
   ) {}
 
+  @Get('applications/:id')
+  @ApiOperation({ summary: 'One applicant in full, from the application snapshot.' })
+  detail(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    const parsedId = UuidSchema.safeParse(id);
+    if (!parsedId.success) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Applicant not found.',
+        statusCode: 404,
+      });
+    }
+    return this.applicants.detail(user.sub, parsedId.data);
+  }
+
   @Get('jobs/:id/applicants')
   @ApiOperation({ summary: 'Applicants for one of my company jobs (from snapshots).' })
   list(

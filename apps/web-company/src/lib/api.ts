@@ -1,12 +1,14 @@
 import {
   API_PREFIX,
   EmployerJobDtoSchema,
+  EmployerJobVisibilitySchema,
   ListEmployerJobsResponseSchema,
   CandidateMatchDtoSchema,
   ListSavedCandidatesResponseSchema,
   SavedCandidateDtoSchema,
   MatchFeedbackResponseSchema,
   z,
+  type CreateEmployerJobRequest,
   type CreateJobOpeningRequest,
   type ListEmployerJobsQuery,
   type CandidateMatchDto,
@@ -50,6 +52,9 @@ const SERVER_OWNED_FIELDS = [
   'driveDate',
 ] as const;
 
+/** Fields a company may send when posting or editing a job. */
+export type JobPostingBody = Partial<CreateEmployerJobRequest> & Partial<CreateJobOpeningRequest>;
+
 function employerJobFields<T extends Record<string, unknown>>(body: T) {
   const fields: Record<string, unknown> = { ...body };
   for (const key of SERVER_OWNED_FIELDS) delete fields[key];
@@ -79,16 +84,21 @@ export const companyJobsApi = {
     }
   },
   /** `institutionId` is the campus the job is posted to. */
-  create: (body: Partial<CreateJobOpeningRequest> & { institutionId: string }) =>
+  create: (body: JobPostingBody) =>
     apiClient.post(`${API_PREFIX}/employer/jobs`, employerJobFields(body), {
       schema: EmployerJobDtoSchema,
     }),
-  update: (openingId: string, body: Partial<CreateJobOpeningRequest>) =>
+  update: (openingId: string, body: JobPostingBody) =>
     apiClient.request({
       method: 'PATCH',
       path: `${API_PREFIX}/employer/jobs/${openingId}`,
       body: employerJobFields(body),
       schema: EmployerJobDtoSchema,
+    }),
+  /** Is this job live for students, and why or why not. */
+  checkVisibility: (openingId: string) =>
+    apiClient.get(`${API_PREFIX}/employer/jobs/${openingId}/visibility`, {
+      schema: EmployerJobVisibilitySchema,
     }),
   publish: (openingId: string) =>
     apiClient.post(

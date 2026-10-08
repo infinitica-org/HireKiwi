@@ -15,6 +15,8 @@ import {
 import { Alert, Button, EmptyState, ErrorState, LoadingState } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { useApplicantMoves } from '@/lib/use-applicant-moves';
+import { MessageApplicantButton } from '@/components/message-applicant-button';
+import { ApplicantDetailDrawer } from '@/components/applicant-detail-drawer';
 import { CandidatePanel } from '@/components/pipeline/CandidatePanel';
 import { PipelineBoard } from '@/components/pipeline/PipelineBoard';
 import { StatusSelect } from '@/components/pipeline/StatusSelect';
@@ -56,6 +58,7 @@ export default function JobApplicantsPage() {
   const [sort, setSort] = useState<ApplicantSortKey>('fit');
   const [status, setStatus] = useState<ApplicationStatus | ''>('');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const queryKey = ['employer', 'applicants', id, sort, status] as const;
   const query = useInfiniteQuery({
@@ -176,19 +179,45 @@ export default function JobApplicantsPage() {
                 <th className={tableHeadCell}>Fit</th>
                 <th className={tableHeadCell}>Status</th>
                 <th className={tableHeadCell}>Applied</th>
+                <th className={tableHeadCell}>
+                  <span className="sr-only">Details</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {applicants.map((applicant) => (
                 <tr key={applicant.applicationId} className={tableRow}>
                   <td className={tableCell}>
-                    <button
-                      type="button"
-                      className="font-semibold text-blue-700 underline"
-                      onClick={() => setOpenId(applicant.applicationId)}
-                    >
-                      {applicant.candidateName}
-                    </button>
+                    <span className="flex items-center gap-3">
+                      {applicant.photoUrl ? (
+                        // Signed storage URL; not routed through next/image.
+                        <img
+                          src={applicant.photoUrl}
+                          alt=""
+                          className="size-9 shrink-0 rounded-full border border-zinc-200 object-cover"
+                        />
+                      ) : (
+                        <span
+                          aria-hidden
+                          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white"
+                        >
+                          {applicant.candidateName
+                            .trim()
+                            .split(/\s+/)
+                            .slice(0, 2)
+                            .map((part) => part.charAt(0))
+                            .join('')
+                            .toUpperCase() || '?'}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="font-semibold text-blue-700 underline"
+                        onClick={() => setOpenId(applicant.applicationId)}
+                      >
+                        {applicant.candidateName}
+                      </button>
+                    </span>
                   </td>
                   <td className={tableCell}>
                     {applicant.fit ? (
@@ -211,6 +240,21 @@ export default function JobApplicantsPage() {
                     />
                   </td>
                   <td className={tableCell}>{formatDate(applicant.appliedAt)}</td>
+                  <td className={tableCell}>
+                    <span className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDetailId(applicant.applicationId)}
+                        className="rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-zinc-700 hover:bg-zinc-50"
+                      >
+                        View details
+                      </button>
+                      <MessageApplicantButton
+                        applicationId={applicant.applicationId}
+                        candidateName={applicant.candidateName}
+                      />
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -224,6 +268,10 @@ export default function JobApplicantsPage() {
           applicant={opened}
           onClose={() => setOpenId(null)}
         />
+      ) : null}
+
+      {detailId ? (
+        <ApplicantDetailDrawer applicationId={detailId} onClose={() => setDetailId(null)} />
       ) : null}
 
       {query.hasNextPage ? (

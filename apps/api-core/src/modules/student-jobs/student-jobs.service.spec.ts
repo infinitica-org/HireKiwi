@@ -154,6 +154,35 @@ describe('StudentJobsService (Th6-379..385)', () => {
       expect(where).toContain('"contains":"pune"');
     });
 
+    it('puts pay, experience, openings, skills and highlight tags on the card, never internal notes', async () => {
+      rows = [
+        opening(1, {
+          companyId: uuid(90),
+          company: verifiedCompany,
+          salaryDetails: ' ₹8–12 LPA ',
+          minYearsExperience: 0,
+          maxYearsExperience: 2,
+          headcount: 3,
+          details: { tags: ['Fresher friendly', 7, ''], summary: 'Build things.' },
+          internal: { atsReferenceId: 'REQ-SECRET' },
+          requiredSkills: [req(skillA, 'INTERMEDIATE')],
+        }),
+      ];
+      const { jobs } = await service.list(STUDENT, query());
+      expect(jobs[0]).toMatchObject({
+        salary: '₹8–12 LPA',
+        minYearsExperience: 0,
+        maxYearsExperience: 2,
+        openings: 3,
+        skills: [skillA.name],
+        tags: ['Fresher friendly'],
+      });
+      expect(JSON.stringify(jobs[0])).not.toContain('REQ-SECRET');
+      // The query itself never asks the database for the internal notes.
+      const select = prisma.jobOpening.findMany.mock.calls.at(-1)?.[0].select;
+      expect(JSON.stringify(select)).not.toContain('internal');
+    });
+
     it('puts a verified-company job first only through its fit, shows the badge only for verified companies', async () => {
       rows = [
         opening(1, { companyId: uuid(90), company: verifiedCompany }),

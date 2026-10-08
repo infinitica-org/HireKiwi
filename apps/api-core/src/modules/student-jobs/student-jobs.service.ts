@@ -6,8 +6,10 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { z } from 'zod';
+import { JobDetailsSchema } from '@hirekiwi/contracts';
 import type {
   HideJobRequest,
+  JobDetails,
   JobFlagResponse,
   JobRequirementRow,
   ListSavedJobsResponse,
@@ -61,6 +63,8 @@ const OPENING_SELECT = {
   aboutCompany: true,
   companyOffers: true,
   salaryDetails: true,
+  headcount: true,
+  details: true,
   requiredSkills: {
     select: { minProficiency: true, skill: { select: { code: true, name: true } } },
   },
@@ -92,6 +96,24 @@ interface StudentFacts {
 
 const CursorSchema = z.object({ p: z.number().int(), t: z.number().int(), id: z.string() });
 type CursorKey = z.infer<typeof CursorSchema>;
+
+/**
+ * The candidate-facing job details, parsed through the schema so only known fields ever leave the
+ * API. Anything malformed becomes null, and the company-only `internal` notes are never selected.
+ */
+function candidateDetails(details: unknown): JobDetails | null {
+  const parsed = JobDetailsSchema.safeParse(details);
+  return parsed.success ? parsed.data : null;
+}
+
+/** Company highlights from the job's details, at most six, strings only. */
+function cardTags(details: unknown): string[] {
+  const tags = details && typeof details === 'object' ? (details as { tags?: unknown }).tags : null;
+  if (!Array.isArray(tags)) return [];
+  return tags
+    .filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0)
+    .slice(0, 6);
+}
 
 export function encodeCursor(key: CursorKey): string {
   return Buffer.from(JSON.stringify(key)).toString('base64url');
@@ -294,6 +316,7 @@ export class StudentJobsService {
       hidden: hiddenRow !== null,
       whyItMatches: (fit?.reasons ?? []).slice(0, DETAIL_REASON_LIMIT),
       requirements,
+      details: candidateDetails(row.details),
     };
   }
 
@@ -475,6 +498,12 @@ export class StudentJobsService {
         : null,
       applied,
       saved,
+      salary: row.salaryDetails?.trim() ? row.salaryDetails.trim() : null,
+      minYearsExperience: row.minYearsExperience ?? null,
+      maxYearsExperience: row.maxYearsExperience ?? null,
+      openings: row.headcount ?? null,
+      skills: row.requiredSkills.slice(0, 5).map((requirement) => requirement.skill.name),
+      tags: cardTags(row.details),
     };
   }
 

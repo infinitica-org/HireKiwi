@@ -116,6 +116,39 @@ function accessTokenIssuedAtMs(accessToken: string): number | null {
   }
 }
 
+/** `exp` claim of an access token, in ms; null when unreadable. */
+function accessTokenExpiresAtMs(accessToken: string): number | null {
+  const payload = accessToken.split('.')[1];
+  if (!payload) return null;
+  try {
+    const exp = (JSON.parse(utf8FromBase64Url(payload)) as { exp?: unknown }).exp;
+    return typeof exp === 'number' && Number.isFinite(exp) ? exp * 1_000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * True when the token's own `exp` has passed. A token without a readable `exp` is not treated as
+ * expired here; the API still decides. Used so a leftover JWT in storage is never mistaken for a
+ * live session (portals would reject it and bounce back to login, which would re-send it).
+ */
+export function isAccessTokenExpired(accessToken: string, now: number = Date.now()): boolean {
+  const expiresAt = accessTokenExpiresAtMs(accessToken);
+  return expiresAt !== null && expiresAt <= now;
+}
+
+/** The stored access token, or null (and cleared) when it has already expired. */
+export function getUnexpiredAccessToken(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+  if (isAccessTokenExpired(token)) {
+    clearAccessToken();
+    return null;
+  }
+  return token;
+}
+
 /** localStorage is shared by every tab of an origin; sessionStorage is per tab. */
 function sharedAccessToken(): string | null {
   try {
@@ -406,13 +439,13 @@ async function reconcileOnce(apiBaseUrl: string): Promise<string | null> {
       clearAccessToken();
       return null;
     }
-    if (!res.ok) return getAccessToken();
+    if (!res.ok) return getUnexpiredAccessToken();
     const parsed = AuthTokenResponseSchema.safeParse(await res.json());
-    if (!parsed.success) return getAccessToken();
+    if (!parsed.success) return getUnexpiredAccessToken();
     storeAccessToken(parsed.data.accessToken);
     return parsed.data.accessToken;
   } catch {
-    return getAccessToken();
+    return getUnexpiredAccessToken();
   }
 }
 

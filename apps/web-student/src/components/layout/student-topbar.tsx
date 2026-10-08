@@ -9,7 +9,7 @@ import {
   FileText,
   Globe,
   Menu,
-  MessageSquare,
+  MessageSquareText,
   Settings,
   Shield,
   UserRound,
@@ -134,11 +134,9 @@ export function StudentTopbar() {
                         aria-haspopup={hasMenu ? 'menu' : undefined}
                         className={cn(
                           'flex items-center gap-2 whitespace-nowrap px-3.5 py-2 text-sm no-underline transition-colors duration-200 motion-reduce:transition-none',
-                          // Thin (1px) underline on hover, set a little below the text.
-                          'underline-offset-[4px] decoration-1 decoration-zinc-900 hover:underline dark:decoration-white',
                           focusRing,
                           lit
-                            ? 'font-semibold text-zinc-900 underline dark:text-white'
+                            ? 'font-semibold text-zinc-900 dark:text-white'
                             : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white',
                         )}
                       >
@@ -211,14 +209,15 @@ export function StudentTopbar() {
               title="Messages"
               aria-current={messagesActive ? 'page' : undefined}
               className={cn(
-                'relative flex size-9 items-center justify-center rounded-xl border transition-colors',
+                'relative flex h-9 items-center justify-center gap-2 rounded-xl border px-2.5 text-sm transition-colors sm:px-3',
                 focusRing,
                 messagesActive
                   ? 'border-zinc-200 bg-white text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white'
                   : 'border-transparent text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white',
               )}
             >
-              <MessageSquare className="size-[18px]" strokeWidth={1.75} />
+              <MessageSquareText className="size-[18px]" strokeWidth={1.75} />
+              <span className="hidden sm:inline">Messages</span>
               {unreadMessages > 0 ? (
                 <span
                   aria-hidden="true"
@@ -265,7 +264,7 @@ export function StudentTopbar() {
               type="button"
               aria-label="Dismiss navigation menu"
               tabIndex={-1}
-              className="fixed inset-0 top-16 -z-10 bg-zinc-900/30 lg:hidden"
+              className="fixed inset-0 top-14 -z-10 bg-zinc-900/30 lg:hidden"
               onClick={() => setMenuOpen(false)}
             />
             <nav
