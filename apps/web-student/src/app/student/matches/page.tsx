@@ -1,35 +1,31 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
-  Briefcase,
-  CheckCircle2,
-  Bookmark,
-  BookmarkCheck,
-  ArrowRight,
-  Search,
-  DollarSign,
-  Check,
-  X,
-  Target,
-  Clock,
-  Info,
-  SlidersHorizontal,
   AlertCircle,
+  ArrowRight,
+  Bookmark,
+  Briefcase,
+  Check,
+  CircleCheck,
   Plus,
-  ThumbsUp,
+  Search,
+  SlidersHorizontal,
+  Target,
   ThumbsDown,
+  ThumbsUp,
 } from 'lucide-react';
 import { cn, VerifiedBadge } from '@hirekiwi/ui';
-import { motion, AnimatePresence } from 'motion/react';
+import { tintFor } from '@/components/dashboard/OpportunityFeed';
+import { motion } from 'motion/react';
 import { useProfileProgress } from '@/lib/use-profile-progress';
 import { canVerifySkills } from '@/lib/profile-progress';
 import { api, apiClient } from '@/lib/api';
-import { API_PREFIX } from '@hirekiwi/contracts';
+import { API_PREFIX, type StudentJobCard } from '@hirekiwi/contracts';
 import { queryKeys } from '@hirekiwi/api-client';
 import { useQuery } from '@hirekiwi/ui';
-import { skillNameForCode } from '@/lib/skill-declarations';
 
 export interface JobMatch {
   id: string;
@@ -37,7 +33,7 @@ export interface JobMatch {
   company: string;
   logoText: string;
   location: string;
-  type: 'Full-time' | 'Internship' | 'Part-time';
+  type: 'Full-time' | 'Internship' | 'Part-time' | 'Contract';
   salary: string;
   matchScore: number;
   matchReason: string;
@@ -48,6 +44,15 @@ export interface JobMatch {
   requiredSkills: { name: string; level: string; met: boolean; note: string }[];
   postedDaysAgo: number;
   deadline?: string;
+  /** True when the student has already applied to this opening. */
+  applied?: boolean;
+  /** Remote, Hybrid or On-site, when the company said. */
+  mode?: string;
+  /** Years of experience asked for, e.g. "0–2 years". */
+  experience?: string;
+  openings?: number;
+  /** The first few required skills, by name. */
+  skills: string[];
 }
 
 type TabType = 'jobs' | 'applied' | 'saved';
@@ -68,8 +73,59 @@ interface AppliedApplication {
   companyVerifiedAt?: string | null;
 }
 
+const EMPLOYMENT_LABELS: Record<string, JobMatch['type']> = {
+  INTERNSHIP: 'Internship',
+  PART_TIME: 'Part-time',
+  CONTRACT: 'Contract',
+};
+const WORK_MODE_LABELS: Record<string, string> = {
+  REMOTE: 'Remote',
+  HYBRID: 'Hybrid',
+  ONSITE: 'On-site',
+};
+
+function experienceLabel(min: number | null, max: number | null): string | undefined {
+  if (min === null && max === null) return undefined;
+  const low = min ?? 0;
+  const high = max ?? low;
+  if (high === 0) return 'Fresher';
+  return low === high ? `${low} years` : `${low}–${high} years`;
+}
+
+/** One real job card from the API as a card on this page. Only facts the API gave us. */
+function jobCardToMatch(job: StudentJobCard): JobMatch {
+  const posted = Date.parse(job.postedAt);
+  const postedDaysAgo = Number.isNaN(posted)
+    ? 0
+    : Math.max(0, Math.floor((Date.now() - posted) / 86_400_000));
+  return {
+    id: job.id,
+    title: job.roleTitle,
+    company: job.companyName,
+    logoText: job.companyName.slice(0, 2).toUpperCase(),
+    location: job.location ?? '',
+    type: EMPLOYMENT_LABELS[job.employmentType ?? ''] ?? 'Full-time',
+    salary: job.salary ?? '',
+    matchScore: job.fit?.matchPercent ?? 0,
+    matchReason: job.fit?.topReason ?? '',
+    tags: job.tags,
+    skills: job.skills,
+    mode: job.workMode ? (WORK_MODE_LABELS[job.workMode] ?? job.workMode) : undefined,
+    experience: experienceLabel(job.minYearsExperience, job.maxYearsExperience),
+    openings: job.openings ?? undefined,
+    description: '',
+    companyAbout: '',
+    companyProfileUrl: '#',
+    requiredSkills: [],
+    postedDaysAgo,
+    deadline: job.lastDateToApply ? `Apply by ${job.lastDateToApply}` : undefined,
+    applied: job.applied,
+  };
+}
+
 export default function MatchesPage() {
-  const { progress, skillClaims, loading: profileLoading } = useProfileProgress();
+  const router = useRouter();
+  const { progress, loading: profileLoading } = useProfileProgress();
   const profilePercent = progress?.percent ?? 33;
   const isVerified = canVerifySkills(profilePercent);
 
@@ -93,118 +149,53 @@ export default function MatchesPage() {
     return realDbApplications.map((app) => ({
       id: app.applicationId,
       jobId: app.applicationId,
-      title: app.roleTitle || 'Software Engineer',
-      company: app.companyName || 'Campus Placement Partner',
+      title: app.roleTitle || 'Untitled role',
+      company: app.companyName || 'Company',
       companyVerified: app.companyVerified === true,
       companyVerifiedAt: app.companyVerifiedAt ?? null,
-      logoText: (app.companyName || 'SM').slice(0, 2).toUpperCase(),
-      location: app.location || 'Remote',
-      salary: 'Competitive CTC',
+      logoText: (app.companyName || 'CO').slice(0, 2).toUpperCase(),
+      location: app.location || '',
+      salary: '',
       appliedDate: 'Active',
       status: (app.stage as AppliedApplication['status']) || 'Applied',
     }));
   }, [realDbApplications]);
 
-  // Compute live match recommendations based on verified database skill claims and student profile
-  const liveMatches: JobMatch[] = useMemo(() => {
-    // If student has real applications in database with match scores, prioritize them
-    if (realDbApplications.length > 0) {
-      return realDbApplications.map((app, idx) => {
-        const rawScore = app.matchScore != null ? app.matchScore : 0.82;
-        const score = Math.round(rawScore <= 1 ? rawScore * 100 : rawScore);
-        const title = app.roleTitle || 'Full Stack Engineer';
-        const company = app.companyName || 'Campus Hiring Partner';
+  // Every open job the student can see, from the real job feed (company jobs and university jobs).
+  const {
+    data: jobsData,
+    isLoading: jobsLoading,
+    error: jobsError,
+  } = useQuery({
+    queryKey: ['student', 'jobs', 'matches-page'] as const,
+    queryFn: () => api.studentJobs.list({ fit: 'ALL', limit: 50 }),
+    retry: false,
+  });
 
-        return {
-          id: app.applicationId,
-          title,
-          company,
-          logoText: (company || 'SM').slice(0, 2).toUpperCase(),
-          location: app.location || 'Bangalore / Hybrid',
-          type: (app.employmentType === 'INTERNSHIP'
-            ? 'Internship'
-            : 'Full-time') as JobMatch['type'],
-          salary: '₹14 - 20 LPA',
-          matchScore: score,
-          matchReason: `Your verified profile matches ${score}% of ${company}'s role requirements.`,
-          tags: [app.domain || 'Engineering', 'Full-time', 'Campus Drive'],
-          description: `Active campus hiring opportunity for ${title} at ${company}. Matched based on your verified credentials.`,
-          companyAbout: `${company} is an active enterprise placement partner in the HireKiwi campus recruitment network.`,
-          companyProfileUrl: '#',
-          requiredSkills: [
-            {
-              name: 'Core Track Competency',
-              level: 'Level 2+',
-              met: score >= 70,
-              note: `Match confidence: ${score}%`,
-            },
-            {
-              name: 'System Architecture & Problem Solving',
-              level: 'Intermediate',
-              met: score >= 80,
-              note: 'Verified in defense interview & diagnostics',
-            },
-          ],
-          postedDaysAgo: idx + 1,
-          deadline: 'In 5 days',
-        };
-      });
-    }
+  const liveMatches: JobMatch[] = useMemo(
+    () => (jobsData?.jobs ?? []).map((job) => jobCardToMatch(job)),
+    [jobsData],
+  );
 
-    if (skillClaims.length === 0) return [];
-
-    return skillClaims.map((claim, idx) => {
-      const isClaimVerified = claim.status === 'VERIFIED';
-      const name = skillNameForCode(claim.skillCode);
-      const score = isClaimVerified ? Math.min(95, 85 + (idx % 10)) : Math.max(62, 70 + (idx % 8));
-
-      return {
-        id: `match-${claim.claimId || idx}`,
-        title: `${name} Engineer`,
-        company: idx % 2 === 0 ? 'Enterprise Solutions Partner' : 'Campus Hiring Partner',
-        logoText: name.slice(0, 2).toUpperCase(),
-        location: 'Bangalore / Hybrid',
-        type: 'Full-time',
-        salary: '₹14 - 20 LPA',
-        matchScore: score,
-        matchReason: `Your ${name} claim (${claim.status}) matches the job requirement profile.`,
-        tags: [name, 'Software Engineering', claim.proficiency || 'Intermediate'],
-        description: `Join our campus cohort looking for verified ${name} capabilities to build enterprise web applications and reliable microservices.`,
-        companyAbout:
-          'Enterprise placement partner connected through HireKiwi campus hiring network.',
-        companyProfileUrl: '#',
-        requiredSkills: [
-          {
-            name,
-            level: claim.proficiency || 'Intermediate',
-            met: isClaimVerified,
-            note: `Status: ${claim.status}`,
-          },
-          {
-            name: 'System Architecture',
-            level: 'Intermediate',
-            met: isClaimVerified,
-            note: 'Evaluated in defense interview',
-          },
-        ],
-        postedDaysAgo: idx + 1,
-        deadline: 'In 5 days',
-      };
-    });
-  }, [realDbApplications, skillClaims]);
-
-  const [selectedJob, setSelectedJob] = useState<JobMatch | null>(null);
-  const [showAppliedSuccess, setShowAppliedSuccess] = useState(false);
-  const [justAppliedTitle, setJustAppliedTitle] = useState('');
+  // Start from what the server says is saved, then follow the student's clicks.
+  useEffect(() => {
+    if (!jobsData) return;
+    setSavedJobIds(new Set(jobsData.jobs.filter((job) => job.saved).map((job) => job.id)));
+  }, [jobsData]);
 
   const toggleSave = (jobId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setSavedJobIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(jobId)) next.delete(jobId);
-      else next.add(jobId);
-      return next;
-    });
+    const wasSaved = savedJobIds.has(jobId);
+    const apply = (saved: boolean) =>
+      setSavedJobIds((prev) => {
+        const next = new Set(prev);
+        if (saved) next.add(jobId);
+        else next.delete(jobId);
+        return next;
+      });
+    apply(!wasSaved);
+    const call = wasSaved ? api.studentJobs.unsave(jobId) : api.studentJobs.save(jobId);
+    call.catch(() => apply(wasSaved));
   };
 
   const [matchFeedback, setMatchFeedback] = useState<Record<string, 'RELEVANT' | 'NOT_RELEVANT'>>(
@@ -233,14 +224,14 @@ export default function MatchesPage() {
     }
   };
 
-  const handleApply = async (job: JobMatch, e?: React.MouseEvent) => {
+  const handleApply = (job: JobMatch, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setJustAppliedTitle(`${job.title} at ${job.company}`);
-    setShowAppliedSuccess(true);
+    // The job page owns eligibility checks and the real application.
+    router.push(`/student/jobs/${job.id}?apply=1`);
   };
 
-  // Every job worth showing: strong (>= 85) and medium (60-84) fits together.
-  const jobs = useMemo(() => liveMatches.filter((j) => j.matchScore >= 60), [liveMatches]);
+  // Every open job, best fits first (see the sort below).
+  const jobs = liveMatches;
   const savedJobs = useMemo(
     () => liveMatches.filter((j) => savedJobIds.has(j.id)),
     [liveMatches, savedJobIds],
@@ -268,7 +259,7 @@ export default function MatchesPage() {
     }
 
     if (remoteOnly) {
-      list = list.filter((j) => j.location.toLowerCase().includes('remote'));
+      list = list.filter((j) => j.location.toLowerCase().includes('remote') || j.mode === 'Remote');
     }
 
     const sorted = [...list];
@@ -293,7 +284,7 @@ export default function MatchesPage() {
               Jobs
             </h1>
             <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm dark:text-zinc-400">
-              Verified Jobs recommended by HireKiwi based on your evaluated skill claims
+              Open jobs from verified companies and your university, best fit first
             </p>
           </div>
         </div>
@@ -325,6 +316,13 @@ export default function MatchesPage() {
       {/* 🧭 Top Bar: Tabs & Search */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <Link
+            href="/student/jobs"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 px-3 py-1.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            All jobs
+            <ArrowRight className="size-3.5" aria-hidden />
+          </Link>
           {/* Animated Tabs */}
           <div className="flex w-full items-center gap-2 overflow-x-auto border-b border-zinc-200 [scrollbar-width:none] dark:border-zinc-800 [&::-webkit-scrollbar]:hidden">
             {[
@@ -504,10 +502,16 @@ export default function MatchesPage() {
       ) : (
         /* Matches Grid */
         <div className="space-y-4">
-          {profileLoading || appsLoading ? (
-            <div className="py-12 text-center text-xs text-zinc-400">
-              Loading job matches from database…
-            </div>
+          {jobsError ? (
+            <p
+              role="alert"
+              className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+            >
+              Could not load jobs right now. Please refresh the page.
+            </p>
+          ) : null}
+          {profileLoading || appsLoading || jobsLoading ? (
+            <div className="py-12 text-center text-xs text-zinc-400">Loading jobs…</div>
           ) : filteredAndSortedJobs.length === 0 ? (
             <div className="rounded-md border border-dashed border-zinc-200 bg-zinc-50/60 px-6 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/40">
               <Target className="mx-auto size-8 text-zinc-400 mb-2" />
@@ -526,305 +530,177 @@ export default function MatchesPage() {
               </Link>
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredAndSortedJobs.map((job) => {
                 const isSaved = savedJobIds.has(job.id);
-                const isApplied = appliedApplications.some((a) => a.jobId === job.id);
+                const isApplied =
+                  job.applied === true || appliedApplications.some((a) => a.jobId === job.id);
 
                 return (
-                  <div
+                  <article
                     key={job.id}
-                    onClick={() => setSelectedJob(job)}
-                    className="group relative cursor-pointer flex flex-col justify-between rounded-lg border border-zinc-200/80 bg-white p-5 shadow-2xs transition-all hover:border-zinc-400 hover:shadow-xs dark:border-zinc-800 dark:bg-[#161616] dark:hover:border-zinc-700"
+                    onClick={() => router.push(`/student/jobs/${job.id}`)}
+                    className="group flex h-full cursor-pointer flex-col rounded-lg border border-zinc-200/80 bg-white p-5 font-sans shadow-2xs transition-colors hover:border-zinc-300 sm:p-6 dark:border-zinc-800 dark:bg-[#161616] dark:hover:border-zinc-700"
                   >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="space-y-2 flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 font-bold text-xs text-zinc-800 shadow-2xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                            {job.logoText}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-heading text-base font-bold text-zinc-950 group-hover:text-zinc-700 dark:text-white dark:group-hover:text-zinc-200">
-                                {job.title}
-                              </h3>
-                              <span
-                                className={cn(
-                                  'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold',
-                                  job.matchScore >= 85
-                                    ? 'border-emerald-200/90 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                                    : 'border-blue-200/90 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-300',
-                                )}
-                              >
-                                <CheckCircle2 className="size-3 text-emerald-600" />
-                                {job.matchScore}% Match
-                              </span>
-                            </div>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {job.company} · {job.location} · {job.type}
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex min-w-0 items-center gap-3.5">
+                        <span
+                          aria-hidden
+                          className={cn(
+                            'flex size-11 shrink-0 items-center justify-center rounded-xl text-lg font-bold',
+                            tintFor(job.company),
+                          )}
+                        >
+                          {job.company.trim().charAt(0).toUpperCase() || '?'}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm text-zinc-900 dark:text-white">
+                            <span className="font-semibold">{job.company}</span>
+                            {job.location ? (
+                              <span className="ml-1.5 text-zinc-400">{job.location}</span>
+                            ) : null}
+                          </p>
+                          {job.matchScore > 0 ? (
+                            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                              {job.matchScore}% skills match
                             </p>
-                          </div>
-                        </div>
-
-                        <div className="rounded-md border border-zinc-100 bg-zinc-50/80 p-2.5 text-xs text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-300">
-                          <span className="font-bold text-zinc-900 dark:text-white mr-1">
-                            Why you match:
-                          </span>
-                          <span>{job.matchReason}</span>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                          <span className="font-semibold text-zinc-900 dark:text-white flex items-center gap-1">
-                            <DollarSign className="size-3.5 text-zinc-500" />
-                            {job.salary}
-                          </span>
-                          <span className="text-zinc-400">·</span>
-                          <span className="text-zinc-500 flex items-center gap-1 text-[11px]">
-                            <Clock className="size-3 text-zinc-400" />
-                            {job.deadline}
-                          </span>
-                          {job.tags.map((t) => (
-                            <span
-                              key={t}
-                              className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
-                            >
-                              {t}
-                            </span>
-                          ))}
+                          ) : null}
                         </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={(e) => toggleSave(job.id, e)}
+                        aria-pressed={isSaved}
+                        title={isSaved ? 'Remove from saved' : 'Save job'}
+                        aria-label={isSaved ? 'Remove from saved' : 'Save job'}
+                        className={cn(
+                          'flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors',
+                          isSaved
+                            ? 'bg-amber-50 text-amber-500 dark:bg-amber-950/40'
+                            : 'bg-zinc-50 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:bg-zinc-800 dark:hover:text-white',
+                        )}
+                      >
+                        <Bookmark className={cn('size-4', isSaved && 'fill-current')} />
+                      </button>
+                    </div>
 
-                      <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0">
-                        <div className="flex items-center rounded-md border border-zinc-200 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-800">
+                    <h3 className="mt-4 text-lg font-medium tracking-tight text-zinc-950 dark:text-white">
+                      {job.title}
+                    </h3>
+
+                    {job.tags.length > 0 || job.skills.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                        {job.tags.map((tag) => (
+                          <span
+                            key={`tag-${tag}`}
+                            className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {job.skills.map((skill) => (
+                          <span
+                            key={`skill-${skill}`}
+                            className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <div className="mt-auto space-y-4 pt-4">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                        {job.matchScore >= 70 ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-600">
+                            <CircleCheck className="size-3.5" />
+                            Matches your profile
+                          </span>
+                        ) : null}
+                        {[
+                          job.type,
+                          job.mode,
+                          job.salary,
+                          job.experience,
+                          job.openings
+                            ? `${job.openings} opening${job.openings === 1 ? '' : 's'}`
+                            : undefined,
+                          job.deadline,
+                        ]
+                          .filter((text) => Boolean(text))
+                          .map((text) => (
+                            <span key={text} className="inline-flex items-center gap-3">
+                              <span aria-hidden>·</span>
+                              {text}
+                            </span>
+                          ))}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1">
                           <button
                             type="button"
                             onClick={(e) => handleMatchFeedback(job.id, 'RELEVANT', e)}
                             title="Relevant match (I377)"
+                            aria-label="Relevant match"
                             className={cn(
-                              'rounded p-1.5 transition-colors',
+                              'flex size-8 items-center justify-center rounded-md transition-colors',
                               matchFeedback[job.id] === 'RELEVANT'
-                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                                : 'text-zinc-400 hover:text-emerald-600 dark:text-zinc-500 dark:hover:text-emerald-400',
+                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                : 'text-zinc-400 hover:bg-zinc-100 hover:text-emerald-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-emerald-400',
                             )}
                           >
-                            <ThumbsUp className="size-3.5" />
+                            <ThumbsUp className="size-4" strokeWidth={1.75} />
                           </button>
                           <button
                             type="button"
                             onClick={(e) => handleMatchFeedback(job.id, 'NOT_RELEVANT', e)}
                             title="Not relevant match (I377)"
+                            aria-label="Not relevant match"
                             className={cn(
-                              'rounded p-1.5 transition-colors',
+                              'flex size-8 items-center justify-center rounded-md transition-colors',
                               matchFeedback[job.id] === 'NOT_RELEVANT'
-                                ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
-                                : 'text-zinc-400 hover:text-rose-600 dark:text-zinc-500 dark:hover:text-rose-400',
+                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
+                                : 'text-zinc-400 hover:bg-zinc-100 hover:text-rose-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-rose-400',
                             )}
                           >
-                            <ThumbsDown className="size-3.5" />
+                            <ThumbsDown className="size-4" strokeWidth={1.75} />
                           </button>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={(e) => toggleSave(job.id, e)}
-                          title={isSaved ? 'Remove from saved' : 'Save job'}
-                          className={cn(
-                            'rounded-md border p-2 text-xs font-semibold shadow-2xs transition-colors',
-                            isSaved
-                              ? 'border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900'
-                              : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
-                          )}
-                        >
-                          {isSaved ? (
-                            <BookmarkCheck className="size-4" />
-                          ) : (
-                            <Bookmark className="size-4" />
-                          )}
-                        </button>
-
-                        {isApplied ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                            <Check className="size-3.5" />
-                            Applied
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => handleApply(job, e)}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-4 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/student/jobs/${job.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center rounded-md border border-zinc-200 px-3.5 py-2 text-[13px] font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                           >
-                            Apply
-                            <ArrowRight className="size-3.5" />
-                          </button>
-                        )}
+                            View more
+                          </Link>
+                          {isApplied ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-3.5 py-2 text-[13px] font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                              <Check className="size-3.5" />
+                              Applied
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => handleApply(job, e)}
+                              className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-4 py-2 text-[14px] font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+                            >
+                              Apply
+                              <ArrowRight className="size-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>
           )}
         </div>
       )}
-
-      {/* 🔍 Job Detail Modal */}
-      <AnimatePresence>
-        {selectedJob && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/50 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.15 }}
-              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-md border border-zinc-200/80 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-[#161616]"
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedJob(null)}
-                className="absolute right-4 top-4 rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white"
-              >
-                <X className="size-5" />
-              </button>
-
-              <div className="flex items-start gap-4 pr-8">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100 font-bold text-sm text-zinc-800 shadow-2xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                  {selectedJob.logoText}
-                </div>
-                <div>
-                  <h2 className="font-heading text-lg font-bold text-zinc-950 dark:text-white">
-                    {selectedJob.title}
-                  </h2>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    {selectedJob.company} · {selectedJob.location} · {selectedJob.type}
-                  </p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs font-bold text-zinc-900 dark:text-white">
-                      {selectedJob.salary}
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/90 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                      <CheckCircle2 className="size-3 text-emerald-600" />
-                      {selectedJob.matchScore}% Match
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-4 text-xs">
-                <div>
-                  <h3 className="font-bold text-zinc-900 dark:text-white uppercase tracking-wider text-[11px]">
-                    About the Role
-                  </h3>
-                  <p className="mt-1.5 text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                    {selectedJob.description}
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-zinc-900 dark:text-white uppercase tracking-wider text-[11px]">
-                    Required Skills & Readiness Match
-                  </h3>
-                  <div className="mt-2 space-y-2">
-                    {selectedJob.requiredSkills.map((req, idx) => (
-                      <div
-                        key={idx}
-                        className={cn(
-                          'flex items-center justify-between p-2.5 rounded-md border text-xs',
-                          req.met
-                            ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-950 dark:bg-emerald-950/20'
-                            : 'border-zinc-200 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/30',
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          {req.met ? (
-                            <Check className="size-4 text-emerald-600 shrink-0" />
-                          ) : (
-                            <X className="size-4 text-rose-500 shrink-0" />
-                          )}
-                          <span className="font-semibold text-zinc-900 dark:text-white">
-                            {req.name} ({req.level})
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                          <span>{req.met ? '✓ Met' : '✗ Gap'}</span>
-                          <span title={req.note} className="cursor-help">
-                            <Info className="size-3.5 text-zinc-400 hover:text-zinc-700" />
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-zinc-900 dark:text-white uppercase tracking-wider text-[11px]">
-                    About {selectedJob.company}
-                  </h3>
-                  <p className="mt-1.5 text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                    {selectedJob.companyAbout}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => toggleSave(selectedJob.id)}
-                  className="rounded-md border border-zinc-200 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                >
-                  {savedJobIds.has(selectedJob.id) ? 'Saved' : 'Save Job'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleApply(selectedJob);
-                    setSelectedJob(null);
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
-                >
-                  Apply Now
-                  <ArrowRight className="size-3.5" />
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* 🎉 Application Sent Screen Modal */}
-      <AnimatePresence>
-        {showAppliedSuccess && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/50 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              className="relative w-full max-w-md rounded-md border border-zinc-200/80 bg-white p-6 text-center shadow-xl dark:border-zinc-800 dark:bg-[#161616]"
-            >
-              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 mb-4 dark:bg-emerald-950 dark:text-emerald-300">
-                <CheckCircle2 className="size-6" />
-              </div>
-              <h2 className="font-heading text-lg font-bold text-zinc-950 dark:text-white">
-                Application Sent!
-              </h2>
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Your verified credential bundle was successfully submitted to{' '}
-                <span className="font-semibold text-zinc-900 dark:text-white">
-                  {justAppliedTitle}
-                </span>
-                .
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowAppliedSuccess(false)}
-                className="mt-6 w-full rounded-md bg-zinc-900 py-2 text-xs font-bold text-white shadow-2xs hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
-              >
-                Back to Matches
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
