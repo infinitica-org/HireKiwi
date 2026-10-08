@@ -111,6 +111,8 @@ export type ListEmployerApplicantsQuery = z.infer<typeof ListEmployerApplicantsQ
 export const EmployerApplicantCardSchema = z.object({
   applicationId: UuidSchema,
   candidateName: z.string(),
+  /** Signed link to the candidate's profile photo, when they have one. */
+  photoUrl: z.string().nullable().default(null),
   /** Fit at the moment the student applied (from the snapshot). */
   fit: JobFitSummarySchema.nullable(),
   /** True when the student's fit today differs from the snapshot; a hint to review, not a re-sort. */
@@ -122,6 +124,22 @@ export const EmployerApplicantCardSchema = z.object({
   appliedAt: IsoDateTimeSchema,
 });
 export type EmployerApplicantCard = z.infer<typeof EmployerApplicantCardSchema>;
+
+/** One applicant in full: the profile the student confirmed when applying, plus where the application stands. */
+export const EmployerApplicantDetailSchema = z.object({
+  applicationId: UuidSchema,
+  jobId: UuidSchema,
+  roleTitle: z.string(),
+  /** The employer-visible profile as it was when the student applied. */
+  profile: PublicCandidateProfileDtoSchema,
+  photoUrl: z.string().nullable(),
+  coverNote: z.string().nullable(),
+  fit: JobFitSummarySchema.nullable(),
+  status: ApplicationStatusSchema,
+  statusLabel: z.string(),
+  appliedAt: IsoDateTimeSchema,
+});
+export type EmployerApplicantDetail = z.infer<typeof EmployerApplicantDetailSchema>;
 
 export const ListEmployerApplicantsResponseSchema = z.object({
   job: z.object({ id: UuidSchema, roleTitle: z.string() }),

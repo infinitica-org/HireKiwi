@@ -142,7 +142,7 @@ export const ROUTES: readonly RouteSpec[] = [
     path: '/users/me',
     module: 'users',
     owner: 'Vishal V',
-    roles: ['STUDENT', 'INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'SUPER_ADMIN'],
+    roles: ['STUDENT', 'INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'SUPER_ADMIN', 'COMPANY'],
     rateLimit: 'role.student',
     criticality: 'INTERACTIVE',
     execution: 'SYNC',
@@ -1462,6 +1462,20 @@ export const ROUTES: readonly RouteSpec[] = [
     summary: 'Company-scoped applicants for one job, from application snapshots (Th6-390/391).',
   },
 
+  {
+    method: 'GET',
+    path: '/employer/applications/:id',
+    module: 'applications',
+    owner: 'Th6-APP-01',
+    roles: ['COMPANY'],
+    rateLimit: 'role.student',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 300,
+    summary:
+      'One applicant in full, from the application snapshot, for the company that owns the job.',
+  },
+
   /* -------------------- employer job management (JOB-01) ------------------- */
   {
     method: 'GET',
@@ -1522,6 +1536,19 @@ export const ROUTES: readonly RouteSpec[] = [
     execution: 'SYNC',
     slaMs: 300,
     summary: 'Delete a DRAFT job that has no applications (JOB-01.10).',
+  },
+  {
+    method: 'GET',
+    path: '/employer/jobs/:id/visibility',
+    module: 'jobs',
+    owner: 'Vishal V',
+    roles: ['COMPANY'],
+    rateLimit: 'role.company',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 300,
+    summary:
+      'Is this job live? The same visibility rules students get, with the reason for each (JOB-01).',
   },
   {
     method: 'POST',
