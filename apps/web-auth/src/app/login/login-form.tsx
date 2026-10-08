@@ -6,6 +6,11 @@ import { useSearchParams } from 'next/navigation';
 import { isSmartApiError } from '@hirekiwi/api-client';
 import { EMAIL_NOT_VERIFIED_ERROR } from '@hirekiwi/contracts';
 import { EyeIcon, EyeOffIcon } from '../../components/auth-icons';
+import {
+  CompanyIllustration,
+  StudentIllustration,
+  WelcomeIllustration,
+} from '../../components/auth-illustrations';
 import { ResendVerification } from '../../components/resend-verification';
 import { api, buildGoogleOauthUrl, redirectForRole, storeSession } from '../../lib/api';
 import { oauthErrorMessage } from '../../lib/oauth-error-message';
@@ -83,7 +88,11 @@ export function LoginForm() {
   return (
     <section className="flex w-full flex-1 flex-col items-center justify-between text-center">
       <div className="my-auto flex w-full flex-col items-center justify-center pt-14 ">
-        <img src="/icon.png" alt="SMART" className="mx-auto h-11 w-11 object-contain" />
+        {stage === 'choose-signup' ? (
+          <WelcomeIllustration className="h-20 w-auto" />
+        ) : (
+          <img src="/icon.png" alt="SMART" className="mx-auto h-11 w-11 object-contain" />
+        )}
 
         <h1 className="mt-4 text-[1.65rem] font-bold leading-tight tracking-tight text-[#111827] sm:text-[1.85rem]">
           {stage === 'choose-signup' ? "Let's get you set up" : 'Log in or sign up'}
@@ -238,27 +247,115 @@ export function LoginForm() {
         ) : null}
 
         {stage === 'choose-signup' ? (
-          <div className="mt-8 w-full max-w-[420px] space-y-4 text-center mx-auto">
+          <div className="mt-8 w-full max-w-2xl space-y-6 text-center mx-auto">
             <p className="text-sm text-[#6b7280]">
               We couldn&apos;t find an account for <span className="font-medium">{email}</span>. How
-              would you like to sign up?
+              would you like to join SMART?
             </p>
 
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Link
                 href={`/register?email=${encodeURIComponent(email)}`}
-                className="flex h-14 w-full flex-col items-start justify-center rounded-md border border-[#e5e7eb] bg-white px-4 text-left transition hover:bg-slate-50"
+                className="group relative flex flex-col items-start overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white p-6 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[#0f766e]/40 hover:shadow-xl hover:shadow-[#0f766e]/10"
               >
-                <span className="text-sm font-semibold text-[#111827]">Sign up as a student</span>
-                <span className="text-xs text-[#6b7280]">Find internships and jobs</span>
+                <span className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-[#0f766e]/5 transition-transform duration-300 group-hover:scale-125" />
+                <StudentIllustration className="h-20 w-20" />
+                <span className="mt-4 text-lg font-semibold text-[#111827]">
+                  I&apos;m a student
+                </span>
+                <span className="mt-1 text-xs leading-relaxed text-[#6b7280]">
+                  Build a skill profile, get matched on real evidence, and get discovered by
+                  verified employers.
+                </span>
+
+                <ul className="mt-3 space-y-1.5">
+                  {['Evidence-backed profile', 'Matched to verified employers'].map((item) => (
+                    <li key={item} className="flex items-center gap-1.5 text-[11px] text-[#4b5563]">
+                      <svg
+                        className="h-3 w-3 shrink-0 text-[#0f766e]"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M5 13l4 4L19 7"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <span className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[#0f766e] px-3.5 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-[#0b5c54]">
+                  Create student account
+                  <svg
+                    className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <path
+                      d="M5 12h14M13 6l6 6-6 6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
               </Link>
 
               <Link
                 href={`/company/register?email=${encodeURIComponent(email)}`}
-                className="flex h-14 w-full flex-col items-start justify-center rounded-md border border-[#e5e7eb] bg-white px-4 text-left transition hover:bg-slate-50"
+                className="group relative flex flex-col items-start overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white p-6 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[#4338ca]/40 hover:shadow-xl hover:shadow-[#4338ca]/10"
               >
-                <span className="text-sm font-semibold text-[#111827]">Sign up as a company</span>
-                <span className="text-xs text-[#6b7280]">Hire from a verified talent pool</span>
+                <span className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-[#4338ca]/5 transition-transform duration-300 group-hover:scale-125" />
+                <CompanyIllustration className="h-20 w-20" />
+                <span className="mt-4 text-lg font-semibold text-[#111827]">I&apos;m hiring</span>
+                <span className="mt-1 text-xs leading-relaxed text-[#6b7280]">
+                  Source from a verified, evidence-backed talent pool and run your pipeline end to
+                  end.
+                </span>
+
+                <ul className="mt-3 space-y-1.5">
+                  {['Verified talent pool', 'End-to-end pipeline'].map((item) => (
+                    <li key={item} className="flex items-center gap-1.5 text-[11px] text-[#4b5563]">
+                      <svg
+                        className="h-3 w-3 shrink-0 text-[#4338ca]"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M5 13l4 4L19 7"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <span className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[#4338ca] px-3.5 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-[#362ea3]">
+                  Create company account
+                  <svg
+                    className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <path
+                      d="M5 12h14M13 6l6 6-6 6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
               </Link>
             </div>
 

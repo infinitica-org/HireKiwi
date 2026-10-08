@@ -109,13 +109,23 @@ function labelFromPath(path: string): string {
 
 const MAX_LISTED_DETAILS = 4;
 
+/** Shown for any network-level failure — never the raw path/timeout detail. */
+export const NETWORK_ERROR_MESSAGE =
+  "We couldn't reach the server. Check your connection and try again.";
+
+/** Shown when the server responded but the body didn't match what we expected. */
+export const CONTRACT_ERROR_MESSAGE = 'Something went wrong on our end. Please try again.';
+
 /**
  * One user-facing sentence for any failed request.
  *
  * - A specific server message ("Verify your corporate email before submitting.") is shown as is.
  * - The generic "Request failed validation." is replaced by the actual field problems, so the
  *   user learns which field to fix.
- * - Anything else falls back to the error message, then to `fallback`.
+ * - A `SmartNetworkError`/`SmartContractViolationError` carries internal detail (endpoint path,
+ *   timeout, raw contract-mismatch payload) meant for logs, not the page — those get a fixed,
+ *   friendly sentence instead of `error.message`.
+ * - Anything else unrecognised falls back to `fallback`.
  */
 export function describeApiError(
   error: unknown,
@@ -138,6 +148,8 @@ export function describeApiError(
     }
     return error.message || fallback;
   }
+  if (error instanceof SmartNetworkError) return NETWORK_ERROR_MESSAGE;
+  if (error instanceof SmartContractViolationError) return CONTRACT_ERROR_MESSAGE;
   if (error instanceof Error && error.message) return error.message;
   return fallback;
 }

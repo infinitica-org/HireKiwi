@@ -59,12 +59,12 @@ describe('LoginForm identify-first flow', () => {
     fireEvent.change(emailInput, { target: { value: 'new.person@example.com' } });
     submitClosestForm(emailInput);
 
-    expect(await screen.findByText(/Sign up as a student/i)).toBeTruthy();
-    expect(screen.getByText(/Sign up as a company/i)).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Sign up as a student/i }).getAttribute('href')).toBe(
+    expect(await screen.findByText(/I'm a student/i)).toBeTruthy();
+    expect(screen.getByText(/I'm hiring/i)).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Create student account/i }).getAttribute('href')).toBe(
       '/register?email=new.person%40example.com',
     );
-    expect(screen.getByRole('link', { name: /Sign up as a company/i }).getAttribute('href')).toBe(
+    expect(screen.getByRole('link', { name: /Create company account/i }).getAttribute('href')).toBe(
       '/company/register?email=new.person%40example.com',
     );
   });

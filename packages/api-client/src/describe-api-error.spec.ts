@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { describeApiError, GENERIC_VALIDATION_MESSAGE, SmartApiError } from './errors.js';
+import {
+  CONTRACT_ERROR_MESSAGE,
+  describeApiError,
+  GENERIC_VALIDATION_MESSAGE,
+  NETWORK_ERROR_MESSAGE,
+  SmartApiError,
+  SmartContractViolationError,
+  SmartNetworkError,
+} from './errors.js';
 
 function apiError(message: string, details: { path: string; message: string }[] = []) {
   return new SmartApiError({
@@ -62,6 +70,21 @@ describe('describeApiError', () => {
 
   it('falls back to the error message when there are no details', () => {
     expect(describeApiError(apiError(GENERIC_VALIDATION_MESSAGE))).toBe(GENERIC_VALIDATION_MESSAGE);
+  });
+
+  it('hides the raw endpoint/timeout detail of a network failure behind a friendly sentence', () => {
+    const error = new SmartNetworkError(
+      'Request to /api/v1/public/company/onboarding/sessions failed or timed out after 15000ms.',
+    );
+    expect(describeApiError(error)).toBe(NETWORK_ERROR_MESSAGE);
+    expect(describeApiError(error)).not.toContain('/api/v1');
+  });
+
+  it('hides the raw contract-mismatch payload behind a friendly sentence', () => {
+    const error = new SmartContractViolationError('/api/v1/students/me', [
+      { path: 'email', message: 'Required' },
+    ]);
+    expect(describeApiError(error)).toBe(CONTRACT_ERROR_MESSAGE);
   });
 
   it('handles plain errors, unknown values and empty messages', () => {
