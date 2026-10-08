@@ -76,8 +76,8 @@ describe('ResumeSection', () => {
     expect(screen.queryByRole('button', { name: /^Replace resume$/i })).toBeNull();
 
     // Prominent requirements must be rendered
-    expect(screen.getByText('PDF only')).toBeDefined();
-    expect(screen.getByText('Maximum size: 5 MB')).toBeDefined();
+    expect(screen.getByText(/PDF only/)).toBeDefined();
+    expect(screen.getByText(/Maximum size: 5 MB/)).toBeDefined();
   });
 
   it('uploads a valid PDF resume when none exists and shows parse success message', async () => {

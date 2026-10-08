@@ -33,6 +33,7 @@ import { InstitutionsModule } from './modules/institutions/institutions.module.j
 import { CampusModule } from './modules/campus/campus.module.js';
 import { MatchingModule } from './modules/matching/matching.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
+import { CandidateInspectionModule } from './modules/candidate-inspection/candidate-inspection.module.js';
 import { PlacementModule } from './modules/placement/placement.module.js';
 import { ProctoringModule } from './modules/proctoring/proctoring.module.js';
 import { ProjectsModule } from './modules/projects/projects.module.js';
@@ -110,6 +111,7 @@ import { StorageModule } from './platform/storage/storage.module.js';
     MatchingModule,
     NotificationsModule,
     PlacementModule,
+    CandidateInspectionModule,
     ProctoringModule,
     ProjectsModule,
     PublicProfileModule,

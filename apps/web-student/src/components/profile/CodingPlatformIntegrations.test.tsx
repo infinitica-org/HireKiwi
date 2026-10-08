@@ -131,15 +131,13 @@ describe('CodingPlatformIntegrations', () => {
   });
 
   it('does not call a missing API route a wrong username', async () => {
-    lookup
-      .mockReset()
-      .mockRejectedValue(
-        new HireKiwiApiError({
-          error: 'Not Found',
-          message: 'Cannot POST',
-          statusCode: 404,
-        } as never),
-      );
+    lookup.mockReset().mockRejectedValue(
+      new HireKiwiApiError({
+        error: 'Not Found',
+        message: 'Cannot POST',
+        statusCode: 404,
+      } as never),
+    );
     openAndType('LeetCode', 'ada_l');
     const alert = await screen.findByRole('alert', {}, FOUND_TIMEOUT);
     expect(alert.textContent).toContain('Could not check LeetCode right now');
