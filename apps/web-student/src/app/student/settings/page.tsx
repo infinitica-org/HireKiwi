@@ -11,6 +11,7 @@ import { MessagingPreferenceCard } from '@/components/account/MessagingPreferenc
 import { NotificationPreferencesCard } from '@/components/account/NotificationPreferencesCard';
 import { PersonalInfoCard } from '@/components/account/PersonalInfoCard';
 import { ProfileViewsSettingCard } from '@/components/account/ProfileViewsSettingCard';
+import { TwoFactorAuthCard } from '@/components/account/TwoFactorAuthCard';
 import { VisibilitySettingsCard } from '@/components/public-profile/visibility-settings-card';
 
 interface SettingsSection {
@@ -27,7 +28,12 @@ const SECTIONS: SettingsSection[] = [
     label: 'Account',
     description: 'Your name, contact details and sign-in information.',
     icon: UserRound,
-    content: <PersonalInfoCard />,
+    content: (
+      <>
+        <PersonalInfoCard />
+        <TwoFactorAuthCard />
+      </>
+    ),
   },
   {
     id: 'privacy',

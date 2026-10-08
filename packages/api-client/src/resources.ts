@@ -250,8 +250,15 @@ import {
   AuthTokenResponseSchema,
   AuthenticatedUserSchema,
   CompanyPortalAccountSchema,
+  LoginResponseSchema,
+  MfaEnableResponseSchema,
+  MfaSetupResponseSchema,
+  MfaStatusResponseSchema,
   SendEmailOtpResponseSchema,
   VerifyEmailOtpResponseSchema,
+  type MfaChallengeVerifyRequest,
+  type MfaDisableRequest,
+  type MfaEnableRequest,
   IdentifyResponseSchema,
   UserHoldResponseSchema,
   RegisterResponseSchema,
@@ -466,7 +473,25 @@ const prefixed = (path: string): string => `${API_PREFIX}${path}`;
 export function authApi(client: HireKiwiApiClient) {
   return {
     login: (body: { email: string; password: string }) =>
-      client.post(prefixed('/auth/login'), body, { schema: AuthTokenResponseSchema }),
+      client.post(prefixed('/auth/login'), body, { schema: LoginResponseSchema }),
+
+    /** Second step of an MFA-gated login: trades the challenge token + code for a real session. */
+    verifyMfaChallenge: (body: MfaChallengeVerifyRequest) =>
+      client.post(prefixed('/auth/mfa/verify'), body, {
+        schema: AuthTokenResponseSchema,
+        anonymous: true,
+      }),
+
+    mfaStatus: () => client.get(prefixed('/auth/mfa/status'), { schema: MfaStatusResponseSchema }),
+
+    mfaSetup: () =>
+      client.post(prefixed('/auth/mfa/setup'), undefined, { schema: MfaSetupResponseSchema }),
+
+    mfaEnable: (body: MfaEnableRequest) =>
+      client.post(prefixed('/auth/mfa/enable'), body, { schema: MfaEnableResponseSchema }),
+
+    mfaDisable: (body: MfaDisableRequest) =>
+      client.request<void>({ method: 'DELETE', path: prefixed('/auth/mfa'), body }),
 
     identify: (body: { email: string }) =>
       client.post(prefixed('/auth/identify'), body, {
