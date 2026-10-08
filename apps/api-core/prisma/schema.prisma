@@ -1701,6 +1701,10 @@ model JobOpening {
   status                   JobOpeningStatus   @default(DRAFT)
   /// JOB-02 — filled by job posting (Th6-358); nullable until then.
   workMode                 JobWorkMode?       @map("work_mode")
+  /// Candidate-facing posting sections beyond the core columns (JobDetailsSchema).
+  details                  Json?              @map("details")
+  /// Company-only notes (JobInternalSchema). Never selected into any candidate-facing DTO.
+  internal                 Json?              @map("internal")
   createdById              String             @map("created_by_id") @db.Uuid
   createdBy                User               @relation("JobOpeningCreatedBy", fields: [createdById], references: [id])
   createdAt                DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)

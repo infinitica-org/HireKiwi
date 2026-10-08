@@ -4,6 +4,7 @@ import { IDS } from '../company-profile/test-utils.js';
 import { EmployerJobsService } from './employer-jobs.service.js';
 
 const CAMPUS = '33333333-3333-4333-8333-333333333333';
+const DEFAULT_CAMPUS = '11111111-1111-4111-8111-111111111111';
 const OTHER_CAMPUS = '44444444-4444-4444-8444-444444444444';
 const JOB = '55555555-5555-4555-8555-555555555555';
 const skillCode = SKILL_CODES[0] as string;
@@ -74,10 +75,12 @@ describe('EmployerJobsService (JOB-01)', () => {
           heldAt: null,
         })),
       },
+      institution: { findFirst: vi.fn(async () => ({ id: DEFAULT_CAMPUS })) },
       skill: { findMany: vi.fn(async () => [{ id: 'skill-1', code: skillCode }]) },
       jobOpening: {
         findFirst: vi.fn(async () => jobRow()),
         findMany: vi.fn(async () => [jobRow()]),
+        count: vi.fn(async () => 1),
         create: vi.fn(async () => jobRow()),
         update: vi.fn(async ({ data }: { data: Record<string, unknown> }) => jobRow(data)),
         delete: vi.fn(async () => undefined),
@@ -127,6 +130,90 @@ describe('EmployerJobsService (JOB-01)', () => {
   it('creates a job for any campus without campus approval', async () => {
     await service.create(IDS.recruiter, createBody());
     expect(prisma.jobOpening.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('assigns a default home campus when the company names none', async () => {
+    const { institutionId: _omit, ...withoutCampus } = createBody();
+    await service.create(IDS.recruiter, withoutCampus);
+    expect(prisma.institution.findFirst).toHaveBeenCalledTimes(1);
+    expect(prisma.jobOpening.create.mock.calls[0][0].data).toMatchObject({
+      institutionId: DEFAULT_CAMPUS,
+      companyId: IDS.companyA,
+    });
+  });
+
+  it('saves the posting sections and the company-only internal notes', async () => {
+    await service.create(IDS.recruiter, {
+      ...createBody(),
+      details: { department: 'Platform', summary: 'Build APIs.', assessment: { coding: true } },
+      internal: { atsReferenceId: 'REQ-42', hiringPriority: 'HIGH' },
+    });
+    expect(prisma.jobOpening.create.mock.calls[0][0].data).toMatchObject({
+      details: { department: 'Platform', summary: 'Build APIs.', assessment: { coding: true } },
+      internal: { atsReferenceId: 'REQ-42', hiringPriority: 'HIGH' },
+    });
+  });
+
+  describe('visibility check', () => {
+    it('says a published job is live and lists passing checks', async () => {
+      prisma.jobOpening.findFirst.mockResolvedValueOnce(jobRow({ status: 'OPEN' }));
+      const result = await service.visibility(IDS.recruiter, JOB);
+      expect(result.visible).toBe(true);
+      expect(result.checks.every((check) => check.ok)).toBe(true);
+      // The verdict is the same query the student list uses.
+      expect(prisma.jobOpening.count.mock.calls[0][0].where).toMatchObject({
+        id: JOB,
+        status: 'OPEN',
+      });
+    });
+
+    it('explains why a draft is not shown', async () => {
+      prisma.jobOpening.findFirst.mockResolvedValueOnce(jobRow({ status: 'DRAFT' }));
+      prisma.jobOpening.count.mockResolvedValueOnce(0);
+      const result = await service.visibility(IDS.recruiter, JOB);
+      expect(result.visible).toBe(false);
+      const published = result.checks.find((check) => check.id === 'published');
+      expect(published).toMatchObject({ ok: false });
+      expect(published?.message).toMatch(/publish/i);
+    });
+
+    it('flags an unverified company and a passed deadline', async () => {
+      prisma.jobOpening.findFirst.mockResolvedValueOnce(
+        jobRow({ status: 'OPEN', lastDateToApply: new Date('2020-01-01T00:00:00Z') }),
+      );
+      prisma.company.findUnique.mockResolvedValueOnce({
+        verificationStatus: 'PENDING',
+        deactivatedAt: null,
+        heldAt: null,
+      });
+      prisma.jobOpening.count.mockResolvedValueOnce(0);
+      const result = await service.visibility(IDS.recruiter, JOB);
+      expect(result.visible).toBe(false);
+      expect(result.checks.find((check) => check.id === 'company_verified')?.ok).toBe(false);
+      expect(result.checks.find((check) => check.id === 'deadline_open')?.message).toMatch(
+        /2020-01-01/,
+      );
+    });
+
+    it("404s another company's job", async () => {
+      prisma.jobOpening.findFirst.mockResolvedValueOnce(null);
+      await expect(service.visibility(IDS.recruiter, JOB)).rejects.toMatchObject({ status: 404 });
+    });
+  });
+
+  it('puts an open job back to draft when it is put on hold', async () => {
+    prisma.jobOpening.findFirst.mockResolvedValueOnce(jobRow({ status: 'OPEN' }));
+    await service.update(IDS.recruiter, JOB, { details: { onHold: true } });
+    expect(prisma.jobOpening.update.mock.calls[0][0].data).toMatchObject({ status: 'DRAFT' });
+  });
+
+  it('refuses to post when the platform has no active university', async () => {
+    prisma.institution.findFirst.mockResolvedValueOnce(null);
+    const { institutionId: _omit, ...withoutCampus } = createBody();
+    await expect(service.create(IDS.recruiter, withoutCampus)).rejects.toMatchObject({
+      status: 422,
+    });
+    expect(prisma.jobOpening.create).not.toHaveBeenCalled();
   });
 
   it("scopes every read to the caller's company, so another company's job is a 404", async () => {

@@ -59,7 +59,7 @@ export class UsersController {
   ) {}
 
   @Get('me')
-  @Roles('STUDENT', 'INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'SUPER_ADMIN')
+  @Roles('STUDENT', 'INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'SUPER_ADMIN', 'COMPANY')
   me(@CurrentUser() user: RequestUser) {
     return this.service.getMe(user.sub);
   }

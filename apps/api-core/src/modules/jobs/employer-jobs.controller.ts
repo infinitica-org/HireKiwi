@@ -20,6 +20,7 @@ import {
   UpdateEmployerJobRequestSchema,
   UuidSchema,
   type EmployerJobDto,
+  type EmployerJobVisibility,
   type ListEmployerJobsResponse,
 } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -56,6 +57,15 @@ export class EmployerJobsController {
   @ApiOperation({ summary: 'Create a DRAFT job for a campus the company has access to.' })
   create(@CurrentUser() user: RequestUser, @Body() body: unknown): Promise<EmployerJobDto> {
     return this.jobs.create(user.sub, CreateEmployerJobRequestSchema.parse(body));
+  }
+
+  @Get(':id/visibility')
+  @ApiOperation({ summary: 'Is this job live for students, and why or why not.' })
+  visibility(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+  ): Promise<EmployerJobVisibility> {
+    return this.jobs.visibility(user.sub, jobIdOrNotFound(id));
   }
 
   @Get(':id')
