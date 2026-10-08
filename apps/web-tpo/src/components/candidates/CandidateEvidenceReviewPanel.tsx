@@ -39,7 +39,7 @@ export function CandidateEvidenceReviewPanel({ studentId }: { studentId: string 
     setLoading(true);
     setLoadError(null);
     try {
-      const result = await api.placement.getCandidateEvidenceProvenance(studentId);
+      const result = await api.candidateInspection.getCandidateEvidenceProvenance(studentId);
       setProvenance(result);
       setSelectedEvidenceId((current) => current ?? result.items[0]?.evidenceId ?? null);
     } catch (caught: unknown) {
@@ -76,7 +76,7 @@ export function CandidateEvidenceReviewPanel({ studentId }: { studentId: string 
             ? { decision, reason: reason.trim() }
             : { decision, reason: reason.trim() || undefined };
 
-      const response = await api.placement.reviewCandidateEvidence(
+      const response = await api.candidateInspection.reviewCandidateEvidence(
         studentId,
         selectedEvidenceId,
         body,
