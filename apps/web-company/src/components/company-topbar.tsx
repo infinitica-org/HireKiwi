@@ -10,7 +10,7 @@ import {
   CreditCard,
   FileText,
   Menu,
-  MessageSquare,
+  MessageSquareText,
   Settings,
   Shield,
   UserRound,
@@ -219,14 +219,15 @@ export function CompanyTopbar() {
               title="Messages"
               aria-current={messagesActive ? 'page' : undefined}
               className={cn(
-                'relative flex size-9 items-center justify-center rounded-xl border transition-colors',
+                'relative flex h-9 items-center justify-center gap-2 rounded-xl border px-2.5 text-sm transition-colors sm:px-3',
                 focusRing,
                 messagesActive
                   ? 'border-zinc-200 bg-white text-zinc-900 shadow-sm'
                   : 'border-transparent text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900',
               )}
             >
-              <MessageSquare className="size-[18px]" strokeWidth={1.75} />
+              <MessageSquareText className="size-[18px]" strokeWidth={1.75} />
+              <span className="hidden sm:inline">Messages</span>
               {unreadMessages > 0 ? (
                 <span
                   aria-hidden="true"

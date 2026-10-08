@@ -35,6 +35,7 @@ const applicant = (
 ): EmployerApplicantCard => ({
   applicationId: `a0000000-0000-4000-8000-${String(n).padStart(12, '0')}`,
   candidateName: `Candidate ${n}`,
+  photoUrl: null,
   fit: { band: 'STRONG', matchPercent: 90 - n, topReason: null },
   fitRecalculated: false,
   status: 'APPLIED',

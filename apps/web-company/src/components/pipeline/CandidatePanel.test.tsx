@@ -21,6 +21,7 @@ const REC = 'b0000000-0000-4000-8000-000000000001';
 const applicant = (status: EmployerApplicantCard['status']): EmployerApplicantCard => ({
   applicationId: APP,
   candidateName: 'Candidate 1',
+  photoUrl: null,
   fit: null,
   fitRecalculated: false,
   status,

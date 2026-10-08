@@ -13,6 +13,7 @@ import {
 const applicant = (id: string, status: EmployerApplicantCard['status']): EmployerApplicantCard => ({
   applicationId: id,
   candidateName: `Candidate ${id}`,
+  photoUrl: null,
   fit: null,
   fitRecalculated: false,
   status,

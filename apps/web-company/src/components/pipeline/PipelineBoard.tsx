@@ -21,6 +21,23 @@ import {
 import { BOARD_COLUMNS, canDrop, dropTargets, groupByStatus } from '@/lib/pipeline-board';
 
 const BAND_LABEL = { STRONG: 'Strong fit', MODERATE: 'Good fit', STRETCH: 'Stretch' } as const;
+const BAND_STYLE = {
+  STRONG: 'bg-emerald-50 text-emerald-700',
+  MODERATE: 'bg-amber-50 text-amber-700',
+  STRETCH: 'bg-zinc-100 text-zinc-600',
+} as const;
+
+function initials(name: string): string {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase() || '?'
+  );
+}
 
 function CandidateCard({
   applicant,
@@ -31,14 +48,46 @@ function CandidateCard({
 }) {
   return (
     <div
-      className={`rounded-lg border bg-white p-3 text-left shadow-2xs ${overlay ? 'shadow-lg ring-2 ring-emerald-500/40' : ''}`}
+      className={`rounded-lg border border-zinc-200 bg-white p-3 text-left shadow-2xs ${overlay ? 'shadow-lg ring-2 ring-emerald-500/40' : ''}`}
     >
-      <p className="truncate text-sm font-semibold">{applicant.candidateName}</p>
-      <p className="mt-0.5 text-xs text-zinc-500">
-        {applicant.fit
-          ? `${BAND_LABEL[applicant.fit.band]} · ${applicant.fit.matchPercent}%`
-          : 'Not scored'}
-      </p>
+      <div className="flex items-center gap-2.5">
+        {applicant.photoUrl ? (
+          // Signed storage URL; not routed through next/image.
+          <img
+            src={applicant.photoUrl}
+            alt=""
+            draggable={false}
+            className="size-8 shrink-0 rounded-full border border-zinc-200 object-cover"
+          />
+        ) : (
+          <span
+            aria-hidden
+            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[11px] font-semibold text-white"
+          >
+            {initials(applicant.candidateName)}
+          </span>
+        )}
+        <p className="min-w-0 truncate text-sm font-semibold text-zinc-900">
+          {applicant.candidateName}
+        </p>
+      </div>
+      <div className="mt-2.5 flex items-center justify-between gap-2 text-xs">
+        {applicant.fit ? (
+          <span
+            className={`rounded-full px-2 py-0.5 font-semibold ${BAND_STYLE[applicant.fit.band]}`}
+          >
+            {BAND_LABEL[applicant.fit.band]} · {applicant.fit.matchPercent}%
+          </span>
+        ) : (
+          <span className="text-zinc-400">Not scored</span>
+        )}
+        <span className="text-zinc-400">
+          {new Date(applicant.appliedAt).toLocaleDateString(undefined, {
+            day: 'numeric',
+            month: 'short',
+          })}
+        </span>
+      </div>
     </div>
   );
 }
@@ -89,14 +138,18 @@ function Column({
       aria-label={`${EMPLOYER_APPLICATION_STATUS_LABELS[status]} column`}
       data-testid={`column-${status}`}
       data-drop-state={state}
-      className={`flex min-h-40 w-56 shrink-0 flex-col gap-2 rounded-xl border p-2 ${style}`}
+      className={`flex min-h-48 min-w-0 flex-col gap-2 rounded-lg border p-2.5 ${style}`}
     >
-      <h3 className="flex items-center justify-between px-1 text-xs font-bold uppercase tracking-wide text-zinc-600">
-        {EMPLOYER_APPLICATION_STATUS_LABELS[status]}
-        <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px]">{applicants.length}</span>
+      <h3 className="flex items-center justify-between gap-2 px-1 pb-1 text-xs font-bold tracking-wide text-zinc-600 uppercase">
+        <span className="truncate">{EMPLOYER_APPLICATION_STATUS_LABELS[status]}</span>
+        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] text-zinc-700 shadow-2xs">
+          {applicants.length}
+        </span>
       </h3>
       {applicants.length === 0 ? (
-        <p className="px-1 text-xs text-zinc-400">No candidates</p>
+        <p className="rounded-md border border-dashed border-zinc-200 px-2 py-5 text-center text-xs text-zinc-400">
+          No candidates
+        </p>
       ) : (
         applicants.map((applicant) => (
           <DraggableCard key={applicant.applicationId} applicant={applicant} />
@@ -138,7 +191,10 @@ export function PipelineBoard({ applicants, onMove }: PipelineBoardProps) {
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveId(null)}
     >
-      <div className="flex gap-3 overflow-x-auto pb-3" data-testid="pipeline-board">
+      <div
+        className="grid auto-cols-[minmax(8.5rem,1fr)] grid-flow-col gap-3 overflow-x-auto pb-3"
+        data-testid="pipeline-board"
+      >
         {BOARD_COLUMNS.map((status) => (
           <Column key={status} status={status} applicants={groups[status]} active={active} />
         ))}
