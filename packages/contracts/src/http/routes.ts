@@ -175,7 +175,7 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'GET',
-    path: '/placement/candidates/:studentId/education',
+    path: '/candidate-inspection/:studentId/education',
     module: 'placement',
     owner: 'Vishal V',
     roles: ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN', 'SUPER_ADMIN'],
@@ -187,7 +187,7 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'GET',
-    path: '/placement/candidates/:studentId/claims',
+    path: '/candidate-inspection/:studentId/claims',
     module: 'placement',
     owner: 'Vishal V',
     roles: ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN', 'SUPER_ADMIN'],
@@ -199,7 +199,7 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'GET',
-    path: '/placement/candidates/:studentId/skills',
+    path: '/candidate-inspection/:studentId/skills',
     module: 'placement',
     owner: 'Vishal V',
     roles: ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN', 'SUPER_ADMIN'],
@@ -211,7 +211,7 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'GET',
-    path: '/placement/candidates/:studentId/skills/:skillCode/explanation',
+    path: '/candidate-inspection/:studentId/skills/:skillCode/explanation',
     module: 'placement',
     owner: 'Vishal V',
     roles: ['PLACEMENT_STAFF', 'INSTITUTION_ADMIN', 'SUPER_ADMIN'],
@@ -4058,7 +4058,7 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'GET',
-    path: '/placement/candidates/:studentId/evidence/:evidenceId/versions',
+    path: '/candidate-inspection/:studentId/evidence/:evidenceId/versions',
     module: 'evidence',
     owner: 'Vishal Bharath R',
     roles: ['INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN'],
@@ -4070,7 +4070,7 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'GET',
-    path: '/placement/candidates/:studentId/evidence/:evidenceId/versions/:versionNumber',
+    path: '/candidate-inspection/:studentId/evidence/:evidenceId/versions/:versionNumber',
     module: 'evidence',
     owner: 'Vishal Bharath R',
     roles: ['INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN'],
@@ -4106,7 +4106,7 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'GET',
-    path: '/placement/candidates/:studentId/evidence',
+    path: '/candidate-inspection/:studentId/evidence',
     module: 'evidence',
     owner: 'Vishal V',
     roles: ['INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN'],
@@ -4118,7 +4118,7 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: 'POST',
-    path: '/placement/candidates/:studentId/evidence/:evidenceId/review',
+    path: '/candidate-inspection/:studentId/evidence/:evidenceId/review',
     module: 'evidence',
     owner: 'Vishal V',
     roles: ['INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'SUPER_ADMIN'],
