@@ -4,7 +4,7 @@ import { CandidateEvidenceReviewPanel } from './CandidateEvidenceReviewPanel';
 
 vi.mock('../../lib/api', () => ({
   api: {
-    placement: {
+    candidateInspection: {
       getCandidateEvidenceProvenance: vi.fn(),
       reviewCandidateEvidence: vi.fn(),
     },
@@ -18,7 +18,7 @@ const EVIDENCE_ID = '22222222-2222-4222-8222-222222222222';
 
 describe('CandidateEvidenceReviewPanel', () => {
   beforeEach(() => {
-    vi.mocked(api.placement.getCandidateEvidenceProvenance).mockResolvedValue({
+    vi.mocked(api.candidateInspection.getCandidateEvidenceProvenance).mockResolvedValue({
       studentId: STUDENT_ID,
       total: 1,
       summary: { SELF_DECLARED: 1, SOURCE_VERIFIED: 0, ASSESSED: 0, HUMAN_REVIEWED: 0 },
@@ -57,7 +57,7 @@ describe('CandidateEvidenceReviewPanel', () => {
   });
 
   it('26. shows validation error from API', async () => {
-    vi.mocked(api.placement.reviewCandidateEvidence).mockRejectedValue(
+    vi.mocked(api.candidateInspection.reviewCandidateEvidence).mockRejectedValue(
       new Error('reason must be at least 8 characters when rejecting evidence.'),
     );
     render(<CandidateEvidenceReviewPanel studentId={STUDENT_ID} />);
@@ -68,7 +68,7 @@ describe('CandidateEvidenceReviewPanel', () => {
   });
 
   it('27. shows processing state while submitting', async () => {
-    vi.mocked(api.placement.reviewCandidateEvidence).mockImplementation(
+    vi.mocked(api.candidateInspection.reviewCandidateEvidence).mockImplementation(
       () =>
         new Promise((resolve) => {
           setTimeout(
@@ -102,7 +102,7 @@ describe('CandidateEvidenceReviewPanel', () => {
   });
 
   it('28. shows success state after review', async () => {
-    vi.mocked(api.placement.reviewCandidateEvidence).mockResolvedValue({
+    vi.mocked(api.candidateInspection.reviewCandidateEvidence).mockResolvedValue({
       evidence: {
         evidenceId: EVIDENCE_ID,
         candidateId: STUDENT_ID,
@@ -127,7 +127,7 @@ describe('CandidateEvidenceReviewPanel', () => {
   });
 
   it('29. shows failure state with retry', async () => {
-    vi.mocked(api.placement.reviewCandidateEvidence).mockRejectedValue(
+    vi.mocked(api.candidateInspection.reviewCandidateEvidence).mockRejectedValue(
       new Error('Evidence review conflict — another reviewer updated this record.'),
     );
     render(<CandidateEvidenceReviewPanel studentId={STUDENT_ID} />);
@@ -137,7 +137,7 @@ describe('CandidateEvidenceReviewPanel', () => {
   });
 
   it('30. reloads provenance after success so updated status is visible', async () => {
-    vi.mocked(api.placement.reviewCandidateEvidence).mockResolvedValue({
+    vi.mocked(api.candidateInspection.reviewCandidateEvidence).mockResolvedValue({
       evidence: {
         evidenceId: EVIDENCE_ID,
         candidateId: STUDENT_ID,
@@ -159,7 +159,7 @@ describe('CandidateEvidenceReviewPanel', () => {
     await screen.findByTestId('submit-review');
     fireEvent.click(screen.getByTestId('submit-review'));
     await waitFor(() =>
-      expect(api.placement.getCandidateEvidenceProvenance).toHaveBeenCalledTimes(2),
+      expect(api.candidateInspection.getCandidateEvidenceProvenance).toHaveBeenCalledTimes(2),
     );
   });
 });

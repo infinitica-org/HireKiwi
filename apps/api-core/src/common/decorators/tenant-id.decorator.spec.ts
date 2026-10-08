@@ -1,6 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 import { ROUTE_ARGS_METADATA, GUARDS_METADATA } from '@nestjs/common/constants.js';
 import { describe, expect, it } from 'vitest';
+import { CandidateInspectionController } from '../../modules/candidate-inspection/candidate-inspection.controller.js';
 import { InstitutionsTpoController } from '../../modules/institutions/institutions-tpo.controller.js';
 import { PlacementMatchController } from '../../modules/matching/placement-match.controller.js';
 import { PlacementController } from '../../modules/placement/placement.controller.js';
@@ -91,9 +92,17 @@ describe('tenant scoping on institution controllers (#166)', () => {
     );
   });
 
-  it('PlacementController scopes every route except the multi-role evidence reads', () => {
+  it('PlacementController scopes every route except meta', () => {
     const scoped = handlersWithTenantId(PlacementController);
     const unscoped = routeHandlers(PlacementController).filter((name) => !scoped.has(name));
+    expect(unscoped.sort()).toEqual(['meta'].sort());
+  });
+
+  it('CandidateInspectionController has no @TenantId scoping (multi-role evidence reads)', () => {
+    const scoped = handlersWithTenantId(CandidateInspectionController);
+    const unscoped = routeHandlers(CandidateInspectionController).filter(
+      (name) => !scoped.has(name),
+    );
     // These also serve COMPANY / B2B_PARTNER / SUPER_ADMIN, who have no institution.
     expect(unscoped.sort()).toEqual(
       [

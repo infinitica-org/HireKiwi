@@ -2035,31 +2035,41 @@ export function placementApi(client: HireKiwiApiClient) {
       client.get(prefixed(`/me/applications/${applicationId}/fit`), {
         schema: MatchFitDtoSchema,
       }),
+  };
+}
 
+/**
+ * Moved out of `placementApi` (S8-VV-P1, cleanup plan C06): these serve
+ * TPO staff, companies and B2B partners inspecting one candidate's evidence
+ * trail, independent of the TPO-mediated placement flow being retired around
+ * `placementApi`.
+ */
+export function candidateInspectionApi(client: HireKiwiApiClient) {
+  return {
     getCandidateEvidenceProvenance: (studentId: string) =>
-      client.get(prefixed(`/placement/candidates/${studentId}/evidence`), {
+      client.get(prefixed(`/candidate-inspection/${studentId}/evidence`), {
         schema: CandidateEvidenceProvenanceResponseSchema,
       }),
 
     getCandidateEducation: (studentId: string) =>
-      client.get(prefixed(`/placement/candidates/${studentId}/education`), {
+      client.get(prefixed(`/candidate-inspection/${studentId}/education`), {
         schema: CandidateEducationEvidenceResponseSchema,
       }),
 
     getCandidateSkillClaims: (studentId: string) =>
-      client.get(prefixed(`/placement/candidates/${studentId}/claims`), {
+      client.get(prefixed(`/candidate-inspection/${studentId}/claims`), {
         schema: CandidateSkillClaimsResponseSchema,
       }),
 
     getCandidateDemonstratedSkills: (studentId: string) =>
-      client.get(prefixed(`/placement/candidates/${studentId}/skills`), {
+      client.get(prefixed(`/candidate-inspection/${studentId}/skills`), {
         schema: CandidateDemonstratedSkillsResponseSchema,
       }),
 
     getCandidateSkillExplanation: (studentId: string, skillCode: string) =>
       client.get(
         prefixed(
-          `/placement/candidates/${studentId}/skills/${encodeURIComponent(skillCode)}/explanation`,
+          `/candidate-inspection/${studentId}/skills/${encodeURIComponent(skillCode)}/explanation`,
         ),
         {
           schema: GetEmployerSkillInspectionResponseSchema,
@@ -2068,13 +2078,13 @@ export function placementApi(client: HireKiwiApiClient) {
 
     reviewCandidateEvidence: (studentId: string, evidenceId: string, body: ReviewEvidenceRequest) =>
       client.post(
-        prefixed(`/placement/candidates/${studentId}/evidence/${evidenceId}/review`),
+        prefixed(`/candidate-inspection/${studentId}/evidence/${evidenceId}/review`),
         body,
         { schema: ReviewEvidenceResponseSchema },
       ),
 
     listCandidateEvidenceVersions: (studentId: string, evidenceId: string) =>
-      client.get(prefixed(`/placement/candidates/${studentId}/evidence/${evidenceId}/versions`), {
+      client.get(prefixed(`/candidate-inspection/${studentId}/evidence/${evidenceId}/versions`), {
         schema: z.union([
           ListEvidenceRecordVersionsResponseSchema,
           ListEvidenceRecordVersionsRedactedResponseSchema,
@@ -2084,7 +2094,7 @@ export function placementApi(client: HireKiwiApiClient) {
     getCandidateEvidenceVersion: (studentId: string, evidenceId: string, versionNumber: number) =>
       client.get(
         prefixed(
-          `/placement/candidates/${studentId}/evidence/${evidenceId}/versions/${versionNumber}`,
+          `/candidate-inspection/${studentId}/evidence/${evidenceId}/versions/${versionNumber}`,
         ),
         {
           schema: z.union([EvidenceRecordVersionDtoSchema, EvidenceRecordVersionRedactedDtoSchema]),
@@ -3148,6 +3158,7 @@ export function createHireKiwiApi(client: HireKiwiApiClient) {
     proctoring: proctoringApi(client),
     certificates: certificateApi(client),
     placement: placementApi(client),
+    candidateInspection: candidateInspectionApi(client),
     onboarding: onboardingApi(client),
     projects: projectsApi(client),
     candidateCertificates: candidateCertificatesApi(client),
