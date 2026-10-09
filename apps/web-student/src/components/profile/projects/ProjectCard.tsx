@@ -3,16 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { ProjectDto } from '@hirekiwi/contracts';
-import {
-  ArrowRight,
-  FolderGit2,
-  GitBranch,
-  Globe,
-  FolderCode,
-  Swords,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { ArrowRight, GitBranch, Globe, FolderCode, Swords, Trash2, X } from 'lucide-react';
 import { EntryCard, EntryIconButton, EntryIconTile } from '@/components/profile/entry-card-ui';
 import { ProjectStatusBadge } from '@/components/profile/projects/ProjectStatusBadge';
 import {

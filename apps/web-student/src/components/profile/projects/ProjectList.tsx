@@ -1,7 +1,6 @@
 'use client';
 
 import type { ProjectDto } from '@hirekiwi/contracts';
-import { Plus } from 'lucide-react';
 import { ProjectCard } from '@/components/profile/projects/ProjectCard';
 import type { StackTagCount } from '@/lib/project-submission';
 
@@ -15,15 +14,7 @@ type ProjectListProps = {
   onAdd: () => void;
 };
 
-export function ProjectList({
-  projects,
-  topStack,
-  canSubmit,
-  onView,
-  onDelete,
-  onVerify,
-  onAdd,
-}: ProjectListProps) {
+export function ProjectList({ projects, onView, onDelete, onVerify }: ProjectListProps) {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">

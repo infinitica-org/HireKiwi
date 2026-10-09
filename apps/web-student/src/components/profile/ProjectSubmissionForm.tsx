@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { useSearchParams } from 'next/navigation';
 import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { GithubRepoSummary, ProjectDto } from '@hirekiwi/contracts';
-import { AlertCircle, CheckCircle2, GitBranch, Plus, ShieldCheck, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Plus, ShieldCheck, X } from 'lucide-react';
 import { ProjectDetailModal } from '@/components/profile/projects/ProjectDetailModal';
 import { ProjectEmptyState } from '@/components/profile/projects/ProjectEmptyState';
 import {

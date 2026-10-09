@@ -28,10 +28,13 @@ function setup(onChange = vi.fn()) {
   return onChange;
 }
 
-const optionNames = () =>
-  within(document.body.querySelector<HTMLElement>('[role="listbox"]')!)
+const optionNames = () => {
+  const list = document.body.querySelector<HTMLElement>('[role="listbox"]');
+  if (!list) throw new Error('The dropdown did not open.');
+  return within(list)
     .queryAllByRole('option')
     .map((row) => row.textContent);
+};
 
 describe('StyledSelect searchable', () => {
   it('narrows the list as you type, hides empty groups, and keeps pinned options', () => {

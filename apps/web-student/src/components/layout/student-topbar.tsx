@@ -12,7 +12,6 @@ import {
   MessageSquareText,
   Settings,
   Shield,
-  UserRound,
   X,
 } from 'lucide-react';
 import { UserMenu, cn, useUnreadMessageCount } from '@hirekiwi/ui';
