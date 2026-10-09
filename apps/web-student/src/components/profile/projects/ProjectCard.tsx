@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { ProjectDto } from '@hirekiwi/contracts';
-import { ExternalLink, GitBranch, MoreVertical, Trash2, X } from 'lucide-react';
+import { ArrowRight, GitBranch, Globe, FolderCode, Swords, Trash2, X } from 'lucide-react';
+import { EntryCard, EntryIconButton, EntryIconTile } from '@/components/profile/entry-card-ui';
 import { ProjectStatusBadge } from '@/components/profile/projects/ProjectStatusBadge';
 import {
   parseStackTags,
   projectSummaryText,
 } from '@/components/profile/projects/project-presenters';
-import { ProjectDefenseInterviewDialog } from '@/components/profile/ProjectDefenseInterviewDialog';
-import { needsOwnershipInterview, processingStateCopy } from '@/lib/project-submission';
+import { projectDefenseInterviewHref } from '@/components/profile/ProjectDefenseInterviewDialog';
+import { needsOwnershipInterview } from '@/lib/project-submission';
 import { api } from '@/lib/api';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -17,14 +19,15 @@ type ProjectCardProps = {
   project: ProjectDto;
   onView: (project: ProjectDto) => void;
   onDelete?: (projectId: string) => void;
+  /** Opens the verification popup for this project (the Start interview button). */
+  onVerify?: (project: ProjectDto) => void;
 };
 
-export function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
+export function ProjectCard({ project, onView, onDelete, onVerify }: ProjectCardProps) {
   const tags = parseStackTags(project.stack);
   const visibleTags = tags.slice(0, 4);
   const hiddenCount = Math.max(0, tags.length - visibleTags.length);
   const summary = projectSummaryText(project);
-  const statusCopy = processingStateCopy(project);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -44,118 +47,125 @@ export function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
     }
   };
 
+  const interviewDue = needsOwnershipInterview(project);
+  const score =
+    project.status === 'VERIFIED' && project.report ? Math.round(project.report.score) : null;
+
   return (
-    <article className="flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-5 font-sans text-zinc-900 select-none dark:border-zinc-800 dark:bg-[#161616] dark:text-white">
-      <header className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <h3 className="font-heading text-[15px] font-semibold leading-snug tracking-tight break-words text-zinc-950 dark:text-white">
-            {project.title}
-          </h3>
-          <div className="mt-2">
-            <ProjectStatusBadge project={project} />
+    <EntryCard className="relative flex h-full flex-col">
+      <div className="flex items-center justify-between gap-3 px-5 pt-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <EntryIconTile icon={FolderCode} />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+              <h3 className="font-heading text-lg leading-snug font-medium tracking-tight break-words text-zinc-950 dark:text-white">
+                {project.title}
+              </h3>
+              {interviewDue ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                  <span className="size-1.5 rounded-full bg-amber-500" aria-hidden="true" />
+                  Interview pending
+                </span>
+              ) : (
+                <ProjectStatusBadge project={project} />
+              )}
+            </div>
+            {score !== null ? (
+              <p className="mt-1 text-xs font-medium text-zinc-500">Score {score}/100</p>
+            ) : null}
           </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            title="Delete this project"
-            className="flex size-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-zinc-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
-            aria-label={`Delete ${project.title}`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            className="flex size-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
-            aria-label={`More actions for ${project.title}`}
-            onClick={() => onView(project)}
-          >
-            <MoreVertical className="h-4 w-4" />
-          </button>
-        </div>
-      </header>
+        <EntryIconButton
+          label={`Delete ${project.title}`}
+          onClick={() => setShowDeleteConfirm(true)}
+          danger
+        >
+          <Trash2 className="size-4" strokeWidth={1.75} />
+        </EntryIconButton>
+      </div>
 
-      {summary ? (
-        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-          {summary}
-        </p>
-      ) : null}
+      <div className="flex flex-1 flex-col gap-3 px-5 pt-3.5 pb-4">
+        {summary ? (
+          <p className="line-clamp-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+            {summary}
+          </p>
+        ) : null}
 
-      {visibleTags.length > 0 ? (
-        <div className="mt-4">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Stack</p>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {visibleTags.length > 0 ? (
+          <ul className="flex flex-wrap gap-1.5" aria-label="Stack">
             {visibleTags.map((tag) => (
-              <span
+              <li
                 key={tag}
                 className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
               >
                 {tag}
-              </span>
+              </li>
             ))}
             {hiddenCount > 0 ? (
-              <span className="rounded-md px-2 py-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+              <li className="rounded-md px-1.5 py-0.5 text-xs text-zinc-500 dark:text-zinc-400">
                 +{hiddenCount}
-              </span>
+              </li>
             ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px] font-medium text-zinc-700 dark:text-zinc-300">
-        {project.githubUrl ? (
-          <a
-            href={project.githubUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 hover:underline"
-          >
-            <GitBranch className="h-3.5 w-3.5" aria-hidden="true" />
-            GitHub
-            <ExternalLink className="h-3 w-3 opacity-70" aria-hidden="true" />
-          </a>
-        ) : null}
-        {project.liveUrl ? (
-          <a
-            href={project.liveUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 hover:underline"
-          >
-            Live Demo
-            <ExternalLink className="h-3 w-3 opacity-70" aria-hidden="true" />
-          </a>
+          </ul>
         ) : null}
       </div>
 
-      {project.status === 'VERIFIED' && project.report ? (
-        <div className="mt-4 border-t border-zinc-100 pt-3 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
-          <p className="font-semibold text-zinc-900 dark:text-white">HireKiwi verification</p>
-          <p className="mt-1">
-            Score {Math.round(project.report.score)}/100 · {statusCopy.body}
-          </p>
+      <footer className="flex items-center justify-between gap-3 border-t border-zinc-100 px-5 py-3 dark:border-zinc-800">
+        <div className="flex min-w-0 items-center gap-1">
+          {project.githubUrl ? (
+            <a
+              href={project.githubUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`${project.title} on GitHub`}
+              title="GitHub"
+              className="flex size-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white"
+            >
+              <GitBranch className="size-4" aria-hidden="true" />
+            </a>
+          ) : null}
+          {project.liveUrl ? (
+            <a
+              href={project.liveUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`${project.title} live demo`}
+              title="Live demo"
+              className="flex size-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white"
+            >
+              <Globe className="size-4" aria-hidden="true" />
+            </a>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => onView(project)}
+            className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            View project
+            <ArrowRight className="size-3.5" aria-hidden="true" />
+          </button>
         </div>
-      ) : project.status === 'UNDER_REVIEW' ? (
-        <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">{statusCopy.body}</p>
-      ) : needsOwnershipInterview(project) ? (
-        <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">{statusCopy.body}</p>
-      ) : null}
 
-      {needsOwnershipInterview(project) ? (
-        <div className="mt-3">
-          <ProjectDefenseInterviewDialog project={project} />
-        </div>
-      ) : null}
-
-      <footer className="mt-auto flex justify-end pt-4">
-        <button
-          type="button"
-          onClick={() => onView(project)}
-          className="text-[13px] font-medium text-zinc-900 hover:underline dark:text-white"
-        >
-          View project →
-        </button>
+        {interviewDue ? (
+          onVerify ? (
+            <button
+              type="button"
+              onClick={() => onVerify(project)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-zinc-900 px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+            >
+              <Swords className="size-3.5" aria-hidden="true" />
+              Start interview
+            </button>
+          ) : (
+            <Link
+              href={projectDefenseInterviewHref(project.projectId)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-zinc-900 px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+            >
+              <Swords className="size-3.5" aria-hidden="true" />
+              Start interview
+            </Link>
+          )
+        ) : null}
       </footer>
 
       {/* Delete Confirmation Modal */}
@@ -214,6 +224,6 @@ export function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
           </div>
         )}
       </AnimatePresence>
-    </article>
+    </EntryCard>
   );
 }

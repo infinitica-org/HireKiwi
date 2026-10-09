@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { PROCTORING_SNAPSHOT_KEY_PREFIX } from '@hirekiwi/contracts';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 
@@ -44,6 +45,16 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
     days: 730,
     action: 'report',
     why: 'anonymize after N years? needs a policy decision',
+  },
+  {
+    category: 'proctoring_snapshots',
+    days: 30,
+    action: 'delete',
+    why:
+      'S8-RM-XX: raw proctoring JPEG snapshots have no durable Postgres record (see ' +
+      'proctoring/README.md — Prisma ProctoringSession is still pending); bound retention of ' +
+      'this biometric imagery directly in object storage instead. Distinct from integrity_events ' +
+      'above, which is the academic-integrity dispute/audit trail, not raw telemetry.',
   },
 ];
 
@@ -152,6 +163,18 @@ export class RetentionSweepService {
       deactivated_accounts: {
         count: (c) => db.user.count({ where: { deactivatedAt: { lt: c } } }),
         purge: async () => 0,
+      },
+      proctoring_snapshots: {
+        count: async (c) =>
+          (await this.storage.listObjectKeysOlderThan(PROCTORING_SNAPSHOT_KEY_PREFIX, c)).length,
+        purge: async (c) => {
+          const keys = await this.storage.listObjectKeysOlderThan(
+            PROCTORING_SNAPSHOT_KEY_PREFIX,
+            c,
+          );
+          for (const key of keys) await this.storage.deleteObject(key);
+          return keys.length;
+        },
       },
     };
   }

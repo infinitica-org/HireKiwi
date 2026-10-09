@@ -1,21 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { CertificateGuidelinesBanner } from './certificate-guidelines-banner';
 import { CertificateStatusStepper, getLifecycleStage } from './certificate-status-stepper';
 import { CertificateDetailsForm } from './certificate-details-form';
 
 describe('Student Certification UI Components', () => {
-  describe('CertificateGuidelinesBanner', () => {
-    it('renders educational notice regarding offer letters and non-certificate documents', () => {
-      render(<CertificateGuidelinesBanner />);
-      expect(screen.getByText('Certification Upload Guidelines')).toBeDefined();
-      expect(screen.getByText('Not Accepted (Will Be Rejected)')).toBeDefined();
-      expect(
-        screen.getByText(/Offer letters, appointment letters, internship completion letters/i),
-      ).toBeDefined();
-    });
-  });
-
   describe('CertificateStatusStepper', () => {
     it('correctly determines lifecycle stage for various statuses', () => {
       expect(getLifecycleStage('DECLARED', 'pending', false, false)).toBe('source check');

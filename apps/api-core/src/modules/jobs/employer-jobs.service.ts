@@ -27,7 +27,6 @@ import { AuditPublisherService } from '../../platform/audit/audit-publisher.serv
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { JD_PARSE_QUEUE } from '../../platform/queue/queue.names.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
-import { BillingService } from '../billing/billing.service.js';
 import { requireCompanyActor } from '../company-profile/company-access.js';
 import {
   acceptingOpeningWhere,
@@ -102,15 +101,14 @@ function jobColumns(body: Partial<EmployerJobFields>): Prisma.JobOpeningUnchecke
 /**
  * JOB-01 employer job management. Every route resolves the caller's company from the database
  * (`requireCompanyActor`), so a job is only ever read or changed by its own company. Jobs start as
- * DRAFT; publishing checks company verification (EMP-01.08), campus access (UNI-05) and the
- * ACTIVE_JOBS entitlement (BIL-01.08).
+ * DRAFT; publishing checks company verification (EMP-01.08). There is no limit on how many jobs
+ * a company can have open.
  */
 @Injectable()
 export class EmployerJobsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AuditPublisherService) private readonly audit: AuditPublisherService,
-    @Inject(BillingService) private readonly billing: BillingService,
     @InjectQueue(JD_PARSE_QUEUE) private readonly jdParseQueue: Queue<{ openingId: string }>,
     @Optional() @Inject(StorageService) private readonly storage?: StorageService,
   ) {}
@@ -290,7 +288,6 @@ export class EmployerJobsService {
         statusCode: 403,
       });
     }
-    await this.billing.assertQuotaAvailable(actor.companyId, 'ACTIVE_JOBS');
 
     const updated = await this.prisma.jobOpening.update({
       where: { id: jobId },

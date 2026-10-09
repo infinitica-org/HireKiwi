@@ -5,8 +5,9 @@ import type { StudentDashboardSummary } from '@hirekiwi/contracts';
 import { renderWithQueryClient } from '@/test/render-with-query-client';
 import DashboardPage from './page';
 
-const { getDashboard, listSaved, saveJob, unsaveJob } = vi.hoisted(() => ({
+const { getDashboard, listJobs, listSaved, saveJob, unsaveJob } = vi.hoisted(() => ({
   getDashboard: vi.fn(),
+  listJobs: vi.fn(),
   listSaved: vi.fn(),
   saveJob: vi.fn(),
   unsaveJob: vi.fn(),
@@ -31,11 +32,39 @@ vi.mock('@/lib/candidate-identity', async (importOriginal) => ({
 vi.mock('@/lib/api', () => ({
   api: {
     users: { getDashboard },
-    studentJobs: { listSaved, save: saveJob, unsave: unsaveJob },
+    studentJobs: { list: listJobs, listSaved, save: saveJob, unsave: unsaveJob },
   },
 }));
 
 const OPENING = '11111111-1111-4111-8111-111111111111';
+
+/** One job card as the real job feed returns it. */
+function jobCard(over: Record<string, unknown> = {}) {
+  return {
+    id: OPENING,
+    roleTitle: 'Data Analyst',
+    companyName: 'Globex',
+    companyId: null,
+    companyVerified: true,
+    companyVerifiedAt: null,
+    location: 'Remote',
+    employmentType: 'FULL_TIME',
+    workMode: 'REMOTE',
+    lastDateToApply: '2026-10-15',
+    postedAt: '2026-09-20T00:00:00.000Z',
+    fit: null,
+    applied: false,
+    saved: false,
+    salary: null,
+    minYearsExperience: null,
+    maxYearsExperience: null,
+    openings: null,
+    skills: [],
+    tags: [],
+    ...over,
+  };
+}
+
 const APPLICATION = '22222222-2222-4222-8222-222222222222';
 
 function summary(overrides: Partial<StudentDashboardSummary> = {}): StudentDashboardSummary {
@@ -70,6 +99,12 @@ describe('DashboardPage', () => {
   beforeEach(() => {
     getDashboard.mockReset();
     getDashboard.mockResolvedValue(summary());
+    listJobs.mockReset();
+    listJobs.mockResolvedValue({
+      jobs: [],
+      nextCursor: null,
+      counts: { strong: 0, good: 0, all: 0 },
+    });
     listSaved.mockReset();
     listSaved.mockResolvedValue({ jobs: [] });
     saveJob.mockReset();
@@ -111,9 +146,9 @@ describe('DashboardPage', () => {
     renderPage();
     await screen.findByTestId('complete-profile-card');
 
-    expect(screen.getByText('No matches yet')).toBeTruthy();
+    expect(await screen.findByText('No jobs yet')).toBeTruthy();
     fireEvent.click(screen.getByRole('tab', { name: 'Most Recent' }));
-    expect(screen.getByText('No new opportunities')).toBeTruthy();
+    expect(screen.getByText('No new jobs')).toBeTruthy();
     fireEvent.click(screen.getByRole('tab', { name: 'Applied' }));
     expect(screen.getByText('No active applications')).toBeTruthy();
     expect(screen.getByText(/No activity recorded yet/i)).toBeTruthy();
@@ -144,7 +179,23 @@ describe('DashboardPage', () => {
     expect(screen.queryByText('Needs your attention')).toBeNull();
   });
 
-  it('shows real opportunities, applications, matches and activity', async () => {
+  it('shows real jobs, applications and activity', async () => {
+    listJobs.mockResolvedValue({
+      jobs: [
+        jobCard(),
+        jobCard({
+          id: '33333333-3333-4333-8333-333333333333',
+          roleTitle: 'Backend Engineer',
+          companyName: 'Acme',
+          location: 'Pune',
+          postedAt: '2026-09-22T00:00:00.000Z',
+          lastDateToApply: null,
+          fit: { band: 'STRONG', matchPercent: 88, topReason: null },
+        }),
+      ],
+      nextCursor: null,
+      counts: { strong: 1, good: 0, all: 2 },
+    });
     getDashboard.mockResolvedValue(
       summary({
         topMatches: [
@@ -199,9 +250,9 @@ describe('DashboardPage', () => {
     );
     renderPage();
 
-    // My Feed: the scored match, with its application stage.
+    // My Feed: the best-fitting job first.
     expect(await screen.findByText('Backend Engineer')).toBeTruthy();
-    expect(screen.getByText('Shortlisted')).toBeTruthy();
+    expect(screen.getByText(/88% skills match/)).toBeTruthy();
     expect(screen.getByText('Candidate education updated')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('tab', { name: 'Most Recent' }));
@@ -213,22 +264,18 @@ describe('DashboardPage', () => {
   });
 
   it('saves a role from the feed bookmark', async () => {
-    getDashboard.mockResolvedValue(
-      summary({
-        topMatches: [
-          {
-            source: 'OPENING',
-            applicationId: null,
-            openingId: OPENING,
-            roleTitle: 'Platform Engineer',
-            companyName: 'Initech',
-            location: null,
-            matchPercent: 91,
-            stage: null,
-          },
-        ],
-      }),
-    );
+    listJobs.mockResolvedValue({
+      jobs: [
+        jobCard({
+          roleTitle: 'Platform Engineer',
+          companyName: 'Initech',
+          location: null,
+          fit: { band: 'STRONG', matchPercent: 91, topReason: null },
+        }),
+      ],
+      nextCursor: null,
+      counts: { strong: 1, good: 0, all: 1 },
+    });
     renderPage();
 
     const save = await screen.findByRole('button', { name: 'Save Platform Engineer' });
@@ -244,7 +291,7 @@ describe('DashboardPage', () => {
     renderPage();
 
     expect((await screen.findAllByText('Loading…')).length).toBeGreaterThan(0);
-    expect(screen.queryByText('No matches yet')).toBeNull();
+    expect(screen.queryByText('No jobs yet')).toBeNull();
   });
 
   it('says so when the profile is complete', async () => {
@@ -277,28 +324,24 @@ describe('DashboardPage', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('shows an unapplied opening as a scored match', async () => {
-    getDashboard.mockResolvedValue(
-      summary({
-        topMatches: [
-          {
-            source: 'OPENING',
-            applicationId: null,
-            openingId: OPENING,
-            roleTitle: 'Platform Engineer',
-            companyName: 'Initech',
-            location: null,
-            matchPercent: 91,
-            stage: null,
-          },
-        ],
-      }),
-    );
+  it('shows an unapplied job as a scored match', async () => {
+    listJobs.mockResolvedValue({
+      jobs: [
+        jobCard({
+          roleTitle: 'Platform Engineer',
+          companyName: 'Initech',
+          location: null,
+          fit: { band: 'STRONG', matchPercent: 91, topReason: null },
+        }),
+      ],
+      nextCursor: null,
+      counts: { strong: 1, good: 0, all: 1 },
+    });
     renderPage();
 
     expect(await screen.findByText('Platform Engineer')).toBeTruthy();
     expect(screen.getByText('Initech')).toBeTruthy();
-    expect(screen.getByText('91% skills match')).toBeTruthy();
+    expect(screen.getByText(/91% skills match/)).toBeTruthy();
     expect(screen.getByText('Best Match')).toBeTruthy();
     expect(screen.getByText('Matches your profile')).toBeTruthy();
   });

@@ -21,7 +21,7 @@ describe('TPO_NAV', () => {
     expect(TPO_NAV.map((item) => item.name)).toEqual([
       'Dashboard',
       'Students',
-      'Whitelist',
+      'Invitations',
       'Employers',
       'Messages',
       'Reports',

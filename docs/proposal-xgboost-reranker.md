@@ -4,7 +4,7 @@
 
 Our matching pipeline (`matching.service.ts`) already runs in two stages:
 
-1. **Stage 1 — Vector narrow**: `vector-candidate-matcher.ts` uses pgvector cosine similarity (1536-dim embeddings from Google's `text-embedding-004`) to shortlist candidates from the full pool.
+1. **Stage 1 — Vector narrow**: `vector-candidate-matcher.ts` shortlists candidates from the full pool via cosine similarity over an explainable 6-dim vector (5 domain-competency axes A-E + tier weight), so every shortlist decision can be read back per-axis on the radar chart. `CandidateEmbeddingService` (S8-RM-XX) separately generates and persists a real 1536-dim pgvector embedding per candidate (`CandidateEvidenceProfile.embedding`, via Google's `text-embedding-004`) for future semantic-similarity ranking, but that embedding is not yet consulted by the live Stage 1 ranking query — see `docs/proposal-xgboost-reranker.md` history or `candidate-embedding.service.ts`'s header comment for current status before assuming it's wired end-to-end.
 2. **Stage 2 — Authoritative score**: `calculatePersonJobFit` (`person-job-fit.ts`) re-scores the shortlist with a deterministic, hand-weighted formula — proficiency accuracy × role weight × importance weight, skill token overlap, held-at-ask thresholds.
 
 Every number this produces today traces back to a rule a person wrote. That is a deliberate strength: we can tell any student or company exactly why they were or weren't matched. We should not give that up.

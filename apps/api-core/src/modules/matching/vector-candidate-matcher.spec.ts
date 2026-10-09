@@ -25,9 +25,10 @@ describe('Th6-I611: Semantic Vector Candidate Matcher with Privacy Opt-Out Enfor
         {
           code: 'JAVASCRIPT_TYPESCRIPT_FULL_STACK_DEVELOPMENT',
           domain: 'A',
+          domainCode: 'A',
           proficiency: 'PROFESSIONAL',
         },
-        { code: 'SQL_QUERY_OPTIMIZATION', domain: 'C', proficiency: 'ADVANCED' },
+        { code: 'SQL_QUERY_OPTIMIZATION', domain: 'C', domainCode: 'C', proficiency: 'ADVANCED' },
       ],
       domainCompetencies: { A: 0.95, B: 0.9, C: 0.85, D: 0.8, E: 0.8 },
     },
@@ -45,6 +46,7 @@ describe('Th6-I611: Semantic Vector Candidate Matcher with Privacy Opt-Out Enfor
         {
           code: 'JAVASCRIPT_TYPESCRIPT_FULL_STACK_DEVELOPMENT',
           domain: 'A',
+          domainCode: 'A',
           proficiency: 'PROFESSIONAL',
         },
       ],
@@ -77,6 +79,7 @@ describe('Th6-I611: Semantic Vector Candidate Matcher with Privacy Opt-Out Enfor
         {
           code: 'JAVASCRIPT_TYPESCRIPT_FULL_STACK_DEVELOPMENT',
           domain: 'A',
+          domainCode: 'A',
           proficiency: 'INTERMEDIATE',
         },
       ],
@@ -149,8 +152,8 @@ describe('Th6-I611: Semantic Vector Candidate Matcher with Privacy Opt-Out Enfor
       const juniorVector = buildJobVectorFromRequiredSkills([{ minProficiency: 'BEGINNER' }]);
 
       expect(seniorVector.every((v) => v > (juniorVector[0] ?? 0))).toBe(true);
-      // Flattened across all 5 domain axes + tier (see function doc: skill_claims.domain never
-      // actually holds an A-E code, so candidate vectors can't be compared per-domain yet).
+      // Flattened across all 5 domain axes + tier: neither required skill here carries a
+      // domainCode, so this exercises the pre-backfill fallback path (see function doc).
       expect(new Set(seniorVector).size).toBe(1);
       expect(seniorVector).toHaveLength(6);
     });
@@ -159,6 +162,17 @@ describe('Th6-I611: Semantic Vector Candidate Matcher with Privacy Opt-Out Enfor
       const vector = buildJobVectorFromRequiredSkills([{}]);
       expect(vector).toHaveLength(6);
       expect(vector.every((v) => v >= 0 && v <= 1)).toBe(true);
+    });
+
+    it('places a classified required skill on its own domain axis instead of flattening (S8-RM-XX)', () => {
+      const vector = buildJobVectorFromRequiredSkills([
+        { minProficiency: 'PROFESSIONAL', domainCode: 'A' },
+        { minProficiency: 'BEGINNER', domainCode: 'D' },
+      ]);
+      // [A, B, C, D, E, overallAvg] — A and D diverge from the rest once skills are classified.
+      expect(vector[0]).toBeGreaterThan(vector[1] ?? 0);
+      expect(vector[0]).not.toBe(vector[3]);
+      expect(vector).toHaveLength(6);
     });
   });
 });

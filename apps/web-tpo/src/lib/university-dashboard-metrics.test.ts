@@ -3,6 +3,7 @@ import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import {
   buildUniversityRosterRows,
   computeUniversityDashboardMetrics,
+  filterUniversityRoster,
   verificationStateForStudent,
 } from './university-dashboard-metrics';
 
@@ -82,5 +83,95 @@ describe('buildUniversityRosterRows', () => {
       hiredLabel: '—',
       verifiedSkillsCount: 1,
     });
+  });
+});
+
+describe('filterUniversityRoster', () => {
+  const sampleRoster = [
+    {
+      userId: '11111111-aaaa-4111-8111-111111111111',
+      name: 'Ada Lovelace',
+      email: 'ada@school.edu',
+      major: 'Computer Science',
+      verificationState: 'Full' as const,
+      hiredLabel: '—',
+      verifiedSkillsCount: 3,
+    },
+    {
+      userId: '22222222-bbbb-4222-8222-222222222222',
+      name: 'Alan Turing',
+      email: 'alan@cambridge.edu',
+      major: 'Mathematics',
+      verificationState: 'Partial' as const,
+      hiredLabel: '—',
+      verifiedSkillsCount: 1,
+    },
+    {
+      userId: '33333333-cccc-4333-8333-333333333333',
+      name: 'Grace Hopper',
+      email: 'grace@navy.mil',
+      major: 'Systems',
+      verificationState: 'Pending' as const,
+      hiredLabel: '—',
+      verifiedSkillsCount: 0,
+    },
+  ];
+
+  it('returns full roster when query is empty or whitespace', () => {
+    expect(filterUniversityRoster(sampleRoster, '')).toEqual(sampleRoster);
+    expect(filterUniversityRoster(sampleRoster, '   ')).toEqual(sampleRoster);
+  });
+
+  it('filters by student name case-insensitively and with partial matching', () => {
+    const result = filterUniversityRoster(sampleRoster, 'ada');
+    expect(result).toHaveLength(1);
+    expect(result[0]?.name).toBe('Ada Lovelace');
+
+    const partial = filterUniversityRoster(sampleRoster, 'TUR');
+    expect(partial).toHaveLength(1);
+    expect(partial[0]?.name).toBe('Alan Turing');
+  });
+
+  it('filters by student email', () => {
+    const result = filterUniversityRoster(sampleRoster, 'cambridge.edu');
+    expect(result).toHaveLength(1);
+    expect(result[0]?.name).toBe('Alan Turing');
+  });
+
+  it('filters by student ID prefix and full UUID', () => {
+    const byPrefix = filterUniversityRoster(sampleRoster, '11111111');
+    expect(byPrefix).toHaveLength(1);
+    expect(byPrefix[0]?.name).toBe('Ada Lovelace');
+
+    const byFull = filterUniversityRoster(sampleRoster, '22222222-bbbb-4222-8222-222222222222');
+    expect(byFull).toHaveLength(1);
+    expect(byFull[0]?.name).toBe('Alan Turing');
+  });
+
+  it('filters when query includes "ID " prefix as shown in UI table', () => {
+    const result = filterUniversityRoster(sampleRoster, 'ID 11111111');
+    expect(result).toHaveLength(1);
+    expect(result[0]?.name).toBe('Ada Lovelace');
+
+    const withColon = filterUniversityRoster(sampleRoster, 'id: 33333333');
+    expect(withColon).toHaveLength(1);
+    expect(withColon[0]?.name).toBe('Grace Hopper');
+  });
+
+  it('filters by major', () => {
+    const result = filterUniversityRoster(sampleRoster, 'systems');
+    expect(result).toHaveLength(1);
+    expect(result[0]?.name).toBe('Grace Hopper');
+  });
+
+  it('ignores leading and trailing whitespace', () => {
+    const result = filterUniversityRoster(sampleRoster, '  grace  ');
+    expect(result).toHaveLength(1);
+    expect(result[0]?.name).toBe('Grace Hopper');
+  });
+
+  it('returns an empty array when no students match', () => {
+    const result = filterUniversityRoster(sampleRoster, 'nonexistent-query-xyz');
+    expect(result).toEqual([]);
   });
 });

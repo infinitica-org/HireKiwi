@@ -19,7 +19,7 @@ const TONE_CLASS: Record<EntryTone, string> = {
 };
 
 export const entryCardClass =
-  'rounded-lg border border-zinc-200 bg-white font-sans text-zinc-900 select-none dark:border-zinc-800 dark:bg-[#161616] dark:text-white';
+  'rounded-lg border border-zinc-200 bg-white font-sans text-zinc-900 dark:border-zinc-800 dark:bg-[#161616] dark:text-white';
 
 export function EntryCard({ children, className }: { children: ReactNode; className?: string }) {
   return <article className={`${entryCardClass} ${className ?? ''}`}>{children}</article>;

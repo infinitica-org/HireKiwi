@@ -95,10 +95,6 @@ vi.mock('@/lib/use-profile-progress', () => ({
   }),
 }));
 
-vi.mock('@/components/profile/ProfilePublicLinkCard', () => ({
-  ProfilePublicLinkCard: () => null,
-}));
-
 vi.mock('@/components/profile/SkillsSection', () => ({
   SkillsSection: () => <div>Skills section</div>,
 }));
@@ -115,12 +111,8 @@ vi.mock('@/components/profile/LanguagesSection', () => ({
   LanguagesSection: () => <div>Languages section</div>,
 }));
 
-vi.mock('@/components/profile/CertificatesSection', () => ({
-  CertificatesSection: () => <div>Certificates section</div>,
-}));
-
-vi.mock('@/components/profile/CredentialsSection', () => ({
-  CredentialsSection: () => <div>Credentials section</div>,
+vi.mock('@/components/profile/CertificationsSection', () => ({
+  CertificationsSection: () => <div>Certifications section</div>,
 }));
 
 vi.mock('@/components/profile/ProjectSubmissionForm', () => ({

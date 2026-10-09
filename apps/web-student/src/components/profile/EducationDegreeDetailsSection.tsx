@@ -10,6 +10,7 @@ import {
 } from '@/lib/education-degree-details';
 import { EDUCATION_MODAL_FIELD } from '@/components/profile/education-details-modal-ui';
 import { EVIDENCE_ACCEPT, EVIDENCE_HINT } from '@/lib/evidence-upload';
+import { StyledSelect } from '@/components/ui/styled-select';
 
 interface EducationDegreeDetailsSectionProps {
   program: string;
@@ -92,7 +93,7 @@ export function EducationDegreeDetailsSection({
           <label htmlFor="edu-current-sem" className={fieldLabelClass}>
             Current semester <span className="text-[var(--ds-text-muted)]">*</span>
           </label>
-          <select
+          <StyledSelect
             id="edu-current-sem"
             value={values.degreeDetails.currentSemester}
             onChange={(e) => onPatchDegreeDetails({ currentSemester: e.target.value })}
@@ -104,7 +105,7 @@ export function EducationDegreeDetailsSection({
                 Semester {n}
               </option>
             ))}
-          </select>
+          </StyledSelect>
         </div>
       </div>
 

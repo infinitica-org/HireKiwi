@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { isHireKiwiApiError } from '@hirekiwi/api-client';
+import { describeApiError, isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   API_PREFIX,
   BatchImportMappingSchema,
@@ -57,9 +57,15 @@ export function toBatchImportMapping(mapping: MappingState): BatchImportMapping 
 }
 
 function safeMessage(caught: unknown, fallback: string) {
-  if (isHireKiwiApiError(caught)) return caught.message;
-  if (caught instanceof Error) return caught.message;
-  return fallback;
+  if (isHireKiwiApiError(caught)) {
+    if (caught.message && caught.message !== 'An unexpected error occurred.') {
+      return caught.message;
+    }
+    if (caught.details && caught.details.length > 0) {
+      return caught.details.map((d) => d.message).join('; ');
+    }
+  }
+  return describeApiError(caught, fallback);
 }
 
 export function BatchImportWizard({
@@ -310,6 +316,10 @@ export function BatchImportWizard({
       </div>
       {file || result ? null : (
         <div className="space-y-3">
+          <p className="rounded-lg border border-zinc-200/90 bg-zinc-50/70 p-3 text-xs text-zinc-600 leading-relaxed">
+            Upload a CSV or XLSX roster using the required template format. The first row must
+            contain the required column headers. Maximum file size: 5 MB.
+          </p>
           <input
             ref={inputRef}
             type="file"

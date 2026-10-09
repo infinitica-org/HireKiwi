@@ -49,7 +49,7 @@ Edge-layer concerns — SSL termination, DDoS protection, and IP-level rate limi
 
 ## 2. Module Boundaries & Interface Reference
 
-The following module boundaries account for a representative subset of `api-core`'s business logic and are retained here for their interface and SLA detail. The authoritative, current module list is `apps/api-core/src/modules/*`, and the full ownership matrix is maintained in `TEAM.md` §3.1. Modules not detailed below — `analytics`, `calibration`, `candidate-certificates`, `candidate-education`, `candidate-languages`, `catalog`, `corroboration`, `evidence`, `institutions`, `integrations`, `invitations`, `matching`, `notifications`, `proctoring`, `projects`, `public-profile`, `signal-encoder`, `signal-ingestion`, `username`, `users`, `webhooks`, `work-experience` — follow the same boundary and interface conventions and are documented at the module level rather than here.
+The following module boundaries account for a representative subset of `api-core`'s business logic and are retained here for their interface and SLA detail. The authoritative, current module list is `apps/api-core/src/modules/*`, and the full ownership matrix is maintained in `TEAM.md` §3.1. Modules not detailed below — `analytics`, `irt`, `candidate-certificates`, `candidate-education`, `candidate-languages`, `catalog`, `corroboration`, `evidence`, `institutions`, `integrations`, `invitations`, `matching`, `notifications`, `proctoring`, `projects`, `public-profile`, `signal-encoder`, `signal-ingestion`, `username`, `users`, `webhooks`, `work-experience` — follow the same boundary and interface conventions and are documented at the module level rather than here.
 
 ### Module: `auth` (Identity & Access Control)
 

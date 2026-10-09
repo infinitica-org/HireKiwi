@@ -1,3 +1,4 @@
+import { chooseOption } from '@/test-utils/styled-select';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithQueryClient } from '@/test/render-with-query-client';
@@ -72,8 +73,7 @@ describe('EducationSection', () => {
     renderWithQueryClient(<EducationSection />);
     expect(await screen.findByText('MIT')).toBeTruthy();
     expect(screen.getByText('Bachelor of Science')).toBeTruthy();
-    expect(screen.getByText('4.0 GPA')).toBeTruthy();
-    expect(screen.getByText(/Final score/i)).toBeTruthy();
+    expect(screen.getByText('Score: 4.0 GPA')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Add education/i })).toBeTruthy();
   });
 
@@ -111,33 +111,19 @@ describe('EducationSection', () => {
     fireEvent.change(screen.getByPlaceholderText(/RV College/i), {
       target: { value: 'MIT' },
     });
-    fireEvent.change(screen.getByLabelText('Program / Degree *'), {
-      target: { value: 'B.Tech' },
-    });
-    fireEvent.change(screen.getByLabelText('Board / University *'), {
-      target: { value: 'CBSE' },
-    });
-    fireEvent.change(screen.getByLabelText('Branch / Specialization (Optional)'), {
-      target: { value: 'Computer Science' },
-    });
-    fireEvent.change(screen.getByLabelText('Start year *'), {
-      target: { value: '2020' },
-    });
-    fireEvent.change(screen.getByLabelText('End year *'), {
-      target: { value: '2024' },
-    });
-    fireEvent.change(screen.getByLabelText('Study mode *'), {
-      target: { value: 'Full-time' },
-    });
+    chooseOption(screen.getByLabelText('Program / Degree *'), 'B.Tech');
+    chooseOption(screen.getByLabelText('Board / University *'), 'CBSE');
+    chooseOption(screen.getByLabelText('Branch / Specialization (Optional)'), 'Computer Science');
+    chooseOption(screen.getByLabelText('Start year *'), '2020');
+    chooseOption(screen.getByLabelText('End year *'), '2024');
+    chooseOption(screen.getByLabelText('Study mode *'), 'Full-time');
     fireEvent.change(screen.getByTestId('education-score-input'), {
       target: { value: '8.5' },
     });
     fireEvent.change(screen.getByLabelText(/Institute roll no/i), {
       target: { value: '22ALR110' },
     });
-    fireEvent.change(screen.getByLabelText(/Current semester/i), {
-      target: { value: '7' },
-    });
+    chooseOption(screen.getByLabelText(/Current semester/i), '7');
 
     fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
 
@@ -189,7 +175,7 @@ describe('EducationSection', () => {
     ]);
 
     renderWithQueryClient(<EducationSection />);
-    expect(await screen.findByText(/No files/i)).toBeTruthy();
+    expect(await screen.findByText(/None yet/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /^Upload$/i }));
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -205,7 +191,7 @@ describe('EducationSection', () => {
           fileName: 'degree.pdf',
         }),
       );
-      expect(screen.getByText(/1 document\(s\)/i)).toBeTruthy();
+      expect(screen.getByText(/1 document/i)).toBeTruthy();
     });
   });
 
@@ -215,16 +201,16 @@ describe('EducationSection', () => {
     );
     await screen.findByPlaceholderText(/RV College/i);
     fireEvent.change(screen.getByPlaceholderText(/RV College/i), { target: { value: 'MIT' } });
-    fireEvent.change(screen.getByLabelText('Program / Degree *'), { target: { value: 'B.Tech' } });
-    fireEvent.change(screen.getByLabelText('Board / University *'), { target: { value: 'CBSE' } });
-    fireEvent.change(screen.getByLabelText('Start year *'), { target: { value: '2020' } });
-    fireEvent.change(screen.getByLabelText('End year *'), { target: { value: '2024' } });
-    fireEvent.change(screen.getByLabelText('Study mode *'), { target: { value: 'Full-time' } });
+    chooseOption(screen.getByLabelText('Program / Degree *'), 'B.Tech');
+    chooseOption(screen.getByLabelText('Board / University *'), 'CBSE');
+    chooseOption(screen.getByLabelText('Start year *'), '2020');
+    chooseOption(screen.getByLabelText('End year *'), '2024');
+    chooseOption(screen.getByLabelText('Study mode *'), 'Full-time');
     fireEvent.change(screen.getByTestId('education-score-input'), { target: { value: '8.5' } });
     fireEvent.change(screen.getByLabelText(/Institute roll no/i), {
       target: { value: '22ALR110' },
     });
-    fireEvent.change(screen.getByLabelText(/Current semester/i), { target: { value: '7' } });
+    chooseOption(screen.getByLabelText(/Current semester/i), '7');
   }
 
   it('shows an empty state when there are no education entries', async () => {

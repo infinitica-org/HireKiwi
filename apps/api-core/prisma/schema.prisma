@@ -1520,16 +1520,45 @@ model CompanyVerificationDocument {
   @@map("company_verification_documents")
 }
 
+/// Education catalog shown in the student Education popup (seeded from prisma/data/degrees.json).
+model EducationDegree {
+  id        String   @id @db.VarChar(8)
+  name      String
+  fullName  String   @map("full_name")
+  level     String
+  sortOrder Int      @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([level, sortOrder])
+  @@map("education_degrees")
+}
+
+/// Branch / specialization catalog for the Education popup (seeded from prisma/data/specializations.json).
+model EducationSpecialization {
+  id        String   @id @db.VarChar(8)
+  name      String
+  category  String
+  sortOrder Int      @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([category, sortOrder])
+  @@map("education_specializations")
+}
+
 model Skill {
-  id                    String   @id @default(uuid())
-  code                  String   @unique
+  id                    String      @id @default(uuid())
+  code                  String      @unique
   name                  String
-  domain                String   @default("GENERAL")
-  cooldownDays          Int      @default(60) @map("cooldown_days")
-  validityDays          Int      @default(180) @map("validity_days")
-  beginnerPassThreshold Decimal  @default(60) @map("beginner_pass_threshold") @db.Decimal(5, 2)
-  active                Boolean  @default(true)
-  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// Free-text taxonomy label (e.g. "SOFTWARE_IT"), kept for display/back-compat.
+  domain                String      @default("GENERAL")
+  /// Literal A-E radar axis (S8-RM-XX). Nullable: existing/unclassified skills fall back to
+  /// the `domain` string in buildCandidateDomainVector until backfilled.
+  domainCode            DomainCode? @map("domain_code")
+  cooldownDays          Int         @default(60) @map("cooldown_days")
+  validityDays          Int         @default(180) @map("validity_days")
+  beginnerPassThreshold Decimal     @default(60) @map("beginner_pass_threshold") @db.Decimal(5, 2)
+  active                Boolean     @default(true)
+  createdAt             DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
   // Taxonomy fields (attributes_v3_2 bundle)
   type              String?
@@ -1553,6 +1582,7 @@ model Skill {
   openingRequirements JobOpeningSkill[]
 
   @@index([domain, active])
+  @@index([domainCode, active])
   @@map("skills")
 }
 
@@ -2696,6 +2726,11 @@ model CandidateEvidenceProfile {
   careerDomainId     String?  @map("career_domain_id")
   targetRoleId       String?  @map("target_role_id")
   selectedSkillCodes String[] @default([]) @map("selected_skill_codes")
+  /// Stage 1 semantic vector (S8-RM-XX), written by CandidateEmbeddingService via raw SQL —
+  /// Prisma's query engine can't read/write `Unsupported` columns directly. Null until the
+  /// candidate's first embedding generation run.
+  embedding          Unsupported("vector(1536)")?
+  embeddingUpdatedAt DateTime? @map("embedding_updated_at") @db.Timestamptz(6)
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("candidate_evidence_profiles")

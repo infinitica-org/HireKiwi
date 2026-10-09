@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { WhitelistWorkspace } from '../../../components/whitelist/WhitelistWorkspace';
 
 export const metadata: Metadata = {
-  title: 'Whitelist Candidates',
-  description: 'Provision candidate access and manage institution whitelists.',
+  title: 'Candidate Access & Invitations | HireKiwi TPO',
+  description: 'Manage candidate access, invitation statuses, and institution domain rules.',
 };
 
 export default function WhitelistPage() {

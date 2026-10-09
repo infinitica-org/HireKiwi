@@ -2,10 +2,9 @@
 
 import { MessageStudentButton } from '../../../../components/message-student-button';
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Clock, ChevronRight, Users, ShieldCheck } from 'lucide-react';
+import { Search, ChevronRight, Users, ShieldCheck } from 'lucide-react';
 
 import {
-  SKILL_CATEGORY_IDS,
   SKILL_DEFINITIONS,
   proficiencyLevelUiLabel,
   type InstitutionStudentDto,
@@ -14,12 +13,8 @@ import {
 
 import { CandidateDetailDrawer } from '../../../../components/candidate-detail-drawer';
 import { CustomSelect } from '../../../../components/ui/CustomSelect';
-import { api, staffApi } from '../../../../lib/api';
-import {
-  categoryLabel,
-  categoryNameForSkillCode,
-  skillCategoryFor,
-} from '../../../../lib/skill-taxonomy';
+import { api } from '../../../../lib/api';
+import { categoryLabel, categoryNameForSkillCode } from '../../../../lib/skill-taxonomy';
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -35,8 +30,6 @@ export default function CandidatesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewScope, setViewScope] = useState<'ALL' | 'MY'>('ALL');
-  const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [skillFilter, setSkillFilter] = useState<string>('ALL');
   const [proficiencyFilter, setProficiencyFilter] = useState<string>('ALL');
   const [selectedStudent, setSelectedStudent] = useState<InstitutionStudentDto | null>(null);
@@ -58,10 +51,9 @@ export default function CandidatesPage() {
     setLoading(true);
     setError(null);
     const q = searchQuery.trim() || undefined;
-    const promise =
-      viewScope === 'MY' ? staffApi.listAssignedStudents() : api.onboarding.listTpoStudents({ q });
 
-    promise
+    api.onboarding
+      .listTpoStudents({ q })
       .then((studentList) => {
         setStudents(studentList);
         setError(null);
@@ -83,7 +75,7 @@ export default function CandidatesPage() {
       loadStudents();
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, viewScope]);
+  }, [searchQuery]);
 
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
@@ -96,12 +88,6 @@ export default function CandidatesPage() {
         return false;
       }
       const studentClaims = claims.filter((c) => c.studentId === student.userId);
-      if (categoryFilter !== 'ALL') {
-        const hasCategory = studentClaims.some(
-          (claim) => skillCategoryFor(claim.skillCode) === categoryFilter,
-        );
-        if (!hasCategory && studentClaims.length > 0) return false;
-      }
       if (skillFilter !== 'ALL') {
         if (!studentClaims.some((c) => c.skillCode === skillFilter)) return false;
       }
@@ -110,7 +96,7 @@ export default function CandidatesPage() {
       }
       return true;
     });
-  }, [students, claims, searchQuery, categoryFilter, skillFilter, proficiencyFilter]);
+  }, [students, claims, searchQuery, skillFilter, proficiencyFilter]);
 
   // Dynamic KPI calculations
   const totalCount = students.length;
@@ -120,16 +106,13 @@ export default function CandidatesPage() {
     );
     return students.filter((s) => verifiedUserIds.has(s.userId)).length;
   }, [students, claims]);
-  const pendingInvitesCount = useMemo(() => {
-    return students.filter((s) => s.inviteStatus !== 'ACCEPTED').length;
-  }, [students]);
 
   return (
     <div className="space-y-6 ">
-      {/* Separated KPI Stat Cards Grid (Clean Monochrome Theme) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 ">
+      {/* Separated KPI Stat Cards Grid (Clean Monochrome Theme - 2 Cards) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* Total Candidates Stat Card */}
-        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90 e p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
+        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90 p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
               Total Candidates
@@ -142,7 +125,7 @@ export default function CandidatesPage() {
             {totalCount.toLocaleString('en-US')}
           </div>
           <div className="mt-3 text-xs text-zinc-500 font-medium">
-            {viewScope === 'MY' ? 'Assigned to your scope' : 'Enrolled institutional cohort'}
+            Enrolled institutional cohort
           </div>
         </div>
 
@@ -161,62 +144,19 @@ export default function CandidatesPage() {
           </div>
           <div className="mt-3 text-xs text-zinc-500 font-medium">Certified candidates</div>
         </div>
-
-        {/* Pending Invites Stat Card */}
-        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90  p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-              Pending Invites
-            </span>
-            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100/90 text-zinc-800 shadow-2xs">
-              <Clock className="size-4.5 stroke-[1.75]" />
-            </div>
-          </div>
-          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
-            {pendingInvitesCount.toLocaleString('en-US')}
-          </div>
-          <div className="mt-3 text-xs text-zinc-500 font-medium">Awaiting acceptance</div>
-        </div>
       </div>
-      {/* Top Header Action Bar with Readiness Dashboard Button */}
-      {/* <div className="flex items-center">
-       
-        <Link
-          href="/students/readiness"
-          className="inline-flex items-center gap-2 rounded-md bg-zinc-950 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-2xs transition-all hover:bg-zinc-800 active:scale-[0.98]"
-        >
-          <ShieldCheck className="size-4 text-white" aria-hidden />
-          Readiness dashboard
-        </Link>
-      </div> */}
 
       {/* Main Roster & Filter Table Card */}
       <div className="rounded-lg border border-zinc-200/90 bg-white shadow-2xs">
         {/* Header Filter Toolbar */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between p-5 border-b border-zinc-100 bg-white rounded-t-lg">
-          {/* Segmented Switcher */}
+          {/* Candidates View Label */}
           <div className="inline-flex items-center gap-1 rounded-md border border-zinc-200/80 bg-white p-1 w-fit shrink-0">
             <button
               type="button"
-              onClick={() => setViewScope('ALL')}
-              className={`rounded-md px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all ${
-                viewScope === 'ALL'
-                  ? 'bg-black text-white shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-950'
-              }`}
+              className="rounded-md bg-black px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-2xs cursor-default"
             >
               All Candidates
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewScope('MY')}
-              className={`rounded-md px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all ${
-                viewScope === 'MY'
-                  ? 'bg-black text-white shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-950'
-              }`}
-            >
-              My Assigned Students
             </button>
           </div>
 
@@ -236,20 +176,6 @@ export default function CandidatesPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-
-            <CustomSelect
-              ariaLabel="Filter by skill category"
-              value={categoryFilter}
-              onChange={setCategoryFilter}
-              options={[
-                { value: 'ALL', label: 'All Categories' },
-                ...SKILL_CATEGORY_IDS.map((categoryId) => ({
-                  value: categoryId,
-                  label: categoryLabel(categoryId),
-                })),
-              ]}
-              className="min-w-[150px]"
-            />
 
             <CustomSelect
               ariaLabel="Filter by Skills"
@@ -294,7 +220,6 @@ export default function CandidatesPage() {
               <tr className="border-b border-zinc-200/80 bg-zinc-50/60 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                 <th className="px-5 py-3.5">Candidate</th>
                 <th className="px-5 py-3.5">Primary Skill Category</th>
-                <th className="px-5 py-3.5">Onboarding Progress</th>
                 <th className="px-5 py-3.5">Verification Status</th>
                 <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
@@ -303,7 +228,7 @@ export default function CandidatesPage() {
             <tbody className="divide-y divide-zinc-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-16 text-center text-xs text-zinc-500">
+                  <td colSpan={4} className="px-5 py-16 text-center text-xs text-zinc-500">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="size-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-950" />
                       <span className="font-medium">Loading candidates…</span>
@@ -312,7 +237,7 @@ export default function CandidatesPage() {
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-rose-600">
+                  <td colSpan={4} className="px-5 py-10 text-center text-rose-600">
                     <div className="space-y-3">
                       <p className="text-xs font-semibold">{error}</p>
                       <button
@@ -327,11 +252,9 @@ export default function CandidatesPage() {
                 </tr>
               ) : filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-16 text-center text-xs text-zinc-500">
+                  <td colSpan={4} className="px-5 py-16 text-center text-xs text-zinc-500">
                     {students.length === 0
-                      ? viewScope === 'MY'
-                        ? 'No students are currently assigned to your department or campus scope.'
-                        : 'No candidates have been onboarded yet.'
+                      ? 'No candidates have been onboarded yet.'
                       : 'No candidates match the selected filters.'}
                   </td>
                 </tr>
@@ -374,20 +297,6 @@ export default function CandidatesPage() {
                         <span className="inline-flex items-center rounded-full border border-zinc-200/90 bg-zinc-100/70 px-3 py-1 text-xs font-semibold text-zinc-700">
                           {candidateCategory}
                         </span>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        {student.inviteStatus === 'ACCEPTED' ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/80 bg-emerald-50/60 px-3 py-1 text-xs font-semibold text-emerald-700">
-                            <span className="size-1.5 rounded-full bg-emerald-500" />
-                            Completed
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/80 bg-amber-50/60 px-3 py-1 text-xs font-semibold text-amber-700">
-                            <span className="size-1.5 rounded-full bg-amber-500" />
-                            Pending Invite
-                          </span>
-                        )}
                       </td>
 
                       <td className="px-5 py-4">

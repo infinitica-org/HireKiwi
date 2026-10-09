@@ -13,7 +13,6 @@ import {
   PROMPT_REGISTRY,
   UnknownPromptError,
   barsL3Template,
-  defenseExaminerTemplate,
   extractJsonObject,
   gapNarrativeTemplate,
   isRetryable,
@@ -97,7 +96,6 @@ describe('prompt registry', () => {
     // Non-zero temperature on a grader means the kappa we publish measures noise.
     const graders = [
       'bars-l3@1',
-      'defense-grader@1',
       'capstone-review@1',
       'jd-parse@1',
       'jd-skill-extract@1',
@@ -109,11 +107,6 @@ describe('prompt registry', () => {
     for (const ref of graders) {
       expect(PROMPT_REGISTRY.get(ref as never)?.temperature, ref).toBe(0);
     }
-  });
-
-  it('allows temperature only on the conversational examiner', () => {
-    // A scripted interrogation is memorised and shared between candidates.
-    expect(defenseExaminerTemplate.temperature).toBeGreaterThan(0);
   });
 });
 

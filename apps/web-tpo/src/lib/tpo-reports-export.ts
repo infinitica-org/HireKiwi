@@ -139,9 +139,15 @@ export function downloadCsv(filename: string, csvContent: string): void {
   URL.revokeObjectURL(url);
 }
 
+export type ConsolidatedReportData = {
+  summary: PlacementOpportunitiesSummary;
+  verificationRows: VerificationByMajorRow[];
+  employerRows: EmployerEngagementRow[];
+};
+
 export function exportVerificationByMajorCsv(rows: VerificationByMajorRow[]): void {
   const csv = toCsv(
-    ['Major', 'Whitelisted', 'Fully verified', 'Partial', 'Pending', 'Completion %'],
+    ['Cohort / Batch', 'Whitelisted', 'Fully verified', 'Partial', 'Pending', 'Completion %'],
     rows.map((r) => [
       r.major,
       r.whitelisted,
@@ -176,4 +182,91 @@ export function exportEmployerEngagementCsv(rows: EmployerEngagementRow[]): void
   );
   const today = new Date().toISOString().slice(0, 10);
   downloadCsv(`hirekiwi_employer_engagement_${today}.csv`, csv);
+}
+
+export function buildConsolidatedReportCsv(data: ConsolidatedReportData): string {
+  const lines: string[] = [];
+
+  // Section A: Summary Metrics
+  lines.push(csvCell('=== Section A: Summary Metrics ==='));
+  lines.push([csvCell('Metric'), csvCell('Value')].join(','));
+  lines.push([csvCell('Whitelisted Students'), csvCell(data.summary.whitelisted)].join(','));
+  lines.push([csvCell('Fully Verified'), csvCell(data.summary.fullyVerified)].join(','));
+  lines.push([csvCell('Active Drives'), csvCell(data.summary.activeOpenings)].join(','));
+  lines.push([csvCell('Applications Matched'), csvCell(data.summary.totalApplications)].join(','));
+  lines.push('');
+
+  // Section B: Verification by Cohort / Batch
+  lines.push(csvCell('=== Section B: Verification by Cohort / Batch ==='));
+  lines.push(
+    [
+      csvCell('Cohort / Batch'),
+      csvCell('Whitelisted'),
+      csvCell('Fully Verified'),
+      csvCell('Partial'),
+      csvCell('Pending'),
+      csvCell('Completion %'),
+    ].join(','),
+  );
+  if (data.verificationRows.length === 0) {
+    lines.push(
+      [
+        csvCell('No students on the whitelist yet'),
+        csvCell(0),
+        csvCell(0),
+        csvCell(0),
+        csvCell(0),
+        csvCell(0),
+      ].join(','),
+    );
+  } else {
+    for (const r of data.verificationRows) {
+      lines.push(
+        [
+          csvCell(r.major),
+          csvCell(r.whitelisted),
+          csvCell(r.fullyVerified),
+          csvCell(r.partial),
+          csvCell(r.pending),
+          csvCell(r.completionPct),
+        ].join(','),
+      );
+    }
+  }
+  lines.push('');
+
+  // Section C: Employer Engagement
+  lines.push(csvCell('=== Section C: Employer Engagement ==='));
+  lines.push(
+    [
+      csvCell('Employer'),
+      csvCell('Active Openings'),
+      csvCell('Total Openings'),
+      csvCell('Applications'),
+    ].join(','),
+  );
+  if (data.employerRows.length === 0) {
+    lines.push(
+      [csvCell('No employers in the repository yet'), csvCell(0), csvCell(0), csvCell(0)].join(','),
+    );
+  } else {
+    for (const r of data.employerRows) {
+      lines.push(
+        [
+          csvCell(r.employerName),
+          csvCell(r.activeOpenings),
+          csvCell(r.totalOpenings),
+          csvCell(r.applications),
+        ].join(','),
+      );
+    }
+  }
+
+  return `\uFEFF${lines.join('\r\n')}`;
+}
+
+export function exportConsolidatedReportCsv(data: ConsolidatedReportData): void {
+  const csv = buildConsolidatedReportCsv(data);
+  const today = new Date().toISOString().slice(0, 10);
+  downloadCsv(`hirekiwi_reports_analytics_${today}.csv`, csv);
 }

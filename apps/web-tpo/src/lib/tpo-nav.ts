@@ -7,7 +7,6 @@ import {
   LayoutGrid,
   MessageSquare,
   ShieldCheck,
-  UserPlus,
   UserSearch,
   Users,
   GraduationCap,
@@ -140,7 +139,7 @@ export const CANDIDATES_NAV: TpoNavLink[] = CANDIDATES_NAV_GROUPS.flatMap((group
 export const TPO_NAV: TpoNavItem[] = [
   { kind: 'link', name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { kind: 'link', name: 'Students', href: '/students', icon: Users },
-  { kind: 'link', name: 'Whitelist', href: '/whitelist', icon: UserPlus },
+  { kind: 'link', name: 'Invitations', href: '/whitelist', icon: ShieldCheck },
   { kind: 'link', name: 'Employers', href: '/companies', icon: Briefcase },
   { kind: 'link', name: 'Messages', href: '/messages', icon: MessageSquare },
   { kind: 'link', name: 'Reports', href: '/reports', icon: BarChart3 },
@@ -216,7 +215,7 @@ export interface TpoTopNavLink {
 export const TPO_TOP_NAV: TpoTopNavLink[] = [
   { name: 'Home', href: '/', icon: LayoutDashboard },
   { name: 'Students', href: '/students', icon: GraduationCap },
-  { name: 'Whitelist', href: '/whitelist', icon: ShieldCheck },
+  { name: 'Invitations', href: '/whitelist', icon: ShieldCheck },
   // { name: 'Recruiters', href: '/companies', icon: Building2 },
 
   { name: 'Reports', href: '/reports', icon: BarChart3 },
@@ -227,6 +226,7 @@ export function isTopNavLinkActive(pathname: string, link: TpoTopNavLink): boole
   if (link.href === '/') return pathname === '/' || pathname === '/dashboard';
   if (link.name === 'Recruiters') return isPlacementTopNavActive(pathname);
   if (link.name === 'Students') return isStudentsTopNavActive(pathname);
-  if (link.name === 'Whitelist') return isWhitelistTopNavActive(pathname);
+  if (link.name === 'Invitations' || link.name === 'Whitelist')
+    return isWhitelistTopNavActive(pathname);
   return isNavLinkActive(pathname, link.href);
 }

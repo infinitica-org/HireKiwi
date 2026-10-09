@@ -21,6 +21,8 @@ export const PublicSkillSchema = z.object({
   skillCode: z.string(),
   skillName: z.string(),
   proficiency: SkillProficiencySchema,
+  /** True for a declared skill that is not verified yet. */
+  inProgress: z.boolean().default(false),
 });
 export type PublicSkill = z.infer<typeof PublicSkillSchema>;
 
@@ -93,6 +95,8 @@ export type PublicEducation = z.infer<typeof PublicEducationSchema>;
 
 export const PublicCandidateProfileDtoSchema = z.object({
   fullName: z.string(),
+  /** The owner's own one-line quote/headline, when they wrote one. */
+  headline: z.string().nullable().default(null),
   /** Signed download URL for the candidate profile photo, when uploaded. */
   profilePhotoUrl: z.string().url().nullable(),
   trackName: z.string().nullable(),

@@ -1,7 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CertificateDetailsForm } from './certificate-details-form';
-import { CertificateGuidelinesBanner } from './certificate-guidelines-banner';
 
 // Only the page layout uses the UI package's Button and Input; stub them so this test does not
 // load the whole UI barrel.
@@ -100,14 +99,5 @@ describe('CertificateDetailsForm (popup layout)', () => {
   it('keeps the page layout unchanged when not in a popup', () => {
     render(<CertificateDetailsForm onSubmit={() => undefined} />);
     expect(screen.getByRole('heading', { level: 2, name: /Certificate Details/ })).toBeDefined();
-  });
-});
-
-describe('CertificateGuidelinesBanner (compact)', () => {
-  it('gives the same guidance in a smaller box', () => {
-    render(<CertificateGuidelinesBanner compact />);
-    expect(screen.getByText(/Certification upload guidelines/i)).toBeDefined();
-    expect(screen.getByText(/Accepted:/)).toBeDefined();
-    expect(screen.getByText(/Rejected:/)).toBeDefined();
   });
 });

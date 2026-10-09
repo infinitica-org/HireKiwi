@@ -1,6 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type CSSProperties,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
@@ -38,6 +45,29 @@ import {
   IntegrityWarningModal,
 } from './integrity-notices';
 
+/**
+ * Vivi colours for the project interview. The interview screens read their colours from these
+ * variables, so scoping them to the kiosk re-colours every screen in it (setup, camera, questions)
+ * without touching other flows.
+ */
+const VIVI_THEME = {
+  colorScheme: 'light',
+  '--background': '#fff7fb',
+  '--card': '#ffffff',
+  '--surface': '#ffffff',
+  '--muted': '#fdf2f8',
+  '--surface-muted': '#fdf2f8',
+  '--border': '#fbcfe8',
+  '--surface-border': '#fbcfe8',
+  '--foreground': '#18181b',
+  '--text-primary': '#18181b',
+  '--text-secondary': '#52525b',
+  '--muted-foreground': '#71717a',
+  '--text-muted': '#71717a',
+  '--color-brand-500': '#ec4899',
+  '--color-brand-700': '#be185d',
+} as CSSProperties;
+
 export function ProctoringShell({
   attemptId,
   onLockTerminate,
@@ -45,6 +75,7 @@ export function ProctoringShell({
   cameraEnabled = true,
   faceLiveCheck = false,
   kioskTitle,
+  vivi = false,
   children,
 }: {
   attemptId: string;
@@ -57,6 +88,8 @@ export function ProctoringShell({
   /** Skill-verify: live one-face and lighting check before the form generates. */
   faceLiveCheck?: boolean;
   kioskTitle?: string;
+  /** Vivi colours for the whole interview: light pink surfaces and one pink accent. */
+  vivi?: boolean;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -368,7 +401,12 @@ export function ProctoringShell({
       <div
         ref={kioskRef}
         className="fixed inset-0 h-full overflow-hidden bg-black"
-        style={{ zIndex: 2147483646, overscrollBehavior: 'none', touchAction: 'manipulation' }}
+        style={{
+          zIndex: 2147483646,
+          overscrollBehavior: 'none',
+          touchAction: 'manipulation',
+          ...(vivi ? VIVI_THEME : {}),
+        }}
       >
         {!ready ? (
           <div className="flex h-full min-h-full flex-col">
@@ -378,6 +416,7 @@ export function ProctoringShell({
               cameraEnabled={cameraEnabled}
               faceLiveCheck={faceLiveCheck}
               kioskTitle={kioskTitle}
+              vivi={vivi}
               onPassed={(stream) => {
                 mediaRef.current = stream;
                 if (cameraEnabled && previewRef.current && stream) {

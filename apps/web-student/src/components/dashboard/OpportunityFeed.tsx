@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bookmark, CircleCheck, BadgeCheck } from 'lucide-react';
-import type { StudentDashboardSummary } from '@hirekiwi/contracts';
+import type { StudentDashboardSummary, StudentJobCard } from '@hirekiwi/contracts';
 import { cn, useQuery } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
 import { STUDENT_JOBS_KEY, savedJobsKey } from '@/components/jobs/job-cache';
@@ -18,19 +18,19 @@ const TABS: { id: FeedTab; label: string }[] = [
 ];
 
 const VIEW_ALL: Record<FeedTab, { href: string; label: string }> = {
-  feed: { href: '/matches', label: 'All matches' },
-  recent: { href: '/opportunities', label: 'All opportunities' },
-  applied: { href: '/applications', label: 'All applications' },
+  feed: { href: '/student/jobs', label: 'All jobs' },
+  recent: { href: '/student/jobs', label: 'All jobs' },
+  applied: { href: '/student/jobs?view=applied', label: 'All applied' },
 };
 
 const EMPTY: Record<FeedTab, { title: string; body: string }> = {
   feed: {
-    title: 'No matches yet',
-    body: 'Verify your skills to get roles scored against your profile.',
+    title: 'No jobs yet',
+    body: 'Open jobs from verified companies and your university appear here, best fit first.',
   },
   recent: {
-    title: 'No new opportunities',
-    body: 'Open roles at your institution that you have not applied to appear here.',
+    title: 'No new jobs',
+    body: 'Newly posted jobs you have not applied to appear here.',
   },
   applied: {
     title: 'No active applications',
@@ -94,46 +94,49 @@ function stageText(stage: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function buildItems(summary: StudentDashboardSummary, tab: FeedTab): FeedItem[] {
-  const openings = new Map(summary.opportunities.items.map((o) => [o.openingId, o]));
-  const scores = new Map(summary.topMatches.map((m) => [m.openingId, m.matchPercent]));
+function jobToItem(job: StudentJobCard): FeedItem {
+  return {
+    key: `job-${job.id}`,
+    openingId: job.id,
+    roleTitle: job.roleTitle,
+    companyName: job.companyName,
+    location: job.location,
+    employmentType: job.employmentType,
+    lastDateToApply: job.lastDateToApply,
+    timestamp: { label: 'Posted', at: job.postedAt },
+    matchPercent: job.fit?.matchPercent ?? null,
+    stage: null,
+    href: `/student/jobs/${job.id}`,
+  };
+}
 
+function buildItems(
+  summary: StudentDashboardSummary | undefined,
+  jobs: StudentJobCard[],
+  tab: FeedTab,
+): FeedItem[] {
   if (tab === 'feed') {
-    return summary.topMatches.map((match) => {
-      const opening = openings.get(match.openingId);
-      return {
-        key: `match-${match.openingId}`,
-        openingId: match.openingId,
-        roleTitle: match.roleTitle,
-        companyName: match.companyName,
-        location: match.location,
-        employmentType: opening?.employmentType ?? null,
-        lastDateToApply: opening?.lastDateToApply ?? null,
-        timestamp: opening ? { label: 'Posted', at: opening.postedAt } : null,
-        matchPercent: match.matchPercent,
-        stage: match.stage,
-        href: match.applicationId ? '/applications' : `/jobs/${match.openingId}`,
-      };
-    });
+    // Best fit first, then newest, among jobs the student has not applied to.
+    return jobs
+      .filter((job) => !job.applied)
+      .sort(
+        (a, b) =>
+          (b.fit?.matchPercent ?? -1) - (a.fit?.matchPercent ?? -1) ||
+          Date.parse(b.postedAt) - Date.parse(a.postedAt),
+      )
+      .map(jobToItem);
   }
-
   if (tab === 'recent') {
-    return [...summary.opportunities.items]
-      .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
-      .map((opening) => ({
-        key: `opening-${opening.openingId}`,
-        openingId: opening.openingId,
-        roleTitle: opening.roleTitle,
-        companyName: opening.companyName,
-        location: opening.location,
-        employmentType: opening.employmentType,
-        lastDateToApply: opening.lastDateToApply,
-        timestamp: { label: 'Posted', at: opening.postedAt },
-        matchPercent: scores.get(opening.openingId) ?? null,
-        stage: null,
-        href: `/jobs/${opening.openingId}`,
-      }));
+    return jobs
+      .filter((job) => !job.applied)
+      .sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt))
+      .map(jobToItem);
   }
+  return summary ? appliedItems(summary) : [];
+}
+
+function appliedItems(summary: StudentDashboardSummary): FeedItem[] {
+  const scores = new Map(summary.topMatches.map((m) => [m.openingId, m.matchPercent]));
 
   return summary.activeApplications.items.map((application) => ({
     key: `application-${application.applicationId}`,
@@ -289,28 +292,34 @@ function FeedCard({
   );
 }
 
-/** "Programs"-style feed of real roles: scored matches, newest openings, and active applications. */
+/** Real jobs from the job feed (best fit, newest) and the student's active applications. */
 /** The dashboard is a preview — the full list lives behind the "View all" link. */
 const MAX_VISIBLE = 3;
 
 export function OpportunityFeed({
   summary,
-  loading,
+  loading: summaryLoading,
 }: {
   summary: StudentDashboardSummary | undefined;
   loading: boolean;
 }) {
   const [tab, setTab] = useState<FeedTab>('feed');
   const { isSaved, toggle, error } = useSavedOpenings();
-  const items = useMemo(() => (summary ? buildItems(summary, tab) : []), [summary, tab]);
+  const jobsQuery = useQuery({
+    queryKey: [...STUDENT_JOBS_KEY, 'dashboard-feed'],
+    queryFn: () => api.studentJobs.list({ fit: 'ALL', limit: 20 }),
+    staleTime: 60_000,
+    retry: false,
+  });
+  const jobs = jobsQuery.data?.jobs;
+  const items = useMemo(() => buildItems(summary, [...(jobs ?? [])], tab), [summary, jobs, tab]);
   const bestScore = Math.max(0, ...items.map((item) => item.matchPercent ?? 0));
+  const loading = tab === 'applied' ? summaryLoading : jobsQuery.isLoading;
 
   return (
-    <section aria-label="Opportunities" data-testid="opportunity-feed" className="space-y-4">
+    <section aria-label="Jobs" data-testid="opportunity-feed" className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-medium tracking-tight text-zinc-950 dark:text-white">
-          Opportunities
-        </h2>
+        <h2 className="text-xl font-medium tracking-tight text-zinc-950 dark:text-white">Jobs</h2>
         <Link
           href={VIEW_ALL[tab].href}
           className="text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:underline dark:text-zinc-400 dark:hover:text-white"
@@ -321,7 +330,7 @@ export function OpportunityFeed({
 
       <div
         role="tablist"
-        aria-label="Opportunity feed"
+        aria-label="Jobs feed"
         className="inline-flex gap-1 rounded-full bg-zinc-100 p-1 dark:bg-zinc-800"
       >
         {TABS.map((t) => (

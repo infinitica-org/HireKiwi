@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { useQuery } from '@hirekiwi/ui';
 
-import { CertificatesSection } from '@/components/profile/CertificatesSection';
-import { CredentialsSection } from '@/components/profile/CredentialsSection';
+import { CertificationsSection } from '@/components/profile/CertificationsSection';
 import { EducationSection } from '@/components/profile/EducationSection';
 import { LanguagesSection } from '@/components/profile/LanguagesSection';
 import { ProfessionalLinksSection } from '@/components/profile/ProfessionalLinksSection';
@@ -21,11 +20,7 @@ import { WorkExperienceSection } from '@/components/profile/WorkExperienceSectio
 import { PROFILE_AREA_IDS } from '@/lib/profile-progress';
 import { api } from '@/lib/api';
 import { useCurrentUser } from '@/lib/candidate-identity';
-import {
-  PROFILE_AREA_TO_SECTION,
-  profileSectionMeta,
-  type ProfileSectionId,
-} from '@/lib/profile-sections';
+import { profileSectionMeta, type ProfileSectionId } from '@/lib/profile-sections';
 import { useProfileSection } from '@/lib/use-profile-section';
 import { useProfileProgress } from '@/lib/use-profile-progress';
 import { studentWarningBannerClass } from '@/lib/student-ui-classes';
@@ -57,17 +52,6 @@ function ProfileWorkspace() {
   });
   const { loading, error, progress, input, linkedinVerified, githubVerified } =
     useProfileProgress();
-
-  const completedSections = new Set<ProfileSectionId>(
-    (
-      Object.entries(PROFILE_AREA_TO_SECTION) as [
-        keyof typeof PROFILE_AREA_TO_SECTION,
-        ProfileSectionId,
-      ][]
-    )
-      .filter(([area]) => progress?.areaStatus[area])
-      .map(([, id]) => id),
-  );
 
   const completedCount = progress
     ? PROFILE_AREA_IDS.filter((id) => progress.areaStatus[id]).length
@@ -101,7 +85,6 @@ function ProfileWorkspace() {
         username={usernameStatus?.username ?? null}
         publicLinkUrl={publicLink?.url ?? null}
         percent={progress?.percent ?? null}
-        completedSections={completedSections}
       />
 
       <div className="min-w-0">
@@ -137,7 +120,6 @@ function ProfileWorkspace() {
           section === 'projects' ||
           section === 'education' ||
           section === 'certifications' ||
-          section === 'credentials' ||
           section === 'languages' ||
           section === 'skills' ||
           section === 'links' ||
@@ -163,9 +145,7 @@ function renderSection(section: ProfileSectionId) {
     case 'education':
       return <EducationSection />;
     case 'certifications':
-      return <CertificatesSection />;
-    case 'credentials':
-      return <CredentialsSection />;
+      return <CertificationsSection />;
     case 'languages':
       return <LanguagesSection />;
     case 'skills':

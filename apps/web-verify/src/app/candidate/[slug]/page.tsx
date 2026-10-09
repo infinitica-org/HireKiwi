@@ -1,10 +1,21 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { isHireKiwiApiError } from '@hirekiwi/api-client';
-import { TierBadge } from '@hirekiwi/ui';
+import { HireKiwiLogo, TierBadge } from '@hirekiwi/ui';
 import type { PublicCandidateProfileDto } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
+
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';
+
+/** The public profile is always light, whatever the visitor's theme, like a printed résumé. */
+const LIGHT_VARS = {
+  '--surface': '#ffffff',
+  '--surface-muted': '#ffffff',
+  '--surface-border': '#e4e4e7',
+  '--text-primary': '#18181b',
+  '--text-muted': '#71717a',
+} as CSSProperties;
 
 /** web-verify has no icon library dependency — small inline SVGs match its existing pages. */
 function Icon({ path, className }: { path: string; className?: string }) {
@@ -61,6 +72,7 @@ export default function PublicCandidateProfilePage({ params }: PageProps) {
   const [profile, setProfile] = useState<PublicCandidateProfileDto | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<'skills' | 'career' | 'projects' | 'certificates'>('skills');
 
   useEffect(() => {
     let cancelled = false;
@@ -114,232 +126,352 @@ export default function PublicCandidateProfilePage({ params }: PageProps) {
   const trackLabel = [profile.trackCategory === 'MBA' ? 'MBA' : null, profile.trackName]
     .filter(Boolean)
     .join(' · ');
-  const headline = trackLabel ? `${trackLabel} candidate` : 'HireKiwi candidate';
+  const headline = profile.headline ?? (trackLabel ? `${trackLabel} candidate` : null);
+  const decodedSlug = decodeURIComponent(slug);
+  const handle = decodedSlug.startsWith('@') ? decodedSlug : null;
+  const verified = profile.skills.length > 0;
+  const tabs = [
+    { id: 'skills', label: 'Skills' },
+    { id: 'career', label: 'Career' },
+    { id: 'projects', label: 'Projects' },
+    { id: 'certificates', label: 'Certificates' },
+  ] as const;
 
   return (
-    <div className="mx-auto max-w-3xl pb-16">
-      <div className="overflow-hidden rounded-[40px] border border-[var(--surface-border)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
-        <div className="relative h-32 bg-gradient-to-r from-[#14b8a6]/20 to-[#004c63]/30">
-          <div className="absolute -bottom-12 left-8 h-24 w-24 rounded-full bg-[var(--surface)] p-1.5">
-            <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-[var(--surface-muted)] to-[var(--surface-border)] text-2xl font-bold text-[var(--text-muted)]">
-              {initialsOf(profile.fullName)}
-            </div>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-white text-zinc-900" style={LIGHT_VARS}>
+      <header className="border-b border-zinc-200 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+          <HireKiwiLogo kind="wordmark" className="h-8" />
+          <div className="flex items-center gap-2">
+            <a
+              href={`${AUTH_URL}/login`}
+              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50"
+            >
+              Sign in
+            </a>
+            <a
+              href={`${AUTH_URL}/register`}
+              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+            >
+              Create account
+            </a>
           </div>
         </div>
-
-        <div className="px-8 pb-8 pt-16">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-bold text-[var(--text-primary)]">{profile.fullName}</h1>
-              <p className="mt-1 font-medium text-[var(--text-muted)]">{headline}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              {profile.certificate ? <TierBadge tier={profile.certificate.tier} showLabel /> : null}
-              {profile.skills.length > 0 ? (
-                <div className="flex items-center gap-1.5 rounded-full border border-[#14b8a6]/30 bg-[#14b8a6]/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[#00967c] dark:text-[#14b8a6]">
-                  <Icon path={ICON_PATH.checkCircle} className="h-4 w-4" />
-                  HireKiwi Verified
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          {/* Verified Skills */}
-          <div className="mt-10">
-            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
-              <Icon path={ICON_PATH.code} className="h-4 w-4 text-[var(--text-muted)]" />
-              Verified Skills
-            </h3>
-            {profile.skills.length === 0 ? (
-              <p className="text-sm text-[var(--text-muted)]">No verified skills yet.</p>
+      </header>
+      <div className="mx-auto grid max-w-6xl gap-8 px-6 py-8 pb-16 lg:grid-cols-[300px_minmax(0,1fr)]">
+        {/* Left: who this is. */}
+        <aside className="lg:pt-2">
+          <div className="mb-5 h-28 w-28 overflow-hidden rounded-full border border-[var(--surface-border)] bg-[var(--surface)] shadow-sm">
+            {profile.profilePhotoUrl ? (
+              <img
+                src={profile.profilePhotoUrl}
+                alt={profile.fullName}
+                className="h-full w-full object-cover"
+              />
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill) => (
-                  <div
-                    key={skill.skillCode}
-                    className="flex items-center gap-2 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-muted)] px-3 py-1.5"
-                  >
-                    <span className="text-sm font-medium text-[var(--text-primary)]">
-                      {skill.skillName}
-                    </span>
-                    <div className="h-3 w-px bg-[var(--surface-border)]" />
-                    <span className="text-xs font-bold text-[#00967c] dark:text-[#14b8a6]">
-                      {skill.proficiency.charAt(0) + skill.proficiency.slice(1).toLowerCase()}
-                    </span>
-                  </div>
-                ))}
+              <div className="flex h-full w-full items-center justify-center bg-zinc-100 text-3xl font-bold text-zinc-700">
+                {initialsOf(profile.fullName)}
               </div>
             )}
           </div>
 
-          {/* Work Experience */}
-          <div className="mt-10 border-t border-[var(--surface-border)] pt-10">
-            <h3 className="mb-6 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
-              <Icon path={ICON_PATH.briefcase} className="h-4 w-4 text-[var(--text-muted)]" />
-              Work Experience
-            </h3>
-            {profile.workExperience.length === 0 ? (
-              <p className="text-sm text-[var(--text-muted)]">
-                No employer-verified work experience yet.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {profile.workExperience.map((entry, idx) => (
-                  <div
-                    key={`${entry.companyName}-${String(idx)}`}
-                    className="flex items-start gap-3 rounded-[20px] border border-[var(--surface-border)] bg-[var(--surface-muted)] p-5"
-                  >
-                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#14b8a6]/10 text-[#00967c] dark:text-[#14b8a6]">
-                      <Icon path={ICON_PATH.checkCircle} className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-[var(--text-primary)]">
-                        {entry.role} · {entry.companyName}
-                      </p>
-                      <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                        {EMPLOYMENT_TYPE_LABELS[entry.employmentType] ?? entry.employmentType}
-                        {' · '}
-                        {formatDate(entry.startDate)} –{' '}
-                        {entry.isCurrent
-                          ? 'Present'
-                          : entry.endDate
-                            ? formatDate(entry.endDate)
-                            : '—'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+            {profile.fullName}
+            {verified ? (
+              <span title="HireKiwi Verified" className="text-emerald-600">
+                <Icon path={ICON_PATH.checkCircle} className="h-6 w-6" />
+              </span>
+            ) : null}
+          </h1>
+          {handle ? <p className="mt-1 text-sm text-[var(--text-muted)]">{handle}</p> : null}
+          {headline ? (
+            <p className="mt-3 text-base leading-relaxed text-[var(--text-primary)]">
+              “{headline}”
+            </p>
+          ) : null}
+          {profile.certificate ? (
+            <div className="mt-4">
+              <TierBadge tier={profile.certificate.tier} showLabel />
+            </div>
+          ) : null}
 
-          {/* Projects */}
-          <div className="mt-10 border-t border-[var(--surface-border)] pt-10">
-            <h3 className="mb-6 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
-              <Icon path={ICON_PATH.folderGit} className="h-4 w-4 text-[var(--text-muted)]" />
-              Projects
-            </h3>
-            {profile.projects.length === 0 ? (
-              <p className="text-sm text-[var(--text-muted)]">No projects submitted yet.</p>
-            ) : (
-              <div className="flex flex-col gap-6">
-                {profile.projects.map((project) => (
-                  <div
-                    key={project.projectId}
-                    className="rounded-[24px] border border-[var(--surface-border)] bg-[var(--surface-muted)] p-6"
-                  >
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <h4 className="text-lg font-semibold text-[var(--text-primary)]">
-                        {project.title}
-                      </h4>
-                      {project.status === 'VERIFIED' ? (
-                        <span className="flex items-center gap-1 rounded-full bg-[#14b8a6]/10 px-2 py-0.5 text-xs font-bold text-[#00967c] dark:text-[#14b8a6]">
-                          <Icon path={ICON_PATH.checkCircle} className="h-3.5 w-3.5" />
-                          {project.score !== null
-                            ? `Verified · ${String(Math.round(project.score))}/100`
-                            : 'Verified'}
-                        </span>
-                      ) : null}
-                      <div className="ml-auto flex items-center gap-2">
-                        {project.githubUrl ? (
-                          <a
-                            href={project.githubUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                            aria-label="GitHub repository"
-                          >
-                            <Icon path={ICON_PATH.link} className="h-4 w-4" />
-                          </a>
-                        ) : null}
-                        {project.liveUrl ? (
-                          <a
-                            href={project.liveUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                            aria-label="Live demo"
-                          >
-                            <Icon path={ICON_PATH.externalLink} className="h-4 w-4" />
-                          </a>
-                        ) : null}
-                      </div>
-                    </div>
-                    <p className="line-clamp-3 text-sm text-[var(--text-muted)]">
-                      {project.outcome}
+          <h2 className="mt-8 text-lg font-semibold text-[var(--text-primary)]">At a glance</h2>
+          <dl className="mt-3 divide-y divide-[var(--surface-border)] rounded-xl border border-[var(--surface-border)] bg-[var(--surface)]">
+            {[
+              ['Skills', profile.skills.length],
+              ['Projects', profile.projects.length],
+              ['Certificates', profile.externalCertificates.length],
+              ['Work experience', profile.workExperience.length],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between px-4 py-3 text-sm">
+                <dt className="text-[var(--text-muted)]">{label}</dt>
+                <dd className="font-semibold text-[var(--text-primary)]">{value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          {profile.education.length > 0 ? (
+            <>
+              <h2 className="mt-8 text-lg font-semibold text-[var(--text-primary)]">Education</h2>
+              <ul className="mt-3 space-y-3">
+                {profile.education.map((entry, idx) => (
+                  <li key={`${entry.institutionName}-${String(idx)}`} className="text-sm">
+                    <p className="font-medium text-[var(--text-primary)]">
+                      {entry.institutionName}
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {project.stack
-                        .split(',')
-                        .map((tech) => tech.trim())
-                        .filter(Boolean)
-                        .map((tech) => (
-                          <span
-                            key={tech}
-                            className="rounded-md border border-[var(--surface-border)] bg-[var(--surface)] px-2 py-1 text-xs text-[var(--text-muted)]"
-                          >
-                            {tech}
-                          </span>
-                        ))}
-                    </div>
-                  </div>
+                    <p className="text-[var(--text-muted)]">
+                      {[entry.degree, entry.fieldOfStudy].filter(Boolean).join(' · ')}
+                    </p>
+                  </li>
                 ))}
-              </div>
-            )}
+              </ul>
+            </>
+          ) : null}
+        </aside>
+
+        {/* Right: the proof, in tabs. */}
+        <section className="min-w-0">
+          <div
+            role="tablist"
+            className="mt-6 flex flex-wrap gap-1 border-b border-[var(--surface-border)]"
+          >
+            {tabs.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={tab === item.id}
+                onClick={() => setTab(item.id)}
+                className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+                  tab === item.id
+                    ? 'border-zinc-900 text-[var(--text-primary)]'
+                    : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
 
-          {/* External Certifications */}
-          <div className="mt-10 border-t border-[var(--surface-border)] pt-10">
-            <h3 className="mb-6 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
-              <Icon path={ICON_PATH.award} className="h-4 w-4 text-[var(--text-muted)]" />
-              Certifications
-            </h3>
-            {profile.externalCertificates.length === 0 ? (
-              <p className="text-sm text-[var(--text-muted)]">No verified certifications yet.</p>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {profile.externalCertificates.map((cert, idx) => (
-                  <div
-                    key={`${cert.title}-${String(idx)}`}
-                    className="rounded-[20px] border border-[var(--surface-border)] bg-[var(--surface-muted)] p-5"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-semibold text-[var(--text-primary)]">{cert.title}</p>
-                      {cert.verificationMethod ? (
-                        <span className="flex items-center gap-1 rounded-full bg-[#14b8a6]/10 px-2 py-0.5 text-xs font-bold text-[#00967c] dark:text-[#14b8a6]">
-                          <Icon path={ICON_PATH.checkCircle} className="h-3.5 w-3.5" />
-                          {VERIFICATION_METHOD_LABELS[cert.verificationMethod] ??
-                            cert.verificationMethod}
+          <div className="mt-6" role="tabpanel">
+            {tab === 'skills' ? (
+              <Card
+                title="Skills"
+                hint="Verified skills are marked proven; the rest are still being verified."
+              >
+                {profile.skills.length === 0 ? (
+                  <Empty>No verified skills yet.</Empty>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {profile.skills.map((skill) => (
+                      <SkillChip
+                        key={skill.skillCode}
+                        name={skill.skillName}
+                        level={skill.proficiency}
+                        inProgress={skill.inProgress}
+                      />
+                    ))}
+                  </div>
+                )}
+              </Card>
+            ) : null}
+
+            {tab === 'career' ? (
+              <Card title="Work experience" hint="Confirmed by the employer.">
+                {profile.workExperience.length === 0 ? (
+                  <Empty>No employer-verified work experience yet.</Empty>
+                ) : (
+                  <ul className="flex flex-col divide-y divide-[var(--surface-border)]">
+                    {profile.workExperience.map((entry, idx) => (
+                      <li
+                        key={`${entry.companyName}-${String(idx)}`}
+                        className="flex items-start gap-3 py-4 first:pt-0 last:pb-0"
+                      >
+                        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700">
+                          <Icon path={ICON_PATH.briefcase} className="h-4 w-4" />
                         </span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-[var(--text-primary)]">
+                            {entry.role} · {entry.companyName}{' '}
+                            {entry.inProgress ? <InProgress /> : null}
+                          </p>
+                          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                            {EMPLOYMENT_TYPE_LABELS[entry.employmentType] ?? entry.employmentType}
+                            {' · '}
+                            {formatDate(entry.startDate)} –{' '}
+                            {entry.isCurrent
+                              ? 'Present'
+                              : entry.endDate
+                                ? formatDate(entry.endDate)
+                                : '—'}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            ) : null}
+
+            {tab === 'projects' ? (
+              <div className="flex flex-col gap-4">
+                {profile.projects.length === 0 ? (
+                  <Card title="Projects">
+                    <Empty>No projects submitted yet.</Empty>
+                  </Card>
+                ) : (
+                  profile.projects.map((project) => (
+                    <div
+                      key={project.projectId}
+                      className="rounded-xl border border-[var(--surface-border)] bg-[var(--surface)] p-5"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-semibold text-[var(--text-primary)]">
+                          {project.title}
+                        </h3>
+                        {project.status === 'VERIFIED' ? (
+                          <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                            <Icon path={ICON_PATH.checkCircle} className="h-3.5 w-3.5" />
+                            {project.score !== null
+                              ? `Verified · ${String(Math.round(project.score))}/100`
+                              : 'Verified'}
+                          </span>
+                        ) : null}
+                        <div className="ml-auto flex items-center gap-3">
+                          {project.githubUrl ? (
+                            <a
+                              href={project.githubUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                              aria-label="GitHub repository"
+                            >
+                              <Icon path={ICON_PATH.link} className="h-4 w-4" />
+                            </a>
+                          ) : null}
+                          {project.liveUrl ? (
+                            <a
+                              href={project.liveUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                              aria-label="Live demo"
+                            >
+                              <Icon path={ICON_PATH.externalLink} className="h-4 w-4" />
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                      <p className="mt-2 line-clamp-3 text-sm text-[var(--text-muted)]">
+                        {project.outcome}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {project.stack
+                          .split(',')
+                          .map((tech) => tech.trim())
+                          .filter(Boolean)
+                          .map((tech) => (
+                            <span
+                              key={tech}
+                              className="rounded-md bg-zinc-100 px-2 py-1 text-xs text-zinc-600"
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : null}
+
+            {tab === 'certificates' ? (
+              <div className="flex flex-col gap-4">
+                {profile.externalCertificates.length === 0 ? (
+                  <Card title="Certificates">
+                    <Empty>No verified certifications yet.</Empty>
+                  </Card>
+                ) : (
+                  profile.externalCertificates.map((cert, idx) => (
+                    <div
+                      key={`${cert.title}-${String(idx)}`}
+                      className="rounded-xl border border-[var(--surface-border)] bg-[var(--surface)] p-5"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Icon path={ICON_PATH.award} className="h-4 w-4 text-[var(--text-muted)]" />
+                        <p className="font-semibold text-[var(--text-primary)]">{cert.title}</p>
+                        {cert.inProgress ? <InProgress /> : null}
+                        {cert.verificationMethod ? (
+                          <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                            <Icon path={ICON_PATH.checkCircle} className="h-3.5 w-3.5" />
+                            {VERIFICATION_METHOD_LABELS[cert.verificationMethod] ??
+                              cert.verificationMethod}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 text-xs text-[var(--text-muted)]">{cert.issuer}</p>
+                      {cert.skills.length > 0 ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {cert.skills.map((skill) => (
+                            <SkillChip
+                              key={skill.skillName}
+                              name={skill.skillName}
+                              level={skill.proficiency}
+                            />
+                          ))}
+                        </div>
                       ) : null}
                     </div>
-                    <p className="mt-0.5 text-xs text-[var(--text-muted)]">{cert.issuer}</p>
-                    {cert.skills.length > 0 ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {cert.skills.map((skill) => (
-                          <div
-                            key={skill.skillName}
-                            className="flex items-center gap-2 rounded-xl border border-[var(--surface-border)] bg-[var(--surface)] px-3 py-1.5"
-                          >
-                            <span className="text-sm font-medium text-[var(--text-primary)]">
-                              {skill.skillName}
-                            </span>
-                            <div className="h-3 w-px bg-[var(--surface-border)]" />
-                            <span className="text-xs font-bold text-[#00967c] dark:text-[#14b8a6]">
-                              {skill.proficiency.charAt(0) +
-                                skill.proficiency.slice(1).toLowerCase()}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
-            )}
+            ) : null}
           </div>
-        </div>
+        </section>
       </div>
     </div>
+  );
+}
+
+function Card({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return (
+    <div className="rounded-xl border border-[var(--surface-border)] bg-[var(--surface)] p-5">
+      <h2 className="text-lg font-semibold text-[var(--text-primary)]">{title}</h2>
+      {hint ? <p className="mt-0.5 text-sm text-[var(--text-muted)]">{hint}</p> : null}
+      <div className="mt-4">{children}</div>
+    </div>
+  );
+}
+
+function Empty({ children }: { children: ReactNode }) {
+  return <p className="text-sm text-[var(--text-muted)]">{children}</p>;
+}
+
+function InProgress() {
+  return (
+    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+      In progress
+    </span>
+  );
+}
+
+function SkillChip({
+  name,
+  level,
+  inProgress = false,
+}: {
+  name: string;
+  level: string;
+  inProgress?: boolean;
+}) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-lg border border-[var(--surface-border)] bg-[var(--surface)] px-3 py-1.5 text-sm">
+      <span className="font-medium text-[var(--text-primary)]">{name}</span>
+      <span className="h-3 w-px bg-[var(--surface-border)]" />
+      <span className="text-xs font-semibold text-emerald-700">
+        {level.charAt(0) + level.slice(1).toLowerCase()}
+      </span>
+      {inProgress ? <InProgress /> : null}
+    </span>
   );
 }
