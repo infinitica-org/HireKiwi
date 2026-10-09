@@ -50,8 +50,12 @@ export const RegisterRequestSchema = z.object({
   email: EmailSchema,
   password: z.string().min(8).max(200),
   fullName: z.string().trim().min(1).max(200),
-  /** Selected from GET /auth/institutions — self-serve registration always joins an existing institution. */
-  institutionId: UuidSchema,
+  /**
+   * Optional — personal emails (Gmail, Yahoo, …) are allowed for self-signup. When omitted,
+   * the server tries to auto-match an institution from the email domain; a university email
+   * gets linked immediately, a personal one links a school later in onboarding.
+   */
+  institutionId: UuidSchema.optional(),
 });
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 

@@ -61,37 +61,96 @@ describe('AuthService.registerStudent', () => {
     });
   });
 
-  it('rejects registration with a personal email domain (e.g. gmail.com)', async () => {
+  it('allows registration with a personal email domain (e.g. gmail.com), with no institution linked', async () => {
+    const createdUsers: any[] = [];
     const prisma = {
       institution: { findMany: vi.fn(async () => []) },
+      user: {
+        create: vi.fn(async ({ data }: { data: any }) => {
+          const user = {
+            id: randomUUID(),
+            ...data,
+            createdAt: new Date(),
+            institution: null,
+            company: null,
+            primaryTrack: null,
+            secondaryTrack: null,
+          };
+          createdUsers.push(user);
+          return user;
+        }),
+      },
+      refreshToken: { create: vi.fn(async ({ data }: { data: any }) => data) },
+      $transaction: vi.fn(async (cb: (tx: any) => Promise<any>) => cb(prisma)),
     };
-    const auth = new AuthService(prisma as any, {} as any, {} as any);
+    const jwt = { signAsync: vi.fn(async () => 'access.token.jwt') };
+    const storage = { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) };
+    const auth = new AuthService(prisma as any, jwt as any, storage as any);
 
-    await expect(
-      auth.registerStudent(
-        {
-          fullName: 'Jane Personal',
-          email: 'jane@gmail.com',
-          password: 'Password123!',
-        },
-        {} as any,
-      ),
-    ).rejects.toThrow(UnprocessableEntityException);
+    const result = await auth.registerStudent(
+      {
+        fullName: 'Jane Personal',
+        email: 'jane@gmail.com',
+        password: 'Password123!',
+      },
+      { setCookie: vi.fn() } as any,
+    );
+
+    expect(result.accessToken).toBe('access.token.jwt');
+    expect(createdUsers[0]).toMatchObject({ email: 'jane@gmail.com', institutionId: null });
   });
 
-  it('rejects registration when the university domain is not registered on HireKiwi', async () => {
+  it('registers a student whose domain is not a registered university, with no institution linked', async () => {
+    const createdUsers: any[] = [];
     const prisma = {
-      institution: { findMany: vi.fn(async () => [{ id: randomUUID(), domain: 'psgtech.ac.in' }]) },
+      institution: {
+        findMany: vi.fn(async () => [{ id: randomUUID(), domain: 'psgtech.ac.in' }]),
+      },
+      user: {
+        create: vi.fn(async ({ data }: { data: any }) => {
+          const user = {
+            id: randomUUID(),
+            ...data,
+            createdAt: new Date(),
+            institution: null,
+            company: null,
+            primaryTrack: null,
+            secondaryTrack: null,
+          };
+          createdUsers.push(user);
+          return user;
+        }),
+      },
+      refreshToken: { create: vi.fn(async ({ data }: { data: any }) => data) },
+      $transaction: vi.fn(async (cb: (tx: any) => Promise<any>) => cb(prisma)),
     };
+    const jwt = { signAsync: vi.fn(async () => 'access.token.jwt') };
+    const storage = { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) };
+    const auth = new AuthService(prisma as any, jwt as any, storage as any);
+
+    const result = await auth.registerStudent(
+      {
+        fullName: 'Student Unregistered',
+        email: 'student@unknown-univ.edu',
+        password: 'Password123!',
+      },
+      { setCookie: vi.fn() } as any,
+    );
+
+    expect(result.accessToken).toBe('access.token.jwt');
+    expect(createdUsers[0]).toMatchObject({
+      email: 'student@unknown-univ.edu',
+      institutionId: null,
+    });
+  });
+
+  it('rejects an email with no domain part', async () => {
+    const prisma = { institution: { findMany: vi.fn(async () => []) } };
     const auth = new AuthService(prisma as any, {} as any, {} as any);
 
     await expect(
       auth.registerStudent(
-        {
-          fullName: 'Student Unregistered',
-          email: 'student@unknown-univ.edu',
-          password: 'Password123!',
-        },
+        { fullName: 'No Domain', email: 'not-an-email', password: 'Password123!' },
         {} as any,
       ),
     ).rejects.toThrow(UnprocessableEntityException);

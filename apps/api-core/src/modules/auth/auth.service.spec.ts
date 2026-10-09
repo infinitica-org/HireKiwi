@@ -631,6 +631,68 @@ describe('AuthService.register', () => {
     );
   });
 
+  it('auto-matches an institution from the email domain when institutionId is omitted', async () => {
+    const institutionId = randomUUID();
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => null),
+        create: vi.fn(async ({ data }: { data: Record<string, unknown> }) =>
+          userRow({ ...data, id: randomUUID() }),
+        ),
+      },
+      institution: {
+        findMany: vi.fn(async () => [
+          { id: institutionId, domain: 'psgtech.ac.in', deactivatedAt: null, heldAt: null },
+        ]),
+      },
+      refreshToken: { create: vi.fn(async ({ data }: { data: unknown }) => data) },
+    };
+    const storage = { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn(async () => 'access.jwt') } as never,
+      storage as never,
+      mockAuditPublisher() as never,
+    );
+
+    const user = await auth.register({
+      email: 'student@psgtech.ac.in',
+      password: 'password1',
+      fullName: 'Auto Matched',
+    } as never);
+
+    expect(user.institutionId).toBe(institutionId);
+  });
+
+  it('allows a personal email with no institutionId — registers with institutionId: null', async () => {
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => null),
+        create: vi.fn(async ({ data }: { data: Record<string, unknown> }) =>
+          userRow({ ...data, id: randomUUID() }),
+        ),
+      },
+      institution: { findMany: vi.fn(async () => []) },
+      refreshToken: { create: vi.fn(async ({ data }: { data: unknown }) => data) },
+    };
+    const storage = { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn(async () => 'access.jwt') } as never,
+      storage as never,
+      mockAuditPublisher() as never,
+    );
+
+    const user = await auth.register({
+      email: 'jane@gmail.com',
+      password: 'password1',
+      fullName: 'Jane Personal',
+    } as never);
+
+    expect(user.email).toBe('jane@gmail.com');
+    expect(user.institutionId).toBeNull();
+  });
+
   it('rejects a duplicate email with 409', async () => {
     const prisma = { user: { findUnique: vi.fn(async () => userRow()) } };
     const storage = { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) };

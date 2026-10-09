@@ -15,7 +15,6 @@ import { JwtService } from '@nestjs/jwt';
 import {
   EMAIL_NOT_VERIFIED_ERROR,
   CompanyPortalAccountSchema,
-  isDisallowedEndorserEmailDomain,
   type ActiveSessionDto,
   type AuthTokenResponse,
   type AuthenticatedUser,
@@ -307,15 +306,36 @@ export class AuthService {
       });
     }
 
-    const institution = await this.prisma.institution.findUnique({
-      where: { id: body.institutionId },
-    });
-    if (!institution || institution.deactivatedAt || institution.heldAt) {
-      throw new NotFoundException({
-        error: 'not_found',
-        message: 'Institution not found.',
-        statusCode: 404,
+    let institutionId: string | null = null;
+    if (body.institutionId) {
+      const institution = await this.prisma.institution.findUnique({
+        where: { id: body.institutionId },
       });
+      if (!institution || institution.deactivatedAt || institution.heldAt) {
+        throw new NotFoundException({
+          error: 'not_found',
+          message: 'Institution not found.',
+          statusCode: 404,
+        });
+      }
+      institutionId = institution.id;
+    } else {
+      // No institution chosen: try to auto-match one from the email domain so a university
+      // email still gets linked without picking from a list. Personal emails (and unmatched
+      // university domains) just get institutionId: null — the student links a school later
+      // in onboarding.
+      const emailDomain = email.split('@')[1];
+      if (emailDomain) {
+        const institutions = await this.prisma.institution.findMany({
+          select: { id: true, domain: true, deactivatedAt: true, heldAt: true },
+        });
+        const matched = institutions.find((inst) => {
+          if (inst.deactivatedAt || inst.heldAt) return false;
+          const cleanInstDomain = inst.domain.trim().toLowerCase();
+          return emailDomain === cleanInstDomain || emailDomain.endsWith(`.${cleanInstDomain}`);
+        });
+        institutionId = matched?.id ?? null;
+      }
     }
 
     const passwordHash = await hashPassword(body.password);
@@ -326,7 +346,7 @@ export class AuthService {
         passwordHash,
         role: 'STUDENT',
         emailVerified: false,
-        institutionId: institution.id,
+        institutionId,
       },
       include: { institution: true, company: true, primaryTrack: true, secondaryTrack: true },
     });
@@ -452,15 +472,9 @@ export class AuthService {
   ): Promise<AuthTokenResponse> {
     const normalizedEmail = dto.email.trim().toLowerCase();
 
-    if (isDisallowedEndorserEmailDomain(normalizedEmail)) {
-      throw new UnprocessableEntityException({
-        error: 'personal_email_not_allowed',
-        message:
-          'Personal email addresses (e.g. Gmail, Yahoo) are not permitted. Please use your official university email.',
-        statusCode: 422,
-      });
-    }
-
+    // Personal emails (Gmail, Yahoo, …) are allowed for student self-signup — a university
+    // email only buys faster approval by auto-matching an institution below. A student who
+    // signs up with a personal address links their school later, in onboarding.
     const emailDomain = normalizedEmail.split('@')[1];
     if (!emailDomain) {
       throw new UnprocessableEntityException({
@@ -478,15 +492,6 @@ export class AuthService {
       return emailDomain === cleanInstDomain || emailDomain.endsWith(`.${cleanInstDomain}`);
     });
 
-    if (!matchedInstitution) {
-      throw new UnprocessableEntityException({
-        error: 'unregistered_university_domain',
-        message:
-          'Your university domain is not registered on HireKiwi. Please contact your placement administrator.',
-        statusCode: 422,
-      });
-    }
-
     const passwordHash = await hashPassword(dto.password);
 
     try {
@@ -499,7 +504,7 @@ export class AuthService {
             role: 'STUDENT',
             provider: 'PASSWORD',
             emailVerified: false,
-            institutionId: matchedInstitution.id,
+            institutionId: matchedInstitution?.id ?? null,
             onboardingCompleted: false,
           },
           include: {
