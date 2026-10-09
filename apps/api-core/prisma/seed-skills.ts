@@ -53,48 +53,6 @@ export async function seedSkills(): Promise<void> {
           create: t,
         });
 
-      for (const l of load<any>('assessment_levels'))
-        await tx.assessmentLevel.upsert({
-          where: { level: l.level },
-          update: {
-            name: l.name,
-            format: l.format,
-            measures: l.measures,
-            delivery: l.delivery,
-            scoring: l.scoring,
-            unlocksWhen: l.unlocks_when,
-          },
-          create: {
-            level: l.level,
-            name: l.name,
-            format: l.format,
-            measures: l.measures,
-            delivery: l.delivery,
-            scoring: l.scoring,
-            unlocksWhen: l.unlocks_when,
-          },
-        });
-
-      for (const m of load<any>('l2_modes'))
-        await tx.l2Mode.upsert({
-          where: { mode: m.mode },
-          update: {
-            description: m.description,
-            handsOnType: m.hands_on_type,
-            environment: m.environment,
-            autoGrading: m.auto_grading,
-            l5Deliverable: m.l5_deliverable,
-          },
-          create: {
-            mode: m.mode,
-            description: m.description,
-            handsOnType: m.hands_on_type,
-            environment: m.environment,
-            autoGrading: m.auto_grading,
-            l5Deliverable: m.l5_deliverable,
-          },
-        });
-
       for (const p of load<any>('parent_skills')) {
         const d = {
           name: p.name,
