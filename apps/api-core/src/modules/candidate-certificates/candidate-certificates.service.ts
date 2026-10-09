@@ -13,6 +13,8 @@ import {
   skillsClaimedSnapshotWhenVerified,
   type AddCertificateSkillsRequest,
   type AdminCertificateReviewRequest,
+  type BulkReVerifyCertificatesResponse,
+  type ReVerifyCertificateResponse,
   type CandidateCertificateDeclarationResponseDto,
   type CandidateCertificateDto,
   type CertificateVerificationEventDto,
@@ -38,7 +40,8 @@ import type { EmailJobPayload, EmailQueueJobData } from '../../platform/mailer/m
 import { EMAIL_QUEUE } from '../../platform/mailer/mailer.types.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
-import { CertificateSourceVerificationService } from './verification/certificate-source-verification.service.js';
+import { CERTIFICATE_VERIFICATION_QUEUE } from '../../platform/queue/queue.names.js';
+import type { CertificateVerificationJobPayload } from './verification/certificate-verification.processor.js';
 import { credlyBadgeImage } from './verification/credly-badge-image.js';
 import { CredentialDedupService } from './verification/credential-dedup.service.js';
 import { publishCredentialVerified } from './verification/credential-verified-publisher.js';
@@ -63,8 +66,8 @@ export class CandidateCertificatesService {
     @Inject(StorageService) private readonly storage: StorageService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
     @InjectQueue(EMAIL_QUEUE) private readonly emailQueue: Queue<EmailQueueJobData>,
-    @Inject(CertificateSourceVerificationService)
-    private readonly verificationService: CertificateSourceVerificationService,
+    @InjectQueue(CERTIFICATE_VERIFICATION_QUEUE)
+    private readonly certVerificationQueue: Queue<CertificateVerificationJobPayload>,
     @Inject(CredentialDedupService) private readonly dedup: CredentialDedupService,
     @Inject(KafkaOutboxService) private readonly outbox: KafkaOutboxService,
     @Inject(PublicProfileService) private readonly publicProfileService?: PublicProfileService,
@@ -211,7 +214,12 @@ export class CandidateCertificatesService {
       data: { hasNoCertifications: false },
     });
 
-    await this.verificationService.runVerification(row.id);
+    // Optimistic: the queue processor settles the final status once Tier 1/2/3 resolve.
+    await this.prisma.candidateCertificate.update({
+      where: { id: row.id },
+      data: { status: 'IN_VERIFICATION' },
+    });
+    await this.certVerificationQueue.add('verify-certificate', { certificateId: row.id });
 
     const updated = await this.prisma.candidateCertificate.findUniqueOrThrow({
       where: { id: row.id },
@@ -275,7 +283,13 @@ export class CandidateCertificatesService {
       include: { skills: true },
     });
     await this.addEvent(id, 'UPLOADED', 'Certificate file uploaded.');
-    await this.verificationService.runVerification(id);
+
+    // Optimistic: the queue processor settles the final status once Tier 1/2/3 resolve.
+    await this.prisma.candidateCertificate.update({
+      where: { id },
+      data: { status: 'IN_VERIFICATION' },
+    });
+    await this.certVerificationQueue.add('verify-certificate', { certificateId: id });
 
     const updated = await this.prisma.candidateCertificate.findUniqueOrThrow({
       where: { id },
@@ -340,10 +354,12 @@ export class CandidateCertificatesService {
         practicalDescription: body.practicalDescription,
         certificateNumber: body.certificateNumber,
         verificationUrl: body.verificationUrl,
+        // Optimistic: the queue processor settles the final status once Tier 1/2/3 resolve.
+        status: 'IN_VERIFICATION',
       },
       include: { skills: true },
     });
-    await this.verificationService.runVerification(id);
+    await this.certVerificationQueue.add('verify-certificate', { certificateId: id });
 
     const updated = await this.prisma.candidateCertificate.findUniqueOrThrow({
       where: { id },
@@ -588,6 +604,66 @@ export class CandidateCertificatesService {
     });
     const certificates = await Promise.all(rows.map((row) => this.toDto(row)));
     return { certificates };
+  }
+
+  /** Admin action for a certificate stuck in `listVerificationQueue()` — forces a fresh async run. */
+  async reVerify(id: string): Promise<ReVerifyCertificateResponse> {
+    const existing = await this.prisma.candidateCertificate.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Certificate not found.',
+        statusCode: 404,
+      });
+    }
+    await this.prisma.candidateCertificate.update({
+      where: { id },
+      data: { sourceStatus: 'pending', status: 'IN_VERIFICATION' },
+    });
+    await this.addEvent(id, 'IN_VERIFICATION', 'Super Admin triggered a manual re-verification.');
+    await this.certVerificationQueue.add('verify-certificate', { certificateId: id });
+    return { certificateId: id, queued: true };
+  }
+
+  async bulkReVerify(ids: string[]): Promise<BulkReVerifyCertificatesResponse> {
+    const uniqueIds = Array.from(new Set(ids));
+    const existingRows = await this.prisma.candidateCertificate.findMany({
+      where: { id: { in: uniqueIds } },
+      select: { id: true },
+    });
+    const existingIds = new Set(existingRows.map((row) => row.id));
+    const skipped = uniqueIds.filter((id) => !existingIds.has(id));
+
+    for (const id of existingIds) {
+      await this.prisma.candidateCertificate.update({
+        where: { id },
+        data: { sourceStatus: 'pending', status: 'IN_VERIFICATION' },
+      });
+      await this.addEvent(id, 'IN_VERIFICATION', 'Super Admin triggered a bulk re-verification.');
+      await this.certVerificationQueue.add('verify-certificate', { certificateId: id });
+    }
+
+    return { queued: existingIds.size, skipped };
+  }
+
+  /** Admin visibility into a certificate stuck in the queue — the full Tier 1/2/3 attempt history. */
+  async adminListEvents(id: string): Promise<ListCertificateVerificationEventsResponse> {
+    const exists = await this.prisma.candidateCertificate.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!exists) {
+      throw new NotFoundException({
+        error: 'not_found',
+        message: 'Certificate not found.',
+        statusCode: 404,
+      });
+    }
+    const rows = await this.prisma.certificateVerificationEvent.findMany({
+      where: { candidateCertificateId: id },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { events: rows.map(toEventDto) };
   }
 
   async adminApprove(

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
+  Award,
   Ban,
   BarChart3,
   Bot,
@@ -20,6 +21,7 @@ import {
   GraduationCap,
   HeartPulse,
   HelpCircle,
+  Layers,
   LayoutDashboard,
   ListChecks,
   MonitorSmartphone,
@@ -75,6 +77,12 @@ export const navGroups: NavGroup[] = [
     label: 'Verification',
     items: [
       { name: 'Verification queue', href: '/admin/verification', icon: CheckCircle2, dot: true },
+      {
+        name: 'Certificate verification',
+        href: '/admin/certificate-verification',
+        icon: Award,
+        dot: true,
+      },
       { name: 'Grading queue', href: '/admin/grading-queue', icon: ListChecks },
       { name: 'Project review', href: '/admin/project-review', icon: FolderGit2 },
       { name: 'Skill disputes', href: '/admin/skills/disputes', icon: Gavel, dot: true },
@@ -99,6 +107,7 @@ export const navGroups: NavGroup[] = [
       { name: 'AI governance', href: '/admin/ai-governance', icon: Bot },
       { name: 'Rate limits', href: '/admin/rate-limits', icon: Gauge },
       { name: 'Webhooks', href: '/admin/webhooks', icon: Webhook },
+      { name: 'Queue monitor', href: '/admin/queues', icon: Layers },
       { name: 'Health & monitoring', href: '/admin/health', icon: HeartPulse },
       { name: 'Audit log', href: '/admin/audit', icon: ScrollText },
       { name: 'Support tool', href: '/admin/support', icon: HelpCircle },

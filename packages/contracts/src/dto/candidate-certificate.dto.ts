@@ -142,6 +142,26 @@ export const AdminCertificateReviewRequestSchema = z.object({
 });
 export type AdminCertificateReviewRequest = z.infer<typeof AdminCertificateReviewRequestSchema>;
 
+/** Admin "stuck in verification" re-verify — enqueues a fresh async verification run. */
+export const ReVerifyCertificateResponseSchema = z.object({
+  certificateId: UuidSchema,
+  queued: z.literal(true),
+});
+export type ReVerifyCertificateResponse = z.infer<typeof ReVerifyCertificateResponseSchema>;
+
+export const BulkReVerifyCertificatesRequestSchema = z.object({
+  certificateIds: z.array(UuidSchema).min(1).max(200),
+});
+export type BulkReVerifyCertificatesRequest = z.infer<typeof BulkReVerifyCertificatesRequestSchema>;
+
+export const BulkReVerifyCertificatesResponseSchema = z.object({
+  queued: z.number().int().nonnegative(),
+  skipped: z.array(UuidSchema),
+});
+export type BulkReVerifyCertificatesResponse = z.infer<
+  typeof BulkReVerifyCertificatesResponseSchema
+>;
+
 /** A work email only — a free/personal address is too easy for a candidate to control. */
 export const CreateCertificateEndorsementRequestSchema = z.object({
   endorserName: z.string().min(2).max(200),
