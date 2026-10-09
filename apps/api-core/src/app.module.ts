@@ -14,6 +14,7 @@ import { SupportModule } from './modules/support/support.module.js';
 import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module.js';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
 import { AssessmentModule } from './modules/assessment/assessment.module.js';
+import { IrtModule } from './modules/irt/irt.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { CandidateCertificatesModule } from './modules/candidate-certificates/candidate-certificates.module.js';
 import { CatalogModule } from './modules/catalog/catalog.module.js';
@@ -32,6 +33,7 @@ import { InstitutionsModule } from './modules/institutions/institutions.module.j
 import { CampusModule } from './modules/campus/campus.module.js';
 import { MatchingModule } from './modules/matching/matching.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
+import { CandidateInspectionModule } from './modules/candidate-inspection/candidate-inspection.module.js';
 import { PlacementModule } from './modules/placement/placement.module.js';
 import { ProctoringModule } from './modules/proctoring/proctoring.module.js';
 import { ProjectsModule } from './modules/projects/projects.module.js';
@@ -97,6 +99,7 @@ import { StorageModule } from './platform/storage/storage.module.js';
     CampusModule,
     CatalogModule,
     AssessmentModule,
+    IrtModule,
     EvaluationModule,
     CorroborationModule,
     EvidenceModule,
@@ -108,6 +111,7 @@ import { StorageModule } from './platform/storage/storage.module.js';
     MatchingModule,
     NotificationsModule,
     PlacementModule,
+    CandidateInspectionModule,
     ProctoringModule,
     ProjectsModule,
     PublicProfileModule,

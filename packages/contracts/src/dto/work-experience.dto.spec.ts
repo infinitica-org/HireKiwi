@@ -452,3 +452,53 @@ describe('SendManagerEndorsementSchema (VER-02)', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('WorkExperience Declaration Schemas', () => {
+  it('WorkExperienceDeclarationResponseSchema accepts true, false, and null', async () => {
+    const { WorkExperienceDeclarationResponseSchema } = await import('./work-experience.dto.js');
+    expect(WorkExperienceDeclarationResponseSchema.parse({ hasNoWorkExperience: true })).toEqual({
+      hasNoWorkExperience: true,
+    });
+    expect(WorkExperienceDeclarationResponseSchema.parse({ hasNoWorkExperience: false })).toEqual({
+      hasNoWorkExperience: false,
+    });
+    expect(WorkExperienceDeclarationResponseSchema.parse({ hasNoWorkExperience: null })).toEqual({
+      hasNoWorkExperience: null,
+    });
+  });
+
+  it('WorkExperienceDeclarationResponseSchema rejects invalid types and missing field', async () => {
+    const { WorkExperienceDeclarationResponseSchema } = await import('./work-experience.dto.js');
+    expect(
+      WorkExperienceDeclarationResponseSchema.safeParse({ hasNoWorkExperience: 'true' }).success,
+    ).toBe(false);
+    expect(
+      WorkExperienceDeclarationResponseSchema.safeParse({ hasNoWorkExperience: 1 }).success,
+    ).toBe(false);
+    expect(WorkExperienceDeclarationResponseSchema.safeParse({}).success).toBe(false);
+  });
+
+  it('UpdateWorkExperienceDeclarationSchema accepts boolean values and null for reset', async () => {
+    const { UpdateWorkExperienceDeclarationSchema } = await import('./work-experience.dto.js');
+    expect(UpdateWorkExperienceDeclarationSchema.parse({ hasNoWorkExperience: true })).toEqual({
+      hasNoWorkExperience: true,
+    });
+    expect(UpdateWorkExperienceDeclarationSchema.parse({ hasNoWorkExperience: false })).toEqual({
+      hasNoWorkExperience: false,
+    });
+    expect(UpdateWorkExperienceDeclarationSchema.parse({ hasNoWorkExperience: null })).toEqual({
+      hasNoWorkExperience: null,
+    });
+  });
+
+  it('UpdateWorkExperienceDeclarationSchema rejects invalid non-boolean types', async () => {
+    const { UpdateWorkExperienceDeclarationSchema } = await import('./work-experience.dto.js');
+    expect(
+      UpdateWorkExperienceDeclarationSchema.safeParse({ hasNoWorkExperience: 'invalid' }).success,
+    ).toBe(false);
+    expect(
+      UpdateWorkExperienceDeclarationSchema.safeParse({ hasNoWorkExperience: 123 }).success,
+    ).toBe(false);
+    expect(UpdateWorkExperienceDeclarationSchema.safeParse({}).success).toBe(false);
+  });
+});

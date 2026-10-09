@@ -152,3 +152,40 @@ describe('InterestDomainSchema', () => {
     expect(parsed.success).toBe(false);
   });
 });
+
+describe('Candidate Onboarding Enhancements (middleName, degree, specialization)', () => {
+  it('accepts optional middleName when provided', () => {
+    const parsed = CompleteCandidateOnboardingRequestSchema.safeParse(
+      minimalCompletion({ middleName: 'Augusta' }),
+    );
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.middleName).toBe('Augusta');
+  });
+
+  it('rejects middleName exceeding 50 characters', () => {
+    const parsed = CompleteCandidateOnboardingRequestSchema.safeParse(
+      minimalCompletion({ middleName: 'a'.repeat(51) }),
+    );
+    expect(parsed.success).toBe(false);
+  });
+
+  it('accepts degree and specialization in academicProgram while keeping studyProgram', () => {
+    const parsed = CompleteCandidateOnboardingRequestSchema.safeParse(
+      minimalCompletion({
+        academicProgram: {
+          degree: 'B.Tech',
+          specialization: 'Computer Science',
+          studyProgram: 'B.Tech - Computer Science',
+          graduationYear: 2026,
+        },
+      }),
+    );
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.academicProgram?.degree).toBe('B.Tech');
+    expect(parsed.data.academicProgram?.specialization).toBe('Computer Science');
+    expect(parsed.data.academicProgram?.studyProgram).toBe('B.Tech - Computer Science');
+    expect(parsed.data.academicProgram?.graduationYear).toBe(2026);
+  });
+});

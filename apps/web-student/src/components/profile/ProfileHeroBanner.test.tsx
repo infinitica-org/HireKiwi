@@ -1,9 +1,14 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProfileHeroBanner } from './ProfileHeroBanner';
 
 vi.mock('@/components/profile/ProfilePhotoEditControl', () => ({
   ProfilePhotoEditControl: () => <div data-testid="profile-photo-control" />,
+}));
+
+vi.mock('@/components/profile/EditProfileDialog', () => ({
+  EditProfileDialog: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="edit-profile-dialog">Edit Profile Dialog</div> : null,
 }));
 
 afterEach(() => {
@@ -76,5 +81,26 @@ describe('ProfileHeroBanner', () => {
 
     expect(screen.queryByText('Department not added yet')).toBeNull();
     expect(screen.queryByText('College not added yet')).toBeNull();
+  });
+
+  it('renders Edit Profile button and opens EditProfileDialog on click', () => {
+    render(
+      <ProfileHeroBanner
+        user={{ userId: 'u1', fullName: 'Ada Lovelace', email: 'ada@test.edu' } as never}
+        education={[]}
+        linkedinVerified={false}
+        githubVerified={false}
+        percent={50}
+        completedCount={2}
+        loading={false}
+      />,
+    );
+
+    const editBtn = screen.getByRole('button', { name: /Edit Profile/i });
+    expect(editBtn).toBeTruthy();
+    expect(screen.queryByTestId('edit-profile-dialog')).toBeNull();
+
+    fireEvent.click(editBtn);
+    expect(screen.getByTestId('edit-profile-dialog')).toBeTruthy();
   });
 });

@@ -89,6 +89,7 @@ import {
   type SkillFitRowInternal,
 } from './skill-capability-ranker.js';
 import {
+  buildJobVectorFromRequiredSkills,
   matchCandidatesWithVectorSimilarity,
   type CandidateVectorProfile,
 } from './vector-candidate-matcher.js';
@@ -2047,16 +2048,10 @@ export class MatchingService {
       };
     });
 
-    // Stage 1: vector similarity narrows the (already SQL-filtered) pool down to a ranked
-    // shortlist. This is deliberately a rough pass — see Stage 2 below for the authoritative score.
-    const targetVector = [0.7, 0.7, 0.6, 0.5, 0.5, 0.67]; // Standard threshold baseline
-    const vectorMatches = matchCandidatesWithVectorSimilarity(candidateProfiles, targetVector);
-
-    const profileById = new Map(candidateProfiles.map((profile) => [profile.studentId, profile]));
-
-    // Stage 2: when the search is scoped to a real job opening, re-score only the Stage 1
-    // shortlist with the same structured, explainable scorer the formal match pipeline uses
-    // (calculatePersonJobFit). That score — not the raw cosine number — becomes matchScore.
+    // Stage 2 (below) re-scores whatever Stage 1 shortlists with the same structured,
+    // explainable scorer the formal match pipeline uses (calculatePersonJobFit). Fetched here,
+    // before Stage 1, so Stage 1's target vector can also be derived from the real job instead
+    // of a fixed constant that ignored which job (if any) the search was scoped to.
     const scopedJobId = query.scopedJobId?.trim();
     const requiredSkillsForScoring = scopedJobId
       ? (
@@ -2066,6 +2061,13 @@ export class MatchingService {
           })
         ).map((row) => ({ code: row.skill.code, minProficiency: row.minProficiency }))
       : [];
+
+    // Stage 1: vector similarity narrows the (already SQL-filtered) pool down to a ranked
+    // shortlist. This is deliberately a rough pass — see Stage 2 below for the authoritative score.
+    const targetVector = buildJobVectorFromRequiredSkills(requiredSkillsForScoring);
+    const vectorMatches = matchCandidatesWithVectorSimilarity(candidateProfiles, targetVector);
+
+    const profileById = new Map(candidateProfiles.map((profile) => [profile.studentId, profile]));
 
     const claimConfidenceByStudentSkill = new Map<string, Map<string, number | null>>();
     for (const row of rows) {

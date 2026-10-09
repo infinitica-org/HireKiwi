@@ -50,8 +50,12 @@ export const RegisterRequestSchema = z.object({
   email: EmailSchema,
   password: z.string().min(8).max(200),
   fullName: z.string().trim().min(1).max(200),
-  /** Selected from GET /auth/institutions — self-serve registration always joins an existing institution. */
-  institutionId: UuidSchema,
+  /**
+   * Optional — personal emails (Gmail, Yahoo, …) are allowed for self-signup. When omitted,
+   * the server tries to auto-match an institution from the email domain; a university email
+   * gets linked immediately, a personal one links a school later in onboarding.
+   */
+  institutionId: UuidSchema.optional(),
 });
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 
@@ -267,3 +271,96 @@ export type ListActiveSessionsQuery = z.infer<typeof ListActiveSessionsQuerySche
 
 export const ListActiveSessionsResponseSchema = z.array(ActiveSessionDtoSchema);
 export type ListActiveSessionsResponse = z.infer<typeof ListActiveSessionsResponseSchema>;
+
+/* ----------------------- student onboarding email OTP --------------------- */
+
+export const SendEmailOtpResponseSchema = z.object({
+  resendAvailableAt: IsoDateTimeSchema,
+  expiresAt: IsoDateTimeSchema,
+});
+export type SendEmailOtpResponse = z.infer<typeof SendEmailOtpResponseSchema>;
+
+export const VerifyEmailOtpRequestSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Enter a valid 6-digit OTP code.'),
+});
+export type VerifyEmailOtpRequest = z.infer<typeof VerifyEmailOtpRequestSchema>;
+
+export const VerifyEmailOtpResponseSchema = z.object({
+  verified: z.boolean(),
+});
+export type VerifyEmailOtpResponse = z.infer<typeof VerifyEmailOtpResponseSchema>;
+
+/* -------------------------------- MFA (TOTP) ------------------------------- */
+
+/**
+ * A 6-digit TOTP code, or one of the `XXXXX-XXXXX` recovery codes issued when
+ * MFA was enabled. Both factors are accepted everywhere a "code" is asked for
+ * after enrollment (disable, login challenge) — only `enable` requires TOTP,
+ * since there are no recovery codes to spend yet.
+ */
+const MfaFactorCodeSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^(\d{6}|[A-Z2-9]{5}-[A-Z2-9]{5})$/, 'Enter your 6-digit code or a recovery code.');
+
+/** Login found `user.mfaEnabled`: no session yet, just a short-lived challenge to answer. */
+export const MfaChallengeResponseSchema = z.object({
+  mfaRequired: z.literal(true),
+  mfaToken: z.string(),
+  expiresInSeconds: z.number().int(),
+});
+export type MfaChallengeResponse = z.infer<typeof MfaChallengeResponseSchema>;
+
+/** `POST /auth/login`'s actual response shape: a full session, or an MFA challenge. */
+export const LoginResponseSchema = z.union([AuthTokenResponseSchema, MfaChallengeResponseSchema]);
+export type LoginResponse = z.infer<typeof LoginResponseSchema>;
+
+export const MfaChallengeVerifyRequestSchema = z.object({
+  mfaToken: z.string(),
+  code: MfaFactorCodeSchema,
+});
+export type MfaChallengeVerifyRequest = z.infer<typeof MfaChallengeVerifyRequestSchema>;
+
+/** Begin enrollment: a secret is generated and held, unconfirmed, until `enable` verifies it. */
+export const MfaSetupResponseSchema = z.object({
+  secret: z.string(),
+  otpauthUri: z.string(),
+  qrCodeDataUrl: z.string(),
+});
+export type MfaSetupResponse = z.infer<typeof MfaSetupResponseSchema>;
+
+export const MfaEnableRequestSchema = z.object({
+  /** TOTP only — proves the app was actually set up before we hand out recovery codes. */
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Enter the 6-digit code from your authenticator app.'),
+});
+export type MfaEnableRequest = z.infer<typeof MfaEnableRequestSchema>;
+
+/** Recovery codes are shown exactly once, here, and never retrievable again. */
+export const MfaEnableResponseSchema = z.object({
+  recoveryCodes: z.array(z.string()),
+});
+export type MfaEnableResponse = z.infer<typeof MfaEnableResponseSchema>;
+
+export const MfaDisableRequestSchema = z.object({
+  code: MfaFactorCodeSchema,
+});
+export type MfaDisableRequest = z.infer<typeof MfaDisableRequestSchema>;
+
+export const MfaStatusResponseSchema = z.object({
+  enabled: z.boolean(),
+  enabledAt: IsoDateTimeSchema.nullable(),
+});
+export type MfaStatusResponse = z.infer<typeof MfaStatusResponseSchema>;
+
+/** SUPER_ADMIN override: force-disabling a locked-out user's MFA needs no second factor. */
+export const AdminMfaResetResponseSchema = z.object({
+  wasEnabled: z.boolean(),
+});
+export type AdminMfaResetResponse = z.infer<typeof AdminMfaResetResponseSchema>;

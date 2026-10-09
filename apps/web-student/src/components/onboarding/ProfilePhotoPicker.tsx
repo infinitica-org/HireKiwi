@@ -5,18 +5,24 @@ import { Camera, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { PhotoCropDialog } from '@/components/profile/PhotoCropDialog';
 import { CandidateAvatar } from '@/components/profile/CandidateAvatar';
-import { PROFILE_PHOTO_ACCEPT, validateProfilePhotoFile } from '@/lib/profile-photo';
+import {
+  PROFILE_PHOTO_ACCEPT,
+  validateProfilePhotoFile,
+  validateProfilePhotoImage,
+} from '@/lib/profile-photo';
 
 interface ProfilePhotoPickerProps {
   fullName: string;
   profilePhotoUrl: string;
   onPhotoChange: (url: string) => void;
+  required?: boolean;
 }
 
 export function ProfilePhotoPicker({
   fullName,
   profilePhotoUrl,
   onPhotoChange,
+  required = true,
 }: ProfilePhotoPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -41,6 +47,11 @@ export function ProfilePhotoPicker({
     setPendingFile(null);
     setUploading(true);
     try {
+      const faceValidation = await validateProfilePhotoImage(file);
+      if (!faceValidation.valid) {
+        setError(faceValidation.error ?? 'Please provide a valid profile photo.');
+        return;
+      }
       const response = await api.users.uploadProfilePhoto(file, file.name);
       onPhotoChange(response.profilePhotoUrl);
     } catch {
@@ -53,7 +64,9 @@ export function ProfilePhotoPicker({
 
   return (
     <div className="md:col-span-2">
-      <p className="mb-3 text-sm font-medium text-foreground">Profile Picture</p>
+      <p className="mb-3 text-sm font-medium text-foreground">
+        Profile Photo {required ? <span className="text-rose-500">*</span> : null}
+      </p>
       <div className="flex items-center gap-4">
         <CandidateAvatar
           fullName={fullName}
@@ -75,7 +88,9 @@ export function ProfilePhotoPicker({
             )}
             {profilePhotoUrl ? 'Change photo' : 'Upload photo'}
           </button>
-          <p className="text-xs text-muted-foreground">JPEG, PNG, or WebP up to 2MB. Optional.</p>
+          <p className="text-xs text-muted-foreground">
+            JPG, JPEG or PNG only. Maximum size: 2 MB. Your face should be clearly visible.
+          </p>
           {error ? <p className="text-xs text-rose-600">{error}</p> : null}
         </div>
       </div>

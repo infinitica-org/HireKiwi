@@ -13,6 +13,7 @@ import {
   skillsClaimedSnapshotWhenVerified,
   type AddCertificateSkillsRequest,
   type AdminCertificateReviewRequest,
+  type CandidateCertificateDeclarationResponseDto,
   type CandidateCertificateDto,
   type CertificateVerificationEventDto,
   type CreateCandidateCertificateRequest,
@@ -148,6 +149,40 @@ export class CandidateCertificatesService {
     return this.toDto(updated);
   }
 
+  async getDeclaration(candidateId: string): Promise<CandidateCertificateDeclarationResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: candidateId },
+      select: { hasNoCertifications: true },
+    });
+    return { hasNoCertifications: user?.hasNoCertifications ?? null };
+  }
+
+  async setDeclaration(
+    candidateId: string,
+    hasNoCertifications: boolean | null,
+  ): Promise<CandidateCertificateDeclarationResponseDto> {
+    if (hasNoCertifications === true) {
+      const count = await this.prisma.candidateCertificate.count({
+        where: { candidateId },
+      });
+      if (count > 0) {
+        throw new BadRequestException({
+          error: 'cannot_declare_with_existing_certificates',
+          message: 'Cannot declare no certifications when certification records already exist.',
+          statusCode: 400,
+        });
+      }
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: candidateId },
+      data: { hasNoCertifications },
+      select: { hasNoCertifications: true },
+    });
+
+    return { hasNoCertifications: updated.hasNoCertifications ?? null };
+  }
+
   async create(
     candidateId: string,
     body: CreateCandidateCertificateRequest,
@@ -169,6 +204,11 @@ export class CandidateCertificatesService {
         verificationUrl: body.verificationUrl,
       },
       include: { skills: true },
+    });
+
+    await this.prisma.user.update({
+      where: { id: candidateId },
+      data: { hasNoCertifications: false },
     });
 
     await this.verificationService.runVerification(row.id);

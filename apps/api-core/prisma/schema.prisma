@@ -521,6 +521,12 @@ model User {
   failedLoginAttempts    Int                       @default(0) @map("failed_login_attempts")
   /// S6-VV-92 — set once failedLoginAttempts hits the threshold; login is refused until this passes.
   loginLockedUntil       DateTime?                 @map("login_locked_until") @db.Timestamptz(6)
+  /// S8-VV-P0 — TOTP MFA. True only once the user has confirmed a code against mfaSecretEncrypted.
+  mfaEnabled             Boolean                   @default(false) @map("mfa_enabled")
+  /// S8-VV-P0 — AES-256-GCM ciphertext (see secret-cipher.util.ts), set on enroll, cleared on disable.
+  /// Present with mfaEnabled=false during the brief enroll-but-not-yet-confirmed window.
+  mfaSecretEncrypted     String?                   @map("mfa_secret_encrypted")
+  mfaEnabledAt           DateTime?                 @map("mfa_enabled_at") @db.Timestamptz(6)
   role                   UserRole
   provider               AuthProvider              @default(PASSWORD)
   emailVerified          Boolean                   @default(false) @map("email_verified")
@@ -555,6 +561,12 @@ model User {
   hscPercentage          Decimal?                  @map("hsc_percentage") @db.Decimal(5, 2)
   /// Active academic backlog (placement eligibility).
   hasActiveBacklog       Boolean?                  @map("has_active_backlog")
+  /// Student declaration of no work experience (null = unanswered, true = explicitly no experience, false = has/had experience).
+  hasNoWorkExperience    Boolean?                  @map("has_no_work_experience")
+  /// Student declaration of no external certifications (null = unanswered, true = explicitly no certifications, false = has/had certifications).
+  hasNoCertifications    Boolean?                  @map("has_no_certifications")
+  /// Student declaration of no professional credentials/licenses (null = unanswered, true = explicitly no credentials, false = has/had credentials).
+  hasNoCredentials       Boolean?                  @map("has_no_credentials")
   /// Study program (e.g. "B.Tech CSE") + graduation year, collected during onboarding.
   /// graduationYear is denormalized onto User (like cgpa/sscPercentage above) so placement
   /// pool filtering (packages/contracts/src/dto/placement.dto.ts filters.graduationYear)
@@ -590,6 +602,7 @@ model User {
   refreshTokens                        RefreshToken[]
   emailVerificationTokens              EmailVerificationToken[]
   passwordResetTokens                  PasswordResetToken[]
+  mfaRecoveryCodes                     MfaRecoveryCode[]
   attempts                             Attempt[]
   certificates                         Certificate[]
   placements                           PlacementRecord[]
@@ -713,6 +726,20 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+/// S8-VV-P0 — one-time-use MFA recovery codes, issued as a batch when MFA is enabled.
+/// Codes are hashed with the same scrypt scheme as passwords (never stored or logged in plaintext).
+model MfaRecoveryCode {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String    @map("code_hash")
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("mfa_recovery_codes")
+}
+
 model ApiKey {
   id        String    @id @default(uuid()) @db.Uuid
   name      String
@@ -780,11 +807,12 @@ model Level {
   itemCount       Int         @default(0) @map("item_count")
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  items     Item[]
-  attempts  Attempt[]
-  results   LevelResult[]
-  cutScores CutScore[]
-  panels    CalibrationPanel[]
+  items             Item[]
+  attempts          Attempt[]
+  results           LevelResult[]
+  cutScores         CutScore[]
+  panels            CalibrationPanel[]
+  irtCalibrationRuns IrtCalibrationRun[]
 
   @@unique([trackId, levelNumber])
   @@map("levels")
@@ -805,11 +833,21 @@ model Item {
   exposureCount Int           @default(0) @map("exposure_count")
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  /// IRT 2PL parameters (shadow use only — v1 scoring uses difficultyTag/weighted scoring, not these).
+  /// Null until the item has cleared IRT_CALIBRATION_MIN_RESPONSES real responses. Owner: Ramansh.
+  irtDiscrimination    Decimal?          @map("irt_discrimination") @db.Decimal(6, 4)
+  irtDifficulty        Decimal?          @map("irt_difficulty") @db.Decimal(6, 4)
+  irtCalibrationStatus CalibrationStatus @default(NOT_CALIBRATED) @map("irt_calibration_status")
+  irtSampleSize        Int?              @map("irt_sample_size")
+  irtCalibratedAt      DateTime?         @map("irt_calibrated_at") @db.Timestamptz(6)
+  irtModelVersion      String?           @map("irt_model_version")
+
   options   ItemOption[]
   responses Response[]
 
   @@index([levelId, active, formCode])
   @@index([competencyId])
+  @@index([irtCalibrationStatus])
   @@map("items")
 }
 
@@ -897,9 +935,53 @@ model Attempt {
   result                    LevelResult?
   events                    IntegrityEvent[]
   skillVerificationAttempts SkillVerificationAttempt[]
+  irtShadowEstimate         IrtShadowEstimate?
 
   @@index([userId, status])
   @@map("attempts")
+}
+
+/// One row per IRT calibration run against a level's item pool. Shadow
+/// infrastructure only — v1 scoring never reads this. Owner: Ramansh.
+model IrtCalibrationRun {
+  id               String   @id @default(uuid()) @db.Uuid
+  levelId          String   @map("level_id") @db.Uuid
+  level            Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  itemsCalibrated  Int      @map("items_calibrated")
+  itemsFrozen      Int      @map("items_frozen")
+  totalResponses   Int      @map("total_responses")
+  iterations       Int
+  converged        Boolean
+  modelVersion     String   @map("model_version")
+  checksum         String
+  triggeredBy      String   @map("triggered_by")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  shadowEstimates IrtShadowEstimate[]
+
+  @@index([levelId, createdAt])
+  @@map("irt_calibration_runs")
+}
+
+/// Shadow IRT ability estimate for one attempt. Never read by live scoring —
+/// exists only so Stage 3 validation (validateIrtAgainstV1) has real paired
+/// data to compare against LevelResult.rawScore. Owner: Ramansh.
+model IrtShadowEstimate {
+  id                       String             @id @default(uuid()) @db.Uuid
+  attemptId                String             @unique @map("attempt_id") @db.Uuid
+  attempt                  Attempt            @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  calibrationRunId         String?            @map("calibration_run_id") @db.Uuid
+  calibrationRun           IrtCalibrationRun? @relation(fields: [calibrationRunId], references: [id], onDelete: SetNull)
+  theta                    Decimal?           @db.Decimal(6, 4)
+  standardError            Decimal?           @map("standard_error") @db.Decimal(6, 4)
+  itemsUsed                Int                @map("items_used")
+  itemsSkippedUncalibrated Int                @map("items_skipped_uncalibrated")
+  inconclusive             Boolean            @default(false)
+  modelVersion             String             @map("model_version")
+  createdAt                DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([calibrationRunId])
+  @@map("irt_shadow_estimates")
 }
 
 model Response {

@@ -40,133 +40,26 @@ import {
   type UploadJobOpeningDocumentResponse,
   type UploadJobOpeningLogoResponse,
 } from '@hirekiwi/contracts';
-import { AuditAccess } from '../../common/decorators/audit-access.decorator.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
-import { EvidenceService } from '../evidence/evidence.service.js';
-import { SkillLevelExplanationService } from '../evidence/skill-level-explanation.service.js';
 import { PlacementEmployersService } from './placement-employers.service.js';
 import { PlacementService } from './placement.service.js';
 import { TenantId } from '../../common/decorators/tenant-id.decorator.js';
 
-// No class-level TenantScopeGuard: the evidence-version routes also serve COMPANY,
-// B2B_PARTNER and SUPER_ADMIN callers, who have no institution. Institution-scoped
-// handlers take @TenantId(), which rejects a caller without one.
+// No class-level TenantScopeGuard: `meta()` has no institution to scope.
+// Every other handler takes @TenantId(), which rejects a caller without one.
+// The candidate evidence/education/claims/skills routes that used to live
+// here moved to `candidate-inspection` (S8-VV-P1, cleanup plan C06) — they
+// serve COMPANY/B2B_PARTNER/SUPER_ADMIN callers who have no institution,
+// which no longer fits this controller's TPO-institution-scoped routes.
 @ApiTags('placement')
 @Controller(`${API_PREFIX}/placement`)
 export class PlacementController {
   constructor(
     @Inject(PlacementService) private readonly service: PlacementService,
     @Inject(PlacementEmployersService) private readonly employers: PlacementEmployersService,
-    @Inject(EvidenceService) private readonly evidence: EvidenceService,
-    @Inject(SkillLevelExplanationService)
-    private readonly skillExplanation: SkillLevelExplanationService,
   ) {}
-
-  @Get('candidates/:studentId/evidence')
-  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get candidate evidence records categorized by provenance (VER-01).' })
-  getCandidateEvidenceProvenance(
-    @CurrentUser() user: RequestUser,
-    @Param('studentId') studentId: string,
-  ) {
-    return this.evidence.getCandidateEvidenceProvenance(user, studentId);
-  }
-
-  @Get('candidates/:studentId/education')
-  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Get a candidate's relevant education and evidence (T2)." })
-  getCandidateEducation(@CurrentUser() user: RequestUser, @Param('studentId') studentId: string) {
-    return this.evidence.getCandidateEducation(user, studentId);
-  }
-
-  @Get('candidates/:studentId/claims')
-  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get verification status for candidate individual skill claims (T3).' })
-  getCandidateSkillClaims(@CurrentUser() user: RequestUser, @Param('studentId') studentId: string) {
-    return this.evidence.getCandidateSkillClaims(user, studentId);
-  }
-
-  @Get('candidates/:studentId/skills')
-  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Get a candidate's demonstrated skills and proficiency level (T4)." })
-  getCandidateDemonstratedSkills(
-    @CurrentUser() user: RequestUser,
-    @Param('studentId') studentId: string,
-  ) {
-    return this.evidence.getCandidateDemonstratedSkills(user, studentId);
-  }
-
-  @Get('candidates/:studentId/skills/:skillCode/explanation')
-  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get explanation for a candidate skill (T5).' })
-  getCandidateSkillExplanation(
-    @CurrentUser() user: RequestUser,
-    @Param('studentId') studentId: string,
-    @Param('skillCode') skillCode: string,
-  ) {
-    return this.skillExplanation.getCandidateSkillExplanation(user, studentId, skillCode);
-  }
-
-  @Post('candidates/:studentId/evidence/:evidenceId/review')
-  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary:
-      'Reviewer marks candidate evidence accepted, rejected, or needing information (VER-01).',
-  })
-  reviewCandidateEvidence(
-    @CurrentUser() user: RequestUser,
-    @Param('studentId') studentId: string,
-    @Param('evidenceId') evidenceId: string,
-    @Body() body: unknown,
-  ) {
-    return this.evidence.reviewEvidence(user, studentId, evidenceId, body);
-  }
-
-  @Get('candidates/:studentId/evidence/:evidenceId/versions')
-  @AuditAccess('evidence', 'evidenceId', {
-    action: 'evidence.accessed',
-    subjectParam: 'studentId',
-  })
-  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'List historical evidence versions for a candidate (VER-01).' })
-  listCandidateEvidenceVersions(
-    @CurrentUser() user: RequestUser,
-    @Param('studentId') studentId: string,
-    @Param('evidenceId') evidenceId: string,
-  ) {
-    return this.evidence.listCandidateEvidenceVersions(user, studentId, evidenceId);
-  }
-
-  @Get('candidates/:studentId/evidence/:evidenceId/versions/:versionNumber')
-  @AuditAccess('evidence', 'evidenceId', {
-    action: 'evidence.accessed',
-    subjectParam: 'studentId',
-  })
-  @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'COMPANY', 'B2B_PARTNER', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get a specific historical evidence version (VER-01).' })
-  getCandidateEvidenceVersion(
-    @CurrentUser() user: RequestUser,
-    @Param('studentId') studentId: string,
-    @Param('evidenceId') evidenceId: string,
-    @Param('versionNumber') versionNumber: string,
-  ) {
-    return this.evidence.getCandidateEvidenceVersion(
-      user,
-      studentId,
-      evidenceId,
-      Number.parseInt(versionNumber, 10),
-    );
-  }
 
   @Get('_meta')
   meta() {

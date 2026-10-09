@@ -37,6 +37,7 @@ import {
   type EvidenceRecordVersionDto,
   type ListEvidenceRecordVersionsResponse,
   type PassiveSignalEvidenceDto,
+  type ProfessionalCredentialDeclarationResponseDto,
   type ProfessionalCredentialDto,
   type ProjectSkillMappingDto,
   type ReviewEvidenceResponse,
@@ -531,6 +532,42 @@ export class EvidenceService {
     };
   }
 
+  async getCredentialDeclaration(
+    studentId: string,
+  ): Promise<ProfessionalCredentialDeclarationResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: studentId },
+      select: { hasNoCredentials: true },
+    });
+    return { hasNoCredentials: user?.hasNoCredentials ?? null };
+  }
+
+  async setCredentialDeclaration(
+    studentId: string,
+    hasNoCredentials: boolean | null,
+  ): Promise<ProfessionalCredentialDeclarationResponseDto> {
+    if (hasNoCredentials === true) {
+      const count = await this.prisma.professionalCredential.count({
+        where: { studentId },
+      });
+      if (count > 0) {
+        throw new BadRequestException({
+          error: 'cannot_declare_with_existing_credentials',
+          message: 'Cannot declare no credentials when credential records already exist.',
+          statusCode: 400,
+        });
+      }
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: studentId },
+      data: { hasNoCredentials },
+      select: { hasNoCredentials: true },
+    });
+
+    return { hasNoCredentials: updated.hasNoCredentials ?? null };
+  }
+
   async listCredentials(studentId: string): Promise<ProfessionalCredentialDto[]> {
     const rows = await this.prisma.professionalCredential.findMany({
       where: { studentId },
@@ -570,6 +607,11 @@ export class EvidenceService {
         applicationEvidence: (input.applicationEvidence ?? []) as Prisma.InputJsonValue,
         verificationMethod: 'SELF_ATTESTED',
       },
+    });
+
+    await this.prisma.user.update({
+      where: { id: studentId },
+      data: { hasNoCredentials: false },
     });
 
     const organizationId = await this.evidenceVersions.resolveStudentOrganizationId(studentId);

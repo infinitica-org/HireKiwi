@@ -13,6 +13,7 @@ import {
   PROFILE_PHOTO_ACCEPT,
   profilePhotoDisplayUrl,
   validateProfilePhotoFile,
+  validateProfilePhotoImage,
 } from '@/lib/profile-photo';
 
 interface ProfilePhotoEditControlProps {
@@ -63,6 +64,11 @@ export function ProfilePhotoEditControl({
     setPendingFile(null);
     setUploading(true);
     try {
+      const faceValidation = await validateProfilePhotoImage(file);
+      if (!faceValidation.valid) {
+        setError(faceValidation.error ?? 'Please provide a valid profile photo.');
+        return;
+      }
       const response = await api.users.uploadProfilePhoto(file, file.name);
       const cacheKey = Date.now();
       const bustedUrl = profilePhotoDisplayUrl(response.profilePhotoUrl, cacheKey);

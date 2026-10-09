@@ -15,12 +15,16 @@ import {
   API_PREFIX,
   AcceptInvitationRequestSchema,
   IdentifyRequestSchema,
+  MfaChallengeVerifyRequestSchema,
   PasswordLoginRequestSchema,
   PasswordResetConfirmRequestSchema,
   PasswordResetRequestSchema,
   RegisterRequestSchema,
   RegisterResponseSchema,
   ResendEmailVerificationRequestSchema,
+  SendEmailOtpResponseSchema,
+  VerifyEmailOtpRequestSchema,
+  VerifyEmailOtpResponseSchema,
 } from '@hirekiwi/contracts';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { Public } from '../../common/guards/public.decorator.js';
@@ -56,6 +60,14 @@ export class AuthController {
   identify(@Body() body: unknown) {
     const { email } = IdentifyRequestSchema.parse(body);
     return this.auth.identify(email);
+  }
+
+  /** Second step of an MFA-gated login (`login` above returns `{ mfaRequired: true, mfaToken }`). */
+  @Public()
+  @Post('mfa/verify')
+  verifyMfaChallenge(@Body() body: unknown, @Res({ passthrough: true }) reply: FastifyReply) {
+    const parsed = MfaChallengeVerifyRequestSchema.parse(body);
+    return this.auth.completeMfaChallenge(parsed.mfaToken, parsed.code, reply);
   }
 
   @Public()
@@ -99,6 +111,19 @@ export class AuthController {
   @HttpCode(204)
   async verifyEmail(@Param('token') token: string) {
     await this.emailVerification.confirm(token);
+  }
+
+  @Post('email-otp/send')
+  async sendEmailOtp(@CurrentUser() user: RequestUser) {
+    const result = await this.emailVerification.sendOtpForUser(user.sub);
+    return SendEmailOtpResponseSchema.parse(result);
+  }
+
+  @Post('email-otp/verify')
+  async verifyEmailOtp(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = VerifyEmailOtpRequestSchema.parse(body);
+    const result = await this.emailVerification.verifyOtpForUser(user.sub, parsed.code);
+    return VerifyEmailOtpResponseSchema.parse(result);
   }
 
   @Public()

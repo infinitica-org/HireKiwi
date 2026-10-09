@@ -211,6 +211,7 @@ import type {
   ReplacePaymentMethodDto,
   VerifyPaymentMethodReplacementDto,
   ResolveEvidenceDisputeRequest,
+  VerifyEmailOtpRequest,
 } from '@hirekiwi/contracts';
 import {
   API_PREFIX,
@@ -245,10 +246,20 @@ import {
   CertVerifySessionDtoSchema,
   ActiveSessionDtoSchema,
   AuditLogDtoSchema,
+  AdminMfaResetResponseSchema,
   AssignRoleResponseSchema,
   AuthTokenResponseSchema,
   AuthenticatedUserSchema,
   CompanyPortalAccountSchema,
+  LoginResponseSchema,
+  MfaEnableResponseSchema,
+  MfaSetupResponseSchema,
+  MfaStatusResponseSchema,
+  SendEmailOtpResponseSchema,
+  VerifyEmailOtpResponseSchema,
+  type MfaChallengeVerifyRequest,
+  type MfaDisableRequest,
+  type MfaEnableRequest,
   IdentifyResponseSchema,
   UserHoldResponseSchema,
   RegisterResponseSchema,
@@ -257,6 +268,7 @@ import {
   BatchMemberDtoSchema,
   CandidateBriefDtoSchema,
   CandidateCertificateDtoSchema,
+  CandidateCertificateDeclarationResponseDtoSchema,
   CandidateEducationDocumentSchema,
   CandidateEducationSchema,
   CandidateLanguageSchema,
@@ -341,6 +353,7 @@ import {
   ListCapabilityInferenceReviewQueueResponseSchema,
   CorrectStudentCapabilityResponseSchema,
   ProfessionalCredentialDtoSchema,
+  ProfessionalCredentialDeclarationResponseDtoSchema,
   PassiveSignalEvidenceDtoSchema,
   ProjectSkillMappingDtoSchema,
   VerificationDecisionDtoSchema,
@@ -396,12 +409,16 @@ import {
   SendManagerEndorsementResponseSchema,
   ResendManagerEndorsementResponseSchema,
   WorkExperienceOpsDashboardItemSchema,
+  WorkExperienceDeclarationResponseSchema,
   type CreateWorkExperienceDto,
   type UpdateWorkExperienceDto,
   type CreateWorkExperienceDocumentDto,
   type SubmitWorkExperienceVerificationDto,
   type SendManagerEndorsementDto,
   type SubmitManagerEndorsementDto,
+  type UpdateWorkExperienceDeclarationDto,
+  type UpdateCandidateCertificateDeclarationDto,
+  type UpdateProfessionalCredentialDeclarationDto,
   UsernameStatusResponseSchema,
   ProfileVisibilityResponseSchema,
   PersonalInfoResponseSchema,
@@ -435,6 +452,7 @@ import {
   ToggleModelVersionResponseSchema,
   ListRegisteredPromptsResponseSchema,
   type CorrectStudentCapabilityRequest,
+  type UpdateCandidateProfileRequest,
 } from '@hirekiwi/contracts';
 import { z } from 'zod';
 import type { HireKiwiApiClient } from './client.js';
@@ -456,7 +474,25 @@ const prefixed = (path: string): string => `${API_PREFIX}${path}`;
 export function authApi(client: HireKiwiApiClient) {
   return {
     login: (body: { email: string; password: string }) =>
-      client.post(prefixed('/auth/login'), body, { schema: AuthTokenResponseSchema }),
+      client.post(prefixed('/auth/login'), body, { schema: LoginResponseSchema }),
+
+    /** Second step of an MFA-gated login: trades the challenge token + code for a real session. */
+    verifyMfaChallenge: (body: MfaChallengeVerifyRequest) =>
+      client.post(prefixed('/auth/mfa/verify'), body, {
+        schema: AuthTokenResponseSchema,
+        anonymous: true,
+      }),
+
+    mfaStatus: () => client.get(prefixed('/auth/mfa/status'), { schema: MfaStatusResponseSchema }),
+
+    mfaSetup: () =>
+      client.post(prefixed('/auth/mfa/setup'), undefined, { schema: MfaSetupResponseSchema }),
+
+    mfaEnable: (body: MfaEnableRequest) =>
+      client.post(prefixed('/auth/mfa/enable'), body, { schema: MfaEnableResponseSchema }),
+
+    mfaDisable: (body: MfaDisableRequest) =>
+      client.request<void>({ method: 'DELETE', path: prefixed('/auth/mfa'), body }),
 
     identify: (body: { email: string }) =>
       client.post(prefixed('/auth/identify'), body, {
@@ -523,6 +559,16 @@ export function authApi(client: HireKiwiApiClient) {
     /** Always resolves (204), whether or not the address has an unverified account. */
     resendEmailVerification: (body: { email: string }) =>
       client.post<void>(prefixed('/auth/verify-email/resend'), body, { anonymous: true }),
+
+    sendEmailOtp: () =>
+      client.post(prefixed('/auth/email-otp/send'), undefined, {
+        schema: SendEmailOtpResponseSchema,
+      }),
+
+    verifyEmailOtp: (body: VerifyEmailOtpRequest) =>
+      client.post(prefixed('/auth/email-otp/verify'), body, {
+        schema: VerifyEmailOtpResponseSchema,
+      }),
 
     requestPasswordReset: (body: { email: string }) =>
       client.post<void>(prefixed('/auth/password-reset/request'), body, {
@@ -600,6 +646,11 @@ export function usersApi(client: HireKiwiApiClient) {
         schema: UploadProfilePhotoResponseSchema,
       });
     },
+
+    updateProfile: (body: UpdateCandidateProfileRequest) =>
+      client.patch(prefixed('/users/me/profile'), body, {
+        schema: AuthenticatedUserSchema,
+      }),
 
     /** Begins "Sign in with LinkedIn" (OIDC) — open the returned URL to verify. */
     linkedinOauthUrl: () =>
@@ -763,6 +814,19 @@ export function usersApi(client: HireKiwiApiClient) {
     listWorkExperiences: () =>
       client.get(prefixed('/users/me/work-experiences'), {
         schema: z.array(WorkExperienceSchema),
+      }),
+
+    getWorkExperienceDeclaration: () =>
+      client.get(prefixed('/users/me/work-experiences/declaration'), {
+        schema: WorkExperienceDeclarationResponseSchema,
+      }),
+
+    updateWorkExperienceDeclaration: (body: UpdateWorkExperienceDeclarationDto) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed('/users/me/work-experiences/declaration'),
+        body,
+        schema: WorkExperienceDeclarationResponseSchema,
       }),
 
     listEducation: () =>
@@ -1478,6 +1542,16 @@ export function onboardingApi(client: HireKiwiApiClient) {
         schema: UserHoldResponseSchema,
       }),
 
+    /** SUPER_ADMIN view of any user's MFA enrollment (not just the caller's own). */
+    adminMfaStatus: (userId: string) =>
+      client.get(prefixed(`/admin/users/${userId}/mfa`), { schema: MfaStatusResponseSchema }),
+
+    /** Force-disables a locked-out user's MFA — no second factor required. */
+    adminResetMfa: (userId: string, body: TenantActionReason) =>
+      client.post(prefixed(`/admin/users/${userId}/mfa/reset`), body, {
+        schema: AdminMfaResetResponseSchema,
+      }),
+
     resendAdminInvitation: (invitationId: string) =>
       client.post(prefixed(`/admin/invitations/${invitationId}/resend`), undefined, {
         schema: InvitationDtoSchema,
@@ -1658,6 +1732,19 @@ export function evidenceApi(client: HireKiwiApiClient) {
     listCredentials: () =>
       client.get(prefixed('/users/me/credentials'), {
         schema: z.array(ProfessionalCredentialDtoSchema),
+      }),
+
+    getCredentialDeclaration: () =>
+      client.get(prefixed('/users/me/credentials/declaration'), {
+        schema: ProfessionalCredentialDeclarationResponseDtoSchema,
+      }),
+
+    updateCredentialDeclaration: (body: UpdateProfessionalCredentialDeclarationDto) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed('/users/me/credentials/declaration'),
+        body,
+        schema: ProfessionalCredentialDeclarationResponseDtoSchema,
       }),
 
     createCredential: (body: unknown) =>
@@ -1948,31 +2035,41 @@ export function placementApi(client: HireKiwiApiClient) {
       client.get(prefixed(`/me/applications/${applicationId}/fit`), {
         schema: MatchFitDtoSchema,
       }),
+  };
+}
 
+/**
+ * Moved out of `placementApi` (S8-VV-P1, cleanup plan C06): these serve
+ * TPO staff, companies and B2B partners inspecting one candidate's evidence
+ * trail, independent of the TPO-mediated placement flow being retired around
+ * `placementApi`.
+ */
+export function candidateInspectionApi(client: HireKiwiApiClient) {
+  return {
     getCandidateEvidenceProvenance: (studentId: string) =>
-      client.get(prefixed(`/placement/candidates/${studentId}/evidence`), {
+      client.get(prefixed(`/candidate-inspection/${studentId}/evidence`), {
         schema: CandidateEvidenceProvenanceResponseSchema,
       }),
 
     getCandidateEducation: (studentId: string) =>
-      client.get(prefixed(`/placement/candidates/${studentId}/education`), {
+      client.get(prefixed(`/candidate-inspection/${studentId}/education`), {
         schema: CandidateEducationEvidenceResponseSchema,
       }),
 
     getCandidateSkillClaims: (studentId: string) =>
-      client.get(prefixed(`/placement/candidates/${studentId}/claims`), {
+      client.get(prefixed(`/candidate-inspection/${studentId}/claims`), {
         schema: CandidateSkillClaimsResponseSchema,
       }),
 
     getCandidateDemonstratedSkills: (studentId: string) =>
-      client.get(prefixed(`/placement/candidates/${studentId}/skills`), {
+      client.get(prefixed(`/candidate-inspection/${studentId}/skills`), {
         schema: CandidateDemonstratedSkillsResponseSchema,
       }),
 
     getCandidateSkillExplanation: (studentId: string, skillCode: string) =>
       client.get(
         prefixed(
-          `/placement/candidates/${studentId}/skills/${encodeURIComponent(skillCode)}/explanation`,
+          `/candidate-inspection/${studentId}/skills/${encodeURIComponent(skillCode)}/explanation`,
         ),
         {
           schema: GetEmployerSkillInspectionResponseSchema,
@@ -1981,13 +2078,13 @@ export function placementApi(client: HireKiwiApiClient) {
 
     reviewCandidateEvidence: (studentId: string, evidenceId: string, body: ReviewEvidenceRequest) =>
       client.post(
-        prefixed(`/placement/candidates/${studentId}/evidence/${evidenceId}/review`),
+        prefixed(`/candidate-inspection/${studentId}/evidence/${evidenceId}/review`),
         body,
         { schema: ReviewEvidenceResponseSchema },
       ),
 
     listCandidateEvidenceVersions: (studentId: string, evidenceId: string) =>
-      client.get(prefixed(`/placement/candidates/${studentId}/evidence/${evidenceId}/versions`), {
+      client.get(prefixed(`/candidate-inspection/${studentId}/evidence/${evidenceId}/versions`), {
         schema: z.union([
           ListEvidenceRecordVersionsResponseSchema,
           ListEvidenceRecordVersionsRedactedResponseSchema,
@@ -1997,7 +2094,7 @@ export function placementApi(client: HireKiwiApiClient) {
     getCandidateEvidenceVersion: (studentId: string, evidenceId: string, versionNumber: number) =>
       client.get(
         prefixed(
-          `/placement/candidates/${studentId}/evidence/${evidenceId}/versions/${versionNumber}`,
+          `/candidate-inspection/${studentId}/evidence/${evidenceId}/versions/${versionNumber}`,
         ),
         {
           schema: z.union([EvidenceRecordVersionDtoSchema, EvidenceRecordVersionRedactedDtoSchema]),
@@ -2093,6 +2190,19 @@ export function candidateCertificatesApi(client: HireKiwiApiClient) {
     listMine: () =>
       client.get(prefixed('/candidate-certificates'), {
         schema: ListMyCandidateCertificatesResponseSchema,
+      }),
+
+    getDeclaration: () =>
+      client.get(prefixed('/candidate-certificates/declaration'), {
+        schema: CandidateCertificateDeclarationResponseDtoSchema,
+      }),
+
+    updateDeclaration: (body: UpdateCandidateCertificateDeclarationDto) =>
+      client.request({
+        method: 'PUT',
+        path: prefixed('/candidate-certificates/declaration'),
+        body,
+        schema: CandidateCertificateDeclarationResponseDtoSchema,
       }),
 
     get: (id: string) =>
@@ -3048,6 +3158,7 @@ export function createHireKiwiApi(client: HireKiwiApiClient) {
     proctoring: proctoringApi(client),
     certificates: certificateApi(client),
     placement: placementApi(client),
+    candidateInspection: candidateInspectionApi(client),
     onboarding: onboardingApi(client),
     projects: projectsApi(client),
     candidateCertificates: candidateCertificatesApi(client),

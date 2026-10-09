@@ -50,11 +50,6 @@ export function EducationDegreeDetailsSection({
     ],
   );
 
-  const rows = useMemo(
-    () => syncSemesterRows(totalSemesters, values.degreeDetails.semesterRows),
-    [totalSemesters, values.degreeDetails.semesterRows],
-  );
-
   const semesterOptions = useMemo(
     () => Array.from({ length: totalSemesters }, (_, i) => i + 1),
     [totalSemesters],
@@ -65,11 +60,6 @@ export function EducationDegreeDetailsSection({
       ...next,
       semesterRows: syncSemesterRows(totalSemesters, next.semesterRows),
     });
-  }
-
-  function updateRow(index: number, patch: Partial<(typeof rows)[number]>) {
-    const nextRows = rows.map((row, i) => (i === index ? { ...row, ...patch } : row));
-    onPatchDegreeDetails({ semesterRows: nextRows });
   }
 
   return (

@@ -1,5 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { BadRequestException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsersService } from './users.service.js';
 
@@ -589,6 +594,90 @@ describe('UsersService uploadProfilePhoto', () => {
     ).rejects.toMatchObject({
       response: expect.objectContaining({ error: 'storage_unavailable' }),
     });
+  });
+
+  it('rejects webp format for profile photo', async () => {
+    const user = studentRow();
+    prisma.user.findUnique.mockResolvedValueOnce(user);
+
+    await expect(
+      service.uploadProfilePhoto(user.id, {
+        buffer: Buffer.from('fake'),
+        fileName: 'avatar.webp',
+        mimeType: 'image/webp',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe('UsersService updateProfile', () => {
+  const auth = { revokeAllForUser: vi.fn() };
+  const outbox = { enqueueEnvelope: vi.fn().mockResolvedValue(undefined) };
+  const storage = mockStorage();
+  let prisma: {
+    user: {
+      findUnique: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+    };
+  };
+  let service: UsersService;
+
+  beforeEach(() => {
+    prisma = {
+      user: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+      },
+    };
+    storage.getSignedDownloadUrl.mockClear();
+    service = new UsersService(
+      prisma as never,
+      auth as never,
+      outbox as never,
+      storage as never,
+      { record: vi.fn().mockResolvedValue(undefined) } as never,
+    );
+  });
+
+  it('updates profileHeadline for a student', async () => {
+    const user = studentRow({ profileHeadline: 'Old headline' });
+    prisma.user.findUnique.mockResolvedValueOnce(user);
+    prisma.user.update.mockResolvedValueOnce({
+      ...user,
+      profileHeadline: 'New profile description here',
+    });
+
+    const result = await service.updateProfile(user.id, {
+      profileHeadline: 'New profile description here',
+    });
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: user.id },
+      data: { profileHeadline: 'New profile description here' },
+      include: { institution: true, company: true, primaryTrack: true, secondaryTrack: true },
+    });
+    expect(result.profileHeadline).toBe('New profile description here');
+  });
+
+  it('throws ForbiddenException if user is not a student', async () => {
+    const recruiter = { ...studentRow(), role: 'RECRUITER' };
+    prisma.user.findUnique.mockResolvedValueOnce(recruiter);
+
+    await expect(
+      service.updateProfile(recruiter.id, {
+        profileHeadline: 'Recruiter headline',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('throws NotFoundException if user is not found', async () => {
+    prisma.user.findUnique.mockResolvedValueOnce(null);
+
+    await expect(
+      service.updateProfile('non-existent-id', {
+        profileHeadline: 'Some description',
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
 

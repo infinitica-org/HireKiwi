@@ -13,7 +13,7 @@ const portalOrigins = {
 
 export async function loginWithPassword(email: string, password: string) {
   const result = await api.auth.login({ email: email.trim().toLowerCase(), password });
-  if (result.accessToken) {
+  if (!('mfaRequired' in result)) {
     storeAccessToken(result.accessToken);
   }
   return result;

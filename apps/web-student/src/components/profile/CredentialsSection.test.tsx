@@ -1,14 +1,22 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { renderWithQueryClient } from '@/test/render-with-query-client';
 import { CredentialsSection } from './CredentialsSection';
 
 const listCredentials = vi.fn();
 const createCredential = vi.fn();
 const uploadCredentialDocument = vi.fn();
+const getCredentialDeclaration = vi.fn();
+const updateCredentialDeclaration = vi.fn();
 
-vi.mock('@hirekiwi/api-client', () => ({
-  isHireKiwiApiError: () => false,
-}));
+vi.mock('@hirekiwi/api-client', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    isHireKiwiApiError: () => false,
+    isSmartApiError: () => false,
+  };
+});
 
 vi.mock('@/lib/api', () => ({
   api: {
@@ -16,6 +24,8 @@ vi.mock('@/lib/api', () => ({
       listCredentials: () => listCredentials(),
       createCredential: (...args: unknown[]) => createCredential(...args),
       uploadCredentialDocument: (...args: unknown[]) => uploadCredentialDocument(...args),
+      getCredentialDeclaration: () => getCredentialDeclaration(),
+      updateCredentialDeclaration: (...args: unknown[]) => updateCredentialDeclaration(...args),
     },
   },
 }));
@@ -25,7 +35,11 @@ describe('CredentialsSection', () => {
     listCredentials.mockReset();
     createCredential.mockReset();
     uploadCredentialDocument.mockReset();
+    getCredentialDeclaration.mockReset();
+    updateCredentialDeclaration.mockReset();
     listCredentials.mockResolvedValue([]);
+    getCredentialDeclaration.mockResolvedValue({ hasNoCredentials: null });
+    updateCredentialDeclaration.mockResolvedValue({ hasNoCredentials: true });
     // jsdom has no real blob storage; stub just enough for the preview thumbnail.
     URL.createObjectURL = vi.fn(() => 'blob:mock-preview-url');
     URL.revokeObjectURL = vi.fn();
@@ -42,12 +56,12 @@ describe('CredentialsSection', () => {
       },
     ]);
 
-    render(<CredentialsSection />);
+    renderWithQueryClient(<CredentialsSection />);
     expect(await screen.findByText(/all verification runs on our backend/i)).toBeDefined();
   });
 
   it('shows an empty state when there are no credentials', async () => {
-    render(<CredentialsSection />);
+    renderWithQueryClient(<CredentialsSection />);
     expect(await screen.findByText('No credentials yet')).toBeDefined();
   });
 
@@ -69,7 +83,7 @@ describe('CredentialsSection', () => {
       },
     ]);
 
-    render(<CredentialsSection />);
+    renderWithQueryClient(<CredentialsSection />);
     await screen.findByText('No credentials yet');
 
     fireEvent.click(
@@ -108,7 +122,7 @@ describe('CredentialsSection', () => {
     ]);
     uploadCredentialDocument.mockResolvedValue({});
 
-    render(<CredentialsSection />);
+    renderWithQueryClient(<CredentialsSection />);
     await screen.findByText('AWS Certified Solutions Architect');
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -134,7 +148,7 @@ describe('CredentialsSection', () => {
       },
     ]);
 
-    render(<CredentialsSection />);
+    renderWithQueryClient(<CredentialsSection />);
     expect(await screen.findByText('attorney-license.pdf')).toBeDefined();
   });
 
@@ -153,7 +167,7 @@ describe('CredentialsSection', () => {
 
   it('rejects unsupported file types without calling the API', async () => {
     listCredentials.mockResolvedValue([pendingCredential]);
-    render(<CredentialsSection />);
+    renderWithQueryClient(<CredentialsSection />);
     await screen.findByText('AWS Certified Solutions Architect');
 
     uploadFile(new File(['x'], 'run.exe', { type: 'application/x-msdownload' }));
@@ -164,7 +178,7 @@ describe('CredentialsSection', () => {
 
   it('rejects documents over 5MB without calling the API', async () => {
     listCredentials.mockResolvedValue([pendingCredential]);
-    render(<CredentialsSection />);
+    renderWithQueryClient(<CredentialsSection />);
     await screen.findByText('AWS Certified Solutions Architect');
 
     const big = new File(['x'], 'big.pdf', { type: 'application/pdf' });
@@ -179,7 +193,7 @@ describe('CredentialsSection', () => {
     listCredentials.mockResolvedValue([pendingCredential]);
     uploadCredentialDocument.mockRejectedValueOnce(new Error('boom'));
     uploadCredentialDocument.mockResolvedValueOnce({});
-    render(<CredentialsSection />);
+    renderWithQueryClient(<CredentialsSection />);
     await screen.findByText('AWS Certified Solutions Architect');
     const file = new File(['cert'], 'license.pdf', { type: 'application/pdf' });
 
@@ -195,9 +209,44 @@ describe('CredentialsSection', () => {
 
   it('shows a revoked verification outcome instead of a pending state', async () => {
     listCredentials.mockResolvedValue([{ ...pendingCredential, status: 'REVOKED' }]);
-    render(<CredentialsSection />);
+    renderWithQueryClient(<CredentialsSection />);
 
     expect(await screen.findByText('Revoked')).toBeDefined();
     expect(screen.queryByText('Pending verification')).toBeNull();
+  });
+
+  it('shows declared no credentials state when hasNoCredentials is true', async () => {
+    getCredentialDeclaration.mockResolvedValue({ hasNoCredentials: true });
+    renderWithQueryClient(<CredentialsSection />);
+
+    expect(await screen.findByText('No credentials')).toBeDefined();
+    expect(
+      screen.getByText("You've indicated that you don't currently have any credentials."),
+    ).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Change declaration' })).toBeDefined();
+  });
+
+  it('calls updateCredentialDeclaration when declaring no credentials', async () => {
+    getCredentialDeclaration.mockResolvedValue({ hasNoCredentials: null });
+    renderWithQueryClient(<CredentialsSection />);
+
+    const button = await screen.findByRole('button', { name: "I don't have any credentials" });
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(updateCredentialDeclaration).toHaveBeenCalledWith({ hasNoCredentials: true });
+    });
+  });
+
+  it('calls updateCredentialDeclaration with null when changing declaration', async () => {
+    getCredentialDeclaration.mockResolvedValue({ hasNoCredentials: true });
+    renderWithQueryClient(<CredentialsSection />);
+
+    const button = await screen.findByRole('button', { name: 'Change declaration' });
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(updateCredentialDeclaration).toHaveBeenCalledWith({ hasNoCredentials: null });
+    });
   });
 });

@@ -106,3 +106,14 @@ export type CreateCandidateLanguageDto = z.infer<typeof CreateCandidateLanguageS
 
 export const UpdateCandidateLanguageSchema = CreateCandidateLanguageSchema.partial();
 export type UpdateCandidateLanguageDto = z.infer<typeof UpdateCandidateLanguageSchema>;
+
+/** Student profile update (PATCH /api/v1/users/me/profile) — headline/description. */
+export const UpdateCandidateProfileRequestSchema = z.object({
+  profileHeadline: z
+    .string()
+    .trim()
+    .min(3, 'Profile description must be at least 3 characters.')
+    .max(300, 'Profile description must be at most 300 characters.')
+    .optional(),
+});
+export type UpdateCandidateProfileRequest = z.infer<typeof UpdateCandidateProfileRequestSchema>;
