@@ -15,6 +15,7 @@ import {
   API_PREFIX,
   AcceptInvitationRequestSchema,
   IdentifyRequestSchema,
+  MfaChallengeVerifyRequestSchema,
   PasswordLoginRequestSchema,
   PasswordResetConfirmRequestSchema,
   PasswordResetRequestSchema,
@@ -59,6 +60,14 @@ export class AuthController {
   identify(@Body() body: unknown) {
     const { email } = IdentifyRequestSchema.parse(body);
     return this.auth.identify(email);
+  }
+
+  /** Second step of an MFA-gated login (`login` above returns `{ mfaRequired: true, mfaToken }`). */
+  @Public()
+  @Post('mfa/verify')
+  verifyMfaChallenge(@Body() body: unknown, @Res({ passthrough: true }) reply: FastifyReply) {
+    const parsed = MfaChallengeVerifyRequestSchema.parse(body);
+    return this.auth.completeMfaChallenge(parsed.mfaToken, parsed.code, reply);
   }
 
   @Public()

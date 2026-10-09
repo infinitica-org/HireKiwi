@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CreditCard, CheckCircle2, AlertCircle, RefreshCw, Lock, ShieldCheck } from 'lucide-react';
 import type { EmployerSubscriptionDto } from '@hirekiwi/contracts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
+import { TwoFactorAuthCard } from '../../../components/two-factor-auth-card';
 import { api, formatApiError } from '../../../lib/api';
 
 declare global {
@@ -238,6 +239,8 @@ export default function CompanySettingsPage() {
           </div>
         </div>
       </div>
+
+      <TwoFactorAuthCard />
 
       <Card className="border-border/70 bg-white">
         <CardHeader>

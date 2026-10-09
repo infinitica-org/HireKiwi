@@ -13,7 +13,7 @@ import { oauthErrorMessage } from '../../lib/oauth-error-message';
 const inputClass =
   'w-full h-12 rounded-md border border-[#e5e7eb] bg-white px-3.5 text-sm text-[#111827] placeholder:text-[#9ca3af] transition-[border-color,box-shadow] duration-150 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10';
 
-type Stage = 'identify' | 'password' | 'choose-signup';
+type Stage = 'identify' | 'password' | 'mfa' | 'choose-signup';
 
 export function LoginForm() {
   const searchParams = useSearchParams();
@@ -26,6 +26,8 @@ export function LoginForm() {
   );
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
 
   function onGoogleClick() {
     window.location.href = buildGoogleOauthUrl(searchParams.get('returnTo'));
@@ -52,6 +54,11 @@ export function LoginForm() {
     setUnverifiedEmail(null);
     try {
       const result = await api.auth.login({ email, password });
+      if ('mfaRequired' in result) {
+        setMfaToken(result.mfaToken);
+        setStage('mfa');
+        return;
+      }
       storeSession(result.accessToken);
       redirectForRole(result.user.role, result.accessToken, searchParams.get('returnTo'));
     } catch (err) {
@@ -76,8 +83,27 @@ export function LoginForm() {
   function backToIdentify() {
     setStage('identify');
     setPassword('');
+    setMfaToken(null);
+    setMfaCode('');
     setError(null);
     setUnverifiedEmail(null);
+  }
+
+  async function onMfaSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!mfaToken) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await api.auth.verifyMfaChallenge({ mfaToken, code: mfaCode.trim() });
+      storeSession(result.accessToken);
+      redirectForRole(result.user.role, result.accessToken, searchParams.get('returnTo'));
+    } catch (err) {
+      setMfaCode('');
+      setError(isHireKiwiApiError(err) ? err.message : 'That code is incorrect.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -86,7 +112,11 @@ export function LoginForm() {
         <img src="/icon.png" alt="HireKiwi" className="mx-auto h-11 w-11 object-contain" />
 
         <h1 className="mt-4 text-[1.65rem] font-bold leading-tight tracking-tight text-[#111827] sm:text-[1.85rem]">
-          {stage === 'choose-signup' ? "Let's get you set up" : 'Log in or sign up'}
+          {stage === 'choose-signup'
+            ? "Let's get you set up"
+            : stage === 'mfa'
+              ? 'Two-factor verification'
+              : 'Log in or sign up'}
         </h1>
 
         {error ? (
@@ -234,6 +264,54 @@ export function LoginForm() {
                 Forgot Password?
               </a>
             </div>
+          </form>
+        ) : null}
+
+        {stage === 'mfa' ? (
+          <form
+            onSubmit={onMfaSubmit}
+            className="mt-8 w-full max-w-[420px] space-y-4 text-center mx-auto"
+          >
+            <p className="text-sm text-[#6b7280]">
+              Enter the 6-digit code from your authenticator app, or one of your recovery codes.
+            </p>
+
+            <div className="w-full">
+              <label htmlFor="mfaCode" className="sr-only">
+                Authentication code
+              </label>
+              <input
+                id="mfaCode"
+                type="text"
+                inputMode="text"
+                required
+                autoComplete="one-time-code"
+                placeholder="123456 or XXXXX-XXXXX"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value)}
+                className={`${inputClass} text-center tracking-widest`}
+                autoFocus
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || mfaCode.trim().length === 0}
+              className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-black px-5 text-md font-semibold text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] disabled:opacity-70"
+            >
+              <span>{loading ? 'Verifying…' : 'Verify'}</span>
+              {loading ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              ) : null}
+            </button>
+
+            <button
+              type="button"
+              onClick={backToIdentify}
+              className="text-xs font-medium text-[#6b7280] underline-offset-4 hover:underline"
+            >
+              Use a different account
+            </button>
           </form>
         ) : null}
 

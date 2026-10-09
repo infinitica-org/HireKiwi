@@ -150,6 +150,13 @@ const EnvSchema = z.object({
   /** AES-256-GCM key (any passphrase; it is hashed to 32 bytes) for stored GitHub access tokens. */
   GITHUB_TOKEN_ENCRYPTION_KEY: z.string().optional(),
 
+  /**
+   * S8-VV-P0 — AES-256-GCM key for the TOTP secret stored on `User.mfaSecretEncrypted`;
+   * see secret-cipher.util.ts. Distinct from JWT_SECRET/CERTIFICATE_MASTER_SECRET so
+   * rotating one doesn't silently break the other.
+   */
+  MFA_SECRET_ENCRYPTION_KEY: z.string().default('local-dev-mfa-secret-change-me-now!!'),
+
   ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_AI_API_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),
@@ -271,6 +278,12 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   if (data.NODE_ENV === 'production' && data.CERTIFICATE_MASTER_SECRET === defaultCertSecret) {
     throw new Error(
       'Invalid environment: CERTIFICATE_MASTER_SECRET must be set to a non-default value in production',
+    );
+  }
+  const defaultMfaSecret = 'local-dev-mfa-secret-change-me-now!!';
+  if (data.NODE_ENV === 'production' && data.MFA_SECRET_ENCRYPTION_KEY === defaultMfaSecret) {
+    throw new Error(
+      'Invalid environment: MFA_SECRET_ENCRYPTION_KEY must be set to a non-default value in production',
     );
   }
   if (data.NODE_ENV === 'production' && !data.METRICS_SCRAPE_TOKEN) {

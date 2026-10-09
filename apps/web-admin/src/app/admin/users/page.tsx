@@ -76,6 +76,7 @@ export default function Page() {
   const [viewReason, setViewReason] = useState('');
   const [profile, setProfile] = useState<CandidateBriefDto | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mfaMessage, setMfaMessage] = useState<string | null>(null);
 
   useEffect(() => {
     api.onboarding
@@ -139,6 +140,7 @@ export default function Page() {
         description="Search by name/email, institution, skill, proficiency, or verification status. Opening a profile requires a reason code and is audit-logged."
       />
       {error ? <InlineAlert tone="danger" title={error} /> : null}
+      {mfaMessage ? <InlineAlert title={mfaMessage} /> : null}
       <Card>
         <CardHeader>
           <CardTitle>Search</CardTitle>
@@ -323,6 +325,44 @@ export default function Page() {
                       }}
                     >
                       View
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 border-zinc-200 bg-white px-2.5 text-[11px] font-semibold text-zinc-900 hover:bg-zinc-50 hover:border-zinc-300 shadow-2xs"
+                      onClick={() => {
+                        if (reason.trim().length < 8) {
+                          setError('Enter a reason of at least 8 characters.');
+                          return;
+                        }
+                        if (
+                          !window.confirm(
+                            `Force-disable two-factor authentication for ${hit.fullName}? Only do this after verifying their identity through another channel.`,
+                          )
+                        ) {
+                          return;
+                        }
+                        void (async () => {
+                          try {
+                            const { wasEnabled } = await api.onboarding.adminResetMfa(hit.userId, {
+                              reason: reason.trim(),
+                            });
+                            setError(null);
+                            setMfaMessage(
+                              wasEnabled
+                                ? `${hit.fullName}'s two-factor authentication has been reset.`
+                                : `${hit.fullName} didn't have two-factor authentication enabled.`,
+                            );
+                          } catch (err) {
+                            setError(
+                              isHireKiwiApiError(err) ? err.message : 'Could not reset MFA.',
+                            );
+                          }
+                        })();
+                      }}
+                    >
+                      Reset MFA
                     </Button>
                     <Button
                       type="button"

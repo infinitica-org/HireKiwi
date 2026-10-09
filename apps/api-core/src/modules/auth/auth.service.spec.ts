@@ -373,6 +373,125 @@ describe('AuthService.login lockout (S6-VV-92)', () => {
   });
 });
 
+describe('AuthService.login MFA gating (S8-VV-P0)', () => {
+  it('returns an MFA challenge instead of a session when mfaEnabled is true', async () => {
+    const user = userRow({
+      passwordHash: await hashPassword('correct-password'),
+      mfaEnabled: true,
+    });
+    const refreshTokenCreate = vi.fn();
+    const prisma = {
+      user: { findUnique: vi.fn(async () => user), update: vi.fn() },
+      refreshToken: { create: refreshTokenCreate },
+    };
+    const mfa = {
+      createChallenge: vi.fn(async () => ({
+        mfaRequired: true,
+        mfaToken: 't',
+        expiresInSeconds: 300,
+      })),
+    };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn() } as never,
+      { getSignedDownloadUrl: vi.fn() } as never,
+      mockAuditPublisher() as never,
+      mfa as never,
+    );
+
+    const result = await auth.login('student@example.com', 'correct-password', {} as never);
+
+    expect(result).toEqual({ mfaRequired: true, mfaToken: 't', expiresInSeconds: 300 });
+    expect(mfa.createChallenge).toHaveBeenCalledWith(user.id);
+    expect(refreshTokenCreate).not.toHaveBeenCalled(); // no session minted yet
+  });
+
+  it('skips the MFA challenge and issues a session when mfaEnabled is false', async () => {
+    const user = userRow({
+      passwordHash: await hashPassword('correct-password'),
+      mfaEnabled: false,
+    });
+    const prisma = {
+      user: { findUnique: vi.fn(async () => user), update: vi.fn() },
+      refreshToken: { create: vi.fn(async ({ data }: { data: unknown }) => data) },
+    };
+    const mfa = { createChallenge: vi.fn() };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn(async () => 'access.jwt') } as never,
+      { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) } as never,
+      mockAuditPublisher() as never,
+      mfa as never,
+    );
+
+    const result = await auth.login('student@example.com', 'correct-password', {
+      setCookie: vi.fn(),
+    } as never);
+
+    expect(mfa.createChallenge).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ tokenType: 'Bearer' });
+  });
+});
+
+describe('AuthService.completeMfaChallenge (S8-VV-P0)', () => {
+  function service(user: unknown, mfaOverrides: Partial<Record<string, unknown>> = {}) {
+    const prisma = {
+      user: { findUnique: vi.fn(async () => user) },
+      refreshToken: { create: vi.fn(async ({ data }: { data: unknown }) => data) },
+    };
+    const mfa = {
+      resolveChallenge: vi.fn(async () => (user as { id: string }).id),
+      verifyFactorAndConsume: vi.fn(async () => true),
+      ...mfaOverrides,
+    };
+    const auditPublisher = mockAuditPublisher();
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn(async () => 'access.jwt') } as never,
+      { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) } as never,
+      auditPublisher as never,
+      mfa as never,
+    );
+    return { auth, mfa, auditPublisher };
+  }
+
+  it('issues a real session once the second factor checks out', async () => {
+    const user = userRow({ mfaEnabled: true });
+    const { auth, auditPublisher } = service(user);
+
+    const result = await auth.completeMfaChallenge('mfa-token', '123456', {
+      setCookie: vi.fn(),
+    } as never);
+
+    expect(result).toMatchObject({ tokenType: 'Bearer' });
+    expect(auditPublisher.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'auth.mfa_challenge_verified' }),
+    );
+  });
+
+  it('rejects an incorrect second factor without issuing a session', async () => {
+    const user = userRow({ mfaEnabled: true });
+    const { auth, auditPublisher } = service(user, {
+      verifyFactorAndConsume: vi.fn(async () => false),
+    });
+
+    await expect(
+      auth.completeMfaChallenge('mfa-token', '000000', {} as never),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(auditPublisher.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'auth.mfa_challenge_failed' }),
+    );
+  });
+
+  it('rejects when the account behind the challenge token no longer exists', async () => {
+    const { auth } = service(null, { resolveChallenge: vi.fn(async () => randomUUID()) });
+
+    await expect(
+      auth.completeMfaChallenge('mfa-token', '123456', {} as never),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+});
+
 describe('AuthService.login failure audit (S6-VV-143)', () => {
   function service(user: unknown) {
     const auditPublisher = mockAuditPublisher();
@@ -858,6 +977,7 @@ describe('AuthService session revocation marker (Th6-614)', () => {
       {} as never,
       {} as never,
       mockAuditPublisher() as never,
+      {} as never,
       redis as never,
     );
     return { auth, prisma, familyId, userId, raw };
