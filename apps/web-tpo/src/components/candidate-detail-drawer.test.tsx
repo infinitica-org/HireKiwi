@@ -41,6 +41,16 @@ describe('CandidateDetailDrawer', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Ada Lovelace').length).toBeGreaterThan(0);
     });
+    expect(screen.queryByText(/Evidence Review/i)).toBeNull();
+    expect(screen.queryByText('Onboarding complete')).toBeNull();
+    expect(screen.queryByText(/Invite sent/i)).toBeNull();
+  });
+
+  it('does not render Evidence Review panel in the drawer', () => {
+    render(<CandidateDetailDrawer candidate={candidate} isOpen onClose={() => {}} />);
+    expect(screen.queryByText('Candidate Evidence Review')).toBeNull();
+    expect(screen.queryByText(/Evidence Review/i)).toBeNull();
+    expect(screen.queryByText('Review Evidence')).toBeNull();
   });
 
   it('calls onClose when close button is pressed', async () => {
