@@ -73,7 +73,7 @@ describe('primaryBatchLabel', () => {
 
   it('returns null when education has no batch dates', () => {
     expect(
-      primaryBatchLabel([{ institutionName: 'SMART Pilot Institute', current: true } as never]),
+      primaryBatchLabel([{ institutionName: 'HireKiwi Pilot Institute', current: true } as never]),
     ).toBeNull();
   });
 });

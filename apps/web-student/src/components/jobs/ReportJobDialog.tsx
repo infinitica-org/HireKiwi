@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { CreateReportRequestSchema, REPORT_REASONS, type ReportReason } from '@hirekiwi/contracts';
 import { Button, FormMessage, Modal } from '@hirekiwi/ui';
 import { api } from '@/lib/api';
@@ -54,10 +54,10 @@ export function ReportJobDialog({
       onReported(jobId, report.alreadyReported);
     },
     onError: (err) => {
-      const field = isSmartApiError(err) ? err.details[0]?.message : undefined;
+      const field = isHireKiwiApiError(err) ? err.details[0]?.message : undefined;
       setError(
         field ??
-          (isSmartApiError(err) && err.message ? err.message : 'Could not send your report.'),
+          (isHireKiwiApiError(err) && err.message ? err.message : 'Could not send your report.'),
       );
     },
   });

@@ -2,7 +2,38 @@
 
 import { AlertTriangle, Info, CheckCircle2, XCircle } from 'lucide-react';
 
-export function CertificateGuidelinesBanner() {
+export function CertificateGuidelinesBanner({ compact = false }: { compact?: boolean } = {}) {
+  if (compact) {
+    return (
+      <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+        <p className="flex items-center gap-1.5 font-semibold">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          Certification upload guidelines
+        </p>
+        <p className="mt-1 leading-relaxed">
+          Add an officially issued completion certificate or a verifiable credential link (Credly,
+          AWS CertMetrics, Coursera, etc.).
+        </p>
+        <ul className="mt-2 space-y-1">
+          <li className="flex items-start gap-1.5">
+            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
+            <span>
+              <strong className="font-semibold">Accepted:</strong> completion certificate, digital
+              badge, professional license, credential ID with verification URL.
+            </span>
+          </li>
+          <li className="flex items-start gap-1.5">
+            <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-danger" aria-hidden />
+            <span>
+              <strong className="font-semibold">Rejected:</strong> offer or appointment letters,
+              internship letters, course enrolments, salary slips.
+            </span>
+          </li>
+        </ul>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-warning/30 bg-warning/5 p-5 text-sm">
       <div className="flex items-start gap-3">

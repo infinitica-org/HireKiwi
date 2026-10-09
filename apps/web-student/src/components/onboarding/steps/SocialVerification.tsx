@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { FetchGithubProfileResponse } from '@hirekiwi/contracts';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import type { OnboardingProfileForm } from '@/lib/onboarding-form';
 
@@ -108,7 +108,7 @@ export default function SocialVerification({ formData, updateField }: SocialVeri
       setGithubPreview(profile);
     } catch (error) {
       const message =
-        isSmartApiError(error) && error.code === 'github_user_not_found'
+        isHireKiwiApiError(error) && error.code === 'github_user_not_found'
           ? 'No such user found'
           : 'GitHub is unavailable right now. You can skip this and add it later.';
       setGithubError(message);

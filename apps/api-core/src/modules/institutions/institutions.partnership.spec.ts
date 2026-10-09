@@ -219,7 +219,7 @@ describe('InstitutionsService Partnership Workflow', () => {
     expect(tokenDetails.contactEmail).toBe('tpo@annauniv.edu');
   });
 
-  it('Th6-I605 AC2 & AC4: activates account, configures primary/regional campuses, and records smart.org.provisioned audit log', async () => {
+  it('Th6-I605 AC2 & AC4: activates account, configures primary/regional campuses, and records hirekiwi.org.provisioned audit log', async () => {
     const created = await service.createPartnershipRequest({
       name: 'PSG College of Technology',
       domain: 'psgtech.ac.in',
@@ -274,12 +274,12 @@ describe('InstitutionsService Partnership Workflow', () => {
     expect(res.primaryCampusId).toBe('campus-main-1');
     expect(res.campusIds.length).toBe(2);
     expect(res.tpoUser.role).toBe('INSTITUTION_ADMIN');
-    expect(res.auditLog.action).toBe('smart.org.provisioned');
+    expect(res.auditLog.action).toBe('hirekiwi.org.provisioned');
     expect(res.auditLog.ipAddress).toBe('192.168.1.100');
 
     expect(mockAudit.record).toHaveBeenCalledWith(
       expect.objectContaining({
-        action: 'smart.org.provisioned',
+        action: 'hirekiwi.org.provisioned',
         actorId: 'admin-super',
         resourceType: 'INSTITUTION',
         resourceId: 'inst-psg-1',

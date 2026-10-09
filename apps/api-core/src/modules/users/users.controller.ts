@@ -6,6 +6,7 @@ import {
   Get,
   HttpCode,
   Inject,
+  Patch,
   Post,
   Put,
   Query,
@@ -25,6 +26,7 @@ import {
   RepoLanguagesRequestSchema,
   ReverseGeocodeRequestSchema,
   DeleteResumeRequestSchema,
+  UpdateCandidateProfileRequestSchema,
 } from '@hirekiwi/contracts';
 import type { FastifyReply } from 'fastify';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -33,9 +35,12 @@ import { Roles } from '../../common/guards/roles.decorator.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { env } from '../../platform/config/env.js';
 import { ResumeParseService } from '../ai-gateway/resume-parse.service.js';
+import { GithubOauthService } from '../auth/github-oauth.service.js';
 import { LinkedinOauthService } from '../auth/linkedin-oauth.service.js';
 import { GeocodingOnboardingService } from '../integrations/geocoding/geocoding-onboarding.service.js';
 import { GithubOnboardingService } from '../integrations/github/github-onboarding.service.js';
+import { encryptSecret } from '../../platform/crypto/secret-cipher.util.js';
+import { SignalIngestionService } from '../signal-ingestion/signal-ingestion.service.js';
 import { UsersService } from './users.service.js';
 
 const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024;
@@ -48,13 +53,15 @@ export class UsersController {
     @Inject(UsersService) private readonly service: UsersService,
     @Inject(ResumeParseService) private readonly resumeParse: ResumeParseService,
     @Inject(LinkedinOauthService) private readonly linkedinOauth: LinkedinOauthService,
+    @Inject(GithubOauthService) private readonly githubOauth: GithubOauthService,
     @Inject(GithubOnboardingService) private readonly githubOnboarding: GithubOnboardingService,
     @Inject(GeocodingOnboardingService)
     private readonly geocodingOnboarding: GeocodingOnboardingService,
+    @Inject(SignalIngestionService) private readonly signalIngestion: SignalIngestionService,
   ) {}
 
   @Get('me')
-  @Roles('STUDENT', 'INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'SUPER_ADMIN')
+  @Roles('STUDENT', 'INSTITUTION_ADMIN', 'PLACEMENT_STAFF', 'SUPER_ADMIN', 'COMPANY')
   me(@CurrentUser() user: RequestUser) {
     return this.service.getMe(user.sub);
   }
@@ -126,7 +133,7 @@ export class UsersController {
   @Post('me/resume')
   @Roles('STUDENT')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Upload or replace the candidate resume file (PDF/DOCX/TXT, max 5MB).' })
+  @ApiOperation({ summary: 'Upload candidate resume file (PDF only, max 5MB).' })
   async uploadResume(@CurrentUser() user: RequestUser, @Req() request: FastifyRequest) {
     const partsIter = (
       request as FastifyRequest & { parts: (opts?: unknown) => AsyncIterableIterator<Multipart> }
@@ -148,7 +155,7 @@ export class UsersController {
     } catch {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'The uploaded file exceeds the 5MB limit or could not be read.',
+        message: 'Resume must be 5 MB or smaller.',
         statusCode: 400,
       });
     }
@@ -156,7 +163,7 @@ export class UsersController {
     if (!fileBuffer) {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'Choose a PDF, DOCX, DOC, or TXT resume to upload.',
+        message: 'Only PDF resumes are allowed.',
         statusCode: 400,
       });
     }
@@ -180,7 +187,7 @@ export class UsersController {
   @Post('me/profile-photo')
   @Roles('STUDENT')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Upload or replace the candidate profile photo (JPEG/PNG/WebP).' })
+  @ApiOperation({ summary: 'Upload or replace the candidate profile photo (JPEG/PNG, max 2MB).' })
   @ApiResponse({ status: 200, description: 'Signed profilePhotoUrl for immediate display.' })
   async uploadProfilePhoto(@CurrentUser() user: RequestUser, @Req() request: FastifyRequest) {
     const partsIter = (
@@ -211,7 +218,7 @@ export class UsersController {
     if (!fileBuffer) {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'Choose a JPEG, PNG, or WebP image to upload.',
+        message: 'Choose a JPEG or PNG image to upload.',
         statusCode: 400,
       });
     }
@@ -221,6 +228,16 @@ export class UsersController {
       fileName,
       mimeType,
     });
+  }
+
+  @Patch('me/profile')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update student profile fields such as profile description/headline.' })
+  @ApiResponse({ status: 200, description: 'Updated AuthenticatedUser profile.' })
+  updateProfile(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = UpdateCandidateProfileRequestSchema.parse(body);
+    return this.service.updateProfile(user.sub, parsed);
   }
 
   @Get('me/onboarding/linkedin/oauth-url')
@@ -266,6 +283,60 @@ export class UsersController {
         providerSub: identity.providerSub,
         name: identity.name,
         pictureUrl: identity.pictureUrl,
+      });
+      reply.redirect(redirectTo(true), 302);
+    } catch {
+      reply.redirect(redirectTo(false), 302);
+    }
+  }
+
+  @Get('me/onboarding/github/oauth-url')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Begin "Sign in with GitHub" to grant read access to private repos.',
+  })
+  async githubOauthUrl(@CurrentUser() user: RequestUser) {
+    return { url: await this.githubOauth.createAuthorizationUrl(user.sub) };
+  }
+
+  @Public()
+  @Get('onboarding/github/callback')
+  @ApiOperation({
+    summary: 'GitHub OAuth redirect target — not called by the frontend directly.',
+  })
+  async githubCallback(
+    @Query('code') code: string | undefined,
+    @Query('state') state: string | undefined,
+    @Query('error') error: string | undefined,
+    @Res() reply: FastifyReply,
+  ) {
+    const redirectTo = (ok: boolean) =>
+      `${env.STUDENT_APP_URL}/student/profile?githubRepoAccess=${ok ? '1' : '0'}`;
+
+    if (error || !code || !state) {
+      reply.redirect(redirectTo(false), 302);
+      return;
+    }
+
+    const userId = await this.githubOauth.consumeState(state);
+    if (!userId || !env.GITHUB_TOKEN_ENCRYPTION_KEY) {
+      reply.redirect(redirectTo(false), 302);
+      return;
+    }
+
+    try {
+      const identity = await this.githubOauth.exchangeCode(code);
+      const encryptedAccessToken = encryptSecret(
+        identity.accessToken,
+        env.GITHUB_TOKEN_ENCRYPTION_KEY,
+      );
+      await this.signalIngestion.connectGithubViaOauth(userId, {
+        login: identity.login,
+        name: identity.name,
+        avatarUrl: identity.avatarUrl,
+        encryptedAccessToken,
+        scopes: identity.scopes,
       });
       reply.redirect(redirectTo(true), 302);
     } catch {

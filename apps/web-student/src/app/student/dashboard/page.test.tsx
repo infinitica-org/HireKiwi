@@ -1,3 +1,4 @@
+import type * as CandidateIdentityModule from '@/lib/candidate-identity';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import type { StudentDashboardSummary } from '@hirekiwi/contracts';
@@ -11,7 +12,8 @@ const { getDashboard, listSaved, saveJob, unsaveJob } = vi.hoisted(() => ({
   unsaveJob: vi.fn(),
 }));
 
-vi.mock('@/lib/candidate-identity', () => ({
+vi.mock('@/lib/candidate-identity', async (importOriginal) => ({
+  ...(await importOriginal<typeof CandidateIdentityModule>()),
   useCurrentUser: () => ({
     data: {
       userId: 'usr_1',
@@ -22,6 +24,8 @@ vi.mock('@/lib/candidate-identity', () => ({
     isLoading: false,
   }),
   firstNameOf: (name?: string) => name?.split(' ')[0] ?? '',
+  useTracks: () => ({ data: [] }),
+  headlineFor: () => 'HireKiwi candidate',
 }));
 
 vi.mock('@/lib/api', () => ({

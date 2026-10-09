@@ -201,8 +201,8 @@ describe('E2E Matching Pipeline with Multidimensional Profiles', () => {
 
     // Verify source reliability differs by trust tier
     if (assessmentMetrics && projectMetrics) {
-      expect(assessmentMetrics.sourceReliability).toBe(0.9); // TRUSTED
-      expect(projectMetrics.sourceReliability).toBe(0.7); // PROVISIONAL
+      expect(assessmentMetrics.sourceAuthorityWeight).toBe(0.9); // TRUSTED
+      expect(projectMetrics.sourceAuthorityWeight).toBe(0.7); // PROVISIONAL
     }
 
     // Verify proficiency inference
@@ -425,7 +425,7 @@ describe('E2E Matching Pipeline with Multidimensional Profiles', () => {
 
     expect(trustedMetrics).toBeDefined();
     expect(mixedMetrics).toBeDefined();
-    expect(trustedMetrics.sourceReliability).toBe(0.9);
-    expect(mixedMetrics?.sourceReliability).toBe(0.9);
+    expect(trustedMetrics.sourceAuthorityWeight).toBe(0.9);
+    expect(mixedMetrics?.sourceAuthorityWeight).toBe(0.9);
   });
 });

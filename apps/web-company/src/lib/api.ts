@@ -1,14 +1,16 @@
 import {
   API_PREFIX,
-  JobOpeningDtoSchema,
-  ListJobOpeningsResponseSchema,
+  EmployerJobDtoSchema,
+  EmployerJobVisibilitySchema,
+  ListEmployerJobsResponseSchema,
   CandidateMatchDtoSchema,
   ListSavedCandidatesResponseSchema,
   SavedCandidateDtoSchema,
   MatchFeedbackResponseSchema,
   z,
+  type CreateEmployerJobRequest,
   type CreateJobOpeningRequest,
-  type ListJobOpeningsQuery,
+  type ListEmployerJobsQuery,
   type CandidateMatchDto,
   type SubmitMatchFeedbackRequest,
   type ListSavedCandidatesResponse,
@@ -16,17 +18,17 @@ import {
   type MatchFeedbackResponse,
 } from '@hirekiwi/contracts';
 import {
-  SmartApiClient,
+  HireKiwiApiClient,
   clearAccessToken,
   createRefreshAccessToken,
-  createSmartApi,
+  createHireKiwiApi,
   getAccessToken,
-  isSmartApiError,
+  isHireKiwiApiError,
 } from '@hirekiwi/api-client';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-export const apiClient = new SmartApiClient({
+export const apiClient = new HireKiwiApiClient({
   baseUrl,
   getAccessToken,
   refreshAccessToken: createRefreshAccessToken(() => api.auth.refresh()),
@@ -38,43 +40,76 @@ export const apiClient = new SmartApiClient({
   },
 });
 
-export const api = createSmartApi(apiClient);
+export const api = createHireKiwiApi(apiClient);
 
+/** Fields the server fills from the company profile or that only placement staff set. */
+const SERVER_OWNED_FIELDS = [
+  'companyName',
+  'aboutCompany',
+  'companyOffers',
+  'additionalCompanyDetails',
+  'driveSpoc',
+  'driveDate',
+] as const;
+
+/** Fields a company may send when posting or editing a job. */
+export type JobPostingBody = Partial<CreateEmployerJobRequest> & Partial<CreateJobOpeningRequest>;
+
+function employerJobFields<T extends Record<string, unknown>>(body: T) {
+  const fields: Record<string, unknown> = { ...body };
+  for (const key of SERVER_OWNED_FIELDS) delete fields[key];
+  return fields;
+}
+
+/** Company job management (JOB-01): `/employer/jobs`, scoped to the signed-in company. */
 export const companyJobsApi = {
-  list: async (query?: ListJobOpeningsQuery) => {
+  list: async (query?: ListEmployerJobsQuery) => {
     try {
-      return await apiClient.get(`${API_PREFIX}/placement/openings`, {
-        schema: ListJobOpeningsResponseSchema,
+      const res = await apiClient.get(`${API_PREFIX}/employer/jobs`, {
+        schema: ListEmployerJobsResponseSchema,
         query,
       });
+      return { openings: res.jobs, total: res.jobs.length };
     } catch {
       return { openings: [], total: 0 };
     }
   },
   get: async (openingId: string) => {
     try {
-      return await apiClient.get(`${API_PREFIX}/placement/openings/${openingId}`, {
-        schema: JobOpeningDtoSchema,
+      return await apiClient.get(`${API_PREFIX}/employer/jobs/${openingId}`, {
+        schema: EmployerJobDtoSchema,
       });
     } catch {
       return null;
     }
   },
-  create: (body: CreateJobOpeningRequest) =>
-    apiClient.post(`${API_PREFIX}/placement/openings`, body, {
-      schema: JobOpeningDtoSchema,
+  /** `institutionId` is the campus the job is posted to. */
+  create: (body: JobPostingBody) =>
+    apiClient.post(`${API_PREFIX}/employer/jobs`, employerJobFields(body), {
+      schema: EmployerJobDtoSchema,
     }),
-  update: (openingId: string, body: Partial<CreateJobOpeningRequest>) =>
+  update: (openingId: string, body: JobPostingBody) =>
     apiClient.request({
       method: 'PATCH',
-      path: `${API_PREFIX}/placement/openings/${openingId}`,
-      body,
-      schema: JobOpeningDtoSchema,
+      path: `${API_PREFIX}/employer/jobs/${openingId}`,
+      body: employerJobFields(body),
+      schema: EmployerJobDtoSchema,
     }),
+  /** Is this job live for students, and why or why not. */
+  checkVisibility: (openingId: string) =>
+    apiClient.get(`${API_PREFIX}/employer/jobs/${openingId}/visibility`, {
+      schema: EmployerJobVisibilitySchema,
+    }),
+  publish: (openingId: string) =>
+    apiClient.post(
+      `${API_PREFIX}/employer/jobs/${openingId}/publish`,
+      {},
+      { schema: EmployerJobDtoSchema },
+    ),
   delete: (openingId: string) =>
     apiClient.request<void>({
       method: 'DELETE',
-      path: `${API_PREFIX}/placement/openings/${openingId}`,
+      path: `${API_PREFIX}/employer/jobs/${openingId}`,
     }),
 };
 
@@ -126,10 +161,10 @@ export const companyFeedbackApi = {
 };
 
 export function formatApiError(error: unknown, fallback = 'Operation failed'): string {
-  if (isSmartApiError(error) && error.details.length > 0) {
+  if (isHireKiwiApiError(error) && error.details.length > 0) {
     return error.details.map((d) => d.message).join('. ');
   }
-  if (isSmartApiError(error)) {
+  if (isHireKiwiApiError(error)) {
     return error.message;
   }
   if (error instanceof Error) {

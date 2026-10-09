@@ -53,8 +53,10 @@ export const EvidenceValidationMetricsSchema = z.object({
   evidenceType: EvidenceTypeSchema,
   methodType: z.string().min(1),
   constructCoverage: z.number().min(0).max(1),
-  interRaterReliability: z.number().min(0).max(1),
-  sourceReliability: z.number().min(0).max(1),
+  /** null = unknown (absent or single-rater evidence); excluded from compositeValidityScore. */
+  interRaterReliability: z.number().min(0).max(1).nullable(),
+  /** Declared policy weight for the evidence source (trust tier), not a measured reliability. */
+  sourceAuthorityWeight: z.number().min(0).max(1),
   recencyDays: z.number().int().nonnegative(),
   decayFactor: z.number().min(0).max(1),
   compositeValidityScore: z.number().min(0).max(1),

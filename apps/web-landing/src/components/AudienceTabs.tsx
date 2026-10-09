@@ -11,7 +11,6 @@ import {
   Zap,
   Search,
   Sparkles,
-  ExternalLink,
 } from 'lucide-react';
 import { AUDIENCE_TABS_CONTENT } from '@/lib/landing-content';
 import { authSignUpUrl } from '@/lib/portal-urls';

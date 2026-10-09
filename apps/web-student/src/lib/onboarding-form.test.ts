@@ -265,4 +265,75 @@ describe('onboarding-form', () => {
       { type: 'technical', code: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT', name: 'Python' },
     ]);
   });
+
+  it('includes middleName, degree, and specialization in draft and complete payloads', () => {
+    const form = emptyOnboardingForm();
+    form.firstName = 'Ada';
+    form.middleName = 'Augusta';
+    form.lastName = 'King';
+    form.phoneNumber = '9876543210';
+    form.academicProgram = {
+      studyProgram: '',
+      degree: 'B.Tech / B.E.',
+      specialization: 'Computer Science and Engineering',
+      graduationYear: '2025',
+    };
+    form.dpdpConsent = true;
+
+    const draft = buildOnboardingDraftPayload(form);
+    expect(draft.firstName).toBe('Ada');
+    expect(draft.middleName).toBe('Augusta');
+    expect(draft.lastName).toBe('King');
+    expect(draft.academicProgram).toEqual({
+      studyProgram: 'B.Tech / B.E. - Computer Science and Engineering',
+      degree: 'B.Tech / B.E.',
+      specialization: 'Computer Science and Engineering',
+      graduationYear: 2025,
+    });
+
+    const complete = buildCompleteOnboardingRequest(form);
+    expect('error' in complete).toBe(false);
+    if ('error' in complete) return;
+    expect(complete.firstName).toBe('Ada');
+    expect(complete.middleName).toBe('Augusta');
+    expect(complete.lastName).toBe('King');
+    expect(complete.academicProgram?.degree).toBe('B.Tech / B.E.');
+    expect(complete.academicProgram?.specialization).toBe('Computer Science and Engineering');
+    expect(complete.academicProgram?.studyProgram).toBe(
+      'B.Tech / B.E. - Computer Science and Engineering',
+    );
+  });
+});
+
+describe('buildProfessionalLinksSavePayload clearing (disconnect)', () => {
+  it('leaves an empty link out of the request by default, so a stale form cannot wipe a saved link', () => {
+    const form = {
+      ...emptyOnboardingForm(),
+      githubUrl: '',
+      linkedinUrl: 'https://linkedin.com/in/ada',
+    };
+    const payload = buildProfessionalLinksSavePayload(form);
+    expect(payload.githubUrl).toBeUndefined();
+    expect(payload.linkedinUrl).toBe('https://linkedin.com/in/ada');
+  });
+
+  it('sends an explicit empty string for a link the student is removing', () => {
+    const form = {
+      ...emptyOnboardingForm(),
+      githubUrl: '',
+      linkedinUrl: 'https://linkedin.com/in/ada',
+    };
+    const payload = buildProfessionalLinksSavePayload(form, ['githubUrl']);
+    expect(payload.githubUrl).toBe('');
+    // Only the platform being removed is cleared.
+    expect(payload.linkedinUrl).toBe('https://linkedin.com/in/ada');
+    expect(JSON.parse(JSON.stringify(payload))).toHaveProperty('githubUrl', '');
+  });
+
+  it('does not clear a link that still has a value', () => {
+    const form = { ...emptyOnboardingForm(), githubUrl: 'github.com/ada' };
+    expect(buildProfessionalLinksSavePayload(form, ['githubUrl']).githubUrl).toBe(
+      'https://github.com/ada',
+    );
+  });
 });

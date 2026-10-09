@@ -24,7 +24,7 @@ A “dating app” in V1 means: structured JD in → ranked verified candidates 
 | ----------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
 | Rank        | Rules: skill presence + proficiency met/exceeded + domain + experience + location. Score 0–1 + one-line why. | pgvector cosine as an extra signal    |
 | Who sees it | TPO only (`web-tpo`). No candidate job board (`CN-02`).                                                      | Company self-serve sourcing (`CO-07`) |
-| Persistence | `placement` shortlist + `smart.placement.matched`                                                            | —                                     |
+| Persistence | `placement` shortlist + `hirekiwi.placement.matched`                                                            | —                                     |
 | LLM         | Optional JD parse / confidence interview via `ai-gateway` only                                               | Embedding re-rank                     |
 
 **RACI for the outcome path (does not silently rewrite CODEOWNERS):**

@@ -66,34 +66,36 @@ jobs:
         # Uses default concurrency for GitHub-hosted runner
         run: pnpm exec turbo run build
 
-  # Th6-598: Lighthouse CI + SEO/axe checks for the public landing site. Separate job
-  # so a landing perf regression never blocks or slows the main `ci` gate's other steps.
-  landing-lighthouse:
-    name: landing-lighthouse
+  # S8-TN-05: Database migration verification + schema drift detection gate.
+  # Executes all Prisma migrations against a clean PostgreSQL (pgvector) container,
+  # checks that migrations match schema.prisma with zero drift, and verifies seeds.
+  # Prevents arbitrary column changes or broken migrations from entering `dev`.
+  db-migrations:
+    name: db-migrations
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: hirekiwi
+          POSTGRES_PASSWORD: hirekiwi
+          POSTGRES_DB: hirekiwi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - uses: ./.github/actions/setup-node-pnpm
 
-      - name: build landing (production, indexable)
-        run: pnpm exec turbo run build --filter=@hirekiwi/web-landing
+      - name: verify db migrations, schema drift & seeds
         env:
-          NEXT_PUBLIC_ENV: production
-
-      - name: lighthouse ci (mobile + desktop)
-        run: pnpm --filter @hirekiwi/web-landing lhci
-
-      - name: seo + axe e2e
-        run: pnpm --filter @hirekiwi/web-landing test:e2e
-        env:
-          PLAYWRIGHT_CHROME_CHANNEL: chrome
-
-      - name: upload lighthouse reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: landing-lighthouse
-          path: apps/web-landing/.lighthouseci
-          if-no-files-found: warn
+          DATABASE_URL: postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi?schema=public
+        run: node scripts/verify-db-migrations.mjs

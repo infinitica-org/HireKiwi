@@ -144,7 +144,7 @@ export function AdminTopbar({ onToggleSidebar, collapsed = true }: AdminTopbarPr
         <UserMenu
           user={{
             name: user?.fullName ?? 'Platform Admin',
-            email: user?.email ?? 'admin@smart.local',
+            email: user?.email ?? 'admin@hirekiwi.local',
             avatarUrl: null,
             role: 'SUPER_ADMIN',
           }}

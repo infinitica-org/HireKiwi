@@ -3,14 +3,14 @@
     "templateName": "institution-admin-invite",
     "templateLabel": "TPO / Institution Admin Invite",
     "theme": "classic",
-    "subject": "Invitation to administer Bansal Institute of Technology on SMART",
+    "subject": "Invitation to administer Bansal Institute of Technology on HireKiwi",
     "file": "preview/classic/institution-admin-invite.html"
   },
   {
     "templateName": "institution-admin-invite",
     "templateLabel": "TPO / Institution Admin Invite",
     "theme": "minimal",
-    "subject": "You're invited to manage Bansal Institute of Technology on SMART",
+    "subject": "You're invited to manage Bansal Institute of Technology on HireKiwi",
     "file": "preview/minimal/institution-admin-invite.html"
   },
   {
@@ -24,42 +24,42 @@
     "templateName": "student-invite",
     "templateLabel": "Student Invite",
     "theme": "classic",
-    "subject": "You're invited to SMART — Bansal Institute of Technology",
+    "subject": "You're invited to HireKiwi — Bansal Institute of Technology",
     "file": "preview/classic/student-invite.html"
   },
   {
     "templateName": "student-invite",
     "templateLabel": "Student Invite",
     "theme": "minimal",
-    "subject": "Bansal Institute of Technology invited you to SMART — let's get your skills verified",
+    "subject": "Bansal Institute of Technology invited you to HireKiwi — let's get your skills verified",
     "file": "preview/minimal/student-invite.html"
   },
   {
     "templateName": "student-invite",
     "templateLabel": "Student Invite",
     "theme": "genz",
-    "subject": "👋 Your SMART invite from Bansal Institute of Technology",
+    "subject": "👋 Your HireKiwi invite from Bansal Institute of Technology",
     "file": "preview/genz/student-invite.html"
   },
   {
     "templateName": "invite-reminder",
     "templateLabel": "Invite Reminder",
     "theme": "classic",
-    "subject": "Reminder: complete your SMART account setup",
+    "subject": "Reminder: complete your HireKiwi account setup",
     "file": "preview/classic/invite-reminder.html"
   },
   {
     "templateName": "invite-reminder",
     "templateLabel": "Invite Reminder",
     "theme": "minimal",
-    "subject": "Still there? Your SMART invite is waiting",
+    "subject": "Still there? Your HireKiwi invite is waiting",
     "file": "preview/minimal/invite-reminder.html"
   },
   {
     "templateName": "invite-reminder",
     "templateLabel": "Invite Reminder",
     "theme": "genz",
-    "subject": "⏳ 3 days left to activate your SMART account",
+    "subject": "⏳ 3 days left to activate your HireKiwi account",
     "file": "preview/genz/invite-reminder.html"
   },
   {

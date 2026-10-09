@@ -14,7 +14,7 @@ import {
  * defaults instead of breaking the page; the API itself answers 422 for them.
  */
 
-export type JobsView = 'browse' | 'saved';
+export type JobsView = 'browse' | 'saved' | 'applied';
 
 export interface JobsUrlState {
   view: JobsView;
@@ -63,7 +63,7 @@ function pick<T extends string>(value: string | null, allowed: readonly T[]): T 
 export function parseJobsUrl(params: ParamReader): JobsUrlState {
   const location = params.get('location')?.trim().slice(0, JOB_LOCATION_MAX_LENGTH);
   return {
-    view: params.get('view') === 'saved' ? 'saved' : 'browse',
+    view: pick(params.get('view'), ['saved', 'applied'] as const) ?? 'browse',
     fit: pick(params.get('fit'), JOB_FIT_TABS) ?? 'ALL',
     type: pick(params.get('type'), EMPLOYMENT_TYPES),
     mode: pick(params.get('mode'), JOB_WORK_MODES),
@@ -74,7 +74,7 @@ export function parseJobsUrl(params: ParamReader): JobsUrlState {
 /** Query string for a state, leaving out defaults so the common URL stays clean. */
 export function toJobsSearch(state: JobsUrlState): string {
   const params = new URLSearchParams();
-  if (state.view === 'saved') params.set('view', 'saved');
+  if (state.view !== 'browse') params.set('view', state.view);
   if (state.fit !== 'ALL') params.set('fit', state.fit);
   if (state.type) params.set('type', state.type);
   if (state.mode) params.set('mode', state.mode);

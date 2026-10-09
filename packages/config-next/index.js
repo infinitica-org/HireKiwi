@@ -1,8 +1,8 @@
 /**
- * Creates a shared Next.js configuration for SMART portals.
+ * Creates a shared Next.js configuration for HireKiwi portals.
  * Applies standard transpilePackages, standalone output, and merges custom config.
  */
-export function withSmartConfig(config = {}) {
+export function withHireKiwiConfig(config = {}) {
     const baseConfig = {
         allowedDevOrigins: ['localhost', '127.0.0.1', 'localhost:3001', '127.0.0.1:3001'],
         output: 'standalone',

@@ -32,7 +32,7 @@ const projectRow = {
     techAgeFlag: false,
     relevanceScore: 75,
     explanation:
-      'ok\n---smart-verify---\n{"qualityScore":72,"duplicateScore":10,"confidence":0.75,"flags":[],"promptRef":"project-verify@1","auditId":null}',
+      'ok\n---hirekiwi-verify---\n{"qualityScore":72,"duplicateScore":10,"confidence":0.75,"flags":[],"promptRef":"project-verify@1","auditId":null}',
     routedToReview: false,
     createdAt: new Date(),
   },
@@ -195,7 +195,7 @@ describe('ProjectDefenseService', () => {
       ...projectRow,
       report: {
         ...projectRow.report,
-        explanation: `ok\n---smart-verify---\n${JSON.stringify({
+        explanation: `ok\n---hirekiwi-verify---\n${JSON.stringify({
           qualityScore: 72,
           duplicateScore: 15,
           confidence: 0.85,

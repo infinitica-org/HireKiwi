@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import type { CompanyProfile } from '@hirekiwi/contracts';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -110,7 +110,7 @@ describe('Company profile page (Th6-349/350/354)', () => {
   it('saves with the loaded version and an Idempotency-Key, and shows server 422 field errors', async () => {
     employer.getCompany.mockResolvedValue(profile());
     employer.updateCompany.mockRejectedValueOnce(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'validation_failed',
         message: 'Request failed validation.',
         statusCode: 422,
@@ -135,7 +135,7 @@ describe('Company profile page (Th6-349/350/354)', () => {
   it('offers to reload after a stale-version conflict', async () => {
     employer.getCompany.mockResolvedValue(profile());
     employer.updateCompany.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'version_conflict',
         message: 'stale',
         statusCode: 409,

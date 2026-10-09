@@ -15,6 +15,30 @@ import {
 import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
 import { profileSectionMeta } from '@/lib/profile-sections';
 
+export const CANONICAL_LANGUAGES = [
+  'Arabic',
+  'Bengali',
+  'Dutch',
+  'English',
+  'French',
+  'German',
+  'Gujarati',
+  'Hindi',
+  'Italian',
+  'Japanese',
+  'Kannada',
+  'Korean',
+  'Malayalam',
+  'Mandarin Chinese',
+  'Marathi',
+  'Portuguese',
+  'Russian',
+  'Spanish',
+  'Tamil',
+  'Telugu',
+  'Urdu',
+] as const;
+
 const PROFICIENCY_OPTIONS = [
   'Elementary',
   'Limited Working',
@@ -44,6 +68,7 @@ export function LanguagesSection() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingCustomLanguage, setEditingCustomLanguage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [language, setLanguage] = useState('');
@@ -57,6 +82,7 @@ export function LanguagesSection() {
 
   const openCreateModal = () => {
     setEditingId(null);
+    setEditingCustomLanguage(null);
     setLanguage('');
     setProficiency('Professional Working');
     setFormError(null);
@@ -65,6 +91,10 @@ export function LanguagesSection() {
 
   const openEditModal = (item: CandidateLanguageDto) => {
     setEditingId(item.id);
+    const isCustom = !CANONICAL_LANGUAGES.includes(
+      item.language as (typeof CANONICAL_LANGUAGES)[number],
+    );
+    setEditingCustomLanguage(isCustom ? item.language : null);
     setLanguage(item.language);
     setProficiency(item.proficiency);
     setFormError(null);
@@ -74,6 +104,7 @@ export function LanguagesSection() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
+    setEditingCustomLanguage(null);
     setFormError(null);
   };
 
@@ -128,7 +159,7 @@ export function LanguagesSection() {
         title={meta.title}
         description={meta.description}
         action={
-          !loading ? (
+          !loading && languages.length > 0 ? (
             <button
               type="button"
               onClick={openCreateModal}
@@ -214,27 +245,48 @@ export function LanguagesSection() {
               ) : null}
 
               <div>
-                <label className="block text-[13px] font-medium text-[var(--ds-text-secondary)]">
+                <label
+                  htmlFor="language-select"
+                  className="block text-[13px] font-medium text-[var(--ds-text-secondary)]"
+                >
                   Language <span className="text-red-600">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
+                  id="language-select"
                   required
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  placeholder="e.g. English, German, Spanish"
                   className={fieldClass}
-                />
+                  aria-label="Language"
+                >
+                  <option value="" disabled>
+                    Select language
+                  </option>
+                  {editingCustomLanguage &&
+                    !CANONICAL_LANGUAGES.includes(
+                      editingCustomLanguage as (typeof CANONICAL_LANGUAGES)[number],
+                    ) && <option value={editingCustomLanguage}>{editingCustomLanguage}</option>}
+                  {CANONICAL_LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {lang}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-[var(--ds-text-secondary)]">
+                <label
+                  htmlFor="proficiency-select"
+                  className="block text-[13px] font-medium text-[var(--ds-text-secondary)]"
+                >
                   Proficiency
                 </label>
                 <select
+                  id="proficiency-select"
                   value={proficiency}
                   onChange={(e) => setProficiency(e.target.value)}
                   className={fieldClass}
+                  aria-label="Proficiency"
                 >
                   {PROFICIENCY_OPTIONS.map((opt) => (
                     <option key={opt} value={opt}>

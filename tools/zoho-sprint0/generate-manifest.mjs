@@ -37,7 +37,7 @@ lines.push(
 for (const s of STORIES) {
   const gh = config.githubIds?.[s.id];
   const zohoId = config.itemIds?.[s.id] || 'TBD';
-  const ghLink = gh ? `[#${gh}](https://github.com/infinitica-org/smart/issues/${gh})` : 'TBD';
+  const ghLink = gh ? `[#${gh}](https://github.com/infinitica-org/HireKiwi/issues/${gh})` : 'TBD';
   lines.push(
     `| ${s.id} | ${ghLink} | ${s.points} | ${s.priority} | ${s.owner} | ${s.epic} | ${zohoId} |`,
   );

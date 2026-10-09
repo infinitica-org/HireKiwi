@@ -117,7 +117,7 @@ export default function InterviewsPage() {
             </h1>
             <p className="mt-1 text-xs font-medium text-zinc-500 sm:text-sm dark:text-zinc-400">
               Live automated technical defense sessions where you explain your project code
-              decisions to Smart&apos;s AI model
+              decisions to HireKiwi&apos;s AI model
             </p>
           </div>
         </div>
@@ -179,8 +179,8 @@ export default function InterviewsPage() {
                 No pending project defenses
               </p>
               <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-                Add portfolio projects in your profile to defend them against Smart&apos;s AI model
-                for verified competency credentials.
+                Add portfolio projects in your profile to defend them against HireKiwi&apos;s AI
+                model for verified competency credentials.
               </p>
               <Link
                 href="/student/profile?section=projects"

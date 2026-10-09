@@ -43,7 +43,7 @@ export default function CandidatesPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      document.title = 'Students · SMART TPO';
+      document.title = 'Students · HireKiwi TPO';
       const params = new URLSearchParams(window.location.search);
       const q = params.get('q');
       if (q) setSearchQuery(q);

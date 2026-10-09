@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SMART — Zero-Downtime Blue-Green Deployment Engine for High-End Linux VPS
+# HireKiwi — Zero-Downtime Blue-Green Deployment Engine for High-End Linux VPS
 # Manages seamless, zero-downtime traffic switching between Blue and Green production slots.
 #
 # Usage:
@@ -23,8 +23,8 @@ test -f "$ENV_FILE" || {
 
 # If deploying to DEV, run direct isolated deploy
 if [[ "$ENV_NAME" == "dev" ]]; then
-  echo "==> Deploying to isolated DEV stack (smart-dev)..."
-  COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml -p "smart-dev")
+  echo "==> Deploying to isolated DEV stack (hirekiwi-dev)..."
+  COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml -p "hirekiwi-dev")
   "${COMPOSE[@]}" --profile apps build
   "${COMPOSE[@]}" --profile apps up -d --no-build
   echo "==> Waiting for DEV API health check..."
@@ -35,7 +35,8 @@ if [[ "$ENV_NAME" == "dev" ]]; then
   done
   echo "==> Running Prisma migrations on DEV..."
   "${COMPOSE[@]}" --profile apps exec -T api npx prisma migrate deploy
-  echo "==> DEV stack deployed successfully at dev.becomesmart.online."
+  "${COMPOSE[@]}" --profile apps exec -T credential-verifier npx prisma migrate deploy
+  echo "==> DEV stack deployed successfully at dev.hirekiwi.online."
   exit 0
 fi
 
@@ -54,12 +55,12 @@ else
 fi
 
 echo "=========================================================================="
-echo " SMART BLUE-GREEN DEPLOYMENT ENGINE"
+echo " HireKiwi BLUE-GREEN DEPLOYMENT ENGINE"
 echo " Active Production Slot:   [${ACTIVE_COLOR}]"
 echo " Target Deployment Slot:   [${TARGET_COLOR}] (Internal API Port: ${TARGET_API_PORT})"
 echo "=========================================================================="
 
-TARGET_PROJECT="smart-prod-${TARGET_COLOR}"
+TARGET_PROJECT="hirekiwi-prod-${TARGET_COLOR}"
 TARGET_COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml -p "$TARGET_PROJECT")
 
 # 1. Build target container images sequentially to prevent VPS CPU/IO starvation
@@ -100,6 +101,9 @@ echo "==> Target [${TARGET_COLOR}] is healthy!"
 # 4. Database Migrations (Forward-Only)
 echo "==> [Phase 4/5] Running database migrations on shared production database..."
 "${TARGET_COMPOSE[@]}" --profile apps exec -T api npx prisma migrate deploy
+# credential-verifier is not color-coded blue/green (single stable instance,
+# not duplicated per slot) — migrate it here once, not per-slot.
+"${TARGET_COMPOSE[@]}" --profile apps exec -T credential-verifier npx prisma migrate deploy
 
 # 5. Atomic Traffic Switchover via Caddy
 echo "==> [Phase 5/5] Shifting live traffic from ${ACTIVE_COLOR} to ${TARGET_COLOR}..."
@@ -118,7 +122,7 @@ echo "==> Allowing 15-second graceful connection draining on old slot [${ACTIVE_
 sleep 15
 
 if [[ -f "$STATE_FILE" ]]; then
-  OLD_PROJECT="smart-prod-${ACTIVE_COLOR}"
+  OLD_PROJECT="hirekiwi-prod-${ACTIVE_COLOR}"
   echo "==> Spinning down inactive slot [${ACTIVE_COLOR}]..."
   OLD_COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml -p "$OLD_PROJECT")
   "${OLD_COMPOSE[@]}" --profile apps --profile obs down || true
@@ -128,5 +132,5 @@ echo "$TARGET_COLOR" > "$STATE_FILE"
 echo "=========================================================================="
 echo " BLUE-GREEN DEPLOYMENT COMPLETE"
 echo " Active Production is now: [${TARGET_COLOR}]"
-echo " Public Domains Verified:  https://becomesmart.online"
+echo " Public Domains Verified:  https://hirekiwi.online"
 echo "=========================================================================="

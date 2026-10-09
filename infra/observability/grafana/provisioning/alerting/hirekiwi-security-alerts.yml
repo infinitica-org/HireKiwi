@@ -1,14 +1,14 @@
-# S6-VV-126 (#574): security alerts. Delivered by the smart-team contact point and policy
+# S6-VV-126 (#574): security alerts. Delivered by the hirekiwi-team contact point and policy
 # provisioned in hirekiwi-alerts.yml (S6-VV-125). Runbooks: web-docs delivery/SECURITY_ALERTS.
 apiVersion: 1
 
 groups:
   - orgId: 1
-    name: smart-security-critical
-    folder: SMART
+    name: hirekiwi-security-critical
+    folder: HireKiwi
     interval: 1m
     rules:
-      - uid: smart-sec-refresh-reuse
+      - uid: hirekiwi-sec-refresh-reuse
         title: "Refresh token reuse detected"
         condition: C
         data:
@@ -17,7 +17,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: 'sum(increase(smart_security_events_total{action="auth.refresh_reuse_detected"}[10m]))'
+              expr: 'sum(increase(hirekiwi_security_events_total{action="auth.refresh_reuse_detected"}[10m]))'
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -35,8 +35,8 @@ groups:
           category: security
         annotations:
           summary: "A revoked refresh token was presented again: likely a stolen token. The family was revoked automatically."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#refresh-reuse
-      - uid: smart-sec-login-failure-burst
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#refresh-reuse
+      - uid: hirekiwi-sec-login-failure-burst
         title: "Burst of failed logins"
         condition: C
         data:
@@ -45,7 +45,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: 'sum(increase(smart_security_events_total{action="auth.login_failed"}[10m]))'
+              expr: 'sum(increase(hirekiwi_security_events_total{action="auth.login_failed"}[10m]))'
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -63,8 +63,8 @@ groups:
           category: security
         annotations:
           summary: "More than 50 failed logins in 10 minutes across the platform: possible credential stuffing."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#login-failure-burst
-      - uid: smart-sec-infected-upload
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#login-failure-burst
+      - uid: hirekiwi-sec-infected-upload
         title: "Infected file uploaded"
         condition: C
         data:
@@ -73,7 +73,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: 'sum(increase(smart_file_scans_total{result="infected"}[15m]))'
+              expr: 'sum(increase(hirekiwi_file_scans_total{result="infected"}[15m]))'
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -91,13 +91,13 @@ groups:
           category: security
         annotations:
           summary: "The malware scanner rejected an uploaded file."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#infected-upload
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#infected-upload
   - orgId: 1
-    name: smart-security-warning
-    folder: SMART
+    name: hirekiwi-security-warning
+    folder: HireKiwi
     interval: 1m
     rules:
-      - uid: smart-sec-lockouts
+      - uid: hirekiwi-sec-lockouts
         title: "Several accounts locked out"
         condition: C
         data:
@@ -106,7 +106,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: 'sum(increase(smart_security_events_total{action="auth.account_locked"}[15m]))'
+              expr: 'sum(increase(hirekiwi_security_events_total{action="auth.account_locked"}[15m]))'
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -124,8 +124,8 @@ groups:
           category: security
         annotations:
           summary: "More than 5 accounts were locked after repeated failed logins in 15 minutes."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#lockouts
-      - uid: smart-sec-authz-denied-spike
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#lockouts
+      - uid: hirekiwi-sec-authz-denied-spike
         title: "Spike in refused requests"
         condition: C
         data:
@@ -134,7 +134,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: "sum(increase(smart_authz_denied_total[10m]))"
+              expr: "sum(increase(hirekiwi_authz_denied_total[10m]))"
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -152,8 +152,8 @@ groups:
           category: security
         annotations:
           summary: "More than 100 requests were refused by the role/permission guard in 10 minutes: possible probing."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#authz-denied-spike
-      - uid: smart-sec-scanner-errors
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#authz-denied-spike
+      - uid: hirekiwi-sec-scanner-errors
         title: "Upload malware scanner failing"
         condition: C
         data:
@@ -162,7 +162,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: 'sum(increase(smart_file_scans_total{result="error"}[15m]))'
+              expr: 'sum(increase(hirekiwi_file_scans_total{result="error"}[15m]))'
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -180,8 +180,8 @@ groups:
           category: security
         annotations:
           summary: "The malware scanner errored on several uploads; uploads fail closed while it is down."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#scanner-errors
-      - uid: smart-sec-support-access
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#scanner-errors
+      - uid: hirekiwi-sec-support-access
         title: "Support access granted"
         condition: C
         data:
@@ -190,7 +190,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: 'sum(increase(smart_security_events_total{action="support.access_granted"}[15m]))'
+              expr: 'sum(increase(hirekiwi_security_events_total{action="support.access_granted"}[15m]))'
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -208,8 +208,8 @@ groups:
           category: security
         annotations:
           summary: "A support agent was granted time-limited access to a user account. Confirm it matches a ticket."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#support-access
-      - uid: smart-sec-role-change
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#support-access
+      - uid: hirekiwi-sec-role-change
         title: "Staff role changed"
         condition: C
         data:
@@ -218,7 +218,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: A
-              expr: 'sum(increase(smart_security_events_total{action="user.role_changed"}[15m]))'
+              expr: 'sum(increase(hirekiwi_security_events_total{action="user.role_changed"}[15m]))'
               instant: true
           - refId: C
             datasourceUid: __expr__
@@ -236,4 +236,4 @@ groups:
           category: security
         annotations:
           summary: "An institution staff role was changed. Confirm the change in the audit log (action=user.role_changed)."
-          runbook_url: https://github.com/infinitica-org/smart/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#role-change
+          runbook_url: https://github.com/infinitica-org/HireKiwi/blob/dev/apps/web-docs/content/docs/delivery/SECURITY_ALERTS.mdx#role-change

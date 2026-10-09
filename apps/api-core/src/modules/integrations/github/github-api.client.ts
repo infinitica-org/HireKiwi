@@ -5,14 +5,18 @@ import { env } from '../../../platform/config/env.js';
 import { RedisService } from '../../../platform/redis/redis.service.js';
 
 /**
- * Thin, cached GitHub REST v3 client — unauthenticated public data only (no
- * per-user OAuth; we never ask a candidate to grant GitHub access). Mirrors
- * the fetch+timeout+zod pattern already used in
- * `evaluation/project-verify.web-similarity.ts` for the same API.
+ * Thin GitHub REST v3 client. Mirrors the fetch+timeout+zod pattern already
+ * used in `evaluation/project-verify.web-similarity.ts` for the same API.
  *
- * Unauthenticated calls are capped at 60/hr per source IP; setting
- * GITHUB_API_TOKEN (a plain PAT, no scopes needed) raises that to 5,000/hr —
- * required before this sees real traffic.
+ * Two auth modes:
+ *  - App-level (`fetchProfile`, `listRepos`, `getReadme`, `repoLanguages`):
+ *    unauthenticated-equivalent public data, cached in Redis, using the
+ *    shared GITHUB_API_TOKEN PAT (raises the unauthenticated-per-IP rate
+ *    limit of 60/hr to 5,000/hr; no scopes needed, public data only).
+ *  - Per-student OAuth (`*Authenticated` methods): the student's own `repo`-
+ *    scope access token from GithubOauthService, for reading their private
+ *    repos. Never cached — caching one student's private repo content under
+ *    a global key would leak it to any other code path that reuses that key.
  */
 
 const GITHUB_API = 'https://api.github.com';
@@ -87,11 +91,21 @@ export class GithubApiClient {
   private headers(): Record<string, string> {
     const headers: Record<string, string> = {
       Accept: 'application/vnd.github+json',
-      'User-Agent': 'smart-onboarding',
+      'User-Agent': 'hirekiwi-onboarding',
       'X-GitHub-Api-Version': '2022-11-28',
     };
     if (env.GITHUB_API_TOKEN) headers.Authorization = `Bearer ${env.GITHUB_API_TOKEN}`;
     return headers;
+  }
+
+  /** Per-student token headers — never falls back to the shared app token. */
+  private authedHeaders(accessToken: string): Record<string, string> {
+    return {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'hirekiwi-onboarding',
+      'X-GitHub-Api-Version': '2022-11-28',
+      Authorization: `Bearer ${accessToken}`,
+    };
   }
 
   private async cached<T>(key: string, ttlSeconds: number, load: () => Promise<T>): Promise<T> {
@@ -205,5 +219,68 @@ export class GithubApiClient {
         }
       },
     );
+  }
+
+  /**
+   * Every repo the OAuth-connected student can access — `/user/repos` (not
+   * `/users/:login/repos`), so private repos are included when the token
+   * carries `repo` scope. Not cached; see the class doc comment for why.
+   */
+  async listReposForAuthenticatedUser(accessToken: string): Promise<GithubRepo[]> {
+    const response = await fetch(
+      `${GITHUB_API}/user/repos?affiliation=owner&sort=updated&per_page=100`,
+      { headers: this.authedHeaders(accessToken), signal: AbortSignal.timeout(FETCH_MS) },
+    );
+    if (!response.ok) throw new Error(`github_user_repos_${String(response.status)}`);
+    const body = z.array(GithubRepoSchema).parse(await response.json());
+    return body
+      .filter((repo) => !repo.fork)
+      .map((repo) => ({
+        id: repo.id,
+        fullName: repo.full_name,
+        description: repo.description,
+        htmlUrl: repo.html_url,
+        stars: repo.stargazers_count,
+        primaryLanguage: repo.language,
+        updatedAt: repo.updated_at,
+      }));
+  }
+
+  /** Authenticated equivalent of {@link getReadme}, for a repo that may be private. */
+  async getReadmeAuthenticated(fullName: string, accessToken: string): Promise<string | null> {
+    try {
+      const response = await fetch(`${GITHUB_API}/repos/${fullName}/readme`, {
+        headers: { ...this.authedHeaders(accessToken), Accept: 'application/vnd.github.raw' },
+        signal: AbortSignal.timeout(FETCH_MS),
+      });
+      if (!response.ok) return null;
+      const text = await response.text();
+      return text.slice(0, PROJECT_VERIFY_README_MAX_CHARS);
+    } catch (error) {
+      this.logger.warn(
+        `getReadmeAuthenticated(${fullName}) failed: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+      return null;
+    }
+  }
+
+  /** Authenticated equivalent of {@link repoLanguages}, for a repo that may be private. */
+  async repoLanguagesAuthenticated(
+    fullName: string,
+    accessToken: string,
+  ): Promise<Record<string, number>> {
+    try {
+      const response = await fetch(`${GITHUB_API}/repos/${fullName}/languages`, {
+        headers: this.authedHeaders(accessToken),
+        signal: AbortSignal.timeout(FETCH_MS),
+      });
+      if (!response.ok) return {};
+      return GithubLanguagesSchema.parse(await response.json());
+    } catch (error) {
+      this.logger.warn(
+        `repoLanguagesAuthenticated(${fullName}) failed: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+      return {};
+    }
   }
 }

@@ -1,8 +1,20 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { Tier1IssuerRegistry } from '../../candidate-certificates/verification/tier1-issuer-registry.js';
+import { CredentialVerifierClientAdapter } from '../../candidate-certificates/verification/credential-verifier-client.js';
 import { Tier2PublicUrlVerifier } from '../../candidate-certificates/verification/tier2-public-url-verifier.js';
 import { Tier3OcrVerifier } from '../../candidate-certificates/verification/tier3-ocr-verifier.js';
 import { CredentialVerificationService } from './credential-verification.service.js';
+
+// Tier 1 is now HTTP-backed (CredentialVerifierClientAdapter). Unless a test
+// overrides `tier1` directly, stub fetch to fail so it resolves UNAVAILABLE
+// deterministically and fast — same effective behavior as the old "no API
+// key configured" default, without a real network call in a unit test.
+beforeEach(() => {
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('not reachable in tests')));
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function buildService(
   mockPrisma: unknown,
@@ -29,7 +41,7 @@ function buildService(
     service: new CredentialVerificationService(
       prisma as any,
       reconciliation as any,
-      overrides?.tier1 ?? new Tier1IssuerRegistry(),
+      overrides?.tier1 ?? new Tier1IssuerRegistry(new CredentialVerifierClientAdapter()),
       overrides?.tier2 ?? new Tier2PublicUrlVerifier(),
       overrides?.tier3 ?? new Tier3OcrVerifier(),
       outbox as any,
@@ -107,7 +119,7 @@ describe('CredentialVerificationService', () => {
     expect(reconciliation.reconcileForStudent).toHaveBeenCalledWith('student-1');
     expect(outbox.enqueueEnvelope).toHaveBeenCalledWith(
       expect.objectContaining({
-        topic: 'smart.credential.verified',
+        topic: 'hirekiwi.credential.verified',
         data: expect.objectContaining({
           userId: 'student-1',
           sourceId: 'PROFESSIONALCREDENTIAL',

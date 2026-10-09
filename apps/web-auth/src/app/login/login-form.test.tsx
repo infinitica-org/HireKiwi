@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { api, storeSession } from '../../lib/api';
 import { LoginForm } from './login-form';
 
@@ -13,12 +13,33 @@ vi.mock('next/link', () => ({
   ),
 }));
 vi.mock('../../lib/api', () => ({
-  api: { auth: { login: vi.fn(), resendEmailVerification: vi.fn() } },
+  api: {
+    auth: {
+      identify: vi.fn(),
+      login: vi.fn(),
+      resendEmailVerification: vi.fn(),
+      verifyMfaChallenge: vi.fn(),
+    },
+  },
   storeSession: vi.fn(),
   redirectForRole: vi.fn(),
 }));
 
-describe('LoginForm with an unverified email', () => {
+function submitClosestForm(input: HTMLElement) {
+  const form = input.closest('form');
+  if (!form) throw new Error('form missing');
+  fireEvent.submit(form);
+}
+
+async function identifyAndReachPasswordStage(email: string) {
+  render(<LoginForm />);
+  const emailInput = screen.getByLabelText('Email');
+  fireEvent.change(emailInput, { target: { value: email } });
+  submitClosestForm(emailInput);
+  await screen.findByLabelText('Password');
+}
+
+describe('LoginForm identify-first flow', () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
@@ -26,9 +47,37 @@ describe('LoginForm with an unverified email', () => {
     cleanup();
   });
 
+  it('shows the password field when the email already has an account', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: true });
+
+    await identifyAndReachPasswordStage('jane@psgtech.ac.in');
+
+    expect(api.auth.identify).toHaveBeenCalledWith({ email: 'jane@psgtech.ac.in' });
+    expect(screen.getByLabelText('Password')).toBeTruthy();
+  });
+
+  it('offers student/company signup choices when the email has no account', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: false });
+
+    render(<LoginForm />);
+    const emailInput = screen.getByLabelText('Email');
+    fireEvent.change(emailInput, { target: { value: 'new.person@example.com' } });
+    submitClosestForm(emailInput);
+
+    expect(await screen.findByText(/I'm a student/i)).toBeTruthy();
+    expect(screen.getByText(/I'm hiring/i)).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Create student account/i }).getAttribute('href')).toBe(
+      '/register?email=new.person%40example.com',
+    );
+    expect(screen.getByRole('link', { name: /Create company account/i }).getAttribute('href')).toBe(
+      '/company/register?email=new.person%40example.com',
+    );
+  });
+
   it('explains why sign-in failed and offers a new verification link', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: true });
     vi.mocked(api.auth.login).mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'email_not_verified',
         message: 'Verify your email before signing in.',
         statusCode: 403,
@@ -36,15 +85,11 @@ describe('LoginForm with an unverified email', () => {
     );
     vi.mocked(api.auth.resendEmailVerification).mockResolvedValue(undefined);
 
-    const { container } = render(<LoginForm />);
-    const email = container.querySelector('input[type="email"]');
-    const password = container.querySelector('input[type="password"]');
-    if (!email || !password) throw new Error('login inputs missing');
-    fireEvent.change(email, { target: { value: 'jane@psgtech.ac.in' } });
+    await identifyAndReachPasswordStage('jane@psgtech.ac.in');
+
+    const password = screen.getByLabelText('Password');
     fireEvent.change(password, { target: { value: 'Password123!' } });
-    const form = email.closest('form');
-    if (!form) throw new Error('form missing');
-    fireEvent.submit(form);
+    submitClosestForm(password);
 
     expect((await screen.findByRole('alert')).textContent).toBe(
       'Verify your email before signing in.',
@@ -60,14 +105,105 @@ describe('LoginForm with an unverified email', () => {
   });
 });
 
+describe('LoginForm MFA challenge (S8-VV-P0)', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('asks for a code instead of signing in when login returns an MFA challenge', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: true });
+    vi.mocked(api.auth.login).mockResolvedValue({
+      mfaRequired: true,
+      mfaToken: 'challenge-token',
+      expiresInSeconds: 300,
+    });
+
+    await identifyAndReachPasswordStage('jane@psgtech.ac.in');
+    const password = screen.getByLabelText('Password');
+    fireEvent.change(password, { target: { value: 'Password123!' } });
+    submitClosestForm(password);
+
+    expect(await screen.findByPlaceholderText(/123456/)).toBeTruthy();
+    expect(storeSession).not.toHaveBeenCalled();
+  });
+
+  it('signs in once the correct code is submitted', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: true });
+    vi.mocked(api.auth.login).mockResolvedValue({
+      mfaRequired: true,
+      mfaToken: 'challenge-token',
+      expiresInSeconds: 300,
+    });
+    vi.mocked(api.auth.verifyMfaChallenge).mockResolvedValue({
+      accessToken: 'access.jwt',
+      tokenType: 'Bearer',
+      expiresInSeconds: 900,
+      user: { role: 'STUDENT' } as never,
+    });
+
+    await identifyAndReachPasswordStage('jane@psgtech.ac.in');
+    const password = screen.getByLabelText('Password');
+    fireEvent.change(password, { target: { value: 'Password123!' } });
+    submitClosestForm(password);
+
+    const codeInput = await screen.findByPlaceholderText(/123456/);
+    fireEvent.change(codeInput, { target: { value: '654321' } });
+    submitClosestForm(codeInput);
+
+    await waitFor(() =>
+      expect(api.auth.verifyMfaChallenge).toHaveBeenCalledWith({
+        mfaToken: 'challenge-token',
+        code: '654321',
+      }),
+    );
+    await waitFor(() => expect(storeSession).toHaveBeenCalledWith('access.jwt'));
+  });
+
+  it('shows an error and clears the field on a wrong code', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: true });
+    vi.mocked(api.auth.login).mockResolvedValue({
+      mfaRequired: true,
+      mfaToken: 'challenge-token',
+      expiresInSeconds: 300,
+    });
+    vi.mocked(api.auth.verifyMfaChallenge).mockRejectedValue(
+      new HireKiwiApiError({
+        error: 'unauthorized',
+        message: 'That code is incorrect.',
+        statusCode: 401,
+      }),
+    );
+
+    await identifyAndReachPasswordStage('jane@psgtech.ac.in');
+    const password = screen.getByLabelText('Password');
+    fireEvent.change(password, { target: { value: 'Password123!' } });
+    submitClosestForm(password);
+
+    const codeInput = await screen.findByPlaceholderText(/123456/);
+    fireEvent.change(codeInput, { target: { value: '000000' } });
+    submitClosestForm(codeInput);
+
+    expect((await screen.findByRole('alert')).textContent).toBe('That code is incorrect.');
+    expect(storeSession).not.toHaveBeenCalled();
+  });
+});
+
 describe('LoginForm accessibility (S6-VV-161)', () => {
   afterEach(() => {
     cleanup();
   });
 
-  it('gives the email and password inputs accessible names', () => {
+  it('gives the email input an accessible name', () => {
     render(<LoginForm />);
     expect(screen.getByLabelText('Email').getAttribute('type')).toBe('email');
+  });
+
+  it('gives the password input an accessible name once reached', async () => {
+    vi.mocked(api.auth.identify).mockResolvedValue({ exists: true });
+    await identifyAndReachPasswordStage('jane@psgtech.ac.in');
     expect(screen.getByLabelText('Password').getAttribute('type')).toBe('password');
   });
 });

@@ -4,7 +4,7 @@ import {
   type CompanyProfile,
   type UpdateCompanyProfileRequest,
 } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 
 export const SOCIAL_NETWORKS = ['linkedin', 'twitter', 'facebook', 'instagram', 'youtube'] as const;
 export type SocialNetwork = (typeof SOCIAL_NETWORKS)[number];
@@ -80,7 +80,7 @@ export function validateProfileBody(body: UpdateCompanyProfileRequest): Record<s
 
 /** Field errors from a server 422 (`details: [{ path, message }]`), or null for any other error. */
 export function fieldErrorsFromError(error: unknown): Record<string, string> | null {
-  if (!isSmartApiError(error) || error.statusCode !== 422 || error.details.length === 0) {
+  if (!isHireKiwiApiError(error) || error.statusCode !== 422 || error.details.length === 0) {
     return null;
   }
   const errors: Record<string, string> = {};
@@ -89,7 +89,7 @@ export function fieldErrorsFromError(error: unknown): Record<string, string> | n
 }
 
 export function isVersionConflict(error: unknown): boolean {
-  return isSmartApiError(error) && error.statusCode === 409 && error.code === 'version_conflict';
+  return isHireKiwiApiError(error) && error.statusCode === 409 && error.code === 'version_conflict';
 }
 
 export const EMPLOYEE_COUNT_OPTIONS = Object.entries(COMPANY_EMPLOYEE_COUNT_LABELS).map(

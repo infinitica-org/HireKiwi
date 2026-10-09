@@ -5,7 +5,7 @@ import { SkillDiscoverySchema, SocialVerificationSchema } from './candidate-soci
 /**
  * CN-T01 — candidate onboarding completion payload.
  *
- * Progressive onboarding model: completion means the student has entered SMART
+ * Progressive onboarding model: completion means the student has entered HireKiwi
  * with a broad interest domain and minimum identity/contact fields — not that
  * they finished their professional profile, declared skills, or enrolled in a
  * certification track.
@@ -78,7 +78,7 @@ export const CandidateOnboardingLanguageSchema = z.object({
 /** Catalog skill code, e.g. `REACT_FRONTEND` — the standardized 10-track competency taxonomy. */
 export const SkillCatalogCodeSchema = z
   .string()
-  .regex(/^[A-Z][A-Z0-9_]{1,63}$/, 'Choose a skill from the SMART skill catalog.');
+  .regex(/^[A-Z][A-Z0-9_]{1,63}$/, 'Choose a skill from the HireKiwi skill catalog.');
 
 /**
  * Th6-600 — a technical skill is a catalog pick only: no free-text names and no self-rated
@@ -134,6 +134,8 @@ export type CandidateAcademicScores = z.infer<typeof CandidateAcademicScoresSche
  */
 export const CandidateAcademicProgramSchema = z.object({
   studyProgram: z.string().min(1).max(120).optional(),
+  degree: z.string().min(1).max(120).optional(),
+  specialization: z.string().min(1).max(120).optional(),
   graduationYear: z
     .number()
     .int()
@@ -183,6 +185,7 @@ export const CompleteCandidateOnboardingRequestSchema = z.object({
   /** Broad area-of-interest — not a certification track or career role. */
   interestDomain: InterestDomainSchema,
   firstName: z.string().min(1).max(50),
+  middleName: z.string().max(50).optional(),
   lastName: z.string().min(1).max(50),
   gender: z.string().max(40).optional(),
   dateOfBirth: z.string().max(32).optional(),
@@ -231,6 +234,7 @@ export type CandidateOnboardingProfile = z.infer<typeof CandidateOnboardingProfi
 export const CandidateOnboardingDraftSchema = z.object({
   interestDomain: InterestDomainSchema.optional(),
   firstName: z.string().max(50).optional(),
+  middleName: z.string().max(50).optional(),
   lastName: z.string().max(50).optional(),
   gender: z.string().max(40).optional(),
   dateOfBirth: z.string().max(32).optional(),

@@ -7,7 +7,7 @@ import {
   type Message,
   type ReportReason,
 } from '@hirekiwi/contracts';
-import { useMutation, useSmartApi } from '../api-provider';
+import { useMutation, useHireKiwiApi } from '../api-provider';
 import { Alert } from '../components/alert';
 import { Button } from '../components/button';
 import { Modal } from '../components/modal';
@@ -26,7 +26,7 @@ export function ReportMessageDialog(props: {
   onClose: () => void;
   onReported: () => void;
 }) {
-  const api = useSmartApi();
+  const api = useHireKiwiApi();
   const [reason, setReason] = useState<ReportReason>('DISCRIMINATORY');
   const [details, setDetails] = useState('');
   const keyRef = useRef(newIdempotencyKey());

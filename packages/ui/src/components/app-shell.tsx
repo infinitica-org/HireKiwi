@@ -1,7 +1,7 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '../lib/cn';
-import { SmartLogo } from './smart-logo';
+import { HireKiwiLogo } from './hirekiwi-logo';
 import { Breadcrumbs, type BreadcrumbItem } from './breadcrumbs';
 import { UserMenu } from './user-menu';
 import { ThemeSwitcher } from './theme-switcher';
@@ -98,7 +98,7 @@ export function AppShell({
               href={config.homeUrl}
               className="flex items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ds-primary)] rounded-lg"
             >
-              <SmartLogo kind="mark" className="h-6 w-6 shrink-0" />
+              <HireKiwiLogo kind="mark" className="h-6 w-6 shrink-0" />
               {kicker ? (
                 <span className="hidden sm:inline-flex rounded-full bg-[var(--ds-primary-soft)] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--ds-primary)]">
                   {kicker}
@@ -201,7 +201,7 @@ export function AppShell({
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ds-primary)]"
               >
-                <SmartLogo kind="text" className="h-6" title={config.portalName} />
+                <HireKiwiLogo kind="text" className="h-6" title={config.portalName} />
               </a>
               <button
                 type="button"

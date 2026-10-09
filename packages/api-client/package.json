@@ -2,7 +2,7 @@
   "name": "@hirekiwi/api-client",
   "version": "0.1.0",
   "private": true,
-  "description": "Typed HTTP client for the SMART API: contract-validated responses, refresh rotation, 429 backoff, correlation propagation. Owner: Satheswaran V.",
+  "description": "Typed HTTP client for the HireKiwi API: contract-validated responses, refresh rotation, 429 backoff, correlation propagation. Owner: Satheswaran V.",
   "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

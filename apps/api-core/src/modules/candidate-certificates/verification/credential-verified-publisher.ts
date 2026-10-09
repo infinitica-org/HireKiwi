@@ -1,8 +1,8 @@
-import { SMART_TOPICS, type CredentialVerifiedEvent } from '@hirekiwi/contracts';
+import { HIREKIWI_TOPICS, type CredentialVerifiedEvent } from '@hirekiwi/contracts';
 import type { KafkaOutboxService } from '../../../platform/kafka/kafka-outbox.service.js';
 
 /**
- * Shared publish helper for smart.credential.verified (S6-VV-74).
+ * Shared publish helper for hirekiwi.credential.verified (S6-VV-74).
  *
  * Emitted from every place a CandidateCertificate or ProfessionalCredential
  * reaches a verified state (endorsement decision, admin override, agenda
@@ -18,9 +18,9 @@ export async function publishCredentialVerified(
   data: CredentialVerifiedEvent['data'],
 ): Promise<void> {
   await outbox.enqueueEnvelope({
-    topic: SMART_TOPICS.credentialVerified,
+    topic: HIREKIWI_TOPICS.credentialVerified,
     partitionKey: data.userId,
-    eventType: SMART_TOPICS.credentialVerified,
+    eventType: HIREKIWI_TOPICS.credentialVerified,
     source,
     data,
   });

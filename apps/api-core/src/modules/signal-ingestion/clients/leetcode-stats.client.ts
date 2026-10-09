@@ -55,6 +55,46 @@ query userPublicProfile($username: String!) {
   }
 }`;
 
+const LeetcodeLookupResponseSchema = z.object({
+  data: z
+    .object({
+      matchedUser: z
+        .object({
+          username: z.string(),
+          profile: z
+            .object({
+              realName: z.string().nullable().optional(),
+              userAvatar: z.string().nullable().optional(),
+            })
+            .nullable()
+            .optional(),
+          submitStats: z
+            .object({
+              acSubmissionNum: z.array(z.object({ difficulty: z.string(), count: z.number() })),
+            })
+            .optional(),
+        })
+        .nullable(),
+    })
+    .optional(),
+});
+
+const LC_LOOKUP_QUERY = `
+query userLookup($username: String!) {
+  matchedUser(username: $username) {
+    username
+    profile { realName userAvatar }
+    submitStats { acSubmissionNum { difficulty count } }
+  }
+}`;
+
+export interface LeetcodeLookupData {
+  readonly username: string;
+  readonly displayName: string | null;
+  readonly avatarUrl: string | null;
+  readonly solvedTotal: number | null;
+}
+
 export interface LeetcodeProfileData {
   readonly solvedCounts: LeetcodeSolvedCounts;
   readonly tagStats: readonly LeetcodeTagStat[];
@@ -94,6 +134,44 @@ export class LeetcodeStatsClient {
     @Inject(SignalCircuitBreaker) private readonly breaker: SignalCircuitBreaker,
   ) {}
 
+  /** Public name, photo and solved total for one username; null when there is no such profile. */
+  async lookupProfile(username: string): Promise<LeetcodeLookupData | null> {
+    // The global limit is one request per second. A lookup that lands inside that second waits for
+    // the next one instead of failing, so checking a username never reports a false error.
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        await this.acquireGlobalToken();
+        break;
+      } catch (error) {
+        if (attempt >= 2) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 1_100));
+      }
+    }
+    const parsed = await this.breaker.execute('LEETCODE', async (signal) => {
+      const response = await fetch(LC_GRAPHQL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'hirekiwi-signal-ingestion' },
+        body: JSON.stringify({ query: LC_LOOKUP_QUERY, variables: { username } }),
+        signal: AbortSignal.any([signal, AbortSignal.timeout(FETCH_MS)]),
+      });
+      // LeetCode answers 200 with `matchedUser: null` (or an error body) for an unknown user.
+      if (!response.ok && response.status >= 500) {
+        throw new Error(`LeetCode lookup failed: HTTP ${response.status}`);
+      }
+      return LeetcodeLookupResponseSchema.safeParse(await response.json().catch(() => ({})));
+    });
+    const user = parsed.success ? parsed.data.data?.matchedUser : null;
+    if (!user) return null;
+    const total = user.submitStats?.acSubmissionNum.find((row) => row.difficulty === 'All')?.count;
+    const avatar = user.profile?.userAvatar ?? null;
+    return {
+      username: user.username,
+      displayName: user.profile?.realName?.trim() || null,
+      avatarUrl: avatar && avatar.startsWith('https://') ? avatar : null,
+      solvedTotal: typeof total === 'number' ? total : null,
+    };
+  }
+
   async fetchProfile(username: string): Promise<LeetcodeProfileData> {
     const cacheKey = `leetcode:profile:${username.toLowerCase()}`;
     try {
@@ -110,7 +188,7 @@ export class LeetcodeStatsClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'smart-signal-ingestion',
+          'User-Agent': 'hirekiwi-signal-ingestion',
         },
         body: JSON.stringify({
           query: LC_PROFILE_QUERY,

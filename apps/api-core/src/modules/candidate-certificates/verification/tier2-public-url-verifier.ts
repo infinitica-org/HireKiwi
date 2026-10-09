@@ -46,7 +46,7 @@ export class Tier2PublicUrlVerifier {
           method: 'GET',
           signal: controller.signal,
           headers: {
-            'User-Agent': 'SMART-Certificate-Verifier/1.0',
+            'User-Agent': 'HireKiwi-Certificate-Verifier/1.0',
             Accept: 'text/html,application/xhtml+xml,text/plain',
           },
           redirect: 'follow',

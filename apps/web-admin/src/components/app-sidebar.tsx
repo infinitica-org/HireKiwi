@@ -20,13 +20,13 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         <Link
           prefetch={false}
           href="/admin"
-          aria-label="SMART Admin Console"
+          aria-label="HireKiwi Admin Console"
           className="flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 group-data-[collapsible=icon]:justify-center"
         >
           <div className="group-data-[collapsible=icon]:hidden flex items-center gap-2">
             <Image
               src={textLogo}
-              alt="SMART"
+              alt="HireKiwi"
               width={100}
               height={26}
               priority

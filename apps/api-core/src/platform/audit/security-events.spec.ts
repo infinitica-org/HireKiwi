@@ -4,7 +4,7 @@ import { countSecurityEvent } from './audit-publisher.service.js';
 
 async function count(labels: Record<string, string>): Promise<number> {
   const metric = (await registry.getMetricsAsJSON()).find(
-    (m) => m.name === 'smart_security_events_total',
+    (m) => m.name === 'hirekiwi_security_events_total',
   );
   return (
     metric?.values.find((v) => Object.entries(labels).every(([k, val]) => v.labels[k] === val))

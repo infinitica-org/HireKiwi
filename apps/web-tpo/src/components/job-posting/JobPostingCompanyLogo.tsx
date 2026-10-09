@@ -1,13 +1,13 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { openingsApi } from '../../lib/api';
 import type { JobPostingCompanyLogo } from '../../lib/job-posting';
 import { errorNoticeClass, mutedTextClass, secondaryButtonSmClass } from '../../lib/tpo-ui';
 
 function errorMessage(caught: unknown, fallback: string): string {
-  if (isSmartApiError(caught) || caught instanceof Error) return caught.message;
+  if (isHireKiwiApiError(caught) || caught instanceof Error) return caught.message;
   return fallback;
 }
 

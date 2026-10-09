@@ -8,7 +8,7 @@ type Slide = { title: string; body: string; ctaLabel: string; href: string };
 
 const SLIDES: Slide[] = [
   {
-    title: 'Learn how to get started on SMART',
+    title: 'Learn how to get started on HireKiwi',
     body: 'Complete your profile, verify your skills and get matched to roles at your institution.',
     ctaLabel: 'Complete profile',
     href: '/profile',
@@ -29,7 +29,7 @@ const SLIDES: Slide[] = [
 
 const ROTATE_MS = 7000;
 
-/** "Getting started" carousel at the top of the dashboard, in the white SMART/TPO card style. */
+/** "Getting started" carousel at the top of the dashboard, in the white HireKiwi/TPO card style. */
 export function WelcomeBanner() {
   const [index, setIndex] = useState(0);
 
@@ -38,7 +38,8 @@ export function WelcomeBanner() {
     return () => window.clearInterval(timer);
   }, [index]);
 
-  const slide = SLIDES[index] ?? SLIDES[0]!;
+  const slide = SLIDES[index] ?? SLIDES[0];
+  if (!slide) return null;
 
   return (
     <section

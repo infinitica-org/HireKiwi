@@ -99,10 +99,10 @@ describe('Teammates page (Th6-351/352/353)', () => {
   });
 
   it('shows the server message when the last owner cannot be demoted', async () => {
-    const { SmartApiError } = await import('@hirekiwi/api-client');
+    const { HireKiwiApiError } = await import('@hirekiwi/api-client');
     employer.listMembers.mockResolvedValue({ members: [member(OWNER)] });
     employer.changeMemberRole.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'last_owner',
         message: 'A company must always have at least one owner.',
         statusCode: 409,
@@ -126,10 +126,10 @@ describe('Teammates page (Th6-351/352/353)', () => {
   });
 
   it('shows the server 422 message for an invite to another domain', async () => {
-    const { SmartApiError } = await import('@hirekiwi/api-client');
+    const { HireKiwiApiError } = await import('@hirekiwi/api-client');
     employer.listMembers.mockResolvedValue({ members: [member(OWNER)] });
     employer.inviteRecruiter.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'email_domain_mismatch',
         message: 'Invitee email must be on acme.test.',
         statusCode: 409,

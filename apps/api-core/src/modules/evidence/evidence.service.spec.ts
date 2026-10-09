@@ -30,6 +30,7 @@ function buildService(overrides?: { prisma?: Record<string, unknown> }) {
   const prisma = {
     professionalCredential: {
       create: vi.fn().mockResolvedValue({ id: 'cred-1', studentId: 'student-1' }),
+      count: vi.fn().mockResolvedValue(0),
       findFirst: vi.fn().mockResolvedValue({ id: 'cred-1', studentId: 'student-1' }),
       findMany: vi.fn().mockResolvedValue([]),
       update: vi.fn().mockResolvedValue({ id: 'cred-1', studentId: 'student-1' }),
@@ -38,7 +39,8 @@ function buildService(overrides?: { prisma?: Record<string, unknown> }) {
       findMany: vi.fn().mockResolvedValue([]),
     },
     user: {
-      findUnique: vi.fn().mockResolvedValue({ institutionId: 'inst-1' }),
+      findUnique: vi.fn().mockResolvedValue({ institutionId: 'inst-1', hasNoCredentials: null }),
+      update: vi.fn().mockImplementation((args: { data: unknown }) => Promise.resolve(args.data)),
     },
     evidenceRecord: {
       create: evidenceRecordCreate,
@@ -1012,6 +1014,61 @@ describe('EvidenceService credential upload validation', () => {
       expect(res.disputeId).toBe('dispute-10');
       const audit = auditPublisher.record.mock.calls[0]?.[0];
       expect(audit.metadata.explanation).toBeNull();
+    });
+  });
+
+  describe('getCredentialDeclaration and setCredentialDeclaration', () => {
+    it('returns null when no credential declaration exists', async () => {
+      const { service, prisma } = buildService();
+      prisma.user.findUnique.mockResolvedValueOnce({ hasNoCredentials: null });
+      const res = await service.getCredentialDeclaration(STUDENT_ID);
+      expect(res).toEqual({ hasNoCredentials: null });
+    });
+
+    it('sets declaration to true when no credentials exist', async () => {
+      const { service, prisma } = buildService();
+      prisma.professionalCredential.count.mockResolvedValueOnce(0);
+      prisma.user.update.mockResolvedValueOnce({ hasNoCredentials: true });
+      const res = await service.setCredentialDeclaration(STUDENT_ID, true);
+      expect(res).toEqual({ hasNoCredentials: true });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: STUDENT_ID },
+        data: { hasNoCredentials: true },
+        select: { hasNoCredentials: true },
+      });
+    });
+
+    it('throws BadRequestException when declaring true but credentials exist', async () => {
+      const { service, prisma } = buildService();
+      prisma.professionalCredential.count.mockResolvedValueOnce(1);
+      await expect(service.setCredentialDeclaration(STUDENT_ID, true)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('allows setting declaration to false or null', async () => {
+      const { service, prisma } = buildService();
+      prisma.user.update.mockResolvedValueOnce({ hasNoCredentials: false });
+      const resFalse = await service.setCredentialDeclaration(STUDENT_ID, false);
+      expect(resFalse).toEqual({ hasNoCredentials: false });
+
+      prisma.user.update.mockResolvedValueOnce({ hasNoCredentials: null });
+      const resNull = await service.setCredentialDeclaration(STUDENT_ID, null);
+      expect(resNull).toEqual({ hasNoCredentials: null });
+    });
+
+    it('sets hasNoCredentials to false when creating a credential', async () => {
+      const { service, prisma } = buildService();
+      prisma.user.update.mockResolvedValueOnce({ hasNoCredentials: false });
+      await service.createCredential(STUDENT_ID, {
+        issuer: 'Amazon Web Services',
+        credentialName: 'AWS Certified Solutions Architect',
+        credentialType: 'CERTIFICATION',
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: STUDENT_ID },
+        data: { hasNoCredentials: false },
+      });
     });
   });
 });

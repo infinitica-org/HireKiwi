@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { PROFICIENCY_LEVEL_ORDER } from './skill-levels.js';
 
 /**
- * SMART canonical domain enumerations.
+ * HireKiwi canonical domain enumerations.
  *
  * These values appear in the database, in Kafka payloads, in HTTP responses and
  * in the UI. Changing a member is a breaking change for all six engineers —
@@ -128,7 +128,7 @@ export const USER_ROLES = [
   'INSTITUTION_ADMIN', // TPO
   'PLACEMENT_STAFF',
   'STUDENT',
-  'B2B_PARTNER', // X-SMART-API-KEY holder
+  'B2B_PARTNER', // X-HireKiwi-API-KEY holder
   'COMPANY', // B2B company portal representative (tenant = User.companyId)
   'SUPPORT_AGENT',
   'SUPPORT_LEAD',
@@ -245,12 +245,12 @@ export const SessionHoldCodeSchema = z.enum(SESSION_HOLD_CODES);
 export type SessionHoldCode = z.infer<typeof SessionHoldCodeSchema>;
 
 export const SESSION_HOLD_MESSAGE: Readonly<Record<SessionHoldCode, string>> = {
-  institution_held: 'This institution is on hold. You cannot use SMART until it is released.',
+  institution_held: 'This institution is on hold. You cannot use HireKiwi until it is released.',
   institution_deactivated:
-    'This institution is deactivated. You cannot use SMART until it is restored.',
+    'This institution is deactivated. You cannot use HireKiwi until it is restored.',
   account_held: 'Your account is on hold. Contact your TPO or platform administrator.',
-  company_held: 'This company is on hold. You cannot use SMART until it is released.',
-  company_deactivated: 'This company is deactivated. You cannot use SMART until it is restored.',
+  company_held: 'This company is on hold. You cannot use HireKiwi until it is released.',
+  company_deactivated: 'This company is deactivated. You cannot use HireKiwi until it is restored.',
 };
 
 export function isSessionHoldCode(code: string): code is SessionHoldCode {
@@ -552,8 +552,14 @@ export type AtsStage = z.infer<typeof AtsStageSchema>;
 export const HUMAN_HIRING_DECISION_REQUIRED = true as const;
 export const HUMAN_GATED_ATS_STAGES: readonly AtsStage[] = ['OFFER', 'HIRED'] as const;
 
-/** How a match score was produced. SKILL_CAPABILITY is the default ranker; RULES is legacy rollback. */
-export const MATCH_METHODS = ['RULES', 'SKILL_CAPABILITY', 'HYBRID'] as const;
+/**
+ * How a match score was produced. SKILL_CAPABILITY is the default ranker; RULES is legacy
+ * rollback. HYBRID means vector similarity narrowed the pool AND the structured scorer ranked
+ * it — that structured score is authoritative. VECTOR_PREVIEW means only vector similarity ran
+ * (e.g. free-text candidate browsing with no job requirements to score against) — it is an
+ * unscored similarity ranking, never a match decision.
+ */
+export const MATCH_METHODS = ['RULES', 'SKILL_CAPABILITY', 'HYBRID', 'VECTOR_PREVIEW'] as const;
 export const MatchMethodSchema = z.enum(MATCH_METHODS);
 export type MatchMethod = z.infer<typeof MatchMethodSchema>;
 

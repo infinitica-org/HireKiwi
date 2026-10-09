@@ -18,6 +18,7 @@ import {
   UploadJobOpeningLogoResponseSchema,
   ShortlistDtoSchema,
   SendMessageResponseSchema,
+  UniversityReadinessAnalyticsResponseSchema,
   UniversityRosterResponseSchema,
   UniversityStudentSummarySchema,
   z,
@@ -36,15 +37,17 @@ import {
   type StaffRole,
   type SendMessageResponse,
   type UniversityMessageStudentRequest,
+  type UniversityReadinessAnalyticsQuery,
+  type UniversityReadinessAnalyticsResponse,
   type UniversityRosterQuery,
   type UniversityRosterResponse,
   type UniversityStudentSummary,
 } from '@hirekiwi/contracts';
 import {
-  SmartApiClient,
+  HireKiwiApiClient,
   clearAccessToken,
   createRefreshAccessToken,
-  createSmartApi,
+  createHireKiwiApi,
   getAccessToken,
 } from '@hirekiwi/api-client';
 
@@ -52,7 +55,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 // web-auth is the one login screen for every portal now.
 const authUrl = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';
 
-export const apiClient = new SmartApiClient({
+export const apiClient = new HireKiwiApiClient({
   baseUrl,
   getAccessToken,
   refreshAccessToken: createRefreshAccessToken(() => api.auth.refresh()),
@@ -64,7 +67,7 @@ export const apiClient = new SmartApiClient({
   },
 });
 
-export const api = createSmartApi(apiClient);
+export const api = createHireKiwiApi(apiClient);
 
 export const employersApi = {
   list: (query?: ListPlacementEmployersQuery) =>
@@ -215,6 +218,14 @@ export const staffApi = {
 
 /** UNI-04 — student readiness dashboard (Th6-437 to Th6-444). */
 export const universityApi = {
+  /** Th6-607 - tier distribution + department x domain heatmap for the caller's university. */
+  readinessAnalytics: (
+    query: UniversityReadinessAnalyticsQuery,
+  ): Promise<UniversityReadinessAnalyticsResponse> =>
+    apiClient.get(`${API_PREFIX}/tpo/analytics/readiness`, {
+      schema: UniversityReadinessAnalyticsResponseSchema,
+      query,
+    }),
   roster: (
     query: Partial<Omit<UniversityRosterQuery, 'limit'>> & { limit?: number },
   ): Promise<UniversityRosterResponse> =>

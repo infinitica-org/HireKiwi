@@ -35,7 +35,7 @@ export function UniversityReportsExport() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      document.title = 'Reports & Analytics · SMART TPO';
+      document.title = 'Reports & Analytics · HireKiwi TPO';
     }
     let active = true;
     setLoading(true);

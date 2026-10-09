@@ -4,7 +4,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import {
   ProctoringSnapshotReadyEventSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   type ProctoringViolationKind,
 } from '@hirekiwi/contracts';
 
@@ -33,7 +33,7 @@ export class ProctoringSnapshotConsumer implements OnModuleInit {
 
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.proctoringSnapshotReady,
+        topic: HIREKIWI_TOPICS.proctoringSnapshotReady,
 
         module: 'proctoring',
 

@@ -15,7 +15,7 @@ description: 'Delivery & Engineering Protocols - ENGINEER_GUIDES'
 Full checklist (access → bootstrap → first PR): [`ENGINEER_START_CHECKLIST.md`](./ENGINEER_START_CHECKLIST.md).
 
 ```bash
-git clone <repo> smart-platform && cd smart-platform
+git clone <repo> hirekiwi-platform && cd hirekiwi-platform
 corepack enable && corepack prepare pnpm@11.22.0 --activate   # or: npm i -g pnpm@11.22.0
 cp .env.example .env                                          # then fill the secrets you own
 ./scripts/bootstrap.sh                                        # infra + install + migrate + seed
@@ -222,7 +222,7 @@ S5: E2E regression, a11y audit, Lighthouse.
 
 ### Your job in one line
 
-Own the attempt from "start" to "issued certificate", plus the two surfaces that prove SMART is
+Own the attempt from "start" to "issued certificate", plus the two surfaces that prove HireKiwi is
 real — public verification and the admin console.
 
 ### You own
@@ -232,7 +232,7 @@ apps/api-core/src/modules/assessment/**   attempts · Redis session · timer · 
                                           level unlock gating · integrity events
 apps/api-core/src/modules/certificate/**  Tier Trail · headline tier · confidence note · QR · PDF → R2
 apps/api-core/src/modules/webhooks/**     HMAC-SHA256 outbound dispatcher · retry · DLQ
-apps/web-verify/**                        public verify.smart.com/cert/[id]
+apps/web-verify/**                        public verify.hirekiwi.com/cert/[id]
 apps/web-admin/**                         super admin console · integrity review queue
 ```
 
@@ -252,8 +252,8 @@ apps/web-admin/**                         super admin console · integrity revie
 
 - **To Satheswaran:** you expose `AttemptSessionDto` and `NextItemDto`. The client sends drafts;
   you decide validity, next item, and expiry.
-- **To Ramansh:** you hand off with `smart.assessment.submitted` and you get back
-  `smart.eval.completed`. **No direct service call in either direction** — that coupling is exactly
+- **To Ramansh:** you hand off with `hirekiwi.assessment.submitted` and you get back
+  `hirekiwi.eval.completed`. **No direct service call in either direction** — that coupling is exactly
   what the event bus exists to prevent.
 - **To Vedika:** you never query the `items` table. You ask `catalog` for a parallel form. Item
   rotation, exposure tracking and retirement are hers, and reaching around her breaks anti-cheat.

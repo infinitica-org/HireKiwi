@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Briefcase, Clock, MapPin, Pencil, Plus, Search, Users } from 'lucide-react';
+import { JobVisibilityCheck } from '../../../components/job-visibility-check';
 import { companyJobsApi, formatApiError } from '../../../lib/api';
-import type { JobOpeningDto, JobOpeningStatus } from '@hirekiwi/contracts';
+import type { EmployerJobDto, JobOpeningStatus } from '@hirekiwi/contracts';
 
 type Filter = 'ALL' | JobOpeningStatus;
 
@@ -48,8 +49,25 @@ function postedOn(iso: string): string {
   });
 }
 
+function initials(title: string): string {
+  const letters = title
+    .split(/\s+/u)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? '')
+    .join('');
+  return letters || 'JB';
+}
+
+function skillLabel(code: string): string {
+  return code
+    .split('_')
+    .map((word) => (word ? word[0] + word.slice(1).toLowerCase() : word))
+    .join(' ');
+}
+
 export default function JobsPage() {
-  const [jobs, setJobs] = useState<JobOpeningDto[]>([]);
+  const [jobs, setJobs] = useState<EmployerJobDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('ALL');
@@ -84,6 +102,8 @@ export default function JobsPage() {
       .filter((job) => !q || `${job.roleTitle} ${job.location ?? ''}`.toLowerCase().includes(q))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [jobs, filter, query]);
+
+  const showCards = !loading && visible.length > 0;
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 pt-2 pb-16 font-sans">
@@ -155,7 +175,13 @@ export default function JobsPage() {
         </label>
       </div>
 
-      <div className="overflow-hidden rounded-md border border-zinc-200/80 bg-white shadow-2xs dark:border-zinc-800 dark:bg-[#161616]">
+      <div
+        className={
+          showCards
+            ? undefined
+            : 'overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-[#161616]'
+        }
+      >
         {loading ? (
           <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -192,63 +218,112 @@ export default function JobsPage() {
             ) : null}
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <ul className="grid gap-3">
             {visible.map((job) => {
               const status = STATUS_STYLE[job.status];
+              const skills = (job.requiredSkills ?? []).slice(0, 4);
+              const hiddenSkills = Math.max(0, (job.requiredSkills?.length ?? 0) - skills.length);
               return (
                 <li
                   key={job.openingId}
-                  className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-zinc-50/60 sm:flex-row sm:items-center dark:hover:bg-zinc-800/30"
+                  className="rounded-lg border border-zinc-200 bg-white p-5 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#161616] dark:hover:border-zinc-700"
                 >
-                  <div className="flex min-w-0 flex-1 items-center gap-4">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                      <Briefcase className="size-4.5" strokeWidth={1.75} />
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
-                          {job.roleTitle}
-                        </p>
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${status.className}`}
-                        >
-                          {status.label}
-                        </span>
-                      </div>
-                      <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        <span className="inline-flex items-center gap-1">
-                          <MapPin className="size-3.5" />
-                          {job.location ?? 'Remote'}
-                        </span>
-                        <span>
-                          {EMPLOYMENT_LABELS[job.employmentType ?? ''] ??
-                            job.employmentType ??
-                            'Full-time'}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <Clock className="size-3.5" />
-                          Posted {postedOn(job.createdAt)}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <span
+                        aria-hidden="true"
+                        className="flex size-10 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                      >
+                        {initials(job.roleTitle)}
+                      </span>
+                      <div className="min-w-0 flex-1 space-y-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-heading truncate text-base font-semibold tracking-tight text-zinc-950 dark:text-white">
+                              {job.roleTitle}
+                            </h3>
+                            <span
+                              className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${status.className}`}
+                            >
+                              {status.label}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="size-3.5" />
+                              {job.location ?? 'Remote'}
+                            </span>
+                            <span>
+                              {EMPLOYMENT_LABELS[job.employmentType ?? ''] ??
+                                job.employmentType ??
+                                'Full-time'}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <Clock className="size-3.5" />
+                              Posted {postedOn(job.createdAt)}
+                            </span>
+                          </p>
+                        </div>
 
-                  <div className="flex shrink-0 items-center gap-2 sm:pl-4">
-                    <Link
-                      href={`/jobs/${job.openingId}/applicants`}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-2xs transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-                    >
-                      <Users className="size-3.5" />
-                      Applicants
-                    </Link>
-                    <Link
-                      href={`/jobs/${job.openingId}/edit`}
-                      aria-label={`Edit ${job.roleTitle}`}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-2xs transition-colors hover:bg-zinc-50 hover:text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-                    >
-                      <Pencil className="size-3.5" />
-                      Edit
-                    </Link>
+                        {(job.details?.tags?.length ?? 0) > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {job.details?.tags?.slice(0, 4).map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-md border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        {job.salaryDetails || skills.length > 0 ? (
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            {job.salaryDetails ? (
+                              <span className="font-semibold text-zinc-900 dark:text-white">
+                                {job.salaryDetails}
+                              </span>
+                            ) : null}
+                            {job.salaryDetails && skills.length > 0 ? (
+                              <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                            ) : null}
+                            {skills.map((skill) => (
+                              <span
+                                key={skill.skillCode}
+                                className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                              >
+                                {skillLabel(skill.skillCode)}
+                              </span>
+                            ))}
+                            {hiddenSkills > 0 ? (
+                              <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                                +{hiddenSkills}
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <JobVisibilityCheck jobId={job.openingId} jobTitle={job.roleTitle} />
+                      <Link
+                        href={`/jobs/${job.openingId}/edit`}
+                        aria-label={`Edit ${job.roleTitle}`}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                      >
+                        <Pencil className="size-3.5" />
+                        Edit
+                      </Link>
+                      <Link
+                        href={`/jobs/${job.openingId}/applicants`}
+                        className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+                      >
+                        <Users className="size-3.5" />
+                        Applicants
+                      </Link>
+                    </div>
                   </div>
                 </li>
               );

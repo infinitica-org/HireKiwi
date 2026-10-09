@@ -36,7 +36,7 @@ describe('CandidatesPage', () => {
     expect(screen.getByRole('option', { name: /^Level 4/ })).toBeDefined();
     expect(screen.queryByRole('link', { name: /Onboard Candidates/i })).toBeNull();
     expect(screen.queryByRole('link', { name: /Whitelist/i })).toBeNull();
-    await waitFor(() => expect(document.title).toBe('Students · SMART TPO'));
+    await waitFor(() => expect(document.title).toBe('Students · HireKiwi TPO'));
   });
 
   it('switches to My Assigned Students view and calls listAssignedStudents', async () => {

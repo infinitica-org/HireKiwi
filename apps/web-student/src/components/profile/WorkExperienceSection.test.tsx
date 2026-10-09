@@ -14,6 +14,8 @@ const uploadWorkExperienceProofDocument = vi.fn();
 const attachWorkExperienceDocument = vi.fn();
 const removeWorkExperienceDocument = vi.fn();
 const resendWorkExperienceManagerEndorsement = vi.fn();
+const getWorkExperienceDeclaration = vi.fn();
+const updateWorkExperienceDeclaration = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
@@ -23,6 +25,9 @@ vi.mock('@/lib/api', () => ({
   api: {
     users: {
       listWorkExperiences: (...args: unknown[]) => listWorkExperiences(...args),
+      getWorkExperienceDeclaration: (...args: unknown[]) => getWorkExperienceDeclaration(...args),
+      updateWorkExperienceDeclaration: (...args: unknown[]) =>
+        updateWorkExperienceDeclaration(...args),
       createWorkExperience: (...args: unknown[]) => createWorkExperience(...args),
       updateWorkExperience: (...args: unknown[]) => updateWorkExperience(...args),
       deleteWorkExperience: (...args: unknown[]) => deleteWorkExperience(...args),
@@ -152,9 +157,18 @@ async function openAddExperienceModal() {
   listWorkExperiences.mockResolvedValueOnce([]);
   const view = renderWithQueryClient(<WorkExperienceSection />);
   fireEvent.click(
-    (await screen.findAllByRole('button', { name: 'Add experience' })).at(-1) as HTMLElement,
+    (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(-1) as HTMLElement,
   );
+  await screen.findByRole('heading', { name: /Add Work Experience/i });
   return view;
+}
+
+/** Labels render the required marker in its own span, so match on the combined text. */
+function requiredLabelCount(label: string): number {
+  return screen.queryAllByText((_content, element) => {
+    const text = element?.textContent?.replace(/\s+/g, ' ').trim();
+    return text === `${label} *` && element?.querySelector('span') !== null;
+  }).length;
 }
 
 describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
@@ -168,6 +182,14 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     restartWorkExperienceVerification.mockReset();
     resendWorkExperienceManagerEndorsement.mockReset();
     uploadWorkExperienceProofDocument.mockReset();
+    getWorkExperienceDeclaration
+      .mockReset()
+      .mockResolvedValue({ hasNoWorkExperience: null, declaredAt: null });
+    updateWorkExperienceDeclaration.mockReset().mockResolvedValue({
+      success: true,
+      hasNoWorkExperience: true,
+      declaredAt: new Date().toISOString(),
+    });
   });
 
   it('renders ongoing role with active employment metadata', async () => {
@@ -181,7 +203,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     listWorkExperiences.mockResolvedValueOnce([]);
     renderWithQueryClient(<WorkExperienceSection />);
 
-    const addButton = (await screen.findAllByRole('button', { name: 'Add experience' })).at(
+    const addButton = (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(
       -1,
     ) as HTMLElement;
     fireEvent.click(addButton);
@@ -196,7 +218,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     listWorkExperiences.mockResolvedValueOnce([]);
     renderWithQueryClient(<WorkExperienceSection />);
 
-    const addButton = (await screen.findAllByRole('button', { name: 'Add experience' })).at(
+    const addButton = (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(
       -1,
     ) as HTMLElement;
     fireEvent.click(addButton);
@@ -209,7 +231,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
   it('shows proof document upload controls in the add experience modal', async () => {
     await openAddExperienceModal();
 
-    expect(screen.getByText('Proof documents *')).toBeTruthy();
+    expect(requiredLabelCount('Proof documents')).toBeGreaterThan(0);
     expect(screen.getByLabelText('Proof document')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Add file/i })).toBeTruthy();
   });
@@ -588,7 +610,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
 
     expect(await screen.findByText(/No work experience yet/i)).toBeTruthy();
     expect(
-      screen.getAllByRole('button', { name: 'Add experience' }).at(-1) as HTMLElement,
+      screen.getAllByRole('button', { name: /^Add experience$/i }).at(-1) as HTMLElement,
     ).toBeTruthy();
   });
 
@@ -646,6 +668,14 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
     createWorkExperience.mockReset();
     updateWorkExperience.mockReset().mockResolvedValue(mockOngoingExp);
     uploadWorkExperienceProofDocument.mockReset();
+    getWorkExperienceDeclaration
+      .mockReset()
+      .mockResolvedValue({ hasNoWorkExperience: null, declaredAt: null });
+    updateWorkExperienceDeclaration.mockReset().mockResolvedValue({
+      success: true,
+      hasNoWorkExperience: true,
+      declaredAt: new Date().toISOString(),
+    });
   });
 
   it('renders the Professional Domain field', async () => {
@@ -655,7 +685,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
   it('marks Professional Domain as required', async () => {
     await openAddExperienceModal();
-    expect(screen.getByText('Professional domain *')).toBeTruthy();
+    expect(requiredLabelCount('Professional domain')).toBeGreaterThan(0);
   });
 
   it('prevents save when domain is empty', async () => {
@@ -696,7 +726,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
   it('marks End Date as required when employment has ended', async () => {
     await openAddExperienceModal();
-    expect(screen.getByText('End date *')).toBeTruthy();
+    expect(requiredLabelCount('End date')).toBeGreaterThan(0);
   });
 
   it('prevents save for ended employment when End Date is missing', async () => {
@@ -722,7 +752,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container, {}, { isCurrent: true });
-    expect(screen.queryByText('End date *')).toBeNull();
+    expect(requiredLabelCount('End date')).toBe(0);
     expect(screen.getByText(/^End date$/i)).toBeTruthy();
     selectCatalogSkill('Git & Version Control');
 
@@ -810,5 +840,101 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
     expect(createWorkExperience).not.toHaveBeenCalled();
     expect(updateWorkExperience).not.toHaveBeenCalled();
+  });
+});
+
+describe('WorkExperienceSection declaration ("I don\'t have work experience")', () => {
+  beforeEach(() => {
+    listWorkExperiences.mockReset().mockResolvedValue([]);
+    createWorkExperience.mockReset();
+    updateWorkExperience.mockReset();
+    deleteWorkExperience.mockReset();
+    getWorkExperienceDeclaration.mockReset().mockResolvedValue({
+      hasNoWorkExperience: null,
+      declaredAt: null,
+    });
+    updateWorkExperienceDeclaration.mockReset().mockResolvedValue({
+      success: true,
+      hasNoWorkExperience: true,
+      declaredAt: new Date().toISOString(),
+    });
+  });
+
+  it('renders unanswered declaration empty state with "I don\'t have work experience" button', async () => {
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    expect(await screen.findByText(/No work experience yet/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /I don't have work experience/i })).toBeTruthy();
+  });
+
+  it('declares no work experience when the declaration button is clicked', async () => {
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    const declareButton = await screen.findByRole('button', {
+      name: /I don't have work experience/i,
+    });
+    fireEvent.click(declareButton);
+
+    await waitFor(() => {
+      expect(updateWorkExperienceDeclaration).toHaveBeenCalledWith({
+        hasNoWorkExperience: true,
+      });
+    });
+  });
+
+  it('renders confirmed state when student has declared no work experience', async () => {
+    getWorkExperienceDeclaration.mockResolvedValue({
+      hasNoWorkExperience: true,
+      declaredAt: '2026-10-07T00:00:00.000Z',
+    });
+
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    expect(await screen.findByText(/^No work experience$/i)).toBeTruthy();
+    expect(
+      screen.getByText(/You've indicated that you don't currently have any work experience/i),
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Change declaration/i })).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /Add experience/i }).length).toBeGreaterThan(0);
+  });
+
+  it('clears declaration back to unanswered when "Change declaration" is clicked', async () => {
+    getWorkExperienceDeclaration.mockResolvedValue({
+      hasNoWorkExperience: true,
+      declaredAt: '2026-10-07T00:00:00.000Z',
+    });
+    updateWorkExperienceDeclaration.mockResolvedValue({
+      success: true,
+      hasNoWorkExperience: null,
+      declaredAt: null,
+    });
+
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    const changeButton = await screen.findByRole('button', {
+      name: /Change declaration/i,
+    });
+    fireEvent.click(changeButton);
+
+    await waitFor(() => {
+      expect(updateWorkExperienceDeclaration).toHaveBeenCalledWith({
+        hasNoWorkExperience: null,
+      });
+    });
+  });
+
+  it('renders experience cards instead of empty/declaration state when experiences exist', async () => {
+    listWorkExperiences.mockResolvedValue([mockOngoingExp]);
+    getWorkExperienceDeclaration.mockResolvedValue({
+      hasNoWorkExperience: false,
+      declaredAt: null,
+    });
+
+    renderWithQueryClient(<WorkExperienceSection />);
+
+    expect(await screen.findByText('Acme Corp')).toBeTruthy();
+    expect(screen.queryByText(/No work experience yet/i)).toBeNull();
+    expect(screen.queryByText(/^No work experience$/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /I don't have work experience/i })).toBeNull();
   });
 });

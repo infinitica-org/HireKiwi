@@ -8,7 +8,7 @@ import {
 
 describe('Certificate QR Utilities', () => {
   const verificationUrl =
-    'https://verify.smart.com/cert/11111111-1111-4111-8111-111111111111?sig=abcdef0123456789';
+    'https://verify.hirekiwi.com/cert/11111111-1111-4111-8111-111111111111?sig=abcdef0123456789';
 
   it('11. QR contains the exact verification URL and renders valid SVG', async () => {
     const svg = await generateCertificateQrSvg(verificationUrl);

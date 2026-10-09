@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import {
   EMPLOYMENT_TYPES,
   PLACEMENT_CITY_OPTIONS,
@@ -52,7 +52,7 @@ import {
 } from './job-posting-fields';
 
 function errorMessage(caught: unknown, fallback: string): string {
-  if (isSmartApiError(caught) || caught instanceof Error) return caught.message;
+  if (isHireKiwiApiError(caught) || caught instanceof Error) return caught.message;
   return fallback;
 }
 

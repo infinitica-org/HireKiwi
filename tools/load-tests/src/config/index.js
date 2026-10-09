@@ -43,14 +43,26 @@ export const baseUrl = str('BASE_URL', urls.student);
 export const API_PREFIX = '/api/v1';
 
 export const credentials = {
-  username: str('TEST_USERNAME', 'student@smart.local'),
+  username: str('TEST_USERNAME', 'student@hirekiwi.local'),
   password: str('TEST_PASSWORD', 'ChangeMe!Dev'),
 };
 
 /** TPO account — seeded by apps/api-core/prisma/seed.ts. Used by the search scenario. */
 export const tpoCredentials = {
-  username: str('TEST_TPO_USERNAME', 'tpo@smart.local'),
+  username: str('TEST_TPO_USERNAME', 'tpo@hirekiwi.local'),
   password: str('TEST_TPO_PASSWORD', credentials.password),
+};
+
+/** Platform admin account — same seed, used by the dashboards scenario. */
+export const adminCredentials = {
+  username: str('TEST_ADMIN_USERNAME', 'admin@hirekiwi.local'),
+  password: str('TEST_ADMIN_PASSWORD', credentials.password),
+};
+
+/** Employer account — same seed, used by the dashboards and employer candidate-search scenarios. */
+export const companyCredentials = {
+  username: str('TEST_COMPANY_USERNAME', 'company@hirekiwi.local'),
+  password: str('TEST_COMPANY_PASSWORD', credentials.password),
 };
 
 export const testDataUsers = num('TEST_DATA_USERS', 200);

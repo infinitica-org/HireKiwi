@@ -1,18 +1,26 @@
 import { randomUUID } from 'node:crypto';
-import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ConnectSignalSourceRequestSchema,
   RawSignalEnvelopeSchema,
   REDIS_TTL_SECONDS,
   RefreshSignalsRequestSchema,
   SignalIngestedEventSchema,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   type ConnectableSignalSourceId,
   type ConnectSignalSourceRequest,
   type ConnectSignalSourceResponse,
   type ListSignalConnectionsResponse,
   type RefreshSignalsRequest,
   type RefreshSignalsResponse,
+  type SignalProfilePreview,
 } from '@hirekiwi/contracts';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { KafkaOutboxService } from '../../platform/kafka/kafka-outbox.service.js';
@@ -45,6 +53,22 @@ export class SignalIngestionService {
   async listConnections(userId: string): Promise<ListSignalConnectionsResponse> {
     const rows = await this.connections.list(userId);
     return { connections: rows.map((row) => this.connections.toSummary(row)) };
+  }
+
+  /** Check a username and return its public profile, without connecting anything. */
+  async lookupProfile(
+    sourceId: ConnectableSignalSourceId,
+    username: string,
+  ): Promise<SignalProfilePreview> {
+    const adapter = this.registry.get(sourceId);
+    if (!adapter.lookupProfile) {
+      throw new BadRequestException({
+        error: 'lookup_not_supported',
+        message: `${sourceId} profiles cannot be looked up before connecting.`,
+        statusCode: 400,
+      });
+    }
+    return adapter.lookupProfile(username);
   }
 
   async connect(
@@ -92,6 +116,60 @@ export class SignalIngestionService {
       fetchQueued,
       verificationStatus: 'UNVERIFIED',
     };
+  }
+
+  /**
+   * Upgrades (or creates) the GITHUB connection from a completed OAuth round
+   * trip — called by UsersController's `/onboarding/github/callback`, never
+   * directly by the frontend. `encryptedAccessToken` is already encrypted by
+   * the caller; this method never sees the plaintext token.
+   */
+  async connectGithubViaOauth(
+    userId: string,
+    identity: {
+      login: string;
+      name: string | null;
+      avatarUrl: string;
+      encryptedAccessToken: string;
+      scopes: readonly string[];
+    },
+  ): Promise<void> {
+    const existing = await this.connections.get(userId, 'GITHUB');
+    const now = new Date().toISOString();
+    const stored = await this.connections.upsert({
+      id: existing?.id ?? randomUUID(),
+      userId,
+      sourceId: 'GITHUB',
+      externalAccountId: identity.login,
+      consentScopes: ['github.oauth.repo'],
+      status: 'ACTIVE',
+      connectedAt: existing?.connectedAt ?? now,
+      metadata: {
+        ...(existing?.metadata ?? {}),
+        name: identity.name,
+        avatarUrl: identity.avatarUrl,
+        oauthConnected: true,
+        oauthScopes: [...identity.scopes],
+      },
+      encryptedAccessToken: identity.encryptedAccessToken,
+    });
+
+    await this.audit.record({
+      actorId: userId,
+      action: existing ? 'signal.connection.upgraded' : 'signal.connection.created',
+      resourceType: 'signal_connection',
+      resourceId: stored.id,
+      reasonCode: 'github_oauth',
+      metadata: { sourceId: 'GITHUB', externalAccountId: stored.externalAccountId },
+    });
+
+    try {
+      await this.ingest(userId, 'GITHUB');
+    } catch (error) {
+      this.logger.warn(
+        `Initial fetch after GitHub OAuth connect failed: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+    }
   }
 
   async selectGithubRepositories(
@@ -229,7 +307,7 @@ export class SignalIngestionService {
       const event = SignalIngestedEventSchema.parse({
         meta: {
           eventId: randomUUID(),
-          eventType: SMART_TOPICS.signalIngested,
+          eventType: HIREKIWI_TOPICS.signalIngested,
           version: 1 as const,
           occurredAt: fetchedAt,
           traceId: randomUUID(),
@@ -239,9 +317,9 @@ export class SignalIngestionService {
       });
 
       await this.outbox.enqueueEnvelope({
-        topic: SMART_TOPICS.signalIngested,
+        topic: HIREKIWI_TOPICS.signalIngested,
         partitionKey: userId,
-        eventType: SMART_TOPICS.signalIngested,
+        eventType: HIREKIWI_TOPICS.signalIngested,
         source: 'signal-ingestion',
         data: event.data,
       });

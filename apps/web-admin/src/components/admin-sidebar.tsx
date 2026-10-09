@@ -35,7 +35,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn, SidebarLegalLinks } from '@hirekiwi/ui';
-import smartLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/Smart-logo.png';
+import hirekiwiLogoImg from '@hirekiwi/ui/assets/images/Logos/WebP/HireKiwi-logo.png';
 
 const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005';
 
@@ -229,13 +229,13 @@ export function AdminSidebar({
         >
           <Link
             href="/admin"
-            aria-label="SMART Admin home"
-            title="SMART Admin"
+            aria-label="HireKiwi Admin home"
+            title="HireKiwi Admin"
             className="flex items-center gap-2.5"
           >
             <Image
-              src={smartLogoImg}
-              alt="SMART logo"
+              src={hirekiwiLogoImg}
+              alt="HireKiwi logo"
               width={28}
               height={28}
               priority

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, ErrorState, LoadingState, formatEventTime } from '@hirekiwi/ui';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { EVENTS_KEY, RegistrationButton } from './RegistrationButton';
 
@@ -17,7 +17,7 @@ export function EventDetailView({ eventId }: { eventId: string }) {
 
   if (query.isPending) return <LoadingState message="Loading event…" />;
   if (query.isError) {
-    const missing = query.error instanceof SmartApiError && query.error.statusCode === 404;
+    const missing = query.error instanceof HireKiwiApiError && query.error.statusCode === 404;
     return (
       <ErrorState
         title={missing ? 'Event not found' : 'Could not load this event'}

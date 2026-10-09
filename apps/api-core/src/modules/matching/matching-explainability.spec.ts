@@ -20,7 +20,7 @@ describe('matching-explainability', () => {
           {
             skillCodes: ['PYTHON_APPLICATION_BACKEND_DEVELOPMENT'],
             gaps: ['Missing CI pipeline', 'Limited test coverage'],
-            smartAssessmentJson: {
+            hirekiwiAssessmentJson: {
               appliedProficiencyCeiling: 'INTERMEDIATE',
               competencyObservations: [
                 {
@@ -48,7 +48,7 @@ describe('matching-explainability', () => {
         {
           skillCodes: ['JAVA_ENTERPRISE_APPLICATION_DEVELOPMENT'],
           gaps: ['No Dockerfile'],
-          smartAssessmentJson: null,
+          hirekiwiAssessmentJson: null,
         },
       ],
       new Set(['PYTHON_APPLICATION_BACKEND_DEVELOPMENT']),

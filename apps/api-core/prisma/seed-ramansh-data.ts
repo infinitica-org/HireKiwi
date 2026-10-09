@@ -10,7 +10,8 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/index.js';
 
 const DATABASE_URL =
-  process.env['DATABASE_URL'] ?? 'postgresql://smart:smart@127.0.0.1:5433/smart?schema=public';
+  process.env['DATABASE_URL'] ??
+  'postgresql://hirekiwi:hirekiwi@127.0.0.1:5433/hirekiwi?schema=public';
 
 async function seedRamansh(): Promise<void> {
   const prisma = new PrismaClient({
@@ -19,7 +20,7 @@ async function seedRamansh(): Promise<void> {
 
   console.log('🌱 Seeding data for first student...\n');
 
-  // 1. Find first student or use student@smart.local
+  // 1. Find first student or use student@hirekiwi.local
   let student = await prisma.user.findFirst({
     where: { role: 'STUDENT' },
   });

@@ -41,7 +41,7 @@ export interface Paginated<T> {
 }
 
 /**
- * Structured error body returned by every SMART API error. The frontend
+ * Structured error body returned by every HireKiwi API error. The frontend
  * switches on `error`, never on the human-readable `message`.
  */
 export const ApiErrorSchema = z.object({

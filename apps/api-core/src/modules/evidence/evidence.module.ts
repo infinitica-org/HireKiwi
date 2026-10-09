@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { Tier1IssuerRegistry } from '../candidate-certificates/verification/tier1-issuer-registry.js';
+import { CredentialVerifierClientAdapter } from '../candidate-certificates/verification/credential-verifier-client.js';
 import { Tier2PublicUrlVerifier } from '../candidate-certificates/verification/tier2-public-url-verifier.js';
 import { Tier3OcrVerifier } from '../candidate-certificates/verification/tier3-ocr-verifier.js';
 import { CredentialDedupService } from '../candidate-certificates/verification/credential-dedup.service.js';
@@ -37,6 +38,7 @@ import { SkillVerificationInferenceConsumer } from './skill-verification-inferen
     SkillLevelExplanationService,
     VerificationOrchestratorService,
     Tier1IssuerRegistry,
+    CredentialVerifierClientAdapter,
     Tier2PublicUrlVerifier,
     Tier3OcrVerifier,
     CredentialVerificationService,

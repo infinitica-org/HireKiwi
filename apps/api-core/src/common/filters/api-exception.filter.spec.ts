@@ -21,7 +21,7 @@ function mockHost(headers: Record<string, string> = {}, requestId = 'req-1') {
     url: '/api/v1/auth/login',
     routeOptions: { url: '/api/v1/auth/login' },
     headers,
-    smartLogContext: undefined as { correlationId: string } | undefined,
+    hirekiwiLogContext: undefined as { correlationId: string } | undefined,
   };
   return {
     sent,
@@ -40,7 +40,7 @@ describe('ApiExceptionFilter', () => {
     const filter = new ApiExceptionFilter();
     const minted = newCorrelationId();
     const { host, sent, request } = mockHost({ 'x-correlation-id': '"; DROP TABLE--' });
-    request.smartLogContext = { correlationId: minted };
+    request.hirekiwiLogContext = { correlationId: minted };
 
     runWithContext({ correlationId: minted, module: 'api-core' }, () => {
       filter.catch(
@@ -54,11 +54,11 @@ describe('ApiExceptionFilter', () => {
     expect((sent.body as { traceId: string }).traceId).not.toContain('DROP');
   });
 
-  it('falls back to smartLogContext when ALS is empty', () => {
+  it('falls back to hirekiwiLogContext when ALS is empty', () => {
     const filter = new ApiExceptionFilter();
     const stashed = newCorrelationId();
     const { host, sent, request } = mockHost({ 'x-correlation-id': 'not-a-uuid' });
-    request.smartLogContext = { correlationId: stashed };
+    request.hirekiwiLogContext = { correlationId: stashed };
 
     filter.catch(new UnauthorizedException({ error: 'unauthorized' }), host as never);
 

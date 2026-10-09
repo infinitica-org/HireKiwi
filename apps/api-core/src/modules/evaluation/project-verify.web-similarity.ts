@@ -78,7 +78,7 @@ async function githubHits(
   const response = await fetchImpl(url, {
     headers: {
       Accept: 'application/vnd.github+json',
-      'User-Agent': 'smart-evaluation',
+      'User-Agent': 'hirekiwi-evaluation',
     },
     signal: AbortSignal.timeout(FETCH_MS),
   });

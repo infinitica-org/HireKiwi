@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary & Architecture
 
-SMART's backend is implemented as a single deployable NestJS/Fastify application, `api-core`, organized as a **modular monolith**. The modules enumerated in this document (`apps/api-core/src/modules/*`) are logical boundaries enforced at the code level — each owns its controllers, services, and data-access patterns — rather than independently deployed microservices. All modules run in one process, are built and deployed together, and scale together as a single unit.
+HireKiwi's backend is implemented as a single deployable NestJS/Fastify application, `api-core`, organized as a **modular monolith**. The modules enumerated in this document (`apps/api-core/src/modules/*`) are logical boundaries enforced at the code level — each owns its controllers, services, and data-access patterns — rather than independently deployed microservices. All modules run in one process, are built and deployed together, and scale together as a single unit.
 
 This organization is intended to yield most of the benefits commonly associated with service decomposition while avoiding the operational overhead of a distributed system:
 
@@ -21,7 +21,7 @@ The one genuine exception to this topology is **`proctoring-cv`** (`apps/proctor
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────────┐
-│                          SMART BACKEND TOPOLOGY                                    │
+│                          HireKiwi BACKEND TOPOLOGY                                    │
 │                                                                                     │
 │  ┌───────────────────────── api-core (single NestJS/Fastify process) ───────────┐ │
 │  │                                                                                │ │
@@ -64,7 +64,7 @@ The following module boundaries account for a representative subset of `api-core
   - `POST /api/v1/auth/refresh` `[SYNC <100ms]` — Silent refresh of an expired access token.
   - `GET /api/v1/users/me` `[SYNC <50ms]` — Retrieve the active user profile and track assignments.
   - `PUT /api/v1/users/track` `[SYNC <100ms]` — Enroll in or change a specialization track.
-- **Kafka Topics Published:** `smart.user.created`, `smart.user.updated`
+- **Kafka Topics Published:** `hirekiwi.user.created`, `hirekiwi.user.updated`
 - **Key Implementation Concerns:** JWT access guard and HttpOnly refresh-token rotation; SAML 2.0 / OIDC institutional SSO integration; student profile endpoints and track-assignment logic.
 
 ---
@@ -83,7 +83,7 @@ The following module boundaries account for a representative subset of `api-core
   - `POST /api/v1/assessment/submit-l1` `[SYNC <30ms]` — Submit an answer draft (throttled at 10 req/min).
   - `POST /api/v1/assessment/complete` `[ASYNC BullMQ]` — Finalize the assessment attempt and enqueue it for evaluation.
 - **Queue:** BullMQ `bull:queue:assessment_force_submit` (delayed job, fires at attempt deadline)
-- **Kafka Topics Published:** `smart.assessment.started`, `smart.assessment.submitted`
+- **Kafka Topics Published:** `hirekiwi.assessment.started`, `hirekiwi.assessment.submitted`
 - **Key Implementation Concerns:** Redis-backed session manager (`session:assessment:{id}`); server-authoritative timer with `AssessmentForceSubmitProcessor` auto-submission on expiry; weighted L1 item-selection logic.
 
 ---
@@ -112,8 +112,8 @@ The following module boundaries account for a representative subset of `api-core
   - **Sprint 6 — Adversarial test coverage:** `ai-gateway-adversarial.spec.ts` covers failover circuit-breaker edge cases and prompt-injection resistance.
 - **Primary REST Endpoints:**
   - `POST /api/v1/eval/claude` `[ASYNC, SLA 2–5s]` — Internal endpoint for structured JSON LLM completions.
-- **Kafka Topics Consumed:** `smart.eval.requested`
-- **Kafka Topics Published:** `smart.eval.completed`
+- **Kafka Topics Consumed:** `hirekiwi.eval.requested`
+- **Kafka Topics Published:** `hirekiwi.eval.completed`
 - **Key Implementation Concerns:** Redis token-bucket rate limiter; circuit breaker that fails over to Gemini on HTTP 429/5xx; `pgvector` context retrieval for domain rubrics; adversarial prompt-injection hardening.
 
 ---
@@ -128,8 +128,8 @@ The following module boundaries account for a representative subset of `api-core
 - **Primary REST Endpoints:**
   - `POST /api/v1/assessment/evaluate-l3-l4` `[ASYNC BullMQ, SLA 2–6s]` — Request asynchronous spoken/BARS evaluation.
   - `GET /api/v1/evaluation/results/:attempt_id` `[SYNC <80ms]` — Retrieve an itemized evaluation score breakdown.
-- **Kafka Topics Consumed:** `smart.assessment.submitted`
-- **Kafka Topics Published:** `smart.eval.completed`
+- **Kafka Topics Consumed:** `hirekiwi.assessment.submitted`
+- **Kafka Topics Published:** `hirekiwi.eval.completed`
 - **Key Implementation Concerns:** BARS mode-consensus scoring against rubric anchors; Angoff standard-error calculation via `packages/scoring-engine`; inter-rater reliability monitoring (Cohen's Kappa, target κ ≥ 0.65).
 
 ---
@@ -141,14 +141,14 @@ The following module boundaries account for a representative subset of `api-core
   - Job description (JD) NLP parsing via Claude 5 Sonnet into structured threshold vectors.
   - **Sprint 6 — `JdFallbackExtractor`:** Heuristic offline skill extraction + 10-track threshold vector computation when AI gateway times out or fails (implements ADR-0005 ai-failover).
   - **Sprint 6 — `VectorCandidateMatcher`:** Cosine-similarity vector matching with strict privacy opt-out triple-gate (`discoverableToEmployers`, `isDeactivated`, `isHeld`) applied **before** scoring. Generates 5-domain `RadarCompetencyAxis` breakdown for employer visualization.
-  - TPO auto-shortlist generation, B2B API-key matching (`X-SMART-API-KEY`), and outbound webhooks (`smart.placement.matched`).
+  - TPO auto-shortlist generation, B2B API-key matching (`X-HireKiwi-API-KEY`), and outbound webhooks (`hirekiwi.placement.matched`).
 - **Primary REST Endpoints:**
   - `POST /api/v1/placement/ingest-jd` `[ASYNC, SLA 2–4s]` — Upload and parse a JD document into threshold vectors (with offline fallback).
   - `POST /api/v1/placement/match` `[ASYNC, SLA 1–3s]` — Generate vector-matched candidate shortlists (throttled at 30 req/min).
   - `GET /api/v1/tpo/shortlist` `[SYNC <150ms]` — Retrieve a filterable candidate shortlist for recruiters.
-- **Kafka Topics Consumed:** `smart.eval.completed`
-- **Kafka Topics Published:** `smart.placement.matched`
-- **Outbound Webhooks:** HMAC-SHA256-signed JSON payloads to employer endpoints on `smart.placement.matched`.
+- **Kafka Topics Consumed:** `hirekiwi.eval.completed`
+- **Kafka Topics Published:** `hirekiwi.placement.matched`
+- **Outbound Webhooks:** HMAC-SHA256-signed JSON payloads to employer endpoints on `hirekiwi.placement.matched`.
 - **Key Implementation Concerns:** JD NLP parser with deterministic offline fallback; cosine-similarity vector matching with privacy opt-out gate; B2B API-key handling and webhook dispatch.
 
 ---
@@ -167,9 +167,9 @@ The following module boundaries account for a representative subset of `api-core
   - `GET /api/v1/certificates/export-pdf` `[SYNC]` — Retrieve the PDF certificate artifact (pre-signed MinIO URL delivery).
 - **Queue:** BullMQ `bull:queue:certificate_pdf_generation`
 - **Schema:** `apps/api-core/prisma/migrations/20260929120000_certificate_cryptographic_fields/` — adds `signatureHash`, `canonicalPayload`, `qrUrl` fields.
-- **Kafka Topics Consumed:** `smart.eval.completed`
-- **Kafka Topics Published:** `smart.certificate.issued`
-- **Outbound Webhooks:** HMAC-SHA256-signed JSON payloads to institutional systems on `smart.certificate.issued`.
+- **Kafka Topics Consumed:** `hirekiwi.eval.completed`
+- **Kafka Topics Published:** `hirekiwi.certificate.issued`
+- **Outbound Webhooks:** HMAC-SHA256-signed JSON payloads to institutional systems on `hirekiwi.certificate.issued`.
 - **Key Implementation Concerns:** HMAC-SHA256 canonical payload and signature; deterministic QR encoding; async PDF via BullMQ; public verification view with tamper detection and tier trail; `CERTIFICATE_HMAC_SECRET` env var required.
 
 #### Public Verification App (`apps/web-verify`)
@@ -189,9 +189,9 @@ The following module boundaries account for a representative subset of `api-core
 - **Responsibilities:**
   - In-process Redis sliding-window and token-bucket rate limiting (Super Admin 500/min, TPO 200/min, Student 60/min, Public 20/min, B2B API keys 500/hour).
   - Standard HTTP rate-limit header injection (`X-RateLimit-*`, `Retry-After`, HTTP 429).
-  - Role- and API-key-based limit resolution (`X-SMART-API-KEY`).
+  - Role- and API-key-based limit resolution (`X-HireKiwi-API-KEY`).
 - **Scope:** Applied as guards/middleware across incoming requests within `api-core`. It does not perform edge-level SSL termination or DDoS mitigation; those are handled at the infrastructure layer ahead of the application (see `REPOSITORY_STRUCTURE.md`) and are outside this module's boundary.
-- **Kafka Topics Published:** `smart.rate_limit.exceeded`
+- **Kafka Topics Published:** `hirekiwi.rate_limit.exceeded`
 - **Key Implementation Concerns:** Redis sliding-window and token-bucket Lua scripts; role-based and API-key-based limit resolution; coordination with edge/infrastructure rate-limiting rules.
 
 ---
@@ -223,5 +223,5 @@ Per-module and per-engineer ownership, review responsibilities, delivery-schedul
 
 ---
 
-_This document defines the module boundaries, authentication and SLA model, Kafka interfaces, and REST surface of the SMART `api-core` application, together with the one genuinely separate service in the backend topology, `proctoring-cv`. It carries no engineer- or sprint-level assignment information; see `TEAM.md` and `docs/delivery/AGILE_PLAN.md` for those._
+_This document defines the module boundaries, authentication and SLA model, Kafka interfaces, and REST surface of the HireKiwi `api-core` application, together with the one genuinely separate service in the backend topology, `proctoring-cv`. It carries no engineer- or sprint-level assignment information; see `TEAM.md` and `docs/delivery/AGILE_PLAN.md` for those._
 _Last updated: 2026-09-29, Sprint 6 (PRs #377, #378, #379, #380 merged into `dev`)._

@@ -218,11 +218,11 @@ describe('rendered grading prompts', () => {
       projectSummary: 'Problem: buses\nApproach: websockets',
       stack: 'TypeScript',
       qlixDigest: 'similarityIndex=12',
-      smartAssessmentJson: '{"qualityScore":72}',
+      hirekiwiAssessmentJson: '{"qualityScore":72}',
       skillsDigest: '{"totals":{"analyzedTokens":1200}}',
     });
     expect(rendered.user).toContain('QLIX_DIGEST:');
-    expect(rendered.user).toContain('SMART_ASSESSMENT:');
+    expect(rendered.user).toContain('HIREKIWI_ASSESSMENT:');
   });
 
   it('registers project-defense examiner and grader prompts', () => {

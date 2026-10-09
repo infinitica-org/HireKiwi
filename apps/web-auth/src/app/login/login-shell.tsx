@@ -1,17 +1,20 @@
 import type { ReactNode } from 'react';
+import { AuthSplitShell } from '../../components/auth-split-shell';
 
 const authFontClass =
   'font-[family-name:var(--auth-font-sans,-apple-system,BlinkMacSystemFont,"Segoe_UI",sans-serif)]';
 
 export function LoginShell({ children }: { children: ReactNode }) {
   return (
-    <div
-      className={`flex min-h-dvh w-full items-center justify-center bg-white p-4 text-[#172033] ${authFontClass}`}
-    >
-      <div className="relative flex min-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col items-center justify-center px-2 py-6">
-        {children}
+    <AuthSplitShell>
+      <div
+        className={`flex min-h-dvh w-full flex-1 items-center justify-center p-4 text-[#172033] ${authFontClass}`}
+      >
+        <div className="relative flex min-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col items-center justify-center px-2 py-6">
+          {children}
+        </div>
       </div>
-    </div>
+    </AuthSplitShell>
   );
 }
 

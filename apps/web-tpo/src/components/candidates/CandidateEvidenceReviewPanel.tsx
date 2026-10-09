@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type {
   CandidateEvidenceProvenanceResponse,
   EvidenceProvenanceItemDto,
@@ -39,11 +39,13 @@ export function CandidateEvidenceReviewPanel({ studentId }: { studentId: string 
     setLoading(true);
     setLoadError(null);
     try {
-      const result = await api.placement.getCandidateEvidenceProvenance(studentId);
+      const result = await api.candidateInspection.getCandidateEvidenceProvenance(studentId);
       setProvenance(result);
       setSelectedEvidenceId((current) => current ?? result.items[0]?.evidenceId ?? null);
     } catch (caught: unknown) {
-      setLoadError(isSmartApiError(caught) ? caught.message : 'Could not load candidate evidence.');
+      setLoadError(
+        isHireKiwiApiError(caught) ? caught.message : 'Could not load candidate evidence.',
+      );
       setProvenance(null);
     } finally {
       setLoading(false);
@@ -74,7 +76,7 @@ export function CandidateEvidenceReviewPanel({ studentId }: { studentId: string 
             ? { decision, reason: reason.trim() }
             : { decision, reason: reason.trim() || undefined };
 
-      const response = await api.placement.reviewCandidateEvidence(
+      const response = await api.candidateInspection.reviewCandidateEvidence(
         studentId,
         selectedEvidenceId,
         body,
@@ -88,7 +90,7 @@ export function CandidateEvidenceReviewPanel({ studentId }: { studentId: string 
     } catch (caught: unknown) {
       setUiState('failure');
       setSubmitError(
-        isSmartApiError(caught)
+        isHireKiwiApiError(caught)
           ? caught.message
           : caught instanceof Error
             ? caught.message

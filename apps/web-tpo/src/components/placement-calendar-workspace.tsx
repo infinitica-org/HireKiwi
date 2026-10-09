@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { JobOpeningDto } from '@hirekiwi/contracts';
 import { TpoBentoPageHeader } from './tpo-bento/TpoBentoPageHeader';
 import { openingsApi } from '../lib/api';
@@ -64,7 +64,7 @@ export function PlacementCalendarWorkspace() {
       })
       .catch((err: unknown) => {
         if (!active) return;
-        setError(isSmartApiError(err) ? err.message : 'Failed to load placement drives.');
+        setError(isHireKiwiApiError(err) ? err.message : 'Failed to load placement drives.');
       })
       .finally(() => {
         if (active) setLoading(false);

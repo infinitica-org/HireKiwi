@@ -231,7 +231,7 @@ export class InstitutionsAdminController {
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     return reply
       .header('Content-Type', format === 'csv' ? 'text/csv; charset=utf-8' : 'application/x-ndjson')
-      .header('Content-Disposition', `attachment; filename="smart-audit-log-${stamp}.${format}"`)
+      .header('Content-Disposition', `attachment; filename="hirekiwi-audit-log-${stamp}.${format}"`)
       .header('Cache-Control', 'no-store')
       .send(Readable.from(lines));
   }

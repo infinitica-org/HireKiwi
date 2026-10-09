@@ -14,7 +14,7 @@
  * production (`failOpenOnRedisError`) rather than 500ing every request, and
  * the item-bank cache-aside falls through to Postgres on a Redis error. That
  * fallback is exactly the stampede risk this test measures: watch Postgres
- * CPU/connections (smart-postgres.json) during this run — a healthy fallback
+ * CPU/connections (hirekiwi-postgres.json) during this run — a healthy fallback
  * means slower responses, not a saturated database.
  */
 import { sleep } from 'k6';

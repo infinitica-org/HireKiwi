@@ -25,7 +25,7 @@ export const HTTP_AUTO_LOG_IGNORE_PATHS: readonly string[] = [
 export type BuildPinoHttpOptionsInput = CreateLoggerOptions;
 
 type RequestWithStashedContext = IncomingMessage & {
-  smartLogContext?: LoggerContext;
+  hirekiwiLogContext?: LoggerContext;
 };
 
 /**
@@ -40,7 +40,7 @@ export function buildPinoHttpOptions(options: BuildPinoHttpOptionsInput): Record
   const pinoHttp: Record<string, unknown> = {
     ...base,
     customProps: (req: RequestWithStashedContext, _res: ServerResponse) => {
-      const context = getContext() ?? req.smartLogContext;
+      const context = getContext() ?? req.hirekiwiLogContext;
       return context ? { ...context } : {};
     },
     serializers: {

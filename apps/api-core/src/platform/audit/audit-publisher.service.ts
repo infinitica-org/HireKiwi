@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { securityEventsTotal } from '@hirekiwi/observability';
-import { AuditRecordedDataSchema, SMART_TOPICS } from '@hirekiwi/contracts';
+import { AuditRecordedDataSchema, HIREKIWI_TOPICS } from '@hirekiwi/contracts';
 import { KafkaOutboxService } from '../kafka/kafka-outbox.service.js';
 
 export interface AuditRecordParams {
@@ -13,7 +13,7 @@ export interface AuditRecordParams {
   readonly metadata?: Record<string, unknown>;
 }
 
-/** S6-VV-126: audit actions that also feed `smart_security_events_total` (and the security alerts). */
+/** S6-VV-126: audit actions that also feed `hirekiwi_security_events_total` (and the security alerts). */
 export const SECURITY_EVENT_ACTIONS: ReadonlySet<string> = new Set([
   'auth.login_failed',
   'auth.account_locked',
@@ -61,9 +61,9 @@ export class AuditPublisherService {
     });
 
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.auditRecorded,
+      topic: HIREKIWI_TOPICS.auditRecorded,
       partitionKey: params.resourceId ?? params.actorId ?? randomUUID(),
-      eventType: SMART_TOPICS.auditRecorded,
+      eventType: HIREKIWI_TOPICS.auditRecorded,
       source: 'audit',
       data,
     });

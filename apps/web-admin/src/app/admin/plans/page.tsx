@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type {
   FeatureFlagDto,
   FeatureFlagOverrideDto,
@@ -25,7 +25,7 @@ import {
 import { api } from '@/lib/api';
 
 function formatApiError(err: unknown, fallback: string): string {
-  return isSmartApiError(err) ? err.message : fallback;
+  return isHireKiwiApiError(err) ? err.message : fallback;
 }
 
 /** Render a plan's price in a human-readable format. */

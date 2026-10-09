@@ -4,7 +4,7 @@ import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 /**
- * SMART base ESLint config — applies to every workspace.
+ * HireKiwi base ESLint config — applies to every workspace.
  *
  * The rules below are not stylistic (Prettier owns style). They encode the
  * engineering non-negotiables from docs/delivery/DEFINITION_OF_DONE.md:

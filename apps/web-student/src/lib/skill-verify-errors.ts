@@ -1,4 +1,4 @@
-import { isSmartApiError, SmartNetworkError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, HireKiwiNetworkError } from '@hirekiwi/api-client';
 import type { SkillVerifySessionDto } from '@hirekiwi/contracts';
 
 export function isSkillVerifyAnswered(
@@ -80,11 +80,11 @@ export function skillVerifyErrorFromUnknown(
   error: unknown,
   context: 'prepare' | 'generate' | 'save' | 'submit' = 'prepare',
 ): SkillVerifyError {
-  if (error instanceof SmartNetworkError) {
+  if (error instanceof HireKiwiNetworkError) {
     return NETWORK_ERROR;
   }
 
-  if (isSmartApiError(error)) {
+  if (isHireKiwiApiError(error)) {
     if (error.requiresLogin) {
       return {
         kind: 'login_required',

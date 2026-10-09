@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { Target, Sparkles, FileCheck, Eye } from 'lucide-react';
 import type { DashboardActivityKind } from '@hirekiwi/contracts';
 import { CompleteProfileCard } from '@/components/dashboard/CompleteProfileCard';
 import { OpportunityFeed } from '@/components/dashboard/OpportunityFeed';
@@ -48,40 +46,6 @@ export default function DashboardPage() {
     [summary],
   );
 
-  const profileViews = summary?.profileViews;
-  const kpis = [
-    {
-      label: 'Top matches',
-      value: summary?.topMatches.length ?? 0,
-      subtext: 'Skills-based fit',
-      icon: Target,
-      href: '/student/matches',
-    },
-    {
-      label: 'New opportunities',
-      value: summary?.opportunities.total ?? 0,
-      subtext: 'Open at your institution',
-      icon: Sparkles,
-      href: '/student/opportunities',
-    },
-    {
-      label: 'Active applications',
-      value: summary?.activeApplications.total ?? 0,
-      subtext: 'In recruitment pipeline',
-      icon: FileCheck,
-      href: '/student/applications',
-    },
-    {
-      label: 'Employer profile views',
-      value: profileViews?.visible ? (profileViews.employerViews ?? 0) : '—',
-      subtext: profileViews?.visible
-        ? `Last ${profileViews.windowDays} days`
-        : 'Hidden. Turn on in Settings',
-      icon: Eye,
-      href: profileViews?.visible ? '/student/public-profile' : '/student/settings',
-    },
-  ];
-
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6 pt-2 pb-12 font-sans select-none">
       <div>
@@ -89,7 +53,7 @@ export default function DashboardPage() {
           {userLoading || !firstName ? greeting : `${greeting}, ${firstName}`}
         </h1>
         <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-          Here’s what’s new on your SMART profile today.
+          Here’s what’s new on your HireKiwi profile today.
         </p>
       </div>
 
@@ -110,36 +74,6 @@ export default function DashboardPage() {
           </button>
         </div>
       ) : null}
-
-      {/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((kpi) => {
-          const Icon = kpi.icon;
-          return (
-            <Link
-              key={kpi.label}
-              href={kpi.href}
-              className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 transition-colors duration-200 hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#161616] dark:hover:border-zinc-700"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
-                  {kpi.label}
-                </p>
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-800 transition-colors group-hover:bg-zinc-900 group-hover:text-white dark:bg-zinc-800 dark:text-zinc-200 dark:group-hover:bg-white dark:group-hover:text-zinc-950">
-                  <Icon className="size-5 stroke-[1.75]" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <p className="font-heading text-3xl font-extrabold tracking-tight text-zinc-950 sm:text-4xl dark:text-white">
-                  {kpi.value}
-                </p>
-                <p className="mt-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                  {kpi.subtext}
-                </p>
-              </div>
-            </Link>
-          );
-        })}
-      </div> */}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="min-w-0">

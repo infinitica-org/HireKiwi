@@ -38,7 +38,7 @@ export function ProfilePublicLinkCard() {
   const shareLink = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'My SMART verified profile', url: effectiveUrl });
+        await navigator.share({ title: 'My HireKiwi verified profile', url: effectiveUrl });
         return;
       } catch {
         // dismissed

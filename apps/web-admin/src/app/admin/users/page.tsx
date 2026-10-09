@@ -12,7 +12,7 @@ import type {
   SkillLibraryResponse,
   SkillProficiency,
 } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { Search, Users } from 'lucide-react';
 import { Button } from '@hirekiwi/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@hirekiwi/ui/card';
@@ -55,10 +55,10 @@ const VERIFICATION_STATUSES: SkillClaimStatus[] = [
 ];
 
 function formatApiError(error: unknown, fallback: string): string {
-  if (isSmartApiError(error) && error.details.length > 0) {
+  if (isHireKiwiApiError(error) && error.details.length > 0) {
     return error.details.map((detail) => `${detail.path}: ${detail.message}`).join(' ');
   }
-  if (isSmartApiError(error)) return error.message;
+  if (isHireKiwiApiError(error)) return error.message;
   return fallback;
 }
 
@@ -76,6 +76,7 @@ export default function Page() {
   const [viewReason, setViewReason] = useState('');
   const [profile, setProfile] = useState<CandidateBriefDto | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mfaMessage, setMfaMessage] = useState<string | null>(null);
 
   useEffect(() => {
     api.onboarding
@@ -139,6 +140,7 @@ export default function Page() {
         description="Search by name/email, institution, skill, proficiency, or verification status. Opening a profile requires a reason code and is audit-logged."
       />
       {error ? <InlineAlert tone="danger" title={error} /> : null}
+      {mfaMessage ? <InlineAlert title={mfaMessage} /> : null}
       <Card>
         <CardHeader>
           <CardTitle>Search</CardTitle>
@@ -315,12 +317,52 @@ export default function Page() {
                               }),
                             );
                           } catch (err) {
-                            setError(isSmartApiError(err) ? err.message : 'Profile view failed.');
+                            setError(
+                              isHireKiwiApiError(err) ? err.message : 'Profile view failed.',
+                            );
                           }
                         })();
                       }}
                     >
                       View
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 border-zinc-200 bg-white px-2.5 text-[11px] font-semibold text-zinc-900 hover:bg-zinc-50 hover:border-zinc-300 shadow-2xs"
+                      onClick={() => {
+                        if (reason.trim().length < 8) {
+                          setError('Enter a reason of at least 8 characters.');
+                          return;
+                        }
+                        if (
+                          !window.confirm(
+                            `Force-disable two-factor authentication for ${hit.fullName}? Only do this after verifying their identity through another channel.`,
+                          )
+                        ) {
+                          return;
+                        }
+                        void (async () => {
+                          try {
+                            const { wasEnabled } = await api.onboarding.adminResetMfa(hit.userId, {
+                              reason: reason.trim(),
+                            });
+                            setError(null);
+                            setMfaMessage(
+                              wasEnabled
+                                ? `${hit.fullName}'s two-factor authentication has been reset.`
+                                : `${hit.fullName} didn't have two-factor authentication enabled.`,
+                            );
+                          } catch (err) {
+                            setError(
+                              isHireKiwiApiError(err) ? err.message : 'Could not reset MFA.',
+                            );
+                          }
+                        })();
+                      }}
+                    >
+                      Reset MFA
                     </Button>
                     <Button
                       type="button"
@@ -345,7 +387,7 @@ export default function Page() {
                             }
                             await refresh();
                           } catch (err) {
-                            setError(isSmartApiError(err) ? err.message : 'Hold update failed.');
+                            setError(isHireKiwiApiError(err) ? err.message : 'Hold update failed.');
                           }
                         })();
                       }}

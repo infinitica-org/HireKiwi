@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   COMPANY_VISIBLE_WHERE,
   acceptingOpeningWhere,
+  studentScopeWhere,
   campusApprovedWhere,
   companyVisibleWhere,
   isAcceptingApplications,
@@ -14,11 +15,20 @@ import {
 const today = new Date('2026-09-25T00:00:00Z');
 
 describe('job eligibility (shared by Jobs page and dashboard top matches)', () => {
-  it('only lists open, unexpired jobs of the institution from a visible company', () => {
+  it('lists open, unexpired jobs: company jobs for every university, own jobs for the institution', () => {
     const where = acceptingOpeningWhere('inst-1', today);
-    expect(where).toMatchObject({ institutionId: 'inst-1', status: 'OPEN' });
+    expect(where).toMatchObject({ status: 'OPEN' });
+    // The institution is not a top-level filter any more: a company job reaches every student.
+    expect(where).not.toHaveProperty('institutionId');
     expect(JSON.stringify(where)).toContain('"gte":"2026-09-25');
-    expect(where.AND).toContainEqual(companyVisibleWhere('inst-1'));
+    expect(where.AND).toContainEqual(studentScopeWhere('inst-1'));
+  });
+
+  it('scopes a university job to its own students and a company job to every student', () => {
+    const scope = studentScopeWhere('inst-1');
+    expect(scope.OR).toContainEqual({ companyId: null, institutionId: 'inst-1' });
+    expect(JSON.stringify(scope)).toContain('APPROVED');
+    expect(JSON.stringify(scope)).not.toContain('campusAccess');
   });
 
   it('requires an ACTIVE campus access row for the job institution (Th6-446), keeping own jobs visible', () => {

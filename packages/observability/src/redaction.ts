@@ -1,7 +1,7 @@
 /**
  * PII and secret redaction.
  *
- * SMART logs are read by six engineers, shipped to Loki, and retained. They must
+ * HireKiwi logs are read by six engineers, shipped to Loki, and retained. They must
  * not contain a candidate's answers, a JWT, or an API key. Redaction is
  * centralised here rather than left to each logger call, because "remember to
  * redact" fails exactly once and then it is in the log store forever.

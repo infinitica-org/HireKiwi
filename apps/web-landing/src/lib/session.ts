@@ -30,16 +30,16 @@ export function getClientSession(): SessionInfo {
   }
 
   try {
-    // Check localStorage or cookie for smart_access_token or access_token
+    // Check localStorage or cookie for hirekiwi_access_token or access_token
     let token: string | null = null;
     try {
-      token = localStorage.getItem('smart_access_token') || localStorage.getItem('access_token');
+      token = localStorage.getItem('hirekiwi_access_token') || localStorage.getItem('access_token');
     } catch {
       // Storage restricted
     }
 
     if (!token && typeof document !== 'undefined') {
-      const match = document.cookie.match(/(?:^|; )smart_access_token=([^;]*)/);
+      const match = document.cookie.match(/(?:^|; )hirekiwi_access_token=([^;]*)/);
       if (match && match[1]) {
         token = decodeURIComponent(match[1]);
       }

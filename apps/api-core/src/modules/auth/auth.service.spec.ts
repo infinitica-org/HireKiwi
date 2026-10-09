@@ -34,6 +34,42 @@ function userRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+describe('AuthService identify', () => {
+  it('reports exists: true for a registered email, case-insensitively', async () => {
+    const findUnique = vi.fn().mockResolvedValue({ id: randomUUID() });
+    const prisma = { user: { findUnique } };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn() } as never,
+      { getSignedDownloadUrl: vi.fn() } as never,
+      mockAuditPublisher() as never,
+    );
+
+    const result = await auth.identify('Student@Example.com');
+
+    expect(result).toEqual({ exists: true });
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { email: 'student@example.com' },
+      select: { id: true },
+    });
+  });
+
+  it('reports exists: false for an unregistered email', async () => {
+    const findUnique = vi.fn().mockResolvedValue(null);
+    const prisma = { user: { findUnique } };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn() } as never,
+      { getSignedDownloadUrl: vi.fn() } as never,
+      mockAuditPublisher() as never,
+    );
+
+    const result = await auth.identify('nobody@example.com');
+
+    expect(result).toEqual({ exists: false });
+  });
+});
+
 describe('AuthService refresh rotation', () => {
   it('issues a session with a hashed refresh token', async () => {
     const created: unknown[] = [];
@@ -105,7 +141,7 @@ describe('AuthService refresh rotation', () => {
       storage as never,
       mockAuditPublisher() as never,
     );
-    const request = { cookies: { smart_refresh: raw } };
+    const request = { cookies: { hirekiwi_refresh: raw } };
     const reply = { setCookie: vi.fn(), clearCookie: vi.fn() };
 
     const result = await auth.refresh(request as never, reply as never);
@@ -141,7 +177,7 @@ describe('AuthService refresh rotation', () => {
     const reply = { setCookie: vi.fn(), clearCookie: vi.fn() };
 
     await expect(
-      auth.refresh({ cookies: { smart_refresh: raw } } as never, reply as never),
+      auth.refresh({ cookies: { hirekiwi_refresh: raw } } as never, reply as never),
     ).rejects.toBeInstanceOf(UnauthorizedException);
     expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
       where: { familyId, revokedAt: null },
@@ -178,7 +214,7 @@ describe('AuthService refresh rotation', () => {
 
     await expect(
       auth.refresh(
-        { cookies: { smart_refresh: raw } } as never,
+        { cookies: { hirekiwi_refresh: raw } } as never,
         { setCookie: vi.fn(), clearCookie: vi.fn() } as never,
       ),
     ).rejects.toBeInstanceOf(UnauthorizedException);
@@ -213,7 +249,7 @@ describe('AuthService refresh rotation', () => {
       {
         response: {
           error: 'institution_held',
-          message: 'This institution is on hold. You cannot use SMART until it is released.',
+          message: 'This institution is on hold. You cannot use HireKiwi until it is released.',
         },
       },
     );
@@ -334,6 +370,125 @@ describe('AuthService.login lockout (S6-VV-92)', () => {
       where: { id: user.id },
       data: { failedLoginAttempts: 0, loginLockedUntil: null },
     });
+  });
+});
+
+describe('AuthService.login MFA gating (S8-VV-P0)', () => {
+  it('returns an MFA challenge instead of a session when mfaEnabled is true', async () => {
+    const user = userRow({
+      passwordHash: await hashPassword('correct-password'),
+      mfaEnabled: true,
+    });
+    const refreshTokenCreate = vi.fn();
+    const prisma = {
+      user: { findUnique: vi.fn(async () => user), update: vi.fn() },
+      refreshToken: { create: refreshTokenCreate },
+    };
+    const mfa = {
+      createChallenge: vi.fn(async () => ({
+        mfaRequired: true,
+        mfaToken: 't',
+        expiresInSeconds: 300,
+      })),
+    };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn() } as never,
+      { getSignedDownloadUrl: vi.fn() } as never,
+      mockAuditPublisher() as never,
+      mfa as never,
+    );
+
+    const result = await auth.login('student@example.com', 'correct-password', {} as never);
+
+    expect(result).toEqual({ mfaRequired: true, mfaToken: 't', expiresInSeconds: 300 });
+    expect(mfa.createChallenge).toHaveBeenCalledWith(user.id);
+    expect(refreshTokenCreate).not.toHaveBeenCalled(); // no session minted yet
+  });
+
+  it('skips the MFA challenge and issues a session when mfaEnabled is false', async () => {
+    const user = userRow({
+      passwordHash: await hashPassword('correct-password'),
+      mfaEnabled: false,
+    });
+    const prisma = {
+      user: { findUnique: vi.fn(async () => user), update: vi.fn() },
+      refreshToken: { create: vi.fn(async ({ data }: { data: unknown }) => data) },
+    };
+    const mfa = { createChallenge: vi.fn() };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn(async () => 'access.jwt') } as never,
+      { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) } as never,
+      mockAuditPublisher() as never,
+      mfa as never,
+    );
+
+    const result = await auth.login('student@example.com', 'correct-password', {
+      setCookie: vi.fn(),
+    } as never);
+
+    expect(mfa.createChallenge).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ tokenType: 'Bearer' });
+  });
+});
+
+describe('AuthService.completeMfaChallenge (S8-VV-P0)', () => {
+  function service(user: unknown, mfaOverrides: Partial<Record<string, unknown>> = {}) {
+    const prisma = {
+      user: { findUnique: vi.fn(async () => user) },
+      refreshToken: { create: vi.fn(async ({ data }: { data: unknown }) => data) },
+    };
+    const mfa = {
+      resolveChallenge: vi.fn(async () => (user as { id: string }).id),
+      verifyFactorAndConsume: vi.fn(async () => true),
+      ...mfaOverrides,
+    };
+    const auditPublisher = mockAuditPublisher();
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn(async () => 'access.jwt') } as never,
+      { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) } as never,
+      auditPublisher as never,
+      mfa as never,
+    );
+    return { auth, mfa, auditPublisher };
+  }
+
+  it('issues a real session once the second factor checks out', async () => {
+    const user = userRow({ mfaEnabled: true });
+    const { auth, auditPublisher } = service(user);
+
+    const result = await auth.completeMfaChallenge('mfa-token', '123456', {
+      setCookie: vi.fn(),
+    } as never);
+
+    expect(result).toMatchObject({ tokenType: 'Bearer' });
+    expect(auditPublisher.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'auth.mfa_challenge_verified' }),
+    );
+  });
+
+  it('rejects an incorrect second factor without issuing a session', async () => {
+    const user = userRow({ mfaEnabled: true });
+    const { auth, auditPublisher } = service(user, {
+      verifyFactorAndConsume: vi.fn(async () => false),
+    });
+
+    await expect(
+      auth.completeMfaChallenge('mfa-token', '000000', {} as never),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(auditPublisher.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'auth.mfa_challenge_failed' }),
+    );
+  });
+
+  it('rejects when the account behind the challenge token no longer exists', async () => {
+    const { auth } = service(null, { resolveChallenge: vi.fn(async () => randomUUID()) });
+
+    await expect(
+      auth.completeMfaChallenge('mfa-token', '123456', {} as never),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });
 
@@ -474,6 +629,68 @@ describe('AuthService.register', () => {
         }),
       }),
     );
+  });
+
+  it('auto-matches an institution from the email domain when institutionId is omitted', async () => {
+    const institutionId = randomUUID();
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => null),
+        create: vi.fn(async ({ data }: { data: Record<string, unknown> }) =>
+          userRow({ ...data, id: randomUUID() }),
+        ),
+      },
+      institution: {
+        findMany: vi.fn(async () => [
+          { id: institutionId, domain: 'psgtech.ac.in', deactivatedAt: null, heldAt: null },
+        ]),
+      },
+      refreshToken: { create: vi.fn(async ({ data }: { data: unknown }) => data) },
+    };
+    const storage = { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn(async () => 'access.jwt') } as never,
+      storage as never,
+      mockAuditPublisher() as never,
+    );
+
+    const user = await auth.register({
+      email: 'student@psgtech.ac.in',
+      password: 'password1',
+      fullName: 'Auto Matched',
+    } as never);
+
+    expect(user.institutionId).toBe(institutionId);
+  });
+
+  it('allows a personal email with no institutionId — registers with institutionId: null', async () => {
+    const prisma = {
+      user: {
+        findUnique: vi.fn(async () => null),
+        create: vi.fn(async ({ data }: { data: Record<string, unknown> }) =>
+          userRow({ ...data, id: randomUUID() }),
+        ),
+      },
+      institution: { findMany: vi.fn(async () => []) },
+      refreshToken: { create: vi.fn(async ({ data }: { data: unknown }) => data) },
+    };
+    const storage = { getSignedDownloadUrl: vi.fn().mockResolvedValue(null) };
+    const auth = new AuthService(
+      prisma as never,
+      { signAsync: vi.fn(async () => 'access.jwt') } as never,
+      storage as never,
+      mockAuditPublisher() as never,
+    );
+
+    const user = await auth.register({
+      email: 'jane@gmail.com',
+      password: 'password1',
+      fullName: 'Jane Personal',
+    } as never);
+
+    expect(user.email).toBe('jane@gmail.com');
+    expect(user.institutionId).toBeNull();
   });
 
   it('rejects a duplicate email with 409', async () => {
@@ -760,7 +977,7 @@ describe('AuthService email verification gate (#156)', () => {
     const reply = { setCookie: vi.fn(), clearCookie: vi.fn() };
 
     await expect(
-      auth.refresh({ cookies: { smart_refresh: raw } } as never, reply as never),
+      auth.refresh({ cookies: { hirekiwi_refresh: raw } } as never, reply as never),
     ).rejects.toMatchObject({ response: expect.objectContaining({ error: 'email_not_verified' }) });
     expect(reply.clearCookie).toHaveBeenCalled();
     expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -801,5 +1018,66 @@ describe('company portal account status (S6-VV-139)', () => {
     );
 
     expect(user.sessionHold).toMatchObject({ code: 'company_held' });
+  });
+});
+
+describe('AuthService session revocation marker (Th6-614)', () => {
+  function build(redis: { setex: ReturnType<typeof vi.fn> } | undefined) {
+    const familyId = randomUUID();
+    const userId = randomUUID();
+    const raw = 'live-refresh-token';
+    const existing = { id: randomUUID(), familyId, userId, tokenHash: hashRefreshToken(raw) };
+    const prisma = {
+      refreshToken: {
+        findUnique: vi.fn(async () => existing),
+        updateMany: vi.fn(async () => ({ count: 1 })),
+        findMany: vi.fn(async () => [{ familyId }]),
+      },
+    };
+    const auth = new AuthService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      mockAuditPublisher() as never,
+      {} as never,
+      redis as never,
+    );
+    return { auth, prisma, familyId, userId, raw };
+  }
+
+  it('logout revokes the family AND marks it so its access tokens stop working', async () => {
+    const redis = { setex: vi.fn(async () => 'OK') };
+    const { auth, familyId, raw } = build(redis);
+    const reply = { clearCookie: vi.fn() };
+    await auth.logout({ cookies: { hirekiwi_refresh: raw } } as never, reply as never);
+    expect(redis.setex).toHaveBeenCalledWith(`auth:revoked-family:${familyId}`, 960, '1');
+    expect(reply.clearCookie).toHaveBeenCalled();
+  });
+
+  it('revoking every session of a user marks each family', async () => {
+    const redis = { setex: vi.fn(async () => 'OK') };
+    const { auth, familyId, userId } = build(redis);
+    await auth.revokeAllForUser(userId);
+    expect(redis.setex).toHaveBeenCalledWith(`auth:revoked-family:${familyId}`, 960, '1');
+  });
+
+  it('still logs out when Redis is unavailable', async () => {
+    const redis = {
+      setex: vi.fn(async () => {
+        throw new Error('redis down');
+      }),
+    };
+    const { auth, prisma, raw } = build(redis);
+    const reply = { clearCookie: vi.fn() };
+    await auth.logout({ cookies: { hirekiwi_refresh: raw } } as never, reply as never);
+    expect(prisma.refreshToken.updateMany).toHaveBeenCalled();
+    expect(reply.clearCookie).toHaveBeenCalled();
+  });
+
+  it('works without a Redis service (refresh rows remain the source of truth)', async () => {
+    const { auth, prisma, raw } = build(undefined);
+    const reply = { clearCookie: vi.fn() };
+    await auth.logout({ cookies: { hirekiwi_refresh: raw } } as never, reply as never);
+    expect(prisma.refreshToken.updateMany).toHaveBeenCalled();
   });
 });

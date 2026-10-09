@@ -121,7 +121,7 @@ sequenceDiagram
 ## 4. Product Identity vs. Agent Persona: HireKiwi & Vivi
 
 To prevent team and agent confusion:
-- **Product & Platform Name:** **HireKiwi Intelligent Talent Discovery Platform** (formerly known under working prototypes as SMART / SmartZen / HireKiwi).
+- **Product & Platform Name:** **HireKiwi Intelligent Talent Discovery Platform** (formerly known under working prototypes as HireKiwi).
 - **AI Agent Persona:** **Vivi** is the unified AI agent, proctoring supervisor, and candidate copilot (do NOT rename Vivi to HireKiwi).
   - Vivi conducts interactive project defense interviews and asks code-grounded questions.
   - Vivi supervises 4D proctoring and provides non-invasive candidate prompts.
@@ -134,7 +134,7 @@ To prevent team and agent confusion:
 
 All environments run on a single Linux VPS managed via isolated Docker Compose projects with Caddy TLS reverse proxy:
 
-| Service / Application | Production Blue | Production Green | Dev (`dev.becomesmart.online`) | Local Host | Description |
+| Service / Application | Production Blue | Production Green | Dev (`dev.hirekiwi.online`) | Local Host | Description |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `apps/api-core` | `:3000` | `:3010` | `:3020` | `http://localhost:3000` | Fastify + NestJS Backend API Core |
 | `apps/web-student` | `:3001` | `:3011` | `:3021` | `http://localhost:3001` | Next.js 16 Student Assessment & Profile Portal |
@@ -153,7 +153,7 @@ All environments run on a single Linux VPS managed via isolated Docker Compose p
 | MinIO S3 | `127.0.0.1:9000` | `127.0.0.1:9000` | `127.0.0.1:9000` | `127.0.0.1:9000` | S3 Object Storage API (Console: `:9001`) |
 
 > [!IMPORTANT]
-> **Week 1 Milestone Target:** For Week 1 (Oct 05 - Oct 11, 2026), we are **NOT moving to production**. The deliverable deadline on Friday (Oct 09) targets an end-to-end deployment to the **Dev environment (`dev.becomesmart.online`)** on ports `3020-3028` for internal stakeholder validation, sprint review demo, and stability handover.
+> **Week 1 Milestone Target:** For Week 1 (Oct 05 - Oct 11, 2026), we are **NOT moving to production**. The deliverable deadline on Friday (Oct 09) targets an end-to-end deployment to the **Dev environment (`dev.hirekiwi.online`)** on ports `3020-3028` for internal stakeholder validation, sprint review demo, and stability handover.
 
 ---
 

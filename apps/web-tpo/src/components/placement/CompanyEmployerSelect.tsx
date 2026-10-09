@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { PlacementEmployerSummary } from '@hirekiwi/contracts';
 import { PLACEMENT_CITY_OPTIONS } from '@hirekiwi/contracts';
 import { employersApi } from '../../lib/api';
@@ -47,7 +47,7 @@ export function CompanyEmployerSelect({
       })
       .catch((caught: unknown) => {
         if (!cancelled) {
-          setError(isSmartApiError(caught) ? caught.message : 'Could not load companies.');
+          setError(isHireKiwiApiError(caught) ? caught.message : 'Could not load companies.');
         }
       })
       .finally(() => {
@@ -83,7 +83,7 @@ export function CompanyEmployerSelect({
       setShowCreate(false);
       setQuery(created.name);
     } catch (caught: unknown) {
-      setError(isSmartApiError(caught) ? caught.message : 'Could not create company.');
+      setError(isHireKiwiApiError(caught) ? caught.message : 'Could not create company.');
     } finally {
       setCreating(false);
     }

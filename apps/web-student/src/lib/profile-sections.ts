@@ -9,12 +9,14 @@ import {
   IdCard,
   Languages,
   Plug,
+  UserRound,
 } from 'lucide-react';
 
 import type { ProfileAreaId } from '@/lib/profile-progress';
 
 /** Stable query param values for /profile?section=… */
 export const PROFILE_SECTION_IDS = [
+  'profile',
   'education',
   'experience',
   'projects',
@@ -67,6 +69,18 @@ export interface ProfileSectionNavGroup {
 }
 
 export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
+  {
+    groupLabel: 'Overview',
+    items: [
+      {
+        id: 'profile',
+        label: 'Profile',
+        icon: UserRound,
+        title: 'Profile',
+        description: 'Your public identity, photo, headline and sharing options.',
+      },
+    ],
+  },
   {
     groupLabel: 'Career',
     items: [
@@ -125,7 +139,7 @@ export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
         icon: CodeXml,
         title: 'Skills',
         description:
-          'Select skills from the SMART catalog to assess and build verified credentials.',
+          'Select skills from the HireKiwi catalog to assess and build verified credentials.',
       },
     ],
   },
@@ -149,7 +163,7 @@ export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
         label: 'Resume',
         icon: FileUser,
         title: 'Resume',
-        description: 'Upload your resume — SMART can parse it to help pre-fill profile details.',
+        description: 'Upload your resume — HireKiwi can parse it to help pre-fill profile details.',
       },
     ],
   },
@@ -174,7 +188,7 @@ export function profileSectionMeta(id: ProfileSectionId): ProfileSectionNavItem 
   );
 }
 
-export const DEFAULT_PROFILE_SECTION: ProfileSectionId = 'education';
+export const DEFAULT_PROFILE_SECTION: ProfileSectionId = 'profile';
 
 /** Legacy ?section=about (and hash skills) map to a real subsection. */
 export function resolveProfileSection(raw: string | null | undefined): ProfileSectionId {

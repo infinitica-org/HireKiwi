@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# SMART — create long-lived branches + apply GitHub branch protection
+# HireKiwi — create long-lived branches + apply GitHub branch protection
 #
 # Prerequisites (run on your machine as @brittytino, org admin on the repo):
 #   1. Install GitHub CLI: https://cli.github.com/
 #   2. gh auth login   # HTTPS or SSH; must be brittytino with admin on the repo
 #   3. Confirm remote: git remote -v
-#        Prefer: https://github.com/infinitica-org/smart.git  (or your canonical org)
+#        Prefer: https://github.com/infinitica-org/HireKiwi.git  (or your canonical org)
 #
 # Usage:
 #   bash scripts/github/protect-branches.sh                 # create + protect

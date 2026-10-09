@@ -58,8 +58,8 @@ export function buildSummaryText(testName, data) {
     ...thresholdFailures.map((f) => `  FAILED: ${f}`),
     '',
     'Inspect the corresponding Grafana dashboard during/after the run:',
-    '  http://localhost:3100/d/smart-platform-overview (or 3100 -> your GRAFANA_PORT)',
-    '  http://localhost:3100/d/smart-api-metrics',
+    '  http://localhost:3100/d/hirekiwi-platform-overview (or 3100 -> your GRAFANA_PORT)',
+    '  http://localhost:3100/d/hirekiwi-api-metrics',
   ].join('\n');
 }
 

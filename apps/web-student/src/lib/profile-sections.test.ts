@@ -9,12 +9,12 @@ import {
 } from './profile-sections';
 
 describe('profile-sections', () => {
-  it('defaults to experience and validates section ids', () => {
-    expect(DEFAULT_PROFILE_SECTION).toBe('education');
+  it('defaults to profile and validates section ids', () => {
+    expect(DEFAULT_PROFILE_SECTION).toBe('profile');
     expect(isProfileSectionId('experience')).toBe(true);
     expect(isProfileSectionId('about')).toBe(false);
     expect(isProfileSectionId('overview')).toBe(false);
-    expect(resolveProfileSection('about')).toBe('education');
+    expect(resolveProfileSection('about')).toBe('profile');
     expect(resolveProfileSection('preferences')).toBe('resume');
     expect(resolveProfileSection('skills')).toBe('skills');
     expect(profileSectionMeta('skills').title).toBe('Skills');

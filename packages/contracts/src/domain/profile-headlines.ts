@@ -118,5 +118,7 @@ function hashString(value: string): number {
 
 /** The headline assigned to this student (same user id always gives the same headline). */
 export function profileHeadlineForUser(userId: string): string {
-  return PROFILE_HEADLINES[hashString(userId) % PROFILE_HEADLINES.length]!;
+  return (
+    PROFILE_HEADLINES[hashString(userId) % PROFILE_HEADLINES.length] ?? PROFILE_HEADLINES[0] ?? ''
+  );
 }

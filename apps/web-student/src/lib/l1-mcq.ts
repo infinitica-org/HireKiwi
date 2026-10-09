@@ -5,7 +5,7 @@ import {
   type SaveDraftRequest,
   type TrackCode,
 } from '@hirekiwi/contracts';
-import { isSmartApiError, SmartNetworkError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, HireKiwiNetworkError } from '@hirekiwi/api-client';
 
 export const L1_LEVEL_NUMBER = 1 as const;
 /** Stay under the 10 req/min submit-l1 budget (one save per 6s). */
@@ -34,7 +34,7 @@ export function resolveL1TrackCode(me: { primaryTrack: string | null }): TrackCo
   return isTrackCode(me.primaryTrack) ? me.primaryTrack : null;
 }
 
-export const L1_LAST_ATTEMPT_STORAGE_KEY = 'smart.l1.lastAttemptId';
+export const L1_LAST_ATTEMPT_STORAGE_KEY = 'hirekiwi.l1.lastAttemptId';
 
 export function readLastL1AttemptId(): string | null {
   if (typeof sessionStorage === 'undefined') return null;
@@ -147,13 +147,13 @@ export function isMcqSingle(item: DeliverableItemDto): boolean {
 }
 
 export function playerErrorFromUnknown(error: unknown): PlayerError {
-  if (error instanceof SmartNetworkError) {
+  if (error instanceof HireKiwiNetworkError) {
     return {
       kind: 'network',
       message: 'Connection dropped. Your last saved answer is kept on the server.',
     };
   }
-  if (isSmartApiError(error)) {
+  if (isHireKiwiApiError(error)) {
     if (error.statusCode === 429) {
       return {
         kind: 'rate_limit',

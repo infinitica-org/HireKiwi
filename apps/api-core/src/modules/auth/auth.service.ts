@@ -1,17 +1,11 @@
-import {
-  createHash,
-  randomBytes,
-  randomUUID,
-  scrypt as scryptCallback,
-  timingSafeEqual,
-} from 'node:crypto';
-import { promisify } from 'node:util';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import {
   ConflictException,
   ForbiddenException,
   HttpException,
   HttpStatus,
   Inject,
+  Optional,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -21,12 +15,13 @@ import { JwtService } from '@nestjs/jwt';
 import {
   EMAIL_NOT_VERIFIED_ERROR,
   CompanyPortalAccountSchema,
-  isDisallowedEndorserEmailDomain,
   type ActiveSessionDto,
   type AuthTokenResponse,
   type AuthenticatedUser,
   type CompanyPortalAccount,
+  type IdentifyResponse,
   type ListActiveSessionsQuery,
+  type LoginResponse,
   type RegisterRequest,
   type RegisterStudentRequest,
   type SelectableInstitutionDto,
@@ -34,14 +29,20 @@ import {
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuditPublisherService } from '../../platform/audit/audit-publisher.service.js';
 import { env } from '../../platform/config/env.js';
+import { RedisService } from '../../platform/redis/redis.service.js';
+import {
+  revokedFamilyKey,
+  revokedFamilyTtlSeconds,
+} from '../../common/guards/session-revocation.js';
 import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
 import type { RequestUser } from '../../common/guards/jwt-auth.guard.js';
 import { resolveSessionHold } from '../../common/session-hold.js';
 import { toAuthenticatedUserWithPhoto } from '../users/profile-photo.util.js';
+import type { GoogleIdentity } from './google-oauth.service.js';
+import { MfaService } from './mfa/mfa.service.js';
+import { hashPassword, verifyPassword } from './password-hash.util.js';
 import { clearRefreshCookie, setRefreshCookie } from './refresh-cookie.js';
-
-const scrypt = promisify(scryptCallback);
 
 /** S6-VV-92 — account lockout, independent of the IP-based 'auth.login' rate-limit policy. */
 const MAX_FAILED_LOGIN_ATTEMPTS = 5;
@@ -58,6 +59,8 @@ export type UserWithAuthIncludes = {
   createdAt: Date;
   passwordHash: string | null;
   heldAt: Date | null;
+  mfaEnabled: boolean;
+  mfaSecretEncrypted: string | null;
   onboardingCompleted?: boolean;
   profilePhotoObjectKey?: string | null;
   institution: {
@@ -83,6 +86,8 @@ export class AuthService {
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(StorageService) private readonly storage: StorageService,
     @Inject(AuditPublisherService) private readonly auditPublisher: AuditPublisherService,
+    @Inject(MfaService) private readonly mfa: MfaService,
+    @Optional() @Inject(RedisService) private readonly redis?: RedisService,
   ) {}
 
   tryVerifyAccessToken(header?: string): RequestUser | null {
@@ -96,7 +101,16 @@ export class AuthService {
     }
   }
 
-  async login(email: string, password: string, reply: FastifyReply): Promise<AuthTokenResponse> {
+  /** Identify-first login step. Deliberately reveals existence — see IdentifyResponseSchema. */
+  async identify(email: string): Promise<IdentifyResponse> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true },
+    });
+    return { exists: Boolean(user) };
+  }
+
+  async login(email: string, password: string, reply: FastifyReply): Promise<LoginResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase() },
       include: { institution: true, company: true, primaryTrack: true, secondaryTrack: true },
@@ -156,6 +170,56 @@ export class AuthService {
     await this.auditPublisher.record({
       actorId: user.id,
       action: 'auth.login',
+      resourceType: 'user',
+      resourceId: user.id,
+      reasonCode: null,
+    });
+
+    if (user.mfaEnabled) {
+      return this.mfa.createChallenge(user.id);
+    }
+    return this.issueSession(user, reply);
+  }
+
+  /**
+   * The second step of an MFA-gated login: `mfaToken` proves the password
+   * already checked out (see `login` above); `code` proves the second
+   * factor. Re-runs the same tenant/deactivation checks as `login` because
+   * nothing else has re-verified them since the password step.
+   */
+  async completeMfaChallenge(
+    mfaToken: string,
+    code: string,
+    reply: FastifyReply,
+  ): Promise<AuthTokenResponse> {
+    const userId = await this.mfa.resolveChallenge(mfaToken);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { institution: true, company: true, primaryTrack: true, secondaryTrack: true },
+    });
+    if (!user) {
+      throw unauthorized('Account no longer exists.');
+    }
+    assertTenantLoginAllowed(user);
+    if (user.deactivatedAt) {
+      throw unauthorized('This account has been deactivated.');
+    }
+
+    const verified = await this.mfa.verifyFactorAndConsume(user.id, code, user.mfaSecretEncrypted);
+    if (!verified) {
+      await this.auditPublisher.record({
+        actorId: user.id,
+        action: 'auth.mfa_challenge_failed',
+        resourceType: 'user',
+        resourceId: user.id,
+        reasonCode: null,
+      });
+      throw unauthorized('That code is incorrect.');
+    }
+
+    await this.auditPublisher.record({
+      actorId: user.id,
+      action: 'auth.mfa_challenge_verified',
       resourceType: 'user',
       resourceId: user.id,
       reasonCode: null,
@@ -242,15 +306,36 @@ export class AuthService {
       });
     }
 
-    const institution = await this.prisma.institution.findUnique({
-      where: { id: body.institutionId },
-    });
-    if (!institution || institution.deactivatedAt || institution.heldAt) {
-      throw new NotFoundException({
-        error: 'not_found',
-        message: 'Institution not found.',
-        statusCode: 404,
+    let institutionId: string | null = null;
+    if (body.institutionId) {
+      const institution = await this.prisma.institution.findUnique({
+        where: { id: body.institutionId },
       });
+      if (!institution || institution.deactivatedAt || institution.heldAt) {
+        throw new NotFoundException({
+          error: 'not_found',
+          message: 'Institution not found.',
+          statusCode: 404,
+        });
+      }
+      institutionId = institution.id;
+    } else {
+      // No institution chosen: try to auto-match one from the email domain so a university
+      // email still gets linked without picking from a list. Personal emails (and unmatched
+      // university domains) just get institutionId: null — the student links a school later
+      // in onboarding.
+      const emailDomain = email.split('@')[1];
+      if (emailDomain) {
+        const institutions = await this.prisma.institution.findMany({
+          select: { id: true, domain: true, deactivatedAt: true, heldAt: true },
+        });
+        const matched = institutions.find((inst) => {
+          if (inst.deactivatedAt || inst.heldAt) return false;
+          const cleanInstDomain = inst.domain.trim().toLowerCase();
+          return emailDomain === cleanInstDomain || emailDomain.endsWith(`.${cleanInstDomain}`);
+        });
+        institutionId = matched?.id ?? null;
+      }
     }
 
     const passwordHash = await hashPassword(body.password);
@@ -261,7 +346,7 @@ export class AuthService {
         passwordHash,
         role: 'STUDENT',
         emailVerified: false,
-        institutionId: institution.id,
+        institutionId,
       },
       include: { institution: true, company: true, primaryTrack: true, secondaryTrack: true },
     });
@@ -285,21 +370,111 @@ export class AuthService {
     return this.issueSession(user, reply);
   }
 
+  /**
+   * "Sign in with Google" — student-only. Company accounts always use their
+   * verified work-domain email + password and are never created or signed in
+   * here; self-serve company signup goes through the verification wizard
+   * (PR #290).
+   */
+  async loginOrRegisterWithGoogle(
+    identity: GoogleIdentity,
+    reply: FastifyReply,
+  ): Promise<AuthTokenResponse> {
+    if (!identity.emailVerified) {
+      throw new ForbiddenException({
+        error: 'google_email_unverified',
+        message: 'That Google account email is not verified.',
+        statusCode: 403,
+      });
+    }
+
+    const email = identity.email.toLowerCase();
+    const include = {
+      institution: true,
+      company: true,
+      primaryTrack: true,
+      secondaryTrack: true,
+    } as const;
+
+    let user = await this.prisma.user.findUnique({ where: { email }, include });
+
+    if (user && user.role !== 'STUDENT') {
+      throw new UnauthorizedException({
+        error: 'google_role_mismatch',
+        message: 'This email is not registered as a student account.',
+        statusCode: 401,
+      });
+    }
+
+    if (!user) {
+      try {
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            fullName: identity.name?.trim() || email,
+            role: 'STUDENT',
+            provider: 'GOOGLE',
+            emailVerified: true,
+          },
+          include,
+        });
+      } catch (err: unknown) {
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'code' in err &&
+          (err as { code: string }).code === 'P2002'
+        ) {
+          // Lost a race with a concurrent signup for the same email; use the winner's row.
+          user = await this.prisma.user.findUniqueOrThrow({ where: { email }, include });
+        } else {
+          throw err;
+        }
+      }
+      await this.auditPublisher.record({
+        actorId: user.id,
+        action: 'auth.register',
+        resourceType: 'user',
+        resourceId: user.id,
+        reasonCode: 'google_oauth',
+      });
+    } else if (!user.emailVerified) {
+      // Google's attestation is stronger than our own email-verification link.
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true },
+        include,
+      });
+    }
+
+    if (!user) {
+      throw unauthorized('Could not resolve a user for this Google account.');
+    }
+
+    assertTenantLoginAllowed(user);
+    if (user.deactivatedAt) {
+      throw unauthorized('This account has been deactivated.');
+    }
+
+    await this.auditPublisher.record({
+      actorId: user.id,
+      action: 'auth.login',
+      resourceType: 'user',
+      resourceId: user.id,
+      reasonCode: 'google_oauth',
+    });
+    return this.issueSession(user, reply);
+  }
+
   async registerStudent(
     dto: RegisterStudentRequest,
     reply: FastifyReply,
   ): Promise<AuthTokenResponse> {
     const normalizedEmail = dto.email.trim().toLowerCase();
 
-    if (isDisallowedEndorserEmailDomain(normalizedEmail)) {
-      throw new UnprocessableEntityException({
-        error: 'personal_email_not_allowed',
-        message:
-          'Personal email addresses (e.g. Gmail, Yahoo) are not permitted. Please use your official university email.',
-        statusCode: 422,
-      });
-    }
-
+    // Personal emails (Gmail, Yahoo, …) are allowed for student self-signup — a university
+    // email only buys faster approval by auto-matching an institution below. A student who
+    // signs up with a personal address links their school later, in onboarding.
     const emailDomain = normalizedEmail.split('@')[1];
     if (!emailDomain) {
       throw new UnprocessableEntityException({
@@ -317,15 +492,6 @@ export class AuthService {
       return emailDomain === cleanInstDomain || emailDomain.endsWith(`.${cleanInstDomain}`);
     });
 
-    if (!matchedInstitution) {
-      throw new UnprocessableEntityException({
-        error: 'unregistered_university_domain',
-        message:
-          'Your university domain is not registered on SMART. Please contact your placement administrator.',
-        statusCode: 422,
-      });
-    }
-
     const passwordHash = await hashPassword(dto.password);
 
     try {
@@ -338,7 +504,7 @@ export class AuthService {
             role: 'STUDENT',
             provider: 'PASSWORD',
             emailVerified: false,
-            institutionId: matchedInstitution.id,
+            institutionId: matchedInstitution?.id ?? null,
             onboardingCompleted: false,
           },
           include: {
@@ -478,10 +644,16 @@ export class AuthService {
   }
 
   async revokeAllForUser(userId: string): Promise<void> {
+    const live = await this.prisma.refreshToken.findMany({
+      where: { userId, revokedAt: null },
+      select: { familyId: true },
+      distinct: ['familyId'],
+    });
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    await Promise.all(live.map((row) => this.markFamilyRevoked(row.familyId)));
   }
 
   /** S6-VV-93 — one row per active session, for the SUPER_ADMIN sessions panel. */
@@ -543,6 +715,24 @@ export class AuthService {
       where: { familyId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    await this.markFamilyRevoked(familyId);
+  }
+
+  /**
+   * Th6-614 - also cut off the session's access tokens, which are otherwise valid until they
+   * expire. The refresh-token rows above stay the source of truth; this marker is best effort.
+   */
+  private async markFamilyRevoked(familyId: string): Promise<void> {
+    if (!this.redis) return;
+    try {
+      await this.redis.setex(
+        revokedFamilyKey(familyId),
+        revokedFamilyTtlSeconds(env.JWT_ACCESS_TTL_SECONDS),
+        '1',
+      );
+    } catch {
+      // Redis is down: the refresh token is revoked in the database; access tokens expire on their own.
+    }
   }
 
   async getCompanyPortalAccount(userId: string): Promise<CompanyPortalAccount> {
@@ -673,20 +863,7 @@ export function buildAccessTokenClaims(
   return claims;
 }
 
-export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16);
-  const derived = (await scrypt(password, salt, 64)) as Buffer;
-  return `${salt.toString('hex')}:${derived.toString('hex')}`;
-}
-
-export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [saltHex, hashHex] = stored.split(':');
-  if (!saltHex || !hashHex) return false;
-  const derived = (await scrypt(password, Buffer.from(saltHex, 'hex'), 64)) as Buffer;
-  const expected = Buffer.from(hashHex, 'hex');
-  if (derived.length !== expected.length) return false;
-  return timingSafeEqual(derived, expected);
-}
+export { hashPassword, verifyPassword } from './password-hash.util.js';
 
 /** Prisma returns `cgpa`/`sscPercentage`/`hscPercentage` as `Decimal`; duck-type rather than import generated internals. */
 type Decimalish = { toNumber?: () => number } | number;

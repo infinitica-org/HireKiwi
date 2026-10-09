@@ -4,7 +4,7 @@ import {
   CandidateSkillsDiscoveredEventSchema,
   SKILL_CODE_SET,
   SKILL_DEFINITIONS,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   type LanguageBreakdownEntry,
 } from '@hirekiwi/contracts';
 import { runKafkaHandler } from '@hirekiwi/observability';
@@ -134,7 +134,7 @@ export function deriveSkillCandidates(
 }
 
 /**
- * Consumes `smart.candidate.skills_discovered` (produced by `users` on
+ * Consumes `hirekiwi.candidate.skills_discovered` (produced by `users` on
  * onboarding completion) and best-effort auto-declares matching catalog
  * skills. Runs async, off the request path — a slow or failed match must
  * never affect onboarding completion, which already succeeded before this
@@ -153,7 +153,7 @@ export class CandidateSkillsDiscoveredConsumer implements OnModuleInit {
     if (env.NODE_ENV === 'test') return;
     try {
       await this.kafka.subscribe({
-        topic: SMART_TOPICS.candidateSkillsDiscovered,
+        topic: HIREKIWI_TOPICS.candidateSkillsDiscovered,
         module: 'assessment',
         handler: async (payload, headers) => {
           await runKafkaHandler(headers, async () => {

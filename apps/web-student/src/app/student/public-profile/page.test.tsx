@@ -41,7 +41,9 @@ function renderPage() {
 describe('PublicProfilePreviewPage (employer-visible preview)', () => {
   beforeEach(() => {
     users.getMyPublicProfile.mockReset().mockResolvedValue(baseProfile);
-    users.getPublicProfileLink.mockReset().mockResolvedValue({ url: 'https://smart.test/c/ada' });
+    users.getPublicProfileLink
+      .mockReset()
+      .mockResolvedValue({ url: 'https://hirekiwi.test/c/ada' });
     Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
   });
 
@@ -59,7 +61,7 @@ describe('PublicProfilePreviewPage (employer-visible preview)', () => {
     expect(screen.getByText('No verified skills yet.')).toBeTruthy();
     expect(screen.getByText(/0 of 3 declared/)).toBeTruthy();
     // No proof yet, so the verified badge must not appear.
-    expect(screen.queryByText('SMART Verified')).toBeNull();
+    expect(screen.queryByText('HireKiwi Verified')).toBeNull();
   });
 
   it('shows employers whether messaging is on or off', async () => {
@@ -81,7 +83,7 @@ describe('PublicProfilePreviewPage (employer-visible preview)', () => {
 
     expect(await screen.findByText('React')).toBeTruthy();
     expect(screen.getByText('Advanced')).toBeTruthy();
-    expect(screen.getByText('SMART Verified')).toBeTruthy();
+    expect(screen.getByText('HireKiwi Verified')).toBeTruthy();
     expect(screen.getByText(/1 of 3 declared/)).toBeTruthy();
   });
 
@@ -93,7 +95,7 @@ describe('PublicProfilePreviewPage (employer-visible preview)', () => {
     fireEvent.click(copy);
 
     await waitFor(() =>
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://smart.test/c/ada'),
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://hirekiwi.test/c/ada'),
     );
     expect(await screen.findByText('Copied!')).toBeTruthy();
   });

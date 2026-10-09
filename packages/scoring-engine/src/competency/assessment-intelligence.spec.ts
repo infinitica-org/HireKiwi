@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { Effect } from 'effect';
+import { Effect, Either } from 'effect';
 import {
   buildCategoryCompetencyModel,
   buildDefaultProficiencyRequirements,
 } from '@hirekiwi/contracts';
 import {
+  assertMinimumItemCoverage,
   competencyIdsBlockingProficiency,
   evaluateAssessmentIntelligence,
   determineSupportedProficiency,
@@ -138,5 +139,38 @@ describe('assessment-intelligence', () => {
     const results = rollupItemResultsToCompetencies({ competencyModel: model, items });
     expect(determineSupportedProficiency(results, requirements)).toBe('ADVANCED');
     expect(shouldStopTesting(results, 'PROFESSIONAL', requirements, false)).toBe(true);
+  });
+
+  it('assertMinimumItemCoverage fails when a critical competency has only 1 item', () => {
+    const items = model.map((row) => ({
+      competencyIds: [row.competencyId],
+      marksEarned: 10,
+      marksMax: 10,
+    }));
+    const result = Effect.runSync(
+      Effect.either(assertMinimumItemCoverage({ competencyModel: model, items })),
+    );
+    expect(Either.isLeft(result)).toBe(true);
+    if (Either.isLeft(result)) {
+      expect(result.left._tag).toBe('InsufficientItemCoverageError');
+      const criticalRows = result.left.underCovered.filter((row) => row.role === 'critical');
+      expect(criticalRows.length).toBeGreaterThan(0);
+      expect(criticalRows.every((row) => row.required === 3)).toBe(true);
+    }
+  });
+
+  it('assertMinimumItemCoverage passes once every competency meets its role floor', () => {
+    const items = model.flatMap((row) => {
+      const copies = row.role === 'critical' ? 3 : 2;
+      return Array.from({ length: copies }, () => ({
+        competencyIds: [row.competencyId],
+        marksEarned: 5,
+        marksMax: 10,
+      }));
+    });
+    const result = Effect.runSync(
+      Effect.either(assertMinimumItemCoverage({ competencyModel: model, items })),
+    );
+    expect(Either.isRight(result)).toBe(true);
   });
 });

@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
   HireKiwiLogo,
-  SmartLogo,
   HIREKIWI_LOGO_SRC,
   HIREKIWI_TEXT_LOGO_SRC,
   HIREKIWI_LOGO_TEXT_SRC,
@@ -30,9 +29,9 @@ describe('HireKiwiLogo', () => {
     expect(img.getAttribute('src')).toBe(HIREKIWI_LOGO_TEXT_SRC);
   });
 
-  it('supports SmartLogo backwards-compatible alias with custom title', () => {
-    render(<SmartLogo title="SMART" />);
-    const img = screen.getByRole('img', { name: 'SMART' });
+  it('supports HireKiwiLogo backwards-compatible alias with custom title', () => {
+    render(<HireKiwiLogo title="HireKiwi" />);
+    const img = screen.getByRole('img', { name: 'HireKiwi' });
     expect(img).toBeDefined();
   });
 });

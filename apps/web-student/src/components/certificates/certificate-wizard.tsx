@@ -18,10 +18,18 @@ import { EndorsementRequestForm } from './endorsement-request-form';
 import { CertificateStatusBadge } from './certificate-status-badge';
 import type { CertificateSkillSelection } from './skill-picker';
 
-export function CertificateWizard() {
+/** Popup mode: the profile page hosts the wizard, so it must not touch the URL. */
+export interface EmbeddedCertificateWizard {
+  /** Certificate to manage, or null to add a new one. */
+  certificateId: string | null;
+  /** Back button: closes the popup. */
+  onClose: () => void;
+}
+
+export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificateWizard } = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const existingId = searchParams.get('id');
+  const existingId = embedded ? embedded.certificateId : searchParams.get('id');
 
   const [certificateId, setCertificateId] = useState<string | null>(existingId);
   const [certificate, setCertificate] = useState<CandidateCertificateDto | null>(null);
@@ -79,7 +87,7 @@ export function CertificateWizard() {
         const created = await api.candidateCertificates.create(details);
         setCertificate(created);
         setCertificateId(created.certificateId);
-        router.replace(`/student/certificates/add?id=${created.certificateId}`);
+        if (!embedded) router.replace(`/student/certificates/add?id=${created.certificateId}`);
       }
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Failed to save certificate details.');
@@ -189,29 +197,42 @@ export function CertificateWizard() {
     );
   }
 
-  const WizardHeader = () => (
-    <div className="mb-6 flex items-center justify-between">
-      <Link
-        href="/student/certificates"
-        className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to My Certificates
-      </Link>
-      <Link
-        href="/student/dashboard"
-        className="text-xs font-medium text-foreground hover:underline"
-      >
-        Skip to Dashboard &rarr;
-      </Link>
-    </div>
-  );
+  const WizardHeader = () =>
+    embedded ? (
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={embedded.onClose}
+          className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to My Certificates
+        </button>
+      </div>
+    ) : (
+      <div className="mb-6 flex items-center justify-between">
+        <Link
+          href="/student/certificates"
+          className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to My Certificates
+        </Link>
+        <Link
+          href="/student/dashboard"
+          className="text-xs font-medium text-foreground hover:underline"
+        >
+          Skip to Dashboard &rarr;
+        </Link>
+      </div>
+    );
 
   if (!certificate || isEditingDetails) {
     return (
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <WizardHeader />
-        <CertificateGuidelinesBanner />
+      <div className={`mx-auto flex w-full max-w-3xl flex-col ${embedded ? 'gap-5' : 'gap-6'}`}>
+        {embedded ? null : <WizardHeader />}
+        <CertificateGuidelinesBanner compact={Boolean(embedded)} />
         <CertificateDetailsForm
+          embedded={Boolean(embedded)}
+          onCancel={embedded?.onClose}
           initialValues={
             certificate
               ? {

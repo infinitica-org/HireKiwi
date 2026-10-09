@@ -20,7 +20,7 @@ import {
   SkillVerifyInterviewDtoSchema,
   REDIS_TTL_SECONDS,
   SKILL_VERIFICATION_STATUSES,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   SaveSkillVerifyRequestSchema,
   SkillClaimDtoSchema,
   SkillVerificationCompletedDataSchema,
@@ -1192,9 +1192,9 @@ export class SkillVerificationService {
     const kafkaStatus = SKILL_VERIFICATION_STATUSES.find((status) => status === mapped.status);
     if (kafkaStatus) {
       await this.outbox.enqueueEnvelope({
-        topic: SMART_TOPICS.skillVerificationCompleted,
+        topic: HIREKIWI_TOPICS.skillVerificationCompleted,
         partitionKey: mapped.claimId,
-        eventType: SMART_TOPICS.skillVerificationCompleted,
+        eventType: HIREKIWI_TOPICS.skillVerificationCompleted,
         source: 'assessment',
         data: SkillVerificationCompletedDataSchema.parse({
           claimId: mapped.claimId,

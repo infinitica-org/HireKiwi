@@ -290,7 +290,7 @@ export function buildEmployerConfidenceIndicators(
   if (explanation.claimStatus === 'VERIFIED' && explanation.verifiedVsAi.verified?.proficiency) {
     indicators.push({
       code: 'VERIFIED_SKILL',
-      label: 'SMART-verified skill level on profile',
+      label: 'HireKiwi-verified skill level on profile',
       tone: 'positive',
     });
   }

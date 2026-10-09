@@ -39,7 +39,7 @@ describe('ConnectUniversityStep — Partnership Status (STU-01)', () => {
       expect(screen.getByTestId('unpartnered-warning')).toBeTruthy();
       expect(screen.getByText(/Institution Not Yet Partnered/i)).toBeTruthy();
       expect(screen.getByText('Example Unpartnered College')).toBeTruthy();
-      expect(screen.getByText(/is not currently partnered with SMART/i)).toBeTruthy();
+      expect(screen.getByText(/is not currently partnered with HireKiwi/i)).toBeTruthy();
     });
   });
 
@@ -145,7 +145,7 @@ describe('ConnectUniversityStep — Partnership Status (STU-01)', () => {
   });
 });
 
-describe('ConnectUniversityStep — Request SMART Contact My University (STU-01)', () => {
+describe('ConnectUniversityStep — Request HireKiwi Contact My University (STU-01)', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
@@ -286,5 +286,22 @@ describe('ConnectUniversityStep — Request SMART Contact My University (STU-01)
     await waitFor(() => {
       expect(screen.queryByTestId('university-contact-requested')).toBeNull();
     });
+  });
+
+  it('renders "Skip" secondary button and calls onContinue when clicked', async () => {
+    const onContinue = vi.fn();
+    vi.mocked(api.onboarding.getInstitutionPartnershipStatus).mockResolvedValue({
+      institutionId: null,
+      institutionName: null,
+      isPartnered: false,
+    });
+    vi.mocked(api.onboarding.listPartnerUniversities).mockResolvedValue([]);
+
+    render(<ConnectUniversityStep onContinue={onContinue} />);
+
+    const skipButton = await screen.findByRole('button', { name: /^Skip$/i });
+    expect(skipButton).toBeTruthy();
+    fireEvent.click(skipButton);
+    expect(onContinue).toHaveBeenCalledTimes(1);
   });
 });

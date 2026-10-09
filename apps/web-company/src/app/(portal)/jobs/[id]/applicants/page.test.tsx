@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import type { EmployerApplicantCard } from '@hirekiwi/contracts';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -35,6 +35,7 @@ const applicant = (
 ): EmployerApplicantCard => ({
   applicationId: `a0000000-0000-4000-8000-${String(n).padStart(12, '0')}`,
   candidateName: `Candidate ${n}`,
+  photoUrl: null,
   fit: { band: 'STRONG', matchPercent: 90 - n, topReason: null },
   fitRecalculated: false,
   status: 'APPLIED',
@@ -149,7 +150,7 @@ describe('Job applicants page (Th6-390/391/414)', () => {
   it('rolls the card back and explains a 409 (someone else moved it), then refreshes', async () => {
     employer.listApplicants.mockResolvedValue(page([applicant(1)]));
     employer.transitionApplication.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'stale_status',
         message: 'This application is now Reviewing. Refresh and try again.',
         statusCode: 409,
@@ -171,7 +172,7 @@ describe('Job applicants page (Th6-390/391/414)', () => {
   it('rolls the card back and explains a 422 (not an allowed move)', async () => {
     employer.listApplicants.mockResolvedValue(page([applicant(1)]));
     employer.transitionApplication.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'transition_not_allowed',
         message: "Can't move from Applied to Offered",
         statusCode: 422,

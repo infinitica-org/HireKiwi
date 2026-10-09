@@ -64,7 +64,7 @@ export async function seededInstitutionId(request: APIRequestContext): Promise<s
 
 /** Registers a student and confirms the emailed link, the way a real student would. */
 export async function registerVerifiedStudent(request: APIRequestContext) {
-  const email = `e2e-${uniqueSuffix()}@${e2eEnv.studentEmail.split('@')[1] ?? 'smart.local'}`;
+  const email = `e2e-${uniqueSuffix()}@${e2eEnv.studentEmail.split('@')[1] ?? 'hirekiwi.local'}`;
   const password = `E2e!${uniqueSuffix()}`;
   const register = await request.post(`${apiV1}/auth/register`, {
     data: {

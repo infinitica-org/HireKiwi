@@ -9,7 +9,7 @@ import {
   PORTAL_ROLES,
   resolvePortalOriginsFromEnv,
 } from '@hirekiwi/api-client';
-import { RolesGuard, SessionBootstrap, SessionHoldWall, SmartApiProvider } from '@hirekiwi/ui';
+import { RolesGuard, SessionBootstrap, SessionHoldWall, HireKiwiApiProvider } from '@hirekiwi/ui';
 import { api } from '../lib/api';
 import { signOut } from '../lib/auth';
 
@@ -45,7 +45,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             window.location.href = `${authUrl}/login`;
           }}
         >
-          <SmartApiProvider
+          <HireKiwiApiProvider
             baseUrl={baseUrl}
             getAccessToken={getAccessToken}
             refreshAccessToken={createRefreshAccessToken(() => api.auth.refresh())}
@@ -55,7 +55,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             }}
           >
             {children}
-          </SmartApiProvider>
+          </HireKiwiApiProvider>
         </SessionHoldWall>
       </RolesGuard>
     </SessionBootstrap>

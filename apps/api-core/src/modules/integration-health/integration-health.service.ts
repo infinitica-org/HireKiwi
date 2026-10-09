@@ -30,7 +30,7 @@ function withTimeout<T>(promise: Promise<T>): Promise<T> {
  * S6-VV-129 (#585): `/ready` only checks Postgres and Redis, so an expired AI key, a dead SMTP
  * relay or an unreachable object store went unnoticed until users hit it. This probes each
  * third-party dependency once a minute with its cheapest call, exports
- * `smart_integration_up{integration}` (configured integrations only) and keeps the last result
+ * `hirekiwi_integration_up{integration}` (configured integrations only) and keeps the last result
  * for `GET /admin/health/integrations`. `/ready` deliberately stays Postgres + Redis, so a
  * third-party outage never takes the API out of rotation.
  */
@@ -67,7 +67,7 @@ export class IntegrationHealthService implements OnModuleInit, OnModuleDestroy {
       ai_openrouter: ai(openrouter),
       github: async () => {
         const res = await fetch('https://api.github.com/rate_limit', {
-          headers: { 'user-agent': 'smart-integration-health' },
+          headers: { 'user-agent': 'hirekiwi-integration-health' },
         });
         return { up: res.ok, message: res.ok ? undefined : `HTTP ${res.status}` };
       },

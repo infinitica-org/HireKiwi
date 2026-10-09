@@ -35,7 +35,7 @@ describe('assertEmailDomainReceivesMail (S6-VV-155, #609)', () => {
   it('skips reserved test domains outside production', async () => {
     const resolver = vi.fn();
     await assertEmailDomainReceivesMail('owner@acme.test', resolver);
-    await assertEmailDomainReceivesMail('admin@smart.local', resolver);
+    await assertEmailDomainReceivesMail('admin@hirekiwi.local', resolver);
     await assertEmailDomainReceivesMail('hr@e2e-1234.example.com', resolver);
     expect(resolver).not.toHaveBeenCalled();
   });

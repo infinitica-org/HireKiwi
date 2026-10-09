@@ -40,7 +40,7 @@ export function isValidCorrelationId(value: string): boolean {
   return UUID_PATTERN.test(value);
 }
 
-/** Headers to attach when calling another SMART service. */
+/** Headers to attach when calling another HireKiwi service. */
 export function outboundHeaders(correlationId: string): Record<string, string> {
   return { [CORRELATION_HEADER]: correlationId };
 }

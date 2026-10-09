@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '../../generated/prisma/index.js';
 import {
   PROJECT_VERIFY_PROMPT_REF,
-  SMART_TOPICS,
+  HIREKIWI_TOPICS,
   type ProjectGithubSnapshot,
 } from '@hirekiwi/contracts';
 import type { Queue } from 'bullmq';
@@ -142,7 +142,7 @@ export class QlixPollService {
     const analyzedTokens = skills?.totals?.analyzedTokens ?? 0;
     const similarity = result.similarityIndex ?? 0;
     const aiLikelihood = result.aiLikelihood ?? null;
-    const smart = result.smartAssessment ?? null;
+    const hirekiwi = result.hirekiwiAssessment ?? null;
     const routed = routeQlixResult({
       similarityIndex: similarity,
       aiLikelihood,
@@ -171,8 +171,8 @@ export class QlixPollService {
     const skillsJson = skills
       ? (JSON.parse(JSON.stringify(skills)) as Prisma.InputJsonValue)
       : undefined;
-    const smartAssessmentJson = smart
-      ? (JSON.parse(JSON.stringify(smart)) as Prisma.InputJsonValue)
+    const hirekiwiAssessmentJson = hirekiwi
+      ? (JSON.parse(JSON.stringify(hirekiwi)) as Prisma.InputJsonValue)
       : undefined;
 
     await this.prisma.qlixCheckResult.upsert({
@@ -188,12 +188,12 @@ export class QlixPollService {
         suspicionLevel: result.agentReview?.verdict?.suspicionLevel ?? null,
         agentSummary: result.agentReview?.verdict?.summary ?? null,
         skillsJson,
-        smartAssessmentJson,
-        appliedProficiencyCeiling: smart?.appliedProficiencyCeiling ?? null,
-        qualityScore: smart?.qualityScore ?? null,
-        authenticityScore: smart?.authenticityScore ?? null,
-        relevanceScore: smart?.relevanceScore ?? null,
-        gaps: smart?.gaps ?? [],
+        hirekiwiAssessmentJson,
+        appliedProficiencyCeiling: hirekiwi?.appliedProficiencyCeiling ?? null,
+        qualityScore: hirekiwi?.qualityScore ?? null,
+        authenticityScore: hirekiwi?.authenticityScore ?? null,
+        relevanceScore: hirekiwi?.relevanceScore ?? null,
+        gaps: hirekiwi?.gaps ?? [],
         analyzedTokens: analyzedTokens > 0 ? analyzedTokens : null,
       },
       update: {
@@ -206,12 +206,12 @@ export class QlixPollService {
         suspicionLevel: result.agentReview?.verdict?.suspicionLevel ?? null,
         agentSummary: result.agentReview?.verdict?.summary ?? null,
         skillsJson,
-        smartAssessmentJson,
-        appliedProficiencyCeiling: smart?.appliedProficiencyCeiling ?? null,
-        qualityScore: smart?.qualityScore ?? null,
-        authenticityScore: smart?.authenticityScore ?? null,
-        relevanceScore: smart?.relevanceScore ?? null,
-        gaps: smart?.gaps ?? [],
+        hirekiwiAssessmentJson,
+        appliedProficiencyCeiling: hirekiwi?.appliedProficiencyCeiling ?? null,
+        qualityScore: hirekiwi?.qualityScore ?? null,
+        authenticityScore: hirekiwi?.authenticityScore ?? null,
+        relevanceScore: hirekiwi?.relevanceScore ?? null,
+        gaps: hirekiwi?.gaps ?? [],
         analyzedTokens: analyzedTokens > 0 ? analyzedTokens : null,
       },
     });
@@ -274,9 +274,9 @@ export class QlixPollService {
     }
 
     await this.outbox.enqueueEnvelope({
-      topic: SMART_TOPICS.projectVerifyCompleted,
+      topic: HIREKIWI_TOPICS.projectVerifyCompleted,
       partitionKey: payload.projectId,
-      eventType: SMART_TOPICS.projectVerifyCompleted,
+      eventType: HIREKIWI_TOPICS.projectVerifyCompleted,
       source: 'evaluation',
       data: {
         projectId: payload.projectId,

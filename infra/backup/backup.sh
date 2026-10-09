@@ -14,13 +14,13 @@
 set -Eeuo pipefail
 
 : "${BACKUP_AGE_RECIPIENT:?BACKUP_AGE_RECIPIENT (age public key) is required}"
-: "${BACKUP_DEST:?BACKUP_DEST (rclone destination, e.g. offsite:smart-backups) is required}"
+: "${BACKUP_DEST:?BACKUP_DEST (rclone destination, e.g. offsite:hirekiwi-backups) is required}"
 : "${PGHOST:?}" "${PGUSER:?}" "${PGDATABASE:?}"
 
 ENV_NAME="${BACKUP_ENV_NAME:-local}"
 WORK_DIR="${BACKUP_WORK_DIR:-/work}"
 METRICS_DIR="${BACKUP_METRICS_DIR:-/metrics}"
-MINIO_SOURCE="${BACKUP_MINIO_SOURCE:-minio:${MINIO_BUCKET:-smart}}"
+MINIO_SOURCE="${BACKUP_MINIO_SOURCE:-minio:${MINIO_BUCKET:-hirekiwi}}"
 INCLUDE_OBJECTS="${BACKUP_INCLUDE_OBJECTS:-true}"
 KEEP_DAILY="${BACKUP_KEEP_DAILY:-7d}"
 KEEP_WEEKLY="${BACKUP_KEEP_WEEKLY:-29d}"
@@ -53,10 +53,10 @@ on_error() {
     touch "${RUN_DIR}/dump.done" 2>/dev/null || true
     kill "$HOLDER_PID" 2>/dev/null || true
   fi
-  write_metric_file smart_backup_failure \
-    '# HELP smart_backup_last_failure_timestamp_seconds Unix time of the last failed backup run.' \
-    '# TYPE smart_backup_last_failure_timestamp_seconds gauge' \
-    "smart_backup_last_failure_timestamp_seconds{env=\"${ENV_NAME}\"} $(date -u +%s)"
+  write_metric_file hirekiwi_backup_failure \
+    '# HELP hirekiwi_backup_last_failure_timestamp_seconds Unix time of the last failed backup run.' \
+    '# TYPE hirekiwi_backup_last_failure_timestamp_seconds gauge' \
+    "hirekiwi_backup_last_failure_timestamp_seconds{env=\"${ENV_NAME}\"} $(date -u +%s)"
   rm -rf "$RUN_DIR"
 }
 trap 'on_error $LINENO' ERR
@@ -178,15 +178,15 @@ prune weekly "$KEEP_WEEKLY"
 prune monthly "$KEEP_MONTHLY"
 
 FINISHED="$(date -u +%s)"
-write_metric_file smart_backup_success \
-  '# HELP smart_backup_last_success_timestamp_seconds Unix time of the last complete backup upload.' \
-  '# TYPE smart_backup_last_success_timestamp_seconds gauge' \
-  "smart_backup_last_success_timestamp_seconds{env=\"${ENV_NAME}\"} ${FINISHED}" \
-  '# HELP smart_backup_last_duration_seconds Wall-clock duration of the last successful backup.' \
-  '# TYPE smart_backup_last_duration_seconds gauge' \
-  "smart_backup_last_duration_seconds{env=\"${ENV_NAME}\"} $((FINISHED - STARTED))" \
-  '# HELP smart_backup_last_size_bytes Encrypted size of each artifact in the last successful backup.' \
-  '# TYPE smart_backup_last_size_bytes gauge' \
-  "smart_backup_last_size_bytes{env=\"${ENV_NAME}\",artifact=\"db\"} ${DB_BYTES}" \
-  "smart_backup_last_size_bytes{env=\"${ENV_NAME}\",artifact=\"objects\"} ${OBJECTS_BYTES}"
+write_metric_file hirekiwi_backup_success \
+  '# HELP hirekiwi_backup_last_success_timestamp_seconds Unix time of the last complete backup upload.' \
+  '# TYPE hirekiwi_backup_last_success_timestamp_seconds gauge' \
+  "hirekiwi_backup_last_success_timestamp_seconds{env=\"${ENV_NAME}\"} ${FINISHED}" \
+  '# HELP hirekiwi_backup_last_duration_seconds Wall-clock duration of the last successful backup.' \
+  '# TYPE hirekiwi_backup_last_duration_seconds gauge' \
+  "hirekiwi_backup_last_duration_seconds{env=\"${ENV_NAME}\"} $((FINISHED - STARTED))" \
+  '# HELP hirekiwi_backup_last_size_bytes Encrypted size of each artifact in the last successful backup.' \
+  '# TYPE hirekiwi_backup_last_size_bytes gauge' \
+  "hirekiwi_backup_last_size_bytes{env=\"${ENV_NAME}\",artifact=\"db\"} ${DB_BYTES}" \
+  "hirekiwi_backup_last_size_bytes{env=\"${ENV_NAME}\",artifact=\"objects\"} ${OBJECTS_BYTES}"
 log "done in $((FINISHED - STARTED))s"

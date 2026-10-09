@@ -1,13 +1,13 @@
 ---
 title: RBAC Requirements & Role-Based UI Visibility Specification
-description: Authoritative Role-Based Access Control (RBAC) requirements, portal topology, module-by-module visibility matrix, and legal/operational justifications for UI access across SMART.
+description: Authoritative Role-Based Access Control (RBAC) requirements, portal topology, module-by-module visibility matrix, and legal/operational justifications for UI access across HireKiwi.
 ---
 
 # RBAC Requirements & Role-Based UI Visibility Specification
 
 ## 1. Executive Summary & Zero-Trust Governance
 
-SmartZen (SMART) enforces zero-trust Role-Based Access Control (RBAC) across all six web applications and backend API routes. Access control is modeled around multi-tenant boundaries, criterion-referenced evaluation integrity, and strict adherence to the **Digital Personal Data Protection (DPDP) Act 2023**.
+HireKiwi enforces zero-trust Role-Based Access Control (RBAC) across all six web applications and backend API routes. Access control is modeled around multi-tenant boundaries, criterion-referenced evaluation integrity, and strict adherence to the **Digital Personal Data Protection (DPDP) Act 2023**.
 
 The architecture ensures that:
 1. **No UI element is accessible without cryptographically verified role membership.**
@@ -50,7 +50,7 @@ User identity is bound to a single canonical `UserRole` (`packages/contracts/src
 | `SUPER_ADMIN` | Platform Operator | Global platform administrator. Holds platform-wide configuration access, rate limit overrides, tenant approvals, DSR execution, and audit log inspection. |
 | `SUPPORT_LEAD` | Customer Support Lead | Escalated platform operations, tenant dispute investigation, assisted account recovery, and verification exception handling. |
 | `SUPPORT_AGENT` | Support Specialist | First-line customer support. View-only access to non-sensitive tenant metadata; strictly blocked from viewing raw candidate PII or unmasked telemetry. |
-| `B2B_PARTNER` | API Consumer | Machine-to-machine partner holding an `X-SMART-API-KEY`. Interacts via programmatic REST contracts; has no interactive web UI portal. |
+| `B2B_PARTNER` | API Consumer | Machine-to-machine partner holding an `X-HireKiwi-API-KEY`. Interacts via programmatic REST contracts; has no interactive web UI portal. |
 | `PUBLIC` | Anonymous Visitor | Unauthenticated external user verifying HMAC-SHA256 signed public credentials on `web-verify`. |
 
 ---
@@ -91,7 +91,7 @@ The following matrix documents interface visibility, view access, and action cap
 
 ## 4. Justifications for UI Visibility & Access Restrictions
 
-Every access boundary in SMART is justified by explicit legal, operational, and integrity requirements:
+Every access boundary in HireKiwi is justified by explicit legal, operational, and integrity requirements:
 
 ### 4.1 Indian DPDP Act 2023 Compliance & Data Minimization
 
@@ -117,7 +117,7 @@ Every access boundary in SMART is justified by explicit legal, operational, and 
 
 3. **Zero Government ID Display:**
    - **Restricted from:** All interfaces.
-   - **Justification:** SMART collects zero Aadhaar numbers, PAN cards, or passport images. Identity is verified exclusively via federated institutional SSO and GitHub OAuth. No UI view exists to store, render, or expose Indian national identity numbers.
+   - **Justification:** HireKiwi collects zero Aadhaar numbers, PAN cards, or passport images. Identity is verified exclusively via federated institutional SSO and GitHub OAuth. No UI view exists to store, render, or expose Indian national identity numbers.
 
 4. **Right to Erasure & DSR Interface:**
    - **Restricted to:** `SUPER_ADMIN` with automated cryptographic logging.

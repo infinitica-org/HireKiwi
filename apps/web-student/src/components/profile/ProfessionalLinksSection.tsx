@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQueryClient } from '@hirekiwi/ui';
-import { Link2, Loader2, ArrowRight, Plus } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import {
   applyServerDraft,
   buildProfessionalLinksSavePayload,
@@ -15,8 +15,11 @@ import {
   ProfileSectionError,
   ProfileSectionHeader,
 } from '@/components/profile/ProfileSectionChrome';
+import { ProfileToast } from '@/components/profile/ProfileToast';
+import { ProfileLookupCard, useProfileLookup } from '@/components/profile/IntegrationProfileLookup';
 import {
   CodingPlatformIntegrations,
+  ConsentNotice,
   IntegrationCard,
 } from '@/components/profile/CodingPlatformIntegrations';
 import { profileSectionMeta } from '@/lib/profile-sections';
@@ -84,6 +87,12 @@ const PLATFORMS: PlatformConfig[] = [
   // },
 ];
 
+/** The only data HireKiwi reads from each profile (shown in the consent notice). */
+const PLATFORM_READS: Record<PlatformKey, string> = {
+  github: 'your profile name and photo, public repositories, languages and contribution activity',
+  linkedin: 'your public profile link and the sections you choose to import',
+};
+
 export function ProfessionalLinksSection() {
   const queryClient = useQueryClient();
   const { data, isLoading, isError, error: queryError } = useOnboarding();
@@ -98,7 +107,36 @@ export function ProfessionalLinksSection() {
   const [inputValue, setInputValue] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
-  const [githubPreview, setGithubPreview] = useState<FetchGithubProfileResponse | null>(null);
+  const [consented, setConsented] = useState(false);
+  // The GitHub login the student confirmed is theirs by selecting the profile card.
+  const [selectedGithub, setSelectedGithub] = useState<string | null>(null);
+
+  // Check the GitHub username as it is typed, and show whose profile it is.
+  const githubTyped = inputValue
+    .trim()
+    .replace(/^https?:\/\/(www\.)?github\.com\//iu, '')
+    .replace(/\/.*$/u, '');
+  const githubCurrent = formData.githubUrl.replace(/\/+$/u, '').split('/').pop()?.toLowerCase();
+  const githubUnchanged =
+    Boolean(githubCurrent) &&
+    githubTyped.toLowerCase() === githubCurrent &&
+    Boolean(formData.githubUrl.trim());
+  const githubNeedsCheck = activeModal === 'github' && !githubUnchanged;
+  const githubLookup = useProfileLookup<FetchGithubProfileResponse>({
+    username: githubTyped,
+    enabled: githubNeedsCheck,
+    platformName: 'GitHub',
+    lookup: (name) => api.users.fetchGithubProfile({ githubUrl: `https://github.com/${name}` }),
+    toProfile: (profile) => ({
+      username: profile.login,
+      displayName: profile.name || null,
+      avatarUrl: profile.avatarUrl || null,
+      profileUrl: `https://github.com/${profile.login}`,
+      summary: `${profile.publicRepoCount} public repos`,
+    }),
+  });
+  const githubSelected =
+    githubLookup.status === 'found' && selectedGithub === (githubLookup.profile?.username ?? null);
 
   useEffect(() => {
     if (!data) return;
@@ -109,7 +147,7 @@ export function ProfessionalLinksSection() {
   useEffect(() => {
     if (isError) {
       setError(
-        isSmartApiError(queryError)
+        isHireKiwiApiError(queryError)
           ? queryError.message
           : 'Could not load saved professional links.',
       );
@@ -134,10 +172,11 @@ export function ProfessionalLinksSection() {
     return false;
   };
 
-  const isVerified = (platformId: PlatformKey) => {
-    if (platformId === 'github') return Boolean(formData.socialVerification.github?.verified);
-    if (platformId === 'linkedin') return Boolean(formData.socialVerification.linkedin?.verified);
-    return false;
+  /** True (and shows why) when a new connection has not been agreed to yet. */
+  const consentMissing = (platformId: PlatformKey): boolean => {
+    if (isConnected(platformId) || consented) return false;
+    setModalError('Please agree to share your public details first.');
+    return true;
   };
 
   const handleOpenConnect = (platform: PlatformConfig) => {
@@ -150,26 +189,31 @@ export function ProfessionalLinksSection() {
     }
     setInputValue(cleanVal);
     setModalError(null);
-    setGithubPreview(null);
+    setSelectedGithub(null);
+    setConsented(false);
     setActiveModal(platform.id);
   };
 
-  const handleSaveAll = async (updatedForm: OnboardingProfileForm) => {
+  const handleSaveAll = async (
+    updatedForm: OnboardingProfileForm,
+    clear: ReadonlyArray<'linkedinUrl' | 'githubUrl'> = [],
+    successMessage = 'Professional links saved successfully.',
+  ) => {
     setSaving(true);
     setError(null);
     setSuccess(null);
     try {
-      const payload = buildProfessionalLinksSavePayload(updatedForm);
+      const payload = buildProfessionalLinksSavePayload(updatedForm, clear);
       await api.users.saveOnboarding(payload);
       setFormData((current) => ({
         ...current,
         linkedinUrl: payload.linkedinUrl ?? '',
         githubUrl: payload.githubUrl ?? '',
       }));
-      setSuccess('Professional links saved successfully.');
+      setSuccess(successMessage);
       await queryClient.invalidateQueries({ queryKey: queryKeys.myOnboarding() });
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not save professional links.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not save professional links.');
     } finally {
       setSaving(false);
     }
@@ -177,38 +221,25 @@ export function ProfessionalLinksSection() {
 
   const handleSaveModal = async (platformId: PlatformKey) => {
     const trimmed = inputValue.trim();
+    const platformName = platformId === 'github' ? 'GitHub' : 'LinkedIn';
+    // Connecting needs a username. Removing a link is what Disconnect is for.
+    if (!trimmed) {
+      setModalError(`Enter your ${platformName} username or profile URL.`);
+      return;
+    }
+    if (consentMissing(platformId)) return;
+    setModalError(null);
+
     if (platformId === 'github') {
-      const fullUrl = trimmed
-        ? trimmed.startsWith('http')
-          ? trimmed
-          : `https://github.com/${trimmed}`
-        : '';
-      const nextForm = {
-        ...formData,
-        githubUrl: fullUrl,
-        socialVerification: {
-          ...formData.socialVerification,
-          ...(fullUrl ? {} : { github: null }),
-        },
-      };
+      const fullUrl = trimmed.startsWith('http') ? trimmed : `https://github.com/${trimmed}`;
+      const nextForm = { ...formData, githubUrl: fullUrl };
       setFormData(nextForm);
-      await handleSaveAll(nextForm);
-    } else if (platformId === 'linkedin') {
-      const fullUrl = trimmed
-        ? trimmed.startsWith('http')
-          ? trimmed
-          : `https://linkedin.com/in/${trimmed}`
-        : '';
-      const nextForm = {
-        ...formData,
-        linkedinUrl: fullUrl,
-        socialVerification: {
-          ...formData.socialVerification,
-          ...(fullUrl ? {} : { linkedin: null }),
-        },
-      };
+      await handleSaveAll(nextForm, [], 'GitHub connected.');
+    } else {
+      const fullUrl = trimmed.startsWith('http') ? trimmed : `https://linkedin.com/in/${trimmed}`;
+      const nextForm = { ...formData, linkedinUrl: fullUrl };
       setFormData(nextForm);
-      await handleSaveAll(nextForm);
+      await handleSaveAll(nextForm, [], 'LinkedIn connected.');
     }
     setActiveModal(null);
   };
@@ -218,52 +249,30 @@ export function ProfessionalLinksSection() {
       const nextForm = {
         ...formData,
         githubUrl: '',
-        socialVerification: {
-          ...formData.socialVerification,
-          github: null,
-        },
+        socialVerification: { ...formData.socialVerification, github: null },
       };
       setFormData(nextForm);
-      await handleSaveAll(nextForm);
+      await handleSaveAll(nextForm, ['githubUrl'], 'GitHub disconnected.');
     } else if (platformId === 'linkedin') {
       const nextForm = {
         ...formData,
         linkedinUrl: '',
-        socialVerification: {
-          ...formData.socialVerification,
-          linkedin: null,
-        },
+        socialVerification: { ...formData.socialVerification, linkedin: null },
       };
       setFormData(nextForm);
-      await handleSaveAll(nextForm);
+      await handleSaveAll(nextForm, ['linkedinUrl'], 'LinkedIn disconnected.');
     }
     setActiveModal(null);
   };
 
-  const handleFetchGithub = async () => {
-    const trimmed = inputValue.trim();
-    if (!trimmed) return;
-    const url = trimmed.startsWith('http') ? trimmed : `https://github.com/${trimmed}`;
-    setActionLoading(true);
-    setModalError(null);
-    setGithubPreview(null);
-    try {
-      const profile = await api.users.fetchGithubProfile({ githubUrl: url });
-      setGithubPreview(profile);
-    } catch (err: unknown) {
-      const message =
-        isSmartApiError(err) && err.code === 'github_user_not_found'
-          ? 'GitHub profile not found.'
-          : 'Could not reach GitHub right now.';
-      setModalError(message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const confirmGithubProfile = async () => {
-    if (!githubPreview) return;
-    const fullUrl = `https://github.com/${githubPreview.login}`;
+    const preview = githubLookup.raw;
+    if (!preview || !githubSelected) {
+      setModalError('Select your GitHub profile to continue.');
+      return;
+    }
+    if (consentMissing('github')) return;
+    const fullUrl = `https://github.com/${preview.login}`;
     const nextForm: OnboardingProfileForm = {
       ...formData,
       githubUrl: fullUrl,
@@ -272,22 +281,23 @@ export function ProfessionalLinksSection() {
         github: {
           verified: true,
           verifiedAt: new Date().toISOString(),
-          login: githubPreview.login,
-          name: githubPreview.name,
-          avatarUrl: githubPreview.avatarUrl,
-          publicRepoCount: githubPreview.publicRepoCount,
+          login: preview.login,
+          name: preview.name,
+          avatarUrl: preview.avatarUrl,
+          publicRepoCount: preview.publicRepoCount,
           selectedRepos: formData.socialVerification.github?.selectedRepos ?? [],
         },
       },
     };
     setFormData(nextForm);
-    await handleSaveAll(nextForm);
+    await handleSaveAll(nextForm, [], 'GitHub connected.');
     setActiveModal(null);
   };
 
   const handleVerifyLinkedin = async () => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
+    if (consentMissing('linkedin')) return;
     setActionLoading(true);
     setModalError(null);
     try {
@@ -325,11 +335,7 @@ export function ProfessionalLinksSection() {
       {!isLoading ? (
         <>
           {error ? <ProfileSectionError>{error}</ProfileSectionError> : null}
-          {success ? (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
-              {success}
-            </div>
-          ) : null}
+          <ProfileToast message={success} onDismiss={() => setSuccess(null)} />
 
           <div
             data-testid="integration-cards"
@@ -346,7 +352,6 @@ export function ProfessionalLinksSection() {
                   name={platform.name}
                   description={platform.description}
                   connected={connected}
-                  verified={isVerified(platform.id)}
                   link={
                     connected && currentUrl
                       ? {
@@ -425,58 +430,35 @@ export function ProfessionalLinksSection() {
                           />
                         </div>
 
-                        {/* GitHub Specific Preview & Verification */}
-                        {isGh && (
-                          <div className="space-y-3 pt-3">
-                            {!githubPreview && inputValue.trim() && (
-                              <button
-                                type="button"
-                                disabled={actionLoading}
-                                onClick={handleFetchGithub}
-                                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-3.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-                              >
-                                {actionLoading ? (
-                                  <Loader2 className="size-3.5 animate-spin" />
-                                ) : (
-                                  <ArrowRight className="size-3.5" />
-                                )}
-                                Preview Profile Stats
-                              </button>
-                            )}
+                        {isGh && githubNeedsCheck ? (
+                          <ProfileLookupCard
+                            platformName="GitHub"
+                            status={githubLookup.status}
+                            profile={githubLookup.profile}
+                            message={githubLookup.message}
+                            selected={githubSelected}
+                            onSelect={() =>
+                              setSelectedGithub(githubLookup.profile?.username ?? null)
+                            }
+                            onRetry={githubLookup.retry}
+                          />
+                        ) : null}
 
-                            {modalError && (
-                              <p className="text-xs text-rose-600 dark:text-rose-400">
-                                {modalError}
-                              </p>
-                            )}
-
-                            {githubPreview && (
-                              <div className="flex items-center gap-3 rounded-md border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
-                                <img
-                                  src={githubPreview.avatarUrl}
-                                  alt=""
-                                  className="size-10 rounded-full border border-emerald-300 object-cover"
-                                />
-                                <div className="min-w-0 flex-1 text-left">
-                                  <p className="truncate text-xs font-bold text-zinc-900 dark:text-white">
-                                    {githubPreview.name || githubPreview.login}
-                                  </p>
-                                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                                    @{githubPreview.login} · {githubPreview.publicRepoCount} public
-                                    repos
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={confirmGithubProfile}
-                                  className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-bold text-white hover:bg-emerald-700"
-                                >
-                                  Confirm
-                                </button>
-                              </div>
-                            )}
-                          </div>
+                        {connected ? null : (
+                          <ConsentNotice
+                            platformName={isGh ? 'GitHub' : 'LinkedIn'}
+                            reads={PLATFORM_READS[activeModal]}
+                            checked={consented}
+                            onChange={setConsented}
+                            disabled={saving || actionLoading}
+                          />
                         )}
+
+                        {modalError ? (
+                          <p role="alert" className="mt-2 text-xs text-rose-600 dark:text-rose-400">
+                            {modalError}
+                          </p>
+                        ) : null}
 
                         {/* LinkedIn OAuth button option */}
                         {!isGh && (
@@ -524,11 +506,20 @@ export function ProfessionalLinksSection() {
                             )}
                             <button
                               type="button"
-                              disabled={saving}
-                              onClick={() => handleSaveModal(activeModal)}
+                              disabled={
+                                saving ||
+                                !inputValue.trim() ||
+                                (isGh && githubNeedsCheck && !githubSelected) ||
+                                (!connected && !consented)
+                              }
+                              onClick={() =>
+                                isGh && githubNeedsCheck
+                                  ? confirmGithubProfile()
+                                  : handleSaveModal(activeModal)
+                              }
                               className="rounded-md bg-[#6f8580] px-7 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#5f746f] active:scale-[0.99] disabled:opacity-50 transition"
                             >
-                              {saving ? 'Connecting…' : 'Connect'}
+                              {saving ? 'Connecting…' : connected ? 'Save' : 'Connect'}
                             </button>
                           </div>
                         </div>

@@ -4,6 +4,10 @@ import AssessmentsPage from './page';
 
 const listSkillClaimsMock = vi.fn();
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
+}));
+
 vi.mock('@/lib/api', () => ({
   api: {
     assessment: {

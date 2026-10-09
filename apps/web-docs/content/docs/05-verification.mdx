@@ -11,7 +11,7 @@ In legacy recruitment, candidate claims (resumes, portfolios, listed skills) are
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                        SMARTKIWI VERIFICATION & TRUST PIPELINE                          │
+│                        HireKiwi VERIFICATION & TRUST PIPELINE                          │
 ├────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                        │
 │  [Candidate Claim / Artifact]                                                          │
@@ -51,10 +51,10 @@ The core doctrine of HireKiwi verification is:
 
 The Verification Engine runs as a dedicated modular service within `apps/api-core/src/modules/assessment` and `work-experience`:
 
-- **Event-Driven Execution:** Runs on distributed BullMQ worker pools responding asynchronously to submission events (`smart.evidence.submitted`).
+- **Event-Driven Execution:** Runs on distributed BullMQ worker pools responding asynchronously to submission events (`hirekiwi.evidence.submitted`).
 - **Sandboxed Outbound Connectors:** Communicates with external identity providers, git hosts, credential authorities, and institutional databases through rate-limited, egress-filtered security sandboxes.
 - **Cryptographic Attestation:** Emits tamper-evident, HMAC-SHA256 signed verification tokens containing canonical `verificationId`, source URI, digest hash, validator timestamp, and calibrated confidence rating.
-- **Standardized Verification ID:** Replaces arbitrary hashes with structured, inspectable identifiers (`VK-YYYYMMDD-UUID8`) resolving to `becomesmart.online/verify/{verificationId}`.
+- **Standardized Verification ID:** Replaces arbitrary hashes with structured, inspectable identifiers (`VK-YYYYMMDD-UUID8`) resolving to `hirekiwi.online/verify/{verificationId}`.
 - **Continuous Provenance Monitoring:** Periodically re-verifies public repositories and credential endpoints to detect post-verification repository deletions, commit re-writes, or certificate revocations.
 
 ---
@@ -124,7 +124,7 @@ Every piece of submitted evidence transitions through a formal state machine:
                ┌────────────────┐
                │   SUBMITTED    │
                └───────┬────────┘
-                       │ Event: smart.evidence.submitted
+                       │ Event: hirekiwi.evidence.submitted
                ┌───────▼────────┐
                │   INSPECTING   │
                └───────┬────────┘
@@ -220,4 +220,4 @@ CREATE TABLE "VerificationAuditLog" (
 );
 ```
 
-Every verified credential can be publicly resolved and cryptographically checked at `becomesmart.online/verify/{verificationId}`, guaranteeing tamper-evident proof to recruiters.
+Every verified credential can be publicly resolved and cryptographically checked at `hirekiwi.online/verify/{verificationId}`, guaranteeing tamper-evident proof to recruiters.

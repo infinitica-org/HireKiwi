@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApplyJobDialog } from './ApplyJobDialog';
@@ -112,7 +112,7 @@ describe('ApplyJobDialog (Th6-387/388/389)', () => {
     studentApplications.preview.mockResolvedValue(preview());
     studentApplications.apply
       .mockRejectedValueOnce(
-        new SmartApiError({
+        new HireKiwiApiError({
           error: 'job_closed',
           message: 'This job is no longer accepting applications.',
           statusCode: 409,
@@ -134,7 +134,7 @@ describe('ApplyJobDialog (Th6-387/388/389)', () => {
   it('shows a 422 field message from the server', async () => {
     studentApplications.preview.mockResolvedValue(preview());
     studentApplications.apply.mockRejectedValue(
-      new SmartApiError({
+      new HireKiwiApiError({
         error: 'validation_failed',
         message: 'Request failed validation.',
         statusCode: 422,
@@ -162,7 +162,7 @@ describe('ApplyJobDialog (Th6-387/388/389)', () => {
 
   it('says the job is closed when the preview is refused with 409', async () => {
     studentApplications.preview.mockRejectedValue(
-      new SmartApiError({ error: 'job_closed', message: 'closed', statusCode: 409 } as never),
+      new HireKiwiApiError({ error: 'job_closed', message: 'closed', statusCode: 409 } as never),
     );
     renderDialog();
     expect(await screen.findByText('This job is no longer accepting applications.')).toBeTruthy();

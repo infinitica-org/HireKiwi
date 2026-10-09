@@ -13,7 +13,7 @@ die() {
   exit 1
 }
 
-echo "==> SMART bootstrap"
+echo "==> HireKiwi bootstrap"
 command -v pnpm >/dev/null || die "Install pnpm 11 / Node 22.20 first (see .nvmrc)."
 
 cp -n .env.example .env 2>/dev/null || true
@@ -28,7 +28,7 @@ echo "==> starting data plane (postgres, redis, redpanda, minio, mailpit)"
 pnpm infra:up
 
 echo "==> waiting for postgres"
-until "${COMPOSE[@]}" exec -T postgres pg_isready -U smart -d smart >/dev/null 2>&1; do
+until "${COMPOSE[@]}" exec -T postgres pg_isready -U hirekiwi -d hirekiwi >/dev/null 2>&1; do
   sleep 1
 done
 
@@ -46,12 +46,22 @@ pnpm db:generate
 pnpm db:deploy
 pnpm db:seed
 
+echo "==> credential-verifier: own database on the same postgres instance"
+"${COMPOSE[@]}" exec -T postgres psql -U hirekiwi -d hirekiwi -tc \
+  "SELECT 1 FROM pg_database WHERE datname = 'credential_verifier'" | grep -q 1 ||
+  "${COMPOSE[@]}" exec -T postgres psql -U hirekiwi -d hirekiwi -c \
+    "CREATE DATABASE credential_verifier OWNER hirekiwi"
+pnpm cv:db:generate
+pnpm cv:db:deploy
+pnpm cv:db:seed
+
 echo
 echo "Ready."
 echo "  API:      pnpm dev:api          -> http://localhost:3000/health"
+echo "  Verifier: pnpm --filter @hirekiwi/credential-verifier dev -> http://localhost:3100/api/docs"
 echo "  Swagger:  http://localhost:3000/api/docs"
 echo "  Student:  pnpm --filter @hirekiwi/web-student dev"
-echo "  Login:    student@smart.local / ChangeMe!Dev"
+echo "  Login:    student@hirekiwi.local / ChangeMe!Dev"
 echo "  Obs:      pnpm infra:obs        -> Prometheus :9090, Grafana :3100, Loki :3101"
 echo "  Verify:   pnpm verify:handover  (API + four portals must be running)"
 echo "  Guide:    TEAM.md and docs/delivery/LOCAL_DEV.md"

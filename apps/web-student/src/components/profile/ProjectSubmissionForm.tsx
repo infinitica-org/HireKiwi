@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { GithubRepoSummary, ProjectDto } from '@hirekiwi/contracts';
 import { AlertCircle, CheckCircle2, GitBranch, Plus, X } from 'lucide-react';
 import { ProjectDetailModal } from '@/components/profile/projects/ProjectDetailModal';
@@ -180,7 +180,7 @@ export function ProjectSubmissionForm() {
         .listGithubRepos({ login: githubLogin })
         .then((res) => setRepos(res.repos))
         .catch((err: unknown) => {
-          if (isSmartApiError(err) && err.message) {
+          if (isHireKiwiApiError(err) && err.message) {
             setReposError(err.message);
             return;
           }
@@ -325,7 +325,7 @@ export function ProjectSubmissionForm() {
         evidenceType="PROJECT"
         description={meta.description}
         action={
-          canSubmitProjects ? (
+          canSubmitProjects && displayProjects.length > 0 ? (
             <button
               type="button"
               onClick={() => openForm()}
@@ -401,14 +401,14 @@ export function ProjectSubmissionForm() {
       ) : null}
 
       {canSubmitProjects && displayProjects.length > 0 ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-amber-100 bg-amber-50/60 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[var(--ds-text-secondary)]">
+        <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800 dark:bg-zinc-900/40">
+          <p className="text-zinc-600 dark:text-zinc-300">
             Tip: Import projects directly from GitHub to save time.
           </p>
           <button
             type="button"
             onClick={() => openForm({ showGithubImport: true })}
-            className="inline-flex items-center gap-1.5 font-semibold text-[var(--ds-green)] hover:underline"
+            className="inline-flex items-center gap-1.5 font-semibold text-teal-700 hover:underline dark:text-teal-400"
           >
             <GitBranch className="h-4 w-4" aria-hidden="true" />
             Import from GitHub →

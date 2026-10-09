@@ -39,6 +39,7 @@ describe('EmployerApplicantsService (Th6-390/391)', () => {
   let actor: any;
   let ownJob: unknown;
   let prisma: any;
+  let storage: any;
   let service: EmployerApplicantsService;
 
   beforeEach(() => {
@@ -54,16 +55,23 @@ describe('EmployerApplicantsService (Th6-390/391)', () => {
       requiredSkills: [{ minProficiency: 'INTERMEDIATE', skill: { code: skillA.code } }],
     };
     prisma = {
-      user: { findUnique: vi.fn(async () => actor) },
+      user: {
+        findUnique: vi.fn(async () => actor),
+        findMany: vi.fn(async (): Promise<unknown[]> => []),
+      },
       jobOpening: {
         findFirst: vi.fn(async ({ where }: any) =>
           where.companyId === IDS.companyA && where.id === JOB ? ownJob : null,
         ),
       },
-      application: { findMany: vi.fn(async () => rows) },
+      application: {
+        findMany: vi.fn(async () => rows),
+        findFirst: vi.fn(async (): Promise<unknown> => null),
+      },
       skillClaim: { findMany: vi.fn(async () => []) },
     };
-    service = new EmployerApplicantsService(prisma);
+    storage = { getSignedDownloadUrl: vi.fn(async (key: string) => `https://files.test/${key}`) };
+    service = new EmployerApplicantsService(prisma, storage);
   });
 
   it('lists applicants from the snapshot with status, fit and applied date', async () => {
@@ -197,5 +205,66 @@ describe('EmployerApplicantsService (Th6-390/391)', () => {
     expect(sortKeyFor('fit', base)).toEqual({ a: -80, b: -1000, id: 'x' });
     expect(sortKeyFor('applied', base)).toEqual({ a: -1000, b: 0, id: 'x' });
     expect(sortKeyFor('status', base)).toEqual({ a: 0, b: -1000, id: 'x' });
+  });
+
+  it('shows each applicant photo as a fresh signed link, and null when they have none', async () => {
+    rows = [row(1), row(2)];
+    prisma.user.findMany.mockResolvedValue([
+      { id: '50000000-0000-4000-8000-000000000001', profilePhotoObjectKey: 'photos/one.png' },
+      { id: '50000000-0000-4000-8000-000000000002', profilePhotoObjectKey: null },
+    ]);
+    const result = await service.list(IDS.owner, JOB, query());
+    const byName = new Map(result.applicants.map((card) => [card.candidateName, card.photoUrl]));
+    expect(byName.get('Candidate 1')).toBe('https://files.test/photos/one.png');
+    expect(byName.get('Candidate 2')).toBeNull();
+  });
+
+  describe('applicant detail', () => {
+    const APPLICATION = 'a0000000-0000-4000-8000-000000000001';
+    const fullProfile = {
+      fullName: 'Asha Rao',
+      profilePhotoUrl: null,
+      trackName: null,
+      trackCategory: null,
+      skills: [],
+      declaredSkillsCount: 0,
+      projects: [],
+      workExperience: [],
+      certificate: null,
+      externalCertificates: [],
+    };
+
+    it('returns the snapshot profile with a fresh photo link, scoped to the caller company', async () => {
+      prisma.application.findFirst.mockResolvedValue({
+        id: APPLICATION,
+        studentId: 's1',
+        stage: 'APPLIED',
+        coverNote: 'Keen to join.',
+        createdAt: new Date(Date.UTC(2026, 9, 1)),
+        opening: { id: JOB, roleTitle: 'Backend Engineer' },
+        snapshot: { profileJson: fullProfile, fitJson: null },
+        student: { profilePhotoObjectKey: 'photos/asha.png' },
+      });
+      const detail = await service.detail(IDS.owner, APPLICATION);
+      expect(detail.profile.fullName).toBe('Asha Rao');
+      expect(detail.photoUrl).toBe('https://files.test/photos/asha.png');
+      expect(detail.coverNote).toBe('Keen to join.');
+      expect(detail.statusLabel).toBeTruthy();
+      expect(prisma.application.findFirst.mock.calls[0]?.[0].where).toMatchObject({
+        id: APPLICATION,
+        opening: { companyId: IDS.companyA },
+      });
+    });
+
+    it('answers 404 for an applicant of another company or without a usable snapshot', async () => {
+      await expect(service.detail(IDS.owner, APPLICATION)).rejects.toMatchObject({ status: 404 });
+      prisma.application.findFirst.mockResolvedValue({
+        id: APPLICATION,
+        snapshot: { profileJson: { broken: true }, fitJson: null },
+        opening: { id: JOB, roleTitle: 'x' },
+        student: { profilePhotoObjectKey: null },
+      });
+      await expect(service.detail(IDS.owner, APPLICATION)).rejects.toMatchObject({ status: 404 });
+    });
   });
 });

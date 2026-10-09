@@ -18,6 +18,7 @@ import type { FastifyRequest } from 'fastify';
 import {
   EVIDENCE_FILE_MAX_BYTES,
   API_PREFIX,
+  UpdateWorkExperienceDeclarationSchema,
   type SendManagerEndorsementDto,
 } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -49,6 +50,25 @@ export class WorkExperienceController {
   @ApiResponse({ status: 200, description: 'Ops Dashboard items list.' })
   getOpsDashboard(@CurrentUser() user: RequestUser) {
     return this.service.getOpsDashboard(user);
+  }
+
+  @Get('declaration')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get candidate work experience declaration status.' })
+  @ApiResponse({ status: 200, description: 'Work experience declaration status.' })
+  getDeclaration(@CurrentUser() user: RequestUser) {
+    return this.service.getDeclaration(user.sub);
+  }
+
+  @Put('declaration')
+  @Roles('STUDENT')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update candidate work experience declaration status.' })
+  @ApiResponse({ status: 200, description: 'Updated work experience declaration status.' })
+  updateDeclaration(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = UpdateWorkExperienceDeclarationSchema.parse(body);
+    return this.service.setDeclaration(user.sub, parsed.hasNoWorkExperience);
   }
 
   @Get(':id')

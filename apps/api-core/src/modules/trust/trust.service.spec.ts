@@ -87,7 +87,7 @@ describe('TrustService', () => {
     it('should create a new trust case and publish audit event', async () => {
       prisma.user.findUnique.mockResolvedValue({
         id: mockCandidateId,
-        email: 'candidate@smart.edu',
+        email: 'candidate@hirekiwi.edu',
       });
       prisma.trustCase.create.mockResolvedValue({
         id: mockCaseId,

@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 
-const SECRET_KEY = process.env.CERT_SIGNATURE_SECRET ?? 'smart-certificate-signing-key-v1';
+const SECRET_KEY = process.env.CERT_SIGNATURE_SECRET ?? 'hirekiwi-certificate-signing-key-v1';
 
 /**
  * Computes the canonical HMAC-SHA256 signature hash for a certificate UUID.

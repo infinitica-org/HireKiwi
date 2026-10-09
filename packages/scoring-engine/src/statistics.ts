@@ -20,7 +20,7 @@ export function mean(values: readonly number[]): number {
  * practitioners is a *sample* of expert judgment, not the whole population of
  * possible judges. Using the population formula would understate sigma and
  * therefore publish a confidence band narrower than the evidence supports —
- * which would be exactly the kind of inflation SMART promises not to do.
+ * which would be exactly the kind of inflation HireKiwi promises not to do.
  */
 export function standardDeviation(values: readonly number[]): number {
   const n = values.length;

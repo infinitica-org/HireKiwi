@@ -2,7 +2,7 @@
   "name": "@hirekiwi/contracts",
   "version": "0.1.0",
   "private": true,
-  "description": "SMART cross-module contract: domain enums, DTOs and Kafka event payloads. THE integration boundary — architect-owned.",
+  "description": "HireKiwi cross-module contract: domain enums, DTOs and Kafka event payloads. THE integration boundary — architect-owned.",
   "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -17,7 +17,7 @@ Skeleton files initialized. Controller and service structures registered in `App
 - Attempt lifecycle states (Start, Resume, SaveDraft)
 - Sandbox executor interfacing (L2 code sandbox)
 - Integrity tracking (DevTools detection, browser tab focus blurs)
-- Kafka message publishing (e.g., `smart.assessment.submitted` events)
+- Kafka message publishing (e.g., `hirekiwi.assessment.submitted` events)
 - DB storage operations and Redis memory cache locks
 
 ## Ownership & Boundaries

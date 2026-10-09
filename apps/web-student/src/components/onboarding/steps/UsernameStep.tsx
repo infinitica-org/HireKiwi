@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { AtSign, CheckCircle2 } from 'lucide-react';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { api } from '@/lib/api';
 import { ErrorBanner, PrimaryButton, StepHeading, TextInput } from '../wizard-ui';
 
@@ -36,7 +36,7 @@ export default function UsernameStep({ onContinue }: UsernameStepProps) {
       await api.users.reserveUsername({ username: trimmed });
       setSaved(true);
     } catch (err) {
-      if (isSmartApiError(err)) {
+      if (isHireKiwiApiError(err)) {
         if (err.code === 'rate_limit_exceeded') {
           const wait = err.retryAfterSeconds ? `${String(err.retryAfterSeconds)}s` : 'a bit';
           setError(`Too many attempts — try again in ${wait}.`);

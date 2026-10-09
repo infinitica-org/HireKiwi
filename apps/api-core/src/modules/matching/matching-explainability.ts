@@ -1,5 +1,5 @@
 import { getSkillBlueprint } from '@hirekiwi/contracts';
-import { QlixSmartAssessmentSchema } from '../evaluation/qlix-client.js';
+import { QlixHireKiwiAssessmentSchema } from '../evaluation/qlix-client.js';
 
 export type RulesExplainability = {
   strongCompetencies: readonly string[];
@@ -10,7 +10,7 @@ export type RulesExplainability = {
 export type QlixProjectExplainability = {
   skillCodes: readonly string[];
   gaps: readonly string[];
-  smartAssessmentJson: unknown;
+  hirekiwiAssessmentJson: unknown;
 };
 
 export type CapabilityExplainabilityRow = {
@@ -42,14 +42,14 @@ export function qlixGapsForVerifiedSkills(
   return [...gaps];
 }
 
-export function qlixStrongFromSmartAssessment(
+export function qlixStrongFromHireKiwiAssessment(
   projects: readonly QlixProjectExplainability[],
   verifiedSkillCodes: ReadonlySet<string>,
 ): string[] {
   const strong = new Set<string>();
   for (const project of projects) {
     if (!project.skillCodes.some((code) => verifiedSkillCodes.has(code))) continue;
-    const parsed = QlixSmartAssessmentSchema.safeParse(project.smartAssessmentJson);
+    const parsed = QlixHireKiwiAssessmentSchema.safeParse(project.hirekiwiAssessmentJson);
     if (!parsed.success) continue;
     for (const skillCode of project.skillCodes) {
       if (!verifiedSkillCodes.has(skillCode)) continue;
@@ -85,7 +85,7 @@ export function mergeMatchExplainability(
     strong.add(row.capabilityLabel.slice(0, 200));
   }
 
-  for (const label of qlixStrongFromSmartAssessment(input.qlixProjects, verified)) {
+  for (const label of qlixStrongFromHireKiwiAssessment(input.qlixProjects, verified)) {
     strong.add(label);
   }
 
@@ -114,7 +114,7 @@ function appendQlixNote(
 
   let ceiling: string | null = null;
   for (const project of linked) {
-    const parsed = QlixSmartAssessmentSchema.safeParse(project.smartAssessmentJson);
+    const parsed = QlixHireKiwiAssessmentSchema.safeParse(project.hirekiwiAssessmentJson);
     const value = parsed.success ? parsed.data.appliedProficiencyCeiling : null;
     if (value && (!ceiling || value > ceiling)) ceiling = value;
   }

@@ -1,6 +1,6 @@
 /**
  * AUTO-GENERATED from tools/content-pipeline/src/skill-registry-data.ts
- * Regenerate: pnpm --filter @smart/content-pipeline codegen:competencies
+ * Regenerate: pnpm --filter @hirekiwi/content-pipeline codegen:competencies
  * DO NOT EDIT MANUALLY.
  */
 import type { SkillAssessmentSpec } from '../domain/skill-assessment-spec.js';
@@ -387,7 +387,7 @@ export const SKILL_ASSESSMENT_INDEX: Readonly<Record<string, SkillAssessmentSpec
     catalogSkillName: 'Blockchain Development',
     sdeFormCode: 'SDE_SYSTEM_DESIGN',
     taskFamily: 'APPLIED',
-    skillFocusOptions: ['Solidity', 'Ethereum', 'Smart contracts'],
+    skillFocusOptions: ['Solidity', 'Ethereum', 'HireKiwi contracts'],
     flavorNotes: ['Reentrancy', 'Gas optimization', 'Upgrade patterns'],
   },
   'INTERNET_OF_THINGS_IOT_ENGINEERING': {

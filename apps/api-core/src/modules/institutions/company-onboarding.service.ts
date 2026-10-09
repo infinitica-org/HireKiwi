@@ -72,11 +72,11 @@ import { OrganizationsService } from './organizations.service.js';
  */
 const REGISTRATION_CONFLICT_MESSAGES = {
   COMPANY_ALREADY_REGISTERED:
-    'This company is already registered on SMART. Start again with your work email on the company domain to ask to join it, or ask one of its owners to invite you to the team.',
+    'This company is already registered on HireKiwi. Start again with your work email on the company domain to ask to join it, or ask one of its owners to invite you to the team.',
   COMPANY_VERIFICATION_PENDING:
     'A registration for this company is already being reviewed. Once it is approved, ask the colleague who applied to invite you to the team.',
   DUPLICATE_REGISTRATION_REVIEW:
-    'This email already has a SMART account. Sign in instead, or register with a different work email.',
+    'This email already has a HireKiwi account. Sign in instead, or register with a different work email.',
 } as const;
 
 const EDITABLE_STATUSES = new Set([

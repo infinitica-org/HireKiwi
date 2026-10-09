@@ -24,7 +24,7 @@ import {
  * auto-resets on clock expiry.
  *
  * Persistence wiring: POST /assessment/complete closes the Attempt and emits
- * smart.assessment.submitted. Skill-claim transitions are not applied there —
+ * hirekiwi.assessment.submitted. Skill-claim transitions are not applied there —
  * callers must apply this function inside a future finalize transaction; do not
  * invent a second assessment runner (INF-06 owns skill-linked items).
  */

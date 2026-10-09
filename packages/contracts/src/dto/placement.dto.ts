@@ -178,14 +178,18 @@ export type TransferSkillRow = z.infer<typeof TransferSkillRowSchema>;
 
 /**
  * Evidence quality metrics for a capability or skill assessment.
- * Reflects the psychometric validity of the evidence backing a claim.
+ *
+ * `null` means "not measured" and is never a stand-in for a good value: the matching
+ * pipeline has no rater or timestamp data, so those fields are null rather than synthesised.
+ * `sourceAuthorityWeight` is a declared policy weight per evidence source type, not a measured
+ * reliability coefficient. `compositeValidityScore` is renormalised over the known components.
  */
 export const EvidenceQualityMetricsSchema = z.object({
   constructCoverage: z.number().min(0).max(1),
-  interRaterReliability: z.number().min(0).max(1),
-  sourceReliability: z.number().min(0).max(1),
-  recencyDays: z.number().int().nonnegative(),
-  decayFactor: z.number().min(0).max(1),
+  interRaterReliability: z.number().min(0).max(1).nullable(),
+  sourceAuthorityWeight: z.number().min(0).max(1),
+  recencyDays: z.number().int().nonnegative().nullable(),
+  decayFactor: z.number().min(0).max(1).nullable(),
   compositeValidityScore: z.number().min(0).max(1),
 });
 export type EvidenceQualityMetrics = z.infer<typeof EvidenceQualityMetricsSchema>;
@@ -335,7 +339,7 @@ export type CreateMatchRunResponse = z.infer<typeof CreateMatchRunResponseSchema
 
 /**
  * Real hiring outcomes written back so the predictive validity of the Gold tier
- * can be measured rather than asserted. This closes SMART's core feedback loop.
+ * can be measured rather than asserted. This closes HireKiwi's core feedback loop.
  */
 export const PlacementRecordDtoSchema = z.object({
   recordId: UuidSchema,
@@ -753,7 +757,7 @@ export const WebhookEndpointDtoSchema = z.object({
   endpointId: UuidSchema,
   institutionId: UuidSchema.nullable(),
   url: z.url(),
-  events: z.array(z.enum(['smart.certificate.issued', 'smart.placement.matched'])).min(1),
+  events: z.array(z.enum(['hirekiwi.certificate.issued', 'hirekiwi.placement.matched'])).min(1),
   active: z.boolean(),
   /** Only the prefix is returned; the signing secret is write-once. */
   secretPrefix: z.string(),
@@ -763,12 +767,12 @@ export type WebhookEndpointDto = z.infer<typeof WebhookEndpointDtoSchema>;
 
 /** Header names for outbound HMAC-SHA256 signed webhook delivery. */
 export const WEBHOOK_HEADERS = {
-  signature: 'x-smart-signature',
-  timestamp: 'x-smart-timestamp',
-  eventId: 'x-smart-event-id',
-  eventType: 'x-smart-event-type',
+  signature: 'x-hirekiwi-signature',
+  timestamp: 'x-hirekiwi-timestamp',
+  eventId: 'x-hirekiwi-event-id',
+  eventType: 'x-hirekiwi-event-type',
   /** Partners must dedupe on this — retries reuse the same key. */
-  idempotencyKey: 'x-smart-idempotency-key',
+  idempotencyKey: 'x-hirekiwi-idempotency-key',
 } as const;
 
 export const SHORTLIST_EXPORT_FORMATS = ['CSV', 'PDF', 'XLSX'] as const;

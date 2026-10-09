@@ -1,3 +1,4 @@
+import { JobDetailsSchema } from './job-details.dto.js';
 import { z, IsoDateTimeSchema, UuidSchema } from './common.js';
 import { EmploymentTypeSchema, SkillProficiencySchema } from '../domain/enums.js';
 
@@ -55,6 +56,15 @@ export const StudentJobCardSchema = z.object({
   fit: JobFitSummarySchema.nullable(),
   applied: z.boolean(),
   saved: z.boolean(),
+  /** Pay as the company wrote it, e.g. "₹8–12 LPA". */
+  salary: z.string().nullable().default(null),
+  minYearsExperience: z.number().int().nullable().default(null),
+  maxYearsExperience: z.number().int().nullable().default(null),
+  openings: z.number().int().nullable().default(null),
+  /** The first few required skills, by name. */
+  skills: z.array(z.string()).default([]),
+  /** Company highlights such as "Fresher friendly". Never includes internal notes. */
+  tags: z.array(z.string()).default([]),
 });
 export type StudentJobCard = z.infer<typeof StudentJobCardSchema>;
 
@@ -106,6 +116,8 @@ export const StudentJobDetailSchema = StudentJobCardSchema.extend({
   hidden: z.boolean(),
   whyItMatches: z.array(z.string()),
   requirements: z.array(JobRequirementRowSchema),
+  /** What the company entered beyond the basics. Never includes internal notes. */
+  details: JobDetailsSchema.nullable().default(null),
 });
 export type StudentJobDetail = z.infer<typeof StudentJobDetailSchema>;
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, MapPin } from 'lucide-react';
-import { isSmartApiError, queryKeys } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQueryClient } from '@hirekiwi/ui';
 import { LightSelect } from '@/components/ui/LightSelect';
 import { CITY_OPTIONS } from '@/lib/onboarding-form';
@@ -35,7 +35,9 @@ export function JobPreferencesSection() {
   useEffect(() => {
     if (isError) {
       setError(
-        isSmartApiError(queryError) ? queryError.message : 'Could not load saved job preferences.',
+        isHireKiwiApiError(queryError)
+          ? queryError.message
+          : 'Could not load saved job preferences.',
       );
     }
   }, [isError, queryError]);
@@ -78,7 +80,7 @@ export function JobPreferencesSection() {
       setSuccess('Job preferences saved.');
       await queryClient.invalidateQueries({ queryKey: queryKeys.myOnboarding() });
     } catch (err: unknown) {
-      setError(isSmartApiError(err) ? err.message : 'Could not save job preferences.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not save job preferences.');
     } finally {
       setSaving(false);
     }
@@ -100,7 +102,7 @@ export function JobPreferencesSection() {
             });
             setCurrentLocation(city);
           } catch (err: unknown) {
-            setError(isSmartApiError(err) ? err.message : 'Could not detect your city.');
+            setError(isHireKiwiApiError(err) ? err.message : 'Could not detect your city.');
           } finally {
             setLocationLoading(false);
           }
@@ -123,7 +125,7 @@ export function JobPreferencesSection() {
       <div>
         <h3 className="text-lg font-medium text-foreground">Job preferences</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Optional matching preferences. These help SMART suggest relevant opportunities later.
+          Optional matching preferences. These help HireKiwi suggest relevant opportunities later.
         </p>
       </div>
 

@@ -79,6 +79,8 @@ export const CandidateCertificateDtoSchema = z.object({
   issueDate: z.string().nullable().optional(),
   expiryDate: z.string().nullable().optional(),
   verificationUrl: z.string().nullable(),
+  /** Badge picture read from a verified Credly link; null when there is none. */
+  previewImageUrl: z.string().nullable().optional(),
   verificationMethod: CertificateVerificationMethodSchema.nullable(),
   certificateFileUrl: z.string().nullable(),
   certificateFileName: z.string().nullable(),
@@ -160,7 +162,7 @@ export const CertificateEndorsementDtoSchema = z.object({
 });
 export type CertificateEndorsementDto = z.infer<typeof CertificateEndorsementDtoSchema>;
 
-/** Public, token-resolved — what an endorser with no SMART account sees. */
+/** Public, token-resolved — what an endorser with no HireKiwi account sees. */
 export const GetCertificateEndorsementResponseSchema = z.object({
   candidateName: z.string(),
   certificateTitle: z.string(),
@@ -195,4 +197,18 @@ export const SubmitCertificateEndorsementDecisionResponseSchema = z.object({
 });
 export type SubmitCertificateEndorsementDecisionResponse = z.infer<
   typeof SubmitCertificateEndorsementDecisionResponseSchema
+>;
+
+export const CandidateCertificateDeclarationResponseDtoSchema = z.object({
+  hasNoCertifications: z.boolean().nullable(),
+});
+export type CandidateCertificateDeclarationResponseDto = z.infer<
+  typeof CandidateCertificateDeclarationResponseDtoSchema
+>;
+
+export const UpdateCandidateCertificateDeclarationDtoSchema = z.object({
+  hasNoCertifications: z.boolean().nullable(),
+});
+export type UpdateCandidateCertificateDeclarationDto = z.infer<
+  typeof UpdateCandidateCertificateDeclarationDtoSchema
 >;

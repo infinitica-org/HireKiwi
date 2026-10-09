@@ -31,7 +31,7 @@ describe('CompanyPublicView', () => {
     expect(screen.getByText('Automotive · 51–200 employees')).toBeTruthy();
     expect(screen.getByText('Pune, India (headquarters)')).toBeTruthy();
     expect(screen.getByTestId('verified-badge').getAttribute('aria-label')).toBe(
-      'SMART verified this company on 1 Sep 2026',
+      'HireKiwi verified this company on 1 Sep 2026',
     );
   });
 

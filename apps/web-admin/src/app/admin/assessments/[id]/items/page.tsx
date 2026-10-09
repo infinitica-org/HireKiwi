@@ -1,7 +1,7 @@
 'use client';
 
 import type { AdminCutScoreDto, AdminItemDto } from '@hirekiwi/contracts';
-import { isSmartApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { Award, FileQuestion, Send } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -80,7 +80,7 @@ export default function AssessmentItemsPage() {
         }
       }
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Failed to load items or cut scores.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Failed to load items or cut scores.');
     } finally {
       setLoading(false);
     }
@@ -112,7 +112,7 @@ export default function AssessmentItemsPage() {
       setForm((prev) => ({ ...prev, stem: '', modelAnswer: '', optionA: '', optionB: '' }));
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not create item.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not create item.');
     } finally {
       setSubmitting(false);
     }
@@ -131,7 +131,7 @@ export default function AssessmentItemsPage() {
       setSuccess(`Cut score for tier ${cutScoreForm.tier} saved.`);
       await load();
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not save cut score.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not save cut score.');
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +140,7 @@ export default function AssessmentItemsPage() {
   async function handlePublishCutScores() {
     if (
       !confirm(
-        'Publishing cut scores will lock them for this level, invalidate downstream evaluation and catalog Redis caches, and emit a smart.track.updated event. Proceed?',
+        'Publishing cut scores will lock them for this level, invalidate downstream evaluation and catalog Redis caches, and emit a hirekiwi.track.updated event. Proceed?',
       )
     ) {
       return;
@@ -154,7 +154,7 @@ export default function AssessmentItemsPage() {
       setCutScores(res.cutScores);
       setSuccess('Cut scores successfully published and cache invalidation event emitted.');
     } catch (err) {
-      setError(isSmartApiError(err) ? err.message : 'Could not publish cut scores.');
+      setError(isHireKiwiApiError(err) ? err.message : 'Could not publish cut scores.');
     } finally {
       setPublishing(false);
     }

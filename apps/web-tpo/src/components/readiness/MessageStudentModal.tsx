@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { Alert, Button, Modal } from '@hirekiwi/ui';
 import { MESSAGE_MAX_LENGTH, UniversityMessageStudentRequestSchema } from '@hirekiwi/contracts';
-import { SmartApiError } from '@hirekiwi/api-client';
+import { HireKiwiApiError } from '@hirekiwi/api-client';
 import { universityApi } from '../../lib/api';
 
 /**
@@ -56,7 +56,7 @@ export function MessageStudentModal({
       onSent();
       onClose();
     } catch (error) {
-      if (error instanceof SmartApiError && Object.keys(error.fieldErrors).length > 0) {
+      if (error instanceof HireKiwiApiError && Object.keys(error.fieldErrors).length > 0) {
         setFieldErrors(error.fieldErrors);
       }
       setFormError(

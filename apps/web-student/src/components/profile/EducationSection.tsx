@@ -158,7 +158,7 @@ export function EducationSection() {
         title={meta.title}
         description={meta.description}
         action={
-          !loading ? (
+          !loading && educationList.length > 0 ? (
             <button
               type="button"
               onClick={openCreateModal}
@@ -200,7 +200,7 @@ export function EducationSection() {
       ) : null}
 
       {!loading && educationList.length > 0 ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {educationList.map((edu, index) => (
             <EducationEntryCard
               key={edu.id}

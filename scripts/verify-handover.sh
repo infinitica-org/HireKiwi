@@ -2,7 +2,7 @@
 # Sprint 0 handover smoke checks — run after bootstrap (see docs/delivery/BOOTSTRAP_SIGNOFF.md).
 set -euo pipefail
 
-API_URL="${SMART_API_URL:-http://localhost:3000}"
+API_URL="${HIREKIWI_API_URL:-http://localhost:3000}"
 FAIL=0
 
 check() {
@@ -16,7 +16,7 @@ check() {
   fi
 }
 
-echo "==> SMART handover verification"
+echo "==> HireKiwi handover verification"
 echo "    API: $API_URL"
 echo
 

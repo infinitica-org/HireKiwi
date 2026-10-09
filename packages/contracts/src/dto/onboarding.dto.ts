@@ -503,7 +503,7 @@ export const BatchImportMappingSchema = z
     if (new Set(selected).size !== selected.length) {
       context.addIssue({
         code: 'custom',
-        message: 'Each SMART field must map to a different uploaded column.',
+        message: 'Each HireKiwi field must map to a different uploaded column.',
       });
     }
   });

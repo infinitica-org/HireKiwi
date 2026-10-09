@@ -1,13 +1,13 @@
 // Grafana Alloy — ship Docker container logs to Loki (obs profile).
 // Discovers compose services; keeps `service` / `container` labels for LogQL.
 
-discovery.docker "smart" {
+discovery.docker "hirekiwi" {
   host             = "unix:///var/run/docker.sock"
   refresh_interval = "10s"
 }
 
-discovery.relabel "smart_logs" {
-  targets = discovery.docker.smart.targets
+discovery.relabel "hirekiwi_logs" {
+  targets = discovery.docker.hirekiwi.targets
 
   rule {
     source_labels = ["__meta_docker_container_name"]
@@ -33,11 +33,11 @@ discovery.relabel "smart_logs" {
   }
 }
 
-loki.source.docker "smart" {
+loki.source.docker "hirekiwi" {
   host          = "unix:///var/run/docker.sock"
-  targets       = discovery.relabel.smart_logs.output
+  targets       = discovery.relabel.hirekiwi_logs.output
   forward_to    = [loki.write.local.receiver]
-  relabel_rules = discovery.relabel.smart_logs.rules
+  relabel_rules = discovery.relabel.hirekiwi_logs.rules
 }
 
 loki.write "local" {

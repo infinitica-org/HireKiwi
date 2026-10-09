@@ -14,7 +14,7 @@ describe('Partnership DTO Schemas', () => {
       contactEmail: 'jane.doe@stanford.edu',
       contactPhone: '+1 650 723 2300',
       estimatedStudents: 15000,
-      notes: 'Interested in SMART placement partnership.',
+      notes: 'Interested in HireKiwi placement partnership.',
     };
 
     const parsed = CreatePartnershipRequestSchema.parse(valid);

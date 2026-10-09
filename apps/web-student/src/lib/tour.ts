@@ -1,7 +1,7 @@
 /** Product-tour state — small, self-contained, no server round-trip needed for any of it. */
 
-const COMPLETED_KEY = 'smart.candidate.tour.completed';
-const AUTOSTART_KEY = 'smart.candidate.tour.autostart';
+const COMPLETED_KEY = 'hirekiwi.candidate.tour.completed';
+const AUTOSTART_KEY = 'hirekiwi.candidate.tour.autostart';
 
 /** Set right before leaving onboarding, so the dashboard knows to auto-start the tour once. */
 export function markTourAutostart(): void {
@@ -40,7 +40,7 @@ export function markTourCompleted(): void {
 }
 
 /** Lets "Take a tour" in the nav menu replay it regardless of completion state. */
-export const START_TOUR_EVENT = 'smart:start-tour';
+export const START_TOUR_EVENT = 'hirekiwi:start-tour';
 
 export function requestTourStart(): void {
   window.dispatchEvent(new Event(START_TOUR_EVENT));

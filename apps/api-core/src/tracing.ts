@@ -57,7 +57,7 @@ if (otlpEndpoint) {
 
   const sdk = new NodeSDK({
     resource: new Resource({
-      [ATTR_SERVICE_NAME]: 'smart-api-core',
+      [ATTR_SERVICE_NAME]: 'hirekiwi-api-core',
       [ATTR_SERVICE_VERSION]: env.APP_VERSION,
     }),
     traceExporter: new OTLPTraceExporter({ url: `${otlpEndpoint}/v1/traces` }),

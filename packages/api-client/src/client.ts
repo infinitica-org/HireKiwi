@@ -1,14 +1,14 @@
 import type { z } from 'zod';
 import { ApiErrorSchema, isSessionHoldCode } from '@hirekiwi/contracts';
 import {
-  SmartApiError,
-  SmartContractViolationError,
-  SmartNetworkError,
-  isSmartApiError,
+  HireKiwiApiError,
+  HireKiwiContractViolationError,
+  HireKiwiNetworkError,
+  isHireKiwiApiError,
 } from './errors.js';
 
 /**
- * The SMART HTTP client.
+ * The HireKiwi HTTP client.
  *
  * Every frontend call goes through here. Raw `fetch` in a component is blocked by
  * ESLint, because four things must happen on every request and none of them can
@@ -18,7 +18,7 @@ import {
  * Owner: Satheswaran V.
  */
 
-export interface SmartClientOptions {
+export interface HireKiwiClientOptions {
   readonly baseUrl: string;
   /**
    * Access-token supplier. A function, not a string: the token rotates, and a
@@ -63,7 +63,7 @@ export const MAX_RATE_LIMIT_RETRIES = 1;
 /** Cap on honoured Retry-After: past this, showing the user an error is kinder. */
 export const MAX_RETRY_AFTER_SECONDS = 5;
 
-export class SmartApiClient {
+export class HireKiwiApiClient {
   private readonly fetchImpl: typeof fetch;
   /**
    * In-flight refresh, shared across concurrent 401s.
@@ -74,7 +74,7 @@ export class SmartApiClient {
    */
   private refreshInFlight: Promise<string | null> | null = null;
 
-  constructor(private readonly options: SmartClientOptions) {
+  constructor(private readonly options: HireKiwiClientOptions) {
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }
 
@@ -160,7 +160,7 @@ export class SmartApiClient {
       });
     } catch (cause) {
       if (options.signal?.aborted === true) throw cause;
-      throw new SmartNetworkError(
+      throw new HireKiwiNetworkError(
         `Request to ${options.path} failed or timed out after ${String(timeoutMs)}ms.`,
         cause,
       );
@@ -188,11 +188,11 @@ export class SmartApiClient {
 
     if (!response.ok) {
       const error = await toApiError(response);
-      if (isSmartApiError(error) && isSessionHoldCode(error.code)) {
+      if (isHireKiwiApiError(error) && isSessionHoldCode(error.code)) {
         this.options.onSessionHold?.({ code: error.code, message: error.message });
         if (typeof window !== 'undefined') {
           window.dispatchEvent(
-            new CustomEvent('smart:session-hold', {
+            new CustomEvent('hirekiwi:session-hold', {
               detail: { code: error.code, message: error.message },
             }),
           );
@@ -211,14 +211,14 @@ export class SmartApiClient {
     try {
       json = JSON.parse(text);
     } catch (cause) {
-      throw new SmartNetworkError(`Response from ${options.path} was not valid JSON.`, cause);
+      throw new HireKiwiNetworkError(`Response from ${options.path} was not valid JSON.`, cause);
     }
 
     if (!options.schema) return json as T;
 
     const parsed = options.schema.safeParse(json);
     if (!parsed.success) {
-      throw new SmartContractViolationError(options.path, parsed.error.issues);
+      throw new HireKiwiContractViolationError(options.path, parsed.error.issues);
     }
     return parsed.data;
   }
@@ -269,14 +269,14 @@ export class SmartApiClient {
   }
 }
 
-async function toApiError(response: Response): Promise<SmartApiError | SmartNetworkError> {
+async function toApiError(response: Response): Promise<HireKiwiApiError | HireKiwiNetworkError> {
   let body: unknown;
   try {
     body = await response.json();
   } catch {
     // A gateway or proxy failure returns HTML, not our error contract. Synthesise
     // a well-formed error so callers never have to handle a third shape.
-    return new SmartApiError({
+    return new HireKiwiApiError({
       error: response.status >= 500 ? 'service_unavailable' : 'internal_error',
       message: `Request failed with status ${String(response.status)}.`,
       statusCode: response.status,
@@ -284,9 +284,9 @@ async function toApiError(response: Response): Promise<SmartApiError | SmartNetw
   }
 
   const parsed = ApiErrorSchema.safeParse(body);
-  if (parsed.success) return new SmartApiError(parsed.data);
+  if (parsed.success) return new HireKiwiApiError(parsed.data);
 
-  return new SmartApiError({
+  return new HireKiwiApiError({
     error: 'internal_error',
     message: `Request failed with status ${String(response.status)}.`,
     statusCode: response.status,

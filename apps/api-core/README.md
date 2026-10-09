@@ -27,10 +27,10 @@ Only Vishal V runs `prisma migrate`. Open an issue with table/column/type/reason
 
 Local only. Password for all: `ChangeMe!Dev`.
 
-| Role                    | Email                 |
-| ----------------------- | --------------------- |
-| Super admin             | `admin@smart.local`   |
-| Institution admin (TPO) | `tpo@smart.local`     |
-| Student                 | `student@smart.local` |
+| Role                    | Email                    |
+| ----------------------- | ------------------------ |
+| Super admin             | `admin@hirekiwi.local`   |
+| Institution admin (TPO) | `tpo@hirekiwi.local`     |
+| Student                 | `student@hirekiwi.local` |
 
 Sign in at `http://localhost:3005/login`.

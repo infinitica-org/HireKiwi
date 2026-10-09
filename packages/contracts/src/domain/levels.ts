@@ -92,7 +92,7 @@ export const LEVEL_DEFINITIONS: readonly LevelDefinition[] = [
 export function getLevelDefinition(level: LevelNumber): LevelDefinition {
   const found = LEVEL_DEFINITIONS.find((definition) => definition.level === level);
   if (!found) {
-    throw new Error(`Unknown SMART level: ${String(level)}`);
+    throw new Error(`Unknown HireKiwi level: ${String(level)}`);
   }
   return found;
 }

@@ -66,10 +66,10 @@ const LOGO_TINTS = [
   'bg-amber-50 text-amber-700',
 ];
 
-function tintFor(name: string): string {
+export function tintFor(name: string): string {
   let hash = 0;
   for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return LOGO_TINTS[hash % LOGO_TINTS.length]!;
+  return LOGO_TINTS[hash % LOGO_TINTS.length] ?? LOGO_TINTS[0] ?? '';
 }
 
 function timeAgo(iso: string, now = Date.now()): string {
