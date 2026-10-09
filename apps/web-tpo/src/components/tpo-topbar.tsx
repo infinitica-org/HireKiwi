@@ -22,7 +22,7 @@ const AUTH_URL = (process.env.NEXT_PUBLIC_AUTH_URL ?? 'http://localhost:3005').r
 const MOBILE_NAV = [...TPO_TOP_NAV, { name: 'Settings', href: '/settings', icon: Settings }];
 
 /** Links tucked under Students: they open from its hover menu instead of sitting in the bar. */
-const STUDENTS_MENU_NAMES = ['Whitelist', 'Reports'];
+const STUDENTS_MENU_NAMES = ['Invitations', 'Whitelist', 'Reports'];
 const STUDENTS_MENU: TpoTopNavLink[] = TPO_TOP_NAV.filter((link) =>
   STUDENTS_MENU_NAMES.includes(link.name),
 );
