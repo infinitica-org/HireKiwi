@@ -1,0 +1,42 @@
+[
+  {
+    "id": "FAM-01",
+    "name": "Software / Technology"
+  },
+  {
+    "id": "FAM-02",
+    "name": "Cloud / DevOps / Infrastructure"
+  },
+  {
+    "id": "FAM-03",
+    "name": "Standards / Protocols / APIs"
+  },
+  {
+    "id": "FAM-04",
+    "name": "Technologies & Ecosystems"
+  },
+  {
+    "id": "FAM-05",
+    "name": "Data & Databases"
+  },
+  {
+    "id": "FAM-06",
+    "name": "AI / Machine Learning"
+  },
+  {
+    "id": "FAM-07",
+    "name": "Programming & Software Development"
+  },
+  {
+    "id": "FAM-08",
+    "name": "Web Development"
+  },
+  {
+    "id": "FAM-09",
+    "name": "Testing & Quality"
+  },
+  {
+    "id": "FAM-10",
+    "name": "Cybersecurity"
+  }
+]

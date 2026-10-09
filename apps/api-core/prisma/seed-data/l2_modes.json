@@ -1,0 +1,50 @@
+[
+  {
+    "mode": "CODE",
+    "description": "Writes, debugs or extends code in a real language/runtime",
+    "hands_on_type": "Yes - programming",
+    "environment": "Docker sandbox with the language toolchain + test runner",
+    "auto_grading": "Hidden unit tests + static checks",
+    "l5_deliverable": "Repository with source, tests and README"
+  },
+  {
+    "mode": "SQL",
+    "description": "Writes SQL queries / DDL against a seeded database",
+    "hands_on_type": "SQL queries / DDL (query language, not app code)",
+    "environment": "Database engine container with seeded schema",
+    "auto_grading": "Result-set / state comparison against answer key",
+    "l5_deliverable": "Schema + query set + performance notes"
+  },
+  {
+    "mode": "CLI",
+    "description": "Runs commands or native queries in a container; no application code",
+    "hands_on_type": "Commands / queries (no app code)",
+    "environment": "Container shell with the tool installed, seeded state",
+    "auto_grading": "End-state checks (repo/cluster/service state, command output)",
+    "l5_deliverable": "Runbook + scripts + evidence of final state"
+  },
+  {
+    "mode": "CONFIG",
+    "description": "Authors or repairs declarative config / IaC / pipeline files",
+    "hands_on_type": "Config authoring (no programming)",
+    "environment": "Linter, schema validator or dry-run in a container",
+    "auto_grading": "Linter / schema / dry-run validation + behavioural probe",
+    "l5_deliverable": "Config repository + README + validation output"
+  },
+  {
+    "mode": "ANALYSIS",
+    "description": "Analyses supplied artifacts (logs, traces, pcaps, datasets, reports) and submits structured answers",
+    "hands_on_type": "Analysis of supplied artifacts (code optional)",
+    "environment": "Seeded files; Python/R/query tools available but optional",
+    "auto_grading": "Structured / numeric answer key",
+    "l5_deliverable": "Analysis report with findings and recommendations"
+  },
+  {
+    "mode": "SCENARIO",
+    "description": "Works a guided, structured scenario for tools that cannot be sandboxed (SaaS, GUI, proprietary, GPU-only); no code",
+    "hands_on_type": "No code",
+    "environment": "No sandbox execution; structured form / ordering / decision-table / short answer",
+    "auto_grading": "Decision key + rubric (BARS-style) on structured responses",
+    "l5_deliverable": "Design/process document, policy or runbook"
+  }
+]
