@@ -154,19 +154,23 @@ describe('PublicProfileService (CN-T09 visibility + in-progress opt-in)', () => 
     });
   });
 
-  describe('build (via getForOwner) — showInProgressItems default off', () => {
-    it('queries work experience and certificates as VERIFIED-only by default', async () => {
+  describe('build (via getForOwner) — showInProgressItems on', () => {
+    it('queries work experience and certificates without the VERIFIED-only filter', async () => {
       await service.getForOwner(userId);
 
       expect(prisma.workExperience.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { studentId: userId, status: 'VERIFIED' } }),
+        expect.objectContaining({
+          where: { studentId: userId, status: { notIn: ['REJECTED', 'EXPIRED', 'VOIDED'] } },
+        }),
       );
       expect(prisma.candidateCertificate.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { candidateId: userId, status: 'VERIFIED' } }),
+        expect.objectContaining({
+          where: { candidateId: userId, status: { notIn: ['REJECTED', 'VOIDED'] } },
+        }),
       );
     });
 
-    it('marks every returned entry as not in-progress and echoes showInProgressItems=false', async () => {
+    it('flags unverified entries as in progress and echoes showInProgressItems=true', async () => {
       prisma.workExperience.findMany.mockResolvedValue([
         {
           companyName: 'Acme',
@@ -180,7 +184,7 @@ describe('PublicProfileService (CN-T09 visibility + in-progress opt-in)', () => 
       ]);
       const result = await service.getForOwner(userId);
       expect(result.workExperience[0].inProgress).toBe(false);
-      expect(result.showInProgressItems).toBe(false);
+      expect(result.showInProgressItems).toBe(true);
     });
   });
 

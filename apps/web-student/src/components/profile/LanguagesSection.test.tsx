@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { chooseOption } from '@/test-utils/styled-select';
 import { renderWithQueryClient } from '@/test/render-with-query-client';
 import { LanguagesSection } from './LanguagesSection';
 
@@ -53,13 +54,10 @@ describe('LanguagesSection', () => {
     fireEvent.click(addButton);
 
     const select = screen.getByRole('combobox', { name: /^Language/i });
+    fireEvent.click(select);
     expect(screen.getByRole('option', { name: 'Select language' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Hindi' })).toBeTruthy();
-    expect(screen.getByRole('option', { name: 'French' })).toBeTruthy();
-
-    fireEvent.change(select, {
-      target: { value: 'French' },
-    });
+    fireEvent.click(screen.getByRole('option', { name: 'French' }));
 
     // The modal's submit button shares its label with the section's add button; it renders last.
     fireEvent.click(
@@ -86,16 +84,12 @@ describe('LanguagesSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /Edit French/i }));
 
     const languageSelect = screen.getByRole('combobox', { name: /^Language/i });
-    expect((languageSelect as HTMLSelectElement).value).toBe('French');
+    expect(languageSelect.textContent).toContain('French');
 
-    fireEvent.change(languageSelect, {
-      target: { value: 'German' },
-    });
+    chooseOption(languageSelect, 'German');
 
     const proficiencySelect = screen.getByRole('combobox', { name: /^Proficiency/i });
-    fireEvent.change(proficiencySelect, {
-      target: { value: 'Native or Bilingual' },
-    });
+    chooseOption(proficiencySelect, 'Native or Bilingual');
 
     fireEvent.click(screen.getByRole('button', { name: /^Save changes$/i }));
 
@@ -124,8 +118,10 @@ describe('LanguagesSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /Edit Esperanto/i }));
 
     const languageSelect = screen.getByRole('combobox', { name: /^Language/i });
-    expect((languageSelect as HTMLSelectElement).value).toBe('Esperanto');
+    expect(languageSelect.textContent).toContain('Esperanto');
+    fireEvent.click(languageSelect);
     expect(screen.getByRole('option', { name: 'Esperanto' })).toBeTruthy();
+    fireEvent.click(languageSelect);
 
     fireEvent.click(screen.getByRole('button', { name: /^Save changes$/i }));
 

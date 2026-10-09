@@ -12,7 +12,6 @@ import {
   MessageSquareText,
   Settings,
   Shield,
-  UserRound,
   X,
 } from 'lucide-react';
 import { UserMenu, cn, useUnreadMessageCount } from '@hirekiwi/ui';
@@ -71,9 +70,7 @@ export function StudentTopbar() {
     window.open(`${AUTH_URL}${path}`, '_blank', 'noopener,noreferrer');
 
   const studentMenuItems = [
-    { label: 'My profile', icon: UserRound, onClick: () => router.push('/student/profile') },
     { label: 'Public profile', icon: Globe, onClick: () => router.push('/student/public-profile') },
-    { label: 'Settings', icon: Settings, onClick: () => router.push('/student/settings') },
     { label: 'Privacy Policy', icon: Shield, onClick: () => openLegal('/privacy') },
     { label: 'Terms & Conditions', icon: FileText, onClick: () => openLegal('/terms') },
   ];

@@ -369,3 +369,27 @@ export const TrackReadinessDtoSchema = z.object({
   blockers: z.array(z.string()),
 });
 export type TrackReadinessDto = z.infer<typeof TrackReadinessDtoSchema>;
+
+/** Education popup catalog: degrees grouped by `level`, specializations by `category`. */
+export const EducationDegreeOptionDtoSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  fullName: z.string().min(1),
+  level: z.string().min(1),
+});
+export type EducationDegreeOptionDto = z.infer<typeof EducationDegreeOptionDtoSchema>;
+
+export const EducationSpecializationOptionDtoSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  category: z.string().min(1),
+});
+export type EducationSpecializationOptionDto = z.infer<
+  typeof EducationSpecializationOptionDtoSchema
+>;
+
+export const EducationCatalogResponseSchema = z.object({
+  degrees: z.array(EducationDegreeOptionDtoSchema),
+  specializations: z.array(EducationSpecializationOptionDtoSchema),
+});
+export type EducationCatalogResponse = z.infer<typeof EducationCatalogResponseSchema>;

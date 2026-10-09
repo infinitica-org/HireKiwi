@@ -4,13 +4,14 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { useSearchParams } from 'next/navigation';
 import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { GithubRepoSummary, ProjectDto } from '@hirekiwi/contracts';
-import { AlertCircle, CheckCircle2, GitBranch, Plus, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Plus, ShieldCheck, X } from 'lucide-react';
 import { ProjectDetailModal } from '@/components/profile/projects/ProjectDetailModal';
 import { ProjectEmptyState } from '@/components/profile/projects/ProjectEmptyState';
 import {
-  ProjectFormModal,
+  ViviProjectModal,
+  ViviVerifyModal,
   type ProjectWizardStep,
-} from '@/components/profile/projects/ProjectFormModal';
+} from '@/components/vivi-verification';
 import { ProjectList } from '@/components/profile/projects/ProjectList';
 import { api } from '../../lib/api';
 import { useOnboarding } from '../../lib/use-onboarding';
@@ -53,6 +54,8 @@ export function ProjectSubmissionForm() {
   const [justSubmitted, setJustSubmitted] = useState<ProjectDto | null>(null);
   const [isPending, startTransition] = useTransition();
   const [formOpen, setFormOpen] = useState(false);
+  // null = closed; { projectId: null } = the list of projects; { projectId } = one project's verification.
+  const [verify, setVerify] = useState<{ projectId: string | null } | null>(null);
   const [detailProject, setDetailProject] = useState<ProjectDto | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -289,8 +292,8 @@ export function ProjectSubmissionForm() {
           setJustSubmitted(withDocs);
           setEvidenceFiles([]);
           setFields(EMPTY_PROJECT_FORM);
-          setFormOpen(false);
-          setWizardStep('choose');
+          // Keep the popup open: it now shows this project's verification and interview.
+          setWizardStep('submitted');
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Failed to submit project.');
         }
@@ -326,14 +329,24 @@ export function ProjectSubmissionForm() {
         description={meta.description}
         action={
           canSubmitProjects && displayProjects.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => openForm()}
-              className={`${profilePrimaryButtonSmClass} justify-center px-4 py-2.5 text-[13px] font-semibold tracking-[-0.01em]`}
-            >
-              <Plus className="size-4" strokeWidth={2} aria-hidden />
-              Add project
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setVerify({ projectId: null })}
+                className="inline-flex items-center justify-center gap-1.5 rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-[13px] font-semibold tracking-[-0.01em] text-zinc-800 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-transparent dark:text-zinc-100 dark:hover:bg-zinc-800"
+              >
+                <ShieldCheck className="size-4" strokeWidth={2} aria-hidden />
+                Verify project
+              </button>
+              <button
+                type="button"
+                onClick={() => openForm()}
+                className={`${profilePrimaryButtonSmClass} justify-center px-4 py-2.5 text-[13px] font-semibold tracking-[-0.01em]`}
+              >
+                <Plus className="size-4" strokeWidth={2} aria-hidden />
+                Add project
+              </button>
+            </div>
           ) : null
         }
       />
@@ -396,27 +409,12 @@ export function ProjectSubmissionForm() {
           canSubmit={canSubmitProjects}
           onView={viewProject}
           onDelete={handleProjectDeleted}
+          onVerify={(project) => setVerify({ projectId: project.projectId })}
           onAdd={() => openForm()}
         />
       ) : null}
 
-      {canSubmitProjects && displayProjects.length > 0 ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800 dark:bg-zinc-900/40">
-          <p className="text-zinc-600 dark:text-zinc-300">
-            Tip: Import projects directly from GitHub to save time.
-          </p>
-          <button
-            type="button"
-            onClick={() => openForm({ showGithubImport: true })}
-            className="inline-flex items-center gap-1.5 font-semibold text-teal-700 hover:underline dark:text-teal-400"
-          >
-            <GitBranch className="h-4 w-4" aria-hidden="true" />
-            Import from GitHub →
-          </button>
-        </div>
-      ) : null}
-
-      <ProjectFormModal
+      <ViviProjectModal
         open={formOpen && canSubmitProjects}
         wizardStep={wizardStep}
         fields={fields}
@@ -433,6 +431,12 @@ export function ProjectSubmissionForm() {
         onFieldChange={setField}
         onSkillCodesChange={setSkillCodes}
         onSubmit={submit}
+        submittedProject={
+          justSubmitted
+            ? (displayProjects.find((p) => p.projectId === justSubmitted.projectId) ??
+              justSubmitted)
+            : null
+        }
         evidenceFiles={evidenceFiles}
         onEvidenceFilesChange={setEvidenceFiles}
         onChooseGithub={() => {
@@ -443,6 +447,13 @@ export function ProjectSubmissionForm() {
         onBackToChoose={() => setWizardStep('choose')}
         onRetryRepos={() => loadReposIfNeeded({ force: true })}
         onSelectRepo={importRepo}
+      />
+
+      <ViviVerifyModal
+        open={verify !== null}
+        onClose={() => setVerify(null)}
+        projects={displayProjects}
+        focusProjectId={verify?.projectId ?? null}
       />
 
       <ProjectDetailModal

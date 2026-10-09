@@ -14,7 +14,7 @@ export interface ProgramScoreUiConfig {
 }
 
 const SSC_PROGRAMS = new Set(['10th Standard']);
-const HSC_PROGRAMS = new Set(['12th Standard']);
+const HSC_PROGRAMS = new Set(['11th Standard', '12th Standard']);
 
 export function resolveProgramDegree(programDegree: string, customProgramDegree: string): string {
   if (programDegree === CUSTOM_OPTION) return customProgramDegree.trim();
@@ -42,8 +42,11 @@ export function programScoreUiConfig(program: string): ProgramScoreUiConfig {
   if (level === 'hsc') {
     return {
       level,
-      scoreLabel: '12th (HSC) score',
-      scoreHelper: 'Enter your 12th board percentage (0–100).',
+      scoreLabel: program === '11th Standard' ? '11th standard score' : '12th (HSC) score',
+      scoreHelper:
+        program === '11th Standard'
+          ? 'Enter your 11th standard percentage (0–100).'
+          : 'Enter your 12th board percentage (0–100).',
       allowUnitChoice: false,
       defaultUnit: 'percentage',
       showBacklogCheckbox: false,
@@ -66,6 +69,7 @@ export function isProgramSelected(programDegree: string, customProgramDegree: st
 
 const KNOWN_PROGRAMS = [
   '10th Standard',
+  '11th Standard',
   '12th Standard',
   'Diploma',
   'Certificate',

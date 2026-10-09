@@ -126,6 +126,7 @@ export function ProjectDefensePlayer({
     <ProctoringShell
       attemptId={prepared.sessionId}
       kioskTitle={`Project defense — ${project.title}`}
+      vivi
       cameraEnabled
       faceLiveCheck
       onReady={() => {

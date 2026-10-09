@@ -311,7 +311,7 @@ export function ProfessionalLinksSection() {
 
   return (
     <section
-      className="flex w-full min-w-0 flex-col gap-3 font-sans select-none"
+      className="flex w-full min-w-0 flex-col gap-3 font-sans"
       aria-label="Professional links"
     >
       <ProfileSectionHeader

@@ -1,16 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button, Input } from '@hirekiwi/ui';
 import { Award } from 'lucide-react';
 import {
-  experienceInputClass,
-  experienceLabelClass,
-} from '@/components/profile/work-experience/work-experience-ui';
-import {
-  profilePrimaryButtonSmClass,
-  profileSecondaryButtonSmClass,
-} from '@/lib/profile-ui-classes';
+  VIVI_FIELD,
+  VIVI_GHOST_BUTTON,
+  VIVI_LABEL,
+  VIVI_PRIMARY_BUTTON,
+} from '@/components/vivi-verification/vivi-field-classes';
 
 export interface CertificateDetailsPayload {
   title: string;
@@ -31,6 +29,10 @@ interface CertificateDetailsFormProps {
   embedded?: boolean;
   /** Popup only: the Cancel button. */
   onCancel?: () => void;
+  /** Popup only: a field shown first, above the rest (the Type choice). */
+  topField?: ReactNode;
+  /** Wording for the three fields that name the item, when it is not a certificate. */
+  labels?: { issuer?: string; title?: string; number?: string };
 }
 
 /** An empty value is fine (the link is optional); anything else must be an http(s) URL. */
@@ -53,6 +55,8 @@ export function CertificateDetailsForm({
   submitLabel = 'Continue to Next Step',
   embedded = false,
   onCancel,
+  topField,
+  labels,
 }: CertificateDetailsFormProps) {
   const [title, setTitle] = useState(initialValues?.title ?? '');
   const [issuer, setIssuer] = useState(initialValues?.issuer ?? '');
@@ -95,7 +99,7 @@ export function CertificateDetailsForm({
   };
 
   if (embedded) {
-    const fieldClass = `${experienceInputClass} disabled:opacity-60`;
+    const fieldClass = VIVI_FIELD;
     const errorText = (message?: string) =>
       message ? <p className="mt-1 text-xs text-red-600">{message}</p> : null;
     return (
@@ -107,20 +111,14 @@ export function CertificateDetailsForm({
         }}
         className="flex flex-col gap-5"
       >
-        <section className="space-y-4">
-          <div>
-            <h3 className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ds-text)]">
-              Certificate details
-            </h3>
-            <p className="mt-0.5 text-xs leading-relaxed text-[var(--ds-text-muted)]">
-              Enter the provider, credential details and a valid verification link.
-            </p>
-          </div>
+        <section className="space-y-5">
+          {topField}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="cert-issuer" className={experienceLabelClass}>
-                Certification provider (issuer)<span className="text-red-600"> *</span>
+              <label htmlFor="cert-issuer" className={VIVI_LABEL}>
+                {labels?.issuer ?? 'Certification provider (issuer)'}
+                <span className="text-red-600"> *</span>
               </label>
               <input
                 id="cert-issuer"
@@ -134,8 +132,9 @@ export function CertificateDetailsForm({
               {errorText(issuerError)}
             </div>
             <div>
-              <label htmlFor="cert-title" className={experienceLabelClass}>
-                Certification name (title)<span className="text-red-600"> *</span>
+              <label htmlFor="cert-title" className={VIVI_LABEL}>
+                {labels?.title ?? 'Certification name (title)'}
+                <span className="text-red-600"> *</span>
               </label>
               <input
                 id="cert-title"
@@ -152,8 +151,8 @@ export function CertificateDetailsForm({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <label htmlFor="cert-number" className={experienceLabelClass}>
-                Certificate number
+              <label htmlFor="cert-number" className={VIVI_LABEL}>
+                {labels?.number ?? 'Certificate number'}
               </label>
               <input
                 id="cert-number"
@@ -166,7 +165,7 @@ export function CertificateDetailsForm({
               />
             </div>
             <div>
-              <label htmlFor="cert-issued" className={experienceLabelClass}>
+              <label htmlFor="cert-issued" className={VIVI_LABEL}>
                 Issue date
               </label>
               <input
@@ -180,7 +179,7 @@ export function CertificateDetailsForm({
               />
             </div>
             <div>
-              <label htmlFor="cert-expiry" className={experienceLabelClass}>
+              <label htmlFor="cert-expiry" className={VIVI_LABEL}>
                 Valid through
               </label>
               <input
@@ -196,7 +195,7 @@ export function CertificateDetailsForm({
           </div>
 
           <div>
-            <label htmlFor="cert-url" className={experienceLabelClass}>
+            <label htmlFor="cert-url" className={VIVI_LABEL}>
               Direct verification / source URL
             </label>
             <input
@@ -210,7 +209,7 @@ export function CertificateDetailsForm({
               className={fieldClass}
             />
             {errorText(urlError)}
-            <p className="mt-1 text-xs text-[var(--ds-text-muted)]">
+            <p className="mt-1.5 text-xs text-zinc-500">
               A direct public link (Credly, CertMetrics, issuer badge) lets us verify it
               automatically.
             </p>
@@ -223,15 +222,11 @@ export function CertificateDetailsForm({
           </div>
         ) : null}
 
-        <div className="sticky bottom-0 -mx-6 -mb-5 flex items-center justify-between gap-3 border-t border-[var(--ds-border)] bg-[var(--ds-surface)] px-6 py-4">
-          <button type="button" onClick={onCancel} className={profileSecondaryButtonSmClass}>
+        <div className="sticky bottom-0 z-10 mt-1 flex items-center justify-between gap-3 border-t border-[var(--ds-border)] bg-[var(--ds-surface)] py-4">
+          <button type="button" onClick={onCancel} className={VIVI_GHOST_BUTTON}>
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={isPending}
-            className={`${profilePrimaryButtonSmClass} disabled:opacity-50`}
-          >
+          <button type="submit" disabled={isPending} className={VIVI_PRIMARY_BUTTON}>
             {isPending ? 'Saving…' : submitLabel}
           </button>
         </div>

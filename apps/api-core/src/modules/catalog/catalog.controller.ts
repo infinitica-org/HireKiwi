@@ -30,6 +30,12 @@ export class CatalogController {
   }
 
   @Public()
+  @Get('education')
+  listEducationCatalog() {
+    return this.catalog.listEducationCatalog();
+  }
+
+  @Public()
   @Get('career-domains')
   listCareerDomains() {
     return this.evidenceCatalog.listCareerDomains();

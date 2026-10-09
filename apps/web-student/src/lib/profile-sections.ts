@@ -6,7 +6,6 @@ import {
   FileUser,
   FolderGit2,
   GraduationCap,
-  IdCard,
   Languages,
   Plug,
   UserRound,
@@ -21,7 +20,6 @@ export const PROFILE_SECTION_IDS = [
   'experience',
   'projects',
   'certifications',
-  'credentials',
   'languages',
   'skills',
   'links',
@@ -113,19 +111,14 @@ export const PROFILE_SECTION_NAV: ProfileSectionNavGroup[] = [
     items: [
       {
         id: 'certifications',
-        label: 'Certifications',
+        label: 'Certificates',
+        navLabel: 'Certifications & Credentials',
         icon: Award,
-        title: 'Certifications',
-        description: 'Professional certifications and verified credentials on your profile.',
-      },
-      {
-        id: 'credentials',
-        label: 'Credentials',
-        icon: IdCard,
-        title: 'Professional credentials',
+        title: 'Certifications & Credentials',
         description:
-          'Upload and verify professional licenses, IDs, and other credential documents.',
+          'Courses and certificates, licenses, badges and memberships, each verified and shown on your profile.',
       },
+
       {
         id: 'languages',
         label: 'Languages',
@@ -195,6 +188,8 @@ export function resolveProfileSection(raw: string | null | undefined): ProfileSe
   if (raw === 'about') return DEFAULT_PROFILE_SECTION;
   if (raw === 'skills') return 'skills';
   if (raw === 'preferences') return 'resume';
+  // Credentials now live with certificates.
+  if (raw === 'credentials') return 'certifications';
   if (isProfileSectionId(raw)) return raw;
   return DEFAULT_PROFILE_SECTION;
 }

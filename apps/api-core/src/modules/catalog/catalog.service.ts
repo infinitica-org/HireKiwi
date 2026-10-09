@@ -6,6 +6,7 @@ import {
   TrackDtoSchema,
   buildSeSkillLibraryResponse,
   buildSkillLibraryResponse,
+  type EducationCatalogResponse,
   type SeSkillLibraryResponse,
   type SkillLibraryResponse,
   type TrackDto,
@@ -52,6 +53,21 @@ export class CatalogService {
   /** skill@1 library grouped by category (Global IT Skills Database). */
   listSkillLibrary(): SkillLibraryResponse {
     return SKILL_LIBRARY;
+  }
+
+  /** Degrees and specializations for the student Education popup, in catalog order. */
+  async listEducationCatalog(): Promise<EducationCatalogResponse> {
+    const [degrees, specializations] = await Promise.all([
+      this.prisma.educationDegree.findMany({
+        orderBy: { sortOrder: 'asc' },
+        select: { id: true, name: true, fullName: true, level: true },
+      }),
+      this.prisma.educationSpecialization.findMany({
+        orderBy: { sortOrder: 'asc' },
+        select: { id: true, name: true, category: true },
+      }),
+    ]);
+    return { degrees, specializations };
   }
 
   /** inf-se-v1 SE skill framework grouped by category A–I (S6-RM-13). */
