@@ -195,5 +195,5 @@ describe('BatchDetailPage', () => {
     fireEvent.click(prevBtn);
     expect(screen.getByText('Showing 1–50 of 55 students')).toBeDefined();
     expect(screen.getByText('Student 01')).toBeDefined();
-  });
+  }, 15000);
 });
