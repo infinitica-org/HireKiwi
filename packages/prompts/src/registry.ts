@@ -1,7 +1,6 @@
 import type { PromptRef, PromptTemplate, RenderedPrompt } from './types.js';
 import { promptRef } from './types.js';
 import { barsL3Template } from './templates/bars-grading.js';
-import { defenseExaminerTemplate, defenseGraderTemplate } from './templates/l4-defense.js';
 import { capstoneReviewTemplate } from './templates/capstone-review.js';
 import { jdParseTemplate } from './templates/jd-parsing.js';
 import { jdSkillExtractTemplate } from './templates/jd-skill-extract.js';
@@ -62,8 +61,6 @@ import {
    Callers get full type safety through renderPrompt<T>. */
 const TEMPLATES: readonly PromptTemplate<any>[] = [
   barsL3Template,
-  defenseExaminerTemplate,
-  defenseGraderTemplate,
   capstoneReviewTemplate,
   jdParseTemplate,
   jdSkillExtractTemplate,
