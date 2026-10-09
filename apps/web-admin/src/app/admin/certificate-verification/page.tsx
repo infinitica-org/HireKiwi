@@ -134,7 +134,6 @@ export default function CertificateVerificationPage() {
 
   useEffect(() => {
     load().catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** Polls event history until the worker's result lands (events grows past `baselineCount`), or times out. */
