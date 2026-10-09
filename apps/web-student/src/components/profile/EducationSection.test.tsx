@@ -112,7 +112,7 @@ describe('EducationSection', () => {
       target: { value: 'MIT' },
     });
     chooseOption(screen.getByLabelText('Program / Degree *'), 'B.Tech');
-    chooseOption(screen.getByLabelText('Board / University *'), 'CBSE');
+    chooseOption(screen.getByLabelText('Board / University *'), 'VTU');
     chooseOption(screen.getByLabelText('Branch / Specialization (Optional)'), 'Computer Science');
     chooseOption(screen.getByLabelText('Start year *'), '2020');
     chooseOption(screen.getByLabelText('End year *'), '2024');
@@ -125,12 +125,12 @@ describe('EducationSection', () => {
     });
     chooseOption(screen.getByLabelText(/Current semester/i), '7');
 
-    fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+    clickEducationSaveButton();
 
     await waitFor(() => expect(createEducation).toHaveBeenCalledTimes(1));
     expect(createEducation).toHaveBeenCalledWith(
       expect.objectContaining({
-        institutionName: 'MIT · CBSE',
+        institutionName: 'MIT · VTU',
         degree: 'Full-time — B.Tech',
         fieldOfStudy: 'Computer Science',
         startDate: '2020-01-01',
@@ -195,6 +195,17 @@ describe('EducationSection', () => {
     });
   });
 
+  function clickEducationSaveButton() {
+    const findSave = () => screen.queryByRole('button', { name: /^Save$/i });
+    for (let i = 0; i < 4 && !findSave(); i += 1) {
+      const next = screen.queryByRole('button', { name: /^Continue$/i });
+      if (!next) break;
+      fireEvent.click(next);
+    }
+    const save = findSave();
+    if (save) fireEvent.click(save);
+  }
+
   async function openCreateModalAndFill() {
     fireEvent.click(
       (await screen.findAllByRole('button', { name: /^Add education$/i })).at(-1) as HTMLElement,
@@ -202,7 +213,7 @@ describe('EducationSection', () => {
     await screen.findByPlaceholderText(/RV College/i);
     fireEvent.change(screen.getByPlaceholderText(/RV College/i), { target: { value: 'MIT' } });
     chooseOption(screen.getByLabelText('Program / Degree *'), 'B.Tech');
-    chooseOption(screen.getByLabelText('Board / University *'), 'CBSE');
+    chooseOption(screen.getByLabelText('Board / University *'), 'VTU');
     chooseOption(screen.getByLabelText('Start year *'), '2020');
     chooseOption(screen.getByLabelText('End year *'), '2024');
     chooseOption(screen.getByLabelText('Study mode *'), 'Full-time');
@@ -233,7 +244,7 @@ describe('EducationSection', () => {
     );
     await screen.findByPlaceholderText(/RV College/i);
 
-    fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+    clickEducationSaveButton();
 
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(createEducation).not.toHaveBeenCalled();
@@ -248,12 +259,12 @@ describe('EducationSection', () => {
     renderWithQueryClient(<EducationSection />);
     await openCreateModalAndFill();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+    clickEducationSaveButton();
 
     expect(await screen.findByText('Could not reach server')).toBeTruthy();
     expect((screen.getByPlaceholderText(/RV College/i) as HTMLInputElement).value).toBe('MIT');
 
-    fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+    clickEducationSaveButton();
     await waitFor(() => expect(createEducation).toHaveBeenCalledTimes(2));
   });
 

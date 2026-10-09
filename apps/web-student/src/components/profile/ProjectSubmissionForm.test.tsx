@@ -87,7 +87,7 @@ async function openAddProjectModal() {
 
 async function openManualProjectModal() {
   await openAddProjectModal();
-  fireEvent.click(screen.getByRole('button', { name: /Add manually/i }));
+  fireEvent.click(await screen.findByRole('button', { name: /Add manually/i }));
   await screen.findByLabelText(/^Title$/i);
 }
 
@@ -297,7 +297,7 @@ describe('ProjectSubmissionForm', () => {
     const dialog = await screen.findByRole('dialog');
     await waitFor(() => expect(listGithubRepos).toHaveBeenCalledWith({ login: 'octocat' }));
 
-    fireEvent.click(within(dialog).getByRole('button', { name: /Use this repository/i }));
+    fireEvent.click(await within(dialog).findByRole('button', { name: /Use this repository/i }));
     await waitFor(() =>
       expect(githubRepoReadme).toHaveBeenCalledWith({ fullName: 'octocat/bus-tracker' }),
     );

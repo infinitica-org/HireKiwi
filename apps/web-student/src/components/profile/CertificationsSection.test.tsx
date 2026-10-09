@@ -101,8 +101,8 @@ describe('CertificationsSection (certificates and credentials together)', () => 
   it('shows one empty state with a single add action', async () => {
     renderWithQueryClient(<CertificationsSection />);
     expect(await screen.findByText('Nothing added yet')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: /^Add$/ })).toHaveLength(1);
-    expect(screen.getByRole('heading', { name: 'Certificates' })).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /^Add/i })).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Certifications & Credentials' })).toBeTruthy();
   });
 
   it('lists certificates and credentials together', async () => {
@@ -117,7 +117,9 @@ describe('CertificationsSection (certificates and credentials together)', () => 
 
   it('opens one popup with a Type field; Certificate shows the certificate steps', async () => {
     renderWithQueryClient(<CertificationsSection />);
-    fireEvent.click(await screen.findByRole('button', { name: /^Add$/ }));
+    fireEvent.click(
+      (await screen.findAllByRole('button', { name: /^Add/i })).at(-1) as HTMLElement,
+    );
 
     expect(await screen.findByText('Add certificate or credential')).toBeTruthy();
     const type = screen.getByLabelText(/^Type/);
@@ -136,7 +138,9 @@ describe('CertificationsSection (certificates and credentials together)', () => 
 
   it('shows the same details form for a license, badge or membership', async () => {
     renderWithQueryClient(<CertificationsSection />);
-    fireEvent.click(await screen.findByRole('button', { name: /^Add$/ }));
+    fireEvent.click(
+      (await screen.findAllByRole('button', { name: /^Add/i })).at(-1) as HTMLElement,
+    );
     chooseOption(await screen.findByLabelText(/^Type/), 'LICENSE');
 
     expect(await screen.findByLabelText(/^Issuer/)).toBeTruthy();
@@ -150,14 +154,18 @@ describe('CertificationsSection (certificates and credentials together)', () => 
   it('adds a credential of the chosen type and shows it', async () => {
     createCredential.mockResolvedValue(license);
     renderWithQueryClient(<CertificationsSection />);
-    fireEvent.click(await screen.findByRole('button', { name: /^Add$/ }));
+    fireEvent.click(
+      (await screen.findAllByRole('button', { name: /^Add/i })).at(-1) as HTMLElement,
+    );
     chooseOption(await screen.findByLabelText(/^Type/), 'BADGE');
 
     fireEvent.change(await screen.findByLabelText(/^Issuer/), { target: { value: 'Bar Council' } });
     fireEvent.change(screen.getByLabelText(/^Name/), { target: { value: 'Advocate license' } });
     listCredentials.mockResolvedValue([license]);
     // The popup's save button is the last "Add" on the page.
-    fireEvent.click(screen.getAllByRole('button', { name: /^Add$/ }).at(-1) as HTMLElement);
+    fireEvent.click(
+      (await screen.findAllByRole('button', { name: /^Add/i })).at(-1) as HTMLElement,
+    );
 
     await waitFor(() => expect(createCredential).toHaveBeenCalledTimes(1));
     expect(createCredential.mock.calls[0]?.[0]).toMatchObject({
