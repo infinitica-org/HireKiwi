@@ -82,15 +82,7 @@ function setup() {
   };
   const auditPublisher = { record: vi.fn().mockResolvedValue(undefined) };
   const emailQueue = { add: vi.fn().mockResolvedValue(undefined) };
-  const verificationService = {
-    runVerification: vi.fn().mockResolvedValue({
-      certificateId: 'test-id',
-      sourceStatus: 'source_verified',
-      status: 'VERIFIED',
-      tierUsed: 'TIER_1_ISSUER_API',
-      result: { status: 'VERIFIED', tier: 'TIER_1_ISSUER_API', confidence: 0.95, reason: 'OK' },
-    }),
-  };
+  const certVerificationQueue = { add: vi.fn().mockResolvedValue(undefined) };
   const publicProfileService = {
     recheckActivationAfterVoid: vi.fn().mockResolvedValue(undefined),
   };
@@ -101,7 +93,7 @@ function setup() {
     storage as never,
     auditPublisher as never,
     emailQueue as never,
-    verificationService as never,
+    certVerificationQueue as never,
     dedup,
     outbox as never,
     publicProfileService as never,
@@ -111,7 +103,7 @@ function setup() {
     storage,
     auditPublisher,
     emailQueue,
-    verificationService,
+    certVerificationQueue,
     outbox,
     publicProfileService,
     dedup,

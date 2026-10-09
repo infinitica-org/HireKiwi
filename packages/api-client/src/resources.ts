@@ -182,6 +182,7 @@ import type {
   ReviewEvidenceRequest,
   SaveOnboardingSelectionRequest,
   CreateVerificationDecisionRequest,
+  RegisterRequest,
   RegisterStudentRequest,
   StartCompanyOnboardingRequest,
   UpdateCompanyOnboardingDraftRequest,
@@ -448,6 +449,11 @@ import {
   VoidWorkExperienceResponseSchema,
   ApproveWorkExperienceAuthenticityResponseSchema,
   VoidCandidateCertificateResponseSchema,
+  ListCertificateVerificationQueueResponseSchema,
+  ReVerifyCertificateResponseSchema,
+  type BulkReVerifyCertificatesRequest,
+  BulkReVerifyCertificatesResponseSchema,
+  ListQueueSnapshotsResponseSchema,
   type ToggleModelVersionRequest,
   type ToggleModelVersionResponse,
   ToggleModelVersionResponseSchema,
@@ -541,12 +547,7 @@ export function authApi(client: HireKiwiApiClient) {
         anonymous: true,
       }),
 
-    register: (body: {
-      email: string;
-      password: string;
-      fullName: string;
-      institutionId: string;
-    }) =>
+    register: (body: RegisterRequest) =>
       client.post(prefixed('/auth/register'), body, {
         schema: RegisterResponseSchema,
         anonymous: true,
@@ -1464,6 +1465,30 @@ export function onboardingApi(client: HireKiwiApiClient) {
         schema: VoidCandidateCertificateResponseSchema,
       }),
 
+    /** Certificates stuck in verification (sourceStatus pending/source_failed). */
+    certificateVerificationQueue: () =>
+      client.get(prefixed('/admin/candidate-certificates/queue'), {
+        schema: ListCertificateVerificationQueueResponseSchema,
+      }),
+
+    reVerifyCertificate: (id: string) =>
+      client.post(
+        prefixed(`/admin/candidate-certificates/${id}/reverify`),
+        {},
+        { schema: ReVerifyCertificateResponseSchema },
+      ),
+
+    bulkReVerifyCertificates: (body: BulkReVerifyCertificatesRequest) =>
+      client.post(prefixed('/admin/candidate-certificates/reverify-bulk'), body, {
+        schema: BulkReVerifyCertificatesResponseSchema,
+      }),
+
+    /** Full Tier 1/2/3 attempt history — what actually happened on each (re)verification run. */
+    certificateVerificationEvents: (id: string) =>
+      client.get(prefixed(`/admin/candidate-certificates/${id}/events`), {
+        schema: ListCertificateVerificationEventsResponseSchema,
+      }),
+
     voidWorkExperience: (id: string, body: VoidRequest) =>
       client.post(prefixed(`/admin/work-experience/${id}/void`), body, {
         schema: VoidWorkExperienceResponseSchema,
@@ -2375,6 +2400,10 @@ export function systemApi(client: HireKiwiApiClient) {
         schema: HealthStatusSchema,
         anonymous: true,
       }),
+
+    /** Universal BullMQ queue viewer — every registered queue (DLQs included). */
+    listQueues: () =>
+      client.get(prefixed('/admin/queues'), { schema: ListQueueSnapshotsResponseSchema }),
   };
 }
 

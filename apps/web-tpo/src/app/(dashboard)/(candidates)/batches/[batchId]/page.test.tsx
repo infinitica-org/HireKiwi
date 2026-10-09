@@ -154,6 +154,8 @@ describe('BatchDetailPage', () => {
     });
   });
 
+  // Renders 55 rows — under CI's CPU-constrained runners this reliably exceeds the
+  // default 5000ms budget even though nothing in the test awaits unresolved work.
   it('paginates batch members at 50 per page with navigation controls', async () => {
     const manyMembers = Array.from({ length: 55 }, (_, i) => ({
       ...member,
@@ -195,5 +197,5 @@ describe('BatchDetailPage', () => {
     fireEvent.click(prevBtn);
     expect(screen.getByText('Showing 1–50 of 55 students')).toBeDefined();
     expect(screen.getByText('Student 01')).toBeDefined();
-  });
+  }, 15_000);
 });
