@@ -294,12 +294,14 @@ export class PublicProfileService {
       select: {
         createdAt: true,
         fullName: true,
+        profileHeadline: true,
         profilePhotoObjectKey: true,
         hiddenSections: true,
         allowEmployerMessages: true,
       },
     });
-    const showInProgress = false;
+    // The owner's own page shows everything they added; unverified items are labelled in progress.
+    const showInProgress = true;
     const hiddenSections = owner.hiddenSections ?? [];
 
     const [
@@ -314,7 +316,7 @@ export class PublicProfileService {
       maxEvidenceAgg,
     ] = await Promise.all([
       this.prisma.skillClaim.findMany({
-        where: { studentId: userId, status: 'VERIFIED' },
+        where: { studentId: userId },
         include: { skill: { select: { code: true } } },
       }),
       this.prisma.skillClaim.count({ where: { studentId: userId } }),
@@ -416,6 +418,7 @@ export class PublicProfileService {
 
     return {
       fullName: owner.fullName,
+      headline: owner.profileHeadline?.trim() || null,
       profilePhotoUrl: await resolveProfilePhotoUrl(this.storage, owner.profilePhotoObjectKey),
       trackName: certificate?.track?.name ?? null,
       trackCategory: null,
@@ -425,6 +428,7 @@ export class PublicProfileService {
             skillCode: claim.skill.code,
             skillName: SKILL_NAME_BY_CODE.get(claim.skill.code) ?? claim.skill.code,
             proficiency: claim.proficiency,
+            inProgress: claim.status !== 'VERIFIED',
           })),
       declaredSkillsCount: isSkillsHidden ? 0 : declaredCount,
       projects: isProjectsHidden

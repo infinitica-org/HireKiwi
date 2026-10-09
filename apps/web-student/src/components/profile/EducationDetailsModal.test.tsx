@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { chooseOption } from '@/test-utils/styled-select';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EducationDetailsModal } from './EducationDetailsModal';
 import { emptyEducationFormValues } from '@/lib/education-form';
@@ -83,9 +84,7 @@ describe('EducationDetailsModal', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText('Program / Degree *'), {
-      target: { value: '12th Standard' },
-    });
+    chooseOption(screen.getByLabelText('Program / Degree *'), '12th Standard');
 
     expect(screen.getByText('12th (HSC) score')).toBeTruthy();
   });

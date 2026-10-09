@@ -42,6 +42,7 @@ export const queryKeys = {
 
   /* -------------------------------- catalog ------------------------------- */
   catalog: () => ['catalog'] as const,
+  educationCatalog: () => ['catalog', 'education'] as const,
   tracks: () => ['catalog', 'tracks'] as const,
   track: (trackCode: string) => ['catalog', 'tracks', trackCode] as const,
   catalogReadiness: () => ['catalog', 'readiness'] as const,

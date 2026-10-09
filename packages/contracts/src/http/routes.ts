@@ -3178,6 +3178,18 @@ export const ROUTES: readonly RouteSpec[] = [
     slaMs: 80,
     summary: 'inf-se-v1 Software Engineering skill framework grouped by category A–I (S6-RM-13).',
   },
+  {
+    method: 'GET',
+    path: '/catalog/education',
+    module: 'catalog',
+    owner: 'Satheswaran V',
+    roles: ['PUBLIC'],
+    rateLimit: 'role.public',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 80,
+    summary: 'Degrees and specializations for the student Education popup.',
+  },
 
   /* ------------------------------- assessment ------------------------------ */
   {

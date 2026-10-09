@@ -36,6 +36,12 @@ export function EducationSection() {
     queryFn: () => api.users.listEducation(),
     staleTime: 60_000,
   });
+  // Catalog degrees and specializations for the popup; it falls back to built-in lists if this fails.
+  const { data: educationCatalog } = useQuery({
+    queryKey: queryKeys.educationCatalog(),
+    queryFn: () => api.catalog.educationCatalog(),
+    staleTime: 60 * 60_000,
+  });
   const error = queryError
     ? (queryError as Error).message || 'Failed to load education entries.'
     : null;
@@ -229,6 +235,7 @@ export function EducationSection() {
           initialValues={modalInitialValues}
           submitting={submitting}
           formError={formError}
+          catalog={educationCatalog}
           onClose={closeModal}
           onSubmit={handleModalSubmit}
         />

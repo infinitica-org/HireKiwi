@@ -333,6 +333,7 @@ import {
   SendBatchInvitesResultDtoSchema,
   SkillClaimDtoSchema,
   SkillLibraryResponseSchema,
+  EducationCatalogResponseSchema,
   CareerDomainDtoSchema,
   TargetRoleDtoSchema,
   RecommendedSkillsResponseSchema,
@@ -1651,6 +1652,12 @@ export function catalogApi(client: HireKiwiApiClient) {
     skillLibrary: () =>
       client.get(prefixed('/catalog/skills'), {
         schema: SkillLibraryResponseSchema,
+        anonymous: true,
+      }),
+
+    educationCatalog: () =>
+      client.get(prefixed('/catalog/education'), {
+        schema: EducationCatalogResponseSchema,
         anonymous: true,
       }),
 

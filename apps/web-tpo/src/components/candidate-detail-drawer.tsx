@@ -6,7 +6,6 @@ import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import { api } from '../lib/api';
 import { CandidateRepositoryProfileView } from './candidates/CandidateRepositoryProfileView';
-import { CandidateEvidenceReviewPanel } from './candidates/CandidateEvidenceReviewPanel';
 
 export function CandidateDetailDrawer({
   candidate,
@@ -99,7 +98,6 @@ export function CandidateDetailDrawer({
             claimsLoading={loading}
             claimsError={error}
           />
-          <CandidateEvidenceReviewPanel studentId={candidate.userId} />
         </div>
       </div>
     </>

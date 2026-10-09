@@ -21,6 +21,7 @@ import { projectDefenseTimerProps } from '@/lib/project-defense-timer';
 import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import { api } from '../../lib/api';
 import { uploadDefenseTurnAudio } from '../../lib/project-defense-audio-upload';
+import { ViviLogo } from '../vivi-verification/ViviLogo';
 import { resolveDefenseClosingAnnouncement } from '../../lib/project-defense-closing';
 import { resolveDefenseReplyAction } from '../../lib/project-defense-reply-action';
 import {
@@ -468,6 +469,10 @@ export function ProjectDefenseInterviewPanel({
           <h1 className="truncate pr-3 text-lg font-semibold tracking-tight">
             Project defense — {project.title}
           </h1>
+          <span className="flex shrink-0 items-center gap-2 text-[10px] text-[var(--text-muted)]">
+            Powered by
+            <ViviLogo className="h-5" />
+          </span>
         </header>
         <div className="flex flex-1 items-center justify-center p-6">
           <section className="w-full max-w-lg rounded-[var(--radius-card)] border border-[var(--surface-border)] bg-[var(--surface)] p-8 text-center md:p-10">

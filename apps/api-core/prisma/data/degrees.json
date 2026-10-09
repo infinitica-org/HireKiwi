@@ -1,0 +1,146 @@
+[
+  {
+    "id": "D01",
+    "name": "10th / SSLC",
+    "fullName": "Secondary School Certificate (10th, SSLC, Matriculation)",
+    "level": "School"
+  },
+  {
+    "id": "D02",
+    "name": "12th / HSC",
+    "fullName": "Higher Secondary Certificate (12th, Intermediate, PUC)",
+    "level": "School"
+  },
+  {
+    "id": "D03",
+    "name": "ITI",
+    "fullName": "Industrial Training Institute Certificate (IT / computer trades)",
+    "level": "Vocational / Diploma"
+  },
+  {
+    "id": "D04",
+    "name": "Diploma",
+    "fullName": "Diploma in Computer Engineering / IT (Polytechnic)",
+    "level": "Vocational / Diploma"
+  },
+  {
+    "id": "D05",
+    "name": "PG Diploma",
+    "fullName": "Post Graduate Diploma in Computer Applications / IT (PGDCA and similar)",
+    "level": "Vocational / Diploma"
+  },
+  {
+    "id": "D06",
+    "name": "BCA",
+    "fullName": "Bachelor of Computer Applications",
+    "level": "Undergraduate"
+  },
+  {
+    "id": "D07",
+    "name": "B.Sc",
+    "fullName": "Bachelor of Science (Computer Science / IT / Data Science and similar)",
+    "level": "Undergraduate"
+  },
+  {
+    "id": "D08",
+    "name": "B.Tech",
+    "fullName": "Bachelor of Technology (CSE / IT and related)",
+    "level": "Undergraduate"
+  },
+  {
+    "id": "D09",
+    "name": "B.E",
+    "fullName": "Bachelor of Engineering (CSE / IT and related)",
+    "level": "Undergraduate"
+  },
+  {
+    "id": "D10",
+    "name": "B.Voc",
+    "fullName": "Bachelor of Vocation (Software Development)",
+    "level": "Undergraduate"
+  },
+  {
+    "id": "D11",
+    "name": "MCA",
+    "fullName": "Master of Computer Applications",
+    "level": "Postgraduate"
+  },
+  {
+    "id": "D12",
+    "name": "M.Sc",
+    "fullName": "Master of Science (Computer Science / IT / Data Science and similar)",
+    "level": "Postgraduate"
+  },
+  {
+    "id": "D13",
+    "name": "M.Tech",
+    "fullName": "Master of Technology (CSE / IT and related)",
+    "level": "Postgraduate"
+  },
+  {
+    "id": "D14",
+    "name": "M.E.",
+    "fullName": "Master of Engineering (CSE / IT and related)",
+    "level": "Postgraduate"
+  },
+  {
+    "id": "D15",
+    "name": "M.Phil",
+    "fullName": "Master of Philosophy (Computer Science / IT)",
+    "level": "Doctorate / Research"
+  },
+  {
+    "id": "D16",
+    "name": "Ph.D",
+    "fullName": "Doctor of Philosophy (Computer Science / IT)",
+    "level": "Doctorate / Research"
+  },
+  {
+    "id": "D17",
+    "name": "B.Com",
+    "fullName": "Bachelor of Commerce (General / Hons)",
+    "level": "Undergraduate"
+  },
+  {
+    "id": "D18",
+    "name": "B.Com (CA)",
+    "fullName": "Bachelor of Commerce (Computer Applications)",
+    "level": "Undergraduate"
+  },
+  {
+    "id": "D19",
+    "name": "BBA",
+    "fullName": "Bachelor of Business Administration",
+    "level": "Undergraduate"
+  },
+  {
+    "id": "D20",
+    "name": "M.Com",
+    "fullName": "Master of Commerce",
+    "level": "Postgraduate"
+  },
+  {
+    "id": "D21",
+    "name": "MBA",
+    "fullName": "Master of Business Administration (IT / Business Analytics)",
+    "level": "Postgraduate"
+  },
+  {
+    "id": "D22",
+    "name": "PGDM",
+    "fullName": "Post Graduate Diploma in Management (IT / Analytics)",
+    "level": "Postgraduate"
+  },
+  {
+    "id": "D23",
+    "name": "CA / CMA / CS",
+    "fullName": "Professional qualifications (Chartered Accountant, Cost & Management Accountant, Company Secretary)",
+    "level": "Professional"
+  },
+  {
+    "id": "D24",
+    "name": "Other",
+    "fullName": "Other (please specify)",
+    "level": "Other"
+  }
+]

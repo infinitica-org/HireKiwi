@@ -1520,6 +1520,31 @@ model CompanyVerificationDocument {
   @@map("company_verification_documents")
 }
 
+/// Education catalog shown in the student Education popup (seeded from prisma/data/degrees.json).
+model EducationDegree {
+  id        String   @id @db.VarChar(8)
+  name      String
+  fullName  String   @map("full_name")
+  level     String
+  sortOrder Int      @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([level, sortOrder])
+  @@map("education_degrees")
+}
+
+/// Branch / specialization catalog for the Education popup (seeded from prisma/data/specializations.json).
+model EducationSpecialization {
+  id        String   @id @db.VarChar(8)
+  name      String
+  category  String
+  sortOrder Int      @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([category, sortOrder])
+  @@map("education_specializations")
+}
+
 model Skill {
   id                    String      @id @default(uuid()) @db.Uuid
   code                  String      @unique

@@ -3,6 +3,7 @@ import { cn } from '../lib/cn';
 import hirekiwiTextImg from '../assets/images/Logos/WebP/samrt-text.png';
 import hirekiwiLogoImg from '../assets/images/Logos/WebP/HireKiwi-logo.jpg';
 import hirekiwiLogoTextImg from '../assets/images/Logos/WebP/hirekiwi-logo-text.jpg';
+import viviLogoImg from '../assets/images/Logos/WebP/vivi.png';
 
 export { HIREKIWI_MARK_TEAL } from '../brand/colors';
 
@@ -22,6 +23,8 @@ export function resolveImageSource(asset: unknown): string {
 export const HIREKIWI_TEXT_LOGO_SRC: string = resolveImageSource(hirekiwiTextImg);
 export const HIREKIWI_LOGO_SRC: string = resolveImageSource(hirekiwiLogoImg);
 export const HIREKIWI_LOGO_TEXT_SRC: string = resolveImageSource(hirekiwiLogoTextImg);
+/** The Vivi verification partner logo (colour flower mark with a black wordmark, transparent). */
+export const VIVI_LOGO_SRC: string = resolveImageSource(viviLogoImg);
 
 export type HireKiwiLogoKind = 'text' | 'wordmark' | 'mark';
 export type HireKiwiLogoTone = 'auto' | 'on-light' | 'on-dark';

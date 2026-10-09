@@ -14,6 +14,7 @@ import {
 } from '@/components/profile/ProfileSectionChrome';
 import { profilePrimaryButtonSmClass } from '@/lib/profile-ui-classes';
 import { profileSectionMeta } from '@/lib/profile-sections';
+import { StyledSelect } from '@/components/ui/styled-select';
 
 export const CANONICAL_LANGUAGES = [
   'Arabic',
@@ -251,7 +252,7 @@ export function LanguagesSection() {
                 >
                   Language <span className="text-red-600">*</span>
                 </label>
-                <select
+                <StyledSelect
                   id="language-select"
                   required
                   value={language}
@@ -271,7 +272,7 @@ export function LanguagesSection() {
                       {lang}
                     </option>
                   ))}
-                </select>
+                </StyledSelect>
               </div>
 
               <div>
@@ -281,7 +282,7 @@ export function LanguagesSection() {
                 >
                   Proficiency
                 </label>
-                <select
+                <StyledSelect
                   id="proficiency-select"
                   value={proficiency}
                   onChange={(e) => setProficiency(e.target.value)}
@@ -293,7 +294,7 @@ export function LanguagesSection() {
                       {opt}
                     </option>
                   ))}
-                </select>
+                </StyledSelect>
               </div>
 
               <div className="flex justify-end gap-3 border-t border-[var(--ds-border-subtle)]/80 pt-4">

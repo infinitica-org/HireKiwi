@@ -103,6 +103,7 @@ export {
   type HireKiwiLogoProps,
   type HireKiwiLogoTone,
   HIREKIWI_MARK_TEAL,
+  VIVI_LOGO_SRC,
 } from './components/hirekiwi-logo';
 export { SignOutButton, type SignOutButtonProps } from './components/sign-out-button';
 export { SessionBootstrap } from './session-bootstrap';

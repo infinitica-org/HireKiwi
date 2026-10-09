@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, Button } from '@hirekiwi/ui';
 import type { CandidateCertificateDto, TrackCode } from '@hirekiwi/contracts';
 import { ArrowLeft, RefreshCw, ShieldAlert, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
-import { CertificateGuidelinesBanner } from './certificate-guidelines-banner';
 import { CertificateStatusStepper } from './certificate-status-stepper';
 import { CertificateDetailsForm, type CertificateDetailsPayload } from './certificate-details-form';
 import { CertificateUpload } from './certificate-upload';
@@ -24,6 +23,10 @@ export interface EmbeddedCertificateWizard {
   certificateId: string | null;
   /** Back button: closes the popup. */
   onClose: () => void;
+  /** A field shown first in the details form (the Type choice in the profile popup). */
+  topField?: ReactNode;
+  /** Which step the wizard is on: 0 details, 1 proof, 2 skills, 3 verify. */
+  onStageChange?: (stage: 0 | 1 | 2 | 3) => void;
 }
 
 export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificateWizard } = {}) {
@@ -69,6 +72,19 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
     queryFn: () => api.candidateCertificates.listEvents(certificateId as string),
     enabled: Boolean(certificateId) && certificate !== null,
   });
+
+  const stage: 0 | 1 | 2 | 3 =
+    !certificate || isEditingDetails
+      ? 0
+      : !(certificate.certificateFileUrl || certificate.verificationUrl)
+        ? 1
+        : certificate.skills.length === 0 || !certificate.learningDescription
+          ? 2
+          : 3;
+  const onStageChange = embedded?.onStageChange;
+  useEffect(() => {
+    onStageChange?.(stage);
+  }, [stage, onStageChange]);
 
   const handleCreateDetails = async (details: CertificateDetailsPayload) => {
     setCreating(true);
@@ -229,10 +245,10 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
     return (
       <div className={`mx-auto flex w-full max-w-3xl flex-col ${embedded ? 'gap-5' : 'gap-6'}`}>
         {embedded ? null : <WizardHeader />}
-        <CertificateGuidelinesBanner compact={Boolean(embedded)} />
         <CertificateDetailsForm
           embedded={Boolean(embedded)}
           onCancel={embedded?.onClose}
+          topField={embedded?.topField}
           initialValues={
             certificate
               ? {
@@ -361,7 +377,6 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <WizardHeader />
-      <CertificateGuidelinesBanner />
 
       <div className="flex items-center justify-between gap-4">
         <div>

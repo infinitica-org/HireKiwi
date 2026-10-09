@@ -54,7 +54,6 @@ describe('EmployerJobsService (JOB-01)', () => {
   let actor: Record<string, unknown>;
   let prisma: any;
   let audit: { record: ReturnType<typeof vi.fn> };
-  let billing: { assertQuotaAvailable: ReturnType<typeof vi.fn> };
   let service: EmployerJobsService;
 
   beforeEach(() => {
@@ -89,13 +88,7 @@ describe('EmployerJobsService (JOB-01)', () => {
     };
     prisma.$transaction = vi.fn(async (fn: (tx: unknown) => unknown) => fn(prisma));
     audit = { record: vi.fn(async () => undefined) };
-    billing = { assertQuotaAvailable: vi.fn(async () => undefined) };
-    service = new EmployerJobsService(
-      prisma as never,
-      audit as never,
-      billing as never,
-      { add: vi.fn() } as never,
-    );
+    service = new EmployerJobsService(prisma as never, audit as never, { add: vi.fn() } as never);
   });
 
   const createBody = () =>
@@ -225,9 +218,8 @@ describe('EmployerJobsService (JOB-01)', () => {
     });
   });
 
-  it('publishes a draft only after verification and the ACTIVE_JOBS quota', async () => {
+  it('publishes a draft after verification, with no limit on how many jobs are open', async () => {
     const job = await service.publish(IDS.recruiter, JOB);
-    expect(billing.assertQuotaAvailable).toHaveBeenCalledWith(IDS.companyA, 'ACTIVE_JOBS');
     expect(prisma.jobOpening.update.mock.calls[0][0].data).toEqual({ status: 'OPEN' });
     expect(job.status).toBe('OPEN');
   });

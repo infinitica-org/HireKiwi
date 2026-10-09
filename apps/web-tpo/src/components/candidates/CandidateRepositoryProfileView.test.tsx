@@ -46,7 +46,10 @@ describe('CandidateRepositoryProfileView', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'Ada Lovelace' })).toBeDefined();
     expect(screen.getByText('ada@campus.edu')).toBeDefined();
     expect(screen.getByText('Batch 2026')).toBeDefined();
-    expect(screen.getByText('Onboarding complete')).toBeDefined();
+    expect(screen.queryByText('Onboarding complete')).toBeNull();
+    expect(screen.queryByText('Invite Pending')).toBeNull();
+    expect(screen.queryByText(/Invite sent/i)).toBeNull();
+    expect(screen.queryByText(/Accepted:/i)).toBeNull();
     expect(screen.getByRole('link', { name: /LinkedIn/i })).toBeDefined();
   });
 

@@ -19,6 +19,7 @@ export type { DegreeDetailsFormSlice };
 
 export const PROGRAM_DEGREE_OPTIONS = [
   '10th Standard',
+  '11th Standard',
   '12th Standard',
   'Diploma',
   'Certificate',
@@ -35,16 +36,70 @@ export const PROGRAM_DEGREE_OPTIONS = [
   'Ph.D',
 ] as const;
 
-export const BOARD_UNIVERSITY_OPTIONS = [
-  'CBSE',
-  'ICSE',
-  'State Board',
+/** What kind of education is being added; the popup's questions change to fit it. */
+export type EducationLevelId =
+  'school' | 'diploma' | 'undergraduate' | 'postgraduate' | 'doctorate' | 'other';
+
+export const SCHOOL_STANDARDS = ['10th Standard', '11th Standard', '12th Standard'] as const;
+
+export interface EducationLevel {
+  id: EducationLevelId;
+  label: string;
+  hint: string;
+  programs: readonly string[];
+}
+
+export const EDUCATION_LEVELS: EducationLevel[] = [
+  { id: 'school', label: 'School', hint: '10th, 11th or 12th', programs: SCHOOL_STANDARDS },
+  {
+    id: 'diploma',
+    label: 'Diploma',
+    hint: 'Diploma or certificate',
+    programs: ['Diploma', 'Certificate'],
+  },
+  {
+    id: 'undergraduate',
+    label: 'Undergraduate',
+    hint: 'B.Tech, B.Sc, BCA, B.Com…',
+    programs: ['B.Tech', 'B.E.', 'B.Sc', 'BCA', 'BBA', 'B.Com'],
+  },
+  {
+    id: 'postgraduate',
+    label: 'Postgraduate',
+    hint: 'M.Tech, M.Sc, MCA, MBA…',
+    programs: ['M.Tech', 'M.Sc', 'MCA', 'MBA'],
+  },
+  { id: 'doctorate', label: 'Doctorate', hint: 'Ph.D', programs: ['Ph.D'] },
+  { id: 'other', label: 'Other', hint: 'Something else', programs: [] },
+];
+
+/** The level a saved program belongs to (anything unknown counts as Other). */
+/** "B.E" and "B.E." are the same program; compare without dots, spaces and case. */
+export function sameProgramName(a: string, b: string): boolean {
+  const norm = (value: string) => value.toLowerCase().replace(/[.\s]/g, '');
+  return norm(a) === norm(b);
+}
+
+export function levelOfProgram(
+  program: string,
+  levels: readonly EducationLevel[] = EDUCATION_LEVELS,
+): EducationLevelId | null {
+  if (!program) return null;
+  const hit = levels.find((level) => level.programs.some((name) => sameProgramName(name, program)));
+  return hit ? hit.id : 'other';
+}
+
+export const SCHOOL_BOARD_OPTIONS = ['CBSE', 'ICSE', 'State Board', 'NIOS', 'IB'] as const;
+
+export const UNIVERSITY_OPTIONS = [
   'VTU',
   'Anna University',
   'Mumbai University',
   'Delhi University',
   'JNTU',
 ] as const;
+
+export const BOARD_UNIVERSITY_OPTIONS = [...SCHOOL_BOARD_OPTIONS, ...UNIVERSITY_OPTIONS] as const;
 
 export const BRANCH_SPECIALIZATION_OPTIONS = [
   'Computer Science',

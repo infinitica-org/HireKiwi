@@ -8,10 +8,6 @@ vi.mock('@/lib/use-onboarding', () => ({
   useOnboarding: vi.fn(),
 }));
 
-vi.mock('@/components/onboarding/steps/SocialVerification', () => ({
-  default: () => <div data-testid="social-verification">Social form</div>,
-}));
-
 vi.mock('@/components/profile/CodingPlatformIntegrations', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   CodingPlatformIntegrations: () => null,

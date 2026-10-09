@@ -59,6 +59,7 @@ import {
   uploadWorkExperienceProof,
   validateEvidenceFile,
 } from '@/lib/evidence-upload';
+import { StyledSelect } from '@/components/ui/styled-select';
 
 type ModalPendingDocument = {
   localId: string;
@@ -891,7 +892,7 @@ export function WorkExperienceSection() {
                 <label className="block text-xs font-medium text-foreground/80">
                   Document Type *
                 </label>
-                <select
+                <StyledSelect
                   value={docType}
                   onChange={(e) => setDocType(e.target.value)}
                   className={`${nativeSelectClass} mt-1 h-10 py-2 text-sm`}
@@ -912,7 +913,7 @@ export function WorkExperienceSection() {
                     Form 16
                   </option>
                   <option value="OTHER">Other Proof Document</option>
-                </select>
+                </StyledSelect>
               </div>
 
               <div>

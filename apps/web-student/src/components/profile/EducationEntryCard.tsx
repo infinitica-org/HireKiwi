@@ -1,18 +1,16 @@
 'use client';
 
-import { CheckCircle2, Clock, Pencil, School, Trash2, XCircle } from 'lucide-react';
+import { Pencil, School, Trash2 } from 'lucide-react';
 import type { CandidateEducationDto } from '@hirekiwi/contracts';
 import { parseEducationDisplay } from '@/lib/education-entry-presenters';
 import {
   EntryBadge,
   EntryCard,
   EntryFact,
-  EntryFacts,
-  EntryFooter,
   EntryHeader,
   EntryIconButton,
   EntryIconTile,
-  entryPrimaryButtonClass,
+  entryTextButtonClass,
 } from './entry-card-ui';
 
 interface EducationEntryCardProps {
@@ -23,6 +21,7 @@ interface EducationEntryCardProps {
   onAddProof: () => void;
 }
 
+/** One education entry: what you studied, where, when and your score. No review status shown. */
 export function EducationEntryCard({
   education,
   onEdit,
@@ -39,36 +38,13 @@ export function EducationEntryCard({
     ? ` · Roll ${details.rollNumber}${details.currentSemester ? ` · Sem ${details.currentSemester}` : ''}`
     : '';
 
-  const isVerified = education.status === 'verified';
-  const isRejected = education.status === 'rejected';
-  const isPending = !isVerified && !isRejected;
-
   return (
     <EntryCard>
       <EntryHeader
         leading={<EntryIconTile icon={School} />}
         title={display.programTitle}
         subtitle={`${institutionLine}${rollLine}`}
-        badges={
-          <>
-            {isVerified ? (
-              <EntryBadge tone="success" icon={CheckCircle2}>
-                Verified
-              </EntryBadge>
-            ) : null}
-            {isPending ? (
-              <EntryBadge tone="warning" icon={Clock}>
-                Pending review
-              </EntryBadge>
-            ) : null}
-            {isRejected ? (
-              <EntryBadge tone="danger" icon={XCircle}>
-                Rejected
-              </EntryBadge>
-            ) : null}
-            {education.current ? <EntryBadge>Current</EntryBadge> : null}
-          </>
-        }
+        badges={education.current ? <EntryBadge>Current</EntryBadge> : null}
         actions={
           <>
             <EntryIconButton label="Edit education" onClick={onEdit}>
@@ -81,27 +57,22 @@ export function EducationEntryCard({
         }
       />
 
-      <EntryFacts>
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-3 border-t border-zinc-100 px-5 py-4 text-sm sm:grid-cols-3 dark:border-zinc-800">
         <EntryFact label="Duration">{display.dateRangeLabel}</EntryFact>
-        <EntryFact label="Grading scale">{display.scoreSummary}</EntryFact>
-        <EntryFact label="Final score">
-          <span className="text-lg font-semibold">{display.finalScore}</span>
+        <EntryFact label="Score">{display.scoreSummary}</EntryFact>
+        <EntryFact label="Proof">
+          <span className="flex items-center gap-2.5">
+            <span>
+              {docCount === 0 ? 'None yet' : `${docCount} document${docCount === 1 ? '' : 's'}`}
+            </span>
+            <button type="button" onClick={onAddProof} className={entryTextButtonClass}>
+              {docCount > 0 ? 'Manage' : 'Upload'}
+            </button>
+          </span>
         </EntryFact>
-        <EntryFact label="Verification documents">
-          {docCount === 0 ? 'No files attached' : `${docCount} document(s)`}
-        </EntryFact>
-      </EntryFacts>
+      </dl>
 
-      <EntryFooter>
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {docCount === 0 ? 'Add proof to get this verified' : 'Proof attached'}
-        </span>
-        <button type="button" onClick={onAddProof} className={entryPrimaryButtonClass}>
-          {docCount > 0 ? 'Manage' : 'Upload'}
-        </button>
-      </EntryFooter>
-
-      {isRejected && education.rejectionReason ? (
+      {education.status === 'rejected' && education.rejectionReason ? (
         <p className="border-t border-rose-100 bg-rose-50 px-5 py-2.5 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
           {education.rejectionReason}
         </p>

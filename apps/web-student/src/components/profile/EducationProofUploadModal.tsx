@@ -8,6 +8,7 @@ import {
   profilePrimaryButtonSmClass,
   profileSecondaryButtonSmClass,
 } from '@/lib/profile-ui-classes';
+import { StyledSelect } from '@/components/ui/styled-select';
 
 const DOCUMENT_TYPE_LABELS: Record<CandidateEducationDocumentDto['documentType'], string> = {
   DEGREE_CERTIFICATE: 'Degree certificate',
@@ -117,7 +118,7 @@ export function EducationProofUploadModal({
             >
               Document type
             </label>
-            <select
+            <StyledSelect
               id="education-proof-type"
               value={docType}
               onChange={(event) =>
@@ -130,7 +131,7 @@ export function EducationProofUploadModal({
                   {label}
                 </option>
               ))}
-            </select>
+            </StyledSelect>
           </div>
 
           <div>
