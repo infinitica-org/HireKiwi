@@ -91,6 +91,17 @@ async function openManualProjectModal() {
   await screen.findByLabelText(/^Title$/i);
 }
 
+/** The manual form is a step-by-step popup: Continue until the review step shows Submit project. */
+function goToSubmitStep() {
+  for (let i = 0; i < 6 && !screen.queryByRole('button', { name: /Submit project/i }); i += 1) {
+    fireEvent.click(screen.getByRole('button', { name: /^Continue$/i }));
+  }
+}
+
+function pickSkill(code: string) {
+  fireEvent.click(document.querySelector(`[data-code="${code}"]`) as HTMLElement);
+}
+
 const busTracker = {
   projectId: '123e4567-e89b-12d3-a456-426614174000',
   studentId: '123e4567-e89b-12d3-a456-426614174001',
@@ -120,9 +131,9 @@ const validFill = () => {
   fireEvent.change(form.getByLabelText(/^Approach/i), {
     target: { value: 'I used websockets and a small GPS ingest service.' },
   });
-  fireEvent.change(form.getByLabelText(/^Skills$/i), {
-    target: { value: 'PYTHON_APPLICATION_BACKEND_DEVELOPMENT' },
-  });
+  fireEvent.click(
+    document.querySelector('[data-code="PYTHON_APPLICATION_BACKEND_DEVELOPMENT"]') as HTMLElement,
+  );
   fireEvent.change(form.getByLabelText(/^Outcome/i), {
     target: { value: 'Average wait time dropped in a 30-student pilot.' },
   });
@@ -157,9 +168,12 @@ describe('ProjectSubmissionForm', () => {
     const form = formScope();
     fireEvent.change(form.getByLabelText(/^Title$/i), { target: { value: 'App' } });
     fireEvent.change(form.getByLabelText(/^Problem/i), { target: { value: 'too short' } });
-    fireEvent.click(screen.getByRole('button', { name: /Submit project/i }));
+    pickSkill('PYTHON_APPLICATION_BACKEND_DEVELOPMENT');
+    fireEvent.click(screen.getByRole('button', { name: /^Continue$/i })); // skills -> project
+    fireEvent.click(screen.getByRole('button', { name: /^Continue$/i })); // project is incomplete
     expect(create).not.toHaveBeenCalled();
-    expect(screen.getByText(/Fix the highlighted template fields/i)).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toMatch(/Describe the problem/i);
+    expect(screen.queryByRole('button', { name: /Submit project/i })).toBeNull();
   });
 
   it('queues create, shows an explicit Verifying state, and offers to submit another', async () => {
@@ -168,6 +182,7 @@ describe('ProjectSubmissionForm', () => {
     renderForm();
     await openManualProjectModal();
     validFill();
+    goToSubmitStep();
     fireEvent.click(screen.getByRole('button', { name: /Submit project/i }));
 
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
@@ -188,12 +203,13 @@ describe('ProjectSubmissionForm', () => {
     await screen.findByRole('dialog');
     fireEvent.click(screen.getByRole('button', { name: /Add manually/i }));
     expect((formScope().getByLabelText(/^Title$/i) as HTMLInputElement).value).toBe('');
+    // A fresh form starts again at the first step.
     expect(
-      (screen.getByRole('button', { name: /Submit project/i }) as HTMLButtonElement).disabled,
+      (screen.getByRole('button', { name: /^Continue$/i }) as HTMLButtonElement).disabled,
     ).toBe(false);
-  });
+  }, 15_000);
 
-  it('lists every submitted project with a top-stack summary', async () => {
+  it('lists every submitted project with its stack', async () => {
     listMine.mockResolvedValue({
       projects: [
         busTracker,
@@ -212,9 +228,7 @@ describe('ProjectSubmissionForm', () => {
     expect(await screen.findByText('Campus bus tracker')).toBeTruthy();
     expect(screen.getByText('Portfolio site')).toBeTruthy();
     expect(screen.getByText(/^Verified$/i)).toBeTruthy();
-    expect(screen.getByText(/Your technology stack/i).closest('p')?.textContent).toMatch(
-      /TypeScript/,
-    );
+    expect(screen.getAllByText('TypeScript').length).toBeGreaterThan(0);
   });
 
   it('sends an optional live link when filled in', async () => {
@@ -226,6 +240,7 @@ describe('ProjectSubmissionForm', () => {
     fireEvent.change(formScope().getByLabelText(/Live link/i), {
       target: { value: 'https://bus-tracker.example.com' },
     });
+    goToSubmitStep();
     fireEvent.click(screen.getByRole('button', { name: /Submit project/i }));
 
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1));

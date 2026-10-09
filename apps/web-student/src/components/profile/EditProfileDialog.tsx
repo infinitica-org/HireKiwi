@@ -208,7 +208,7 @@ export function EditProfileDialog({ isOpen, onClose, user, imageLoader }: EditPr
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingPhoto || saving}
-                    className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 shadow-2xs transition-colors hover:bg-zinc-50 active:scale-95 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                    className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 shadow-2xs transition-colors hover:bg-zinc-50 active:scale-95 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
                   >
                     {uploadingPhoto ? (
                       <Loader2 className="size-4 animate-spin text-zinc-600 dark:text-zinc-300" />
@@ -248,7 +248,7 @@ export function EditProfileDialog({ isOpen, onClose, user, imageLoader }: EditPr
               <div className="flex items-center justify-between mb-2">
                 <label
                   htmlFor="profile-description"
-                  className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400"
+                  className="text-xs font-semibold  tracking-wider text-zinc-600 dark:text-zinc-400"
                 >
                   Profile Description
                 </label>
@@ -271,7 +271,7 @@ export function EditProfileDialog({ isOpen, onClose, user, imageLoader }: EditPr
                 value={description}
                 onChange={handleDescriptionChange}
                 placeholder="Write a short summary about yourself, your background, or what you're looking for..."
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 p-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-950 focus:bg-white focus:outline-hidden dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-white resize-none"
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50/50 p-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-950 focus:bg-white focus:outline-hidden dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-white resize-none"
               />
 
               {descriptionError ? (

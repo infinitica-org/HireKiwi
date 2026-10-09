@@ -1,0 +1,232 @@
+[
+  {
+    "id": "S01",
+    "name": "Computer Science",
+    "category": "Core Computing"
+  },
+  {
+    "id": "S02",
+    "name": "Information Technology",
+    "category": "Core Computing"
+  },
+  {
+    "id": "S03",
+    "name": "Computer Applications",
+    "category": "Core Computing"
+  },
+  {
+    "id": "S04",
+    "name": "Software Engineering",
+    "category": "Core Computing"
+  },
+  {
+    "id": "S05",
+    "name": "Full Stack Development",
+    "category": "Software & Development"
+  },
+  {
+    "id": "S06",
+    "name": "Web Development",
+    "category": "Software & Development"
+  },
+  {
+    "id": "S07",
+    "name": "Mobile App Development",
+    "category": "Software & Development"
+  },
+  {
+    "id": "S08",
+    "name": "Software Testing",
+    "category": "Software & Development"
+  },
+  {
+    "id": "S09",
+    "name": "DevOps",
+    "category": "Software & Development"
+  },
+  {
+    "id": "S10",
+    "name": "Artificial Intelligence",
+    "category": "AI & Data"
+  },
+  {
+    "id": "S11",
+    "name": "Machine Learning",
+    "category": "AI & Data"
+  },
+  {
+    "id": "S12",
+    "name": "Deep Learning",
+    "category": "AI & Data"
+  },
+  {
+    "id": "S13",
+    "name": "Generative AI",
+    "category": "AI & Data"
+  },
+  {
+    "id": "S14",
+    "name": "Natural Language Processing (NLP)",
+    "category": "AI & Data"
+  },
+  {
+    "id": "S15",
+    "name": "Computer Vision",
+    "category": "AI & Data"
+  },
+  {
+    "id": "S16",
+    "name": "Data Science",
+    "category": "AI & Data"
+  },
+  {
+    "id": "S17",
+    "name": "Data Analytics",
+    "category": "AI & Data"
+  },
+  {
+    "id": "S18",
+    "name": "Big Data",
+    "category": "AI & Data"
+  },
+  {
+    "id": "S19",
+    "name": "Data Engineering",
+    "category": "AI & Data"
+  },
+  {
+    "id": "S20",
+    "name": "Cyber Security",
+    "category": "Security"
+  },
+  {
+    "id": "S21",
+    "name": "Network Security",
+    "category": "Security"
+  },
+  {
+    "id": "S22",
+    "name": "Information Security",
+    "category": "Security"
+  },
+  {
+    "id": "S23",
+    "name": "Ethical Hacking",
+    "category": "Security"
+  },
+  {
+    "id": "S24",
+    "name": "Digital Forensics",
+    "category": "Security"
+  },
+  {
+    "id": "S25",
+    "name": "Cloud Computing",
+    "category": "Cloud, Networks & Systems"
+  },
+  {
+    "id": "S26",
+    "name": "Computer Networks",
+    "category": "Cloud, Networks & Systems"
+  },
+  {
+    "id": "S27",
+    "name": "Database Systems",
+    "category": "Cloud, Networks & Systems"
+  },
+  {
+    "id": "S28",
+    "name": "Distributed Systems",
+    "category": "Cloud, Networks & Systems"
+  },
+  {
+    "id": "S29",
+    "name": "Internet of Things (IoT)",
+    "category": "Cloud, Networks & Systems"
+  },
+  {
+    "id": "S30",
+    "name": "Embedded Systems",
+    "category": "Cloud, Networks & Systems"
+  },
+  {
+    "id": "S31",
+    "name": "AI & Data Science (AI&DS)",
+    "category": "General / Trending Branches"
+  },
+  {
+    "id": "S32",
+    "name": "AI & Machine Learning (AIML)",
+    "category": "General / Trending Branches"
+  },
+  {
+    "id": "S33",
+    "name": "Computer Science & Engineering (CSE)",
+    "category": "General / Trending Branches"
+  },
+  {
+    "id": "S34",
+    "name": "CSE (Artificial Intelligence & Machine Learning)",
+    "category": "General / Trending Branches"
+  },
+  {
+    "id": "S35",
+    "name": "CSE (Data Science)",
+    "category": "General / Trending Branches"
+  },
+  {
+    "id": "S36",
+    "name": "CSE (Cyber Security)",
+    "category": "General / Trending Branches"
+  },
+  {
+    "id": "S37",
+    "name": "CSE (IoT)",
+    "category": "General / Trending Branches"
+  },
+  {
+    "id": "S38",
+    "name": "Information Science & Engineering (ISE)",
+    "category": "General / Trending Branches"
+  },
+  {
+    "id": "S39",
+    "name": "Computer Science & Business Systems (CSBS)",
+    "category": "General / Trending Branches"
+  },
+  {
+    "id": "S40",
+    "name": "Blockchain Technology",
+    "category": "Emerging Technologies"
+  },
+  {
+    "id": "S41",
+    "name": "Robotics & Automation",
+    "category": "Emerging Technologies"
+  },
+  {
+    "id": "S42",
+    "name": "AR / VR (Extended Reality)",
+    "category": "Emerging Technologies"
+  },
+  {
+    "id": "S43",
+    "name": "Quantum Computing",
+    "category": "Emerging Technologies"
+  },
+  {
+    "id": "S44",
+    "name": "Game Development",
+    "category": "Emerging Technologies"
+  },
+  {
+    "id": "S45",
+    "name": "UI / UX Design",
+    "category": "Emerging Technologies"
+  },
+  {
+    "id": "S46",
+    "name": "Business Analytics",
+    "category": "Emerging Technologies"
+  }
+]

@@ -134,15 +134,6 @@ export function useProfileProgress(): UseProfileProgressResult {
         hasProfilePhoto: Boolean(onboarding.profilePhotoUrl),
       };
 
-  const failureCount = queryResults.filter((query) => query.isError).length;
-
-  const error =
-    failureCount === 0
-      ? null
-      : failureCount === queryResults.length
-        ? 'Could not load profile progress right now.'
-        : 'Some profile details could not be loaded. Progress may be incomplete.';
-
   const progress = useMemo(() => (input ? computeProfileCompletion(input) : null), [input]);
 
   const rawRecommendedAction = useMemo(() => (input ? recommendNextAction(input) : null), [input]);
@@ -172,7 +163,6 @@ export function useProfileProgress(): UseProfileProgressResult {
 
   return {
     loading,
-    error,
     input,
     progress,
     recommendedAction: rawRecommendedAction,

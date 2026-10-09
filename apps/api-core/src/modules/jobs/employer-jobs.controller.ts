@@ -98,7 +98,7 @@ export class EmployerJobsController {
   @Post(':id/publish')
   @HttpCode(200)
   @ApiOperation({
-    summary: 'Publish a DRAFT job (verification, campus access, ACTIVE_JOBS quota).',
+    summary: 'Publish a DRAFT job (company verification).',
   })
   publish(@CurrentUser() user: RequestUser, @Param('id') id: string): Promise<EmployerJobDto> {
     return this.jobs.publish(user.sub, jobIdOrNotFound(id));

@@ -1,3 +1,4 @@
+import { chooseOption } from '@/test-utils/styled-select';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithQueryClient } from '@/test/render-with-query-client';
@@ -130,23 +131,33 @@ function fillMandatoryWorkExperienceFields(
   });
 }
 
+/** Walks the add/edit wizard to its last step (stopping where a step is incomplete), then submits. */
 function clickExperienceSaveButton() {
-  const save =
+  const findSave = () =>
     screen.queryByRole('button', { name: /^Submit experience$/i }) ??
     screen.queryByRole('button', { name: /^Submit & send verification$/i }) ??
     screen.queryByRole('button', { name: /^Save changes$/i }) ??
-    screen.getByRole('button', { name: /^Save & send verification$/i });
-  fireEvent.click(save);
+    screen.queryByRole('button', { name: /^Save & send verification$/i });
+  for (let i = 0; i < 8 && !findSave(); i += 1) {
+    const next = screen.queryByRole('button', { name: /^Continue$/i });
+    if (!next) break;
+    fireEvent.click(next);
+  }
+  const save = findSave();
+  if (save) fireEvent.click(save);
 }
 
 function selectCatalogSkill(skillName: string) {
-  const select = screen.getByLabelText(/Select skill from catalog/i);
-  const options = Array.from(select.querySelectorAll('option'));
-  const matched = options.find((option) => option.textContent?.trim() === skillName);
-  if (matched?.value) {
-    fireEvent.change(select, { target: { value: matched.value } });
+  const picker = screen.getByLabelText(/Select skill from catalog/i);
+  fireEvent.click(picker);
+  const row = Array.from(document.body.querySelectorAll('[role="option"]')).find(
+    (option) => option.textContent?.trim() === skillName,
+  );
+  if (row) {
+    fireEvent.click(row);
     return;
   }
+  fireEvent.click(picker); // close the menu, then search by name instead
   fireEvent.change(screen.getByPlaceholderText(/search skills/i), {
     target: { value: skillName.slice(0, 4) },
   });
@@ -159,7 +170,8 @@ async function openAddExperienceModal() {
   fireEvent.click(
     (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(-1) as HTMLElement,
   );
-  await screen.findByRole('heading', { name: /Add Work Experience/i });
+  // The popup shows placeholders for a moment; wait for the real form.
+  await screen.findByPlaceholderText(/Acme Corporation/i);
   return view;
 }
 
@@ -208,7 +220,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     ) as HTMLElement;
     fireEvent.click(addButton);
 
-    const currentCheckbox = screen.getByLabelText(/I currently work in this role/i);
+    const currentCheckbox = await screen.findByLabelText(/I currently work in this role/i);
     fireEvent.click(currentCheckbox);
 
     expect(screen.getByText(/Current role: offer letter required/i)).toBeTruthy();
@@ -224,16 +236,18 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     fireEvent.click(addButton);
 
     expect(
-      screen.getByText(/Past role: offer letter and relieving or experience letter required/i),
+      await screen.findByText(
+        /Past role: offer letter and relieving or experience letter required/i,
+      ),
     ).toBeTruthy();
   });
 
   it('shows proof document upload controls in the add experience modal', async () => {
     await openAddExperienceModal();
 
-    expect(requiredLabelCount('Proof documents')).toBeGreaterThan(0);
+    expect(requiredLabelCount('Add proof of your work')).toBeGreaterThan(0);
     expect(screen.getByLabelText('Proof document')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Add file/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Add file/i, hidden: true })).toBeTruthy();
   });
 
   it('submits a new ongoing role when an offer letter is attached in the modal', async () => {
@@ -258,9 +272,9 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
 
     const file = new File(['%PDF-1.4 offer'], 'offer.pdf', { type: 'application/pdf' });
     fireEvent.change(screen.getByLabelText('Proof document'), { target: { files: [file] } });
-    fireEvent.click(screen.getByRole('button', { name: /Add file/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add file/i, hidden: true }));
 
-    fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
+    clickExperienceSaveButton();
 
     await waitFor(() => {
       expect(createWorkExperience).toHaveBeenCalledWith(
@@ -344,9 +358,9 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
 
     // 1. Add Offer Letter
     const offerFile = new File(['%PDF-1.4 offer'], 'offer.pdf', { type: 'application/pdf' });
-    fireEvent.change(screen.getByLabelText('Document type'), { target: { value: 'OFFER_LETTER' } });
+    chooseOption(screen.getByLabelText('Document type'), 'OFFER_LETTER');
     fireEvent.change(screen.getByLabelText('Proof document'), { target: { files: [offerFile] } });
-    fireEvent.click(screen.getByRole('button', { name: /Add file/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add file/i, hidden: true }));
 
     // 2. Add Relieving Letter
     const relievingFile = new File(['%PDF-1.4 relieving'], 'relieving.pdf', {
@@ -358,9 +372,9 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     fireEvent.change(screen.getByLabelText('Proof document'), {
       target: { files: [relievingFile] },
     });
-    fireEvent.click(screen.getByRole('button', { name: /Add file/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add file/i, hidden: true }));
 
-    fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
+    clickExperienceSaveButton();
 
     await waitFor(() => {
       expect(createWorkExperience).toHaveBeenCalled();
@@ -385,9 +399,9 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     selectCatalogSkill('Git & Version Control');
 
     const offerFile = new File(['%PDF-1.4 offer'], 'offer.pdf', { type: 'application/pdf' });
-    fireEvent.change(screen.getByLabelText('Document type'), { target: { value: 'OFFER_LETTER' } });
+    chooseOption(screen.getByLabelText('Document type'), 'OFFER_LETTER');
     fireEvent.change(screen.getByLabelText('Proof document'), { target: { files: [offerFile] } });
-    fireEvent.click(screen.getByRole('button', { name: /Add file/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add file/i, hidden: true }));
 
     expect(
       screen.getByText(/A completion or relieving letter is required when a role has ended/i),
@@ -406,7 +420,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     fillMandatoryWorkExperienceFields(container, {}, { isCurrent: true });
     selectCatalogSkill('Git & Version Control');
 
-    fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
+    clickExperienceSaveButton();
 
     await waitFor(() => {
       expect(createWorkExperience).toHaveBeenCalled();
@@ -495,7 +509,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
     renderWithQueryClient(<WorkExperienceSection />);
 
     fireEvent.click(await screen.findByRole('button', { name: /Edit experience/i }));
-    expect(await screen.findByText('Edit Work Experience')).toBeTruthy();
+    expect(await screen.findByPlaceholderText(/Acme Corporation/i)).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText('https://company.com'), {
       target: { value: 'https://acme.com' },
     });
@@ -505,7 +519,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
 
     clickExperienceSaveButton();
     expect(updateWorkExperience).not.toHaveBeenCalled();
-    expect(screen.getAllByText(/Company LinkedIn URL is required/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/company website and LinkedIn/i).length).toBeGreaterThan(0);
   });
 
   it('renders manager endorsement stage when manager endorsement status is attached (WE-T04)', async () => {
@@ -693,10 +707,10 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
     fillMandatoryWorkExperienceFields(container, { domain: '' }, { isCurrent: true });
     selectCatalogSkill('Git & Version Control');
 
-    fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
+    clickExperienceSaveButton();
 
     expect(createWorkExperience).not.toHaveBeenCalled();
-    expect(screen.getAllByText(/Professional domain is required/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Enter your professional domain/i).length).toBeGreaterThan(0);
   });
 
   it('prevents save when responsibilities are empty', async () => {
@@ -704,24 +718,20 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
     fillMandatoryWorkExperienceFields(container, { responsibilities: '' }, { isCurrent: true });
     selectCatalogSkill('Git & Version Control');
 
-    fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
+    clickExperienceSaveButton();
 
     expect(createWorkExperience).not.toHaveBeenCalled();
-    expect(
-      screen.getAllByText(/Responsibilities and accomplishments are required/i).length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Describe what you did/i).length).toBeGreaterThan(0);
   });
 
   it('prevents save when no skills are selected', async () => {
     const { container } = await openAddExperienceModal();
     fillMandatoryWorkExperienceFields(container, {}, { isCurrent: true });
 
-    fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
+    clickExperienceSaveButton();
 
     expect(createWorkExperience).not.toHaveBeenCalled();
-    expect(
-      screen.getAllByText(/At least one skill from the catalog is required/i).length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Pick at least one skill/i).length).toBeGreaterThan(0);
   });
 
   it('marks End Date as required when employment has ended', async () => {
@@ -734,12 +744,10 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
     fillMandatoryWorkExperienceFields(container);
     selectCatalogSkill('Git & Version Control');
 
-    fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
+    clickExperienceSaveButton();
 
     expect(createWorkExperience).not.toHaveBeenCalled();
-    expect(
-      screen.getAllByText(/End date is required if not currently employed/i).length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Pick an end date/i).length).toBeGreaterThan(0);
   });
 
   it('keeps End Date optional when currently employed', async () => {
@@ -756,14 +764,14 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
     expect(screen.getByText(/^End date$/i)).toBeTruthy();
     selectCatalogSkill('Git & Version Control');
 
-    fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
+    clickExperienceSaveButton();
 
     await waitFor(() => {
       expect(createWorkExperience).toHaveBeenCalledWith(
         expect.objectContaining({ isCurrent: true, endDate: null }),
       );
     });
-    expect(screen.queryByText(/End date is required if not currently employed/i)).toBeNull();
+    expect(screen.queryByText(/Pick an end date/i)).toBeNull();
   });
 
   it('allows saving a valid complete work experience entry', async () => {
@@ -777,7 +785,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
     });
     renderWithQueryClient(<WorkExperienceSection />);
     fireEvent.click(await screen.findByRole('button', { name: /Edit experience/i }));
-    expect(await screen.findByText('Edit Work Experience')).toBeTruthy();
+    expect(await screen.findByPlaceholderText(/Acme Corporation/i)).toBeTruthy();
 
     clickExperienceSaveButton();
 
@@ -813,10 +821,11 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
 
     renderWithQueryClient(<WorkExperienceSection />);
     fireEvent.click(await screen.findByRole('button', { name: /Edit experience/i }));
+    await screen.findByPlaceholderText(/Acme Corporation/i);
 
     const file = new File(['%PDF-1.4 offer'], 'offer.pdf', { type: 'application/pdf' });
     fireEvent.change(screen.getByLabelText('Proof document'), { target: { files: [file] } });
-    fireEvent.click(screen.getByRole('button', { name: /Add file/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add file/i, hidden: true }));
 
     expect(screen.getByText(/Requirements met/i)).toBeTruthy();
 
@@ -836,7 +845,7 @@ describe('WorkExperienceSection mandatory fields (S6-VB-01)', () => {
     fillMandatoryWorkExperienceFields(container, { domain: '   ' }, { isCurrent: true });
     selectCatalogSkill('Git & Version Control');
 
-    fireEvent.click(screen.getByRole('button', { name: /Submit experience/i }));
+    clickExperienceSaveButton();
 
     expect(createWorkExperience).not.toHaveBeenCalled();
     expect(updateWorkExperience).not.toHaveBeenCalled();

@@ -49,11 +49,14 @@ export function FaceLiveCheck({
   onPassed,
   onFailMessage,
   busy = false,
+  vivi = false,
 }: {
   stream: MediaStream;
   onPassed: (sample: FaceCheckResult) => void | Promise<void>;
   onFailMessage?: (message: string) => void;
   busy?: boolean;
+  /** Vivi colours: pink oval and ticks, pink button. */
+  vivi?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const maskId = useId().replace(/:/g, '');
@@ -119,7 +122,9 @@ export function FaceLiveCheck({
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black">
+      <div
+        className={`relative overflow-hidden rounded-xl border bg-black ${vivi ? 'border-pink-200' : 'border-white/10'}`}
+      >
         <video
           ref={videoRef}
           className="aspect-video w-full object-cover"
@@ -153,7 +158,7 @@ export function FaceLiveCheck({
             rx={FACE_CUTOUT.rx * 100}
             ry={FACE_CUTOUT.ry * 100}
             fill="none"
-            stroke={verified ? '#5eead4' : 'rgba(255,255,255,0.85)'}
+            stroke={verified ? (vivi ? '#ec4899' : '#5eead4') : 'rgba(255,255,255,0.85)'}
             strokeWidth="1.4"
             vectorEffect="non-scaling-stroke"
           />
@@ -166,9 +171,10 @@ export function FaceLiveCheck({
         <CheckRow
           ok={Boolean(result?.oneFace && result.faceCount === 1)}
           label="Only one face visible"
+          vivi={vivi}
         />
-        <CheckRow ok={Boolean(result?.fillOk)} label="Whole face in the oval" />
-        <CheckRow ok={Boolean(result?.lightingOk)} label="Face is clearly lit" />
+        <CheckRow ok={Boolean(result?.fillOk)} label="Whole face in the oval" vivi={vivi} />
+        <CheckRow ok={Boolean(result?.lightingOk)} label="Face is clearly lit" vivi={vivi} />
       </ul>
       {result && !verified ? (
         <Alert tone="warning" title="Adjust your setup">
@@ -186,7 +192,11 @@ export function FaceLiveCheck({
       <Button
         type="button"
         disabled={!verified || busy}
-        className="w-full bg-teal text-ink hover:bg-teal/90"
+        className={
+          vivi
+            ? 'w-full bg-pink-500 text-white hover:bg-pink-600 disabled:bg-zinc-200 disabled:text-zinc-400'
+            : 'w-full bg-teal text-ink hover:bg-teal/90'
+        }
         onClick={continueToAssessment}
       >
         {busy ? 'Starting…' : 'Enter the challenge'}
@@ -195,18 +205,28 @@ export function FaceLiveCheck({
   );
 }
 
-function CheckRow({ ok, label }: { ok: boolean; label: string }) {
+function CheckRow({ ok, label, vivi = false }: { ok: boolean; label: string; vivi?: boolean }) {
   return (
     <li
       className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-        ok
-          ? 'border-teal-400/30 bg-teal-500/10 text-teal-200'
-          : 'border-white/10 bg-white/5 text-white/60'
+        vivi
+          ? ok
+            ? 'border-pink-200 bg-pink-50 text-pink-700'
+            : 'border-zinc-200 bg-white text-zinc-500'
+          : ok
+            ? 'border-teal-400/30 bg-teal-500/10 text-teal-200'
+            : 'border-white/10 bg-white/5 text-white/60'
       }`}
     >
       <span
         className={`flex size-5 shrink-0 items-center justify-center rounded-full ${
-          ok ? 'bg-teal-400 text-ink' : 'bg-white/10'
+          ok
+            ? vivi
+              ? 'bg-pink-500 text-white'
+              : 'bg-teal-400 text-ink'
+            : vivi
+              ? 'bg-zinc-200'
+              : 'bg-white/10'
         }`}
         aria-hidden
       >

@@ -9,7 +9,14 @@ export function projectDefenseInterviewHref(projectId: string): string {
   return `/student/profile/projects/${projectId}/defense`;
 }
 
-export function ProjectDefenseInterviewDialog({ project }: { project: ProjectDto }) {
+export function ProjectDefenseInterviewDialog({
+  project,
+  onStart,
+}: {
+  project: ProjectDto;
+  /** When given, the button calls this (for example to open the Vivi popup) instead of linking. */
+  onStart?: () => void;
+}) {
   if (project.interviewStatus === 'COMPLETED') {
     return (
       <Alert tone="success" title="Ownership interview complete">
@@ -35,12 +42,22 @@ export function ProjectDefenseInterviewDialog({ project }: { project: ProjectDto
             </p>
           </div>
         </div>
-        <Link
-          href={projectDefenseInterviewHref(project.projectId)}
-          className="inline-flex shrink-0 items-center justify-center rounded-md bg-teal-600 px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-teal-700"
-        >
-          Start interview
-        </Link>
+        {onStart ? (
+          <button
+            type="button"
+            onClick={onStart}
+            className="inline-flex shrink-0 items-center justify-center rounded-md bg-teal-600 px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-teal-700"
+          >
+            Start interview
+          </button>
+        ) : (
+          <Link
+            href={projectDefenseInterviewHref(project.projectId)}
+            className="inline-flex shrink-0 items-center justify-center rounded-md bg-teal-600 px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-teal-700"
+          >
+            Start interview
+          </Link>
+        )}
       </div>
     </div>
   );
