@@ -899,6 +899,7 @@ export function toAuthenticatedUser(user: {
   cgpa?: Decimalish | null;
   sscPercentage?: Decimalish | null;
   hscPercentage?: Decimalish | null;
+  mfaEnabled?: boolean;
 }): AuthenticatedUser {
   const hold = resolveSessionHold({
     role: user.role,
@@ -938,6 +939,7 @@ export function toAuthenticatedUser(user: {
     cgpa: nullableDecimal(user.cgpa),
     sscPercentage: nullableDecimal(user.sscPercentage),
     hscPercentage: nullableDecimal(user.hscPercentage),
+    mfaEnabled: Boolean(user.mfaEnabled),
     sessionHold: hold,
   };
 }

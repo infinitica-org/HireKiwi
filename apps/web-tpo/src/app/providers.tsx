@@ -1,8 +1,16 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { PORTAL_ROLES, resolvePortalOriginsFromEnv } from '@hirekiwi/api-client';
-import { RolesGuard, SessionBootstrap } from '@hirekiwi/ui';
+import {
+  buildLoginUrl,
+  clearAccessToken,
+  createRefreshAccessToken,
+  getAccessToken,
+  PORTAL_ROLES,
+  resolvePortalOriginsFromEnv,
+} from '@hirekiwi/api-client';
+import { RolesGuard, SessionBootstrap, HireKiwiApiProvider } from '@hirekiwi/ui';
+import { api } from '../lib/api';
 import { signOut } from '../lib/auth';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -24,7 +32,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
         publicPathPrefixes={PUBLIC_PATHS}
         onSignOut={signOut}
       >
-        {children}
+        <HireKiwiApiProvider
+          baseUrl={baseUrl}
+          getAccessToken={getAccessToken}
+          refreshAccessToken={createRefreshAccessToken(() => api.auth.refresh())}
+          onUnauthorized={() => {
+            clearAccessToken();
+            window.location.href = buildLoginUrl(authUrl, window.location.href);
+          }}
+        >
+          {children}
+        </HireKiwiApiProvider>
       </RolesGuard>
     </SessionBootstrap>
   );
