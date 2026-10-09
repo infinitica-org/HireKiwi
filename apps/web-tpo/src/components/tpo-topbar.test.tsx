@@ -47,7 +47,7 @@ describe('TpoTopbar navigation', () => {
   });
 
   it.each([
-    ['Whitelist', '/whitelist'],
+    ['Invitations', '/whitelist'],
     ['Reports', '/reports'],
   ])('opens %s from the Students menu at %s', (name, href) => {
     render(<TpoTopbar />);
@@ -64,7 +64,7 @@ describe('TpoTopbar navigation', () => {
     ['/', 'Home'],
     ['/students', 'Students'],
     ['/batches', 'Students'],
-    ['/onboarding', 'Whitelist'],
+    ['/onboarding', 'Invitations'],
     ['/reports', 'Reports'],
   ] as const)('marks %s as current for %s', (pathname, label) => {
     navState.pathname = pathname;
@@ -86,7 +86,7 @@ describe('TpoTopbar mobile menu', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open navigation menu' }));
     const mobile = screen.getByRole('navigation', { name: 'University console (mobile)' });
-    for (const name of ['Home', 'Students', 'Whitelist', 'Reports', 'Settings']) {
+    for (const name of ['Home', 'Students', 'Invitations', 'Reports', 'Settings']) {
       expect(within(mobile).getByRole('link', { name })).toBeDefined();
     }
 
