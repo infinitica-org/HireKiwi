@@ -12,7 +12,6 @@ import { validateDomain } from '../../../../../lib/domain-validation';
 import {
   bentoCardClass,
   bentoChipClass,
-  bentoCompactCardClass,
   candidatesPageStackClass,
   bentoTableBodyRowClass,
   bentoTableCellClass,
@@ -37,6 +36,7 @@ import {
   ArrowLeft,
   Edit3,
   UserPlus,
+  Upload,
   Users,
   X,
   ShieldCheck,
@@ -48,6 +48,8 @@ import {
   RotateCcw,
   Copy,
 } from 'lucide-react';
+
+const MEMBERS_PAGE_SIZE = 50;
 
 function safeMsg(err: unknown, fallback: string): string {
   if (isHireKiwiApiError(err)) return err.message;
@@ -72,6 +74,9 @@ export default function BatchDetailPage() {
   const [editCode, setEditCode] = useState('');
 
   const [isAddingMember, setIsAddingMember] = useState(false);
+  const [memberModalError, setMemberModalError] = useState<string | null>(null);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [page, setPage] = useState(1);
   const [memberSubmitting, setMemberSubmitting] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
@@ -96,6 +101,10 @@ export default function BatchDetailPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [batchId]);
 
   // ── Auto-dismiss notifications after 5s ──
   useEffect(() => {
@@ -128,14 +137,14 @@ export default function BatchDetailPage() {
 
   async function onAdd(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
+    setMemberModalError(null);
     setMemberSubmitting(true);
     try {
       const entitlements = await api.onboarding.tpoEntitlements().catch(() => null);
       const domain = entitlements?.domain?.trim().toLowerCase();
       const trimmedEmail = email.trim().toLowerCase();
       if (!domain || !validateDomain(trimmedEmail, domain)) {
-        setError(
+        setMemberModalError(
           `Email address must belong to domain @${domain ?? '(unavailable)'} or one of its subdomains.`,
         );
         setMemberSubmitting(false);
@@ -158,6 +167,7 @@ export default function BatchDetailPage() {
       setFullName('');
       setEmail('');
       setGroupLabel('');
+      setMemberModalError(null);
       setIsAddingMember(false);
       if (sendError) {
         setError(
@@ -168,7 +178,7 @@ export default function BatchDetailPage() {
       }
       await load();
     } catch (caught) {
-      setError(safeMsg(caught, 'Could not add member.'));
+      setMemberModalError(safeMsg(caught, 'Could not add member.'));
     } finally {
       setMemberSubmitting(false);
     }
@@ -249,10 +259,20 @@ export default function BatchDetailPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setIsAddingMember(true)}
+                onClick={() => {
+                  setMemberModalError(null);
+                  setIsAddingMember(true);
+                }}
+                className={secondaryButtonClass}
+              >
+                <UserPlus className="size-4" aria-hidden /> Single Student
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsBulkUploadOpen(true)}
                 className={dashboardPrimaryButtonClass}
               >
-                <UserPlus className="size-4" aria-hidden /> Add member
+                <Upload className="size-4" aria-hidden /> Bulk Upload
               </button>
             </div>
           }
@@ -278,148 +298,183 @@ export default function BatchDetailPage() {
         </div>
       ) : null}
 
-      <div className={`${bentoCompactCardClass} [&_.min-h-56]:min-h-40 [&_.p-8]:p-5`}>
-        <h2 className="text-sm font-semibold text-[var(--ds-text)]">Bulk import (CSV / XLSX)</h2>
-        <p className="mt-1 text-[12px] text-[var(--ds-text-muted)]">
-          Upload a roster to add multiple candidates to this batch at once.
-        </p>
-        <div className="mt-3">
-          <BatchImportWizard batchId={batchId} onComplete={() => void load()} />
-        </div>
-      </div>
+      {(() => {
+        const totalMembers = members.length;
+        const totalPages = Math.max(1, Math.ceil(totalMembers / MEMBERS_PAGE_SIZE));
+        const validPage = Math.min(page, totalPages);
+        const startIndex = (validPage - 1) * MEMBERS_PAGE_SIZE;
+        const paginatedMembers = members.slice(startIndex, startIndex + MEMBERS_PAGE_SIZE);
+        const endIndex = Math.min(startIndex + paginatedMembers.length, totalMembers);
+        const countLabel =
+          totalMembers === 0
+            ? 'Showing 0 students'
+            : `Showing ${startIndex + 1}–${endIndex} of ${totalMembers} students`;
 
-      <div className={bentoTableShellClass}>
-        <div className="flex items-center justify-between gap-3 border-b border-[var(--ds-border-subtle)] px-5 py-4">
-          <h2 className="text-sm font-semibold text-[var(--ds-text)]">Batch members</h2>
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={loading}
-            className={`${secondaryButtonSmClass} !px-2 !py-2`}
-            title="Refresh"
-          >
-            <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className={bentoTableClass}>
-            <thead>
-              <tr className={bentoTableHeadRowClass}>
-                <th className={bentoTableHeadCellClass}>Name</th>
-                <th className={bentoTableHeadCellClass}>Email</th>
-                <th className={bentoTableHeadCellClass}>Group</th>
-                <th className={bentoTableHeadCellClass}>Invite status</th>
-                <th className={bentoTableHeadCellClass}>Access</th>
-                <th className={`${bentoTableHeadCellClass} text-right`}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className={`${bentoTableCellClass} py-10 text-center`}>
-                    <Loader2 className="inline size-4 animate-spin" />
-                  </td>
-                </tr>
-              ) : members.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className={`${bentoTableCellClass} py-10 text-center`}>
-                    No members in this batch yet.
-                  </td>
-                </tr>
-              ) : (
-                members.map((member) => (
-                  <tr key={member.userId} className={bentoTableBodyRowClass}>
-                    <td className={bentoTableCellClass}>
-                      <div className="font-semibold text-[var(--ds-text)]">{member.fullName}</div>
-                    </td>
-                    <td className={bentoTableCellClass}>{member.email}</td>
-                    <td className={bentoTableCellClass}>
-                      <span className={bentoChipClass}>{member.groupLabel ?? '—'}</span>
-                    </td>
-                    <td className={bentoTableCellClass}>
-                      {member.emailVerified ? (
-                        <span className={dashboardMintBadgeClass}>
-                          <CheckCircle className="size-3" /> Accepted
-                        </span>
-                      ) : (
-                        <span className={dashboardPendingBadgeClass}>
-                          <Clock className="size-3" /> {member.invitation?.status ?? 'Pending'}
-                        </span>
-                      )}
-                    </td>
-                    <td className={bentoTableCellClass}>
-                      {member.heldAt ? (
-                        <span className={dashboardRoseBadgeClass}>
-                          <Ban className="size-3" /> On hold
-                        </span>
-                      ) : (
-                        <span className={dashboardMintBadgeClass}>
-                          <ShieldCheck className="size-3" /> Active
-                        </span>
-                      )}
-                    </td>
-                    <td className={`${bentoTableCellClass} text-right`}>
-                      {member.invitation?.status === 'PENDING' && !member.emailVerified ? (
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            disabled={actionLoadingId === `copy-${member.userId}`}
-                            className={secondaryButtonSmClass}
-                            onClick={() => void onCopyLink(member.userId)}
-                          >
-                            {actionLoadingId === `copy-${member.userId}` ? (
-                              <Loader2 className="size-3 animate-spin" />
-                            ) : (
-                              <Copy className="size-3" />
-                            )}
-                            Copy link
-                          </button>
-                          <button
-                            type="button"
-                            disabled={
-                              actionLoadingId === `resend-${member.invitation?.invitationId}`
-                            }
-                            className={secondaryButtonSmClass}
-                            onClick={() => {
-                              const invitationId = member.invitation?.invitationId;
-                              if (invitationId) void onResend(invitationId);
-                            }}
-                          >
-                            {actionLoadingId === `resend-${member.invitation?.invitationId}` ? (
-                              <Loader2 className="size-3 animate-spin" />
-                            ) : (
-                              <RotateCcw className="size-3" />
-                            )}
-                            Resend
-                          </button>
-                          <button
-                            type="button"
-                            disabled={
-                              actionLoadingId === `revoke-${member.invitation?.invitationId}`
-                            }
-                            className={`${secondaryButtonSmClass} text-[#9f1239] hover:bg-[var(--tpo-dash-accent-rose-soft)]`}
-                            onClick={() => {
-                              const invitationId = member.invitation?.invitationId;
-                              if (invitationId) void onRevoke(invitationId);
-                            }}
-                          >
-                            {actionLoadingId === `revoke-${member.invitation?.invitationId}` ? (
-                              <Loader2 className="size-3 animate-spin" />
-                            ) : (
-                              <X className="size-3" />
-                            )}
-                            Revoke
-                          </button>
-                        </div>
-                      ) : null}
-                    </td>
+        return (
+          <div className={bentoTableShellClass}>
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--ds-border-subtle)] px-5 py-4">
+              <h2 className="text-sm font-semibold text-[var(--ds-text)]">Batch members</h2>
+              <button
+                type="button"
+                onClick={() => void load()}
+                disabled={loading}
+                className={`${secondaryButtonSmClass} !px-2 !py-2`}
+                title="Refresh"
+              >
+                <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className={bentoTableClass}>
+                <thead>
+                  <tr className={bentoTableHeadRowClass}>
+                    <th className={bentoTableHeadCellClass}>Name</th>
+                    <th className={bentoTableHeadCellClass}>Email</th>
+                    <th className={bentoTableHeadCellClass}>Group</th>
+                    <th className={bentoTableHeadCellClass}>Invite status</th>
+                    <th className={bentoTableHeadCellClass}>Access</th>
+                    <th className={`${bentoTableHeadCellClass} text-right`}>Actions</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className={`${bentoTableCellClass} py-10 text-center`}>
+                        <Loader2 className="inline size-4 animate-spin" />
+                      </td>
+                    </tr>
+                  ) : paginatedMembers.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className={`${bentoTableCellClass} py-10 text-center`}>
+                        No members in this batch yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedMembers.map((member) => (
+                      <tr key={member.userId} className={bentoTableBodyRowClass}>
+                        <td className={bentoTableCellClass}>
+                          <div className="font-semibold text-[var(--ds-text)]">
+                            {member.fullName}
+                          </div>
+                        </td>
+                        <td className={bentoTableCellClass}>{member.email}</td>
+                        <td className={bentoTableCellClass}>
+                          <span className={bentoChipClass}>{member.groupLabel ?? '—'}</span>
+                        </td>
+                        <td className={bentoTableCellClass}>
+                          {member.emailVerified ? (
+                            <span className={dashboardMintBadgeClass}>
+                              <CheckCircle className="size-3" /> Accepted
+                            </span>
+                          ) : (
+                            <span className={dashboardPendingBadgeClass}>
+                              <Clock className="size-3" /> {member.invitation?.status ?? 'Pending'}
+                            </span>
+                          )}
+                        </td>
+                        <td className={bentoTableCellClass}>
+                          {member.heldAt ? (
+                            <span className={dashboardRoseBadgeClass}>
+                              <Ban className="size-3" /> On hold
+                            </span>
+                          ) : (
+                            <span className={dashboardMintBadgeClass}>
+                              <ShieldCheck className="size-3" /> Active
+                            </span>
+                          )}
+                        </td>
+                        <td className={`${bentoTableCellClass} text-right`}>
+                          {member.invitation?.status === 'PENDING' && !member.emailVerified ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                disabled={actionLoadingId === `copy-${member.userId}`}
+                                className={secondaryButtonSmClass}
+                                onClick={() => void onCopyLink(member.userId)}
+                              >
+                                {actionLoadingId === `copy-${member.userId}` ? (
+                                  <Loader2 className="size-3 animate-spin" />
+                                ) : (
+                                  <Copy className="size-3" />
+                                )}
+                                Copy link
+                              </button>
+                              <button
+                                type="button"
+                                disabled={
+                                  actionLoadingId === `resend-${member.invitation?.invitationId}`
+                                }
+                                className={secondaryButtonSmClass}
+                                onClick={() => {
+                                  const invitationId = member.invitation?.invitationId;
+                                  if (invitationId) void onResend(invitationId);
+                                }}
+                              >
+                                {actionLoadingId === `resend-${member.invitation?.invitationId}` ? (
+                                  <Loader2 className="size-3 animate-spin" />
+                                ) : (
+                                  <RotateCcw className="size-3" />
+                                )}
+                                Resend
+                              </button>
+                              <button
+                                type="button"
+                                disabled={
+                                  actionLoadingId === `revoke-${member.invitation?.invitationId}`
+                                }
+                                className={`${secondaryButtonSmClass} text-[#9f1239] hover:bg-[var(--tpo-dash-accent-rose-soft)]`}
+                                onClick={() => {
+                                  const invitationId = member.invitation?.invitationId;
+                                  if (invitationId) void onRevoke(invitationId);
+                                }}
+                              >
+                                {actionLoadingId === `revoke-${member.invitation?.invitationId}` ? (
+                                  <Loader2 className="size-3 animate-spin" />
+                                ) : (
+                                  <X className="size-3" />
+                                )}
+                                Revoke
+                              </button>
+                            </div>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {totalMembers > 0 ? (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[var(--ds-border-subtle)] px-5 py-3 text-xs text-[var(--ds-text-muted)]">
+                <span>{countLabel}</span>
+                {totalPages > 1 ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={validPage <= 1}
+                      className={`${secondaryButtonSmClass} !py-1 !px-2.5 text-xs disabled:opacity-50`}
+                    >
+                      Previous
+                    </button>
+                    <span className="font-medium text-[var(--ds-text)]">
+                      Page {validPage} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={validPage >= totalPages}
+                      className={`${secondaryButtonSmClass} !py-1 !px-2.5 text-xs disabled:opacity-50`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        );
+      })()}
 
       {isEditing && batch ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -479,18 +534,61 @@ export default function BatchDetailPage() {
       ) : null}
 
       {isAddingMember ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="single-student-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        >
           <div className={`${bentoCardClass} w-full max-w-md`}>
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h3 className="text-base font-semibold text-[var(--ds-text)]">Add member</h3>
+              <div>
+                <h3
+                  id="single-student-modal-title"
+                  className="text-base font-semibold text-[var(--ds-text)]"
+                >
+                  Single Student
+                </h3>
+                <p className="mt-0.5 text-xs text-[var(--ds-text-muted)]">
+                  Add candidate to{' '}
+                  <span className="font-medium text-[var(--ds-text)]">
+                    {batch?.name ?? 'batch'}
+                  </span>
+                  {batch?.code ? ` (${batch.code})` : ''}
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => setIsAddingMember(false)}
+                onClick={() => {
+                  setIsAddingMember(false);
+                  setMemberModalError(null);
+                  setFullName('');
+                  setEmail('');
+                  setGroupLabel('');
+                }}
                 className="rounded-lg p-1.5 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
+                aria-label="Close"
               >
                 <X className="size-5" />
               </button>
             </div>
+            {memberModalError ? (
+              <div
+                className={`${dashboardErrorNoticeClass} mb-4 flex items-start gap-2.5 text-xs`}
+                role="alert"
+              >
+                <Ban className="size-4 shrink-0 text-[#9f1239]" aria-hidden />
+                <p className="flex-1">{memberModalError}</p>
+                <button
+                  type="button"
+                  onClick={() => setMemberModalError(null)}
+                  className="text-[#9f1239]"
+                  aria-label="Dismiss error"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ) : null}
             <form onSubmit={onAdd} className="space-y-4">
               <div>
                 <label className={`${labelClass} mb-2 block`} htmlFor="member-name">
@@ -533,7 +631,13 @@ export default function BatchDetailPage() {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsAddingMember(false)}
+                  onClick={() => {
+                    setIsAddingMember(false);
+                    setMemberModalError(null);
+                    setFullName('');
+                    setEmail('');
+                    setGroupLabel('');
+                  }}
                   className={secondaryButtonClass}
                 >
                   Cancel
@@ -548,11 +652,56 @@ export default function BatchDetailPage() {
                       <Loader2 className="size-3 animate-spin" /> Adding…
                     </span>
                   ) : (
-                    'Add member'
+                    'Add student'
                   )}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {isBulkUploadOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="bulk-upload-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto"
+        >
+          <div className={`${bentoCardClass} w-full max-w-3xl my-8 max-h-[90vh] overflow-y-auto`}>
+            <div className="mb-4 flex items-center justify-between gap-3 border-b border-[var(--ds-border-subtle)] pb-3">
+              <div>
+                <h3
+                  id="bulk-upload-modal-title"
+                  className="text-base font-semibold text-[var(--ds-text)]"
+                >
+                  Bulk Upload
+                </h3>
+                <p className="mt-0.5 text-xs text-[var(--ds-text-muted)]">
+                  Upload candidate roster for{' '}
+                  <span className="font-medium text-[var(--ds-text)]">
+                    {batch?.name ?? 'batch'}
+                  </span>
+                  {batch?.code ? ` (${batch.code})` : ''}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBulkUploadOpen(false)}
+                className="rounded-lg p-1.5 text-[var(--ds-text-muted)] hover:bg-[var(--ds-surface-hover)]"
+                aria-label="Close"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="py-2">
+              <BatchImportWizard
+                batchId={batchId}
+                onComplete={() => {
+                  void load();
+                }}
+              />
+            </div>
           </div>
         </div>
       ) : null}

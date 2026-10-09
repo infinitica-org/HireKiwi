@@ -80,4 +80,17 @@ describe('BatchesWorkspace', () => {
         ?.getAttribute('href'),
     ).toBe('/batches/b1');
   });
+
+  it('renders 3 KPI cards (Total Cohorts, Enrolled Candidates, Pending Invites) and omits Campuses KPI and Refresh button', async () => {
+    render(<BatchesWorkspace />);
+    await screen.findByRole('heading', { level: 3, name: 'Batch 2025–2026' });
+
+    expect(screen.getByText('Total Cohorts')).toBeDefined();
+    expect(screen.getByText('Enrolled Candidates')).toBeDefined();
+    expect(screen.getAllByText('Pending Invites').length).toBeGreaterThanOrEqual(1);
+    // Campuses KPI card removed
+    expect(screen.queryByText('Campuses')).toBeNull();
+    // Standalone refresh button removed
+    expect(screen.queryByRole('button', { name: /Refresh/i })).toBeNull();
+  });
 });
