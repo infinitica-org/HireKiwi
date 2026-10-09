@@ -9,4 +9,8 @@ Technical events (`HEARTBEAT_LOST`, `NETWORK_LOSS`, `CAMERA_STATIC`) do not incr
 
 Prisma `ProctoringSession` is requested of VV; Redis holds session telemetry until that migration.
 
+Snapshot JPEGs in object storage have no durable DB record of their keys, so they're purged by
+key prefix + `LastModified` directly: see `proctoring_snapshots` in
+`platform/retention/retention-sweep.service.ts` (S8-RM-XX, 30-day delete).
+
 Tests: `src/modules/proctoring/*.spec.ts`

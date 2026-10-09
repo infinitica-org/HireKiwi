@@ -66,6 +66,27 @@ export class GoogleAdapter implements AiProviderAdapter {
     }
   }
 
+  /**
+   * Real pgvector-compatible embedding (S8-RM-XX), distinct from `complete()`'s EMBEDDING
+   * modelRole above — that path calls `generateContent` with `text-embedding-004`, which is an
+   * embedding-only model and would reject a chat-completion request. `embedContent` is the
+   * actual embedding endpoint.
+   */
+  async embedText(text: string): Promise<number[]> {
+    if (!this.client) {
+      throw new Error('Google GenAI client is not configured (missing GOOGLE_AI_API_KEY).');
+    }
+    const response = await this.client.models.embedContent({
+      model: ROLE_TO_MODEL.EMBEDDING,
+      contents: text,
+    });
+    const values = response.embeddings?.[0]?.values;
+    if (!values || values.length === 0) {
+      throw new Error('Google embedContent returned no embedding values.');
+    }
+    return values;
+  }
+
   async complete(options: ModelCompletionOptions): Promise<ModelCompletionResult> {
     if (!this.client) {
       throw new Error('Google GenAI client is not configured (missing GOOGLE_AI_API_KEY).');

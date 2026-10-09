@@ -7,6 +7,7 @@ import {
   GetBucketEncryptionCommand,
   GetObjectCommand,
   HeadBucketCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -183,6 +184,32 @@ export class StorageService implements OnModuleInit {
   /** Deletes an object by key (S3 delete is idempotent — missing keys succeed). */
   async deleteObject(objectKey: string): Promise<void> {
     await this.client.send(new DeleteObjectCommand({ Bucket: env.S3_BUCKET, Key: objectKey }));
+  }
+
+  /**
+   * Lists object keys under `prefix` last modified before `cutoff` (S8-RM-XX retention sweep —
+   * for object categories with no durable DB record of their keys, e.g. proctoring snapshots).
+   * Paginates through the full prefix; safe to call on prefixes with many objects.
+   */
+  async listObjectKeysOlderThan(prefix: string, cutoff: Date): Promise<string[]> {
+    const keys: string[] = [];
+    let continuationToken: string | undefined;
+    do {
+      const response = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: env.S3_BUCKET,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        }),
+      );
+      for (const object of response.Contents ?? []) {
+        if (object.Key && object.LastModified && object.LastModified < cutoff) {
+          keys.push(object.Key);
+        }
+      }
+      continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+    } while (continuationToken);
+    return keys;
   }
 }
 

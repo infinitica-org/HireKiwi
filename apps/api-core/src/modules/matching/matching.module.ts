@@ -3,6 +3,7 @@ import { AiGatewayModule } from '../ai-gateway/ai-gateway.module.js';
 import { BillingModule } from '../billing/billing.module.js';
 import { EvidenceModule } from '../evidence/evidence.module.js';
 import { InstitutionsModule } from '../institutions/institutions.module.js';
+import { CandidateEmbeddingService } from './candidate-embedding.service.js';
 import { JdParseProcessor } from './jd-parse.processor.js';
 import { MatchNarrativeService } from './match-narrative.service.js';
 import { MatchingService } from './matching.service.js';
@@ -19,8 +20,9 @@ import { PlacementMatchController } from './placement-match.controller.js';
     OpeningJdParseService,
     JdParseProcessor,
     MatchNarrativeService,
+    CandidateEmbeddingService,
   ],
-  exports: [MatchingService, OpeningJdParseService],
+  exports: [MatchingService, OpeningJdParseService, CandidateEmbeddingService],
 })
 export class MatchingModule {}
 export * from './jd-fallback-extractor.js';
