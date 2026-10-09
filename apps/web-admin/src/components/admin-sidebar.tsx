@@ -26,6 +26,7 @@ import {
   Repeat,
   Scale,
   ScrollText,
+  Settings,
   ShieldAlert,
   TrendingUp,
   UserCog,
@@ -102,6 +103,7 @@ export const navGroups: NavGroup[] = [
       { name: 'Health & monitoring', href: '/admin/health', icon: HeartPulse },
       { name: 'Audit log', href: '/admin/audit', icon: ScrollText },
       { name: 'Support tool', href: '/admin/support', icon: HelpCircle },
+      { name: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },
 ];

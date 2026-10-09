@@ -260,6 +260,23 @@ export function portalHomeForRole(role: UserRole, origins: PortalOrigins): strin
   }
 }
 
+/** Where to send a user who wants to turn on 2FA right after login. */
+export function portalSettingsForRole(role: UserRole, origins: PortalOrigins): string | null {
+  switch (role) {
+    case 'STUDENT':
+      return `${origins.student.replace(/\/$/u, '')}/student/settings`;
+    case 'COMPANY':
+      return `${origins.company.replace(/\/$/u, '')}/settings`;
+    case 'INSTITUTION_ADMIN':
+    case 'PLACEMENT_STAFF':
+      return `${origins.tpo.replace(/\/$/u, '')}/settings`;
+    case 'SUPER_ADMIN':
+      return `${origins.admin.replace(/\/$/u, '')}/admin/settings`;
+    default:
+      return portalHomeForRole(role, origins);
+  }
+}
+
 /** Deep-link only when returnTo is already on the portal that owns this role. */
 export function returnToForRole(
   role: UserRole,
