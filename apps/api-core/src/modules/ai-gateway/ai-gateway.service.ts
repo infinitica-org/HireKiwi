@@ -153,6 +153,19 @@ export class AiGatewayService {
     );
   }
 
+  /**
+   * Real 1536-dim text embedding (S8-RM-XX), used by CandidateEmbeddingService for Stage 1
+   * matching. Only Google is wired to an actual embedding endpoint today — unlike `complete()`,
+   * there's no multi-provider fallback chain here, so this throws plainly when Google isn't
+   * configured rather than silently returning a degraded vector.
+   */
+  async embedText(text: string): Promise<number[]> {
+    if (!this.google.isConfigured) {
+      throw new Error('No embedding provider is configured (missing GOOGLE_AI_API_KEY).');
+    }
+    return this.google.embedText(text);
+  }
+
   async complete(request: AiCompletionRequest): Promise<AiCompletionResponse> {
     const rendered = renderPromptRef(request.promptRef, request.variables);
 
