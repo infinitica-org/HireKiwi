@@ -5286,6 +5286,19 @@ export const ROUTES: readonly RouteSpec[] = [
     summary: 'Declare a new external certificate (title + issuer).',
   },
   {
+    method: 'POST',
+    path: '/candidate-certificates/lookup',
+    module: 'platform',
+    owner: 'Vishal V',
+    roles: ['STUDENT'],
+    rateLimit: 'certificates.lookup',
+    criticality: 'INTERACTIVE',
+    execution: 'SYNC',
+    slaMs: 6000,
+    summary:
+      'Preview a pasted certificate link: what it is, whose it is, whether it can be checked.',
+  },
+  {
     method: 'GET',
     path: '/candidate-certificates',
     module: 'platform',

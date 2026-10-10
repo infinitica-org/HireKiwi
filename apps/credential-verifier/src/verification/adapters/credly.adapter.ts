@@ -1,3 +1,4 @@
+import { readMetaContent, toIsoDate } from '../html-meta.util.js';
 import { safeFetch, UnsafeUrlError } from '../safe-fetch.util.js';
 import type {
   AdapterCapabilities,
@@ -176,7 +177,14 @@ export class CredlyAdapter implements CredentialVerifier {
     const expires = typeof lookup.assertion.expires === 'string' ? lookup.assertion.expires : null;
     if (expires && new Date(expires) < new Date()) {
       checks.push({ checkName: 'expiration', result: 'FAIL', detail: `Expired ${expires}.` });
-      return this.result('EXPIRED', 'CREDENTIAL_PLATFORM_VERIFIED', checks, badgeUrl, page);
+      return this.result(
+        'EXPIRED',
+        'CREDENTIAL_PLATFORM_VERIFIED',
+        checks,
+        badgeUrl,
+        page,
+        lookup.assertion,
+      );
     }
     checks.push({
       checkName: 'expiration',
@@ -184,7 +192,14 @@ export class CredlyAdapter implements CredentialVerifier {
       detail: expires ? `Valid until ${expires}.` : 'Badge has no expiration date.',
     });
 
-    return this.result('VERIFIED', 'CREDENTIAL_PLATFORM_VERIFIED', checks, badgeUrl, page);
+    return this.result(
+      'VERIFIED',
+      'CREDENTIAL_PLATFORM_VERIFIED',
+      checks,
+      badgeUrl,
+      page,
+      lookup.assertion,
+    );
   }
 
   async getEvidence(credential: NormalizedCredential): Promise<Evidence[]> {
@@ -234,6 +249,7 @@ export class CredlyAdapter implements CredentialVerifier {
     checks: VerificationCheck[],
     evidenceUrl: string,
     page: ParsedBadgePage | null = null,
+    assertion: BadgeAssertion | null = null,
   ): AdapterVerificationResult {
     const verified = status === 'VERIFIED' || status === 'VERIFIED_WITH_WARNINGS';
     return {
@@ -247,6 +263,14 @@ export class CredlyAdapter implements CredentialVerifier {
       evidenceUrl,
       rawResponse: null,
       subjectName: page?.recipientName ?? null,
+      details: page
+        ? {
+            achievementName: page.badgeName,
+            issuerName: page.issuerName,
+            issuedOn: toIsoDate(assertion?.issuedOn),
+            expiresOn: toIsoDate(assertion?.expires),
+          }
+        : null,
     };
   }
 }
@@ -267,27 +291,4 @@ export function parseBadgePage(html: string): ParsedBadgePage | null {
     issuerName: issuerName.trim(),
     recipientName: recipientName.trim(),
   };
-}
-
-function readMetaContent(html: string, property: string): string | null {
-  const tags = html.match(/<meta\b[^>]*>/giu) ?? [];
-  for (const tag of tags) {
-    const name = /\b(?:property|name)=["']([^"']+)["']/iu.exec(tag)?.[1];
-    if (name?.toLowerCase() !== property) continue;
-    const content = /\bcontent=(?:"([^"]*)"|'([^']*)')/iu.exec(tag);
-    const value = content?.[1] ?? content?.[2];
-    if (value) return decodeEntities(value);
-  }
-  return null;
-}
-
-function decodeEntities(text: string): string {
-  return text
-    .replace(/&#(\d+);/gu, (_m, code: string) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([0-9a-f]+);/giu, (_m, code: string) => String.fromCodePoint(parseInt(code, 16)))
-    .replace(/&quot;/gu, '"')
-    .replace(/&apos;/gu, "'")
-    .replace(/&lt;/gu, '<')
-    .replace(/&gt;/gu, '>')
-    .replace(/&amp;/gu, '&');
 }

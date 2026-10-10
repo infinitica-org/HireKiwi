@@ -231,6 +231,13 @@ export class W3cVcAdapter implements CredentialVerifier {
       evidence,
       evidenceUrl: null,
       rawResponse: null,
+      subjectName: subjectNameOf(shape),
+      details: {
+        achievementName: achievementNameOf(shape),
+        issuerName: issuerNameOf(shape),
+        issuedOn: typeof shape.validFrom === 'string' ? shape.validFrom : null,
+        expiresOn: typeof shape.validUntil === 'string' ? shape.validUntil : null,
+      },
     };
   }
 
@@ -300,4 +307,23 @@ export class W3cVcAdapter implements CredentialVerifier {
       return null;
     }
   }
+}
+
+/** The holder's display name when the credential states one (VC 2.0 / Open Badges 3.0 `credentialSubject.name`). */
+function subjectNameOf(shape: W3cCredentialShape): string | null {
+  const name = shape.credentialSubject?.name;
+  return typeof name === 'string' && name.trim() ? name.trim() : null;
+}
+
+function issuerNameOf(shape: W3cCredentialShape): string | null {
+  const name = typeof shape.issuer === 'object' ? shape.issuer.name : undefined;
+  return typeof name === 'string' && name.trim() ? name.trim() : null;
+}
+
+/** The achievement's own name, when it has one (Open Badges 3.0 nests it under credentialSubject). */
+function achievementNameOf(shape: W3cCredentialShape): string | null {
+  const achievement = shape.credentialSubject?.achievement as { name?: unknown } | undefined;
+  return typeof achievement?.name === 'string' && achievement.name.trim()
+    ? achievement.name.trim()
+    : null;
 }

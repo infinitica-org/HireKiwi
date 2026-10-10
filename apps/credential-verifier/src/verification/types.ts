@@ -126,6 +126,16 @@ export interface AdapterVerificationResult {
   rawResponse: Record<string, unknown> | null;
   /** Earner name as the source publishes it, when the adapter can read one. Matching it to an account is the caller's job. */
   subjectName?: string | null;
+  /** What the source says the credential is, so a caller can prefill a form instead of asking for it. */
+  details?: CredentialDetails | null;
+}
+
+export interface CredentialDetails {
+  achievementName: string | null;
+  /** The organization that awarded it (Cisco, Meta…), not the hosting platform. */
+  issuerName: string | null;
+  issuedOn: string | null;
+  expiresOn: string | null;
 }
 
 /**

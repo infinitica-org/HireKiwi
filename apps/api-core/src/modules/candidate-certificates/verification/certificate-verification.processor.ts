@@ -11,6 +11,10 @@ import { CertificateSourceVerificationService } from './certificate-source-verif
 
 export interface CertificateVerificationJobPayload {
   certificateId: string;
+  /** Re-ask the issuer instead of reusing the engine's cached answer. */
+  refresh?: boolean;
+  /** Scheduled re-check: only a revocation changes the certificate. */
+  recheck?: boolean;
 }
 
 /**
@@ -34,7 +38,11 @@ export class CertificateVerificationProcessor extends DlqAwareProcessor {
     await withJobSpan(
       job,
       { 'verification.kind': 'candidate_certificate', 'subject.id': job.data.certificateId },
-      () => this.verificationService.runVerification(job.data.certificateId),
+      () =>
+        this.verificationService.runVerification(job.data.certificateId, {
+          refresh: job.data.refresh,
+          recheck: job.data.recheck,
+        }),
     );
   }
 }

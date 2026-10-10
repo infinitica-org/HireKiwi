@@ -47,6 +47,11 @@ export const EVIDENCE_EXPIRATION_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 export const EVIDENCE_RECONCILIATION_QUEUE = 'evidence_reconciliation' as const;
 
+/** Daily re-check of link-verified candidate certificates for revocation (see certificate-recheck.processor.ts). */
+export const CERTIFICATE_RECHECK_QUEUE = 'certificate_recheck' as const;
+export const CERTIFICATE_RECHECK_JOB_ID = 'certificate-recheck-daily' as const;
+export const CERTIFICATE_RECHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
 export const BILLING_GRACE_EXPIRY_QUEUE = 'billing_grace_expiry' as const;
 export const BILLING_GRACE_EXPIRY_JOB_ID = 'billing-grace-expiry-hourly' as const;
 export const BILLING_GRACE_EXPIRY_INTERVAL_MS = 60 * 60 * 1000;

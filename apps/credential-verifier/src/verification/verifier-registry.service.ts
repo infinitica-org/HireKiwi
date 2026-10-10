@@ -3,8 +3,11 @@ import type { CredentialInput, CredentialVerifier } from './types.js';
 import { UnverifiableFallbackAdapter } from './adapters/unverifiable-fallback.adapter.js';
 import { OpenBadgesAdapter } from './adapters/open-badges.adapter.js';
 import { W3cVcAdapter } from './adapters/w3c-vc.adapter.js';
+import { CourseraAdapter } from './adapters/coursera.adapter.js';
 import { CredlyAdapter } from './adapters/credly.adapter.js';
 import { GenericIssuerVerifierAdapter } from './adapters/generic-issuer-verifier.adapter.js';
+import { HackerRankAdapter } from './adapters/hackerrank.adapter.js';
+import { NptelAdapter } from './adapters/nptel.adapter.js';
 
 /**
  * The only place that knows the full adapter list. The orchestrator asks
@@ -22,6 +25,10 @@ export class VerifierRegistryService {
     new OpenBadgesAdapter(),
     new W3cVcAdapter(),
     new CredlyAdapter(),
+    new CourseraAdapter(),
+    new HackerRankAdapter(),
+    // Ahead of the generic issuer-page adapter: it claims ISSUER_AND_ID input by declared issuer.
+    new NptelAdapter(),
     new GenericIssuerVerifierAdapter(),
   ];
   private readonly fallback = new UnverifiableFallbackAdapter();

@@ -1,9 +1,19 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import { StorageService } from '../../../platform/storage/storage.service.js';
 import type { TierVerificationResult } from './tier1-issuer-adapter.js';
+import { CredentialVerifierClientAdapter } from './credential-verifier-client.js';
+import {
+  extractFileEvidence,
+  linksFromText,
+  type FileEvidence,
+  type FoundLink,
+  type FoundLinkSource,
+} from './certificate-file-evidence.js';
+import { textContainsPersonName } from './person-name-match.js';
 
 export interface Tier3Input {
   certificateFileUrl?: string | null;
+  fileMimeType?: string | null;
   candidateName?: string | null;
   title: string;
   issuer: string;
@@ -12,10 +22,30 @@ export interface Tier3Input {
   extractedTextOverride?: string | null; // For unit test overriding
 }
 
+const SOURCE_LABELS: Record<FoundLinkSource, string> = {
+  'qr-code': 'QR code',
+  'pdf-link': 'link',
+  'printed-text': 'printed verification link',
+  'roll-number': 'roll number',
+};
+
+/** Links tried against the engine per file: enough for "QR + printed copy", bounded for latency. */
+const MAX_LINKS_TRIED = 3;
+
+/**
+ * Uploaded certificate files. A document a student uploads proves nothing by its own text — it
+ * is trivially edited — so this tier only ever verifies through the issuer: it pulls the
+ * verification link out of the file (QR code, PDF link, printed URL, NPTEL roll number) and runs
+ * it through the engine with the same identity check as a pasted link. Without such a link the
+ * certificate goes to manual review; the text heuristics only annotate it for the reviewer.
+ */
 @Injectable()
 export class Tier3OcrVerifier {
   constructor(
     @Optional() @Inject(StorageService) private readonly storageService?: StorageService,
+    @Optional()
+    @Inject(CredentialVerifierClientAdapter)
+    private readonly engine?: CredentialVerifierClientAdapter,
   ) {}
 
   async verify(input: Tier3Input): Promise<TierVerificationResult> {
@@ -29,94 +59,130 @@ export class Tier3OcrVerifier {
       };
     }
 
-    let rawText = '';
+    let evidence: FileEvidence;
     if (input.extractedTextOverride) {
-      rawText = input.extractedTextOverride.trim();
-    } else if (fileUrl) {
+      const text = input.extractedTextOverride.trim();
+      evidence = { text, links: linksFromText(text) };
+    } else {
       try {
-        const buffer = await this.retrieveBuffer(fileUrl);
-        rawText = this.extractPrintableText(buffer);
+        const buffer = await this.retrieveBuffer(fileUrl as string);
+        if (input.fileMimeType === 'application/json') {
+          return await this.verifyCredentialJson(buffer.toString('utf8'), input);
+        }
+        evidence = await extractFileEvidence(buffer, input.fileMimeType ?? 'application/pdf');
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        return {
-          status: 'AMBIGUOUS',
-          tier: 'TIER_3_OCR_HEURISTIC',
-          confidence: 0.3,
-          reason: `Could not read certificate file for OCR extraction: ${message}.`,
-        };
+        return this.review(
+          `Could not read the certificate file: ${message}.`,
+          "We couldn't read this file, so we'll review it by hand. A clear PDF or the certificate's verification link speeds this up.",
+          {},
+        );
       }
     }
 
-    if (!rawText || rawText.length < 15) {
+    const hints = this.textHints(evidence.text, input);
+    let unverifiable: FoundLink | null = null;
+    for (const link of evidence.links.slice(0, MAX_LINKS_TRIED)) {
+      const result = this.engine
+        ? await this.engine.verify({
+            title: input.title,
+            issuer: input.issuer,
+            verificationUrl: link.url,
+            candidateName: input.candidateName,
+          })
+        : null;
+      if (!result || result.status === 'UNAVAILABLE') {
+        unverifiable ??= link;
+        continue;
+      }
+      const via = SOURCE_LABELS[link.source];
       return {
-        status: 'AMBIGUOUS',
+        ...result,
         tier: 'TIER_3_OCR_HEURISTIC',
-        confidence: 0.3,
-        reason: 'Extracted OCR text was empty or insufficient (< 15 characters).',
-      };
-    }
-
-    const normText = rawText.toLowerCase();
-    const normCandidateName = input.candidateName ? input.candidateName.toLowerCase().trim() : '';
-    const normTitle = input.title.toLowerCase().trim();
-    const normIssuer = input.issuer.toLowerCase().trim();
-    const normCertNumber = input.certificateNumber
-      ? input.certificateNumber.toLowerCase().trim()
-      : '';
-
-    const candidateMatch = normCandidateName ? normText.includes(normCandidateName) : false;
-    const titleMatch = normText.includes(normTitle);
-    const issuerMatch = normText.includes(normIssuer);
-    const certNumberMatch = normCertNumber ? normText.includes(normCertNumber) : false;
-
-    // Calculate heuristic confidence score
-    let score = 0;
-    if (candidateMatch) score += 0.4;
-    if (titleMatch) score += 0.3;
-    if (issuerMatch) score += 0.2;
-    if (certNumberMatch) score += 0.1;
-
-    // Conservative heuristic: Auto-verify ONLY if confidence >= 0.85 (Candidate name MUST match)
-    if (candidateMatch && (titleMatch || issuerMatch || certNumberMatch) && score >= 0.85) {
-      return {
-        status: 'VERIFIED',
-        tier: 'TIER_3_OCR_HEURISTIC',
-        confidence: score,
-        reason: `OCR document analysis verified candidate name and certificate metadata (confidence score: ${score.toFixed(2)}).`,
+        reason: `Link from the uploaded file's ${via} (${link.url}): ${result.reason}`,
+        studentMessage:
+          result.status === 'VERIFIED'
+            ? `We found the ${via} on your certificate and verified it. ${result.studentMessage ?? ''}`.trim()
+            : result.studentMessage,
         metadata: {
-          candidateMatch,
-          titleMatch,
-          issuerMatch,
-          certNumberMatch,
-          score,
+          ...(result.metadata ?? {}),
+          discoveredUrl: link.url,
+          discoveredVia: link.source,
+          ...hints,
         },
       };
     }
 
-    // Completely contradictory (no name match AND no title/issuer match) -> FAILED
-    if (!candidateMatch && !titleMatch && !issuerMatch && !certNumberMatch) {
-      return {
-        status: 'FAILED',
-        tier: 'TIER_3_OCR_HEURISTIC',
-        confidence: 0.85,
-        reason:
-          'OCR document analysis failed: None of candidate name, certificate title, issuer, or certificate number were found in document.',
-      };
+    if (unverifiable) {
+      const host = new URL(unverifiable.url).hostname;
+      return this.review(
+        `Found ${unverifiable.url} in the uploaded file's ${SOURCE_LABELS[unverifiable.source]}, but no automated check covers it. Flagged for review.`,
+        `We found a link to ${host} on your certificate but can't check that site automatically, so we'll review it by hand.`,
+        { discoveredUrl: unverifiable.url, discoveredVia: unverifiable.source, ...hints },
+      );
     }
 
-    // Partial match or candidate name missing -> AMBIGUOUS (Needs manual review / stays PENDING)
+    return this.review(
+      `No verification link or QR code found in the uploaded file (candidate name in text: ${hints.candidateMatch}, title: ${hints.titleMatch}). Flagged for review.`,
+      "We couldn't find a verification link or QR code on this certificate, so we'll review it by hand. Adding its verification link speeds this up.",
+      hints,
+    );
+  }
+
+  /** An Open Badges / W3C Verifiable Credential file is itself checkable: hand it to the engine. */
+  private async verifyCredentialJson(
+    json: string,
+    input: Tier3Input,
+  ): Promise<TierVerificationResult> {
+    const result = this.engine
+      ? await this.engine.verify({
+          title: input.title,
+          issuer: input.issuer,
+          credentialJson: json,
+          candidateName: input.candidateName,
+        })
+      : null;
+    if (!result || result.status === 'UNAVAILABLE') {
+      return this.review(
+        `Uploaded credential JSON could not be verified automatically${result ? `: ${result.reason}` : '.'}`,
+        "We couldn't check this credential file automatically, so we'll review it by hand.",
+        {},
+      );
+    }
+    return {
+      ...result,
+      tier: 'TIER_3_OCR_HEURISTIC',
+      reason: `Uploaded credential file: ${result.reason}`,
+    };
+  }
+
+  /** What the document's own text says — shown to reviewers, never used to decide. */
+  private textHints(text: string, input: Tier3Input) {
+    const normText = text.toLowerCase();
+    return {
+      candidateMatch: input.candidateName
+        ? textContainsPersonName(text, input.candidateName)
+        : false,
+      titleMatch: normText.includes(input.title.toLowerCase().trim()),
+      issuerMatch: normText.includes(input.issuer.toLowerCase().trim()),
+      certNumberMatch: input.certificateNumber
+        ? normText.includes(input.certificateNumber.toLowerCase().trim())
+        : false,
+    };
+  }
+
+  private review(
+    reason: string,
+    studentMessage: string,
+    metadata: Record<string, unknown>,
+  ): TierVerificationResult {
     return {
       status: 'AMBIGUOUS',
       tier: 'TIER_3_OCR_HEURISTIC',
-      confidence: score,
-      reason: `OCR document analysis produced partial match (Candidate name match: ${candidateMatch}, Score: ${score.toFixed(2)}). Flagged for manual review.`,
-      metadata: {
-        candidateMatch,
-        titleMatch,
-        issuerMatch,
-        certNumberMatch,
-        score,
-      },
+      confidence: 0.3,
+      reason,
+      studentMessage,
+      metadata,
     };
   }
 
@@ -145,25 +211,5 @@ export class Tier3OcrVerifier {
 
     const fs = await import('node:fs/promises');
     return fs.readFile(fileUrl);
-  }
-
-  private extractPrintableText(buffer: Buffer): string {
-    const raw = buffer.toString('utf-8');
-    const runs: string[] = [];
-    let current = '';
-    for (let i = 0; i < raw.length; i++) {
-      const code = raw.charCodeAt(i);
-      const printable = code === 9 || code === 10 || code === 13 || (code >= 32 && code <= 126);
-      if (printable) {
-        current += raw[i];
-      } else if (current.length >= 3) {
-        runs.push(current.trim());
-        current = '';
-      } else {
-        current = '';
-      }
-    }
-    if (current.length >= 3) runs.push(current.trim());
-    return runs.join(' ').replace(/\s+/g, ' ').trim();
   }
 }

@@ -77,6 +77,7 @@ describe('Tier 1 Issuer Registry (bridges to the standalone credential-verifier 
               checks: [{ checkName: 'issuer', result: 'PASS', detail: 'Signature verified.' }],
               evidence: [],
               evidenceUrl: null,
+              subjectName: 'Jane Manager',
             }),
         }),
     );
@@ -85,6 +86,7 @@ describe('Tier 1 Issuer Registry (bridges to the standalone credential-verifier 
       title: 'AWS Certified Solutions Architect',
       issuer: 'Amazon Web Services',
       certificateNumber: 'AWS-12345',
+      candidateName: 'Jane Manager',
     });
 
     expect(result.status).toBe('VERIFIED');
@@ -180,10 +182,10 @@ describe('Tier 1 Issuer Registry (bridges to the standalone credential-verifier 
       expect(result.status).toBe('AMBIGUOUS');
     });
 
-    it('keeps VERIFIED when the engine reports no earner name (adapters that cannot read one)', async () => {
+    it('sends an authentic credential that names nobody to review', async () => {
       stubCredlyEngine(null);
       const result = await registry.verify({ ...credlyInput, candidateName: 'Vishal V' });
-      expect(result.status).toBe('VERIFIED');
+      expect(result.status).toBe('AMBIGUOUS');
     });
   });
 });
@@ -224,6 +226,7 @@ describe('Tier 2 Public URL Verifier', () => {
       </html>
     `;
 
+    verifier.trustedHosts = ['aws.amazon.com'];
     const result = await verifier.verify({
       verificationUrl: 'https://aws.amazon.com/verify/987654',
       candidateName: 'Jane Manager',
@@ -235,6 +238,32 @@ describe('Tier 2 Public URL Verifier', () => {
 
     expect(result.status).toBe('VERIFIED');
     expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+  });
+
+  it('does not trust (or fetch) a page on a host the student could have written', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    const result = await verifier.verify({
+      verificationUrl: 'https://jane.github.io/aws-cert.html',
+      candidateName: 'Jane Manager',
+      title: 'AWS Certified Solutions Architect',
+      issuer: 'AWS',
+    });
+    expect(result.status).toBe('AMBIGUOUS');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it('matches whole names only: "Vishal V" is not found in "Vishal Varma"', async () => {
+    verifier.trustedHosts = ['aws.amazon.com'];
+    const result = await verifier.verify({
+      verificationUrl: 'https://aws.amazon.com/verify/1',
+      candidateName: 'Vishal V',
+      title: 'AWS Certified Solutions Architect',
+      issuer: 'AWS',
+      rawHtmlOverride: '<p>Issued to Vishal Varma: AWS Certified Solutions Architect</p>',
+    });
+    expect(result.status).toBe('AMBIGUOUS');
   });
 
   it('flags as AMBIGUOUS when page HTML exists but candidate name does not match', async () => {
@@ -274,7 +303,7 @@ describe('Tier 3 OCR & Heuristic Verifier', () => {
     expect(result.status).toBe('UNAVAILABLE');
   });
 
-  it('verifies when candidate name and certificate title match extracted text with high confidence', async () => {
+  it('never verifies from the document text alone, however well it matches', async () => {
     const extractedTextOverride =
       'Certificate of Completion awarded to Jane Manager for Python Specialist by Coursera.';
 
@@ -285,11 +314,11 @@ describe('Tier 3 OCR & Heuristic Verifier', () => {
       extractedTextOverride,
     });
 
-    expect(result.status).toBe('VERIFIED');
-    expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+    expect(result.status).toBe('AMBIGUOUS');
+    expect(result.metadata).toMatchObject({ candidateMatch: true, titleMatch: true });
   });
 
-  it('fails completely when none of candidate name, title, issuer match OCR text', async () => {
+  it('never auto-rejects from document text either (images are not OCR-read)', async () => {
     const extractedTextOverride = 'Completely unrelated invoice document from Acme Supplies Inc.';
 
     const result = await verifier.verify({
@@ -299,7 +328,7 @@ describe('Tier 3 OCR & Heuristic Verifier', () => {
       extractedTextOverride,
     });
 
-    expect(result.status).toBe('FAILED');
+    expect(result.status).toBe('AMBIGUOUS');
   });
 
   it('flags as AMBIGUOUS for partial matches without full candidate name confirmation', async () => {

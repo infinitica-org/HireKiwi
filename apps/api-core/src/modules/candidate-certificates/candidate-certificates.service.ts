@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import type { Queue } from 'bullmq';
 import {
@@ -17,12 +18,14 @@ import {
   type ReVerifyCertificateResponse,
   type CandidateCertificateDeclarationResponseDto,
   type CandidateCertificateDto,
+  type CertificateSourceCheck,
   type CertificateVerificationEventDto,
   type CreateCandidateCertificateRequest,
   type GetCertificateEndorsementResponse,
   type ListCertificateVerificationEventsResponse,
   type ListCertificateVerificationQueueResponse,
   type ListMyCandidateCertificatesResponse,
+  type LookupCertificateLinkResponse,
   type SubmitCertificateEndorsementDecisionRequest,
   type SubmitCertificateEndorsementDecisionResponse,
   SubmitCertificateAgendaRequestSchema,
@@ -42,7 +45,13 @@ import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
 import { CERTIFICATE_VERIFICATION_QUEUE } from '../../platform/queue/queue.names.js';
 import type { CertificateVerificationJobPayload } from './verification/certificate-verification.processor.js';
+import {
+  CredentialVerifierClientAdapter,
+  negativeMessage,
+  providerLabel,
+} from './verification/credential-verifier-client.js';
 import { credlyBadgeImage } from './verification/credly-badge-image.js';
+import { personNamesMatch } from './verification/person-name-match.js';
 import { CredentialDedupService } from './verification/credential-dedup.service.js';
 import { publishCredentialVerified } from './verification/credential-verified-publisher.js';
 import { PublicProfileService } from '../public-profile/public-profile.service.js';
@@ -53,8 +62,20 @@ import type {
 } from '../../generated/prisma/index.js';
 
 const SKILL_NAME_BY_CODE = new Map(SKILL_DEFINITIONS.map((skill) => [skill.code, skill.name]));
-const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']);
+const ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  // An Open Badges / W3C Verifiable Credential file, checked by its own proof.
+  'application/json',
+]);
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+/** Credential JSON is small; anything bigger isn't one. */
+const MAX_JSON_FILE_SIZE_BYTES = 64 * 1024;
+/** Logged whenever a source check is queued, so "still checking" can be told from "needs review". */
+const VERIFICATION_QUEUED_MESSAGE = 'Source verification queued.';
+const TIER_EVENT_PREFIX = '[TIER_';
 const ENDORSEMENT_TTL_DAYS = 7;
 
 type CertificateRow = CandidateCertificate & { skills: CandidateCertificateSkill[] };
@@ -71,6 +92,9 @@ export class CandidateCertificatesService {
     @Inject(CredentialDedupService) private readonly dedup: CredentialDedupService,
     @Inject(KafkaOutboxService) private readonly outbox: KafkaOutboxService,
     @Inject(PublicProfileService) private readonly publicProfileService?: PublicProfileService,
+    @Optional()
+    @Inject(CredentialVerifierClientAdapter)
+    private readonly engine?: CredentialVerifierClientAdapter,
   ) {}
 
   /**
@@ -219,7 +243,7 @@ export class CandidateCertificatesService {
       where: { id: row.id },
       data: { status: 'IN_VERIFICATION' },
     });
-    await this.certVerificationQueue.add('verify-certificate', { certificateId: row.id });
+    await this.enqueueVerification(row.id);
 
     const updated = await this.prisma.candidateCertificate.findUniqueOrThrow({
       where: { id: row.id },
@@ -252,7 +276,14 @@ export class CandidateCertificatesService {
     if (!ALLOWED_MIME_TYPES.has(file.mimeType)) {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'Only PDF, JPG, and PNG files are accepted.',
+        message: 'Only PDF, JPG, PNG, or a credential JSON file are accepted.',
+        statusCode: 400,
+      });
+    }
+    if (file.mimeType === 'application/json' && file.buffer.byteLength > MAX_JSON_FILE_SIZE_BYTES) {
+      throw new BadRequestException({
+        error: 'validation_failed',
+        message: 'A credential JSON file must be 64KB or smaller.',
         statusCode: 400,
       });
     }
@@ -289,7 +320,7 @@ export class CandidateCertificatesService {
       where: { id },
       data: { status: 'IN_VERIFICATION' },
     });
-    await this.certVerificationQueue.add('verify-certificate', { certificateId: id });
+    await this.enqueueVerification(id);
 
     const updated = await this.prisma.candidateCertificate.findUniqueOrThrow({
       where: { id },
@@ -344,7 +375,13 @@ export class CandidateCertificatesService {
     id: string,
     body: UpdateCertificateLearningRequest,
   ): Promise<CandidateCertificateDto> {
-    await this.findOwnedOrThrow(candidateId, id);
+    const current = await this.findOwnedOrThrow(candidateId, id);
+    // Only a new proof re-runs the source check. Saving "what you learned" must not reset the
+    // status: that used to drop an already-VERIFIED certificate back to IN_VERIFICATION.
+    const proofChanged =
+      (body.verificationUrl !== undefined && body.verificationUrl !== current.verificationUrl) ||
+      (body.certificateNumber !== undefined &&
+        body.certificateNumber !== current.certificateNumber);
     await this.prisma.candidateCertificate.update({
       where: { id },
       data: {
@@ -355,11 +392,13 @@ export class CandidateCertificatesService {
         certificateNumber: body.certificateNumber,
         verificationUrl: body.verificationUrl,
         // Optimistic: the queue processor settles the final status once Tier 1/2/3 resolve.
-        status: 'IN_VERIFICATION',
+        ...(proofChanged
+          ? { status: 'IN_VERIFICATION' as const, sourceStatus: 'pending' as const }
+          : {}),
       },
       include: { skills: true },
     });
-    await this.certVerificationQueue.add('verify-certificate', { certificateId: id });
+    if (proofChanged) await this.enqueueVerification(id);
 
     const updated = await this.prisma.candidateCertificate.findUniqueOrThrow({
       where: { id },
@@ -621,7 +660,7 @@ export class CandidateCertificatesService {
       data: { sourceStatus: 'pending', status: 'IN_VERIFICATION' },
     });
     await this.addEvent(id, 'IN_VERIFICATION', 'Super Admin triggered a manual re-verification.');
-    await this.certVerificationQueue.add('verify-certificate', { certificateId: id });
+    await this.enqueueVerification(id, { refresh: true });
     return { certificateId: id, queued: true };
   }
 
@@ -640,7 +679,7 @@ export class CandidateCertificatesService {
         data: { sourceStatus: 'pending', status: 'IN_VERIFICATION' },
       });
       await this.addEvent(id, 'IN_VERIFICATION', 'Super Admin triggered a bulk re-verification.');
-      await this.certVerificationQueue.add('verify-certificate', { certificateId: id });
+      await this.enqueueVerification(id, { refresh: true });
     }
 
     return { queued: existingIds.size, skipped };
@@ -721,6 +760,157 @@ export class CandidateCertificatesService {
     return this.toDto(updated);
   }
 
+  private async enqueueVerification(
+    certificateId: string,
+    options: { refresh?: boolean } = {},
+  ): Promise<void> {
+    await this.addEvent(certificateId, 'IN_VERIFICATION', VERIFICATION_QUEUED_MESSAGE);
+    await this.certVerificationQueue.add('verify-certificate', {
+      certificateId,
+      ...(options.refresh ? { refresh: true } : {}),
+    });
+  }
+
+  /**
+   * Previews a pasted link for the add form: runs it through the verification engine (whose
+   * answer is then cached for the real check) and says, in plain words, what it found.
+   */
+  async lookupLink(candidateId: string, url: string): Promise<LookupCertificateLinkResponse> {
+    const empty = {
+      provider: null,
+      title: null,
+      issuer: null,
+      holderName: null,
+      nameMatches: null,
+      issueDate: null,
+      expiryDate: null,
+    };
+    if (!this.engine) {
+      return { ...empty, outcome: 'unavailable', message: "We can't check links right now." };
+    }
+    const host = safeHostname(url);
+    const lookup = await this.engine.inspectUrl(url);
+    if (lookup.kind === 'unavailable') {
+      return {
+        ...empty,
+        outcome: 'unavailable',
+        message:
+          "We couldn't check this link right now. You can still add it and we'll check it shortly.",
+      };
+    }
+    const { result } = lookup;
+    const provider = result.provider ? providerLabel(result.provider) : null;
+    const details = result.details ?? null;
+    const holderName = result.subjectName ?? null;
+    const base = {
+      provider,
+      title: details?.achievementName ?? null,
+      issuer: details?.issuerName ?? null,
+      holderName,
+      nameMatches: null as boolean | null,
+      issueDate: details?.issuedOn?.slice(0, 10) ?? null,
+      expiryDate: details?.expiresOn?.slice(0, 10) ?? null,
+    };
+
+    if (result.status === 'VERIFIED' || result.status === 'VERIFIED_WITH_WARNINGS') {
+      const user = await this.prisma.user.findUnique({
+        where: { id: candidateId },
+        select: { fullName: true },
+      });
+      const nameMatches =
+        holderName && user?.fullName ? personNamesMatch(holderName, user.fullName) : null;
+      const who = provider ?? 'The issuer';
+      return {
+        ...base,
+        nameMatches,
+        outcome: 'verified',
+        message: !holderName
+          ? `${who} confirms this certificate. It doesn't show a name, so we'll confirm it's yours by hand.`
+          : nameMatches
+            ? `${who} confirms this certificate was issued to ${holderName}.`
+            : `This certificate was issued to "${holderName}", not the name on your profile. You can still add it and we'll review it.`,
+      };
+    }
+    if (result.status === 'NOT_FOUND') {
+      return {
+        ...base,
+        outcome: 'not_found',
+        message: negativeMessage(result.status, provider ?? host ?? 'The issuer'),
+      };
+    }
+    if (result.status === 'REVOKED' || result.status === 'EXPIRED') {
+      return {
+        ...base,
+        outcome: result.status === 'REVOKED' ? 'revoked' : 'expired',
+        message: negativeMessage(result.status, provider ?? host ?? 'The issuer'),
+      };
+    }
+    return {
+      ...base,
+      provider: provider ?? host,
+      outcome: 'unsupported',
+      message: host
+        ? `We can't check ${host} automatically yet. Add the details and we'll review it by hand.`
+        : "We can't check this link automatically. Add the details and we'll review it by hand.",
+    };
+  }
+
+  /** Reads the latest source-check outcome off the event log, in student terms. */
+  private async sourceCheckFor(row: CertificateRow): Promise<CertificateSourceCheck> {
+    const events = await this.prisma.certificateVerificationEvent.findMany({
+      where: { candidateCertificateId: row.id },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      select: { message: true, metadata: true, createdAt: true },
+    });
+    const latestCheck = events.find((event) => event.message.startsWith(TIER_EVENT_PREFIX));
+    const latestQueued = events.find((event) => event.message === VERIFICATION_QUEUED_MESSAGE);
+    const meta = (latestCheck?.metadata ?? {}) as Record<string, unknown>;
+    const text = (key: string) => (typeof meta[key] === 'string' ? (meta[key] as string) : null);
+    const holderName = text('subjectName');
+    const candidateMatch = meta.candidateMatch;
+    const provider = text('provider');
+    const summary = {
+      provider: provider ? providerLabel(provider) : text('host'),
+      holderName,
+      nameMatches: typeof candidateMatch === 'boolean' && holderName ? candidateMatch : null,
+      checkedAt: latestCheck?.createdAt.toISOString() ?? null,
+    };
+
+    if (row.sourceStatus === 'source_verified') {
+      return {
+        ...summary,
+        outcome: 'verified',
+        message: text('studentMessage') ?? 'Verified by the HireKiwi review team.',
+      };
+    }
+    if (row.sourceStatus === 'source_failed' || row.sourceStatus === 'voided') {
+      return {
+        ...summary,
+        outcome: 'failed',
+        message: text('studentMessage') ?? "This certificate couldn't be verified.",
+      };
+    }
+    const stillChecking =
+      !latestCheck ||
+      (latestQueued !== undefined && latestQueued.createdAt > latestCheck.createdAt);
+    if (stillChecking) {
+      return {
+        ...summary,
+        outcome: 'checking',
+        message:
+          "We're checking this certificate with its issuer. This usually takes a few seconds.",
+      };
+    }
+    return {
+      ...summary,
+      outcome: 'needs_review',
+      message:
+        text('studentMessage') ??
+        "We couldn't confirm this automatically, so we'll review it by hand.",
+    };
+  }
+
   private async addEvent(
     candidateCertificateId: string,
     status: CertificateRow['status'],
@@ -777,6 +967,7 @@ export class CandidateCertificatesService {
         })?.toISOString() ?? null,
       lockedUntil: row.assessmentLockedUntil?.toISOString() ?? null,
       taxonomyVersionSnapshot: row.taxonomyVersionSnapshot,
+      sourceCheck: await this.sourceCheckFor(row),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -795,4 +986,12 @@ function toEventDto(row: {
     message: row.message,
     createdAt: row.createdAt.toISOString(),
   };
+}
+
+function safeHostname(url: string): string | null {
+  try {
+    return new URL(url).hostname.replace(/^www\./u, '');
+  } catch {
+    return null;
+  }
 }

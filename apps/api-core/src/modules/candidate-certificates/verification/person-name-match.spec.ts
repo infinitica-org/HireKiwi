@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { personNamesMatch } from './person-name-match.js';
+import { personNamesMatch, textContainsPersonName } from './person-name-match.js';
 
 describe('personNamesMatch', () => {
   it.each([
@@ -23,5 +23,23 @@ describe('personNamesMatch', () => {
     ['Vishal V', '   '],
   ])('rejects %s ~ %s', (credentialName, accountName) => {
     expect(personNamesMatch(credentialName, accountName)).toBe(false);
+  });
+});
+
+describe('textContainsPersonName', () => {
+  it.each([
+    ['Certificate awarded to VISHAL V. for completing', 'Vishal V'],
+    ['awarded to V Vishal on 2024-05-01', 'Vishal V'],
+    ['José Álvarez completed', 'Jose Alvarez'],
+  ])('finds the name in %s', (text, name) => {
+    expect(textContainsPersonName(text, name)).toBe(true);
+  });
+
+  it.each([
+    ['Certificate awarded to Vishal Varma', 'Vishal V'],
+    ['Vishal completed the course V2', 'Vishal V'],
+    ['anything', ''],
+  ])('does not find it in %s', (text, name) => {
+    expect(textContainsPersonName(text, name)).toBe(false);
   });
 });

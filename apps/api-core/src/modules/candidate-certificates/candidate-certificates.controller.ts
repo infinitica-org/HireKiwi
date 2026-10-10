@@ -18,6 +18,7 @@ import {
   AddCertificateSkillsRequestSchema,
   CreateCandidateCertificateRequestSchema,
   CreateCertificateEndorsementRequestSchema,
+  LookupCertificateLinkRequestSchema,
   SubmitCertificateAgendaRequestSchema,
   UpdateCandidateCertificateDeclarationDtoSchema,
   UpdateCertificateLearningRequestSchema,
@@ -43,6 +44,17 @@ export class CandidateCertificatesController {
   create(@CurrentUser() user: RequestUser, @Body() body: unknown) {
     const parsed = CreateCandidateCertificateRequestSchema.parse(body);
     return this.service.create(user.sub, parsed);
+  }
+
+  @Post('lookup')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Preview a pasted certificate link: what it is, whose it is, whether it can be checked.',
+  })
+  lookup(@CurrentUser() user: RequestUser, @Body() body: unknown) {
+    const parsed = LookupCertificateLinkRequestSchema.parse(body);
+    return this.service.lookupLink(user.sub, parsed.url);
   }
 
   @Get()
@@ -80,7 +92,9 @@ export class CandidateCertificatesController {
 
   @Post(':id/upload')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Upload the certificate file (PDF/JPG/PNG, max 10MB).' })
+  @ApiOperation({
+    summary: 'Upload the certificate file (PDF/JPG/PNG, max 10MB) or a credential JSON (max 64KB).',
+  })
   async upload(
     @CurrentUser() user: RequestUser,
     @Param('id') id: string,
@@ -114,7 +128,7 @@ export class CandidateCertificatesController {
     if (!fileBuffer) {
       throw new BadRequestException({
         error: 'validation_failed',
-        message: 'Choose a PDF, JPG, or PNG file to upload.',
+        message: 'Choose a PDF, JPG, PNG, or credential JSON file to upload.',
         statusCode: 400,
       });
     }

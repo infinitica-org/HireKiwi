@@ -43,3 +43,25 @@ export function personNamesMatch(credentialName: string, accountName: string): b
   }
   return fullWordPairs > 0;
 }
+
+/**
+ * Whether free text (a verification page, an extracted document) names the account holder: every
+ * word of the name must appear as a whole word, consecutively, in either order. Unlike a substring
+ * check, "Vishal V" is not found in "Vishal Varma".
+ */
+export function textContainsPersonName(text: string, accountName: string): boolean {
+  const name = nameTokens(accountName);
+  if (name.length === 0) return false;
+  const words = nameTokens(text);
+  const reversed = [...name].reverse();
+  for (let start = 0; start + name.length <= words.length; start++) {
+    const window = words.slice(start, start + name.length);
+    if (
+      window.every((word, i) => word === name[i]) ||
+      window.every((word, i) => word === reversed[i])
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
