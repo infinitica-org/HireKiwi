@@ -68,6 +68,29 @@ export type UpdateCertificateLearningRequest = z.infer<
   typeof UpdateCertificateLearningRequestSchema
 >;
 
+/** Where the automated source check stands, in terms a student can act on. */
+export const CertificateSourceCheckOutcomeSchema = z.enum([
+  'checking',
+  'verified',
+  'needs_review',
+  'failed',
+]);
+export type CertificateSourceCheckOutcome = z.infer<typeof CertificateSourceCheckOutcomeSchema>;
+
+export const CertificateSourceCheckSchema = z.object({
+  outcome: CertificateSourceCheckOutcomeSchema,
+  /** Who confirmed or was asked: "Credly", "Coursera", a website host… null when nothing was. */
+  provider: z.string().nullable(),
+  /** The name the credential was issued to, when the source publishes one. */
+  holderName: z.string().nullable(),
+  /** Whether `holderName` matches the student's profile name; null when there was nothing to compare. */
+  nameMatches: z.boolean().nullable(),
+  /** One plain-language sentence for the student. */
+  message: z.string(),
+  checkedAt: IsoDateTimeSchema.nullable(),
+});
+export type CertificateSourceCheck = z.infer<typeof CertificateSourceCheckSchema>;
+
 export const CandidateCertificateDtoSchema = z.object({
   certificateId: UuidSchema,
   candidateId: UuidSchema,
@@ -98,10 +121,35 @@ export const CandidateCertificateDtoSchema = z.object({
   retryAvailableAt: IsoDateTimeSchema.nullable().optional(),
   lockedUntil: IsoDateTimeSchema.nullable().optional(),
   taxonomyVersionSnapshot: z.string().nullable().optional(),
+  sourceCheck: CertificateSourceCheckSchema.nullable().optional(),
   createdAt: IsoDateTimeSchema,
   updatedAt: IsoDateTimeSchema,
 });
 export type CandidateCertificateDto = z.infer<typeof CandidateCertificateDtoSchema>;
+
+/** Preview a pasted link before saving: what it is, whose it is, and whether we can check it. */
+export const LookupCertificateLinkRequestSchema = z.object({
+  url: z.string().url().max(500),
+});
+export type LookupCertificateLinkRequest = z.infer<typeof LookupCertificateLinkRequestSchema>;
+
+export const LookupCertificateLinkResponseSchema = z.object({
+  /**
+   * verified: genuine and readable. not_found / revoked / expired: the issuer said so.
+   * unsupported: a site we can't check automatically (it will go to review).
+   * unavailable: the check couldn't run right now.
+   */
+  outcome: z.enum(['verified', 'not_found', 'revoked', 'expired', 'unsupported', 'unavailable']),
+  provider: z.string().nullable(),
+  title: z.string().nullable(),
+  issuer: z.string().nullable(),
+  holderName: z.string().nullable(),
+  nameMatches: z.boolean().nullable(),
+  issueDate: z.string().nullable(),
+  expiryDate: z.string().nullable(),
+  message: z.string(),
+});
+export type LookupCertificateLinkResponse = z.infer<typeof LookupCertificateLinkResponseSchema>;
 
 export const ListMyCandidateCertificatesResponseSchema = z.object({
   certificates: z.array(CandidateCertificateDtoSchema),

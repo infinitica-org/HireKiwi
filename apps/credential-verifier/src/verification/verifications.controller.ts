@@ -18,6 +18,8 @@ const CreateVerificationRequestSchema = z.object({
   ]),
   value: z.string().min(1),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  /** Skip the cached/earlier result and run the adapter again. */
+  refresh: z.boolean().optional(),
 });
 
 @Controller('api/v1/verifications')
@@ -39,7 +41,8 @@ export class VerificationsController {
       });
     }
 
-    const result = await this.orchestrator.submit(parsed.data);
+    const { refresh, ...request } = parsed.data;
+    const result = await this.orchestrator.submit(request, { refresh });
     if (result.status !== 'cached') {
       // jobId = verificationId: concurrent submissions for the same
       // credential all resolve to the same verificationId (orchestrator

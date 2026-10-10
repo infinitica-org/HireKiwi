@@ -2501,6 +2501,8 @@ model CandidateCertificate {
   issuer                  String
   status                  CandidateCertificateStatus     @default(DECLARED)
   sourceStatus            CertificateSourceStatus        @default(pending) @map("source_status")
+  /// Bumped per queued source check; a run only writes if it is still the latest (stale runs are dropped).
+  verificationGeneration  Int                            @default(0) @map("verification_generation")
   certificateNumber       String?                        @map("certificate_number")
   issueDate               String?                        @map("issue_date")
   expiryDate              String?                        @map("expiry_date")

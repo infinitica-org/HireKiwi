@@ -5,7 +5,7 @@ import { RedisService } from '../platform/redis/redis.service.js';
 import { InputResolverService, type RawVerificationRequest } from './input-resolver.service.js';
 import { IssuerDetectorService } from './issuer-detector.service.js';
 import { VerifierRegistryService } from './verifier-registry.service.js';
-import type { CredentialInput } from './types.js';
+import type { CredentialDetails, CredentialInput } from './types.js';
 
 const ADAPTER_VERSION = '0.1.0-stage4';
 
@@ -26,6 +26,15 @@ export interface VerificationResultView {
   checks: Array<{ checkName: string; result: string; detail: string | null }>;
   evidence: Array<{ evidenceType: string; url: string | null }>;
   evidenceUrl: string | null;
+  /** Earner name the source published (e.g. on a Credly badge), or null when the adapter couldn't read one. */
+  subjectName: string | null;
+  /** What the source says the credential is (name, awarding org, dates), when the adapter read it. */
+  details: CredentialDetails | null;
+}
+
+export interface SubmitOptions {
+  /** Re-run even when a cached or earlier result exists (admin re-verify, scheduled re-check). */
+  refresh?: boolean;
 }
 
 /**
@@ -46,22 +55,38 @@ export class VerificationOrchestratorService {
   ) {}
 
   /** Called from the controller: creates the pending rows and returns immediately. Actual verification happens in the worker via `run()`. */
-  async submit(request: RawVerificationRequest): Promise<CreateVerificationResult> {
+  async submit(
+    request: RawVerificationRequest,
+    options: SubmitOptions = {},
+  ): Promise<CreateVerificationResult> {
     const input = this.resolver.resolve(request);
     const sourceIdentifier = this.resolver.sourceIdentifier(input);
 
-    const cached = await this.redis.get(this.cacheKey(sourceIdentifier));
-    if (cached) {
-      const parsed = JSON.parse(cached) as VerificationResultView;
-      return {
-        verificationId: parsed.verificationId,
-        credentialId: parsed.credentialId,
-        status: 'cached',
-      };
+    if (options.refresh) {
+      await this.redis.del(this.cacheKey(sourceIdentifier));
+    } else {
+      const cached = await this.redis.get(this.cacheKey(sourceIdentifier));
+      if (cached) {
+        const parsed = JSON.parse(cached) as VerificationResultView;
+        return {
+          verificationId: parsed.verificationId,
+          credentialId: parsed.credentialId,
+          status: 'cached',
+        };
+      }
     }
 
-    const existingResult = await this.findExistingVerification(sourceIdentifier);
-    if (existingResult) return existingResult;
+    // A credential seen before: reuse a run that is still in flight, otherwise start a fresh one.
+    // Its cached result has expired (the TTL is the freshness window) or a refresh was asked for,
+    // so handing back the old verification would serve a stale revocation/expiry answer.
+    const existingCredential = await this.prisma.credential.findUnique({
+      where: { sourceIdentifier },
+    });
+    if (existingCredential) {
+      const inFlight = await this.findExistingVerification(sourceIdentifier);
+      if (inFlight && existingCredential.status === 'VERIFICATION_PENDING') return inFlight;
+      return this.startNewRun(existingCredential.id);
+    }
 
     const detection = this.issuerDetector.detect(input);
     const issuer = await this.prisma.issuer.upsert({
@@ -152,6 +177,24 @@ export class VerificationOrchestratorService {
     };
   }
 
+  private async startNewRun(credentialId: string): Promise<CreateVerificationResult> {
+    const [, verification] = await this.prisma.$transaction([
+      this.prisma.credential.update({
+        where: { id: credentialId },
+        data: { status: 'VERIFICATION_PENDING' },
+      }),
+      this.prisma.verification.create({
+        data: {
+          credentialId,
+          method: 'DOCUMENT_PARSE',
+          verificationLevel: 'UNVERIFIED',
+          adapterVersion: ADAPTER_VERSION,
+        },
+      }),
+    ]);
+    return { verificationId: verification.id, credentialId, status: 'VERIFICATION_PENDING' };
+  }
+
   private async findExistingVerification(
     sourceIdentifier: string,
   ): Promise<CreateVerificationResult | null> {
@@ -217,7 +260,10 @@ export class VerificationOrchestratorService {
             verificationLevel: result.verificationLevel,
             verifiedAt: result.verifiedAt ? new Date(result.verifiedAt) : null,
             evidenceUrl: result.evidenceUrl,
-            rawResponse: (result.rawResponse ?? {}) as Prisma.InputJsonValue,
+            rawResponse: {
+              ...(result.rawResponse ?? {}),
+              ...(result.details ? { details: result.details } : {}),
+            } as Prisma.InputJsonValue,
           },
         }),
         this.prisma.verificationCheck.createMany({
@@ -237,6 +283,14 @@ export class VerificationOrchestratorService {
             metadata: e.metadata as Prisma.InputJsonValue,
           })),
         }),
+        ...(result.subjectName
+          ? [
+              this.prisma.subject.update({
+                where: { id: verification.credential.subjectId },
+                data: { name: result.subjectName },
+              }),
+            ]
+          : []),
       ]);
 
       const view = await this.toView(verification.id);
@@ -274,7 +328,7 @@ export class VerificationOrchestratorService {
   private async toView(verificationId: string): Promise<VerificationResultView> {
     const verification = await this.prisma.verification.findUnique({
       where: { id: verificationId },
-      include: { credential: true, checks: true, evidence: true },
+      include: { credential: { include: { subject: true } }, checks: true, evidence: true },
     });
     if (!verification) {
       throw new NotFoundException(`Verification ${verificationId} not found.`);
@@ -294,6 +348,12 @@ export class VerificationOrchestratorService {
       })),
       evidence: verification.evidence.map((e) => ({ evidenceType: e.evidenceType, url: e.url })),
       evidenceUrl: verification.evidenceUrl,
+      // Subject rows start as the 'Unknown' placeholder until an adapter reads a real name.
+      subjectName:
+        verification.credential.subject && verification.credential.subject.name !== 'Unknown'
+          ? verification.credential.subject.name
+          : null,
+      details: readDetails(verification.rawResponse),
     };
   }
 
@@ -308,4 +368,10 @@ export class VerificationOrchestratorService {
       return 60 * 60 * 6;
     return 60 * 30;
   }
+}
+
+function readDetails(rawResponse: unknown): CredentialDetails | null {
+  if (typeof rawResponse !== 'object' || rawResponse === null) return null;
+  const details = (rawResponse as { details?: unknown }).details;
+  return typeof details === 'object' && details !== null ? (details as CredentialDetails) : null;
 }

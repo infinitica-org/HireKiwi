@@ -112,6 +112,7 @@ import type {
   CreateInstitutionRequestSchema,
   CompleteCandidateOnboardingRequest,
   CreateCandidateCertificateRequest,
+  LookupCertificateLinkRequest,
   CreateCertificateEndorsementRequest,
   CreateProjectRequest,
   DeclareSkillClaimRequest,
@@ -269,6 +270,7 @@ import {
   BatchMemberDtoSchema,
   CandidateBriefDtoSchema,
   CandidateCertificateDtoSchema,
+  LookupCertificateLinkResponseSchema,
   CandidateCertificateDeclarationResponseDtoSchema,
   CandidateEducationDocumentSchema,
   CandidateEducationSchema,
@@ -2218,6 +2220,12 @@ export function candidateCertificatesApi(client: HireKiwiApiClient) {
     create: (body: CreateCandidateCertificateRequest) =>
       client.post(prefixed('/candidate-certificates'), body, {
         schema: CandidateCertificateDtoSchema,
+      }),
+
+    /** Preview a pasted link before saving: what it is, whose it is, whether it can be checked. */
+    lookupLink: (body: LookupCertificateLinkRequest) =>
+      client.post(prefixed('/candidate-certificates/lookup'), body, {
+        schema: LookupCertificateLinkResponseSchema,
       }),
 
     listMine: () =>

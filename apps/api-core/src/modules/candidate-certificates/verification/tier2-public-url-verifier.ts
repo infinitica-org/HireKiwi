@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import type { TierVerificationResult } from './tier1-issuer-adapter.js';
+import { textContainsPersonName } from './person-name-match.js';
+import {
+  isTrustedVerificationHost,
+  TRUSTED_VERIFICATION_HOSTS,
+} from './trusted-verification-hosts.js';
 
 export interface Tier2Input {
   verificationUrl?: string | null;
@@ -10,9 +15,19 @@ export interface Tier2Input {
   rawHtmlOverride?: string | null; // Used for deterministic testing
 }
 
+/**
+ * Last-resort check of a verification link the engine has no adapter for.
+ *
+ * Page text is only evidence when the page can't have been written by the student, so this tier
+ * auto-verifies solely on hosts in TRUSTED_VERIFICATION_HOSTS. Any other link — including a page
+ * the student published themselves saying "Jane Doe, AWS Certified" — goes to manual review and
+ * isn't fetched at all.
+ */
 @Injectable()
 export class Tier2PublicUrlVerifier {
   private readonly DEFAULT_TIMEOUT_MS = 5_000;
+  /** Overridable in tests; production uses the reviewed list. */
+  trustedHosts: readonly string[] = TRUSTED_VERIFICATION_HOSTS;
 
   async verify(input: Tier2Input): Promise<TierVerificationResult> {
     const url = input.verificationUrl?.trim();
@@ -25,12 +40,25 @@ export class Tier2PublicUrlVerifier {
       };
     }
 
-    if (!this.isValidPublicUrl(url)) {
+    const parsed = this.parsePublicUrl(url);
+    if (!parsed) {
       return {
         status: 'FAILED',
         tier: 'TIER_2_PUBLIC_URL',
         confidence: 1.0,
         reason: `Invalid or untrusted verification URL: ${url}. URL must be an absolute http or https link.`,
+        studentMessage: 'This link is not a valid public web address.',
+      };
+    }
+
+    if (!isTrustedVerificationHost(parsed.hostname, this.trustedHosts)) {
+      return {
+        status: 'AMBIGUOUS',
+        tier: 'TIER_2_PUBLIC_URL',
+        confidence: 0.3,
+        reason: `${parsed.hostname} is not a recognised verification site, so its page content is not accepted as proof. Flagged for review.`,
+        studentMessage: `We can't check ${parsed.hostname} automatically, so we'll review this certificate by hand.`,
+        metadata: { url, host: parsed.hostname, trustedHost: false },
       };
     }
 
@@ -53,12 +81,25 @@ export class Tier2PublicUrlVerifier {
         });
         clearTimeout(timeoutId);
 
+        // A redirect off the trusted host would make the page text untrusted again.
+        const finalHost = response.url ? new URL(response.url).hostname : parsed.hostname;
+        if (!isTrustedVerificationHost(finalHost, this.trustedHosts)) {
+          return {
+            status: 'AMBIGUOUS',
+            tier: 'TIER_2_PUBLIC_URL',
+            confidence: 0.3,
+            reason: `Verification link redirected to untrusted host ${finalHost}. Flagged for review.`,
+            metadata: { url, host: finalHost, trustedHost: false },
+          };
+        }
+
         if (!response.ok) {
           return {
             status: 'FAILED',
             tier: 'TIER_2_PUBLIC_URL',
             confidence: 0.9,
             reason: `Verification URL fetch failed with HTTP status ${response.status}.`,
+            studentMessage: `${parsed.hostname} could not find this certificate (error ${response.status}).`,
           };
         }
 
@@ -85,17 +126,19 @@ export class Tier2PublicUrlVerifier {
     }
 
     const normPageText = pageText.toLowerCase();
-    const normCandidateName = input.candidateName ? input.candidateName.toLowerCase().trim() : '';
     const normTitle = input.title.toLowerCase().trim();
     const normIssuer = input.issuer.toLowerCase().trim();
     const normCertNumber = input.certificateNumber
       ? input.certificateNumber.toLowerCase().trim()
       : '';
 
-    const candidateMatch = normCandidateName ? normPageText.includes(normCandidateName) : false;
+    const candidateMatch = input.candidateName
+      ? textContainsPersonName(pageText, input.candidateName)
+      : false;
     const certNumberMatch = normCertNumber ? normPageText.includes(normCertNumber) : false;
     const titleMatch = normPageText.includes(normTitle);
     const issuerMatch = normPageText.includes(normIssuer);
+    const matches = { url, candidateMatch, certNumberMatch, titleMatch, issuerMatch };
 
     // Strict positive match: must match candidate name AND (cert number OR title/issuer)
     if (candidateMatch && (certNumberMatch || titleMatch || issuerMatch)) {
@@ -103,47 +146,27 @@ export class Tier2PublicUrlVerifier {
         status: 'VERIFIED',
         tier: 'TIER_2_PUBLIC_URL',
         confidence: certNumberMatch ? 0.95 : 0.85,
-        reason: `Verification page successfully validated candidate name "${input.candidateName}" and certificate details.`,
-        metadata: {
-          url,
-          candidateMatch,
-          certNumberMatch,
-          titleMatch,
-          issuerMatch,
-        },
-      };
-    }
-
-    // Contradictory text or missing critical match details -> Ambiguous (needs Super Admin review)
-    if (normPageText.length > 50) {
-      return {
-        status: 'AMBIGUOUS',
-        tier: 'TIER_2_PUBLIC_URL',
-        confidence: 0.5,
-        reason: `Verification page retrieved but failed strict matching (Candidate match: ${candidateMatch}, Cert# match: ${certNumberMatch}, Title match: ${titleMatch}). Flagged for review.`,
-        metadata: {
-          url,
-          candidateMatch,
-          certNumberMatch,
-          titleMatch,
-          issuerMatch,
-        },
+        reason: `Verification page on ${parsed.hostname} names "${input.candidateName}" and matches the certificate details.`,
+        studentMessage: `Verified on ${parsed.hostname}.`,
+        metadata: matches,
       };
     }
 
     return {
-      status: 'FAILED',
+      status: 'AMBIGUOUS',
       tier: 'TIER_2_PUBLIC_URL',
-      confidence: 0.8,
-      reason: `Verification page content did not validate certificate payload.`,
+      confidence: 0.5,
+      reason: `Verification page retrieved but failed strict matching (Candidate match: ${candidateMatch}, Cert# match: ${certNumberMatch}, Title match: ${titleMatch}). Flagged for review.`,
+      studentMessage: `The page on ${parsed.hostname} doesn't clearly show your name and this certificate, so we'll review it by hand.`,
+      metadata: matches,
     };
   }
 
-  private isValidPublicUrl(url: string): boolean {
+  private parsePublicUrl(url: string): URL | null {
     try {
       const parsed = new URL(url);
       if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-        return false;
+        return null;
       }
       // Basic SSRF defense: block localhost & private IP addresses
       const hostname = parsed.hostname.toLowerCase();
@@ -156,11 +179,11 @@ export class Tier2PublicUrlVerifier {
         hostname.endsWith('.internal') ||
         hostname.endsWith('.local')
       ) {
-        return false;
+        return null;
       }
-      return true;
+      return parsed;
     } catch {
-      return false;
+      return null;
     }
   }
 

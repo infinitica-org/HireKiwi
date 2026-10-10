@@ -17,6 +17,26 @@ export interface VerificationRunOutput {
   result: TierVerificationResult;
 }
 
+export interface VerificationRunOptions {
+  /** Re-ask the issuer instead of reusing the engine's cached answer (admin re-verify, re-checks). */
+  refresh?: boolean;
+  /**
+   * Scheduled re-check of an already verified certificate: only a definitive negative (revoked,
+   * no longer found) changes it. An inconclusive answer or an expiry is logged, never a demotion.
+   */
+  recheck?: boolean;
+  /** See CertificateVerificationJobPayload.generation. */
+  generation?: number;
+}
+
+/** Re-check events stay out of the student's status line, which reads the latest `[TIER_` event. */
+const RECHECK_EVENT_PREFIX = '[RECHECK]';
+
+/** Only these outcomes are decisive; anything else can still be improved on by a later tier. */
+function isDecisive(result: TierVerificationResult | null): result is TierVerificationResult {
+  return result?.status === 'VERIFIED' || result?.status === 'FAILED';
+}
+
 @Injectable()
 export class CertificateSourceVerificationService {
   private readonly logger = new Logger(CertificateSourceVerificationService.name);
@@ -28,7 +48,10 @@ export class CertificateSourceVerificationService {
     @Inject(Tier3OcrVerifier) private readonly tier3Verifier: Tier3OcrVerifier,
   ) {}
 
-  async runVerification(certificateId: string): Promise<VerificationRunOutput> {
+  async runVerification(
+    certificateId: string,
+    options: VerificationRunOptions = {},
+  ): Promise<VerificationRunOutput> {
     const cert = await this.prisma.candidateCertificate.findUnique({
       where: { id: certificateId },
       include: { candidate: true },
@@ -39,9 +62,46 @@ export class CertificateSourceVerificationService {
     }
 
     const candidateName = cert.candidate?.fullName ?? null;
+    const { result, discoveredFrom } = await this.evaluate(cert, candidateName, options);
 
+    if (options.recheck) {
+      const revokedOrGone =
+        result.status === 'FAILED' && result.metadata?.engineStatus !== 'EXPIRED';
+      if (revokedOrGone) return this.applyResult(cert.id, result, null, options.generation);
+      await this.prisma.certificateVerificationEvent.create({
+        data: {
+          candidateCertificateId: cert.id,
+          status: cert.status,
+          message: `${RECHECK_EVENT_PREFIX} ${result.status}: ${result.reason}`,
+          metadata: { tier: result.tier, resultStatus: result.status, recheck: true },
+        },
+      });
+      return {
+        certificateId: cert.id,
+        sourceStatus: cert.sourceStatus,
+        status: cert.status,
+        tierUsed: result.tier,
+        result,
+      };
+    }
+    return this.applyResult(cert.id, result, discoveredFrom, options.generation);
+  }
+
+  /** Runs the tiers in order and picks the outcome, without writing anything. */
+  private async evaluate(
+    cert: {
+      title: string;
+      issuer: string;
+      certificateNumber: string | null;
+      verificationUrl: string | null;
+      certificateFileUrl: string | null;
+      fileMimeType: string | null;
+    },
+    candidateName: string | null,
+    options: VerificationRunOptions,
+  ): Promise<{ result: TierVerificationResult; discoveredFrom: TierVerificationResult | null }> {
     // ------------------------------------------------------------------------
-    // Tier 1: Issuer API Check
+    // Tier 1: the verification engine (pasted link, or certificate number)
     // ------------------------------------------------------------------------
     const tier1Result = await this.tier1Registry.verify({
       title: cert.title,
@@ -49,45 +109,48 @@ export class CertificateSourceVerificationService {
       certificateNumber: cert.certificateNumber,
       verificationUrl: cert.verificationUrl,
       candidateName,
+      refresh: options.refresh,
     });
 
     if (tier1Result.status !== 'UNAVAILABLE') {
-      return this.applyResult(cert.id, tier1Result);
+      return { result: tier1Result, discoveredFrom: null };
     }
 
     // ------------------------------------------------------------------------
-    // Tier 2: Public URL Verification Check
+    // Tier 2: a link no engine adapter covers (auto-verifies on trusted hosts only)
     // ------------------------------------------------------------------------
-    if (cert.verificationUrl) {
-      const tier2Result = await this.tier2Verifier.verify({
-        verificationUrl: cert.verificationUrl,
-        candidateName,
-        title: cert.title,
-        issuer: cert.issuer,
-        certificateNumber: cert.certificateNumber,
-      });
-
-      if (tier2Result.status !== 'UNAVAILABLE') {
-        return this.applyResult(cert.id, tier2Result);
-      }
-    }
+    const tier2Result = cert.verificationUrl
+      ? await this.tier2Verifier.verify({
+          verificationUrl: cert.verificationUrl,
+          candidateName,
+          title: cert.title,
+          issuer: cert.issuer,
+          certificateNumber: cert.certificateNumber,
+        })
+      : null;
+    if (isDecisive(tier2Result)) return { result: tier2Result, discoveredFrom: null };
 
     // ------------------------------------------------------------------------
-    // Tier 3: OCR + Heuristic Analysis Check
+    // Tier 3: the uploaded file — its QR code / link can still reach a covered issuer
     // ------------------------------------------------------------------------
-    if (cert.certificateFileUrl) {
-      const tier3Result = await this.tier3Verifier.verify({
-        certificateFileUrl: cert.certificateFileUrl,
-        candidateName,
-        title: cert.title,
-        issuer: cert.issuer,
-        certificateNumber: cert.certificateNumber,
-        verificationUrl: cert.verificationUrl,
-      });
+    const tier3Result = cert.certificateFileUrl
+      ? await this.tier3Verifier.verify({
+          certificateFileUrl: cert.certificateFileUrl,
+          fileMimeType: cert.fileMimeType,
+          candidateName,
+          title: cert.title,
+          issuer: cert.issuer,
+          certificateNumber: cert.certificateNumber,
+          verificationUrl: cert.verificationUrl,
+        })
+      : null;
 
-      if (tier3Result.status !== 'UNAVAILABLE') {
-        return this.applyResult(cert.id, tier3Result);
-      }
+    const usable = [tier3Result, tier2Result].filter(
+      (result): result is TierVerificationResult => !!result && result.status !== 'UNAVAILABLE',
+    );
+    const chosen = usable.find((result) => isDecisive(result)) ?? tier2Result ?? usable[0];
+    if (chosen && chosen.status !== 'UNAVAILABLE') {
+      return { result: chosen, discoveredFrom: cert.verificationUrl ? null : tier3Result };
     }
 
     // Default Fallback: If no tier was available to evaluate
@@ -96,14 +159,22 @@ export class CertificateSourceVerificationService {
       tier: 'TIER_3_OCR_HEURISTIC',
       confidence: 0,
       reason: 'No automated verification tier was capable of evaluating this certificate payload.',
+      studentMessage:
+        "Add the certificate's verification link or upload the certificate so we can check it.",
     };
 
-    return this.applyResult(cert.id, fallbackResult);
+    return { result: fallbackResult, discoveredFrom: null };
   }
 
+  /**
+   * `discoveredFrom`: a Tier 3 result whose link (found in the uploaded file) should be saved as
+   * the certificate's verification URL, so the student and reviewers see where it was checked.
+   */
   private async applyResult(
     certificateId: string,
     result: TierVerificationResult,
+    discoveredFrom: TierVerificationResult | null = null,
+    generation?: number,
   ): Promise<VerificationRunOutput> {
     let sourceStatus: CertificateSourceStatus = 'pending';
     let status: CandidateCertificateStatus = 'IN_VERIFICATION';
@@ -121,14 +192,44 @@ export class CertificateSourceVerificationService {
       status = 'IN_VERIFICATION';
     }
 
-    // Update database row
-    const updated = await this.prisma.candidateCertificate.update({
-      where: { id: certificateId },
-      data: {
-        sourceStatus,
-        status,
-      },
-    });
+    const discoveredUrl = discoveredFrom?.metadata?.discoveredUrl;
+
+    const data = {
+      sourceStatus,
+      status,
+      ...(typeof discoveredUrl === 'string' && discoveredUrl.length <= 500
+        ? { verificationUrl: discoveredUrl }
+        : {}),
+    };
+
+    // Fenced write: only while this run is still the latest one queued for the certificate.
+    if (generation !== undefined) {
+      const { count } = await this.prisma.candidateCertificate.updateMany({
+        where: { id: certificateId, verificationGeneration: generation },
+        data,
+      });
+      if (count === 0) {
+        const current = await this.prisma.candidateCertificate.findUniqueOrThrow({
+          where: { id: certificateId },
+        });
+        this.logger.debug(
+          `Dropped superseded source check for ${certificateId} (generation ${generation}, now ${current.verificationGeneration}).`,
+        );
+        return {
+          certificateId,
+          sourceStatus: current.sourceStatus,
+          status: current.status,
+          tierUsed: result.tier,
+          result,
+        };
+      }
+    }
+    const updated =
+      generation !== undefined
+        ? await this.prisma.candidateCertificate.findUniqueOrThrow({
+            where: { id: certificateId },
+          })
+        : await this.prisma.candidateCertificate.update({ where: { id: certificateId }, data });
 
     // Record audit event in CertificateVerificationEvent
     await this.prisma.certificateVerificationEvent.create({
@@ -143,6 +244,7 @@ export class CertificateSourceVerificationService {
           reason: result.reason,
           sourceStatus,
           verificationSource: result.tier,
+          ...(result.studentMessage ? { studentMessage: result.studentMessage } : {}),
           ...(result.metadata ?? {}),
         },
       },

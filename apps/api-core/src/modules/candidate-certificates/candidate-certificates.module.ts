@@ -11,6 +11,7 @@ import { Tier2PublicUrlVerifier } from './verification/tier2-public-url-verifier
 import { Tier3OcrVerifier } from './verification/tier3-ocr-verifier.js';
 import { CredentialDedupService } from './verification/credential-dedup.service.js';
 import { CertificateVerificationProcessor } from './verification/certificate-verification.processor.js';
+import { CertificateRecheckProcessor } from './verification/certificate-recheck.processor.js';
 import { PublicProfileModule } from '../public-profile/public-profile.module.js';
 
 @Module({
@@ -30,6 +31,7 @@ import { PublicProfileModule } from '../public-profile/public-profile.module.js'
     Tier3OcrVerifier,
     CredentialDedupService,
     CertificateVerificationProcessor,
+    CertificateRecheckProcessor,
   ],
 })
 export class CandidateCertificatesModule {}

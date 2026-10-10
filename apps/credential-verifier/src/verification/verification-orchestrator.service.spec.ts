@@ -127,4 +127,74 @@ describe('VerificationOrchestratorService — concurrency', () => {
     });
     expect(transactionOps.length).toBeGreaterThanOrEqual(6);
   });
+
+  describe('submit() for a credential seen before', () => {
+    const sourceIdentifier = 'URL:https://www.credly.com/badges/x';
+    function orchestratorWith(prisma: ReturnType<typeof makePrismaStub>, redis = makeRedisStub()) {
+      return new VerificationOrchestratorService(
+        prisma as any,
+        redis as any,
+        { resolve: (r: any) => r, sourceIdentifier: () => sourceIdentifier } as any,
+        {} as any,
+        {} as any,
+      );
+    }
+
+    it('starts a fresh run once the cached result has expired, instead of returning the stale one', async () => {
+      const prisma = makePrismaStub();
+      prisma.credential.findUnique.mockResolvedValue({ id: 'cred-1', status: 'UNVERIFIABLE' });
+      prisma.verification.findFirst.mockResolvedValue({ id: 'ver-old', credentialId: 'cred-1' });
+      prisma.verification.create.mockResolvedValue({ id: 'ver-new' });
+
+      const result = await orchestratorWith(prisma).submit({ inputType: 'URL', value: 'x' });
+
+      expect(result).toEqual({
+        verificationId: 'ver-new',
+        credentialId: 'cred-1',
+        status: 'VERIFICATION_PENDING',
+      });
+      expect(prisma.credential.update).toHaveBeenCalledWith({
+        where: { id: 'cred-1' },
+        data: { status: 'VERIFICATION_PENDING' },
+      });
+    });
+
+    it('reuses a run that is still in flight', async () => {
+      const prisma = makePrismaStub();
+      prisma.credential.findUnique.mockResolvedValue({
+        id: 'cred-1',
+        status: 'VERIFICATION_PENDING',
+      });
+      prisma.verification.findFirst.mockResolvedValue({
+        id: 'ver-running',
+        credentialId: 'cred-1',
+      });
+
+      const result = await orchestratorWith(prisma).submit({ inputType: 'URL', value: 'x' });
+
+      expect(result.verificationId).toBe('ver-running');
+      expect(prisma.verification.create).not.toHaveBeenCalled();
+    });
+
+    it('refresh skips a cached result and drops it', async () => {
+      const prisma = makePrismaStub();
+      prisma.credential.findUnique.mockResolvedValue({ id: 'cred-1', status: 'VERIFIED' });
+      prisma.verification.findFirst.mockResolvedValue({ id: 'ver-old', credentialId: 'cred-1' });
+      prisma.verification.create.mockResolvedValue({ id: 'ver-new' });
+      const redis = {
+        ...makeRedisStub(),
+        get: vi.fn().mockResolvedValue(JSON.stringify({ verificationId: 'ver-old' })),
+        del: vi.fn().mockResolvedValue(1),
+      };
+
+      const result = await orchestratorWith(prisma, redis).submit(
+        { inputType: 'URL', value: 'x' },
+        { refresh: true },
+      );
+
+      expect(result.verificationId).toBe('ver-new');
+      expect(redis.del).toHaveBeenCalledWith(`verification:result:${sourceIdentifier}`);
+      expect(redis.get).not.toHaveBeenCalled();
+    });
+  });
 });

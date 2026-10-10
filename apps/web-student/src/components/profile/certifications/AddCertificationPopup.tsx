@@ -5,7 +5,10 @@ import { isHireKiwiApiError, queryKeys } from '@hirekiwi/api-client';
 import { useQueryClient } from '@hirekiwi/ui';
 import type { CredentialType } from '@hirekiwi/contracts';
 import { CertificateDetailsForm } from '@/components/certificates/certificate-details-form';
-import { CertificateWizard } from '@/components/certificates/certificate-wizard';
+import {
+  CertificateWizard,
+  type CertificateWizardStage,
+} from '@/components/certificates/certificate-wizard';
 import { ViviVerificationShell } from '@/components/vivi-verification/ViviVerificationShell';
 import { useViviReady } from '@/components/vivi-verification/useViviReady';
 import { VIVI_FIELD, VIVI_LABEL } from '@/components/vivi-verification/vivi-field-classes';
@@ -40,7 +43,7 @@ export function AddCertificationPopup({
   const [kind, setKind] = useState<Kind>('CERTIFICATE');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stage, setStage] = useState<0 | 1 | 2 | 3>(0);
+  const [stage, setStage] = useState<CertificateWizardStage>(0);
   const ready = useViviReady(true);
   const adding = certificateId === null;
   const noun = KINDS.find((item) => item.id === kind)?.noun ?? 'certificate';
@@ -107,10 +110,11 @@ export function AddCertificationPopup({
     adding
       ? [
           'Add certificate or credential',
-          'Choose the type and add the details. We verify it for you.',
+          kind === 'CERTIFICATE'
+            ? 'Paste its link and we check it with the issuer right away.'
+            : 'Choose the type and add the details.',
         ]
-      : ['Manage certificate', 'Add the provider, credential details and a verification link.'],
-    ['Add proof', 'Upload the document or give a public verification link.'],
+      : ['Update certificate', 'Change its link, or upload the certificate itself.'],
     ['What did you learn?', 'Pick the skills and describe what you learned.'],
     ['Verification', 'Where this certificate stands and what is left to do.'],
   ];
@@ -124,7 +128,7 @@ export function AddCertificationPopup({
       onClose={onClose}
       titleId="add-certification-title"
       title="Certificate Verification"
-      steps={['Details', 'Proof', 'Skills', 'Verify']}
+      steps={['Add', 'Skills', 'Status']}
       stepIndex={kind === 'CERTIFICATE' ? stage : 0}
       selectedHeading="What you are adding"
       selectedHint="A course or certificate, or a license, badge or membership. We verify it for you."

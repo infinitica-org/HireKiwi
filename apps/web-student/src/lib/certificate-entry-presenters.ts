@@ -20,6 +20,29 @@ export function certificateStatusLabel(status: CandidateCertificateStatus): stri
   return STATUS_LABELS[status] ?? status;
 }
 
+/**
+ * The in-progress badge, by where the source check stands: a confirmed source only waits on the
+ * student's assessment, which reads very differently from "we're still checking" or "under review".
+ */
+export function certificatePendingBadge(cert: CandidateCertificateDto): {
+  label: string;
+  tone: 'info' | 'warning' | 'neutral';
+} {
+  if (cert.status === 'DECLARED' || cert.status === 'UPLOADED') {
+    return { label: certificateStatusLabel(cert.status), tone: 'neutral' };
+  }
+  switch (cert.sourceCheck?.outcome) {
+    case 'verified':
+      return { label: 'Source verified · assessment next', tone: 'info' };
+    case 'needs_review':
+      return { label: 'Under review', tone: 'warning' };
+    case 'checking':
+      return { label: 'Checking…', tone: 'neutral' };
+    default:
+      return { label: certificateStatusLabel(cert.status), tone: 'warning' };
+  }
+}
+
 export function certificateStatusIsVerified(status: CandidateCertificateStatus): boolean {
   return status === 'VERIFIED';
 }

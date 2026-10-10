@@ -398,6 +398,16 @@ export const ENDPOINT_RATE_LIMITS: readonly RateLimitPolicy[] = [
     rationale: 'Each submit enqueues GitHub snapshot work plus an LLM verify.',
   },
   {
+    key: 'certificates.lookup',
+    scope: 'USER',
+    limit: 20,
+    windowSeconds: 60,
+    burst: 5,
+    redisKey: 'rl:certificates:lookup:{id}',
+    rationale:
+      'Each lookup fetches an issuer page through the credential-verifier; paste-and-preview only.',
+  },
+  {
     key: 'projects.github',
     scope: 'USER',
     limit: 20,
