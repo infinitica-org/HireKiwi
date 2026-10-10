@@ -211,6 +211,9 @@ export default function SearchStudentsPage() {
       if (targetJob && targetJob.requiredSkills?.length) {
         const hasRequired = targetJob.requiredSkills.some(
           (req) =>
+            candidate.explanation.skillFit?.some(
+              (sf) => sf.skillCode === req.skillCode && sf.status === 'MET',
+            ) ||
             candidate.explanation.verifiedSkills?.some((vs) => vs.skillCode === req.skillCode) ||
             candidate.trackCode.toLowerCase().includes(req.skillCode.toLowerCase()),
         );
@@ -440,13 +443,19 @@ export default function SearchStudentsPage() {
                           <Layers className="size-3.5 text-zinc-400" />
                           Track: <strong className="text-zinc-700">{candidate.trackCode}</strong>
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Award className="size-3.5 text-zinc-400" />
-                          Match Score:{' '}
-                          <strong className="text-zinc-800 font-semibold">
-                            {Math.round(candidate.matchScore * 100)}%
-                          </strong>
-                        </span>
+                        {scopedJobId !== 'ALL' ? (
+                          <span className="flex items-center gap-1">
+                            <Award className="size-3.5 text-zinc-400" />
+                            Match Score:{' '}
+                            <strong className="text-zinc-800 font-semibold">
+                              {Math.round(candidate.matchScore * 100)}%
+                            </strong>
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-zinc-400 italic">
+                            Profile Signal — select a job above for a real match score
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -546,7 +555,7 @@ export default function SearchStudentsPage() {
                       {isWhyOpen ? 'Hide Level Evidence' : 'Why this level?'}
                     </button>
 
-                    {candidate.explanation?.why ? (
+                    {scopedJobId !== 'ALL' && candidate.explanation?.why ? (
                       <span className="text-zinc-500">{candidate.explanation.why}</span>
                     ) : null}
                   </div>
@@ -570,16 +579,23 @@ export default function SearchStudentsPage() {
                           Cleared <strong>Level {candidate.highestLevelCleared}</strong> in{' '}
                           <strong>{candidate.trackCode}</strong> proctored evaluation.
                         </li>
-                        <li>
-                          Overall Readiness Match:{' '}
-                          <strong className="text-zinc-800">
-                            {Math.round(candidate.matchScore * 100)}%
-                          </strong>
-                        </li>
+                        {scopedJobId !== 'ALL' ? (
+                          <li>
+                            Overall Readiness Match:{' '}
+                            <strong className="text-zinc-800">
+                              {Math.round(candidate.matchScore * 100)}%
+                            </strong>
+                          </li>
+                        ) : (
+                          <li className="italic text-zinc-400">
+                            Select a job above to see a real skill-match score for this candidate.
+                          </li>
+                        )}
                       </ul>
 
                       {/* Strong Competencies */}
-                      {candidate.explanation?.strongCompetencies?.length ? (
+                      {scopedJobId !== 'ALL' &&
+                      candidate.explanation?.strongCompetencies?.length ? (
                         <div className="pt-1">
                           <span className="font-semibold text-emerald-800 block text-[11px] mb-1">
                             Verified Strengths:
@@ -598,7 +614,7 @@ export default function SearchStudentsPage() {
                       ) : null}
 
                       {/* Skill Gaps / Missing requirements */}
-                      {candidate.explanation?.gapCompetencies?.length ? (
+                      {scopedJobId !== 'ALL' && candidate.explanation?.gapCompetencies?.length ? (
                         <div className="pt-1">
                           <span className="font-semibold text-amber-800 block text-[11px] mb-1">
                             Skill Gaps / Partially Met:

@@ -84,6 +84,7 @@ import {
   scaleFormCounts,
   competencySlotCountForProficiency,
   evaluateAssessmentIntelligence,
+  assertMinimumItemCoverage,
 } from '@hirekiwi/scoring-engine';
 import { getSkillDefinition, type SkillBlueprint } from '@hirekiwi/contracts';
 import { Effect, Either } from 'effect';
@@ -669,6 +670,32 @@ export class EvaluationService {
             : {}),
         });
         index += 1;
+      }
+
+      if (blueprint?.competencyModel.length) {
+        const coverageItems = scoringItems.map((item) => ({
+          competencyIds: item.competencyIds ?? [],
+          marksEarned: 0,
+          marksMax: item.marksMax,
+        }));
+        const coverage = Effect.runSync(
+          Effect.either(
+            assertMinimumItemCoverage({
+              competencyModel: blueprint.competencyModel,
+              items: coverageItems,
+            }),
+          ),
+        );
+        if (Either.isLeft(coverage)) {
+          this.logger.warn(
+            `skill_form ${skill.code} ${proficiency} under-covered: ${coverage.left.underCovered
+              .map(
+                (row) =>
+                  `${row.competencyId}(${row.role}:${String(row.itemCount)}/${String(row.required)})`,
+              )
+              .join(', ')}`,
+          );
+        }
       }
 
       const scoringToken = sealSdeFormPayload({

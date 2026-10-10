@@ -53,7 +53,25 @@ export type AssessmentIntelligenceOutput = {
   readonly assessmentComplete: boolean;
   readonly assessmentPassed: boolean;
   readonly scorePercent: number;
+  /** True only when every competency in the model (not just the target level's critical path) has been tested. */
+  readonly fullCompetencyCoverage: boolean;
+  /** Fraction of competencies in the model that are not NOT_TESTED. */
+  readonly coverageRatio: number;
 };
+
+export function computeCompetencyCoverage(competencyResults: readonly CompetencyResult[]): {
+  fullCompetencyCoverage: boolean;
+  coverageRatio: number;
+} {
+  if (competencyResults.length === 0) {
+    return { fullCompetencyCoverage: false, coverageRatio: 0 };
+  }
+  const testedCount = competencyResults.filter((row) => row.status !== 'NOT_TESTED').length;
+  return {
+    fullCompetencyCoverage: testedCount === competencyResults.length,
+    coverageRatio: testedCount / competencyResults.length,
+  };
+}
 
 function proficiencyIndex(level: ProficiencyLevel): number {
   return PROFICIENCY_ORDER.indexOf(level);
@@ -415,6 +433,7 @@ export function evaluateAssessmentIntelligence(
     });
     const assessmentComplete =
       highestAssessmentSupportedProficiency !== null && next.recommendedNextStep !== 'REMEDIATION';
+    const { fullCompetencyCoverage, coverageRatio } = computeCompetencyCoverage(competencyResults);
 
     return {
       competencyResults,
@@ -428,6 +447,8 @@ export function evaluateAssessmentIntelligence(
       assessmentComplete,
       assessmentPassed: assessmentComplete,
       scorePercent,
+      fullCompetencyCoverage,
+      coverageRatio,
     };
   });
 }

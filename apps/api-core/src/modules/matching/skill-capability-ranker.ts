@@ -434,7 +434,11 @@ export function scoreSkillCapabilityCandidate(
       : weightedDemandSumMp / (HELD_AT_ASK_MP * totalImportanceWeight);
   const matchScore = Math.min(rawMatchScore, 1);
   const skillCoveragePct = skillCount === 0 ? 0 : heldRequired / skillCount;
-  const skillScore = rawMatchScore;
+  // Bug: heldMillipoints gives up to 1.5x credit per skill for over-qualified candidates, so
+  // rawMatchScore (and therefore this, left unclamped) can exceed 1 — but skillCapability.skill
+  // in the response schema caps at 1, same as matchScore above. An over-qualified candidate's
+  // match run crashed with a 500 on this exact field until it was clamped the same way.
+  const skillScore = Math.min(rawMatchScore, 1);
 
   const capabilityFit: CapabilityFitRowInternal[] = [];
   let weightedSum = 0;

@@ -17,6 +17,8 @@ const sampleResult: AssessmentResult = {
   ],
   highestAssessmentSupportedProficiency: 'ADVANCED',
   targetProficiency: 'ADVANCED',
+  fullCompetencyCoverage: true,
+  coverageRatio: 1,
   assessmentComplete: true,
   assessmentPassed: true,
   uncertainties: [],

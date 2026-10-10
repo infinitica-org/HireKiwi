@@ -199,4 +199,37 @@ describe('Person-Job Fit Scoring Engine Tests', () => {
     expect(result.mustHavesMet).toBe(false);
     expect(result.overallFitScore).toBeLessThan(0.2); // severely penalized by 0.2x multiplier
   });
+
+  it('discounts accuracy credit for LOW-confidence claims versus the same rank at HIGH confidence', () => {
+    const high = calculatePersonJobFit({
+      requiredSkills: [{ skillCode: 'REACT_CORE', requiredRank: 3, importance: 'must_have' }],
+      candidateSkills: [{ skillCode: 'REACT_CORE', demonstratedRank: 3, confidence: 'HIGH' }],
+    });
+    const low = calculatePersonJobFit({
+      requiredSkills: [{ skillCode: 'REACT_CORE', requiredRank: 3, importance: 'must_have' }],
+      candidateSkills: [{ skillCode: 'REACT_CORE', demonstratedRank: 3, confidence: 'LOW' }],
+    });
+
+    // Same demonstrated rank, same gating outcome (LOW confidence doesn't flip a gate on its
+    // own) — but LOW-confidence evidence must score strictly lower on accuracy than HIGH.
+    expect(low.mustHavesMet).toBe(true);
+    expect(low.weightedProficiencyAccuracy).toBeLessThan(high.weightedProficiencyAccuracy);
+    expect(low.overallFitScore).toBeLessThan(high.overallFitScore);
+  });
+
+  it('treats an unresolved corroboration contradiction as not-met for must-have gating, even at full rank', () => {
+    const contested = calculatePersonJobFit({
+      requiredSkills: [{ skillCode: 'REACT_CORE', requiredRank: 3, importance: 'must_have' }],
+      candidateSkills: [
+        { skillCode: 'REACT_CORE', demonstratedRank: 5, confidence: 'HIGH', hasConflict: true },
+      ],
+    });
+
+    expect(contested.mustHavesMet).toBe(false);
+    expect(contested.coverageOfMustHaves).toBe(0);
+    expect(contested.skillFitBreakdown[0]?.isMet).toBe(false);
+    expect(contested.skillFitBreakdown[0]?.sourceDiscrepancy).toBe(true);
+    // Still earns some accuracy credit — the claim isn't treated as entirely absent, just disputed.
+    expect(contested.weightedProficiencyAccuracy).toBeGreaterThan(0);
+  });
 });

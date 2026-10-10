@@ -1820,6 +1820,11 @@ model JobOpening {
   createdById              String             @map("created_by_id") @db.Uuid
   createdBy                User               @relation("JobOpeningCreatedBy", fields: [createdById], references: [id])
   createdAt                DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// Stage 1 semantic vector (mirrors CandidateEvidenceProfile.embedding), written by
+  /// JobEmbeddingService via raw SQL — Prisma's query engine can't read/write `Unsupported`
+  /// columns directly. Null until the job's first embedding generation run.
+  embedding                Unsupported("vector(1536)")?
+  embeddingUpdatedAt       DateTime?          @map("embedding_updated_at") @db.Timestamptz(6)
 
   requiredSkills JobOpeningSkill[]
   applications   Application[]
