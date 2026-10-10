@@ -408,3 +408,124 @@ describe('CertificateSourceVerificationService Orchestrator', () => {
     });
   });
 });
+
+describe('Tier 3 hands links found in the file to the engine', () => {
+  const nptelUrl = 'https://nptel.ac.in/noc/E_Certificate/NPTEL21GE15S4336322203133020';
+
+  it('verifies through the issuer, not the document text', async () => {
+    const engine = new CredentialVerifierClientAdapter();
+    const verify = vi.spyOn(engine, 'verify').mockResolvedValue({
+      status: 'VERIFIED',
+      tier: 'TIER_1_ISSUER_API',
+      confidence: 0.9,
+      reason: 'issuer says yes',
+      studentMessage: 'Verified with NPTEL.',
+    });
+    const verifier = new Tier3OcrVerifier(undefined, engine);
+
+    const result = await verifier.verify({
+      title: 'Python for Data Science',
+      issuer: 'NPTEL',
+      candidateName: 'Jane Manager',
+      extractedTextOverride: 'Roll No NPTEL21GE15S4336322203133020 awarded to someone else',
+    });
+
+    expect(verify).toHaveBeenCalledWith(
+      expect.objectContaining({ verificationUrl: nptelUrl, candidateName: 'Jane Manager' }),
+    );
+    expect(result.status).toBe('VERIFIED');
+    expect(result.metadata).toMatchObject({
+      discoveredUrl: nptelUrl,
+      discoveredVia: 'roll-number',
+    });
+  });
+
+  it('goes to review, keeping the link for the reviewer, when no adapter covers it', async () => {
+    const engine = new CredentialVerifierClientAdapter();
+    vi.spyOn(engine, 'verify').mockResolvedValue({
+      status: 'UNAVAILABLE',
+      tier: 'TIER_1_ISSUER_API',
+      confidence: 0,
+      reason: 'no adapter',
+    });
+    const verifier = new Tier3OcrVerifier(undefined, engine);
+
+    const result = await verifier.verify({
+      title: 'Course',
+      issuer: 'Some Academy',
+      extractedTextOverride: 'Verify at https://academy.example/verify/123',
+    });
+
+    expect(result.status).toBe('AMBIGUOUS');
+    expect(result.metadata).toMatchObject({ discoveredUrl: 'https://academy.example/verify/123' });
+  });
+});
+
+describe('CertificateSourceVerificationService re-checks', () => {
+  function serviceReturning(tier1Result: Awaited<ReturnType<Tier1IssuerRegistry['verify']>>) {
+    const prisma = {
+      candidateCertificate: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'cert-1',
+          title: 'Python Essentials 2',
+          issuer: 'Cisco',
+          certificateNumber: null,
+          verificationUrl: 'https://www.credly.com/badges/x',
+          certificateFileUrl: null,
+          fileMimeType: null,
+          status: 'VERIFIED',
+          sourceStatus: 'source_verified',
+          candidate: { fullName: 'Vishal V' },
+        }),
+        update: vi
+          .fn()
+          .mockImplementation(({ data }) =>
+            Promise.resolve({ id: 'cert-1', sourceStatus: data.sourceStatus, status: data.status }),
+          ),
+      },
+      certificateVerificationEvent: { create: vi.fn().mockResolvedValue({ id: 'event-1' }) },
+    };
+    const tier1 = new Tier1IssuerRegistry(new CredentialVerifierClientAdapter());
+    vi.spyOn(tier1, 'verify').mockResolvedValue(tier1Result);
+    const service = new CertificateSourceVerificationService(
+      prisma as any,
+      tier1,
+      new Tier2PublicUrlVerifier(),
+      new Tier3OcrVerifier(),
+    );
+    return { prisma, service };
+  }
+
+  it('demotes a verified certificate the issuer now reports revoked', async () => {
+    const { prisma, service } = serviceReturning({
+      status: 'FAILED',
+      tier: 'TIER_1_ISSUER_API',
+      confidence: 0.9,
+      reason: 'revoked',
+      metadata: { engineStatus: 'REVOKED' },
+    });
+    const run = await service.runVerification('cert-1', { refresh: true, recheck: true });
+    expect(run.sourceStatus).toBe('source_failed');
+    expect(prisma.candidateCertificate.update).toHaveBeenCalled();
+  });
+
+  it.each([
+    ['inconclusive', { status: 'AMBIGUOUS', metadata: {} }],
+    ['expired', { status: 'FAILED', metadata: { engineStatus: 'EXPIRED' } }],
+  ] as const)('only logs an %s answer, never demoting', async (_label, partial) => {
+    const { prisma, service } = serviceReturning({
+      tier: 'TIER_1_ISSUER_API',
+      confidence: 0.5,
+      reason: 'whatever',
+      ...partial,
+    });
+    const run = await service.runVerification('cert-1', { refresh: true, recheck: true });
+    expect(run.sourceStatus).toBe('source_verified');
+    expect(prisma.candidateCertificate.update).not.toHaveBeenCalled();
+    expect(prisma.certificateVerificationEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ message: expect.stringMatching(/^\[RECHECK\]/) }),
+      }),
+    );
+  });
+});

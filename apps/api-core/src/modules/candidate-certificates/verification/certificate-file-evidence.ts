@@ -1,4 +1,4 @@
-import { pathToFileURL } from 'node:url';
+import { dirname, join } from 'node:path';
 import jpeg from 'jpeg-js';
 import jsQR from 'jsqr';
 import { PNG } from 'pngjs';
@@ -32,6 +32,7 @@ const NPTEL_ROLL_PATTERN = /NPTEL\d{2}[A-Z]{2,4}\d{1,3}S\d{5,}/u;
 const URL_IN_TEXT_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/giu;
 
 type PdfJs = typeof PdfJsModule;
+const STANDARD_FONT_DATA_PATH = `${join(dirname(require.resolve('pdfjs-dist/package.json')), 'standard_fonts')}/`;
 let pdfjsPromise: Promise<PdfJs> | null = null;
 
 /**
@@ -39,10 +40,8 @@ let pdfjsPromise: Promise<PdfJs> | null = null;
  * legacy build is the one meant for Node (no DOM, no worker thread needed).
  */
 function loadPdfJs(): Promise<PdfJs> {
-  pdfjsPromise ??= (async () => {
-    const entry = require.resolve('pdfjs-dist/legacy/build/pdf.mjs');
-    return (await import(pathToFileURL(entry).href)) as PdfJs;
-  })();
+  // A bare specifier, so Node (and vitest) load the package natively rather than transforming it.
+  pdfjsPromise ??= import('pdfjs-dist/legacy/build/pdf.mjs');
   return pdfjsPromise;
 }
 
@@ -81,6 +80,8 @@ async function extractFromPdf(buffer: Buffer): Promise<FileEvidence> {
     data: new Uint8Array(buffer),
     disableFontFace: true,
     useWorkerFetch: false,
+    // Text drawn in the 14 standard PDF fonts needs pdfjs' bundled font data to be extracted.
+    standardFontDataUrl: STANDARD_FONT_DATA_PATH,
   });
   try {
     const doc = await task.promise;
