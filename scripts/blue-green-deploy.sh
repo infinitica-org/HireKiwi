@@ -24,7 +24,7 @@ test -f "$ENV_FILE" || {
 # If deploying to DEV, run direct isolated deploy
 if [[ "$ENV_NAME" == "dev" ]]; then
   echo "==> Deploying to isolated DEV stack (hirekiwi-dev)..."
-  COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml -p "hirekiwi-dev")
+  COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.prod.yml -p "hirekiwi-dev")
   "${COMPOSE[@]}" --profile apps build
   "${COMPOSE[@]}" --profile apps up -d --no-build
   echo "==> Waiting for DEV API health check..."
@@ -61,7 +61,7 @@ echo " Target Deployment Slot:   [${TARGET_COLOR}] (Internal API Port: ${TARGET_
 echo "=========================================================================="
 
 TARGET_PROJECT="hirekiwi-prod-${TARGET_COLOR}"
-TARGET_COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml -p "$TARGET_PROJECT")
+TARGET_COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.prod.yml -p "$TARGET_PROJECT")
 
 # 1. Build target container images sequentially to prevent VPS CPU/IO starvation
 echo "==> [Phase 1/5] Building container images for ${TARGET_COLOR}..."
@@ -124,7 +124,7 @@ sleep 15
 if [[ -f "$STATE_FILE" ]]; then
   OLD_PROJECT="hirekiwi-prod-${ACTIVE_COLOR}"
   echo "==> Spinning down inactive slot [${ACTIVE_COLOR}]..."
-  OLD_COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml -p "$OLD_PROJECT")
+  OLD_COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.prod.yml -p "$OLD_PROJECT")
   "${OLD_COMPOSE[@]}" --profile apps --profile obs down || true
 fi
 

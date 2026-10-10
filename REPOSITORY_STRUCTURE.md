@@ -140,7 +140,7 @@ hirekiwi/
 │   └── ui/                         # Shared React component library and design system
 │
 ├── infra/                          # Infrastructure-as-code and local/production environment
-│   ├── docker/                     # docker-compose.yml, Caddyfile, per-service Dockerfiles
+│   ├── docker/                     # Decoupled compose (docker-compose.dev.yml, docker-compose.prod.yml, docker-compose.yml), Caddyfile
 │   ├── helm/                       # Helm chart scaffolding
 │   ├── k8s/                        # Kubernetes manifest scaffolding
 │   ├── observability/              # Prometheus, Grafana, Alloy, and Tempo configuration

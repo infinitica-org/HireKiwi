@@ -1,0 +1,187 @@
+# HireKiwi — Lightweight Development Docker Compose Stack
+# Purpose: Local development data plane only (Postgres, PgBouncer, Redis, Redpanda, MinIO, Mailpit, Prisma Studio).
+# Apps (api-core, frontends, CV) run on the host via `pnpm dev:*` with hot reloading.
+#
+# Usage:
+#   docker compose -f infra/docker/docker-compose.dev.yml up -d
+#   pnpm infra:dev
+
+name: hirekiwi-dev
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hirekiwi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hirekiwi}
+      POSTGRES_DB: hirekiwi
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hirekiwi -d hirekiwi"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.25.2-p0
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@postgres:5432/hirekiwi
+      LISTEN_PORT: "6432"
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: ${PGBOUNCER_MAX_CLIENT_CONN:-200}
+      DEFAULT_POOL_SIZE: ${PGBOUNCER_DEFAULT_POOL_SIZE:-20}
+    ports:
+      - "127.0.0.1:${PGBOUNCER_PORT:-6432}:6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "PGPASSWORD=${POSTGRES_PASSWORD:-hirekiwi} psql -h 127.0.0.1 -p 6432 -U hirekiwi -d hirekiwi -c 'SELECT 1' >/dev/null 2>&1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      [
+        "redis-server",
+        "--maxmemory",
+        "${REDIS_MAXMEMORY:-512mb}",
+        "--maxmemory-policy",
+        "noeviction",
+        "--appendonly",
+        "yes",
+        "--appendfsync",
+        "everysec",
+        "--bind",
+        "0.0.0.0",
+        "--protected-mode",
+        "no",
+      ]
+    ports:
+      # Host 6380 — Windows often binds 6379 natively.
+      - "127.0.0.1:${REDIS_PORT:-6380}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.8
+    restart: unless-stopped
+    command:
+      - redpanda
+      - start
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+      - --mode
+      - dev-container
+      - --unsafe-bypass-fsync=false
+    ports:
+      - "127.0.0.1:${REDPANDA_PORT:-19092}:19092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -Eiq 'Healthy|ok'"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-hirekiwi}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-hirekiwisecret}
+      MINIO_API_CORS_ALLOW_ORIGIN: ${MINIO_API_CORS_ALLOW_ORIGIN:-http://localhost:3001,http://127.0.0.1:3001,https://dev.app.hirekiwi.online}
+      MINIO_PROMETHEUS_AUTH_TYPE: public
+      MINIO_KMS_SECRET_KEY: ${MINIO_KMS_SECRET_KEY:-}
+    ports:
+      - "127.0.0.1:${MINIO_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      KMS_ENABLED: ${MINIO_KMS_SECRET_KEY:+true}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-hirekiwi} ${MINIO_ROOT_PASSWORD:-hirekiwisecret} &&
+      mc mb --ignore-existing local/hirekiwi &&
+      if [ \"$$KMS_ENABLED\" = true ]; then mc encrypt set sse-s3 local/hirekiwi; fi
+      "
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:8025/api/v1/info",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile.prisma-studio
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ../../apps/api-core/prisma:/app/prisma:ro
+      - ../../apps/api-core/prisma.config.ts:/app/prisma.config.ts:ro
+    environment:
+      DATABASE_URL: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@postgres:5432/hirekiwi?schema=public
+    ports:
+      - "127.0.0.1:${PRISMA_STUDIO_PORT:-5555}:5555"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  redpanda_data:
+  minio_data:

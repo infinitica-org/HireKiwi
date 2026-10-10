@@ -12,8 +12,8 @@ description: 'Delivery & Engineering Protocols - DATABASE'
 
 HireKiwi talks to **PostgreSQL 16+ with `pgvector`**, self-hosted via Docker on every environment. Application code always uses `DATABASE_URL`.
 
-| Host                            | When to use                         | What you set                                            |
-| ------------------------------- | ----------------------------------- | ------------------------------------------------------- |
+| Host                            | When to use                         | What you set                                                  |
+| ------------------------------- | ----------------------------------- | ------------------------------------------------------------- |
 | Docker `pgvector/pgvector:pg16` | Laptop, Single High-End VPS Compose | `DATABASE_URL=postgresql://hirekiwi:…@postgres:5432/hirekiwi` |
 
 Prisma stays the only write path — no separate data-access SDK.
@@ -21,7 +21,7 @@ Prisma stays the only write path — no separate data-access SDK.
 ## Connection pooling (PgBouncer)
 
 The `api` container's own runtime queries go through **PgBouncer** (transaction
-pooling mode, `infra/docker/docker-compose.yml` service `pgbouncer`,
+pooling mode, `infra/docker/docker-compose.prod.yml` / `docker-compose.dev.yml` service `pgbouncer`,
 `edoburu/pgbouncer`) instead of connecting to `postgres` directly — the CLI
 (`prisma migrate deploy`, `prisma db seed`, etc.) always keeps using
 `DATABASE_URL` straight to `postgres:5432`, since transaction-mode pooling
@@ -45,11 +45,11 @@ Add a second `api` replica only after confirming PgBouncer's
 
 Never point `dev`, `qa`, and `prod` at the same database.
 
-| Environment | Git branch | VPS Host / Topology                                     | Database Storage       |
-| ----------- | ---------- | ------------------------------------------------------- | ---------------------- |
-| local       | feature    | laptop Docker                                           | local volume           |
-| **dev**     | `dev`      | **Single VPS** (`COMPOSE_PROJECT_NAME=hirekiwi-dev`)       | isolated volume        |
-| **qa**      | `qa`       | **Single VPS** (`COMPOSE_PROJECT_NAME=hirekiwi-qa`)        | isolated volume        |
+| Environment | Git branch | VPS Host / Topology                                           | Database Storage       |
+| ----------- | ---------- | ------------------------------------------------------------- | ---------------------- |
+| local       | feature    | laptop Docker                                                 | local volume           |
+| **dev**     | `dev`      | **Single VPS** (`COMPOSE_PROJECT_NAME=hirekiwi-dev`)          | isolated volume        |
+| **qa**      | `qa`       | **Single VPS** (`COMPOSE_PROJECT_NAME=hirekiwi-qa`)           | isolated volume        |
 | **prod**    | `main`     | **Single VPS** (`hirekiwi-prod-blue` / `hirekiwi-prod-green`) | persistent prod volume |
 
 ## Env files
@@ -99,7 +99,7 @@ When renaming a column (e.g. `user_id` to `candidate_id`):
 On a server:
 
 ```bash
-docker compose -f infra/docker/docker-compose.yml --profile apps exec api \
+docker compose --env-file .env.prod -f infra/docker/docker-compose.prod.yml --profile apps exec api \
   sh -c 'npx prisma migrate deploy'
 ```
 

@@ -47,6 +47,10 @@ Deployments to production run through [`scripts/blue-green-deploy.sh`](../../scr
 ```bash
 # Execute zero-downtime production deployment:
 bash scripts/blue-green-deploy.sh prod
+
+# Deploy dev environment (full stack or selective service):
+bash scripts/deploy-vps.sh dev
+bash scripts/deploy-vps.sh dev web-student
 ```
 
 ### Execution Lifecycle:
@@ -86,7 +90,7 @@ Because the architecture follows 12-factor cloud principles, transitioning to AW
 
 | VPS Component                | AWS Target Service                  | Migration Mechanism                                               |
 | :--------------------------- | :---------------------------------- | :---------------------------------------------------------------- |
-| **Container Runtime**        | AWS ECS Fargate / EKS               | Run identical Docker images (`Dockerfile.api`, `Dockerfile.web`). |
+| **Container Runtime**        | AWS ECS Fargate / EKS               | Run identical Docker images (`apps/<app>/Dockerfile`).            |
 | **PostgreSQL 16 + pgvector** | AWS RDS PostgreSQL (Multi-AZ)       | Point `DATABASE_URL` to RDS endpoint; run `pg_dump / pg_restore`. |
 | **Redis 7 Cluster**          | AWS ElastiCache for Redis           | Point `REDIS_URL` to ElastiCache cluster endpoint.                |
 | **Redpanda Event Bus**       | AWS MSK / Redpanda Cloud            | Point `KAFKA_BROKERS` to AWS MSK bootstrap servers.               |
