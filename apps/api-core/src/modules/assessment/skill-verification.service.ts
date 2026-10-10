@@ -695,6 +695,8 @@ export class SkillVerificationService {
           recommendedNextStep: assessmentResult.recommendedNextStep,
           confidence: assessmentResult.confidence,
           assessmentComplete: assessmentResult.assessmentComplete,
+          fullCompetencyCoverage: assessmentResult.fullCompetencyCoverage,
+          coverageRatio: assessmentResult.coverageRatio,
           interviewPassed: stored.interviewPassed,
         });
         assessmentResult.recommendedNextStep = gate.recommendedNextStep;
@@ -945,6 +947,8 @@ export class SkillVerificationService {
       recommendedNextStep: stored.pendingAssessmentResult.recommendedNextStep,
       confidence: stored.pendingAssessmentResult.confidence,
       assessmentComplete: stored.pendingAssessmentResult.assessmentComplete,
+      fullCompetencyCoverage: stored.pendingAssessmentResult.fullCompetencyCoverage,
+      coverageRatio: stored.pendingAssessmentResult.coverageRatio,
       interviewPassed: stored.interviewPassed,
     });
     stored.verificationStep = gate.recommendedNextStep;

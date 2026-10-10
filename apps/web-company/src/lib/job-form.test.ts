@@ -16,7 +16,11 @@ function filled(over: Partial<JobForm> = {}): JobForm {
   return {
     ...EMPTY_JOB_FORM,
     title: 'Backend Engineer',
+    functionCategory: 'Software engineering',
     location: 'Bengaluru',
+    summary: 'Build and run backend services.',
+    responsibilities: 'Design APIs and fix bugs.',
+    minimumQualification: "Bachelor's degree",
     mustHave: [skill],
     ...over,
   };
@@ -30,6 +34,15 @@ describe('validateJobForm', () => {
   it('requires a title and at least one must-have skill', () => {
     expect(validateJobForm(filled({ title: '  ' }))).toMatch(/title/i);
     expect(validateJobForm(filled({ mustHave: [] }))).toMatch(/must-have skill/i);
+  });
+
+  it('requires the basics a candidate needs to judge the role', () => {
+    expect(validateJobForm(filled({ functionCategory: '' }))).toMatch(/function/i);
+    expect(validateJobForm(filled({ summary: ' ' }))).toMatch(/summary/i);
+    expect(validateJobForm(filled({ responsibilities: '' }))).toMatch(/responsibilities/i);
+    expect(validateJobForm(filled({ minimumQualification: '' }))).toMatch(/qualification/i);
+    expect(validateJobForm(filled({ minYears: '' }))).toMatch(/minimum experience/i);
+    expect(validateJobForm(filled({ openings: '' }))).toMatch(/openings/i);
   });
 
   it('only needs a location when the job is not remote', () => {

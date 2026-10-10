@@ -18,9 +18,9 @@ describe('renderEmailTemplate', () => {
 
     expect(invite.subject).toContain('HireKiwi University');
     expect(opportunity.subject).toContain('Backend Engineer');
-    // Both templates share the single brand accent (no more per-type colored header).
-    expect(invite.html).toContain('#2fbfae');
-    expect(opportunity.html).toContain('#2fbfae');
+    // Both templates share the same header with the HireKiwi logo, served from the verify app.
+    expect(invite.html).toContain('/email/hirekiwi-logo.png');
+    expect(opportunity.html).toContain('/email/hirekiwi-logo.png');
     expect(invite.html).not.toEqual(opportunity.html);
   });
 

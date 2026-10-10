@@ -278,6 +278,7 @@ import {
   CandidateResumeStateResponseSchema,
   CandidateOnboardingProfileResponseSchema,
   UploadProfilePhotoResponseSchema,
+  UniversityLogoResponseSchema,
   CertificateDtoSchema,
   CompanyDtoSchema,
   FeatureFlagDtoSchema,
@@ -3062,6 +3063,19 @@ function campusApi(client: HireKiwiApiClient) {
       }),
 
     /* university side */
+    /** The college logo as a signed address (TPO). */
+    getLogo: () =>
+      client.get(prefixed('/university/logo'), { schema: UniversityLogoResponseSchema }),
+
+    /** Upload or replace the college logo (TPO). */
+    uploadLogo: (file: File | Blob, fileName: string) => {
+      const formData = new FormData();
+      formData.append('file', file, fileName);
+      return client.postForm(prefixed('/university/logo'), formData, {
+        schema: UniversityLogoResponseSchema,
+      });
+    },
+
     /** Th6-445 */
     listEmployerRequests: (query?: Partial<UniversityEmployerRequestsQuery>) =>
       client.get(prefixed('/university/employer-requests'), {

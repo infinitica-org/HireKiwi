@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
   ServiceUnavailableException,
@@ -12,11 +13,13 @@ import {
 import {
   EmployerJobDtoSchema,
   type CreateEmployerJobRequest,
+  type CreateMatchRunResponse,
   type DuplicateEmployerJobRequest,
   type EmployerJobDto,
   type EmployerJobVisibility,
   type ListEmployerJobsQuery,
   type ListEmployerJobsResponse,
+  type MatchRunDto,
   type SkillProficiency,
   type SkillRequirement,
   type UpdateEmployerJobRequest,
@@ -28,6 +31,8 @@ import { PrismaService } from '../../platform/prisma/prisma.service.js';
 import { JD_PARSE_QUEUE } from '../../platform/queue/queue.names.js';
 import { StorageService } from '../../platform/storage/storage.service.js';
 import { requireCompanyActor } from '../company-profile/company-access.js';
+import { JobEmbeddingService } from '../matching/job-embedding.service.js';
+import { MatchingService } from '../matching/matching.service.js';
 import {
   acceptingOpeningWhere,
   isCompanyVerified,
@@ -106,12 +111,27 @@ function jobColumns(body: Partial<EmployerJobFields>): Prisma.JobOpeningUnchecke
  */
 @Injectable()
 export class EmployerJobsService {
+  private readonly logger = new Logger(EmployerJobsService.name);
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AuditPublisherService) private readonly audit: AuditPublisherService,
     @InjectQueue(JD_PARSE_QUEUE) private readonly jdParseQueue: Queue<{ openingId: string }>,
+    @Inject(MatchingService) private readonly matching: MatchingService,
+    @Inject(JobEmbeddingService) private readonly jobEmbedding: JobEmbeddingService,
     @Optional() @Inject(StorageService) private readonly storage?: StorageService,
   ) {}
+
+  /** Fire-and-forget: never blocks or fails the caller's request on an embedding error
+   * (e.g. GOOGLE_AI_API_KEY unset in this environment) — Stage 1 matching falls back to the
+   * 6-dim heuristic whenever a job has no stored embedding yet. */
+  private triggerEmbedding(jobId: string): void {
+    this.jobEmbedding
+      .generateAndStoreEmbedding(jobId)
+      .catch((error: unknown) =>
+        this.logger.warn(`Job embedding generation failed for ${jobId}: ${String(error)}`),
+      );
+  }
 
   async list(userId: string, query: ListEmployerJobsQuery): Promise<ListEmployerJobsResponse> {
     const actor = await requireCompanyActor(this.prisma, userId, 'company.jobs.view');
@@ -128,6 +148,30 @@ export class EmployerJobsService {
     return this.toDto(await this.requireJob(actor.companyId, jobId));
   }
 
+  /**
+   * JOB-03 — company-triggered AI-suggested-candidates run. Reuses the existing TPO match-run
+   * pipeline (`MatchingService.createMatchRun`/`getMatchRun`), which is already institution-generic
+   * and doesn't check caller role — the only thing missing was a company-facing entry point.
+   * A `JobOpening` always carries its own `institutionId` (set at creation regardless of who
+   * created it), so ownership is verified here (`requireJob` scopes to the caller's company) and
+   * that job's own institutionId is then used to scope the run, exactly like the TPO path does.
+   */
+  async createMatchRunForJob(userId: string, jobId: string): Promise<CreateMatchRunResponse> {
+    const actor = await requireCompanyActor(this.prisma, userId, 'company.jobs.view');
+    const job = await this.requireJob(actor.companyId, jobId);
+    return this.matching.createMatchRun(job.institutionId, userId, {
+      jdId: job.id,
+      limit: 50,
+      minSkillCoverage: 0.6,
+    });
+  }
+
+  async getMatchRunForJob(userId: string, jobId: string, runId: string): Promise<MatchRunDto> {
+    const actor = await requireCompanyActor(this.prisma, userId, 'company.jobs.view');
+    const job = await this.requireJob(actor.companyId, jobId);
+    return this.matching.getMatchRun(job.institutionId, runId);
+  }
+
   async create(userId: string, body: CreateEmployerJobRequest): Promise<EmployerJobDto> {
     const actor = await requireCompanyActor(this.prisma, userId, 'company.jobs.manage');
     const { institutionId: requestedInstitutionId, requiredSkills, ...fields } = body;
@@ -140,6 +184,7 @@ export class EmployerJobsService {
       requiredSkills,
     );
     await this.record(userId, 'employer_job.created', job.id, { institutionId });
+    this.triggerEmbedding(job.id);
     return this.toDto(job);
   }
 
@@ -259,6 +304,7 @@ export class EmployerJobsService {
     if (fields.rawText?.trim())
       await this.jdParseQueue.add('parse-opening-jd', { openingId: jobId });
     await this.record(userId, 'employer_job.updated', jobId, { fields: Object.keys(body) });
+    if (requiredSkills) this.triggerEmbedding(jobId);
     return this.toDto(updated);
   }
 
@@ -295,6 +341,7 @@ export class EmployerJobsService {
       include: JOB_INCLUDE,
     });
     await this.record(userId, 'employer_job.published', jobId, { from: 'DRAFT', to: 'OPEN' });
+    this.triggerEmbedding(jobId);
     return this.toDto(updated);
   }
 

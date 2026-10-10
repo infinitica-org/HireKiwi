@@ -46,6 +46,39 @@ describe('resolveVerificationDecision', () => {
     expect(result?.confidence).toBeLessThanOrEqual(0.6);
   });
 
+  it('returns PROVISIONAL when competency coverage is incomplete, even with strong evidence', () => {
+    const result = resolveVerificationDecision({
+      assessmentComplete: true,
+      confidence: 'HIGH',
+      requiresEvidence: true,
+      hasVerifiedEvidence: true,
+      hasProvisionalEvidence: false,
+      interviewRequired: false,
+      reconciliationReviewRequired: false,
+      fullCompetencyCoverage: false,
+      coverageRatio: 0.5,
+    });
+    expect(result?.decision).toBe('PROVISIONAL');
+    expect(
+      result?.reasons.some((reason) => reason.includes('Competency coverage incomplete')),
+    ).toBe(true);
+  });
+
+  it('returns VERIFIED when coverage is full and nothing else is flagged', () => {
+    const result = resolveVerificationDecision({
+      assessmentComplete: true,
+      confidence: 'HIGH',
+      requiresEvidence: false,
+      hasVerifiedEvidence: false,
+      hasProvisionalEvidence: false,
+      interviewRequired: false,
+      reconciliationReviewRequired: false,
+      fullCompetencyCoverage: true,
+      coverageRatio: 1,
+    });
+    expect(result?.decision).toBe('VERIFIED');
+  });
+
   it('returns null when interview is still required', () => {
     expect(
       resolveVerificationDecision({

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { DashboardActivityKind } from '@hirekiwi/contracts';
+import { CollegeCard } from '@/components/dashboard/CollegeCard';
 import { CompleteProfileCard } from '@/components/dashboard/CompleteProfileCard';
 import { OpportunityFeed } from '@/components/dashboard/OpportunityFeed';
 import { WelcomeBanner } from '@/components/dashboard/WelcomeBanner';
@@ -48,13 +49,20 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6 pt-2 pb-12 font-sans select-none">
-      <div>
-        <h1 className="text-3xl font-medium tracking-tight text-zinc-950 sm:text-4xl dark:text-white">
-          {userLoading || !firstName ? greeting : `${greeting}, ${firstName}`}
-        </h1>
-        <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-          Here’s what’s new on your HireKiwi profile today.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-3xl font-medium tracking-tight text-zinc-950 sm:text-4xl dark:text-white">
+            {userLoading || !firstName ? greeting : `${greeting}, ${firstName}`}
+          </h1>
+          <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+            Here’s what’s new on your HireKiwi profile today.
+          </p>
+        </div>
+        <CollegeCard
+          collegeName={user?.institutionName}
+          domain={user?.institutionDomain}
+          logoUrl={user?.institutionLogoUrl}
+        />
       </div>
 
       <WelcomeBanner />

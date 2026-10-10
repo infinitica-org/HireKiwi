@@ -1,4 +1,4 @@
-import { inputClass, labelClass, mutedTextClass, sectionTitleClass } from '../../lib/tpo-ui';
+import { inputClass, labelClass } from '../../lib/tpo-ui';
 import { labelFor } from '../../lib/job-posting';
 
 function fieldId(label: string) {
@@ -134,30 +134,5 @@ export function JobPostingTextArea({
         placeholder={placeholder}
       />
     </label>
-  );
-}
-
-export function UnsupportedFieldNotice({
-  title,
-  description,
-  fields,
-}: {
-  title: string;
-  description: string;
-  fields: readonly string[];
-}) {
-  return (
-    <section className="rounded-2xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface)] p-6">
-      <h2 className={sectionTitleClass}>{title}</h2>
-      <p className={`mt-1 text-sm ${mutedTextClass}`}>{description}</p>
-      <ul className={`mt-4 list-disc space-y-1 pl-5 text-sm ${mutedTextClass}`}>
-        {fields.map((field) => (
-          <li key={field}>{field}</li>
-        ))}
-      </ul>
-      <p className="mt-4 text-xs font-semibold text-[var(--ds-text-secondary)]">
-        Not saved — the current JobOpening contract has no persistence path for these fields.
-      </p>
-    </section>
   );
 }

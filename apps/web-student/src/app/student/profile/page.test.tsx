@@ -95,35 +95,35 @@ vi.mock('@/lib/use-profile-progress', () => ({
   }),
 }));
 
-vi.mock('@/components/profile/SkillsSection', () => ({
+vi.mock('@/components/profile/skills/SkillsSection', () => ({
   SkillsSection: () => <div>Skills section</div>,
 }));
 
-vi.mock('@/components/profile/EducationSection', () => ({
+vi.mock('@/components/profile/education/EducationSection', () => ({
   EducationSection: () => <div>Education section</div>,
 }));
 
-vi.mock('@/components/profile/WorkExperienceSection', () => ({
+vi.mock('@/components/profile/work-experience/WorkExperienceSection', () => ({
   WorkExperienceSection: () => <div>Work experience section</div>,
 }));
 
-vi.mock('@/components/profile/LanguagesSection', () => ({
+vi.mock('@/components/profile/languages/LanguagesSection', () => ({
   LanguagesSection: () => <div>Languages section</div>,
 }));
 
-vi.mock('@/components/profile/CertificationsSection', () => ({
+vi.mock('@/components/profile/certifications/CertificationsSection', () => ({
   CertificationsSection: () => <div>Certifications section</div>,
 }));
 
-vi.mock('@/components/profile/ProjectSubmissionForm', () => ({
+vi.mock('@/components/profile/projects/ProjectSubmissionForm', () => ({
   ProjectSubmissionForm: () => <div>Projects section</div>,
 }));
 
-vi.mock('@/components/profile/ProfessionalLinksSection', () => ({
+vi.mock('@/components/profile/links/ProfessionalLinksSection', () => ({
   ProfessionalLinksSection: () => <div>Professional links section</div>,
 }));
 
-vi.mock('@/components/profile/ResumeSection', () => ({
+vi.mock('@/components/profile/resume/ResumeSection', () => ({
   ResumeSection: () => <div>Resume section</div>,
 }));
 

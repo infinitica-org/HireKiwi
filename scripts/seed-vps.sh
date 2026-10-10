@@ -32,7 +32,7 @@ test -f "$ENV_FILE" || {
   exit 1
 }
 
-COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml)
+COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.prod.yml)
 IMAGE_TAG="hirekiwi-api-seed-tmp"
 
 echo "==> ${ENV_NAME}: locate the running postgres network"
@@ -44,7 +44,7 @@ test -n "$POSTGRES_CID" || {
 NETWORK="$(docker inspect "$POSTGRES_CID" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}')"
 
 echo "==> ${ENV_NAME}: build source stage for seeding (${IMAGE_TAG})"
-DOCKER_BUILDKIT=1 docker build --target build -f infra/docker/Dockerfile.api -t "$IMAGE_TAG" .
+DOCKER_BUILDKIT=1 docker build --target build -f apps/api-core/Dockerfile -t "$IMAGE_TAG" .
 
 cleanup() { docker rmi "$IMAGE_TAG" >/dev/null 2>&1 || true; }
 trap cleanup EXIT

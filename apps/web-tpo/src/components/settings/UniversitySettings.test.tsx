@@ -2,6 +2,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { UniversitySettings } from './UniversitySettings';
 
+// The two-factor card has its own tests and needs a query provider; not under test here.
+vi.mock('../account/TwoFactorAuthCard', () => ({
+  TwoFactorAuthCard: () => null,
+}));
+
 vi.mock('../../lib/api', () => ({
   api: {
     auth: {

@@ -4,7 +4,7 @@ import type { ProjectDto } from '@hirekiwi/contracts';
 import { ExternalLink, GitBranch, Loader2, X } from 'lucide-react';
 import { ProjectStatusBadge } from '@/components/profile/projects/ProjectStatusBadge';
 import { parseStackTags } from '@/components/profile/projects/project-presenters';
-import { ProjectDefenseInterviewDialog } from '@/components/profile/ProjectDefenseInterviewDialog';
+import { ProjectDefenseInterviewDialog } from '@/components/profile/projects/ProjectDefenseInterviewDialog';
 import { needsOwnershipInterview, processingStateCopy } from '@/lib/project-submission';
 
 type ProjectDetailModalProps = {

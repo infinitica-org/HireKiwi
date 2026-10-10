@@ -5,11 +5,18 @@
  *
  * Run with: pnpm --filter @hirekiwi/api-core exec tsx src/platform/prisma/backfill-skill-domain-codes.ts
  */
+import { loadDotenv } from '../config/load-dotenv.js';
+
+loadDotenv();
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../generated/prisma/index.js';
 import { classifySkillDomainCode } from './skill-domain-classifier.js';
 
+const DATABASE_URL = process.env['DATABASE_URL'];
+if (!DATABASE_URL) throw new Error('DATABASE_URL not set');
+
 async function main(): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }) });
   try {
     const skills = await prisma.skill.findMany({
       where: { domainCode: null },

@@ -17,6 +17,9 @@ export function resolveVerificationDecision(input: {
   interviewRequired: boolean;
   interviewPassed?: boolean;
   reconciliationReviewRequired: boolean;
+  /** Whether every competency in the skill's model was tested, not just the target level's critical path. */
+  fullCompetencyCoverage?: boolean;
+  coverageRatio?: number;
 }): { decision: VerificationDecisionOutcome; confidence: number; reasons: string[] } | null {
   if (!input.assessmentComplete) return null;
 
@@ -44,6 +47,14 @@ export function resolveVerificationDecision(input: {
   if (input.confidence === 'LOW') {
     provisional = true;
     reasons.push('Assessment confidence is low; verification is provisional.');
+  }
+
+  if (input.fullCompetencyCoverage === false) {
+    provisional = true;
+    const pct = Math.round((input.coverageRatio ?? 0) * 100);
+    reasons.push(
+      `Competency coverage incomplete; only ${String(pct)}% of this skill's competencies were tested.`,
+    );
   }
 
   let confidence = assessmentConfidenceToScore(input.confidence);

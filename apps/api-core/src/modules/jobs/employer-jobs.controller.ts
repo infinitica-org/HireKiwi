@@ -19,9 +19,11 @@ import {
   ListEmployerJobsQuerySchema,
   UpdateEmployerJobRequestSchema,
   UuidSchema,
+  type CreateMatchRunResponse,
   type EmployerJobDto,
   type EmployerJobVisibility,
   type ListEmployerJobsResponse,
+  type MatchRunDto,
 } from '@hirekiwi/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { Roles } from '../../common/guards/roles.decorator.js';
@@ -72,6 +74,27 @@ export class EmployerJobsController {
   @ApiOperation({ summary: 'One of the company jobs.' })
   get(@CurrentUser() user: RequestUser, @Param('id') id: string): Promise<EmployerJobDto> {
     return this.jobs.get(user.sub, jobIdOrNotFound(id));
+  }
+
+  /** JOB-03 — trigger an AI-suggested-candidates run for this job (company-facing match run). */
+  @Post(':id/match-runs')
+  @HttpCode(202)
+  @ApiOperation({ summary: 'Trigger an AI-suggested-candidates run for this job.' })
+  createMatchRun(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+  ): Promise<CreateMatchRunResponse> {
+    return this.jobs.createMatchRunForJob(user.sub, jobIdOrNotFound(id));
+  }
+
+  @Get(':id/match-runs/:runId')
+  @ApiOperation({ summary: 'Poll the status/result of an AI-suggested-candidates run.' })
+  getMatchRun(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Param('runId') runId: string,
+  ): Promise<MatchRunDto> {
+    return this.jobs.getMatchRunForJob(user.sub, jobIdOrNotFound(id), jobIdOrNotFound(runId));
   }
 
   @Patch(':id')

@@ -1,3 +1,5 @@
+import { env } from '../config/env.js';
+
 export type EmailTone = 'brand' | 'success' | 'warning' | 'danger' | 'info';
 export type EmailBadgeTone = 'success' | 'warning' | 'danger' | 'info';
 
@@ -29,26 +31,24 @@ const BRAND = {
 // email stays visually consistent with the product (single teal accent, warm
 // paper canvas, rounded card — see that file's "Soft / minimal" design notes).
 const TOKENS = {
-  ink: '#1c1c1e',
-  paper: '#faf9f7',
+  ink: '#18181b',
+  paper: '#ffffff',
+  line: '#e4e4e7',
+  button: '#18181b',
   teal: '#2fbfae',
+  lime: '#d4fc58',
   tealDeep: '#0f5c63',
-  gray600: '#726f6a',
+  gray600: '#71717a',
+  font: "'Manrope','Helvetica Neue',Helvetica,Arial,sans-serif",
 } as const;
 
 const TONE: Record<EmailTone, { fg: string; bg: string }> = {
-  brand: { fg: TOKENS.tealDeep, bg: '#eefaf7' },
+  brand: { fg: TOKENS.ink, bg: '#f3fed0' },
   success: { fg: '#1f9d55', bg: '#eafaf0' },
   warning: { fg: '#d97706', bg: '#fef6e7' },
   danger: { fg: '#dc2626', bg: '#fdecec' },
-  info: { fg: TOKENS.teal, bg: '#eefaf7' },
+  info: { fg: TOKENS.ink, bg: '#f3fed0' },
 };
-
-// packages/ui/src/assets/brand/mark-coloured.svg, flattened to a single fill so
-// it stays legible without the gradient defs some email clients strip.
-const BRAND_MARK = `<svg width="18" height="19" viewBox="0 0 202.67 211.56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HireKiwi">
-<path fill="${TOKENS.teal}" d="M138.45,73.34l-24.78,25.1c3.92,5.59,3.41,13.35-1.56,18.38-4.96,5.02-12.71,5.63-18.34,1.78l-35.17,35.63-35.29,35.79h48.38l11.43-11.57,30.73-31.18,24.22-24.42,46.91,46.35v-49.9l-46.51-45.97ZM131.32,23.09l-11.43,11.57-30.72,31.18-24.22,24.42L18.03,43.9v49.89l46.51,45.97,25.11-25.44c-3.47-5.54-2.81-12.91,1.97-17.76,4.78-4.83,12.14-5.57,17.72-2.19l35.05-35.51,35.3-35.79h-48.38Z"/>
-</svg>`;
 
 // 24x24 line-icon glyphs (stroke-only, no fill) in a Feather/Lucide style —
 // simple enough to hand-author reliably and to stay legible at ~26px.
@@ -69,139 +69,57 @@ const ICON_GLYPHS: Record<EmailIconName, string> = {
 function iconBadge(icon: { name: EmailIconName; tone: EmailTone }): string {
   const palette = TONE[icon.tone];
   return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 20px;"><tr>
-    <td width="56" height="56" style="width:56px;height:56px;border-radius:16px;background:${palette.bg};text-align:center;vertical-align:middle;">
+    <td width="56" height="56" style="width:56px;height:56px;border-radius:12px;background:${palette.bg};text-align:center;vertical-align:middle;">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="${palette.fg}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON_GLYPHS[icon.name]}</svg>
     </td>
   </tr></table>`;
 }
 
-// Hand-drawn, brand-toned hero illustrations for specific templates — kept to
-// simple flat shapes (no photorealistic paths) so they stay legible at small
-// sizes and consistent with the rest of the brand's restrained visual language.
-// An open envelope with a letter, a teal "verified" seal, and a couple of
-// sparkle accents — used on the student welcome email.
-export const WELCOME_ILLUSTRATION = `<svg width="200" height="142" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="An open envelope with a letter">
-  <path d="M30 76 L120 24 L210 76 Z" fill="#eefaf7" stroke="#0f5c63" stroke-width="3" stroke-linejoin="round"/>
-  <rect x="30" y="76" width="180" height="104" rx="14" fill="#ffffff" stroke="#0f5c63" stroke-width="3"/>
-  <path d="M30 76 L120 138 L210 76" fill="none" stroke="#0f5c63" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <g transform="rotate(-6 120 92)">
-    <rect x="72" y="46" width="96" height="66" rx="8" fill="#ffffff" stroke="#1c1c1e" stroke-width="2.5"/>
-    <line x1="88" y1="66" x2="152" y2="66" stroke="#cfccc6" stroke-width="4" stroke-linecap="round"/>
-    <line x1="88" y1="80" x2="152" y2="80" stroke="#cfccc6" stroke-width="4" stroke-linecap="round"/>
-    <line x1="88" y1="94" x2="128" y2="94" stroke="#cfccc6" stroke-width="4" stroke-linecap="round"/>
-  </g>
-  <circle cx="188" cy="132" r="18" fill="#2fbfae"/>
-  <path d="M180 132 l5.5 5.5L197 125" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M46 46v10M41 51h10" stroke="#2fbfae" stroke-width="2.6" stroke-linecap="round"/>
-  <path d="M206 108v8M202 112h8" stroke="#2fbfae" stroke-width="2.4" stroke-linecap="round"/>
-  <circle cx="26" cy="118" r="3.5" fill="#2fbfae"/>
-</svg>`;
+// Header icons: one rounded tile per email type with a single line glyph, the way SaaS product
+// emails do it. Lime tile and black glyph by default; status emails use their status colour.
+const TILE_GLYPHS = {
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7.5 8.5 6 8.5-6"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  clipboard:
+    '<rect x="6" y="4" width="12" height="17" rx="2.5"/><path d="M9.5 4h5v2.5h-5zM9 12l2 2 4-4"/>',
+  medal:
+    '<circle cx="12" cy="9" r="5.5"/><path d="m9 14 -1.5 7 4.5-2.5 4.5 2.5L15 14M12 6.5l.9 1.8 2 .3-1.4 1.4.3 2-1.8-1-1.8 1 .3-2L9.1 8.6l2-.3z"/>',
+  chart: '<path d="M4 20V10M10 20V5M16 20v-7M22 20H2"/>',
+  shield:
+    '<path d="M12 3 5 6v6c0 4.5 3 7.6 7 9 4-1.4 7-4.5 7-9V6l-7-3Z"/><path d="m9 12 2.2 2.200L15.5 10"/>',
+  target:
+    '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  lock: '<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V7.500a4 4 0 0 1 8 0V11"/>',
+  fileSearch:
+    '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><circle cx="11" cy="14" r="2.5"/><path d="m13 16 2 2"/>',
+} as const;
 
-// A closed envelope with a small clock badge — "your invite is still waiting" —
-// used on the invite-reminder email.
-export const REMINDER_ILLUSTRATION = `<svg width="200" height="142" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A closed envelope with a clock">
-  <path d="M30 76 L120 24 L210 76 Z" fill="#eefaf7" stroke="#0f5c63" stroke-width="3" stroke-linejoin="round"/>
-  <rect x="30" y="76" width="180" height="104" rx="14" fill="#ffffff" stroke="#0f5c63" stroke-width="3"/>
-  <path d="M30 76 L120 138 L210 76" fill="none" stroke="#0f5c63" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="188" cy="132" r="20" fill="#2fbfae"/>
-  <path d="M188 122v10l7 5" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M46 46v10M41 51h10" stroke="#2fbfae" stroke-width="2.6" stroke-linecap="round"/>
-  <circle cx="26" cy="118" r="3.5" fill="#2fbfae"/>
+function iconTile(glyph: keyof typeof TILE_GLYPHS, label: string, tone?: EmailBadgeTone): string {
+  const bg = tone ? TONE[tone].bg : '#f3fed0';
+  const fg = tone ? TONE[tone].fg : TOKENS.ink;
+  return `<svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label}">
+  <rect width="56" height="56" rx="14" fill="${bg}"/>
+  <g transform="translate(16 16)" fill="none" stroke="${fg}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TILE_GLYPHS[glyph]}</g>
 </svg>`;
+}
 
-// A folder/clipboard with a checklist and a small chart badge — "manage your
-// institution's placement pipeline" — used on the TPO/admin invite email.
-export const ADMIN_ILLUSTRATION = `<svg width="200" height="142" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A clipboard with a checklist">
-  <rect x="100" y="28" width="40" height="18" rx="6" fill="#eefaf7" stroke="#0f5c63" stroke-width="3"/>
-  <rect x="55" y="40" width="130" height="112" rx="12" fill="#ffffff" stroke="#0f5c63" stroke-width="3"/>
-  <path d="M72 68 l6 6 l10-12" fill="none" stroke="#2fbfae" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <line x1="96" y1="70" x2="165" y2="70" stroke="#cfccc6" stroke-width="4" stroke-linecap="round"/>
-  <path d="M72 96 l6 6 l10-12" fill="none" stroke="#2fbfae" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <line x1="96" y1="98" x2="165" y2="98" stroke="#cfccc6" stroke-width="4" stroke-linecap="round"/>
-  <rect x="72" y="118" width="20" height="20" rx="5" fill="none" stroke="#cfccc6" stroke-width="3"/>
-  <line x1="96" y1="126" x2="165" y2="126" stroke="#cfccc6" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="190" cy="134" r="20" fill="#2fbfae"/>
-  <rect x="180" y="132" width="6" height="10" rx="1.5" fill="#ffffff"/>
-  <rect x="188" y="126" width="6" height="16" rx="1.5" fill="#ffffff"/>
-  <rect x="196" y="122" width="6" height="20" rx="1.5" fill="#ffffff"/>
-</svg>`;
-
-// A ribboned medal with a star — "you made the shortlist" — used on the
-// opportunity-shortlisted email.
-export const SHORTLISTED_ILLUSTRATION = `<svg width="200" height="142" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A medal with a star">
-  <path d="M95 95 L70 155 L100 145 L110 165 Z" fill="#2fbfae"/>
-  <path d="M145 95 L170 155 L140 145 L130 165 Z" fill="#0f5c63"/>
-  <circle cx="120" cy="85" r="48" fill="#ffffff" stroke="#0f5c63" stroke-width="3.5"/>
-  <circle cx="120" cy="85" r="36" fill="#eefaf7" stroke="#2fbfae" stroke-width="2.5"/>
-  <path d="m120 62 6.5 14 15.5 1.5-11.5 10.5 3.2 15-13.7-8-13.7 8 3.2-15-11.5-10.5 15.5-1.5Z" fill="#2fbfae" stroke-linejoin="round"/>
-  <path d="M40 40v10M35 45h10" stroke="#2fbfae" stroke-width="2.6" stroke-linecap="round"/>
-  <circle cx="205" cy="60" r="3.5" fill="#2fbfae"/>
-</svg>`;
-
-// An ascending step chart with a dashed trajectory and a checkmark marker at
-// the peak — "your application just moved forward" — used on the
-// application-stage-changed email.
-export const STAGE_CHANGED_ILLUSTRATION = `<svg width="200" height="142" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="An ascending progress chart">
-  <rect x="30" y="130" width="45" height="20" rx="4" fill="#f1efec"/>
-  <rect x="85" y="105" width="45" height="45" rx="4" fill="#f1efec"/>
-  <rect x="140" y="75" width="45" height="75" rx="4" fill="#eefaf7" stroke="#2fbfae" stroke-width="2.5"/>
-  <path d="M50 128 C70 100 95 100 110 90 C130 78 150 65 165 55" fill="none" stroke="#0f5c63" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 10"/>
-  <circle cx="52" cy="128" r="6" fill="#0f5c63"/>
-  <circle cx="168" cy="50" r="14" fill="#2fbfae"/>
-  <path d="M162 50 l4 4 l8-9" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
-
-// A shield badge with a checkmark — "you're verified" — used on the
-// verification-passed email (deliberately a different shape from the
-// shortlisted medal, since the two celebratory emails shouldn't look alike).
-export const VERIFICATION_PASSED_ILLUSTRATION = `<svg width="200" height="142" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A shield with a checkmark">
-  <path d="M120 20 L175 40 V90 C175 125 150 150 120 160 C90 150 65 125 65 90 V40 Z" fill="#ffffff" stroke="#0f5c63" stroke-width="3.5" stroke-linejoin="round"/>
-  <path d="M120 32 L163 48 V90 C163 118 143 138 120 147 C97 138 77 118 77 90 V48 Z" fill="#eafaf0" stroke="#1f9d55" stroke-width="2.5" stroke-linejoin="round"/>
-  <path d="M98 92 l16 16 l30-34" fill="none" stroke="#1f9d55" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M40 50v10M35 55h10" stroke="#1f9d55" stroke-width="2.4" stroke-linecap="round"/>
-  <circle cx="200" cy="70" r="3.5" fill="#1f9d55"/>
-</svg>`;
-
-// A target with an arrow landed just outside the bullseye — "close, but not
-// quite this time" — a deliberately non-punitive image for the
-// verification-failed email (no red X).
-export const VERIFICATION_FAILED_ILLUSTRATION = `<svg width="200" height="142" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A target with an arrow near the center">
-  <circle cx="115" cy="90" r="60" fill="#ffffff" stroke="#dc2626" stroke-width="3"/>
-  <circle cx="115" cy="90" r="42" fill="#fdecec" stroke="#dc2626" stroke-width="2.5"/>
-  <circle cx="115" cy="90" r="22" fill="#ffffff" stroke="#dc2626" stroke-width="2.5"/>
-  <circle cx="115" cy="90" r="6" fill="#dc2626"/>
-  <line x1="205" y1="35" x2="150" y2="75" stroke="#1c1c1e" stroke-width="3" stroke-linecap="round"/>
-  <path d="M150 75 l-16 4 6-15Z" fill="#1c1c1e"/>
-  <path d="M188 40 l14-10M198 52 l16-4" stroke="#1c1c1e" stroke-width="2.5" stroke-linecap="round"/>
-</svg>`;
-
-// A padlock with a small clock inset — "this is temporary, not a strike" —
-// used on the verification-locked email.
-export const VERIFICATION_LOCKED_ILLUSTRATION = `<svg width="200" height="142" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A padlock with a clock">
-  <rect x="70" y="80" width="100" height="80" rx="14" fill="#ffffff" stroke="#0f5c63" stroke-width="3.5"/>
-  <path d="M90 80V56a30 30 0 0 1 60 0v24" fill="none" stroke="#0f5c63" stroke-width="6" stroke-linecap="round"/>
-  <circle cx="120" cy="118" r="14" fill="#fef6e7" stroke="#d97706" stroke-width="2.5"/>
-  <path d="M120 111v7l5 4" fill="none" stroke="#d97706" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M40 60v10M35 65h10" stroke="#d97706" stroke-width="2.4" stroke-linecap="round"/>
-  <circle cx="195" cy="50" r="3.5" fill="#d97706"/>
-</svg>`;
-
-// A document with a magnifying glass over a checkmark — "please confirm this
-// claim" — used on the work-experience verifier invite/reminder emails (sent
-// to an external employer contact, so kept formal rather than playful).
-export const WORK_EXPERIENCE_ILLUSTRATION = `<svg width="200" height="142" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A document with a magnifying glass">
-  <rect x="55" y="30" width="100" height="130" rx="10" fill="#ffffff" stroke="#0f5c63" stroke-width="3"/>
-  <line x1="72" y1="55" x2="138" y2="55" stroke="#cfccc6" stroke-width="4" stroke-linecap="round"/>
-  <line x1="72" y1="72" x2="138" y2="72" stroke="#cfccc6" stroke-width="4" stroke-linecap="round"/>
-  <line x1="72" y1="89" x2="115" y2="89" stroke="#cfccc6" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="150" cy="120" r="34" fill="#eefaf7" stroke="#0f5c63" stroke-width="3"/>
-  <line x1="174" y1="144" x2="194" y2="164" stroke="#0f5c63" stroke-width="6" stroke-linecap="round"/>
-  <path d="M136 120 l10 10 l20-20" fill="none" stroke="#2fbfae" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
+export const WELCOME_ILLUSTRATION = iconTile('mail', 'An envelope');
+export const REMINDER_ILLUSTRATION = iconTile('clock', 'A clock');
+export const ADMIN_ILLUSTRATION = iconTile('clipboard', 'A checklist');
+export const SHORTLISTED_ILLUSTRATION = iconTile('medal', 'A medal');
+export const STAGE_CHANGED_ILLUSTRATION = iconTile('chart', 'A progress chart');
+export const VERIFICATION_PASSED_ILLUSTRATION = iconTile(
+  'shield',
+  'A shield with a check',
+  'success',
+);
+export const VERIFICATION_FAILED_ILLUSTRATION = iconTile('target', 'A target', 'danger');
+export const VERIFICATION_LOCKED_ILLUSTRATION = iconTile('lock', 'A padlock', 'warning');
+export const WORK_EXPERIENCE_ILLUSTRATION = iconTile('fileSearch', 'A document being checked');
 
 function illustrationBlock(svg: string): string {
-  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;"><tr>
-    <td align="center">${svg}</td>
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 20px;"><tr>
+    <td align="left" style="line-height:0;">${svg}</td>
   </tr></table>`;
 }
 
@@ -213,13 +131,13 @@ export function renderEmailLayout(options: EmailLayoutOptions): string {
       : '';
 
   const badge = options.badge
-    ? `<span style="display:inline-block;padding:5px 12px;border-radius:999px;font-size:11.5px;font-weight:600;color:${TONE[options.badge.tone].fg};background:${TONE[options.badge.tone].bg};margin-bottom:16px;">${options.badge.label}</span><br/>`
+    ? `<span style="display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;color:${TONE[options.badge.tone].fg};background:${TONE[options.badge.tone].bg};margin-bottom:16px;">${options.badge.label}</span><br/>`
     : '';
 
   const ctaBlock = options.cta
     ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:8px;">
         <tr><td>
-          <a href="${options.cta.url}" style="display:inline-block;background:${TOKENS.teal};color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;line-height:1;padding:14px 30px;border-radius:999px;">${options.cta.label}</a>
+          <a href="${options.cta.url}" style="display:inline-block;background:${TOKENS.button};color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;line-height:1;padding:14px 24px;border-radius:10px;">${options.cta.label}</a>
         </td></tr>
       </table>`
     : '';
@@ -239,8 +157,10 @@ export function renderEmailLayout(options: EmailLayoutOptions): string {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light" />
   <title>${options.heading}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
-<body style="margin:0;padding:0;background:${TOKENS.paper};font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:${TOKENS.ink};">
+<body style="margin:0;padding:0;background:${TOKENS.paper};font-family:${TOKENS.font};color:${TOKENS.ink};">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${options.previewText}</div>
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${TOKENS.paper};padding:48px 16px;">
     <tr>
@@ -250,17 +170,17 @@ export function renderEmailLayout(options: EmailLayoutOptions): string {
             <td align="center" style="padding-bottom:20px;">
               <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto;">
                 <tr>
-                  <td style="padding-right:7px;vertical-align:middle;line-height:0;">${BRAND_MARK}</td>
-                  <td style="vertical-align:middle;font-size:14px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:${TOKENS.tealDeep};">HireKiwi</td>
+                  <td style="padding-right:10px;vertical-align:middle;line-height:0;"><img src="${env.VERIFY_APP_URL}/email/hirekiwi-logo.png" width="36" height="36" alt="HireKiwi" style="display:block;width:36px;height:36px;border-radius:9px;" /></td>
+                  <td style="vertical-align:middle;font-size:19px;font-weight:800;letter-spacing:-0.02em;color:${TOKENS.ink};">HireKiwi</td>
                 </tr>
               </table>
             </td>
           </tr>
           <tr>
-            <td style="background:#ffffff;border-radius:24px;padding:40px 40px 32px;">
+            <td style="background:#ffffff;border:1px solid ${TOKENS.line};border-radius:16px;padding:36px 36px 28px;">
               ${icon}
               ${badge}
-              <h1 style="margin:0 0 16px;font-size:24px;line-height:1.3;font-weight:700;color:${TOKENS.ink};letter-spacing:-0.01em;">${options.heading}</h1>
+              <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;font-weight:600;color:${TOKENS.ink};letter-spacing:-0.01em;">${options.heading}</h1>
               ${options.bodyHtml}
               ${ctaBlock}
               ${footerNote}
@@ -283,7 +203,7 @@ export function renderEmailLayout(options: EmailLayoutOptions): string {
 }
 
 export function paragraph(text: string): string {
-  return `<p style="margin:0 0 10px;color:#44403c;font-size:15px;line-height:1.65;">${text}</p>`;
+  return `<p style="margin:0 0 10px;color:#3f3f46;font-size:15px;line-height:1.65;">${text}</p>`;
 }
 
 export function strong(text: string): string {
@@ -304,10 +224,10 @@ export function detailRows(rows: readonly (readonly [string, string])[]): string
   const tr = rows
     .map(
       ([label, value]) => `<tr>
-        <td style="padding:6px 0;font-size:13px;color:${TOKENS.gray600};">${label}</td>
-        <td align="right" style="padding:6px 0;font-size:13px;color:${TOKENS.ink};font-weight:600;">${value}</td>
+        <td style="padding:8px 0;font-size:13px;color:${TOKENS.gray600};">${label}</td>
+        <td align="right" style="padding:8px 0;font-size:13px;color:${TOKENS.ink};font-weight:600;">${value}</td>
       </tr>`,
     )
     .join('');
-  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:14px 0 22px;">${tr}</table>`;
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:16px 0 24px;border:1px solid ${TOKENS.line};border-radius:12px;padding:6px 16px;">${tr}</table>`;
 }

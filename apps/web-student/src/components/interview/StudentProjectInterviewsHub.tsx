@@ -6,7 +6,7 @@ import { Mic } from 'lucide-react';
 import type { ProjectDto } from '@hirekiwi/contracts';
 import { Alert } from '@hirekiwi/ui';
 
-import { projectDefenseInterviewHref } from '@/components/profile/ProjectDefenseInterviewDialog';
+import { projectDefenseInterviewHref } from '@/components/profile/projects/ProjectDefenseInterviewDialog';
 import { api } from '@/lib/api';
 import { pendingProjectOwnershipInterviews } from '@/lib/pending-project-interviews';
 import { processingStateCopy } from '@/lib/project-submission';

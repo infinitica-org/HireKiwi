@@ -93,6 +93,10 @@ const assessmentResult: AssessmentResultView = {
 
   targetProficiency: 'PROFESSIONAL',
 
+  fullCompetencyCoverage: false,
+
+  coverageRatio: 0.5,
+
   assessmentComplete: true,
 
   assessmentPassed: true,

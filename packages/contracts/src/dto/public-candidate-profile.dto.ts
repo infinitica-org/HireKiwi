@@ -82,6 +82,27 @@ export const PublicCompetencyEvidenceSummarySchema = z.object({
 });
 export type PublicCompetencyEvidenceSummary = z.infer<typeof PublicCompetencyEvidenceSummarySchema>;
 
+export const PublicLanguageSchema = z.object({
+  language: z.string(),
+  proficiency: z.string(),
+});
+export type PublicLanguage = z.infer<typeof PublicLanguageSchema>;
+
+export const PublicLinkSchema = z.object({
+  kind: z.enum(['github', 'linkedin']),
+  url: z.string().url(),
+});
+export type PublicLink = z.infer<typeof PublicLinkSchema>;
+
+export const PublicIntegrationSchema = z.object({
+  sourceId: z.enum(['GITHUB', 'HACKERRANK', 'LEETCODE', 'LINKEDIN', 'CREDLY']),
+  /** The account name the candidate connected, e.g. their LeetCode username. */
+  username: z.string(),
+  /** Public profile page for that account, when the service has one we can build. */
+  url: z.string().url().nullable(),
+});
+export type PublicIntegration = z.infer<typeof PublicIntegrationSchema>;
+
 export const PublicEducationSchema = z.object({
   institutionName: z.string(),
   degree: z.string().nullable(),
@@ -112,6 +133,12 @@ export const PublicCandidateProfileDtoSchema = z.object({
   externalCertificates: z.array(PublicExternalCertificateSchema),
   /** College-confirmed education entries when present. */
   education: z.array(PublicEducationSchema).default([]),
+  /** Professional links the candidate added (GitHub, LinkedIn), http(s) only. */
+  links: z.array(PublicLinkSchema).default([]),
+  /** Active connected accounts (GitHub, LeetCode, HackerRank...) the candidate added. */
+  integrations: z.array(PublicIntegrationSchema).default([]),
+  /** Languages the candidate listed on their profile. */
+  languages: z.array(PublicLanguageSchema).default([]),
   competencyEvidenceSummaries: z.array(PublicCompetencyEvidenceSummarySchema).default([]),
   /** CN-T09 — echoes the owner's opt-in state so the frontend can label in-progress entries. */
   showInProgressItems: z.boolean().default(false),

@@ -90,6 +90,8 @@ export class AssessmentIntelligenceService {
       assessmentComplete: intelligence.assessmentComplete,
       assessmentPassed: intelligence.assessmentComplete,
       uncertainties: intelligence.uncertainties,
+      fullCompetencyCoverage: intelligence.fullCompetencyCoverage,
+      coverageRatio: intelligence.coverageRatio,
       recommendedNextStep: intelligence.recommendedNextStep,
       requiresInterview: intelligence.requiresInterview,
       requiresEvidenceVerification: intelligence.requiresEvidenceVerification,

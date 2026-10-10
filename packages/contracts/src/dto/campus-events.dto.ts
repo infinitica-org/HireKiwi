@@ -96,6 +96,12 @@ export const UniversityEmployerRequestRowSchema = z.object({
 });
 export type UniversityEmployerRequestRow = z.infer<typeof UniversityEmployerRequestRowSchema>;
 
+/** The college logo as a short-lived signed address; null when none is uploaded. */
+export const UniversityLogoResponseSchema = z.object({
+  logoUrl: z.string().url().nullable(),
+});
+export type UniversityLogoResponse = z.infer<typeof UniversityLogoResponseSchema>;
+
 export const UniversityEmployerRequestsResponseSchema = z.object({
   requests: z.array(UniversityEmployerRequestRowSchema),
   nextCursor: UuidSchema.nullable(),

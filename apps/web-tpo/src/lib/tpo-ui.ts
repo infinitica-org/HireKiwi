@@ -31,27 +31,13 @@ export const selectClass =
 
 export const labelClass = 'text-xs font-semibold text-[var(--ds-text-secondary)]';
 
-/** Small caps group heading, matching the profile sidebar group labels. */
-export const eyebrowClass =
-  'text-[12px] font-medium uppercase tracking-[0.14em] text-[var(--ds-text-muted)]';
-
 export const sectionLabelClass =
   'text-[10px] font-semibold uppercase tracking-[0.11em] text-[var(--ds-text-subtle)]';
 
-export const pageTitleClass =
-  'text-[32px] font-semibold leading-[1.15] tracking-tight text-[var(--ds-text)]';
-
-export const pageDescriptionClass =
-  'max-w-[720px] text-base leading-relaxed text-[var(--ds-text-muted)]';
-
 export const sectionTitleClass = 'text-base font-semibold text-[var(--ds-text)]';
 
-export const headingClass = 'text-[var(--ds-text)]';
-export const secondaryTextClass = 'text-[var(--ds-text-secondary)]';
 export const mutedTextClass = 'text-[var(--ds-text-muted)]';
 export const subtleTextClass = 'text-[var(--ds-text-subtle)]';
-
-export const dividerClass = 'border-[var(--ds-border-subtle)]';
 
 export const errorNoticeClass =
   'rounded-xl border border-[var(--ds-coral-border)] bg-[#fef4f4] px-4 py-3 text-sm text-[var(--ds-coral)]';

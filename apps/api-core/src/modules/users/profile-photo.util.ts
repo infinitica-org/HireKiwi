@@ -26,5 +26,9 @@ export async function toAuthenticatedUserWithPhoto(
   return {
     ...base,
     profilePhotoUrl: await resolveProfilePhotoUrl(storage, user.profilePhotoObjectKey),
+    institutionLogoUrl: await resolveProfilePhotoUrl(
+      storage,
+      (user.institution as { logoStorageKey?: string | null } | null)?.logoStorageKey,
+    ),
   };
 }

@@ -30,6 +30,13 @@ export interface PersonJobFitParameters {
   readonly gatingMissPenaltyMultiplier: number;
 }
 
+/** Accuracy-ratio discount for a claim whose assessment/verification confidence is MEDIUM. */
+const CONFIDENCE_MULTIPLIER_MEDIUM = 0.85;
+/** Accuracy-ratio discount for a claim whose assessment/verification confidence is LOW. */
+const CONFIDENCE_MULTIPLIER_LOW = 0.6;
+/** Additional accuracy-ratio discount when an unresolved corroboration contradiction exists. */
+const CONTRADICTION_MULTIPLIER = 0.5;
+
 export const DEFAULT_PERSON_JOB_FIT_PARAMS: PersonJobFitParameters = {
   version: 'pjf-v1-schmidt-hunter-prior',
   importanceWeights: {
@@ -79,7 +86,13 @@ export function calculatePersonJobFit(
     const candidateSkill = candidateSkillMap.get(req.skillCode);
     const demonstratedRank = candidateSkill?.demonstratedRank ?? 0;
     const confidence = candidateSkill?.confidence ?? 'LOW';
-    const isMet = demonstratedRank >= req.requiredRank;
+    const hasConflict = candidateSkill?.hasConflict ?? false;
+    const rankClearsBar = demonstratedRank >= req.requiredRank;
+    // An unresolved corroboration contradiction (CorroborationReviewFlag) means the evidence
+    // behind this claim is actively disputed — it cannot satisfy a must-have gate even if the
+    // raw demonstrated rank clears the bar, though it still earns discounted accuracy credit
+    // below rather than being treated as entirely absent.
+    const isMet = rankClearsBar && !hasConflict;
 
     const isMustHave = req.importance === 'critical' || req.importance === 'must_have';
     if (isMustHave) {
@@ -92,8 +105,20 @@ export function calculatePersonJobFit(
     const weight = params.importanceWeights[req.importance] ?? 1.0;
     totalWeight += weight;
 
-    // Accuracy ratio capped between 0 and 1.2 (capped credit for exceeding)
-    const ratio = Math.min(1.2, demonstratedRank / Math.max(1, req.requiredRank));
+    // Accuracy ratio capped between 0 and 1.2 (capped credit for exceeding), then discounted by
+    // how much corroborating evidence actually backs the claim: a LOW-confidence or contradicted
+    // claim contributes less than the same raw rank with HIGH confidence and no dispute.
+    const confidenceMultiplier =
+      confidence === 'HIGH'
+        ? 1.0
+        : confidence === 'MEDIUM'
+          ? CONFIDENCE_MULTIPLIER_MEDIUM
+          : CONFIDENCE_MULTIPLIER_LOW;
+    const contradictionMultiplier = hasConflict ? CONTRADICTION_MULTIPLIER : 1.0;
+    const ratio =
+      Math.min(1.2, demonstratedRank / Math.max(1, req.requiredRank)) *
+      confidenceMultiplier *
+      contradictionMultiplier;
     totalWeightedScore += ratio * weight;
 
     breakdown.push({
@@ -103,7 +128,7 @@ export function calculatePersonJobFit(
       demonstratedRank,
       isMet,
       confidence,
-      sourceDiscrepancy: candidateSkill?.hasConflict ?? false,
+      sourceDiscrepancy: hasConflict,
     });
   }
 

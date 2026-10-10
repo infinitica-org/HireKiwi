@@ -323,7 +323,7 @@ export class MessagingService {
                 profile: { select: { logoFileId: true } },
               },
             },
-            institution: { select: { name: true } },
+            institution: { select: { name: true, logoStorageKey: true } },
           },
         },
       },
@@ -335,6 +335,9 @@ export class MessagingService {
         avatarKey = row.user.company.profile.logoFileId;
       } else if (row.user.profilePhotoObjectKey) {
         avatarKey = row.user.profilePhotoObjectKey;
+      } else if (row.user.institution?.logoStorageKey) {
+        // A TPO or advisor with no photo of their own shows their college logo.
+        avatarKey = row.user.institution.logoStorageKey;
       }
 
       let avatarUrl: string | null = null;
