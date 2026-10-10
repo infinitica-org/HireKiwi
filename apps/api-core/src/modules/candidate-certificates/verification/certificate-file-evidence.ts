@@ -2,6 +2,9 @@ import { pathToFileURL } from 'node:url';
 import jpeg from 'jpeg-js';
 import jsQR from 'jsqr';
 import { PNG } from 'pngjs';
+import type * as PdfJsModule from 'pdfjs-dist/legacy/build/pdf.mjs' with {
+  'resolution-mode': 'import',
+};
 
 /** Where in an uploaded certificate a verification link was found. */
 export type FoundLinkSource = 'qr-code' | 'pdf-link' | 'printed-text' | 'roll-number';
@@ -28,9 +31,7 @@ const MAX_IMAGE_MEGAPIXELS = 40;
 const NPTEL_ROLL_PATTERN = /NPTEL\d{2}[A-Z]{2,4}\d{1,3}S\d{5,}/u;
 const URL_IN_TEXT_PATTERN = /\bhttps?:\/\/[^\s<>"')]+/giu;
 
-type PdfJs = typeof import('pdfjs-dist/legacy/build/pdf.mjs', {
-  with: { 'resolution-mode': 'import' },
-});
+type PdfJs = typeof PdfJsModule;
 let pdfjsPromise: Promise<PdfJs> | null = null;
 
 /**
