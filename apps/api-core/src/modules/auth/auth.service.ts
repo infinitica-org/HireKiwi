@@ -885,7 +885,12 @@ export function toAuthenticatedUser(user: {
   createdAt: Date;
   heldAt?: Date | null;
   onboardingCompleted?: boolean;
-  institution: { name: string; heldAt?: Date | null; deactivatedAt?: Date | null } | null;
+  institution: {
+    name: string;
+    domain?: string | null;
+    heldAt?: Date | null;
+    deactivatedAt?: Date | null;
+  } | null;
   company?: {
     name?: string;
     heldAt?: Date | null;
@@ -925,6 +930,7 @@ export function toAuthenticatedUser(user: {
     role: user.role,
     institutionId: user.institutionId,
     institutionName: user.institution?.name ?? null,
+    institutionDomain: user.institution?.domain ?? null,
     companyId: user.companyId ?? null,
     companyName: user.company?.name ?? null,
     primaryTrack: (user.primaryTrack?.code as AuthenticatedUser['primaryTrack']) ?? null,

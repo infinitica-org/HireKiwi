@@ -20,7 +20,6 @@ import {
   Code2,
 } from 'lucide-react';
 import { cn } from '../lib/cn';
-import { TierBadge } from './badge';
 import { VerificationBadge } from './verification-badge';
 
 function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -193,7 +192,6 @@ export function CandidateProfileCard({
   displayName,
   profilePhotoUrl,
   trackName,
-  headlineTier,
   skills,
   jobTitle,
   quote,
@@ -278,7 +276,6 @@ export function CandidateProfileCard({
 
               {/* Badges line */}
               <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                <TierBadge tier={headlineTier} showLabel={false} />
                 {displayTags.map((tag, i) => (
                   <span
                     key={i}

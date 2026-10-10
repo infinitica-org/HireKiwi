@@ -18,7 +18,7 @@ const mockProjects = [
 ];
 
 describe('CandidateProfileCard', () => {
-  it('renders basic candidate information and tier', () => {
+  it('renders basic candidate information without a tier', () => {
     render(
       <CandidateProfileCard
         candidateId="c-123"
@@ -31,7 +31,8 @@ describe('CandidateProfileCard', () => {
 
     expect(screen.getAllByText('Varun R').length).toBeGreaterThan(0);
     expect(screen.getByText('Software Engineering')).toBeDefined();
-    expect(screen.getByText('Gold')).toBeDefined(); // TierBadge title-cased
+    // The tier (Bronze, Silver, Gold) is no longer shown on the card.
+    expect(screen.queryByText('Gold')).toBeNull();
   });
 
   it('renders skills with their verification statuses', () => {

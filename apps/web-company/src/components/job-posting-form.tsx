@@ -77,6 +77,7 @@ function Field({
   text,
   required,
   hint,
+  error,
   className,
   children,
 }: {
@@ -84,6 +85,8 @@ function Field({
   text: string;
   required?: boolean;
   hint?: string;
+  /** Shown in red under the field when it was left empty. */
+  error?: string;
   className?: string;
   children: ReactNode;
 }) {
@@ -93,7 +96,8 @@ function Field({
         {text} {required ? <span className="text-rose-500">*</span> : null}
       </label>
       {children}
-      {hint ? <p className={hintClass}>{hint}</p> : null}
+      {error ? <p className="mt-1.5 text-xs text-rose-600">{error}</p> : null}
+      {hint && !error ? <p className={hintClass}>{hint}</p> : null}
     </div>
   );
 }
@@ -105,6 +109,7 @@ function TextField({
   onChange,
   placeholder,
   required,
+  invalid = false,
   hint,
   type = 'text',
   min,
@@ -116,13 +121,22 @@ function TextField({
   onChange: (value: string) => void;
   placeholder?: string;
   required?: boolean;
+  /** Required and left empty after an attempt to continue. */
+  invalid?: boolean;
   hint?: string;
   type?: 'text' | 'number' | 'date';
   min?: number | string;
   className?: string;
 }) {
   return (
-    <Field id={id} text={text} required={required} hint={hint} className={className}>
+    <Field
+      id={id}
+      text={text}
+      required={required}
+      hint={hint}
+      error={invalid ? `${text} is required.` : undefined}
+      className={className}
+    >
       <input
         id={id}
         type={type}
@@ -130,7 +144,8 @@ function TextField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={input}
+        aria-invalid={invalid || undefined}
+        className={`${input} ${invalid ? 'border-rose-500!' : ''}`}
       />
     </Field>
   );
@@ -144,6 +159,8 @@ function SelectField({
   options,
   placeholder = 'Select…',
   hint,
+  required,
+  invalid = false,
   className,
 }: {
   id: string;
@@ -153,15 +170,25 @@ function SelectField({
   options: readonly string[];
   placeholder?: string;
   hint?: string;
+  required?: boolean;
+  invalid?: boolean;
   className?: string;
 }) {
   return (
-    <Field id={id} text={text} hint={hint} className={className}>
+    <Field
+      id={id}
+      text={text}
+      hint={hint}
+      required={required}
+      error={invalid ? `${text} is required.` : undefined}
+      className={className}
+    >
       <select
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className={input}
+        aria-invalid={invalid || undefined}
+        className={`${input} ${invalid ? 'border-rose-500!' : ''}`}
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (
@@ -182,6 +209,8 @@ function AreaField({
   placeholder,
   rows = 4,
   hint,
+  required,
+  invalid = false,
   className,
 }: {
   id: string;
@@ -191,17 +220,27 @@ function AreaField({
   placeholder?: string;
   rows?: number;
   hint?: string;
+  required?: boolean;
+  invalid?: boolean;
   className?: string;
 }) {
   return (
-    <Field id={id} text={text} hint={hint} className={className}>
+    <Field
+      id={id}
+      text={text}
+      hint={hint}
+      required={required}
+      error={invalid ? `${text} is required.` : undefined}
+      className={className}
+    >
       <textarea
         id={id}
         rows={rows}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={textarea}
+        aria-invalid={invalid || undefined}
+        className={`${textarea} ${invalid ? 'border-rose-500!' : ''}`}
       />
     </Field>
   );
@@ -394,6 +433,7 @@ export function JobPostingForm({
   section,
   companyName,
   titleInvalid = false,
+  attempted = false,
   postedAt,
 }: {
   form: JobForm;
@@ -402,6 +442,8 @@ export function JobPostingForm({
   section: number;
   companyName: string;
   titleInvalid?: boolean;
+  /** True once someone tried to continue or post: required fields left empty turn red. */
+  attempted?: boolean;
   /** Shown read-only on saved jobs; new jobs get it automatically on save. */
   postedAt?: string;
 }) {
@@ -410,6 +452,11 @@ export function JobPostingForm({
     (value: JobForm[K]) =>
       onChange(key, value);
   const today = new Date().toISOString().slice(0, 10);
+  const empty = (value: string) => attempted && value.trim().length === 0;
+  const needsLocation = form.workMode !== 'Remote';
+  const locationInvalid = attempted && needsLocation && form.location.trim().length === 0;
+  const skillsInvalid = attempted && form.mustHave.length === 0;
+  const redBorder = 'border-rose-500! focus:ring-rose-500/20!';
 
   return (
     <div className="min-w-0 space-y-6">
@@ -442,6 +489,8 @@ export function JobPostingForm({
                 value={form.functionCategory}
                 onChange={set('functionCategory')}
                 options={FUNCTION_CATEGORIES}
+                required
+                invalid={empty(form.functionCategory)}
               />
               <TextField
                 id="job-department"
@@ -450,7 +499,7 @@ export function JobPostingForm({
                 onChange={set('department')}
                 placeholder="e.g. Platform engineering"
               />
-              <Field id="job-company" text="Company">
+              <Field id="job-company" text="Company" required>
                 <input
                   id="job-company"
                   value={companyName}
@@ -469,6 +518,8 @@ export function JobPostingForm({
                 }}
                 options={JOB_TYPES}
                 placeholder="Select job type"
+                required
+                invalid={empty(form.type)}
               />
               <SelectField
                 id="job-work-mode"
@@ -480,6 +531,8 @@ export function JobPostingForm({
                 }}
                 options={WORK_MODES}
                 placeholder="Select work mode"
+                required
+                invalid={empty(form.workMode)}
               />
               <SelectField
                 id="job-work-auth"
@@ -489,14 +542,17 @@ export function JobPostingForm({
                 options={WORK_AUTHORIZATION}
               />
 
-              <Field id="job-location" text="Location" required={form.workMode !== 'Remote'}>
+              <Field id="job-location" text="Location" required={needsLocation}>
                 <LocationInput
                   id="job-location"
                   value={form.location}
                   onChange={set('location')}
                   placeholder="e.g. Bengaluru"
-                  className={input}
+                  className={`${input} ${locationInvalid ? redBorder : ''}`}
                 />
+                {locationInvalid ? (
+                  <p className="mt-1.5 text-xs text-rose-600">Location is required.</p>
+                ) : null}
               </Field>
               <TextField
                 id="job-min-years"
@@ -505,6 +561,8 @@ export function JobPostingForm({
                 min={0}
                 value={form.minYears}
                 onChange={set('minYears')}
+                required
+                invalid={empty(form.minYears)}
               />
               <TextField
                 id="job-max-years"
@@ -513,6 +571,8 @@ export function JobPostingForm({
                 min={0}
                 value={form.maxYears}
                 onChange={set('maxYears')}
+                required
+                invalid={empty(form.maxYears)}
               />
             </div>
 
@@ -597,6 +657,8 @@ export function JobPostingForm({
               rows={3}
               value={form.summary}
               onChange={set('summary')}
+              required
+              invalid={empty(form.summary)}
               placeholder="Two or three lines on what this role is about."
             />
             <AreaField
@@ -604,6 +666,8 @@ export function JobPostingForm({
               text="Responsibilities"
               value={form.responsibilities}
               onChange={set('responsibilities')}
+              required
+              invalid={empty(form.responsibilities)}
               placeholder="One responsibility per line."
             />
             <AreaField
@@ -637,7 +701,16 @@ export function JobPostingForm({
               <span className={label}>
                 Must-have skills <span className="text-rose-500">*</span>
               </span>
-              <SkillsEditor skills={form.mustHave} onChange={set('mustHave')} />
+              <div
+                className={
+                  skillsInvalid ? 'rounded-lg border border-rose-500 p-2 dark:border-rose-500' : ''
+                }
+              >
+                <SkillsEditor skills={form.mustHave} onChange={set('mustHave')} />
+              </div>
+              {skillsInvalid ? (
+                <p className="mt-1.5 text-xs text-rose-600">Add at least one must-have skill.</p>
+              ) : null}
             </div>
             <WeightedSkillsField skills={form.goodToHave} onChange={set('goodToHave')} />
             <div className={sectionGrid}>
@@ -696,6 +769,8 @@ export function JobPostingForm({
               value={form.minimumQualification}
               onChange={set('minimumQualification')}
               options={QUALIFICATIONS}
+              required
+              invalid={empty(form.minimumQualification)}
             />
             <TextField
               id="job-preferred-degree"
@@ -820,6 +895,8 @@ export function JobPostingForm({
                 min={1}
                 value={form.openings}
                 onChange={set('openings')}
+                required
+                invalid={empty(form.openings)}
               />
               <TextField
                 id="job-deadline"
@@ -837,7 +914,9 @@ export function JobPostingForm({
                 options={JOINING_TIMELINES}
               />
               <div>
-                <span className={label}>Job status</span>
+                <span className={label}>
+                  Job status <span className="text-rose-500">*</span>
+                </span>
                 <ChipGroup
                   options={JOB_STATUS_CHOICES}
                   value={[form.status]}

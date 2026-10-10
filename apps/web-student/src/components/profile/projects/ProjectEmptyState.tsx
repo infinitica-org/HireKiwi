@@ -2,7 +2,7 @@
 
 import { FolderKanban, GitBranch, Plus, Sparkles } from 'lucide-react';
 
-import { ProfileBentoEmptyPanel } from '@/components/profile/ProfileSectionChrome';
+import { ProfileBentoEmptyPanel } from '@/components/profile/shared/ProfileSectionChrome';
 import {
   profilePrimaryButtonSmClass,
   profileSecondaryButtonSmClass,

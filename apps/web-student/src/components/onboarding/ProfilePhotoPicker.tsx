@@ -3,8 +3,8 @@
 import { useRef, useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { PhotoCropDialog } from '@/components/profile/PhotoCropDialog';
-import { CandidateAvatar } from '@/components/profile/CandidateAvatar';
+import { PhotoCropDialog } from '@/components/profile/overview/PhotoCropDialog';
+import { CandidateAvatar } from '@/components/profile/overview/CandidateAvatar';
 import {
   PROFILE_PHOTO_ACCEPT,
   validateProfilePhotoFile,

@@ -5,7 +5,6 @@ import {
   Landmark,
   LayoutDashboard,
   LayoutGrid,
-  MessageSquare,
   ShieldCheck,
   UserSearch,
   Users,
@@ -135,16 +134,6 @@ export const CANDIDATES_NAV_GROUPS: TpoNavGroup[] = [
 
 export const CANDIDATES_NAV: TpoNavLink[] = CANDIDATES_NAV_GROUPS.flatMap((group) => group.items);
 
-/** Primary topbar — university wireframe IA */
-export const TPO_NAV: TpoNavItem[] = [
-  { kind: 'link', name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { kind: 'link', name: 'Students', href: '/students', icon: Users },
-  { kind: 'link', name: 'Invitations', href: '/whitelist', icon: ShieldCheck },
-  { kind: 'link', name: 'Employers', href: '/companies', icon: Briefcase },
-  { kind: 'link', name: 'Messages', href: '/messages', icon: MessageSquare },
-  { kind: 'link', name: 'Reports', href: '/reports', icon: BarChart3 },
-];
-
 /** Nav hrefs that must match exactly (sibling routes under the same prefix). */
 const EXACT_MATCH_HREFS = new Set(['/openings', '/company']);
 
@@ -161,17 +150,6 @@ export function isNavLinkActive(pathname: string, href: string): boolean {
 /** Topbar Placement link — active on the repository landing and all placement shell routes. */
 export function isPlacementTopNavActive(pathname: string): boolean {
   return pathname === '/companies' || isPlacementRoute(pathname);
-}
-
-/** Topbar Candidates link — active on repository and onboarding routes. */
-export function isCandidatesTopNavActive(pathname: string): boolean {
-  return isCandidatesRoute(pathname);
-}
-
-export function isNavItemActive(pathname: string, item: TpoNavItem): boolean {
-  return item.kind === 'group'
-    ? item.children.some((child) => isNavLinkActive(pathname, child.href))
-    : isNavLinkActive(pathname, item.href);
 }
 
 /** True on any placement workspace route, used to mount the placement shell. */

@@ -2,7 +2,7 @@
 
 import { Briefcase, CheckCircle2, Loader2, Plus } from 'lucide-react';
 
-import { ProfileBentoEmptyPanel } from '@/components/profile/ProfileSectionChrome';
+import { ProfileBentoEmptyPanel } from '@/components/profile/shared/ProfileSectionChrome';
 import {
   profilePrimaryButtonSmClass,
   profileSecondaryButtonSmClass,

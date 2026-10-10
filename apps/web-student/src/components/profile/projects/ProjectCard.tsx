@@ -4,13 +4,17 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { ProjectDto } from '@hirekiwi/contracts';
 import { ArrowRight, GitBranch, Globe, FolderCode, Swords, Trash2, X } from 'lucide-react';
-import { EntryCard, EntryIconButton, EntryIconTile } from '@/components/profile/entry-card-ui';
+import {
+  EntryCard,
+  EntryIconButton,
+  EntryIconTile,
+} from '@/components/profile/shared/entry-card-ui';
 import { ProjectStatusBadge } from '@/components/profile/projects/ProjectStatusBadge';
 import {
   parseStackTags,
   projectSummaryText,
 } from '@/components/profile/projects/project-presenters';
-import { projectDefenseInterviewHref } from '@/components/profile/ProjectDefenseInterviewDialog';
+import { projectDefenseInterviewHref } from '@/components/profile/projects/ProjectDefenseInterviewDialog';
 import { needsOwnershipInterview } from '@/lib/project-submission';
 import { api } from '@/lib/api';
 import { motion, AnimatePresence } from 'motion/react';

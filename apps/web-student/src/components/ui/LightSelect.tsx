@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
+import { SLIM_SCROLL } from '@/lib/scroll-classes';
 import type { SelectOption } from './CustomSelect';
 
 interface LightSelectProps {
@@ -91,7 +92,7 @@ export function LightSelect({
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}
-        className="w-full flex items-center justify-between text-left focus:outline-none h-full"
+        className="w-full flex items-center justify-between text-left font-sans text-sm focus:outline-none h-full"
       >
         <span
           className={
@@ -120,7 +121,7 @@ export function LightSelect({
               maxHeight: menuBox.maxHeight,
               ...(menuBox.openUp ? { bottom: menuBox.bottom } : { top: menuBox.top }),
             }}
-            className="bg-card border border-border rounded-xl shadow-2xl overflow-y-auto"
+            className={`bg-card border border-border rounded-xl shadow-2xl overflow-y-auto font-sans ${SLIM_SCROLL}`}
           >
             <div className="p-1 flex flex-col gap-1">
               {options.map((option) => {
@@ -133,7 +134,7 @@ export function LightSelect({
                       onChange(option.value);
                       setIsOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    className={`w-full text-left px-3 py-2.5 rounded-lg font-sans text-sm transition-colors ${
                       isSelected
                         ? 'bg-foreground/15 text-foreground font-semibold'
                         : 'text-foreground hover:bg-muted hover:text-foreground'

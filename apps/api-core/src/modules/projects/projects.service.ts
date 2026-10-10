@@ -216,8 +216,15 @@ export class ProjectsService {
     // Immediately mark project as interview-eligible upon submission
     await this.interviewGate.markVerifyComplete(row.id);
 
-    // Sync fallback when Kafka consumer is not running (local dev).
-    await this.verifyRunner.runForProject(row.id, studentId);
+    // Fallback when the Kafka consumer is not running (local dev). Runs in the background so the
+    // student is not kept waiting on the checks; the project shows as Verifying until they finish.
+    void this.verifyRunner.runForProject(row.id, studentId).catch((err: unknown) => {
+      this.logger.warn(
+        `Background verification failed for project ${row.id}: ${
+          err instanceof Error ? err.message : 'unknown error'
+        }`,
+      );
+    });
 
     this.logger.log(`Project ${row.id} queued on ${HIREKIWI_TOPICS.projectSubmitted}`);
     const refreshed = await this.loadRow(row.id);

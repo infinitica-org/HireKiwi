@@ -227,6 +227,7 @@ export default function PostJobPage() {
         onChange={update}
         companyName={companyName}
         titleInvalid={titleInvalid}
+        attempted={attempted}
         problems={problems}
         visited={visited}
       />

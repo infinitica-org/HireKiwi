@@ -11,7 +11,7 @@ vi.mock('@/lib/api', () => ({
   api: { users: { uploadProfilePhoto: (...args: unknown[]) => uploadProfilePhoto(...args) } },
 }));
 
-vi.mock('@/components/profile/PhotoCropDialog', () => ({
+vi.mock('@/components/profile/overview/PhotoCropDialog', () => ({
   PhotoCropDialog: ({
     file,
     onConfirm,

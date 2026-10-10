@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
 import type { ProjectDto } from '@hirekiwi/contracts';
 import { Alert, Button } from '@hirekiwi/ui';
 import { ArrowLeft } from 'lucide-react';
-import { ProjectDefenseOutcomePanel } from '@/components/profile/ProjectDefenseOutcomePanel';
-import { ProjectDefensePlayer } from '@/components/profile/ProjectDefensePlayer';
+import { ProjectDefenseOutcomePanel } from '@/components/profile/projects/ProjectDefenseOutcomePanel';
+import { ProjectDefensePlayer } from '@/components/profile/projects/ProjectDefensePlayer';
 import { api } from '@/lib/api';
 import { needsOwnershipInterview } from '@/lib/project-submission';
 

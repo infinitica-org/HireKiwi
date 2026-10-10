@@ -1,3 +1,4 @@
+import { SignalConnectionStore } from '../signal-ingestion/signal-connection.store.js';
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, NotFoundException, Optional, forwardRef } from '@nestjs/common';
 import {
@@ -41,6 +42,9 @@ export class PublicProfileService {
     @Optional()
     @Inject(forwardRef(() => TrustService))
     private readonly trustService?: TrustService,
+    @Optional()
+    @Inject(SignalConnectionStore)
+    private readonly signalConnections?: SignalConnectionStore,
   ) {}
 
   /**
@@ -297,12 +301,16 @@ export class PublicProfileService {
         profileHeadline: true,
         profilePhotoObjectKey: true,
         hiddenSections: true,
+        onboardingDetails: true,
         allowEmployerMessages: true,
       },
     });
     // The owner's own page shows everything they added; unverified items are labelled in progress.
     const showInProgress = true;
     const hiddenSections = owner.hiddenSections ?? [];
+    const integrationRows = hiddenSections.includes('integrations')
+      ? []
+      : ((await this.signalConnections?.list(userId).catch(() => [])) ?? []);
 
     const [
       skillClaims,
@@ -312,6 +320,7 @@ export class PublicProfileService {
       certificate,
       externalCertificates,
       educationRecords,
+      languageRows,
       capabilityRows,
       maxEvidenceAgg,
     ] = await Promise.all([
@@ -346,6 +355,10 @@ export class PublicProfileService {
         where: { studentId: userId },
         orderBy: { createdAt: 'desc' },
       }),
+      this.prisma.candidateLanguage.findMany({
+        where: { studentId: userId },
+        orderBy: { createdAt: 'asc' },
+      }),
       this.prisma.studentCapability?.findMany
         ? this.prisma.studentCapability.findMany({
             where: { studentId: userId },
@@ -366,6 +379,8 @@ export class PublicProfileService {
     const isWorkExperienceHidden = hiddenSections.includes('workExperience');
     const isCertificationsHidden = hiddenSections.includes('certifications');
     const isEducationHidden = hiddenSections.includes('education');
+    const isLanguagesHidden = hiddenSections.includes('languages');
+    const isLinksHidden = hiddenSections.includes('professionalLinks');
 
     // T10 — Calculate latest committed change timestamp relevant to profile sections
     const timestamps: (Date | undefined | null)[] = [owner.createdAt];
@@ -470,6 +485,18 @@ export class PublicProfileService {
             })),
             inProgress: cert.status !== 'VERIFIED',
           })),
+      integrations: integrationRows
+        // A connection whose last data fetch failed is still the candidate's account; only revoked ones go.
+        .filter((row) => row.status !== 'REVOKED')
+        .map((row) => ({
+          sourceId: row.sourceId,
+          username: row.externalAccountId,
+          url: integrationProfileUrl(row.sourceId, row.externalAccountId),
+        })),
+      links: isLinksHidden ? [] : publicLinksFrom(owner.onboardingDetails),
+      languages: isLanguagesHidden
+        ? []
+        : languageRows.map((row) => ({ language: row.language, proficiency: row.proficiency })),
       education: isEducationHidden
         ? []
         : educationRecords.map((edu) => ({
@@ -487,5 +514,43 @@ export class PublicProfileService {
       competencyEvidenceSummaries: mapStudentCapabilitiesToSummaries(capabilityRows),
       lastUpdatedAt,
     };
+  }
+}
+
+/** The GitHub / LinkedIn links from the student's onboarding details; only real http(s) URLs. */
+function publicLinksFrom(details: unknown): { kind: 'github' | 'linkedin'; url: string }[] {
+  if (typeof details !== 'object' || details === null) return [];
+  const record = details as Record<string, unknown>;
+  const out: { kind: 'github' | 'linkedin'; url: string }[] = [];
+  for (const [kind, key] of [
+    ['github', 'githubUrl'],
+    ['linkedin', 'linkedinUrl'],
+  ] as const) {
+    const raw = record[key];
+    if (typeof raw !== 'string' || raw.trim() === '') continue;
+    try {
+      const url = new URL(raw.trim());
+      if (url.protocol === 'https:' || url.protocol === 'http:') {
+        out.push({ kind, url: url.toString() });
+      }
+    } catch {
+      // Not a valid URL: leave it out.
+    }
+  }
+  return out;
+}
+
+/** Public profile page for a connected account, for the services where we can build one. */
+function integrationProfileUrl(sourceId: string, accountId: string): string | null {
+  const id = encodeURIComponent(accountId);
+  switch (sourceId) {
+    case 'GITHUB':
+      return `https://github.com/${id}`;
+    case 'LEETCODE':
+      return `https://leetcode.com/u/${id}/`;
+    case 'HACKERRANK':
+      return `https://www.hackerrank.com/profile/${id}`;
+    default:
+      return null;
   }
 }

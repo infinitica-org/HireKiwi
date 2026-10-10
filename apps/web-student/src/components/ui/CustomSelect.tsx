@@ -117,7 +117,7 @@ export function CustomSelect({
               maxHeight: menuBox.maxHeight,
               ...(menuBox.openUp ? { bottom: menuBox.bottom } : { top: menuBox.top }),
             }}
-            className={`bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-y-auto ${dropdownClassName}`}
+            className={`bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-y-auto font-sans ${dropdownClassName}`}
           >
             <div className="p-1 flex flex-col gap-1">
               {options.map((option) => {
@@ -130,7 +130,7 @@ export function CustomSelect({
                       onChange(option.value);
                       setIsOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    className={`w-full text-left px-3 py-2.5 rounded-lg font-sans text-sm transition-colors ${
                       isSelected
                         ? 'bg-muted/10 text-foreground font-bold'
                         : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
