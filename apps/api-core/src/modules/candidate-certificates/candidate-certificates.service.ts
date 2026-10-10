@@ -238,12 +238,16 @@ export class CandidateCertificatesService {
       data: { hasNoCertifications: false },
     });
 
-    // Optimistic: the queue processor settles the final status once Tier 1/2/3 resolve.
-    await this.prisma.candidateCertificate.update({
-      where: { id: row.id },
-      data: { status: 'IN_VERIFICATION' },
-    });
-    await this.enqueueVerification(row.id);
+    // Nothing to check until there is proof: an upload queues the check itself. Queuing one now
+    // could also land after the upload's run and overwrite its result.
+    if (body.verificationUrl || body.certificateNumber) {
+      // Optimistic: the queue processor settles the final status once Tier 1/2/3 resolve.
+      await this.prisma.candidateCertificate.update({
+        where: { id: row.id },
+        data: { status: 'IN_VERIFICATION' },
+      });
+      await this.enqueueVerification(row.id);
+    }
 
     const updated = await this.prisma.candidateCertificate.findUniqueOrThrow({
       where: { id: row.id },
@@ -889,6 +893,13 @@ export class CandidateCertificatesService {
         ...summary,
         outcome: 'failed',
         message: text('studentMessage') ?? "This certificate couldn't be verified.",
+      };
+    }
+    if (!row.verificationUrl && !row.certificateNumber && !row.certificateFileUrl) {
+      return {
+        ...summary,
+        outcome: 'needs_review',
+        message: "Add the certificate's link or upload it so we can check it.",
       };
     }
     const stillChecking =

@@ -166,6 +166,21 @@ describe('CandidateCertificatesService', () => {
     expect(dto.verificationUrl).toBe('https://www.credly.com/org/aws/badge/123');
   });
 
+  it('queues no source check for a certificate declared without a link or number', async () => {
+    const { prisma, service, certVerificationQueue } = setup();
+    prisma.candidateCertificate.create.mockResolvedValue(
+      baseCertificateRow({ status: 'DECLARED' }),
+    );
+    prisma.candidateCertificate.findUniqueOrThrow.mockResolvedValue(
+      baseCertificateRow({ status: 'DECLARED', verificationUrl: null, certificateNumber: null }),
+    );
+
+    await service.create(candidateId, { title: 'Python for Data Science', issuer: 'NPTEL' });
+
+    // The upload that follows queues the check; one queued now could overwrite its result.
+    expect(certVerificationQueue.add).not.toHaveBeenCalled();
+  });
+
   it('refuses to declare a certificate that duplicates an existing one for the same candidate', async () => {
     const { prisma, service } = setup();
     prisma.candidateCertificate.findMany.mockResolvedValue([

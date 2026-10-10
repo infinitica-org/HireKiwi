@@ -3,19 +3,26 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useQuery, Button } from '@hirekiwi/ui';
+import { motion } from 'motion/react';
+import { useQuery } from '@hirekiwi/ui';
 import type { CandidateCertificateDto, TrackCode } from '@hirekiwi/contracts';
-import { ArrowLeft, RefreshCw, ShieldAlert, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Pencil, RefreshCw, UserCheck } from 'lucide-react';
 import { api } from '@/lib/api';
-import { CertificateStatusStepper } from './certificate-status-stepper';
-import { CertificateDetailsForm, type CertificateDetailsPayload } from './certificate-details-form';
-import { CertificateUpload } from './certificate-upload';
-import { CertificatePreview } from './certificate-preview';
+import { VIVI_GHOST_BUTTON } from '@/components/vivi-verification/vivi-field-classes';
+import type { CertificateDetailsPayload } from './certificate-details-form';
+import { CertificateLinkForm } from './certificate-link-form';
+import { CertificateSourceCheckCard } from './certificate-source-check-card';
 import { SkillsLearningForm } from './skills-learning-form';
 import { CertificateAgendaForm } from './certificate-agenda-form';
 import { EndorsementRequestForm } from './endorsement-request-form';
-import { CertificateStatusBadge } from './certificate-status-badge';
 import type { CertificateSkillSelection } from './skill-picker';
+
+/** While the issuer is being asked, the certificate is re-read this often, for at most this long. */
+const POLL_INTERVAL_MS = 2_000;
+const POLL_MAX_ATTEMPTS = 20;
+
+/** 0 add (link or file), 1 what you learned, 2 status and next step. */
+export type CertificateWizardStage = 0 | 1 | 2;
 
 /** Popup mode: the profile page hosts the wizard, so it must not touch the URL. */
 export interface EmbeddedCertificateWizard {
@@ -23,10 +30,21 @@ export interface EmbeddedCertificateWizard {
   certificateId: string | null;
   /** Back button: closes the popup. */
   onClose: () => void;
-  /** A field shown first in the details form (the Type choice in the profile popup). */
+  /** A field shown first in the add form (the Type choice in the profile popup). */
   topField?: ReactNode;
-  /** Which step the wizard is on: 0 details, 1 proof, 2 skills, 3 verify. */
-  onStageChange?: (stage: 0 | 1 | 2 | 3) => void;
+  onStageChange?: (stage: CertificateWizardStage) => void;
+}
+
+const ACTION_BUTTON =
+  'inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800';
+
+function learningDone(certificate: CandidateCertificateDto): boolean {
+  return (
+    certificate.skills.length > 0 &&
+    Boolean(certificate.learningDescription) &&
+    certificate.practicalApplied !== null &&
+    (!certificate.practicalApplied || Boolean(certificate.practicalDescription))
+  );
 }
 
 export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificateWizard } = {}) {
@@ -37,17 +55,17 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
   const [certificateId, setCertificateId] = useState<string | null>(existingId);
   const [certificate, setCertificate] = useState<CandidateCertificateDto | null>(null);
   const [loadingExisting, setLoadingExisting] = useState(Boolean(existingId));
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [savingSkills, setSavingSkills] = useState(false);
   const [savingLearning, setSavingLearning] = useState(false);
   const [requestingEndorsement, setRequestingEndorsement] = useState(false);
   const [endorsementError, setEndorsementError] = useState<string | null>(null);
+  const [showEndorsement, setShowEndorsement] = useState(false);
   const [savingAgenda, setSavingAgenda] = useState(false);
   const [agendaError, setAgendaError] = useState<string | null>(null);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [learningLater, setLearningLater] = useState(false);
 
   useEffect(() => {
     if (!existingId) return;
@@ -67,78 +85,85 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
     };
   }, [existingId]);
 
+  // The issuer check runs in the background: keep re-reading until it lands.
+  const checking = certificate?.sourceCheck?.outcome === 'checking';
+  useEffect(() => {
+    if (!checking || !certificateId) return;
+    let cancelled = false;
+    let attempts = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const tick = async () => {
+      attempts += 1;
+      try {
+        const fresh = await api.candidateCertificates.get(certificateId);
+        if (cancelled) return;
+        setCertificate(fresh);
+        if (fresh.sourceCheck?.outcome !== 'checking' || attempts >= POLL_MAX_ATTEMPTS) return;
+      } catch {
+        if (cancelled || attempts >= POLL_MAX_ATTEMPTS) return;
+      }
+      timer = setTimeout(() => void tick(), POLL_INTERVAL_MS);
+    };
+    timer = setTimeout(() => void tick(), POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [checking, certificateId]);
+
   const { data: eventsRes } = useQuery({
-    queryKey: ['candidate-certificate-events', certificateId] as const,
+    queryKey: [
+      'candidate-certificate-events',
+      certificateId,
+      certificate?.sourceCheck?.checkedAt ?? null,
+    ] as const,
     queryFn: () => api.candidateCertificates.listEvents(certificateId as string),
     enabled: Boolean(certificateId) && certificate !== null,
   });
 
-  const stage: 0 | 1 | 2 | 3 =
-    !certificate || isEditingDetails
+  const voided = certificate?.status === 'VOIDED' || certificate?.sourceStatus === 'voided';
+  const failed =
+    certificate?.status === 'REJECTED' || certificate?.sourceStatus === 'source_failed';
+  const hasProof = Boolean(certificate?.verificationUrl || certificate?.certificateFileUrl);
+
+  const stage: CertificateWizardStage =
+    !certificate || isEditingDetails || (!hasProof && !voided)
       ? 0
-      : !(certificate.certificateFileUrl || certificate.verificationUrl)
+      : !learningDone(certificate) && !learningLater && !voided && !failed
         ? 1
-        : certificate.skills.length === 0 || !certificate.learningDescription
-          ? 2
-          : 3;
+        : 2;
   const onStageChange = embedded?.onStageChange;
   useEffect(() => {
     onStageChange?.(stage);
   }, [stage, onStageChange]);
 
-  const handleCreateDetails = async (details: CertificateDetailsPayload) => {
-    setCreating(true);
-    setCreateError(null);
+  const handleSave = async (details: CertificateDetailsPayload, file: File | null) => {
+    setSaving(true);
+    setSaveError(null);
     try {
+      let saved: CandidateCertificateDto;
       if (certificateId && certificate) {
-        const updated = await api.candidateCertificates.updateLearning(certificateId, {
+        saved = await api.candidateCertificates.updateLearning(certificateId, {
           certificateNumber: details.certificateNumber,
           verificationUrl: details.verificationUrl,
           issueDate: details.issueDate,
           expiryDate: details.expiryDate,
         });
-        setCertificate(updated);
-        setIsEditingDetails(false);
       } else {
-        const created = await api.candidateCertificates.create(details);
-        setCertificate(created);
-        setCertificateId(created.certificateId);
-        if (!embedded) router.replace(`/student/certificates/add?id=${created.certificateId}`);
+        saved = await api.candidateCertificates.create(details);
+        setCertificateId(saved.certificateId);
+        if (!embedded) router.replace(`/student/certificates/add?id=${saved.certificateId}`);
       }
+      setCertificate(saved);
+      if (file) {
+        saved = await api.candidateCertificates.upload(saved.certificateId, file, file.name);
+        setCertificate(saved);
+      }
+      setIsEditingDetails(false);
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : 'Failed to save certificate details.');
+      setSaveError(err instanceof Error ? err.message : 'Could not save this certificate.');
     } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleUpload = async (file: File) => {
-    if (!certificateId) return;
-    setUploading(true);
-    setUploadError(null);
-    try {
-      const updated = await api.candidateCertificates.upload(certificateId, file, file.name);
-      setCertificate(updated);
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Failed to upload the certificate.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleSourceUrlSubmit = async (url: string) => {
-    if (!certificateId) return;
-    setUploading(true);
-    setUploadError(null);
-    try {
-      const updated = await api.candidateCertificates.updateLearning(certificateId, {
-        verificationUrl: url,
-      });
-      setCertificate(updated);
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Failed to save verification URL.');
-    } finally {
-      setUploading(false);
+      setSaving(false);
     }
   };
 
@@ -146,8 +171,7 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
     if (!certificateId) return;
     setSavingSkills(true);
     try {
-      const updated = await api.candidateCertificates.replaceSkills(certificateId, { skills });
-      setCertificate(updated);
+      setCertificate(await api.candidateCertificates.replaceSkills(certificateId, { skills }));
     } finally {
       setSavingSkills(false);
     }
@@ -162,8 +186,7 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
     if (!certificateId) return;
     setSavingLearning(true);
     try {
-      const updated = await api.candidateCertificates.updateLearning(certificateId, fields);
-      setCertificate(updated);
+      setCertificate(await api.candidateCertificates.updateLearning(certificateId, fields));
     } finally {
       setSavingLearning(false);
     }
@@ -178,8 +201,8 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
     setRequestingEndorsement(true);
     setEndorsementError(null);
     try {
-      const updated = await api.candidateCertificates.requestEndorsement(certificateId, details);
-      setCertificate(updated);
+      setCertificate(await api.candidateCertificates.requestEndorsement(certificateId, details));
+      setShowEndorsement(false);
     } catch (err) {
       setEndorsementError(err instanceof Error ? err.message : 'Failed to request endorsement.');
     } finally {
@@ -196,8 +219,7 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
     setSavingAgenda(true);
     setAgendaError(null);
     try {
-      const updated = await api.candidateCertificates.submitAgenda(certificateId, body);
-      setCertificate(updated);
+      setCertificate(await api.candidateCertificates.submitAgenda(certificateId, body));
     } catch (err) {
       setAgendaError(err instanceof Error ? err.message : 'Could not save agenda.');
     } finally {
@@ -208,47 +230,38 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
   if (loadingExisting) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="animate-pulse text-sm text-muted-foreground">Loading certificate data…</p>
+        <p className="animate-pulse text-sm text-muted-foreground">Loading certificate…</p>
       </div>
     );
   }
 
-  const WizardHeader = () =>
-    embedded ? (
-      <div className="mb-4 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={embedded.onClose}
-          className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to My Certificates
-        </button>
-      </div>
-    ) : (
-      <div className="mb-6 flex items-center justify-between">
-        <Link
-          href="/student/certificates"
-          className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to My Certificates
-        </Link>
-        <Link
-          href="/student/dashboard"
-          className="text-xs font-medium text-foreground hover:underline"
-        >
-          Skip to Dashboard &rarr;
-        </Link>
-      </div>
-    );
+  const backLink = embedded ? null : (
+    <div className="mb-2 flex items-center justify-between">
+      <Link
+        href="/student/certificates"
+        className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to My Certificates
+      </Link>
+      <Link
+        href="/student/dashboard"
+        className="text-xs font-medium text-foreground hover:underline"
+      >
+        Skip to Dashboard &rarr;
+      </Link>
+    </div>
+  );
 
-  if (!certificate || isEditingDetails) {
+  if (stage === 0) {
     return (
       <div className={`mx-auto flex w-full max-w-3xl flex-col ${embedded ? 'gap-5' : 'gap-6'}`}>
-        {embedded ? null : <WizardHeader />}
-        <CertificateDetailsForm
-          embedded={Boolean(embedded)}
-          onCancel={embedded?.onClose}
-          topField={embedded?.topField}
+        {backLink}
+        <CertificateLinkForm
+          key={certificate?.certificateId ?? 'new'}
+          topField={certificate ? undefined : embedded?.topField}
+          onCancel={
+            certificate && isEditingDetails ? () => setIsEditingDetails(false) : embedded?.onClose
+          }
           initialValues={
             certificate
               ? {
@@ -261,207 +274,155 @@ export function CertificateWizard({ embedded }: { embedded?: EmbeddedCertificate
                 }
               : undefined
           }
-          onSubmit={handleCreateDetails}
-          isPending={creating}
-          error={createError}
-          submitLabel={certificate ? 'Update Details & Recheck' : 'Save & Continue'}
+          hasExistingProof={Boolean(certificate?.certificateFileUrl)}
+          onSubmit={(details, file) => void handleSave(details, file)}
+          isPending={saving}
+          error={saveError}
+          submitLabel={certificate ? 'Save and check again' : 'Add certificate'}
         />
       </div>
     );
   }
 
-  const hasFileOrUrl = Boolean(certificate.certificateFileUrl || certificate.verificationUrl);
-  const hasSkills = certificate.skills.length > 0;
-  const hasLearning = Boolean(certificate.learningDescription);
+  // `stage` is only 0 without a certificate, so it is loaded from here on.
+  const cert = certificate as CandidateCertificateDto;
+  const outcome = cert.sourceCheck?.outcome;
+  const ready = learningDone(cert);
 
-  const isVoided = certificate.status === 'VOIDED' || certificate.sourceStatus === 'voided';
-  const isRejected =
-    certificate.status === 'REJECTED' || certificate.sourceStatus === 'source_failed';
-
-  if (isVoided || isRejected) {
-    return (
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <WizardHeader />
-
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-foreground">{certificate.title}</h2>
-            <p className="text-sm text-muted-foreground">{certificate.issuer}</p>
-          </div>
-          <CertificateStatusBadge status={certificate.status} />
-        </div>
-
-        <CertificateStatusStepper
-          status={certificate.status}
-          sourceStatus={certificate.sourceStatus}
-          hasFileOrUrl={hasFileOrUrl}
-          hasSkills={hasSkills}
-          hasLearning={hasLearning}
-        />
-
-        {isVoided && (
-          <div className="rounded-2xl border border-danger/30 bg-danger/10 p-6 text-sm text-danger-foreground">
-            <div className="flex items-start gap-3">
-              <ShieldAlert className="h-6 w-6 shrink-0 text-danger" />
-              <div>
-                <h4 className="font-semibold text-danger">Certificate Voided</h4>
-                <p className="mt-1 text-xs text-foreground/80 leading-relaxed">
-                  This certificate has been voided by a platform administrator due to an integrity
-                  policy violation or invalid credentials. Voided entries cannot be re-verified or
-                  edited.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {isRejected && (
-          <div className="rounded-2xl border border-warning/30 bg-warning/10 p-6 text-sm text-foreground">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-6 w-6 shrink-0 text-warning" />
-              <div className="flex-1">
-                <h4 className="font-semibold text-warning">Source Verification Failed</h4>
-                <p className="mt-1 text-xs text-foreground/80 leading-relaxed">
-                  Automated or manual check could not confirm this certificate against the issuer
-                  database or verification URL. Please double-check your Certificate Number, direct
-                  Verification URL, or re-upload a clear PDF document.
-                </p>
-                <div className="mt-4 flex gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="inline-flex items-center gap-2 text-xs"
-                    onClick={() => setIsEditingDetails(true)}
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" /> Edit Details &amp; Retry
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="rounded-2xl border border-border bg-muted/30 p-6">
-          <h3 className="mb-4 text-sm font-semibold text-foreground">
-            Verification History &amp; Audit Log
-          </h3>
-          {(eventsRes?.events.length ?? 0) === 0 ? (
-            <p className="text-xs text-muted-foreground">No verification events recorded yet.</p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {eventsRes?.events.map((event) => (
-                <li key={event.eventId} className="flex items-start gap-3 text-xs">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
-                  <div>
-                    <p className="text-foreground/80 font-mono">{event.message}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {new Date(event.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  const readyForVerification =
-    hasFileOrUrl &&
-    hasSkills &&
-    hasLearning &&
-    certificate.practicalApplied !== null &&
-    (!certificate.practicalApplied || Boolean(certificate.practicalDescription));
+  const cardActions = voided ? null : failed ? (
+    <button type="button" onClick={() => setIsEditingDetails(true)} className={ACTION_BUTTON}>
+      <RefreshCw className="size-3.5" aria-hidden /> Fix and check again
+    </button>
+  ) : outcome === 'needs_review' ? (
+    <>
+      <button type="button" onClick={() => setIsEditingDetails(true)} className={ACTION_BUTTON}>
+        <Pencil className="size-3.5" aria-hidden />
+        {cert.verificationUrl ? 'Change link or add a file' : 'Add the certificate link'}
+      </button>
+      {ready ? (
+        <button
+          type="button"
+          onClick={() => setShowEndorsement((open) => !open)}
+          className={ACTION_BUTTON}
+        >
+          <UserCheck className="size-3.5" aria-hidden /> Ask someone to vouch
+        </button>
+      ) : null}
+    </>
+  ) : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-      <WizardHeader />
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
+      {backLink}
 
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">{certificate.title}</h2>
-          <p className="text-sm text-muted-foreground">{certificate.issuer}</p>
-          {certificate.certificateNumber && (
-            <p className="text-xs text-muted-foreground font-mono mt-0.5">
-              Cert #: {certificate.certificateNumber}
-            </p>
-          )}
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-semibold text-foreground">{cert.title}</h2>
+          <p className="text-sm text-muted-foreground">{cert.issuer}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button
+        {voided ? null : (
+          <button
             type="button"
-            variant="ghost"
-            className="text-xs text-muted-foreground hover:text-foreground"
             onClick={() => setIsEditingDetails(true)}
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
-            Edit Details
-          </Button>
-          <CertificateStatusBadge status={certificate.status} />
-        </div>
+            <Pencil className="size-3.5" aria-hidden /> Edit
+          </button>
+        )}
       </div>
 
-      <CertificateStatusStepper
-        status={certificate.status}
-        sourceStatus={certificate.sourceStatus}
-        hasFileOrUrl={hasFileOrUrl}
-        hasSkills={hasSkills}
-        hasLearning={hasLearning}
-      />
+      <CertificateSourceCheckCard certificate={cert}>{cardActions}</CertificateSourceCheckCard>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div>
-          {certificate.certificateFileUrl ? (
-            <CertificatePreview
-              fileUrl={certificate.certificateFileUrl}
-              fileName={certificate.certificateFileName ?? 'certificate'}
-              mimeType={certificate.fileMimeType}
-              onReplace={() => setCertificate({ ...certificate, certificateFileUrl: null })}
-            />
-          ) : (
-            <CertificateUpload
-              onUpload={handleUpload}
-              onSourceUrlSubmit={handleSourceUrlSubmit}
-              isUploading={uploading}
-              error={uploadError}
-              currentFileName={certificate.certificateFileName}
-              currentSourceUrl={certificate.verificationUrl}
-            />
-          )}
-        </div>
-        <div>
+      {stage === 1 ? (
+        <motion.div
+          key="learning"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22 }}
+          className="flex flex-col gap-3"
+        >
           <SkillsLearningForm
-            certificate={certificate}
+            certificate={cert}
             onSaveSkills={handleSaveSkills}
             savingSkills={savingSkills}
             onSaveLearning={handleSaveLearning}
             savingLearning={savingLearning}
           />
-        </div>
-      </div>
-
-      {readyForVerification && certificate.sourceStatus === 'source_verified' ? (
-        <CertificateAgendaForm
-          certificateId={certificate.certificateId}
-          initialLines={certificate.agendaLines}
-          initialTrack={certificate.trackCode ?? null}
-          initialExpiry={certificate.expiryDate ?? null}
-          onSubmit={handleSubmitAgenda}
-          isPending={savingAgenda}
-          error={agendaError}
-        />
-      ) : readyForVerification ? (
-        <EndorsementRequestForm
-          onSubmit={handleRequestEndorsement}
-          isPending={requestingEndorsement}
-          error={endorsementError}
-        />
+          <button
+            type="button"
+            onClick={() => setLearningLater(true)}
+            className="self-end text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
+          >
+            Do this later
+          </button>
+        </motion.div>
       ) : (
-        <div className="rounded-xl border border-border bg-muted/30 p-4 text-center text-xs text-muted-foreground">
-          Add a certificate file or verification URL, at least one skill, and your practical
-          learning details to complete submission.
-        </div>
+        <motion.div
+          key="next"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22 }}
+          className="flex flex-col gap-4"
+        >
+          {!voided && !failed && !ready ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-muted/30 p-4 text-sm">
+              <span className="text-muted-foreground">
+                Add the skills you learned to unlock the assessment that shows this as Verified.
+              </span>
+              <button
+                type="button"
+                onClick={() => setLearningLater(false)}
+                className={VIVI_GHOST_BUTTON}
+              >
+                Add skills
+              </button>
+            </div>
+          ) : null}
+
+          {ready && cert.sourceStatus === 'source_verified' && cert.status !== 'VERIFIED' ? (
+            <CertificateAgendaForm
+              certificateId={cert.certificateId}
+              initialLines={cert.agendaLines}
+              initialTrack={cert.trackCode ?? null}
+              initialExpiry={cert.expiryDate ?? null}
+              onSubmit={handleSubmitAgenda}
+              isPending={savingAgenda}
+              error={agendaError}
+            />
+          ) : null}
+
+          {showEndorsement && outcome === 'needs_review' ? (
+            <EndorsementRequestForm
+              onSubmit={handleRequestEndorsement}
+              isPending={requestingEndorsement}
+              error={endorsementError}
+            />
+          ) : null}
+        </motion.div>
       )}
+
+      {(eventsRes?.events.length ?? 0) > 0 ? (
+        <details className="group rounded-xl border border-border bg-muted/20 px-4 py-3 text-xs">
+          <summary className="cursor-pointer select-none font-medium text-muted-foreground group-open:mb-3">
+            Verification history
+          </summary>
+          <ul className="flex flex-col gap-2.5">
+            {eventsRes?.events.map((event) => (
+              <li key={event.eventId} className="flex items-start gap-2.5">
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-zinc-400" />
+                <div className="min-w-0">
+                  <p className="break-words text-foreground/80">
+                    {event.message.replace(/^\[[A-Z0-9_]+\]\s*/u, '')}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {new Date(event.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </div>
   );
 }

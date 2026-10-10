@@ -7,11 +7,11 @@ import type { CandidateCertificateDto } from '@hirekiwi/contracts';
 import {
   certificateManageCtaLabel,
   certificateNeedsAssessment,
+  certificatePendingBadge,
   certificateProofSummary,
   certificateStatusIsPending,
   certificateStatusIsRejected,
   certificateStatusIsVerified,
-  certificateStatusLabel,
 } from '@/lib/certificate-entry-presenters';
 import {
   EntryBadge,
@@ -55,6 +55,7 @@ export function CertificateEntryCard({ certificate, onView, onManage }: Certific
   const isVerified = certificateStatusIsVerified(certificate.status);
   const isRejected = certificateStatusIsRejected(certificate.status);
   const isPending = certificateStatusIsPending(certificate.status);
+  const pendingBadge = certificatePendingBadge(certificate);
 
   return (
     <EntryCard>
@@ -82,8 +83,8 @@ export function CertificateEntryCard({ certificate, onView, onManage }: Certific
               </EntryBadge>
             ) : null}
             {isPending ? (
-              <EntryBadge tone="warning" icon={Clock}>
-                {certificateStatusLabel(certificate.status)}
+              <EntryBadge tone={pendingBadge.tone} icon={Clock}>
+                {pendingBadge.label}
               </EntryBadge>
             ) : null}
             {isRejected ? (
