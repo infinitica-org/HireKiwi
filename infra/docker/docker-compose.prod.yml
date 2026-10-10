@@ -1,7 +1,17 @@
+# HireKiwi — Production & Staging Docker Compose Topology
+# Purpose: Full stack deployment for single Linux VPS (Dev & Prod stacks with Blue-Green switching).
+# Each application is independently containerized and can be built, scaled, or updated individually.
+#
+# Usage:
+#   docker compose --env-file .env.prod -f infra/docker/docker-compose.prod.yml --profile apps --profile vps up -d
+#   Deploy single app:
+#     docker compose --env-file .env.prod -f infra/docker/docker-compose.prod.yml build web-student
+#     docker compose --env-file .env.prod -f infra/docker/docker-compose.prod.yml up -d --no-deps web-student
+
 name: hirekiwi
 
 x-app-env: &app-env
-  NODE_ENV: ${NODE_ENV:-development}
+  NODE_ENV: ${NODE_ENV:-production}
   DATABASE_URL: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@postgres:5432/hirekiwi?schema=public
   POOLED_DATABASE_URL: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@pgbouncer:6432/hirekiwi?schema=public
   REDIS_URL: redis://redis:6379
@@ -14,9 +24,7 @@ x-app-env: &app-env
   S3_ACCESS_KEY: ${MINIO_ROOT_USER:-hirekiwi}
   S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-hirekiwisecret}
   S3_BUCKET: hirekiwi
-  # S6-VV-119: `required` only after MinIO has a KMS key and the bucket encrypts by default.
   S3_ENCRYPTION: ${S3_ENCRYPTION:-off}
-  # S6-VV-120: `required` once the clamav service (profile `scan`) runs next to the API.
   FILE_SCAN: ${FILE_SCAN:-off}
   CLAMD_HOST: clamav
   LOG_PRETTY: "false"
@@ -40,8 +48,6 @@ x-app-env: &app-env
   PROCTORING_CV_URL: ${PROCTORING_CV_URL:-http://proctoring-cv:8091}
   PROCTORING_CV_PROVIDER: ${PROCTORING_CV_PROVIDER:-stub}
   CREDENTIAL_VERIFIER_URL: ${CREDENTIAL_VERIFIER_URL:-http://credential-verifier:3100}
-  # Opt-in: unset by default. Set to http://tempo:4318 (only meaningful with
-  # the `obs` profile also up) to export traces; see infra/observability/README.md.
   OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
   OTEL_TRACES_SAMPLER_RATIO: ${OTEL_TRACES_SAMPLER_RATIO:-1}
 
@@ -63,12 +69,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # Transaction-mode connection pooler in front of postgres. The `api`
-  # container's runtime pool (PrismaPg, one `pg.Pool` per process) talks to
-  # this instead of postgres directly once POOLED_DATABASE_URL is set —
-  # `prisma migrate deploy` keeps using DATABASE_URL (direct to postgres),
-  # since transaction pooling doesn't support the session-level features
-  # migrations need. See docs/delivery/DATABASE.md.
   pgbouncer:
     image: edoburu/pgbouncer:v1.25.2-p0
     restart: unless-stopped
@@ -95,18 +95,6 @@ services:
       retries: 10
       start_period: 10s
 
-  # AOF (fsync every second) instead of relying on RDB snapshot intervals —
-  # candidate assessment session state (session:assessment:{attempt_id})
-  # changes continuously; without this, a crash between snapshots could lose
-  # several minutes of an in-progress attempt instead of at most ~1s.
-  #
-  # maxmemory-policy noeviction (was volatile-lru): this instance is now also
-  # BullMQ's broker (credential-verifier's VERIFICATION_QUEUE, and api-core's
-  # own queues). BullMQ job data has no TTL, so volatile-lru could silently
-  # evict in-flight/queued jobs under memory pressure — a write failing
-  # loudly (OOM command not allowed) is far better than a job disappearing
-  # with no error anywhere. If maxmemory is hit in practice, raise
-  # REDIS_MAXMEMORY rather than reintroducing eviction.
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -127,7 +115,6 @@ services:
         "no",
       ]
     ports:
-      # Host 6380 — Windows often already binds 6379 (svchost/WSL), which ECONNRESETs ioredis.
       - "127.0.0.1:${REDIS_PORT:-6380}:6379"
     volumes:
       - redis_data:/data
@@ -149,12 +136,6 @@ services:
       - internal://redpanda:9092,external://localhost:19092
       - --mode
       - dev-container
-      # --mode dev-container bundles --unsafe-bypass-fsync=true (acks writes
-      # before they hit disk) along with the auto-topic-creation/low-memory
-      # properties we still want. Override just the fsync bypass — a later
-      # explicit flag wins over the bundle — so a crash/power-loss can't
-      # silently drop "committed" Kafka messages. Verified: this still starts
-      # cleanly with auto_create_topics_enabled intact.
       - --unsafe-bypass-fsync=false
     ports:
       - "127.0.0.1:${REDPANDA_PORT:-19092}:19092"
@@ -174,13 +155,8 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-hirekiwi}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-hirekiwisecret}
-      # Community MinIO: global CORS only (per-bucket mc cors set requires AIStor).
       MINIO_API_CORS_ALLOW_ORIGIN: ${MINIO_API_CORS_ALLOW_ORIGIN:-http://localhost:3001,http://127.0.0.1:3001,https://dev.app.hirekiwi.online}
-      # Metrics scraped in-network only (127.0.0.1-bound Prometheus) — public
-      # auth mode is acceptable here, but do not expose this port beyond that.
       MINIO_PROMETHEUS_AUTH_TYPE: public
-      # S6-VV-119: `<key-name>:<base64 32 bytes>` turns on SSE-S3. Empty = no KMS (today's behavior).
-      # LOSING THIS KEY MAKES EVERY ENCRYPTED OBJECT UNREADABLE. See docs/delivery/STORAGE_ENCRYPTION.md.
       MINIO_KMS_SECRET_KEY: ${MINIO_KMS_SECRET_KEY:-}
     ports:
       - "127.0.0.1:${MINIO_PORT:-9000}:9000"
@@ -194,10 +170,6 @@ services:
       retries: 10
       start_period: 10s
 
-  # One-shot: provisions the "hirekiwi" bucket so a fresh stack never hits
-  # NoSuchBucket on first upload. Idempotent (--ignore-existing) and exits
-  # after running — StorageService also self-heals this on boot as a
-  # second-layer guard for anyone running MinIO outside this compose file.
   minio-init:
     image: minio/mc:latest
     restart: "no"
@@ -205,7 +177,6 @@ services:
       minio:
         condition: service_healthy
     environment:
-      # S6-VV-119: only a flag, never the key itself.
       KMS_ENABLED: ${MINIO_KMS_SECRET_KEY:+true}
     entrypoint: >
       /bin/sh -c "
@@ -214,8 +185,6 @@ services:
       if [ \"$$KMS_ENABLED\" = true ]; then mc encrypt set sse-s3 local/hirekiwi; fi
       "
 
-  # S6-VV-120: malware scanning for uploads (FILE_SCAN=required). Needs ~1.2 GB RAM, so it only
-  # starts with `--profile scan`. freshclam keeps signatures current in the volume.
   clamav:
     image: clamav/clamav:stable
     restart: unless-stopped
@@ -249,8 +218,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # Prisma Studio — browse / edit Postgres rows against the live schema.
-  # UI: http://localhost:5555  (also: pnpm db:studio on the host)
   prisma-studio:
     build:
       context: .
@@ -268,11 +235,6 @@ services:
       postgres:
         condition: service_healthy
 
-  # Adminer — lightweight SQL browser, alternative to Prisma Studio for raw
-  # queries/table admin. Reachable at db.<domain> via Caddy (same Basic Auth
-  # gate as Prisma Studio — DB_BASIC_AUTH_USER/HASH — plus the Postgres login
-  # itself). Not started under the bare laptop profile-less stack; only when
-  # the `apps` profile (VPS stacks) is up, matching the other web services.
   adminer:
     image: adminer:4-standalone
     restart: unless-stopped
@@ -285,6 +247,10 @@ services:
       postgres:
         condition: service_healthy
     profiles: ["apps"]
+
+  # ---------------------------------------------------------------------------
+  # APPLICATIONS (Independently containerized services)
+  # ---------------------------------------------------------------------------
 
   api:
     build:
@@ -320,10 +286,6 @@ services:
       start_period: 25s
     profiles: ["apps"]
 
-  # One-shot: creates the credential-verifier's own database on the shared
-  # postgres instance. The postgres image only auto-creates POSTGRES_DB
-  # ("hirekiwi") on first boot — every other service's database is provisioned
-  # here, idempotently (checks pg_database first), same pattern as minio-init.
   credential-verifier-db-init:
     image: postgres:16-alpine
     restart: "no"
@@ -339,18 +301,13 @@ services:
       "
     profiles: ["apps"]
 
-  # Standalone credential verification engine (apps/credential-verifier) —
-  # adapter-based verification of external credentials (Credly, Open Badges,
-  # W3C VC, issuer pages). Runs HTTP + its BullMQ worker in one process
-  # (same pattern as `api`: a separate `worker.ts` entrypoint exists for
-  # local dev flexibility, but nothing here runs it as a second container).
   credential-verifier:
     build:
       context: ../..
       dockerfile: apps/credential-verifier/Dockerfile
     restart: unless-stopped
     environment:
-      NODE_ENV: ${NODE_ENV:-development}
+      NODE_ENV: ${NODE_ENV:-production}
       HOST: 0.0.0.0
       PORT: "3100"
       DATABASE_URL: postgresql://hirekiwi:${POSTGRES_PASSWORD:-hirekiwi}@postgres:5432/credential_verifier?schema=public
@@ -522,7 +479,6 @@ services:
       - "127.0.0.1:${AUTH_PORT:-3005}:3000"
     profiles: ["apps"]
 
-  # S6-VV-147 — employer portal (was built by CI but never deployed).
   web-company:
     build:
       context: ../..
@@ -586,10 +542,10 @@ services:
       - "127.0.0.1:${DOCS_PORT:-3008}:3000"
     profiles: ["apps"]
 
-  # S6-VV-97 — nightly encrypted, off-box backup of Postgres + MinIO objects.
-  # Idles (hirekiwi_backup_enabled 0) until BACKUP_ENABLED=true and the BACKUP_*
-  # vars are set; see docs/delivery/BACKUP_RESTORE.md. On demand:
-  #   docker compose ... --profile vps run --rm backup backup.sh
+  # ---------------------------------------------------------------------------
+  # INFRASTRUCTURE SERVICES (VPS, BACKUP, CADDY REVERSE PROXY)
+  # ---------------------------------------------------------------------------
+
   backup:
     build:
       context: ../backup
@@ -622,7 +578,6 @@ services:
       RCLONE_CONFIG_OFFSITE_REGION: ${BACKUP_S3_REGION:-}
       RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
       RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
-      # Upload without needing bucket-create/list-buckets permission.
       RCLONE_CONFIG_OFFSITE_NO_CHECK_BUCKET: "true"
     volumes:
       - backup_work:/work
@@ -665,18 +620,15 @@ services:
       - web-docs
       - prisma-studio
       - adminer
-    # Only one stack per host should enable profile `vps` (binds :80/:443).
     profiles: ["vps"]
+
+  # ---------------------------------------------------------------------------
+  # OBSERVABILITY STACK
+  # ---------------------------------------------------------------------------
 
   prometheus:
     image: prom/prometheus:v3.5.0
     restart: unless-stopped
-    # --web.enable-remote-write-receiver: lets k6's Prometheus remote-write
-    # output (tools/load-tests) push live VU/RPS/latency metrics during a run —
-    # see tools/load-tests/README.md. Loopback-only exposure (127.0.0.1 below)
-    # keeps this an acceptable local/CI trade-off.
-    # S6-VV-125: api-core rejects metric scrapes without x-metrics-token in production, so the token
-    # is written to a file that prometheus.yml reads (http_headers.files) before Prometheus starts.
     environment:
       METRICS_SCRAPE_TOKEN: ${METRICS_SCRAPE_TOKEN:-}
     entrypoint: ["/bin/sh", "-c"]
@@ -706,8 +658,6 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_USERS_DEFAULT_THEME: dark
-      # S6-VV-125: alert delivery (provisioning/alerting). Destination per decision D3; the
-      # defaults send alert email to Mailpit and point the webhook at a discard address.
       ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-alerts@hirekiwi.local}
       ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-http://127.0.0.1:9/alert-webhook-not-configured}
       GF_SMTP_ENABLED: "true"
@@ -717,7 +667,6 @@ services:
       GF_SMTP_FROM_ADDRESS: ${GRAFANA_SMTP_FROM:-alerts@hirekiwi.local}
       GF_SMTP_FROM_NAME: HireKiwi alerts
     ports:
-      # Host 3100 (not 3030) — keep Loki on 3101 to avoid collision.
       - "127.0.0.1:${GRAFANA_PORT:-3100}:3000"
     volumes:
       - grafana_data:/var/lib/grafana
@@ -774,9 +723,9 @@ services:
       - ../observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
       - tempo_data:/var/tempo
     ports:
-      - "127.0.0.1:${TEMPO_PORT:-3103}:3200" # query API (Grafana datasource)
-      - "127.0.0.1:${TEMPO_OTLP_GRPC_PORT:-4317}:4317" # OTLP gRPC ingest
-      - "127.0.0.1:${TEMPO_OTLP_HTTP_PORT:-4318}:4318" # OTLP HTTP ingest
+      - "127.0.0.1:${TEMPO_PORT:-3103}:3200"
+      - "127.0.0.1:${TEMPO_OTLP_GRPC_PORT:-4317}:4317"
+      - "127.0.0.1:${TEMPO_OTLP_HTTP_PORT:-4318}:4318"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3200/ready || exit 1"]
       interval: 15s
@@ -784,16 +733,11 @@ services:
       retries: 8
       start_period: 15s
     profiles: ["obs"]
-    # No app currently emits OTel traces to this — wiring an OTel SDK into
-    # api-core (and pointing it at http://tempo:4318) is a separate task.
-    # If /var/tempo permission errors show up on first boot, add `user: root`.
-
-  # --- exporters: turn existing containers/services into Prometheus targets ---
 
   cadvisor:
     image: ghcr.io/google/cadvisor:v0.60.5
     restart: unless-stopped
-    privileged: true # needed for full cgroup/device metrics on cgroup v2 hosts
+    privileged: true
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -818,7 +762,6 @@ services:
       - --path.sysfs=/host/sys
       - --path.rootfs=/rootfs
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
-      # S6-VV-97: exposes hirekiwi_backup_* written by the backup service.
       - --collector.textfile.directory=/textfile
     ports:
       - "127.0.0.1:${NODE_EXPORTER_PORT:-9101}:9100"

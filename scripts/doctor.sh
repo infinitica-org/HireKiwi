@@ -20,7 +20,8 @@ check "lockfile" "test -f pnpm-lock.yaml"
 check "lockfile importers" "node ./scripts/check-lockfile.mjs"
 
 if command -v docker >/dev/null; then
-  check "compose file" "docker compose -f infra/docker/docker-compose.yml config"
+  check "dev compose file" "docker compose -f infra/docker/docker-compose.dev.yml config"
+  check "prod compose file" "docker compose -f infra/docker/docker-compose.prod.yml --env-file .env.example config"
 fi
 
 exit "$fail"

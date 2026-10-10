@@ -13,7 +13,7 @@ everything.
 
 ## What runs
 
-The `backup` service in `infra/docker/docker-compose.yml` (profile `vps`, so it deploys with
+The `backup` service in `infra/docker/docker-compose.prod.yml` (profile `vps`, so it deploys with
 every VPS stack) runs `infra/backup/backup.sh` on `BACKUP_SCHEDULE` (cron, UTC; default
 `30 20 * * *` = 02:00 IST). Each run:
 
@@ -58,22 +58,22 @@ grep 'public key' hirekiwi-backup-age.key   # -> BACKUP_AGE_RECIPIENT
    recommended, so a compromised VPS can't wipe the history.
 2. **Set these in `.env.&lt;env&gt;`** on the server (see `.env.prod.example`):
 
-   | Var                                                       | Example                                                     |
-   | --------------------------------------------------------- | ----------------------------------------------------------- |
-   | `BACKUP_ENABLED`                                          | `true`                                                      |
-   | `BACKUP_ENV_NAME`                                         | `prod`                                                      |
-   | `BACKUP_AGE_RECIPIENT`                                    | `age1…`                                                     |
+   | Var                                                       | Example                                                        |
+   | --------------------------------------------------------- | -------------------------------------------------------------- |
+   | `BACKUP_ENABLED`                                          | `true`                                                         |
+   | `BACKUP_ENV_NAME`                                         | `prod`                                                         |
+   | `BACKUP_AGE_RECIPIENT`                                    | `age1…`                                                        |
    | `BACKUP_DEST`                                             | `offsite:hirekiwi-backups` (`offsite:&lt;bucket&gt;[/prefix]`) |
-   | `BACKUP_S3_PROVIDER`                                      | `Other` (B2), `AWS`, `Cloudflare`, … (rclone provider name) |
-   | `BACKUP_S3_ENDPOINT`                                      | `https://s3.us-west-004.backblazeb2.com` (empty for AWS)    |
-   | `BACKUP_S3_REGION`                                        | provider region, if required                                |
-   | `BACKUP_S3_ACCESS_KEY_ID` / `BACKUP_S3_SECRET_ACCESS_KEY` | the scoped key                                              |
+   | `BACKUP_S3_PROVIDER`                                      | `Other` (B2), `AWS`, `Cloudflare`, … (rclone provider name)    |
+   | `BACKUP_S3_ENDPOINT`                                      | `https://s3.us-west-004.backblazeb2.com` (empty for AWS)       |
+   | `BACKUP_S3_REGION`                                        | provider region, if required                                   |
+   | `BACKUP_S3_ACCESS_KEY_ID` / `BACKUP_S3_SECRET_ACCESS_KEY` | the scoped key                                                 |
 
 3. **Deploy** as usual (`bash scripts/deploy-vps.sh &lt;env&gt;`). Then force one run and confirm
    the upload:
 
 ```bash
-C="docker compose --env-file .env.prod -f infra/docker/docker-compose.yml --profile apps --profile vps"
+C="docker compose --env-file .env.prod -f infra/docker/docker-compose.prod.yml --profile apps --profile vps"
 $C run --rm --no-deps backup backup.sh
 $C run --rm --no-deps backup rclone lsf -R "offsite:hirekiwi-backups/prod/daily" | tail
 ```
@@ -85,8 +85,8 @@ Until `BACKUP_ENABLED=true`, the container idles and reports `hirekiwi_backup_en
 `backup.sh` writes to the shared `backup_metrics` volume, which `node-exporter` (profile
 `obs`) reads with its textfile collector:
 
-| Metric                                             | Meaning                            |
-| -------------------------------------------------- | ---------------------------------- |
+| Metric                                                | Meaning                            |
+| ----------------------------------------------------- | ---------------------------------- |
 | `hirekiwi_backup_enabled{env}`                        | 1 when scheduled backups are on    |
 | `hirekiwi_backup_last_success_timestamp_seconds{env}` | last complete upload               |
 | `hirekiwi_backup_last_failure_timestamp_seconds{env}` | last failed run                    |
@@ -116,7 +116,7 @@ and is never copied onto the server.
 Run it on the VPS, or on any machine with Docker and the repo, pointing at the same `.env`:
 
 ```bash
-C="docker compose --env-file .env.prod -f infra/docker/docker-compose.yml --profile apps --profile vps"
+C="docker compose --env-file .env.prod -f infra/docker/docker-compose.prod.yml --profile apps --profile vps"
 $C run --rm --no-deps \
   -v /path/to/hirekiwi-backup-age.key:/run/secrets/backup_age_key:ro \
   backup restore.sh --objects
@@ -149,6 +149,6 @@ Only when the live data is lost or corrupted. **This drops and recreates the liv
 
 ### Drill log
 
-| Date (UTC) | Environment                                                    | Backup                         | Result | Notes                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ---------- | -------------------------------------------------------------- | ------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Date (UTC) | Environment                                                    | Backup                         | Result | Notes                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------- | -------------------------------------------------------------- | ------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-09-24 | local throwaway stack (`pgvector:pg16` + MinIO, 67 migrations) | `drill/daily/20260924T192408Z` | PASS   | 7/7 row counts + latest migration matched; 3/3 objects. Also passed: a tampered artifact is rejected by checksum; a wrong key fails to decrypt; restoring over `hirekiwi` without `--force-live` is refused; a full `--force-live --restore-objects` recovery brought 14 → 25 users and 2 → 3 objects back, and `prisma migrate status` was up to date afterwards. First real-environment drill pending D1 (off-site target). |

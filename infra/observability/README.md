@@ -14,8 +14,9 @@ Owner: Vishal V.
 
 ```bash
 # From repo root — infra + apps + obs
-pnpm infra:up
-docker compose -f infra/docker/docker-compose.yml --profile apps --profile obs up -d
+pnpm infra:obs
+# Or manually:
+docker compose -f infra/docker/docker-compose.prod.yml --profile apps --profile obs up -d
 ```
 
 Grafana: http://localhost:3100 (admin / `hirekiwi` or anon).
@@ -62,7 +63,7 @@ when `OTEL_EXPORTER_OTLP_ENDPOINT` is set — it defaults unset, so a deployment
 that doesn't opt in is byte-for-byte unaffected. To see traces:
 
 ```bash
-# .env (or infra/docker/docker-compose.yml api-env), obs profile must be up
+# .env (or infra/docker/docker-compose.prod.yml api-env), obs profile must be up
 OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
 ```
 
@@ -79,7 +80,7 @@ hydration, so tracing the Next.js layer would mostly show static-shell
 delivery, not the load path this exists to diagnose.
 
 If Tempo fails to start with a permission error writing to `/var/tempo`, add
-`user: root` under the `tempo` service in `docker-compose.yml`.
+`user: root` under the `tempo` service in `docker-compose.prod.yml`.
 
 ## Notes
 

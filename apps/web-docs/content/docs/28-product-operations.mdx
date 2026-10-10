@@ -38,6 +38,9 @@ bash scripts/blue-green-deploy.sh rollback
 ### Runbook 2: Redis Cache Flush & Token Blacklist
 
 ```bash
-# In event of session token revocation:
-docker compose -f infra/docker/docker-compose.yml exec redis redis-cli FLUSHDB
+# In event of session token revocation (production):
+docker compose -f infra/docker/docker-compose.prod.yml exec redis redis-cli FLUSHDB
+
+# Or in local development:
+docker compose -f infra/docker/docker-compose.dev.yml exec redis redis-cli FLUSHDB
 ```

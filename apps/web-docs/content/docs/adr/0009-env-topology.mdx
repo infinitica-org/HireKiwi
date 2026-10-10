@@ -20,12 +20,16 @@ The HireKiwi platform requires high-availability zero-downtime releases, isolate
    - `qa` → Release candidate freeze and integration verification.
    - `main` → Production truth (`hirekiwi.online`) triggered via automated Blue-Green deployment (`scripts/blue-green-deploy.sh`).
 
-2. **Single High-End VPS Host Architecture:**
+2. **Single High-End VPS Host Architecture & Decoupled Compose:**
    - A single, dedicated high-performance Linux VPS hosts both environments in completely segregated Docker Compose networks and volumes.
+   - Compose configurations are strictly decoupled:
+     - Local development uses lightweight `docker-compose.dev.yml` (data plane only: Postgres, PgBouncer, Redis, Redpanda, MinIO, Mailpit, Prisma Studio), running applications natively on the host for rapid feedback (under 1.5 GB RAM).
+     - Production/VPS uses `docker-compose.prod.yml` with isolated color-coded networks and slots.
+   - Every application is packaged into its own isolated Dockerfile (`apps/<app>/Dockerfile`), enabling independent builds, service-level scaling, and granular rollouts without bouncing the entire stack.
    - Public TLS 1.3 is managed exclusively by a root Caddy reverse proxy on `:80` and `:443`.
-   - **Production Blue Slot:** API port `3000`, Web apps `3001`–`3006`.
-   - **Production Green Slot:** API port `3010`, Web apps `3011`–`3016`.
-   - **Isolated Dev Slot:** API port `3020`, Web apps `3021`–`3026`.
+   - **Production Blue Slot:** API port `3000`, Web apps `3001`–`3008`.
+   - **Production Green Slot:** API port `3010`, Web apps `3011`–`3018`.
+   - **Isolated Dev Slot:** API port `3020`, Web apps `3021`–`3028`.
 
 3. **Zero-Downtime Blue-Green Deployment:**
    - Production updates deploy to the currently inactive slot (Blue or Green).
@@ -53,5 +57,5 @@ The HireKiwi platform requires high-availability zero-downtime releases, isolate
 ## Consequences
 
 - Automated Blue-Green deployment orchestrated via `scripts/blue-green-deploy.sh prod`.
-- Dev deployments run via `scripts/deploy-vps.sh dev`.
+- Dev deployments run via `scripts/deploy-vps.sh dev` (supports selective single-service rollouts via `bash scripts/deploy-vps.sh dev <service>`).
 - Comprehensive architecture and operational runbooks detailed in [`infra/vps/README.md`](../../infra/vps/README.md), [`docs/delivery/DATABASE.md`](../delivery/DATABASE.md), and `@hirekiwi/web-docs`.

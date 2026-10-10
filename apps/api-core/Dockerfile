@@ -1,0 +1,116 @@
+# syntax=docker/dockerfile:1
+
+# Build from the monorepo root:
+#   docker build -f apps/api-core/Dockerfile -t hirekiwi-api .
+
+FROM node:22.20.0-bookworm-slim AS base
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
+
+WORKDIR /app
+
+# ---------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------
+FROM base AS deps
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
+
+# Required by root package.json preinstall hook.
+COPY scripts ./scripts
+
+# Copy workspace manifests first so dependency installation
+# remains cached when source files change.
+COPY packages/*/package.json ./packages/
+COPY apps/*/package.json ./apps/
+
+# API-specific Prisma files needed by the dependency/build lifecycle.
+COPY apps/api-core/prisma ./apps/api-core/prisma
+COPY apps/api-core/prisma.config.ts ./apps/api-core/prisma.config.ts
+
+RUN pnpm install --frozen-lockfile
+
+# ---------------------------------------------------------
+# Build
+# ---------------------------------------------------------
+FROM deps AS build
+
+COPY packages ./packages
+COPY apps ./apps
+
+ENV DATABASE_URL=postgresql://hirekiwi:hirekiwi@127.0.0.1:5432/hirekiwi
+
+RUN pnpm --filter @hirekiwi/api-core... build
+
+# ---------------------------------------------------------
+# Runtime
+# ---------------------------------------------------------
+FROM node:22.20.0-bookworm-slim AS runner
+
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+RUN useradd --system --uid 10001 hirekiwi
+
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/apps/api-core/dist \
+    ./apps/api-core/dist
+
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/apps/api-core/package.json \
+    ./apps/api-core/package.json
+
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/apps/api-core/prisma \
+    ./apps/api-core/prisma
+
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/apps/api-core/prisma.config.ts \
+    ./apps/api-core/prisma.config.ts
+
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/apps/api-core/src/generated \
+    ./apps/api-core/src/generated
+
+# Mirror generated Prisma client into dist/generated because compiled JS references it there.
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/apps/api-core/src/generated \
+    ./apps/api-core/dist/generated
+
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/apps/api-core/node_modules \
+    ./apps/api-core/node_modules
+
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/node_modules \
+    ./node_modules
+
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/packages \
+    ./packages
+
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/pnpm-workspace.yaml \
+    ./pnpm-workspace.yaml
+
+COPY --from=build --chown=hirekiwi:hirekiwi \
+    /app/package.json \
+    ./package.json
+
+USER hirekiwi
+
+EXPOSE 3000
+
+HEALTHCHECK \
+    --interval=20s \
+    --timeout=5s \
+    --start-period=20s \
+    CMD node -e "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+WORKDIR /app/apps/api-core
+
+CMD ["node", "dist/main.js"]

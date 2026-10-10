@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-COMPOSE=(docker compose -f infra/docker/docker-compose.yml)
+COMPOSE=(docker compose -f infra/docker/docker-compose.dev.yml)
 
 die() {
   echo

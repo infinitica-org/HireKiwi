@@ -55,12 +55,25 @@ HireKiwi operates on a dedicated **High-Performance Linux VPS (Ubuntu 24.04 LTS)
 
 ### Port Mapping Matrix (10 Apps + Data Plane)
 
-| Slot / Project        | API Core                        | Web Applications (`web-*`)                      | CV Sidecar | Environment Binding                       |
-| :-------------------- | :------------------------------ | :---------------------------------------------- | :--------- | :---------------------------------------- |
-| **Prod Blue Slot**    | `3000`                          | `3001`–`3008` (Student, TPO, Admin, Verify, Auth, Company, Landing, Docs) | `8091`     | `hirekiwi.online` (via Caddy upstream) |
-| **Prod Green Slot**   | `3010`                          | `3011`–`3018` (Standby mirrors)                 | `8092`     | Standby / deploy target during releases   |
-| **Dev Isolated Slot** | `3020`                          | `3021`–`3028` (Dev mirrors)                     | `8093`     | `dev.hirekiwi.online`                  |
-| **Internal Data**     | `5432`, `6432`, `6379`, `19092`, `9000` | Bound strictly to `127.0.0.1` (SSH Tunnel only) |
+| Slot / Project        | API Core                                | Web Applications (`web-*`)                                                | CV Sidecar | Environment Binding                     |
+| :-------------------- | :-------------------------------------- | :------------------------------------------------------------------------ | :--------- | :-------------------------------------- |
+| **Prod Blue Slot**    | `3000`                                  | `3001`–`3008` (Student, TPO, Admin, Verify, Auth, Company, Landing, Docs) | `8091`     | `hirekiwi.online` (via Caddy upstream)  |
+| **Prod Green Slot**   | `3010`                                  | `3011`–`3018` (Standby mirrors)                                           | `8092`     | Standby / deploy target during releases |
+| **Dev Isolated Slot** | `3020`                                  | `3021`–`3028` (Dev mirrors)                                               | `8093`     | `dev.hirekiwi.online`                   |
+| **Internal Data**     | `5432`, `6432`, `6379`, `19092`, `9000` | Bound strictly to `127.0.0.1` (SSH Tunnel only)                           |
+
+### Decoupled Compose & Per-App Containerization
+
+To optimize developer velocity while maintaining production isolation, container topology is decoupled into distinct layers:
+
+1. **Lightweight Dev Data Plane (`infra/docker/docker-compose.dev.yml`):**
+   - Boots only backend dependencies: PostgreSQL 16 + pgvector, PgBouncer, Redis 7, Redpanda, MinIO, Mailpit, and Prisma Studio.
+   - Applications run natively on the host machine (`pnpm dev`) for sub-second hot reloading with minimal resource overhead (under 1.5 GB RAM).
+
+2. **Production Multi-Slot Topology (`infra/docker/docker-compose.prod.yml`):**
+   - Orchestrates the complete production runtime including Caddy TLS reverse proxy, automated backup engine, and observability stack.
+   - Every service is containerized via its own independent Dockerfile (`apps/<app>/Dockerfile`).
+   - Supports granular, zero-downtime service deployments and scaling (`bash scripts/deploy-vps.sh <env> <service>`) without affecting untouched containers.
 
 ---
 
