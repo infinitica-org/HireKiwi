@@ -1,7 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Download, ShieldCheck, Users, Briefcase, ClipboardList } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Download,
+  ShieldCheck,
+  Users,
+  Briefcase,
+  ClipboardList,
+  AlertCircle,
+  RotateCcw,
+} from 'lucide-react';
 import type { InstitutionStudentDto, JobOpeningDto, SkillClaimDto } from '@hirekiwi/contracts';
 import { api, employersApi, openingsApi } from '../../lib/api';
 import { countInstitutionPlacementApplications } from '../../lib/placement-application-count';
@@ -10,10 +18,18 @@ import {
   buildEmployerEngagementRows,
   buildPlacementOpportunitiesSummary,
   buildVerificationByMajorRows,
+  exportConsolidatedReportCsv,
   exportEmployerEngagementCsv,
-  exportPlacementOpportunitiesCsv,
   exportVerificationByMajorCsv,
 } from '../../lib/tpo-reports-export';
+
+type FetchErrors = {
+  students?: boolean;
+  claims?: boolean;
+  openings?: boolean;
+  employers?: boolean;
+  applications?: boolean;
+};
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -32,44 +48,111 @@ export function UniversityReportsExport() {
     ReturnType<typeof buildEmployerEngagementRows>
   >([]);
   const [loading, setLoading] = useState(true);
+  const [fetchErrors, setFetchErrors] = useState<FetchErrors>({});
+  const mountedRef = useRef(true);
+
+  const hasError = useMemo(() => Object.values(fetchErrors).some(Boolean), [fetchErrors]);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setFetchErrors({});
+
+    const errors: FetchErrors = {};
+
+    const [studentsResult, claimsResult, openingsResult, employersResult] =
+      await Promise.allSettled([
+        api.onboarding.listTpoStudents(),
+        api.assessment.listSkillClaims(),
+        openingsApi.list(),
+        employersApi.list(),
+      ]);
+
+    if (!mountedRef.current) return;
+
+    let loadedStudents: InstitutionStudentDto[] = [];
+    if (studentsResult.status === 'fulfilled') {
+      loadedStudents = studentsResult.value;
+      setStudents(loadedStudents);
+    } else {
+      errors.students = true;
+      setStudents([]);
+    }
+
+    let loadedClaims: SkillClaimDto[] = [];
+    if (claimsResult.status === 'fulfilled') {
+      loadedClaims = claimsResult.value;
+      setClaims(loadedClaims);
+    } else {
+      errors.claims = true;
+      setClaims([]);
+    }
+
+    let loadedOpenings: JobOpeningDto[] = [];
+    if (openingsResult.status === 'fulfilled') {
+      loadedOpenings = openingsResult.value.openings;
+      setOpenings(loadedOpenings);
+    } else {
+      errors.openings = true;
+      setOpenings([]);
+    }
+
+    let loadedEmployers: ReturnType<typeof buildEmployerEngagementRows> = [];
+    let rawEmployers: Array<{
+      employerId: string;
+      institutionId: string;
+      name: string;
+      openingCount: number;
+      activeOpeningCount: number;
+      createdAt: string;
+      updatedAt: string;
+    }> = [];
+
+    if (employersResult.status === 'fulfilled') {
+      rawEmployers = employersResult.value.employers;
+    } else {
+      errors.employers = true;
+    }
+
+    // Reuse already-fetched openings for application counts
+    if (openingsResult.status === 'fulfilled') {
+      try {
+        const appCounts = await countInstitutionPlacementApplications(loadedOpenings);
+        if (!mountedRef.current) return;
+        setApplicationTotal(appCounts.total);
+        if (employersResult.status === 'fulfilled') {
+          const byEmployer = applicationCountByEmployerId(loadedOpenings, appCounts.byOpeningId);
+          loadedEmployers = buildEmployerEngagementRows(rawEmployers, byEmployer);
+          setEmployerEngagement(loadedEmployers);
+        } else {
+          setEmployerEngagement([]);
+        }
+      } catch {
+        if (!mountedRef.current) return;
+        errors.applications = true;
+        setApplicationTotal(0);
+        setEmployerEngagement([]);
+      }
+    } else {
+      errors.applications = true;
+      setApplicationTotal(0);
+      setEmployerEngagement([]);
+    }
+
+    if (!mountedRef.current) return;
+    setFetchErrors(errors);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     if (typeof window !== 'undefined') {
       document.title = 'Reports & Analytics · HireKiwi TPO';
     }
-    let active = true;
-    setLoading(true);
-
-    Promise.all([
-      api.onboarding.listTpoStudents().catch(() => [] as InstitutionStudentDto[]),
-      api.assessment.listSkillClaims().catch(() => [] as SkillClaimDto[]),
-      openingsApi.list().catch(() => ({ openings: [] as JobOpeningDto[] })),
-      employersApi.list().catch(() => ({ employers: [] })),
-      countInstitutionPlacementApplications().catch(() => ({
-        total: 0,
-        byOpeningId: new Map<string, number>(),
-      })),
-    ])
-      .then(([studentList, claimList, openingsRes, employersRes, appCounts]) => {
-        if (!active) return;
-        setStudents(studentList);
-        setClaims(claimList);
-        setOpenings(openingsRes.openings);
-        setApplicationTotal(appCounts.total);
-        const byEmployer = applicationCountByEmployerId(
-          openingsRes.openings,
-          appCounts.byOpeningId,
-        );
-        setEmployerEngagement(buildEmployerEngagementRows(employersRes.employers, byEmployer));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
+    loadData();
     return () => {
-      active = false;
+      mountedRef.current = false;
     };
-  }, []);
+  }, [loadData]);
 
   const verificationRows = useMemo(
     () => buildVerificationByMajorRows(students, claims),
@@ -80,6 +163,15 @@ export function UniversityReportsExport() {
     () => buildPlacementOpportunitiesSummary(students, claims, openings, applicationTotal),
     [students, claims, openings, applicationTotal],
   );
+
+  const handleGlobalExport = () => {
+    if (loading || hasError) return;
+    exportConsolidatedReportCsv({
+      summary: placementSummary,
+      verificationRows,
+      employerRows: employerEngagement,
+    });
+  };
 
   return (
     <div className="space-y-6 pb-12 pt-4">
@@ -95,13 +187,51 @@ export function UniversityReportsExport() {
         </div>
         <button
           type="button"
-          onClick={() => exportPlacementOpportunitiesCsv(placementSummary)}
-          className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2.5 text-xs font-semibold text-white shadow-2xs transition-all hover:bg-zinc-800 active:scale-[0.98]"
+          disabled={loading || hasError}
+          onClick={handleGlobalExport}
+          title={
+            hasError
+              ? 'Export unavailable: some report metrics could not be loaded.'
+              : loading
+                ? 'Loading report data…'
+                : 'Export All Metrics (CSV)'
+          }
+          className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2.5 text-xs font-semibold text-white shadow-2xs transition-all hover:bg-zinc-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Download className="size-4" aria-hidden />
           Export All Metrics (CSV)
         </button>
       </div>
+
+      {/* Non-intrusive Error Alert Banner */}
+      {hasError && !loading && (
+        <div
+          role="alert"
+          aria-live="polite"
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50/90 p-4 text-rose-900 shadow-2xs"
+        >
+          <div className="flex items-center gap-3">
+            <AlertCircle className="size-5 shrink-0 text-rose-600" aria-hidden="true" />
+            <div>
+              <p className="text-xs sm:text-sm font-semibold text-rose-950">
+                Failed to load some report metrics
+              </p>
+              <p className="text-xs text-rose-700">
+                Some data could not be retrieved due to a network or server issue. Check your
+                connection and try again.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={loadData}
+            className="inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs transition-all hover:bg-rose-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+          >
+            <RotateCcw className="size-3.5" aria-hidden="true" />
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Modern KPI Stats Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -114,13 +244,21 @@ export function UniversityReportsExport() {
               <Users className="size-4.5 stroke-[1.75]" />
             </div>
           </div>
-          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
-            {loading ? '—' : placementSummary.whitelisted.toLocaleString('en-US')}
+          <div
+            className={`mt-2 font-heading text-3xl font-extrabold ${
+              fetchErrors.students ? 'text-rose-600 text-xl' : 'text-zinc-950'
+            }`}
+          >
+            {loading
+              ? '—'
+              : fetchErrors.students
+                ? 'Unavailable'
+                : placementSummary.whitelisted.toLocaleString('en-US')}
           </div>
           <div className="mt-3 text-xs font-medium text-zinc-500">Enrolled candidates</div>
         </div>
 
-        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90  p-5 shadow-2xs transition-all hover:border-zinc-300">
+        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90 p-5 shadow-2xs transition-all hover:border-zinc-300">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
               Fully Verified
@@ -129,13 +267,21 @@ export function UniversityReportsExport() {
               <ShieldCheck className="size-4.5 stroke-[1.75]" />
             </div>
           </div>
-          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
-            {loading ? '—' : placementSummary.fullyVerified.toLocaleString('en-US')}
+          <div
+            className={`mt-2 font-heading text-3xl font-extrabold ${
+              fetchErrors.students || fetchErrors.claims ? 'text-rose-600 text-xl' : 'text-zinc-950'
+            }`}
+          >
+            {loading
+              ? '—'
+              : fetchErrors.students || fetchErrors.claims
+                ? 'Unavailable'
+                : placementSummary.fullyVerified.toLocaleString('en-US')}
           </div>
           <div className="mt-3 text-xs font-medium text-zinc-500">Certified credentials</div>
         </div>
 
-        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90  p-5 shadow-2xs transition-all hover:border-zinc-300">
+        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90 p-5 shadow-2xs transition-all hover:border-zinc-300">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
               Active Drives
@@ -144,13 +290,21 @@ export function UniversityReportsExport() {
               <Briefcase className="size-4.5 stroke-[1.75]" />
             </div>
           </div>
-          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
-            {loading ? '—' : placementSummary.activeOpenings.toLocaleString('en-US')}
+          <div
+            className={`mt-2 font-heading text-3xl font-extrabold ${
+              fetchErrors.openings ? 'text-rose-600 text-xl' : 'text-zinc-950'
+            }`}
+          >
+            {loading
+              ? '—'
+              : fetchErrors.openings
+                ? 'Unavailable'
+                : placementSummary.activeOpenings.toLocaleString('en-US')}
           </div>
           <div className="mt-3 text-xs font-medium text-zinc-500">Active placement openings</div>
         </div>
 
-        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90  p-5 shadow-2xs transition-all hover:border-zinc-300">
+        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90 p-5 shadow-2xs transition-all hover:border-zinc-300">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
               Applications Matched
@@ -159,26 +313,38 @@ export function UniversityReportsExport() {
               <ClipboardList className="size-4.5 stroke-[1.75]" />
             </div>
           </div>
-          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
-            {loading ? '—' : placementSummary.totalApplications.toLocaleString('en-US')}
+          <div
+            className={`mt-2 font-heading text-3xl font-extrabold ${
+              fetchErrors.applications || fetchErrors.openings
+                ? 'text-rose-600 text-xl'
+                : 'text-zinc-950'
+            }`}
+          >
+            {loading
+              ? '—'
+              : fetchErrors.applications || fetchErrors.openings
+                ? 'Unavailable'
+                : placementSummary.totalApplications.toLocaleString('en-US')}
           </div>
           <div className="mt-3 text-xs font-medium text-zinc-500">Submitted applications</div>
         </div>
       </div>
 
-      {/* Verification by Major Section */}
+      {/* Verification by Major / Cohort Section */}
       <div className="rounded-xl border border-zinc-200/90 bg-white shadow-2xs">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 rounded-t-xl">
           <div>
             <h2 className="text-lg font-bold text-zinc-900">Verification Completion by Major</h2>
             <p className="mt-0.5 text-xs text-zinc-400">
-              Whitelisted students grouped by major cohort, with full vs partial verification.
+              Whitelisted students grouped by cohort / batch, with full, partial, and pending
+              verification.
             </p>
           </div>
           <button
             type="button"
+            disabled={loading || Boolean(fetchErrors.students || fetchErrors.claims)}
             onClick={() => exportVerificationByMajorCsv(verificationRows)}
-            className="inline-flex items-center gap-2 rounded-md border border-zinc-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 shadow-2xs transition-all hover:bg-zinc-50 hover:border-zinc-300"
+            className="inline-flex items-center gap-2 rounded-md border border-zinc-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 shadow-2xs transition-all hover:bg-zinc-50 hover:border-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="size-3.5 text-zinc-700" aria-hidden />
             Export CSV
@@ -188,23 +354,33 @@ export function UniversityReportsExport() {
           <table className="w-full min-w-[640px] text-left text-xs font-sans">
             <thead>
               <tr className="border-b border-zinc-200/80 bg-zinc-50/60 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
-                <th className="px-5 py-3.5">Major Cohort</th>
+                <th className="px-5 py-3.5">Cohort / Batch</th>
                 <th className="px-5 py-3.5">Whitelisted</th>
                 <th className="px-5 py-3.5">Fully Verified</th>
                 <th className="px-5 py-3.5">Partial</th>
+                <th className="px-5 py-3.5">Pending</th>
                 <th className="px-5 py-3.5 text-right">Completion</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-xs text-zinc-500">
+                  <td colSpan={6} className="px-5 py-12 text-center text-xs text-zinc-500">
                     Loading verification metrics…
+                  </td>
+                </tr>
+              ) : fetchErrors.students || fetchErrors.claims ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-5 py-12 text-center text-xs text-rose-600 font-medium"
+                  >
+                    Failed to load verification metrics. Please use Retry above.
                   </td>
                 </tr>
               ) : verificationRows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-xs text-zinc-500">
+                  <td colSpan={6} className="px-5 py-12 text-center text-xs text-zinc-500">
                     No students on the whitelist yet.
                   </td>
                 </tr>
@@ -227,9 +403,17 @@ export function UniversityReportsExport() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 font-mono text-zinc-700">{row.partial}</td>
+                    <td className="px-5 py-3.5 font-mono text-zinc-700">{row.pending}</td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="inline-flex items-center gap-2">
-                        <div className="h-2 w-16 overflow-hidden rounded-full bg-zinc-100">
+                        <div
+                          role="progressbar"
+                          aria-valuenow={row.completionPct}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`${row.major} verification completion: ${row.completionPct}%`}
+                          className="h-2 w-16 overflow-hidden rounded-full bg-zinc-100"
+                        >
                           <div
                             className="h-full rounded-full bg-emerald-500 transition-all duration-300"
                             style={{ width: `${Math.min(row.completionPct, 100)}%` }}
@@ -248,7 +432,7 @@ export function UniversityReportsExport() {
         </div>
       </div>
 
-      {/* Employer Engagement by School */}
+      {/* Employer Engagement by Institution */}
       <div className="rounded-xl border border-zinc-200/90 bg-white shadow-2xs">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 rounded-t-xl">
           <div>
@@ -259,8 +443,12 @@ export function UniversityReportsExport() {
           </div>
           <button
             type="button"
+            disabled={
+              loading ||
+              Boolean(fetchErrors.employers || fetchErrors.openings || fetchErrors.applications)
+            }
             onClick={() => exportEmployerEngagementCsv(employerEngagement)}
-            className="inline-flex items-center gap-2 rounded-md border border-zinc-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 shadow-2xs transition-all hover:bg-zinc-50 hover:border-zinc-300"
+            className="inline-flex items-center gap-2 rounded-md border border-zinc-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 shadow-2xs transition-all hover:bg-zinc-50 hover:border-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="size-3.5 text-zinc-700" aria-hidden />
             Export CSV
@@ -281,6 +469,15 @@ export function UniversityReportsExport() {
                 <tr>
                   <td colSpan={4} className="px-5 py-12 text-center text-xs text-zinc-500">
                     Loading employer engagement…
+                  </td>
+                </tr>
+              ) : fetchErrors.employers || fetchErrors.openings || fetchErrors.applications ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-5 py-12 text-center text-xs text-rose-600 font-medium"
+                  >
+                    Failed to load employer engagement data. Please use Retry above.
                   </td>
                 </tr>
               ) : employerEngagement.length === 0 ? (

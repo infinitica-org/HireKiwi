@@ -3,17 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { BatchDto, CampusDto } from '@hirekiwi/contracts';
-import {
-  LayoutGrid,
-  Loader2,
-  MapPin,
-  Plus,
-  Search,
-  Users,
-  Clock,
-  X,
-  RefreshCw,
-} from 'lucide-react';
+import { LayoutGrid, Loader2, MapPin, Plus, Search, Users, Clock, X } from 'lucide-react';
 import { api } from '../../lib/api';
 import { CustomSelect } from '../ui/CustomSelect';
 
@@ -108,7 +98,7 @@ export function BatchesWorkspace() {
   return (
     <div className="space-y-4 pb-12">
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="relative overflow-hidden rounded-xl border border-zinc-200/90 bg-white p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
@@ -153,21 +143,6 @@ export function BatchesWorkspace() {
           </div>
           <div className="mt-3 text-xs font-medium text-zinc-500">Unclaimed onboarding invites</div>
         </div>
-
-        <div className="relative overflow-hidden rounded-xl border border-zinc-200/90 bg-white p-5 shadow-2xs transition-all hover:border-zinc-300 hover:shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-              Campuses
-            </span>
-            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-100/90 text-zinc-800 shadow-2xs">
-              <MapPin className="size-4.5 stroke-[1.75]" />
-            </div>
-          </div>
-          <div className="mt-2 font-heading text-3xl font-extrabold text-zinc-950">
-            {campuses.length > 0 ? campuses.length.toLocaleString('en-US') : '1'}
-          </div>
-          <div className="mt-3 text-xs font-medium text-zinc-500">Associated campus locations</div>
-        </div>
       </div>
 
       {error ? (
@@ -195,7 +170,7 @@ export function BatchesWorkspace() {
             {/* Controls Aligned Opposite on Right */}
             <div className="flex flex-wrap items-center gap-3 lg:justify-end">
               {/* Search Box */}
-              <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+              <div className="relative w-full flex-1 sm:w-72 sm:flex-initial">
                 <Search
                   className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400"
                   aria-hidden
@@ -204,7 +179,7 @@ export function BatchesWorkspace() {
                   type="search"
                   aria-label="Search batches by name or code"
                   placeholder="Search batches by name or code…"
-                  className="h-10 w-full rounded-md border border-zinc-200 bg-white pl-9 pr-3 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-zinc-950 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950"
+                  className="h-10 w-full rounded-md border border-zinc-200 bg-white pl-9 pr-3 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-zinc-950 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -226,16 +201,6 @@ export function BatchesWorkspace() {
                   className="min-w-[140px]"
                 />
               ) : null}
-
-              {/* Refresh Button */}
-              <button
-                type="button"
-                onClick={() => void load()}
-                className="h-10 inline-flex items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3.5 text-xs font-semibold text-zinc-700 shadow-2xs transition-all hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-950"
-              >
-                <RefreshCw className="size-3.5 text-zinc-500" />
-                Refresh
-              </button>
 
               {/* Create Batch Modal Trigger Button */}
               <button

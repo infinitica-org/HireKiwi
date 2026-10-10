@@ -19,19 +19,6 @@ function formatProficiency(value: string): string {
   return proficiencyLevelUiLabel(value);
 }
 
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return '—';
-  }
-}
-
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
@@ -68,7 +55,6 @@ export function CandidateRepositoryProfileView({
   const verifiedCount = claims?.filter((c) => c.status === 'VERIFIED').length ?? 0;
   const firstClaim = claims?.[0];
   const primaryCategory = firstClaim ? categoryNameForSkillCode(firstClaim.skillCode) : null;
-  const onboardingComplete = candidate.inviteStatus === 'ACCEPTED';
 
   return (
     <div className="space-y-4">
@@ -96,47 +82,14 @@ export function CandidateRepositoryProfileView({
                 {candidate.email}
               </a>
 
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                {onboardingComplete ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/90 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 shadow-2xs">
-                    <span className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
-                    Onboarding complete
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 shadow-2xs">
-                    <span className="size-1.5 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
-                    Invite Pending
-                  </span>
-                )}
-
-                {candidate.heldAt ? (
+              {candidate.heldAt ? (
+                <div className="pt-1">
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/90 bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800 shadow-2xs">
                     <span className="size-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.5)]" />
                     Hold Active
                   </span>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          {/* Invitation Timestamps */}
-          <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end sm:gap-1.5">
-            <div className="flex items-center gap-2 rounded-lg border border-zinc-200/70 bg-zinc-50/70 px-3 py-1.5 text-xs">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                Invite sent:
-              </span>
-              <span className="font-mono font-semibold text-zinc-800">
-                {formatDate(candidate.lastSentAt)}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 rounded-lg border border-zinc-200/70 bg-zinc-50/70 px-3 py-1.5 text-xs">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                Accepted:
-              </span>
-              <span className="font-mono font-semibold text-zinc-800">
-                {formatDate(candidate.acceptedAt)}
-              </span>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

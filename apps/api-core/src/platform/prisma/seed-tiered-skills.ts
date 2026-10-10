@@ -1,6 +1,8 @@
 // AUTO-GENERATED: Tiered Skill Taxonomy Inventory Seed Module
 // Contains 948 skills across 3 Tiers (Technologies, Platforms & Ecosystems, Standards/Protocols/Formats).
 
+import { classifySkillDomainCode } from './skill-domain-classifier.js';
+
 export interface TieredSkillDefinition {
   readonly tier: 1 | 2 | 3;
   readonly tierName:
@@ -6653,22 +6655,31 @@ export interface PrismaSkillClient {
   skill: {
     upsert(args: {
       where: { code: string };
-      update: { name: string; domain: string; active: boolean };
-      create: { code: string; name: string; domain: string; active: boolean };
+      update: { name: string; domain: string; domainCode: string; active: boolean };
+      create: {
+        code: string;
+        name: string;
+        domain: string;
+        domainCode: string;
+        active: boolean;
+      };
     }): Promise<unknown>;
   };
 }
 
 /**
  * Seeds all 948 skills from the Tiered Framework skill inventory into PostgreSQL via Prisma.
+ * Each skill also gets a literal A-E `domainCode` (S8-RM-XX) so the matcher's 5-domain radar
+ * no longer collapses every axis onto the same aggregate signal — see skill-domain-classifier.ts.
  */
 export async function seedTieredSkills(prisma: PrismaSkillClient): Promise<{ seeded: number }> {
   let seeded = 0;
   for (const item of TIERED_SKILL_CATALOG) {
+    const domainCode = classifySkillDomainCode(item.name);
     await prisma.skill.upsert({
       where: { code: item.code },
-      update: { name: item.name, domain: item.domain, active: true },
-      create: { code: item.code, name: item.name, domain: item.domain, active: true },
+      update: { name: item.name, domain: item.domain, domainCode, active: true },
+      create: { code: item.code, name: item.name, domain: item.domain, domainCode, active: true },
     });
     seeded++;
   }

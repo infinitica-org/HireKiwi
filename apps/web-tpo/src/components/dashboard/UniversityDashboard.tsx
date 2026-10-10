@@ -1,11 +1,13 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Plus, ArrowRight, Clock, Eye, ArrowUpDown, Search } from 'lucide-react';
+import { Plus, ArrowRight, Clock, Eye, ArrowUpDown, Search, X } from 'lucide-react';
 import type { InstitutionStudentDto, SkillClaimDto } from '@hirekiwi/contracts';
 import {
   buildUniversityRosterRows,
   computeUniversityDashboardMetrics,
+  filterUniversityRoster,
   type StudentVerificationState,
 } from '../../lib/university-dashboard-metrics';
 import { bentoCardClass, dashboardSkeletonClass } from '../../lib/tpo-dashboard-ui';
@@ -55,6 +57,8 @@ function renderVerificationBadge(state: StudentVerificationState) {
   );
 }
 
+const ROSTER_PAGE_SIZE = 8;
+
 export function UniversityDashboard({
   students,
   claims,
@@ -62,8 +66,22 @@ export function UniversityDashboard({
   institutionName,
   loading,
 }: UniversityDashboardProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+
   const metrics = computeUniversityDashboardMetrics(students, claims, placementApplicationCount);
-  const roster = buildUniversityRosterRows(students, claims);
+  const roster = useMemo(() => buildUniversityRosterRows(students, claims), [students, claims]);
+  const filteredRoster = useMemo(
+    () => filterUniversityRoster(roster, searchQuery),
+    [roster, searchQuery],
+  );
+
+  const totalFiltered = filteredRoster.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / ROSTER_PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const startIndex = totalFiltered === 0 ? 0 : (safePage - 1) * ROSTER_PAGE_SIZE;
+  const endIndex = totalFiltered === 0 ? 0 : Math.min(startIndex + ROSTER_PAGE_SIZE, totalFiltered);
+  const pagedRoster = filteredRoster.slice(startIndex, endIndex);
 
   // Dynamic Recent Activity derived strictly from claims & student events
   const dynamicActivities =
@@ -231,9 +249,29 @@ export function UniversityDashboard({
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
                   <input
                     type="text"
+                    role="searchbox"
+                    aria-label="Search roster"
                     placeholder="Search roster..."
-                    className="h-8 rounded-md border border-zinc-200 pl-8 pr-3 text-xs text-zinc-800 placeholder:text-zinc-400 focus:outline-2 focus:outline-zinc-900"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setPage(1);
+                    }}
+                    className="h-8 rounded-md border border-zinc-200 pl-8 pr-8 text-xs text-zinc-800 placeholder:text-zinc-400 focus:outline-2 focus:outline-zinc-900"
                   />
+                  {searchQuery.trim().length > 0 && (
+                    <button
+                      type="button"
+                      aria-label="Clear search input"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setPage(1);
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  )}
                 </div>
                 <Link
                   href="/students"
@@ -260,6 +298,24 @@ export function UniversityDashboard({
                   Open whitelist
                 </Link>
               </div>
+            ) : filteredRoster.length === 0 ? (
+              <div className="mt-4 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/60 p-8 text-center">
+                <p className="text-xs font-medium text-zinc-600">No students match your search</p>
+                <p className="text-[11px] text-zinc-400 mt-1">
+                  No candidates match &ldquo;{searchQuery.trim()}&rdquo;. Try another name, email,
+                  or student ID.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setPage(1);
+                  }}
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-900 underline hover:text-zinc-700"
+                >
+                  Clear search
+                </button>
+              </div>
             ) : (
               <>
                 {/* Table Frame with Neat Border */}
@@ -285,7 +341,7 @@ export function UniversityDashboard({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-100">
-                        {roster.slice(0, 8).map((row) => (
+                        {pagedRoster.map((row) => (
                           <tr key={row.userId} className="transition-colors hover:bg-zinc-50/60">
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-3">
@@ -340,19 +396,27 @@ export function UniversityDashboard({
                 <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-zinc-100 text-xs text-zinc-500">
                   <div>
                     Showing{' '}
-                    <span className="font-bold text-zinc-900">1-{Math.min(8, roster.length)}</span>{' '}
-                    from <span className="font-bold text-zinc-900">{roster.length}</span>
+                    <span className="font-bold text-zinc-900">
+                      {startIndex + 1}-{endIndex}
+                    </span>{' '}
+                    from <span className="font-bold text-zinc-900">{totalFiltered}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={safePage <= 1}
+                      aria-label="Previous page"
+                      className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
                     >
                       Previous
                     </button>
                     <button
                       type="button"
-                      className="rounded-lg bg-zinc-950 px-3.5 py-1.5 font-semibold text-white shadow-2xs hover:bg-zinc-800"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={safePage >= totalPages}
+                      aria-label="Next page"
+                      className="rounded-lg bg-zinc-950 px-3.5 py-1.5 font-semibold text-white shadow-2xs hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-zinc-950"
                     >
                       Next
                     </button>

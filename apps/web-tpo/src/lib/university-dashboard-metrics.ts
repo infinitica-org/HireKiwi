@@ -68,3 +68,24 @@ export function buildUniversityRosterRows(
     verifiedSkillsCount: verifiedByStudent.get(student.userId) ?? 0,
   }));
 }
+
+export function filterUniversityRoster(
+  roster: UniversityRosterRow[],
+  query: string,
+): UniversityRosterRow[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return roster;
+
+  const idQuery = normalizedQuery.replace(/^id[\s:-]*/i, '').trim();
+
+  return roster.filter((row) => {
+    const nameMatch = (row.name ?? '').toLowerCase().includes(normalizedQuery);
+    const emailMatch = (row.email ?? '').toLowerCase().includes(normalizedQuery);
+    const majorMatch = (row.major ?? '').toLowerCase().includes(normalizedQuery);
+    const idMatch =
+      (row.userId ?? '').toLowerCase().includes(normalizedQuery) ||
+      (idQuery.length > 0 && (row.userId ?? '').toLowerCase().includes(idQuery));
+
+    return nameMatch || emailMatch || majorMatch || idMatch;
+  });
+}

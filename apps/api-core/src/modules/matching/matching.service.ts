@@ -1985,6 +1985,7 @@ export class MatchingService {
         skills: Array<{
           code: string;
           domain?: string;
+          domainCode?: string | null;
           proficiency?: string;
           claimConfidence?: number | null;
         }> | null;
@@ -2011,6 +2012,7 @@ export class MatchingService {
         SELECT json_agg(json_build_object(
           'code', sk.code,
           'domain', sk.domain,
+          'domainCode', sk.domain_code,
           'proficiency', COALESCE(sc.final_proficiency::text, sc.proficiency::text),
           'claimConfidence', sc.claim_confidence
         )) AS skills
@@ -2030,6 +2032,7 @@ export class MatchingService {
       const verified = (r.skills ?? []).map((s) => ({
         code: s.code,
         domain: s.domain ?? 'SOFTWARE_IT',
+        domainCode: s.domainCode ?? null,
         proficiency: s.proficiency ?? 'INTERMEDIATE',
       }));
 
@@ -2057,9 +2060,13 @@ export class MatchingService {
       ? (
           await this.prisma.jobOpeningSkill.findMany({
             where: { openingId: scopedJobId },
-            include: { skill: { select: { code: true } } },
+            include: { skill: { select: { code: true, domainCode: true } } },
           })
-        ).map((row) => ({ code: row.skill.code, minProficiency: row.minProficiency }))
+        ).map((row) => ({
+          code: row.skill.code,
+          minProficiency: row.minProficiency,
+          domainCode: row.skill.domainCode,
+        }))
       : [];
 
     // Stage 1: vector similarity narrows the (already SQL-filtered) pool down to a ranked

@@ -29,7 +29,13 @@ export interface CandidateVectorProfile {
   readonly discoverableToEmployers: boolean;
   readonly isDeactivated: boolean;
   readonly isHeld: boolean;
-  readonly verifiedSkills: readonly { code: string; domain: string; proficiency: string }[];
+  readonly verifiedSkills: readonly {
+    code: string;
+    domain: string;
+    /** Literal A-E radar axis (S8-RM-XX), null for skills seeded before the backfill ran. */
+    domainCode: string | null;
+    proficiency: string;
+  }[];
   readonly domainCompetencies: Record<string, number>; // Domain A-E or competency weights [0, 1]
   readonly embedding?: readonly number[]; // Optional 1536-dim vector if stored/inferred
 }
@@ -110,10 +116,14 @@ export function buildCandidateDomainVector(profile: CandidateVectorProfile): num
     if (profile.domainCompetencies[d] !== undefined) {
       vec.push(profile.domainCompetencies[d] ?? 0);
     } else {
-      // Aggregate from verified skills matching domain or general skill signals
-      const matchingSkills = profile.verifiedSkills.filter(
-        (s) => s.domain === d || s.domain === 'SOFTWARE_IT',
-      );
+      // S8-RM-XX: match on the skill's literal domainCode when it's been classified
+      // (skill-domain-classifier.ts). Skills without one yet (pre-backfill) fall back to the
+      // old flattened behavior so this stays backward compatible during rollout.
+      const classified = profile.verifiedSkills.filter((s) => s.domainCode !== null);
+      const matchingSkills =
+        classified.length > 0
+          ? classified.filter((s) => s.domainCode === d)
+          : profile.verifiedSkills.filter((s) => s.domain === d || s.domain === 'SOFTWARE_IT');
       if (matchingSkills.length > 0) {
         const avg =
           matchingSkills.reduce((acc, s) => acc + proficiencyToNormalizedScore(s.proficiency), 0) /
@@ -153,27 +163,42 @@ export const UNSCOPED_SEARCH_BASELINE_VECTOR: readonly number[] = [0.7, 0.7, 0.6
  * Builds a Stage 1 target vector from a scoped job opening's actual required skills, so the
  * vector pass narrows the pool toward *this* job instead of a fixed constant baseline.
  *
- * `buildCandidateDomainVector` currently can't place a verified skill into a specific A-E
- * domain axis — `skill_claims.domain` holds taxonomy strings (e.g. "SOFTWARE_IT"), never a
- * literal A-E code, so every domain ends up receiving the same aggregate signal (see
- * vector-candidate-matcher.spec.ts's fixtures, which fabricate 'A'/'C' domain values that don't
- * occur in real data). Until that domain-tagging gap is closed, this builder matches that same
- * flattened behavior — one overall required-proficiency scalar repeated across all 5 axes — so
- * the comparison stays internally consistent with how candidate vectors are actually computed
- * today, rather than inventing per-domain job weights the candidate side can't honor.
+ * S8-RM-XX: when a required skill carries a literal A-E `domainCode` (skill-domain-classifier.ts),
+ * its proficiency requirement is placed on that specific axis, matching how
+ * `buildCandidateDomainVector` now reads candidate-side `domainCode`. A required skill without
+ * one yet (pre-backfill) falls back to the flattened behavior — one overall required-proficiency
+ * scalar repeated across all 5 axes — for backward compatibility with older data.
  */
 export function buildJobVectorFromRequiredSkills(
-  requiredSkills: readonly { readonly minProficiency?: string }[],
+  requiredSkills: readonly {
+    readonly minProficiency?: string;
+    readonly domainCode?: string | null;
+  }[],
 ): number[] {
   if (requiredSkills.length === 0) {
     return [...UNSCOPED_SEARCH_BASELINE_VECTOR];
   }
-  const avg =
+  const overallAvg =
     requiredSkills.reduce(
       (sum, skill) => sum + proficiencyToNormalizedScore(skill.minProficiency),
       0,
     ) / requiredSkills.length;
-  return [avg, avg, avg, avg, avg, avg];
+
+  const domains = ['A', 'B', 'C', 'D', 'E'] as const;
+  const classified = requiredSkills.filter((s) => s.domainCode != null);
+  if (classified.length === 0) {
+    return [overallAvg, overallAvg, overallAvg, overallAvg, overallAvg, overallAvg];
+  }
+
+  const perDomain = domains.map((d) => {
+    const matching = classified.filter((s) => s.domainCode === d);
+    if (matching.length === 0) return overallAvg;
+    return (
+      matching.reduce((sum, skill) => sum + proficiencyToNormalizedScore(skill.minProficiency), 0) /
+      matching.length
+    );
+  });
+  return [...perDomain, overallAvg];
 }
 
 /** Mean share of each required dimension the candidate meets, each capped at 1. */

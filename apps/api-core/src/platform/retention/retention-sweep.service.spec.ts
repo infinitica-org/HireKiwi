@@ -33,7 +33,10 @@ describe('S6-VV-118 retention sweep', () => {
         update: vi.fn().mockResolvedValue({}),
       },
     };
-    storage = { deleteObject: vi.fn().mockResolvedValue(undefined) };
+    storage = {
+      deleteObject: vi.fn().mockResolvedValue(undefined),
+      listObjectKeysOlderThan: vi.fn().mockResolvedValue([]),
+    };
     service = new RetentionSweepService(prisma, storage);
   });
 
@@ -95,6 +98,44 @@ describe('S6-VV-118 retention sweep', () => {
     expect(prisma.dataSubjectRequest.update).toHaveBeenCalledWith({
       where: { id: 'r1' },
       data: { exportKey: null },
+    });
+  });
+
+  describe('S8-RM-XX: proctoring_snapshots (object storage, no DB record of keys)', () => {
+    it('counts and deletes snapshot objects older than 30 days, distinct from integrity_events', async () => {
+      storage.listObjectKeysOlderThan.mockResolvedValue([
+        'proctoring/a1/x.jpg',
+        'proctoring/a1/y.jpg',
+      ]);
+
+      const report = await service.run({ dryRun: false }, NOW);
+
+      expect(storage.listObjectKeysOlderThan).toHaveBeenCalledWith(
+        'proctoring/',
+        new Date(NOW - 30 * DAY),
+      );
+      expect(storage.deleteObject).toHaveBeenCalledWith('proctoring/a1/x.jpg');
+      expect(storage.deleteObject).toHaveBeenCalledWith('proctoring/a1/y.jpg');
+      expect(report.find((row) => row.category === 'proctoring_snapshots')).toMatchObject({
+        action: 'delete',
+        days: 30,
+        matched: 2,
+        removed: 2,
+      });
+      // The 730-day integrity_events dispute/audit-trail policy is untouched by this category.
+      expect(RETENTION_POLICIES.find((p) => p.category === 'integrity_events')?.days).toBe(730);
+    });
+
+    it('a dry run counts snapshot objects without deleting them', async () => {
+      storage.listObjectKeysOlderThan.mockResolvedValue(['proctoring/a1/x.jpg']);
+
+      const report = await service.run({ dryRun: true }, NOW);
+
+      expect(storage.deleteObject).not.toHaveBeenCalled();
+      expect(report.find((row) => row.category === 'proctoring_snapshots')).toMatchObject({
+        matched: 1,
+        removed: 0,
+      });
     });
   });
 });

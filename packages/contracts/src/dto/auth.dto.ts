@@ -138,6 +138,8 @@ export const AuthenticatedUserSchema = z.object({
   cgpa: z.number().min(0).max(10).nullable(),
   sscPercentage: z.number().min(0).max(100).nullable(),
   hscPercentage: z.number().min(0).max(100).nullable(),
+  /** Whether TOTP 2FA is currently enabled on this account. */
+  mfaEnabled: z.boolean(),
   sessionHold: z
     .object({
       code: SessionHoldCodeSchema,
