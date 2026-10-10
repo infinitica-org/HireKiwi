@@ -118,7 +118,7 @@ export class EmployerJobsService {
     @Inject(AuditPublisherService) private readonly audit: AuditPublisherService,
     @InjectQueue(JD_PARSE_QUEUE) private readonly jdParseQueue: Queue<{ openingId: string }>,
     @Inject(MatchingService) private readonly matching: MatchingService,
-    @Inject(JobEmbeddingService) private readonly jobEmbedding: JobEmbeddingService,
+    @Optional() @Inject(JobEmbeddingService) private readonly jobEmbedding?: JobEmbeddingService,
     @Optional() @Inject(StorageService) private readonly storage?: StorageService,
   ) {}
 
@@ -127,8 +127,8 @@ export class EmployerJobsService {
    * 6-dim heuristic whenever a job has no stored embedding yet. */
   private triggerEmbedding(jobId: string): void {
     this.jobEmbedding
-      .generateAndStoreEmbedding(jobId)
-      .catch((error: unknown) =>
+      ?.generateAndStoreEmbedding(jobId)
+      ?.catch((error: unknown) =>
         this.logger.warn(`Job embedding generation failed for ${jobId}: ${String(error)}`),
       );
   }
