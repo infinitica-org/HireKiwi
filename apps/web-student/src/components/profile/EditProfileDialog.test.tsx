@@ -54,6 +54,7 @@ function mockUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser
     secondaryTrack: null,
     provider: 'PASSWORD',
     emailVerified: true,
+    mfaEnabled: false,
     createdAt: new Date(0).toISOString(),
     profilePhotoUrl: 'https://cdn.example/photo.jpg',
     profileHeadline: 'Aspiring AI engineer',

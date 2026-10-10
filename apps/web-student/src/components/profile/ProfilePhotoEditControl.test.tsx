@@ -54,6 +54,7 @@ function meUser(): AuthenticatedUser {
     secondaryTrack: null,
     provider: 'PASSWORD',
     emailVerified: true,
+    mfaEnabled: false,
     createdAt: new Date(0).toISOString(),
     profilePhotoUrl: null,
     cgpa: null,
