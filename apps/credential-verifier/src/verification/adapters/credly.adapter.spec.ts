@@ -34,9 +34,9 @@ function respond(status: number, text: string) {
   return { status, ok: status >= 200 && status < 300, text, finalUrl: BADGE_URL };
 }
 
-async function verify() {
+async function verify(value = BADGE_URL) {
   const adapter = new CredlyAdapter();
-  const input = { type: 'URL' as const, value: BADGE_URL };
+  const input = { type: 'URL' as const, value };
   return adapter.verify(await adapter.normalize(input));
 }
 
@@ -126,6 +126,23 @@ describe('CredlyAdapter.verify', () => {
     expect(result.status).toBe('UNVERIFIABLE');
     expect(result.subjectName).toBeNull();
     expect(safeFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    `https://www.credly.com/earner/earned/badge/${BADGE_ID}`,
+    `https://credly.com/badges/${BADGE_ID.toUpperCase()}`,
+  ])('reads the public page for the badge id in %s', async (pasted) => {
+    vi.mocked(safeFetch)
+      .mockResolvedValueOnce(
+        respond(200, badgePage('Python Essentials 2 was issued by Cisco to Vishal V.')),
+      )
+      .mockResolvedValueOnce(respond(200, assertion()));
+
+    const result = await verify(pasted);
+
+    expect(vi.mocked(safeFetch).mock.calls[0]?.[0]).toBe(BADGE_URL);
+    expect(result.status).toBe('VERIFIED');
+    expect(result.evidenceUrl).toBe(BADGE_URL);
   });
 
   it('is NOT_FOUND when the badge page 404s', async () => {

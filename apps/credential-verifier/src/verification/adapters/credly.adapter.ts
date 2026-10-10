@@ -13,6 +13,7 @@ const CREDLY_HOST_PATTERN = /(^|\.)(credly\.com|youracclaim\.com)$/i;
 const BADGE_ID_PATTERN =
   /\/badges?\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
 const ASSERTION_BASE_URL = 'https://api.credly.com/v1/obi/v2/badge_assertions/';
+const PUBLIC_BADGE_BASE_URL = 'https://www.credly.com/badges/';
 
 export interface ParsedBadgePage {
   badgeName: string;
@@ -82,7 +83,15 @@ export class CredlyAdapter implements CredentialVerifier {
   }
 
   async verify(credential: NormalizedCredential): Promise<AdapterVerificationResult> {
-    const badgeUrl = credential.rawInput.value;
+    // Students paste whatever link they have open: /badges/<id>/public_url, /badges/<id>, or the
+    // signed-in /earner/earned/badge/<id>, which is an app shell with no badge data. Every form
+    // carries the badge id, so always read the public page for it.
+    const badgeId =
+      BADGE_ID_PATTERN.exec(new URL(credential.rawInput.value).pathname)?.[1]?.toLowerCase() ??
+      null;
+    const badgeUrl = badgeId
+      ? `${PUBLIC_BADGE_BASE_URL}${badgeId}/public_url`
+      : credential.rawInput.value;
     const checks: VerificationCheck[] = [];
 
     let page: ParsedBadgePage | null;
@@ -136,7 +145,6 @@ export class CredlyAdapter implements CredentialVerifier {
       detail: `Earner named on the badge: ${page.recipientName}.`,
     });
 
-    const badgeId = BADGE_ID_PATTERN.exec(new URL(badgeUrl).pathname)?.[1] ?? null;
     const lookup = badgeId
       ? await this.fetchAssertion(badgeId)
       : ({ kind: 'unavailable', detail: 'No badge id in the URL.' } as const);
