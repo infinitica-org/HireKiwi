@@ -768,11 +768,19 @@ export class CandidateCertificatesService {
     certificateId: string,
     options: { refresh?: boolean } = {},
   ): Promise<void> {
-    await this.addEvent(certificateId, 'IN_VERIFICATION', VERIFICATION_QUEUED_MESSAGE);
-    await this.certVerificationQueue.add('verify-certificate', {
-      certificateId,
-      ...(options.refresh ? { refresh: true } : {}),
+    // Each queued check gets a new generation; only the latest one may write its result, and a
+    // duplicate enqueue of the same generation collapses onto one job.
+    const { verificationGeneration: generation } = await this.prisma.candidateCertificate.update({
+      where: { id: certificateId },
+      data: { verificationGeneration: { increment: 1 } },
+      select: { verificationGeneration: true },
     });
+    await this.addEvent(certificateId, 'IN_VERIFICATION', VERIFICATION_QUEUED_MESSAGE);
+    await this.certVerificationQueue.add(
+      'verify-certificate',
+      { certificateId, generation, ...(options.refresh ? { refresh: true } : {}) },
+      { jobId: `verify-${certificateId}-${generation}` },
+    );
   }
 
   /**

@@ -529,3 +529,66 @@ describe('CertificateSourceVerificationService re-checks', () => {
     );
   });
 });
+
+describe('CertificateSourceVerificationService generation fence', () => {
+  function setup(currentGeneration: number) {
+    const row = {
+      id: 'cert-1',
+      title: 'Python Essentials 2',
+      issuer: 'Cisco',
+      certificateNumber: null,
+      verificationUrl: 'https://www.credly.com/badges/new-link',
+      certificateFileUrl: null,
+      fileMimeType: null,
+      status: 'IN_VERIFICATION',
+      sourceStatus: 'pending',
+      verificationGeneration: currentGeneration,
+      candidate: { fullName: 'Vishal V' },
+    };
+    const prisma = {
+      candidateCertificate: {
+        findUnique: vi.fn().mockResolvedValue(row),
+        findUniqueOrThrow: vi.fn().mockResolvedValue({ ...row, sourceStatus: 'source_verified' }),
+        update: vi.fn(),
+        updateMany: vi
+          .fn()
+          .mockImplementation(({ where }) =>
+            Promise.resolve({ count: where.verificationGeneration === currentGeneration ? 1 : 0 }),
+          ),
+      },
+      certificateVerificationEvent: { create: vi.fn().mockResolvedValue({ id: 'event-1' }) },
+    };
+    const tier1 = new Tier1IssuerRegistry(new CredentialVerifierClientAdapter());
+    vi.spyOn(tier1, 'verify').mockResolvedValue({
+      status: 'VERIFIED',
+      tier: 'TIER_1_ISSUER_API',
+      confidence: 0.9,
+      reason: 'ok',
+    });
+    const service = new CertificateSourceVerificationService(
+      prisma as any,
+      tier1,
+      new Tier2PublicUrlVerifier(),
+      new Tier3OcrVerifier(),
+    );
+    return { prisma, service };
+  }
+
+  it('drops the result of a run that a newer check has superseded', async () => {
+    const { prisma, service } = setup(3);
+    const run = await service.runVerification('cert-1', { generation: 2 });
+    expect(prisma.candidateCertificate.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'cert-1', verificationGeneration: 2 } }),
+    );
+    expect(prisma.certificateVerificationEvent.create).not.toHaveBeenCalled();
+    expect(prisma.candidateCertificate.update).not.toHaveBeenCalled();
+    expect(run.result.status).toBe('VERIFIED');
+  });
+
+  it('writes the result of the latest run', async () => {
+    const { prisma, service } = setup(3);
+    const run = await service.runVerification('cert-1', { generation: 3 });
+    expect(run.sourceStatus).toBe('source_verified');
+    expect(prisma.certificateVerificationEvent.create).toHaveBeenCalledTimes(1);
+  });
+});

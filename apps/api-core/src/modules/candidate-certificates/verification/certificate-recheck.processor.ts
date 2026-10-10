@@ -66,14 +66,15 @@ export class CertificateRecheckProcessor extends WorkerHost implements OnModuleI
         status: { notIn: ['VOIDED', 'REJECTED'] },
         events: { none: { createdAt: { gte: cutoff } } },
       },
-      select: { id: true },
+      select: { id: true, verificationGeneration: true },
       orderBy: { updatedAt: 'asc' },
       take: RECHECK_BATCH_SIZE,
     });
-    for (const { id } of due) {
+    for (const { id, verificationGeneration } of due) {
       await this.verificationQueue.add(
         'verify-certificate',
-        { certificateId: id, refresh: true, recheck: true },
+        // The current generation, not a new one: any check the student triggers meanwhile wins.
+        { certificateId: id, refresh: true, recheck: true, generation: verificationGeneration },
         // One pending re-check per certificate per day, however often this runs.
         { jobId: `recheck-${id}-${now.toISOString().slice(0, 10)}` },
       );

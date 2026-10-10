@@ -166,6 +166,32 @@ describe('CandidateCertificatesService', () => {
     expect(dto.verificationUrl).toBe('https://www.credly.com/org/aws/badge/123');
   });
 
+  it('gives each queued source check a new generation and a matching job id', async () => {
+    const { prisma, service, certVerificationQueue } = setup();
+    const created = baseCertificateRow({
+      status: 'DECLARED',
+      verificationUrl: 'https://www.credly.com/badges/x',
+    });
+    prisma.candidateCertificate.create.mockResolvedValue(created);
+    prisma.candidateCertificate.update.mockResolvedValue({ ...created, verificationGeneration: 4 });
+    prisma.candidateCertificate.findUniqueOrThrow.mockResolvedValue(created);
+
+    await service.create(candidateId, {
+      title: 'Python Essentials 2',
+      issuer: 'Cisco',
+      verificationUrl: 'https://www.credly.com/badges/x',
+    });
+
+    expect(prisma.candidateCertificate.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { verificationGeneration: { increment: 1 } } }),
+    );
+    expect(certVerificationQueue.add).toHaveBeenCalledWith(
+      'verify-certificate',
+      expect.objectContaining({ generation: 4 }),
+      { jobId: `verify-${created.id}-4` },
+    );
+  });
+
   it('queues no source check for a certificate declared without a link or number', async () => {
     const { prisma, service, certVerificationQueue } = setup();
     prisma.candidateCertificate.create.mockResolvedValue(

@@ -25,6 +25,8 @@ export interface VerificationRunOptions {
    * no longer found) changes it. An inconclusive answer or an expiry is logged, never a demotion.
    */
   recheck?: boolean;
+  /** See CertificateVerificationJobPayload.generation. */
+  generation?: number;
 }
 
 /** Re-check events stay out of the student's status line, which reads the latest `[TIER_` event. */
@@ -65,7 +67,7 @@ export class CertificateSourceVerificationService {
     if (options.recheck) {
       const revokedOrGone =
         result.status === 'FAILED' && result.metadata?.engineStatus !== 'EXPIRED';
-      if (revokedOrGone) return this.applyResult(cert.id, result);
+      if (revokedOrGone) return this.applyResult(cert.id, result, null, options.generation);
       await this.prisma.certificateVerificationEvent.create({
         data: {
           candidateCertificateId: cert.id,
@@ -82,7 +84,7 @@ export class CertificateSourceVerificationService {
         result,
       };
     }
-    return this.applyResult(cert.id, result, discoveredFrom);
+    return this.applyResult(cert.id, result, discoveredFrom, options.generation);
   }
 
   /** Runs the tiers in order and picks the outcome, without writing anything. */
@@ -172,6 +174,7 @@ export class CertificateSourceVerificationService {
     certificateId: string,
     result: TierVerificationResult,
     discoveredFrom: TierVerificationResult | null = null,
+    generation?: number,
   ): Promise<VerificationRunOutput> {
     let sourceStatus: CertificateSourceStatus = 'pending';
     let status: CandidateCertificateStatus = 'IN_VERIFICATION';
@@ -191,17 +194,42 @@ export class CertificateSourceVerificationService {
 
     const discoveredUrl = discoveredFrom?.metadata?.discoveredUrl;
 
-    // Update database row
-    const updated = await this.prisma.candidateCertificate.update({
-      where: { id: certificateId },
-      data: {
-        sourceStatus,
-        status,
-        ...(typeof discoveredUrl === 'string' && discoveredUrl.length <= 500
-          ? { verificationUrl: discoveredUrl }
-          : {}),
-      },
-    });
+    const data = {
+      sourceStatus,
+      status,
+      ...(typeof discoveredUrl === 'string' && discoveredUrl.length <= 500
+        ? { verificationUrl: discoveredUrl }
+        : {}),
+    };
+
+    // Fenced write: only while this run is still the latest one queued for the certificate.
+    if (generation !== undefined) {
+      const { count } = await this.prisma.candidateCertificate.updateMany({
+        where: { id: certificateId, verificationGeneration: generation },
+        data,
+      });
+      if (count === 0) {
+        const current = await this.prisma.candidateCertificate.findUniqueOrThrow({
+          where: { id: certificateId },
+        });
+        this.logger.debug(
+          `Dropped superseded source check for ${certificateId} (generation ${generation}, now ${current.verificationGeneration}).`,
+        );
+        return {
+          certificateId,
+          sourceStatus: current.sourceStatus,
+          status: current.status,
+          tierUsed: result.tier,
+          result,
+        };
+      }
+    }
+    const updated =
+      generation !== undefined
+        ? await this.prisma.candidateCertificate.findUniqueOrThrow({
+            where: { id: certificateId },
+          })
+        : await this.prisma.candidateCertificate.update({ where: { id: certificateId }, data });
 
     // Record audit event in CertificateVerificationEvent
     await this.prisma.certificateVerificationEvent.create({

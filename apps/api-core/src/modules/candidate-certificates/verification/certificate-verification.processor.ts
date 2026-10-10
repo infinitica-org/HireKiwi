@@ -15,6 +15,12 @@ export interface CertificateVerificationJobPayload {
   refresh?: boolean;
   /** Scheduled re-check: only a revocation changes the certificate. */
   recheck?: boolean;
+  /**
+   * The certificate's `verificationGeneration` when this run was queued. The result is only
+   * written while it is still current, so a run for an old link or file can't overwrite a newer
+   * one. Absent on jobs queued before the fence existed.
+   */
+  generation?: number;
 }
 
 /**
@@ -42,6 +48,7 @@ export class CertificateVerificationProcessor extends DlqAwareProcessor {
         this.verificationService.runVerification(job.data.certificateId, {
           refresh: job.data.refresh,
           recheck: job.data.recheck,
+          generation: job.data.generation,
         }),
     );
   }
