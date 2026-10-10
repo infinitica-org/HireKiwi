@@ -123,6 +123,69 @@ describe('Tier 1 Issuer Registry (bridges to the standalone credential-verifier 
 
     expect(result.status).toBe('FAILED');
   });
+
+  describe('identity check against the earner name the engine reports', () => {
+    function stubCredlyEngine(subjectName: string | null) {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve({ verificationId: 'v-3' }),
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                verificationId: 'v-3',
+                credentialId: 'c-3',
+                status: 'VERIFIED',
+                verificationLevel: 'CREDENTIAL_PLATFORM_VERIFIED',
+                method: 'CREDLY',
+                provider: 'credly',
+                verifiedAt: new Date().toISOString(),
+                checks: [{ checkName: 'subject', result: 'PASS', detail: 'Earner named.' }],
+                evidence: [],
+                evidenceUrl: null,
+                subjectName,
+              }),
+          }),
+      );
+    }
+    const credlyInput = {
+      title: 'Python Essentials 2',
+      issuer: 'Cisco',
+      verificationUrl: 'https://www.credly.com/badges/f7ae4be9-fd65-454d-874e-c6e2c3237d41',
+    };
+
+    it('stays VERIFIED when the badge names the account holder', async () => {
+      stubCredlyEngine('VISHAL V.');
+      const result = await registry.verify({ ...credlyInput, candidateName: 'Vishal V' });
+      expect(result.status).toBe('VERIFIED');
+      expect(result.metadata).toMatchObject({ subjectName: 'VISHAL V.', candidateMatch: true });
+    });
+
+    it('downgrades to AMBIGUOUS when the badge was issued to someone else', async () => {
+      stubCredlyEngine('Priya Sharma');
+      const result = await registry.verify({ ...credlyInput, candidateName: 'Vishal V' });
+      expect(result.status).toBe('AMBIGUOUS');
+      expect(result.reason).toContain('Priya Sharma');
+      expect(result.metadata).toMatchObject({ candidateMatch: false });
+    });
+
+    it('downgrades to AMBIGUOUS when there is no account name to compare', async () => {
+      stubCredlyEngine('Vishal V');
+      const result = await registry.verify(credlyInput);
+      expect(result.status).toBe('AMBIGUOUS');
+    });
+
+    it('keeps VERIFIED when the engine reports no earner name (adapters that cannot read one)', async () => {
+      stubCredlyEngine(null);
+      const result = await registry.verify({ ...credlyInput, candidateName: 'Vishal V' });
+      expect(result.status).toBe('VERIFIED');
+    });
+  });
 });
 
 describe('Tier 2 Public URL Verifier', () => {

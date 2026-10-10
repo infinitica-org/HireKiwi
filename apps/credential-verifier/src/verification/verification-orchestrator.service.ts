@@ -26,6 +26,8 @@ export interface VerificationResultView {
   checks: Array<{ checkName: string; result: string; detail: string | null }>;
   evidence: Array<{ evidenceType: string; url: string | null }>;
   evidenceUrl: string | null;
+  /** Earner name the source published (e.g. on a Credly badge), or null when the adapter couldn't read one. */
+  subjectName: string | null;
 }
 
 /**
@@ -237,6 +239,14 @@ export class VerificationOrchestratorService {
             metadata: e.metadata as Prisma.InputJsonValue,
           })),
         }),
+        ...(result.subjectName
+          ? [
+              this.prisma.subject.update({
+                where: { id: verification.credential.subjectId },
+                data: { name: result.subjectName },
+              }),
+            ]
+          : []),
       ]);
 
       const view = await this.toView(verification.id);
@@ -274,7 +284,7 @@ export class VerificationOrchestratorService {
   private async toView(verificationId: string): Promise<VerificationResultView> {
     const verification = await this.prisma.verification.findUnique({
       where: { id: verificationId },
-      include: { credential: true, checks: true, evidence: true },
+      include: { credential: { include: { subject: true } }, checks: true, evidence: true },
     });
     if (!verification) {
       throw new NotFoundException(`Verification ${verificationId} not found.`);
@@ -294,6 +304,11 @@ export class VerificationOrchestratorService {
       })),
       evidence: verification.evidence.map((e) => ({ evidenceType: e.evidenceType, url: e.url })),
       evidenceUrl: verification.evidenceUrl,
+      // Subject rows start as the 'Unknown' placeholder until an adapter reads a real name.
+      subjectName:
+        verification.credential.subject && verification.credential.subject.name !== 'Unknown'
+          ? verification.credential.subject.name
+          : null,
     };
   }
 

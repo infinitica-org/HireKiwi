@@ -5,6 +5,7 @@ import type {
   Tier1IssuerAdapter,
   TierVerificationResult,
 } from './tier1-issuer-adapter.js';
+import { personNamesMatch } from './person-name-match.js';
 
 /** Shape of apps/credential-verifier's GET /api/v1/verifications/:id response. */
 interface EngineVerificationResult {
@@ -18,6 +19,8 @@ interface EngineVerificationResult {
   checks: Array<{ checkName: string; result: string; detail: string | null }>;
   evidence: Array<{ evidenceType: string; url: string | null }>;
   evidenceUrl: string | null;
+  /** Earner name the engine read off the credential; absent from older engine builds. */
+  subjectName?: string | null;
 }
 
 const LEVEL_CONFIDENCE: Record<string, number> = {
@@ -119,7 +122,7 @@ export class CredentialVerifierClientAdapter implements Tier1IssuerAdapter {
       }
 
       if (result.status === 'VERIFICATION_PENDING') continue;
-      return this.toTierResult(result);
+      return this.toTierResult(result, input.candidateName ?? null);
     }
 
     this.logger.debug(
@@ -148,7 +151,10 @@ export class CredentialVerifierClientAdapter implements Tier1IssuerAdapter {
     return null;
   }
 
-  private toTierResult(result: EngineVerificationResult): TierVerificationResult {
+  private toTierResult(
+    result: EngineVerificationResult,
+    candidateName: string | null,
+  ): TierVerificationResult {
     const confidence = LEVEL_CONFIDENCE[result.verificationLevel] ?? 0;
     const reasonDetail = result.checks
       .map((c) => c.detail)
@@ -156,6 +162,27 @@ export class CredentialVerifierClientAdapter implements Tier1IssuerAdapter {
       .join(' ');
 
     if (POSITIVE_STATUSES.has(result.status)) {
+      // The engine caches per credential, not per account, so it reports who the credential names
+      // and the identity check happens here. A mismatch goes to review rather than straight to
+      // rejection: a legal name vs. a display name ("Vishal V" vs. "V. Vishal Kumar") can differ.
+      const subjectName = result.subjectName ?? null;
+      if (subjectName && !(candidateName && personNamesMatch(subjectName, candidateName))) {
+        return {
+          status: 'AMBIGUOUS',
+          tier: 'TIER_1_ISSUER_API',
+          confidence: 0.5,
+          reason: candidateName
+            ? `Credential is authentic but was issued to "${subjectName}", which does not match the account name "${candidateName}". Flagged for review.`
+            : `Credential is authentic and was issued to "${subjectName}", but the account has no name to match it against. Flagged for review.`,
+          metadata: {
+            engineVerificationId: result.verificationId,
+            method: result.method,
+            level: result.verificationLevel,
+            subjectName,
+            candidateMatch: false,
+          },
+        };
+      }
       return {
         status: 'VERIFIED',
         tier: 'TIER_1_ISSUER_API',
@@ -165,6 +192,7 @@ export class CredentialVerifierClientAdapter implements Tier1IssuerAdapter {
           engineVerificationId: result.verificationId,
           method: result.method,
           level: result.verificationLevel,
+          ...(subjectName ? { subjectName, candidateMatch: true } : {}),
         },
       };
     }

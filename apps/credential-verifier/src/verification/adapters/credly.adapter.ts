@@ -10,27 +10,44 @@ import type {
 } from '../types.js';
 
 const CREDLY_HOST_PATTERN = /(^|\.)(credly\.com|youracclaim\.com)$/i;
+const BADGE_ID_PATTERN =
+  /\/badges?\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+const ASSERTION_BASE_URL = 'https://api.credly.com/v1/obi/v2/badge_assertions/';
 
-interface ParsedBadgePage {
-  badgeName: string | null;
-  issuerName: string | null;
-  recipientName: string | null;
-  issuedOn: string | null;
-  expiresOn: string | null;
-  state: 'active' | 'expired' | 'revoked' | 'unknown';
+export interface ParsedBadgePage {
+  badgeName: string;
+  issuerName: string;
+  recipientName: string;
 }
+
+/** The subset of Credly's hosted Open Badges v2 assertion this adapter reads. */
+interface BadgeAssertion {
+  issuedOn?: unknown;
+  expires?: unknown;
+  revoked?: unknown;
+  revocationReason?: unknown;
+}
+
+type AssertionLookup =
+  | { kind: 'found'; assertion: BadgeAssertion }
+  | { kind: 'revoked'; reason: string | null }
+  | { kind: 'unavailable'; detail: string };
 
 /**
  * Credly adapter — treated as a PLATFORM per the Priority 0 research, not a
- * per-issuer integration: AWS/GCP/MongoDB badges all route through here.
+ * per-issuer integration: AWS/GCP/Cisco/MongoDB badges all route through here.
  *
- * Per research, there is no documented public API for anonymous badge
- * lookup (the Web Service API is for the ISSUING organization's own
- * management). This adapter instead fetches the public badge page itself
- * and extracts the embedded JSON-LD (schema.org or Open Badges) that
- * Credly's public pages publish — falling back to an explicit
- * UNVERIFIABLE when that structured data isn't present, rather than
- * guessing from HTML text.
+ * There is no documented public API for anonymous badge lookup, and the
+ * public badge page is client-rendered: the server HTML carries no JSON-LD
+ * and no visible badge text. What it does carry is the Open Graph title
+ * ("<badge> was issued by <issuer> to <earner>."), which is the only place
+ * the earner's display name is public. Status comes from Credly's hosted
+ * Open Badges v2 assertion for the same badge id (issue date, expiry,
+ * revocation); its recipient is a hashed email, so it can't name the earner.
+ *
+ * The earner's name is returned as `subjectName` — a fact about the
+ * credential. Matching it against a particular account is the caller's job:
+ * results here are cached and deduplicated per badge URL, not per caller.
  */
 export class CredlyAdapter implements CredentialVerifier {
   readonly id = 'credly';
@@ -68,7 +85,7 @@ export class CredlyAdapter implements CredentialVerifier {
     const badgeUrl = credential.rawInput.value;
     const checks: VerificationCheck[] = [];
 
-    let page: ParsedBadgePage;
+    let page: ParsedBadgePage | null;
     try {
       const response = await safeFetch(badgeUrl);
       if (response.status === 404) {
@@ -87,7 +104,7 @@ export class CredlyAdapter implements CredentialVerifier {
         });
         return this.result('VERIFICATION_ERROR', 'UNVERIFIED', checks, badgeUrl);
       }
-      page = this.parseBadgePage(response.text);
+      page = parseBadgePage(response.text);
     } catch (error: unknown) {
       const detail =
         error instanceof UnsafeUrlError
@@ -97,12 +114,12 @@ export class CredlyAdapter implements CredentialVerifier {
       return this.result('VERIFICATION_ERROR', 'UNVERIFIED', checks, badgeUrl);
     }
 
-    if (!page.badgeName) {
+    if (!page) {
       checks.push({
         checkName: 'credential',
         result: 'UNKNOWN',
         detail:
-          'Page fetched but no structured badge data (JSON-LD) was found to parse. Confirm the public badge page still embeds this before trusting this adapter further.',
+          'Page fetched but its og:title did not name a badge, issuer and earner (private badge, or Credly changed the page format).',
       });
       return this.result('UNVERIFIABLE', 'UNVERIFIED', checks, badgeUrl);
     }
@@ -112,42 +129,54 @@ export class CredlyAdapter implements CredentialVerifier {
       result: 'PASS',
       detail: `Resolved badge "${page.badgeName}" from the public Credly page.`,
     });
-    checks.push({
-      checkName: 'issuer',
-      result: page.issuerName ? 'PASS' : 'UNKNOWN',
-      detail: page.issuerName ? `Issued by ${page.issuerName}.` : 'Issuer name not found on page.',
-    });
+    checks.push({ checkName: 'issuer', result: 'PASS', detail: `Issued by ${page.issuerName}.` });
     checks.push({
       checkName: 'subject',
-      result: page.recipientName ? 'PASS' : 'UNKNOWN',
-      detail: page.recipientName
-        ? `Recipient: ${page.recipientName}.`
-        : 'Recipient name not found on page.',
+      result: 'PASS',
+      detail: `Earner named on the badge: ${page.recipientName}.`,
     });
 
-    if (page.state === 'revoked') {
+    const badgeId = BADGE_ID_PATTERN.exec(new URL(badgeUrl).pathname)?.[1] ?? null;
+    const lookup = badgeId
+      ? await this.fetchAssertion(badgeId)
+      : ({ kind: 'unavailable', detail: 'No badge id in the URL.' } as const);
+
+    if (lookup.kind === 'revoked') {
       checks.push({
         checkName: 'status',
         result: 'FAIL',
-        detail: 'Badge page indicates this badge was revoked.',
+        detail: `Credly reports this badge as revoked${lookup.reason ? `: ${lookup.reason}` : '.'}`,
       });
-      return this.result('REVOKED', 'CREDENTIAL_PLATFORM_VERIFIED', checks, badgeUrl);
+      return this.result('REVOKED', 'CREDENTIAL_PLATFORM_VERIFIED', checks, badgeUrl, page);
     }
-    if (page.state === 'expired' || (page.expiresOn && new Date(page.expiresOn) < new Date())) {
+    if (lookup.kind === 'unavailable') {
       checks.push({
-        checkName: 'expiration',
-        result: 'FAIL',
-        detail: `Expired ${page.expiresOn ?? 'per page state'}.`,
+        checkName: 'status',
+        result: 'UNKNOWN',
+        detail: `Revocation/expiry not checked — ${lookup.detail}`,
       });
-      return this.result('EXPIRED', 'CREDENTIAL_PLATFORM_VERIFIED', checks, badgeUrl);
+      return this.result(
+        'VERIFIED_WITH_WARNINGS',
+        'CREDENTIAL_PLATFORM_VERIFIED',
+        checks,
+        badgeUrl,
+        page,
+      );
+    }
+
+    checks.push({ checkName: 'status', result: 'PASS', detail: 'Credly assertion is active.' });
+    const expires = typeof lookup.assertion.expires === 'string' ? lookup.assertion.expires : null;
+    if (expires && new Date(expires) < new Date()) {
+      checks.push({ checkName: 'expiration', result: 'FAIL', detail: `Expired ${expires}.` });
+      return this.result('EXPIRED', 'CREDENTIAL_PLATFORM_VERIFIED', checks, badgeUrl, page);
     }
     checks.push({
       checkName: 'expiration',
-      result: page.expiresOn ? 'PASS' : 'SKIP',
-      detail: page.expiresOn ? `Valid until ${page.expiresOn}.` : 'No expiration found on page.',
+      result: expires ? 'PASS' : 'SKIP',
+      detail: expires ? `Valid until ${expires}.` : 'Badge has no expiration date.',
     });
 
-    return this.result('VERIFIED', 'CREDENTIAL_PLATFORM_VERIFIED', checks, badgeUrl);
+    return this.result('VERIFIED', 'CREDENTIAL_PLATFORM_VERIFIED', checks, badgeUrl, page);
   }
 
   async getEvidence(credential: NormalizedCredential): Promise<Evidence[]> {
@@ -164,44 +193,29 @@ export class CredlyAdapter implements CredentialVerifier {
     };
   }
 
-  /** Extracts the embedded JSON-LD block Credly's public badge pages publish. Returns nulls (never fabricated values) if the shape isn't found. */
-  private parseBadgePage(html: string): ParsedBadgePage {
-    const jsonLdMatch =
-      /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i.exec(html);
-    if (!jsonLdMatch?.[1]) {
-      return {
-        badgeName: null,
-        issuerName: null,
-        recipientName: null,
-        issuedOn: null,
-        expiresOn: null,
-        state: 'unknown',
-      };
-    }
+  /** Open Badges v2 hosted verification: a revoked assertion answers 410, or 200 with `revoked: true`. */
+  private async fetchAssertion(badgeId: string): Promise<AssertionLookup> {
     try {
-      const data = JSON.parse(jsonLdMatch[1]) as Record<string, unknown>;
-      const name = typeof data.name === 'string' ? data.name : null;
-      const issuer = data.issuer as { name?: string } | string | undefined;
-      const issuerName = typeof issuer === 'string' ? issuer : (issuer?.name ?? null);
-      const recipient = data.recipient as { name?: string } | undefined;
-      const dateCreated = typeof data.dateCreated === 'string' ? data.dateCreated : null;
-      const expires = typeof data.expires === 'string' ? data.expires : null;
+      const response = await safeFetch(`${ASSERTION_BASE_URL}${badgeId}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (response.status === 410) return { kind: 'revoked', reason: null };
+      if (!response.ok) {
+        return { kind: 'unavailable', detail: `assertion returned HTTP ${response.status}.` };
+      }
+      const assertion = JSON.parse(response.text) as BadgeAssertion;
+      if (assertion.revoked === true) {
+        return {
+          kind: 'revoked',
+          reason:
+            typeof assertion.revocationReason === 'string' ? assertion.revocationReason : null,
+        };
+      }
+      return { kind: 'found', assertion };
+    } catch (error: unknown) {
       return {
-        badgeName: name,
-        issuerName,
-        recipientName: recipient?.name ?? null,
-        issuedOn: dateCreated,
-        expiresOn: expires,
-        state: /revoked/i.test(html) ? 'revoked' : /expired/i.test(html) ? 'expired' : 'active',
-      };
-    } catch {
-      return {
-        badgeName: null,
-        issuerName: null,
-        recipientName: null,
-        issuedOn: null,
-        expiresOn: null,
-        state: 'unknown',
+        kind: 'unavailable',
+        detail: `assertion lookup failed: ${error instanceof Error ? error.message : 'unknown error'}.`,
       };
     }
   }
@@ -211,17 +225,61 @@ export class CredlyAdapter implements CredentialVerifier {
     level: AdapterVerificationResult['verificationLevel'],
     checks: VerificationCheck[],
     evidenceUrl: string,
+    page: ParsedBadgePage | null = null,
   ): AdapterVerificationResult {
+    const verified = status === 'VERIFIED' || status === 'VERIFIED_WITH_WARNINGS';
     return {
       status,
       verificationLevel: level,
       method: 'CREDLY',
       provider: 'credly',
-      verifiedAt: status === 'VERIFIED' ? new Date().toISOString() : null,
+      verifiedAt: verified ? new Date().toISOString() : null,
       checks,
       evidence: [{ evidenceType: 'badge_url', url: evidenceUrl, fileRef: null, metadata: {} }],
       evidenceUrl,
       rawResponse: null,
+      subjectName: page?.recipientName ?? null,
     };
   }
+}
+
+/**
+ * Reads "<badge> was issued by <issuer> to <earner>." out of the page's og:title.
+ * The issuer match is greedy so a badge title containing " to " stays intact;
+ * returns null (never a guess) when the title doesn't have that shape.
+ */
+export function parseBadgePage(html: string): ParsedBadgePage | null {
+  const title = readMetaContent(html, 'og:title');
+  if (!title) return null;
+  const match = /^(.+?) was issued by (.+) to (.+?)\.?$/su.exec(title.trim());
+  const [, badgeName, issuerName, recipientName] = match ?? [];
+  if (!badgeName || !issuerName || !recipientName) return null;
+  return {
+    badgeName: badgeName.trim(),
+    issuerName: issuerName.trim(),
+    recipientName: recipientName.trim(),
+  };
+}
+
+function readMetaContent(html: string, property: string): string | null {
+  const tags = html.match(/<meta\b[^>]*>/giu) ?? [];
+  for (const tag of tags) {
+    const name = /\b(?:property|name)=["']([^"']+)["']/iu.exec(tag)?.[1];
+    if (name?.toLowerCase() !== property) continue;
+    const content = /\bcontent=(?:"([^"]*)"|'([^']*)')/iu.exec(tag);
+    const value = content?.[1] ?? content?.[2];
+    if (value) return decodeEntities(value);
+  }
+  return null;
+}
+
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/gu, (_m, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/giu, (_m, code: string) => String.fromCodePoint(parseInt(code, 16)))
+    .replace(/&quot;/gu, '"')
+    .replace(/&apos;/gu, "'")
+    .replace(/&lt;/gu, '<')
+    .replace(/&gt;/gu, '>')
+    .replace(/&amp;/gu, '&');
 }

@@ -124,6 +124,8 @@ export interface AdapterVerificationResult {
   evidence: Evidence[];
   evidenceUrl: string | null;
   rawResponse: Record<string, unknown> | null;
+  /** Earner name as the source publishes it, when the adapter can read one. Matching it to an account is the caller's job. */
+  subjectName?: string | null;
 }
 
 /**
