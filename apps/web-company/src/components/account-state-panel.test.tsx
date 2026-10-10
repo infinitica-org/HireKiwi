@@ -16,6 +16,7 @@ const account: CompanyPortalAccount = {
   secondaryTrack: null,
   provider: 'PASSWORD',
   emailVerified: true,
+  mfaEnabled: false,
   createdAt: '2026-09-21T10:00:00.000Z',
   onboardingCompleted: true,
   profilePhotoUrl: null,

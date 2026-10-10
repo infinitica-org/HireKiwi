@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { TierBadge, useQuery } from '@hirekiwi/ui';
+import { useQuery } from '@hirekiwi/ui';
 import { PROFICIENCY_LEVEL_ORDER, type PublicCandidateProfileDto } from '@hirekiwi/contracts';
 import {
   Award,
@@ -19,8 +19,8 @@ import {
   Share2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { CandidateAvatar } from '@/components/profile/CandidateAvatar';
-import { HireKiwiVerifiedBadge } from '@/components/profile/ProfileHeroBanner';
+import { CandidateAvatar } from '@/components/profile/overview/CandidateAvatar';
+import { HireKiwiVerifiedBadge } from '@/components/profile/overview/ProfileHeroBanner';
 import { VisibilitySettingsCard } from '@/components/public-profile/visibility-settings-card';
 
 const VERIFICATION_METHOD_LABELS: Record<string, string> = {
@@ -348,11 +348,8 @@ export function PublicProfilePreview({ embedded = false }: { embedded?: boolean 
                 ) : null}
               </div>
 
-              {profile.certificate || profile.skills.length > 0 ? (
+              {profile.skills.length > 0 ? (
                 <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-                  {profile.certificate ? (
-                    <TierBadge tier={profile.certificate.tier} showLabel />
-                  ) : null}
                   {profile.skills.length > 0 ? (
                     <VerifiedPill>HireKiwi Verified</VerifiedPill>
                   ) : null}

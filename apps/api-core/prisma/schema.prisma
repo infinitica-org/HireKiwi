@@ -346,6 +346,8 @@ model Institution {
   id                 String                   @id @default(uuid()) @db.Uuid
   name               String
   domain             String                   @unique
+  /// Storage key of the college logo the TPO uploaded; shown to the college's students.
+  logoStorageKey     String?                  @map("logo_storage_key")
   taxonomyDomain     String?                  @map("taxonomy_domain")
   verificationStatus TenantVerificationStatus @default(APPROVED) @map("verification_status")
   verificationReason String?                  @map("verification_reason")

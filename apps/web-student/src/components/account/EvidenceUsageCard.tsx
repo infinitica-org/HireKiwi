@@ -1,7 +1,7 @@
 'use client';
 
 import { EVIDENCE_TYPES, EVIDENCE_USAGE } from '@hirekiwi/contracts';
-import { EvidenceUsageFacts } from '@/components/profile/EvidenceUsageNote';
+import { EvidenceUsageFacts } from '@/components/profile/shared/EvidenceUsageNote';
 import { SettingsCard } from './account-ui';
 
 /** S6-VV-114 (#550): every evidence type's use, audience, retention and withdrawal in one place. */

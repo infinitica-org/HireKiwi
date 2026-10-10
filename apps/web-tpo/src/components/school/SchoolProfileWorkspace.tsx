@@ -30,6 +30,16 @@ import {
 
 import { SchoolProfileCard } from './SchoolProfileCard';
 
+/** Turns a `data:image/...;base64,...` address back into a file the API can take. */
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [header = '', payload = ''] = dataUrl.split(',');
+  const type = /^data:([^;]+)/u.exec(header)?.[1] ?? 'image/png';
+  const bytes = atob(payload);
+  const buffer = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i += 1) buffer[i] = bytes.charCodeAt(i);
+  return new Blob([buffer], { type });
+}
+
 export function SchoolProfileWorkspace() {
   const [institutionId, setInstitutionId] = useState<string | null>(null);
   const [entitlements, setEntitlements] = useState<TenantEntitlementsDto | null>(null);
@@ -64,11 +74,29 @@ export function SchoolProfileWorkspace() {
       setInstitutionId(inst);
       setEntitlements(ent);
       const defaults = emptyStoredFromEntitlements(ent);
+      // The logo saved on the server is the one students see, so it wins over the browser copy.
+      const serverLogo = await api.campus
+        .getLogo()
+        .then((res) => res.logoUrl)
+        .catch(() => null);
       if (inst) {
         const saved = loadSchoolPublicProfile(inst);
-        setForm(saved ? { ...defaults, ...saved } : defaults);
+        const merged = saved ? { ...defaults, ...saved } : defaults;
+        let logo = serverLogo;
+        // A logo that was only ever kept in this browser is sent to the server once, so the
+        // college's students can see it as well.
+        if (!logo && merged.logoDataUrl.startsWith('data:image/')) {
+          try {
+            const blob = dataUrlToBlob(merged.logoDataUrl);
+            const uploaded = await api.campus.uploadLogo(blob, 'logo.png');
+            logo = uploaded.logoUrl;
+          } catch {
+            // Keep showing the browser copy; the next upload from this page will save it.
+          }
+        }
+        setForm(logo ? { ...merged, logoDataUrl: logo } : merged);
       } else {
-        setForm(defaults);
+        setForm(serverLogo ? { ...defaults, logoDataUrl: serverLogo } : defaults);
       }
     } catch (err: unknown) {
       setError(isHireKiwiApiError(err) ? err.message : 'Failed to load school profile.');
@@ -103,18 +131,21 @@ export function SchoolProfileWorkspace() {
     if (kind === 'logo') setUploadingLogo(true);
     else setUploadingBanner(true);
     try {
-      const dataUrl = await imageFileToDataUrl(
-        file,
-        kind === 'logo' ? 400 : 1600,
-        kind === 'logo' ? 400 : 480,
-      );
-      persist({
-        ...form,
-        [kind === 'logo' ? 'logoDataUrl' : 'bannerDataUrl']: dataUrl,
-      });
+      if (kind === 'logo') {
+        // The logo is saved on the server, so the college's students can see it too.
+        const saved = await api.campus.uploadLogo(file, file.name);
+        persist({ ...form, logoDataUrl: saved.logoUrl ?? form.logoDataUrl });
+      } else {
+        const dataUrl = await imageFileToDataUrl(file, 1600, 480);
+        persist({ ...form, bannerDataUrl: dataUrl });
+      }
       setNotice(kind === 'logo' ? 'Logo updated.' : 'Banner updated.');
-    } catch {
-      setError('Could not process that image. Try a JPEG or PNG under the size limit.');
+    } catch (err: unknown) {
+      setError(
+        isHireKiwiApiError(err)
+          ? err.message
+          : 'Could not process that image. Try a JPEG or PNG under the size limit.',
+      );
     } finally {
       setUploadingLogo(false);
       setUploadingBanner(false);

@@ -367,8 +367,8 @@ export function LoginForm() {
         {stage === 'offer-mfa' ? (
           <div className="mt-8 w-full max-w-[420px] space-y-5 text-center mx-auto">
             <p className="text-sm text-[#6b7280]">
-              Add a second step at login with an authenticator app, so your account stays
-              protected even if your password leaks.
+              Add a second step at login with an authenticator app, so your account stays protected
+              even if your password leaks.
             </p>
 
             <button

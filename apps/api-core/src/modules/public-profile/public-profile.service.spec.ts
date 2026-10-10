@@ -49,6 +49,7 @@ describe('PublicProfileService (CN-T09 visibility + in-progress opt-in)', () => 
         count: vi.fn().mockResolvedValue(0),
       },
       candidateEducation: { findMany: vi.fn().mockResolvedValue([]) },
+      candidateLanguage: { findMany: vi.fn().mockResolvedValue([]) },
       studentCapability: { findMany: vi.fn().mockResolvedValue([]) },
       evidenceRecord: { aggregate: vi.fn().mockResolvedValue({ _max: { updatedAt: null } }) },
     };

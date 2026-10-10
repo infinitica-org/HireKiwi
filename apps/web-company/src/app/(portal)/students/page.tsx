@@ -5,8 +5,6 @@ import {
   Check,
   Search,
   UserCheck,
-  Sparkles,
-  ShieldCheck,
   Send,
   HelpCircle,
   Layers,
@@ -428,14 +426,6 @@ export default function SearchStudentsPage() {
                         <h3 className="font-heading text-base font-bold text-zinc-900">
                           {candidate.studentName}
                         </h3>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-                          <Sparkles className="size-3 text-emerald-600" />
-                          {candidate.headlineTier} Tier
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
-                          <ShieldCheck className="size-3 text-blue-600" />
-                          Level {candidate.highestLevelCleared} Cleared
-                        </span>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">

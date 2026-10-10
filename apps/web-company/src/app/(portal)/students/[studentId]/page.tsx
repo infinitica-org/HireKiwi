@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Award, Check, Send, ShieldCheck, Sparkles, User } from 'lucide-react';
+import { ArrowLeft, Award, Check, Send, ShieldCheck, User } from 'lucide-react';
 import { companyStudentsApi } from '../../../../lib/api';
 import type { CandidateMatchDto } from '@hirekiwi/contracts';
 import { card, pageStack, primaryButton, secondaryButton, sectionTitle } from '../../../../lib/ui';
@@ -89,14 +89,6 @@ export default function CandidateDetailPage({
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className={`${card} p-4`}>
-          <span className="text-xs font-medium text-zinc-500">Headline Readiness</span>
-          <div className="mt-2 flex items-center gap-2">
-            <Sparkles className="size-5 text-emerald-600" />
-            <span className="text-lg font-bold text-zinc-900">{candidate.headlineTier} Tier</span>
-          </div>
-        </div>
-
         <div className={`${card} p-4`}>
           <span className="text-xs font-medium text-zinc-500">Highest Defense / Level</span>
           <div className="mt-2 flex items-center gap-2">

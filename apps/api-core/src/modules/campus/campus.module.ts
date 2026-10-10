@@ -7,6 +7,7 @@ import { EventRegistrationsService } from './event-registrations.service.js';
 import { EventsController } from './events.controller.js';
 import { UniversityCampusController } from './university-campus.controller.js';
 import { UniversityEventsController } from './university-events.controller.js';
+import { UniversityLogoController } from './university-logo.controller.js';
 
 /** UNI-05 — employer campus access and career events (Th6-445 to Th6-451). */
 @Module({
@@ -14,6 +15,7 @@ import { UniversityEventsController } from './university-events.controller.js';
     EmployerCampusController,
     UniversityCampusController,
     UniversityEventsController,
+    UniversityLogoController,
     EventsController,
   ],
   providers: [

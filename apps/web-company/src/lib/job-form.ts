@@ -230,7 +230,16 @@ export function jobFormProblems(form: JobForm, today = new Date()): JobFormProbl
   const add = (step: number, message: string) => problems.push({ step, message });
 
   if (!form.title.trim()) add(1, 'Job title is required.');
+  if (!form.functionCategory.trim()) add(1, 'Job function is required.');
+  if (!form.type) add(1, 'Job type is required.');
+  if (!form.workMode) add(1, 'Work mode is required.');
   if (!form.location.trim() && form.workMode !== 'Remote') add(1, 'Location is required.');
+  if (num(form.minYears) === undefined) add(1, 'Minimum experience is required.');
+  if (num(form.maxYears) === undefined) add(1, 'Maximum experience is required.');
+  if (!form.summary.trim()) add(2, 'Short job summary is required.');
+  if (!form.responsibilities.trim()) add(2, 'Responsibilities are required.');
+  if (!form.minimumQualification.trim()) add(4, 'Minimum qualification is required.');
+  if (num(form.openings) === undefined) add(7, 'Number of openings is required.');
   const minYears = num(form.minYears) ?? 0;
   const maxYears = num(form.maxYears) ?? minYears;
   if (minYears < 0 || maxYears < 0) add(1, 'Experience cannot be negative.');

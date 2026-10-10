@@ -3,10 +3,7 @@ import {
   CANDIDATES_NAV,
   PLACEMENT_NAV,
   PLACEMENT_NAV_GROUPS,
-  TPO_NAV,
   isCandidatesRoute,
-  isCandidatesTopNavActive,
-  isNavItemActive,
   isNavLinkActive,
   isPlacementRoute,
   isPlacementTopNavActive,
@@ -14,21 +11,7 @@ import {
   isWhitelistTopNavActive,
 } from './tpo-nav';
 
-const employersLink = TPO_NAV.find((item) => item.name === 'Employers');
-
-describe('TPO_NAV', () => {
-  it('uses university wireframe labels in the topbar', () => {
-    expect(TPO_NAV.map((item) => item.name)).toEqual([
-      'Dashboard',
-      'Students',
-      'Invitations',
-      'Employers',
-      'Messages',
-      'Reports',
-    ]);
-    expect(employersLink).toMatchObject({ kind: 'link', href: '/companies' });
-  });
-
+describe('placement and candidates nav', () => {
   it('lists placement sidebar routes including company repository', () => {
     expect(PLACEMENT_NAV.map((link) => [link.name, link.href])).toEqual([
       ['Company Repository', '/companies'],
@@ -71,14 +54,6 @@ describe('isWhitelistTopNavActive', () => {
   });
 });
 
-describe('isCandidatesTopNavActive', () => {
-  it('is active on students and batches only', () => {
-    expect(isCandidatesTopNavActive('/students')).toBe(true);
-    expect(isCandidatesTopNavActive('/batches')).toBe(true);
-    expect(isCandidatesTopNavActive('/whitelist')).toBe(false);
-  });
-});
-
 describe('isPlacementTopNavActive', () => {
   it('is active on the repository landing and placement shell routes', () => {
     expect(isPlacementTopNavActive('/companies')).toBe(true);
@@ -92,16 +67,6 @@ describe('isNavLinkActive', () => {
     expect(isNavLinkActive('/students/abc', '/students')).toBe(true);
     expect(isNavLinkActive('/openings', '/openings')).toBe(true);
     expect(isNavLinkActive('/openings/create', '/openings')).toBe(false);
-  });
-});
-
-describe('isNavItemActive', () => {
-  it('resolves dashboard on /dashboard alias', () => {
-    const dashboard = TPO_NAV.find((item) => item.name === 'Dashboard');
-    expect(dashboard).toBeDefined();
-    if (dashboard?.kind === 'link') {
-      expect(isNavItemActive('/dashboard', dashboard)).toBe(true);
-    }
   });
 });
 

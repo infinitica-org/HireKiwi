@@ -168,14 +168,6 @@ export default function ConnectUniversityStep({
         subtitle="Link your account to your university to unlock campus placements, batch verification, and institutional credentials."
       />
 
-      <div className="mb-6 rounded-xl border border-blue-500/20 bg-blue-500/10 p-3.5 text-xs text-blue-900 dark:text-blue-200">
-        <p className="font-semibold">Note</p>
-        <p className="mt-0.5 opacity-90">
-          Your university must be an active HireKiwi partner and must have whitelisted your student
-          email to enable automatic credential verification.
-        </p>
-      </div>
-
       <AnimatePresence>
         {statusError ? (
           <div className="mb-4">
@@ -224,7 +216,7 @@ export default function ConnectUniversityStep({
         </div>
       </div>
 
-      <div className="mb-8 min-h-[160px] max-h-[280px] overflow-y-auto rounded-2xl border border-zinc-200 bg-zinc-50/50 p-2 dark:border-zinc-800 dark:bg-zinc-900/50">
+      <div className="mb-8 min-h-[160px] max-h-[280px] overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50/50 p-2 dark:border-zinc-800 dark:bg-zinc-900/50">
         {loadingUniversities ? (
           <div
             className="flex h-32 items-center justify-center text-sm text-zinc-500"
@@ -246,7 +238,7 @@ export default function ConnectUniversityStep({
                 {contactRequestState === 'submitted' ? (
                   <div
                     data-testid="university-contact-requested"
-                    className="flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-left text-emerald-900 dark:text-emerald-200"
+                    className="flex items-start gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-left text-emerald-900 dark:text-emerald-200"
                   >
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                     <p className="text-xs">
@@ -365,7 +357,7 @@ export default function ConnectUniversityStep({
           Skip
         </button>
         {isCurrentPartnered && selectedId === partnershipStatus?.institutionId ? (
-          <PrimaryButton onClick={onContinue}>Continue →</PrimaryButton>
+          <PrimaryButton onClick={onContinue}>Continue </PrimaryButton>
         ) : (
           <PrimaryButton
             data-testid="connect-university-submit"

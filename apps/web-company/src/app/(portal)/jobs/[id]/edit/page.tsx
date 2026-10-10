@@ -34,6 +34,7 @@ export default function EditJobPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attempted, setAttempted] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -76,6 +77,7 @@ export default function EditJobPage() {
     event.preventDefault();
     const first = problems[0];
     if (first) {
+      setAttempted(true);
       setStep(first.step);
       setError(first.message);
       return;
@@ -173,6 +175,7 @@ export default function EditJobPage() {
           onChange={update}
           companyName={companyName}
           postedAt={postedAt}
+          attempted={attempted}
           problems={problems}
           visited={visited}
         />
