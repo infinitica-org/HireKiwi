@@ -37,6 +37,11 @@ export type RouteCriticality =
   | 'LLM_INTERACTIVE'
   /** Interactive but not exam-timed: dashboards, auth handshakes, admin actions. */
   | 'INTERACTIVE'
+  /**
+   * The user waits while we ask a third-party site (a certificate issuer's verification page).
+   * Bounded by that site, not by our code, so it gets its own budget like LLM_INTERACTIVE.
+   */
+  | 'EXTERNAL_LOOKUP'
   /** Aggregation and reporting. Slower is acceptable; correctness matters more. */
   | 'REPORTING';
 
@@ -60,6 +65,7 @@ export const LATENCY_BUDGET_MS: Readonly<Record<RouteCriticality, number>> = {
   CANDIDATE_CRITICAL: 200,
   LLM_INTERACTIVE: 6_000,
   INTERACTIVE: 500,
+  EXTERNAL_LOOKUP: 6_000,
   REPORTING: 1_000,
 } as const;
 
@@ -5316,7 +5322,7 @@ export const ROUTES: readonly RouteSpec[] = [
     owner: 'Vishal V',
     roles: ['STUDENT'],
     rateLimit: 'certificates.lookup',
-    criticality: 'INTERACTIVE',
+    criticality: 'EXTERNAL_LOOKUP',
     execution: 'SYNC',
     slaMs: 6000,
     summary:
@@ -6616,7 +6622,7 @@ export const ROUTES: readonly RouteSpec[] = [
     rateLimit: 'role.institutionAdmin',
     criticality: 'INTERACTIVE',
     execution: 'SYNC',
-    slaMs: 1000,
+    slaMs: 500,
     summary: "Upload the college's logo (JPEG, PNG or WebP, up to 2 MB).",
   },
   {
