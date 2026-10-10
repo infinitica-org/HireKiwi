@@ -9,6 +9,7 @@ import {
   isSafeReturnTo,
   PORTAL_ROLES,
   portalHomeForRole,
+  portalSettingsForRole,
   resolvePortalOriginsFromEnv,
   returnToForRole,
   roleAllowsPortal,
@@ -129,6 +130,24 @@ describe('login redirect per role', () => {
     );
     expect(returnToForRole('INSTITUTION_ADMIN', 'http://localhost:3002/batches/abc', origins)).toBe(
       'http://localhost:3002/batches/abc',
+    );
+  });
+});
+
+describe('2FA-offer settings link per role', () => {
+  it('sends each role to its own security settings page', () => {
+    expect(portalSettingsForRole('STUDENT', origins)).toBe(
+      'http://localhost:3001/student/settings',
+    );
+    expect(portalSettingsForRole('COMPANY', origins)).toBe('http://localhost:3006/settings');
+    expect(portalSettingsForRole('INSTITUTION_ADMIN', origins)).toBe(
+      'http://localhost:3002/settings',
+    );
+    expect(portalSettingsForRole('PLACEMENT_STAFF', origins)).toBe(
+      'http://localhost:3002/settings',
+    );
+    expect(portalSettingsForRole('SUPER_ADMIN', origins)).toBe(
+      'http://localhost:3003/admin/settings',
     );
   });
 });

@@ -8,6 +8,7 @@ import { RetentionSweepProcessor } from '../retention/retention-sweep.processor.
 import { RetentionSweepService } from '../retention/retention-sweep.service.js';
 import { StorageModule } from '../storage/storage.module.js';
 import { EmailProcessor } from './email.processor.js';
+import { QueueMonitorAdminController } from './queue-monitor-admin.controller.js';
 import {
   AUDIO_EVALUATION_DLQ,
   AUDIO_EVALUATION_QUEUE,
@@ -15,6 +16,8 @@ import {
   MESSAGE_MODERATION_PURGE_QUEUE,
   CREDENTIAL_VERIFICATION_DLQ,
   CREDENTIAL_VERIFICATION_QUEUE,
+  CERTIFICATE_VERIFICATION_DLQ,
+  CERTIFICATE_VERIFICATION_QUEUE,
   EVIDENCE_EXPIRATION_QUEUE,
   EVIDENCE_RECONCILIATION_QUEUE,
   QLIX_POLL_DLQ,
@@ -52,6 +55,7 @@ const queues = [
   { name: EVIDENCE_EXPIRATION_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: EVIDENCE_RECONCILIATION_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: CREDENTIAL_VERIFICATION_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
+  { name: CERTIFICATE_VERIFICATION_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: QLIX_POLL_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: QLIX_RECALIBRATION_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
   { name: MATCH_RUN_QUEUE, defaultJobOptions: DEFAULT_JOB_OPTIONS },
@@ -62,6 +66,7 @@ const queues = [
   { name: AUDIO_EVALUATION_DLQ },
   { name: PDF_GENERATION_DLQ },
   { name: CREDENTIAL_VERIFICATION_DLQ },
+  { name: CERTIFICATE_VERIFICATION_DLQ },
   { name: QLIX_POLL_DLQ },
   { name: QLIX_RECALIBRATION_DLQ },
   { name: MATCH_RUN_DLQ },
@@ -87,6 +92,7 @@ const queues = [
     forwardRef(() => EvidenceModule),
     StorageModule,
   ],
+  controllers: [QueueMonitorAdminController],
   providers: [
     EmailProcessor,
     AudioEvaluationProcessor,

@@ -38,7 +38,10 @@ jobs:
           fi
 
       - name: compose config
-        run: docker compose -f infra/docker/docker-compose.yml --profile apps --env-file .env.example config
+        run: |
+          docker compose -f infra/docker/docker-compose.dev.yml config
+          docker compose -f infra/docker/docker-compose.prod.yml --profile apps --env-file .env.example config
+          docker compose -f infra/docker/docker-compose.yml --profile apps --env-file .env.example config
 
       - uses: ./.github/actions/setup-node-pnpm
 

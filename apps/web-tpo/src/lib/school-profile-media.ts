@@ -1,5 +1,3 @@
-export const SCHOOL_IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp';
-
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 export const SCHOOL_LOGO_MAX_BYTES = 2 * 1024 * 1024;

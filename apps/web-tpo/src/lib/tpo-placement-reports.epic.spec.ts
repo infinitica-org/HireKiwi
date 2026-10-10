@@ -11,7 +11,6 @@ import {
   buildPlacementOpportunitiesSummary,
   buildVerificationByMajorRows,
   exportEmployerEngagementCsv,
-  exportPlacementOpportunitiesCsv,
   exportVerificationByMajorCsv,
   toCsv,
 } from './tpo-reports-export';
@@ -169,34 +168,6 @@ describe('Epic REPORT-01: University Placement Analytics & Export Reports (Th6-I
     expect(csvContent).includes('"80"');
 
     exportVerificationByMajorCsv(rows);
-
-    expect(createObjectURLSpy).toHaveBeenCalled();
-    expect(appendChildSpy).toHaveBeenCalled();
-    expect(removeChildSpy).toHaveBeenCalled();
-    expect(revokeObjectURLSpy).toHaveBeenCalled();
-
-    appendChildSpy.mockRestore();
-    removeChildSpy.mockRestore();
-    createObjectURLSpy.mockRestore();
-    revokeObjectURLSpy.mockRestore();
-  });
-
-  it('Th6-I605: formats placement opportunities summary report CSV', () => {
-    const appendChildSpy = vi
-      .spyOn(document.body, 'appendChild')
-      .mockImplementation((node) => node);
-    const removeChildSpy = vi
-      .spyOn(document.body, 'removeChild')
-      .mockImplementation((node) => node);
-    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
-    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-
-    exportPlacementOpportunitiesCsv({
-      whitelisted: 500,
-      fullyVerified: 400,
-      activeOpenings: 15,
-      totalApplications: 120,
-    });
 
     expect(createObjectURLSpy).toHaveBeenCalled();
     expect(appendChildSpy).toHaveBeenCalled();

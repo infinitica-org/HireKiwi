@@ -272,7 +272,7 @@ export function matchCandidatesWithVectorSimilarity(
       }
     });
 
-    const why = `Vector similarity match: ${matchPercentage}% match on ${c.trackCode} profile at ${c.headlineTier} tier.`;
+    const why = `Vector similarity match: ${matchPercentage}% match on ${c.trackCode} profile.`;
 
     return {
       studentId: c.studentId,

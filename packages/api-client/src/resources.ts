@@ -182,6 +182,7 @@ import type {
   ReviewEvidenceRequest,
   SaveOnboardingSelectionRequest,
   CreateVerificationDecisionRequest,
+  RegisterRequest,
   RegisterStudentRequest,
   StartCompanyOnboardingRequest,
   UpdateCompanyOnboardingDraftRequest,
@@ -275,6 +276,7 @@ import {
   CandidateResumeStateResponseSchema,
   CandidateOnboardingProfileResponseSchema,
   UploadProfilePhotoResponseSchema,
+  UniversityLogoResponseSchema,
   CertificateDtoSchema,
   CompanyDtoSchema,
   FeatureFlagDtoSchema,
@@ -448,6 +450,11 @@ import {
   VoidWorkExperienceResponseSchema,
   ApproveWorkExperienceAuthenticityResponseSchema,
   VoidCandidateCertificateResponseSchema,
+  ListCertificateVerificationQueueResponseSchema,
+  ReVerifyCertificateResponseSchema,
+  type BulkReVerifyCertificatesRequest,
+  BulkReVerifyCertificatesResponseSchema,
+  ListQueueSnapshotsResponseSchema,
   type ToggleModelVersionRequest,
   type ToggleModelVersionResponse,
   ToggleModelVersionResponseSchema,
@@ -541,12 +548,7 @@ export function authApi(client: HireKiwiApiClient) {
         anonymous: true,
       }),
 
-    register: (body: {
-      email: string;
-      password: string;
-      fullName: string;
-      institutionId: string;
-    }) =>
+    register: (body: RegisterRequest) =>
       client.post(prefixed('/auth/register'), body, {
         schema: RegisterResponseSchema,
         anonymous: true,
@@ -1464,6 +1466,30 @@ export function onboardingApi(client: HireKiwiApiClient) {
         schema: VoidCandidateCertificateResponseSchema,
       }),
 
+    /** Certificates stuck in verification (sourceStatus pending/source_failed). */
+    certificateVerificationQueue: () =>
+      client.get(prefixed('/admin/candidate-certificates/queue'), {
+        schema: ListCertificateVerificationQueueResponseSchema,
+      }),
+
+    reVerifyCertificate: (id: string) =>
+      client.post(
+        prefixed(`/admin/candidate-certificates/${id}/reverify`),
+        {},
+        { schema: ReVerifyCertificateResponseSchema },
+      ),
+
+    bulkReVerifyCertificates: (body: BulkReVerifyCertificatesRequest) =>
+      client.post(prefixed('/admin/candidate-certificates/reverify-bulk'), body, {
+        schema: BulkReVerifyCertificatesResponseSchema,
+      }),
+
+    /** Full Tier 1/2/3 attempt history — what actually happened on each (re)verification run. */
+    certificateVerificationEvents: (id: string) =>
+      client.get(prefixed(`/admin/candidate-certificates/${id}/events`), {
+        schema: ListCertificateVerificationEventsResponseSchema,
+      }),
+
     voidWorkExperience: (id: string, body: VoidRequest) =>
       client.post(prefixed(`/admin/work-experience/${id}/void`), body, {
         schema: VoidWorkExperienceResponseSchema,
@@ -2375,6 +2401,10 @@ export function systemApi(client: HireKiwiApiClient) {
         schema: HealthStatusSchema,
         anonymous: true,
       }),
+
+    /** Universal BullMQ queue viewer — every registered queue (DLQs included). */
+    listQueues: () =>
+      client.get(prefixed('/admin/queues'), { schema: ListQueueSnapshotsResponseSchema }),
   };
 }
 
@@ -3025,6 +3055,19 @@ function campusApi(client: HireKiwiApiClient) {
       }),
 
     /* university side */
+    /** The college logo as a signed address (TPO). */
+    getLogo: () =>
+      client.get(prefixed('/university/logo'), { schema: UniversityLogoResponseSchema }),
+
+    /** Upload or replace the college logo (TPO). */
+    uploadLogo: (file: File | Blob, fileName: string) => {
+      const formData = new FormData();
+      formData.append('file', file, fileName);
+      return client.postForm(prefixed('/university/logo'), formData, {
+        schema: UniversityLogoResponseSchema,
+      });
+    },
+
     /** Th6-445 */
     listEmployerRequests: (query?: Partial<UniversityEmployerRequestsQuery>) =>
       client.get(prefixed('/university/employer-requests'), {

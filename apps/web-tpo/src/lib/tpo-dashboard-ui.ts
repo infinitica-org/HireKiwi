@@ -10,32 +10,12 @@ export const candidatesPageStackClass = 'mx-auto w-full max-w-[1500px] space-y-4
 export const bentoCompactCardClass =
   'relative overflow-hidden rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 shadow-[var(--ds-card-shadow)] md:p-5';
 
-export const bentoCompactToolbarClass =
-  'rounded-lg border border-[var(--ds-border,#e2e8f0)] bg-[var(--ds-surface)] p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] md:p-3.5';
-
-/** One-row filter toolbar on xl+ (search ~45%, three equal filters). */
-export const candidatesFilterGridClass =
-  'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] xl:items-center';
-
 /** Shared height/radius for search + selects in Candidates (no teal focus ring). */
 export const candidatesControlClass =
   'h-11 w-full min-w-0 rounded-lg border border-[var(--ds-border,#e2e8f0)] bg-[var(--ds-surface)] px-3 text-[13px] text-[var(--ds-text)] placeholder:text-[var(--ds-text-subtle)] transition focus:border-[#c7d2e0] focus:outline-2 focus:outline-offset-0 focus:outline-[var(--tpo-section-nav-underline,#0f9f8f)] disabled:opacity-50';
 
-export const candidatesTableHeadCellClass = 'px-4 py-2.5 font-semibold';
-
-export const candidatesTableCellClass = 'px-4 py-3 text-[13px] text-[var(--ds-text-secondary)]';
-
 export const candidatesSidebarLinkActiveClass =
   'bg-[var(--ds-nav-active-bg)] font-semibold text-[var(--ds-text)] before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-[var(--tpo-dash-primary)] before:content-[""]';
-
-export const bentoSegmentedTabsClass =
-  'mb-4 flex flex-wrap gap-1 rounded-lg border border-[var(--ds-border-subtle)] bg-[var(--ds-surface-muted)] p-1';
-
-export const bentoSegmentTabActiveClass =
-  'bg-[var(--ds-surface)] text-[var(--ds-text)] shadow-[var(--ds-card-shadow)] border border-[var(--ds-border-subtle)]';
-
-export const bentoSegmentTabIdleClass =
-  'border border-transparent text-[var(--ds-text-muted)] hover:text-[var(--ds-text)]';
 
 export const dashboardCanvasClass = `${bentoPageStackClass} space-y-5 pb-8`;
 
@@ -74,11 +54,6 @@ export const dashboardSuccessNoticeClass =
 export const dashboardMintBadgeClass =
   'inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800';
 
-export const bentoTabActiveClass =
-  'bg-zinc-100 text-zinc-900 border border-zinc-200/80 shadow-2xs font-semibold';
-
-export const bentoTabIdleClass = 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900';
-
 export const bentoCardMutedClass =
   'relative overflow-hidden rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-4 transition-[border-color,box-shadow] duration-200';
 
@@ -112,9 +87,6 @@ export const dashboardRoseBadgeClass =
 
 export const dashboardPillClass =
   'inline-flex items-center rounded-full border border-[var(--ds-border)] bg-[var(--ds-surface-muted)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--ds-text-secondary)]';
-
-export const dashboardStatusNeutralClass =
-  'inline-flex items-center rounded-md border border-[#dbeafe] bg-[#f0f7ff] px-2 py-0.5 text-[11px] font-medium text-[#1e40af]';
 
 export const dashboardQuickActionHoverClass =
   'group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors duration-200 hover:bg-[#f8fafc] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ds-text)]';

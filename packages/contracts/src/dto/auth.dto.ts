@@ -116,6 +116,10 @@ export const AuthenticatedUserSchema = z.object({
   role: UserRoleSchema,
   institutionId: UuidSchema.nullable(),
   institutionName: z.string().nullable(),
+  /** The college's website domain, used to fetch its logo; null when unknown. */
+  institutionDomain: z.string().nullable().optional(),
+  /** Signed address of the college logo the TPO uploaded, when there is one. */
+  institutionLogoUrl: z.string().url().nullable().optional(),
   /** B2B company tenant; null for students, TPO, and platform admins. */
   companyId: UuidSchema.nullable().optional(),
   companyName: z.string().nullable().optional(),
@@ -138,6 +142,8 @@ export const AuthenticatedUserSchema = z.object({
   cgpa: z.number().min(0).max(10).nullable(),
   sscPercentage: z.number().min(0).max(100).nullable(),
   hscPercentage: z.number().min(0).max(100).nullable(),
+  /** Whether TOTP 2FA is currently enabled on this account. */
+  mfaEnabled: z.boolean(),
   sessionHold: z
     .object({
       code: SessionHoldCodeSchema,

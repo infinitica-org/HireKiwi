@@ -12,12 +12,10 @@ import hirekiwiLogo from '@hirekiwi/ui/assets/images/Logos/WebP/hirekiwi-logo-te
 export function StepHeading({ title, subtitle }: { title: string; subtitle?: ReactNode }) {
   return (
     <div className="mb-4 sm:mb-6">
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
+      <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-foreground mb-1.5">
         {title}
       </h1>
-      {subtitle ? (
-        <p className="text-sm text-muted-foreground leading-relaxed">{subtitle}</p>
-      ) : null}
+      {subtitle ? <p className="text-sm text-black leading-relaxed">{subtitle}</p> : null}
     </div>
   );
 }

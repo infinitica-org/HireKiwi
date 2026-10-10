@@ -38,7 +38,6 @@ import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard.js';
 
 @ApiTags('placement')
 @Controller(`${API_PREFIX}/placement`)
-@UseGuards(TenantScopeGuard)
 export class PlacementMatchController {
   constructor(
     @Inject(MatchingService) private readonly matching: MatchingService,
@@ -56,6 +55,7 @@ export class PlacementMatchController {
    */
   @Post('match')
   @HttpCode(200)
+  @UseGuards(TenantScopeGuard)
   @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF')
   @ApiOperation({ summary: 'Rank the verified student pool against a structured JD (SE-T05).' })
   @ApiBearerAuth()
@@ -68,6 +68,7 @@ export class PlacementMatchController {
   /** S6-VV-76 — triggers an async, batch-scoped match job; poll `GET match-runs/:id` for the result. */
   @Post('match-runs')
   @HttpCode(202)
+  @UseGuards(TenantScopeGuard)
   @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF')
   @ApiOperation({ summary: 'Trigger an async, batch-scoped candidate match run (S6-VV-76).' })
   @ApiBearerAuth()
@@ -84,6 +85,7 @@ export class PlacementMatchController {
   @Get('match-runs/:runId/candidates/:studentId')
   @AuditAccess('user', 'studentId')
   @HttpCode(200)
+  @UseGuards(TenantScopeGuard)
   @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF')
   @ApiOperation({ summary: 'Single candidate fit from a completed match run snapshot.' })
   @ApiBearerAuth()
@@ -101,6 +103,7 @@ export class PlacementMatchController {
 
   @Get('match-runs/:id')
   @HttpCode(200)
+  @UseGuards(TenantScopeGuard)
   @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF')
   @ApiOperation({ summary: 'Poll the status/result of an async match run (S6-VV-76).' })
   @ApiBearerAuth()
@@ -116,6 +119,7 @@ export class PlacementMatchController {
   @Get('candidates/:studentId/skills/:skillCode/inspection')
   @AuditAccess('user', 'studentId')
   @HttpCode(200)
+  @UseGuards(TenantScopeGuard)
   @Roles('INSTITUTION_ADMIN', 'PLACEMENT_STAFF')
   @ApiOperation({
     summary:

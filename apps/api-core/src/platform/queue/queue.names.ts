@@ -4,6 +4,8 @@ export const PDF_GENERATION_QUEUE = 'pdf_generation' as const;
 export const RETENTION_SWEEP_QUEUE = 'retention_sweep' as const;
 export const MESSAGE_MODERATION_PURGE_QUEUE = 'message_moderation_purge' as const;
 export const CREDENTIAL_VERIFICATION_QUEUE = 'credential_verification' as const;
+/** Async verification runs for candidate-declared external certificates (Tier 1/2/3 pipeline). */
+export const CERTIFICATE_VERIFICATION_QUEUE = 'certificate_verification' as const;
 export const QLIX_POLL_QUEUE = 'qlix_poll' as const;
 export const QLIX_RECALIBRATION_QUEUE = 'qlix_recalibration' as const;
 export const MATCH_RUN_QUEUE = 'match_run' as const;
@@ -19,6 +21,7 @@ export const BULK_WHITELIST_IMPORT_QUEUE = 'bulk_whitelist_import' as const;
 export const AUDIO_EVALUATION_DLQ = 'audio_evaluation.dlq' as const;
 export const PDF_GENERATION_DLQ = 'pdf_generation.dlq' as const;
 export const CREDENTIAL_VERIFICATION_DLQ = 'credential_verification.dlq' as const;
+export const CERTIFICATE_VERIFICATION_DLQ = 'certificate_verification.dlq' as const;
 export const QLIX_POLL_DLQ = 'qlix_poll.dlq' as const;
 export const QLIX_RECALIBRATION_DLQ = 'qlix_recalibration.dlq' as const;
 export const MATCH_RUN_DLQ = 'match_run.dlq' as const;

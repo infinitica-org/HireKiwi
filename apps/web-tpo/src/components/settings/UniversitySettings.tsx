@@ -6,6 +6,7 @@ import { CheckCircle2, Globe, Lock, Plus, Trash2 } from 'lucide-react';
 import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { PlacementEmployerSummary, TenantEntitlementsDto } from '@hirekiwi/contracts';
 import { StaffManagementWorkspace } from '../staff/StaffManagementWorkspace';
+import { TwoFactorAuthCard } from '../account/TwoFactorAuthCard';
 import { CampusesSection } from './CampusesSection';
 
 import { api, employersApi } from '../../lib/api';
@@ -21,7 +22,7 @@ import {
 } from '../../lib/tpo-institution-settings';
 import { dashboardErrorNoticeClass, dashboardSuccessNoticeClass } from '../../lib/tpo-dashboard-ui';
 
-type SettingsTab = 'all' | 'staff' | 'domains' | 'campuses' | 'employers' | 'plan';
+type SettingsTab = 'all' | 'staff' | 'domains' | 'campuses' | 'employers' | 'plan' | 'security';
 
 function Toggle({
   checked,
@@ -170,6 +171,7 @@ export function UniversitySettings() {
   const showCampuses = activeTab === 'all' || activeTab === 'campuses';
   const showEmployers = activeTab === 'all' || activeTab === 'employers';
   const showPlan = activeTab === 'all' || activeTab === 'plan';
+  const showSecurity = activeTab === 'all' || activeTab === 'security';
 
   return (
     <div className="space-y-6 pb-12 pt-6">
@@ -194,6 +196,7 @@ export function UniversitySettings() {
             { id: 'campuses', label: `Campuses (${campusCount})` },
             { id: 'employers', label: `Employer Queue (${employerQueue.length})` },
             { id: 'plan', label: 'Plan & Profile' },
+            { id: 'security', label: 'Security' },
           ].map((tab) => {
             const active = activeTab === tab.id;
             return (
@@ -474,6 +477,12 @@ export function UniversitySettings() {
               </div>
             </div>
           </div>
+        </section>
+      ) : null}
+
+      {showSecurity ? (
+        <section id="settings-security" className="space-y-3">
+          <TwoFactorAuthCard />
         </section>
       ) : null}
     </div>

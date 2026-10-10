@@ -27,7 +27,7 @@ HireKiwi is composed of **10 applications** running within a Turborepo monorepo:
 
 ## Stack
 
-Turborepo + pnpm workspaces. 8 Next.js 16 portals · NestJS 11 / Fastify core · Python CV sidecar · PostgreSQL 16 with **pgvector** · Redis 7 · Redpanda (Kafka) · MinIO (S3) · Mailpit (development SMTP) · Caddy TLS reverse proxy.
+Turborepo + pnpm workspaces. 8 Next.js 16 portals · NestJS 11 / Fastify core · Python CV sidecar · PostgreSQL 16 with **pgvector** · Redis 7 · Redpanda (Kafka) · MinIO (S3) · Mailpit (development SMTP) · Caddy TLS reverse proxy. Each application is independently containerized (`apps/<app>/Dockerfile`).
 
 Shared packages: `@hirekiwi/contracts` (frozen API surface), `@hirekiwi/scoring-engine`, `@hirekiwi/prompts`, `@hirekiwi/observability`, `@hirekiwi/api-client`, `@hirekiwi/ui`.
 
@@ -57,6 +57,8 @@ pnpm dev:cv             # http://localhost:8091 — python CV sidecar
 
 ### Data plane (`pnpm infra:up`)
 
+`pnpm infra:up` (alias `pnpm infra:dev`) runs the **lightweight dev compose** (`infra/docker/docker-compose.dev.yml`), bringing up only backend dependencies under 1.5 GB RAM while applications run natively on the host:
+
 | Service       | Host URL / port                          | Notes                                                           |
 | ------------- | ---------------------------------------- | --------------------------------------------------------------- |
 | Postgres      | `localhost:5432`                         | `pgvector/pgvector:pg16` (PgBouncer: `localhost:6432`)          |
@@ -66,10 +68,12 @@ pnpm dev:cv             # http://localhost:8091 — python CV sidecar
 | Mailpit       | UI `http://localhost:8025`, SMTP `:1025` | Captures outbound mail                                          |
 | Prisma Studio | `http://localhost:5555`                  | Browse and edit rows against the same database as the API       |
 
-Optional Compose profiles:
+Compose environments & profiles:
 
-- `pnpm infra:obs` — Prometheus (9090), Grafana (3100), Loki (3101), Tempo (3103)
+- `pnpm infra:dev` / `pnpm infra:up` — lightweight data plane only (`docker-compose.dev.yml`, < 1.5 GB RAM)
+- `pnpm infra:prod` — production multi-slot topology with Caddy & backup daemon (`docker-compose.prod.yml`)
 - `pnpm infra:apps` — containerized API and web applications under Docker Compose
+- `pnpm infra:obs` — Prometheus (9090), Grafana (3100), Loki (3101), Tempo (3103)
 
 ### API probes (after `pnpm dev:api`)
 
@@ -85,20 +89,22 @@ Sign in at **http://localhost:3005/login** — the session redirects to the port
 
 Invitation emails are captured by Mailpit (`http://localhost:8025`) in local development. Invitation links resolve on the auth application (`/invite/:token`).
 
-Invitation emails are captured by Mailpit (`http://localhost:8025`) in local development. Invitation links resolve on the auth application (`/invite/:token`).
-
 ## Infrastructure
 
-Two environments are maintained outside local development: a staging/pre-production environment tracking the `dev` branch, and a production environment tracking the `main` branch. Full provisioning and deployment procedure: [`infra/vps/README.md`](./infra/vps/README.md). Database policy: [`docs/delivery/DATABASE.md`](./docs/delivery/DATABASE.md).
+Two environments are maintained outside local development: a development/pre-production environment tracking the `dev` branch, and a production environment tracking the `main` branch. Full provisioning and deployment procedure: [`infra/vps/README.md`](./infra/vps/README.md). Database policy: [`docs/delivery/DATABASE.md`](./docs/delivery/DATABASE.md).
+
+All 10 applications are independently containerized via their own Dockerfile (`apps/<app>/Dockerfile`), allowing selective single-service rollouts and scaling without affecting untouched containers.
 
 Deployment is automated: a merge to `dev` or `main` runs continuous integration, and a successful run triggers the corresponding deployment workflow. Manual invocation of `scripts/deploy-vps.sh` remains supported for break-glass operation and first-time environment setup.
 
 ```bash
-# staging
+# dev (full stack or selective service)
 cp .env.dev.example .env.dev && bash scripts/deploy-vps.sh dev
+# or deploy only a specific service:
+bash scripts/deploy-vps.sh dev web-student
 
-# production (restricted to the designated release owner)
-cp .env.prod.example .env.prod && bash scripts/deploy-vps.sh prod
+# production (automated Blue-Green zero-downtime release)
+cp .env.prod.example .env.prod && bash scripts/blue-green-deploy.sh prod
 ```
 
 ## Quality

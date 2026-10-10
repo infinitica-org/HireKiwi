@@ -95,6 +95,7 @@ export function JobWizard({
   onChange,
   companyName,
   titleInvalid,
+  attempted = false,
   postedAt,
   problems,
   visited,
@@ -105,6 +106,8 @@ export function JobWizard({
   onChange: <K extends keyof JobForm>(key: K, value: JobForm[K]) => void;
   companyName: string;
   titleInvalid?: boolean;
+  /** True once someone tried to continue or post: required fields left empty turn red. */
+  attempted?: boolean;
   postedAt?: string;
   problems: JobFormProblem[];
   visited: ReadonlySet<number>;
@@ -118,6 +121,7 @@ export function JobWizard({
         section={step}
         companyName={companyName}
         titleInvalid={titleInvalid}
+        attempted={attempted}
         postedAt={postedAt}
       />
     </div>

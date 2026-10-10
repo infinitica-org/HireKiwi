@@ -5,6 +5,7 @@ import { EvidenceModule } from '../evidence/evidence.module.js';
 import { InstitutionsModule } from '../institutions/institutions.module.js';
 import { CandidateEmbeddingService } from './candidate-embedding.service.js';
 import { JdParseProcessor } from './jd-parse.processor.js';
+import { JobEmbeddingService } from './job-embedding.service.js';
 import { MatchNarrativeService } from './match-narrative.service.js';
 import { MatchingService } from './matching.service.js';
 import { MatchRunProcessor } from './match-run.processor.js';
@@ -21,8 +22,9 @@ import { PlacementMatchController } from './placement-match.controller.js';
     JdParseProcessor,
     MatchNarrativeService,
     CandidateEmbeddingService,
+    JobEmbeddingService,
   ],
-  exports: [MatchingService, OpeningJdParseService, CandidateEmbeddingService],
+  exports: [MatchingService, OpeningJdParseService, CandidateEmbeddingService, JobEmbeddingService],
 })
 export class MatchingModule {}
 export * from './jd-fallback-extractor.js';

@@ -161,20 +161,6 @@ export function exportVerificationByMajorCsv(rows: VerificationByMajorRow[]): vo
   downloadCsv(`hirekiwi_verification_by_major_${today}.csv`, csv);
 }
 
-export function exportPlacementOpportunitiesCsv(summary: PlacementOpportunitiesSummary): void {
-  const csv = toCsv(
-    ['Metric', 'Value'],
-    [
-      ['Whitelisted students', summary.whitelisted],
-      ['Fully verified students', summary.fullyVerified],
-      ['Active job openings', summary.activeOpenings],
-      ['Placement applications (matched)', summary.totalApplications],
-    ],
-  );
-  const today = new Date().toISOString().slice(0, 10);
-  downloadCsv(`hirekiwi_placement_opportunities_${today}.csv`, csv);
-}
-
 export function exportEmployerEngagementCsv(rows: EmployerEngagementRow[]): void {
   const csv = toCsv(
     ['Employer', 'Active openings', 'Total openings', 'Applications'],

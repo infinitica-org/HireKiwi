@@ -7,7 +7,9 @@ cd "$(dirname "$0")/.."
 echo "==> lockfile"
 node scripts/check-lockfile.mjs
 
-echo "==> compose config"
+echo "==> compose config (dev & prod)"
+docker compose -f infra/docker/docker-compose.dev.yml config >/dev/null
+docker compose -f infra/docker/docker-compose.prod.yml --profile apps --env-file .env.example config >/dev/null
 docker compose -f infra/docker/docker-compose.yml --profile apps --env-file .env.example config >/dev/null
 
 echo "==> lint"

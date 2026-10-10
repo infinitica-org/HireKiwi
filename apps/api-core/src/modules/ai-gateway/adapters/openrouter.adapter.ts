@@ -31,6 +31,46 @@ export class OpenRouterAdapter implements AiProviderAdapter {
     return this.apiKey !== null;
   }
 
+  /**
+   * Real text embedding via OpenRouter's OpenAI-compatible /embeddings endpoint. Uses
+   * openai/text-embedding-3-small — 1536 dimensions, matching the vector(1536) columns this
+   * embeds into (CandidateEvidenceProfile.embedding, JobOpening.embedding) with no conversion.
+   */
+  async embedText(text: string): Promise<number[]> {
+    if (!this.apiKey) {
+      throw new Error('OpenRouter client is not configured (missing OPENROUTER_API_KEY).');
+    }
+
+    const response = await fetch(`${OPENROUTER_BASE_URL}/embeddings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+        'HTTP-Referer': 'https://hirekiwi.infinitica.io',
+        'X-Title': 'HireKiwi',
+      },
+      body: JSON.stringify({
+        model: env.OPENROUTER_EMBEDDING_MODEL || 'openai/text-embedding-3-small',
+        input: text,
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`OpenRouter embeddings API error (${String(response.status)}): ${errText}`);
+    }
+
+    const data = (await response.json()) as {
+      data?: Array<{ embedding?: number[] }>;
+    };
+    const values = data.data?.[0]?.embedding;
+    if (!values || values.length === 0) {
+      throw new Error('OpenRouter /embeddings returned no embedding values.');
+    }
+    return values;
+  }
+
   async checkHealth(): Promise<ProviderHealthResult> {
     if (!this.apiKey) {
       return {

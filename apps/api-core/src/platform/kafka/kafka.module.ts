@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { AssessmentModule } from '../../modules/assessment/assessment.module.js';
 import { CorroborationModule } from '../../modules/corroboration/corroboration.module.js';
+import { MatchingModule } from '../../modules/matching/matching.module.js';
 import { SignalEncoderModule } from '../../modules/signal-encoder/signal-encoder.module.js';
 import { CertificateModule } from '../../modules/certificate/certificate.module.js';
 import { NotificationsModule } from '../../modules/notifications/notifications.module.js';
@@ -9,6 +10,7 @@ import { ApplicationStageChangedConsumer } from './application-stage-changed.con
 import { AssessmentSubmittedConsumer } from './assessment-submitted.consumer.js';
 import { AssessmentSubmittedEvalConsumer } from '../../modules/evaluation/assessment-submitted-eval.consumer.js';
 import { AuditRecordedConsumer } from './audit-recorded.consumer.js';
+import { CandidateEmbeddingRefreshConsumer } from '../../modules/matching/candidate-embedding-refresh.consumer.js';
 import { CandidateSkillsDiscoveredConsumer } from '../../modules/assessment/candidate-skills-discovered.consumer.js';
 import { SignalIngestedEncoderConsumer } from '../../modules/signal-encoder/signal-ingested.encoder-consumer.js';
 import { SkillVerificationCorroborationConsumer } from '../../modules/corroboration/skill-verification-corroboration.consumer.js';
@@ -27,6 +29,7 @@ import { TrackUpdatedConsumer } from './track-updated.consumer.js';
     CertificateModule,
     AssessmentModule,
     CorroborationModule,
+    MatchingModule,
     SignalEncoderModule,
   ],
   providers: [
@@ -44,6 +47,7 @@ import { TrackUpdatedConsumer } from './track-updated.consumer.js';
     CandidateSkillsDiscoveredConsumer,
     SignalIngestedEncoderConsumer,
     SkillVerificationCorroborationConsumer,
+    CandidateEmbeddingRefreshConsumer,
     TrackUpdatedConsumer,
   ],
   exports: [KafkaService, KafkaOutboxService],

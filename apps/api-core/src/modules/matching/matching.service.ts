@@ -92,6 +92,7 @@ import {
   buildJobVectorFromRequiredSkills,
   matchCandidatesWithVectorSimilarity,
   type CandidateVectorProfile,
+  type VectorMatchResult,
 } from './vector-candidate-matcher.js';
 import {
   calculatePersonJobFit,
@@ -511,12 +512,18 @@ function buildEligibleStudentsQuery(
         'code', sk.code,
         'domain', sk.domain,
         'proficiency', COALESCE(sc.final_proficiency::text, sc.proficiency::text),
-        'claimConfidence', sc.claim_confidence
+        -- A BEGINNER_REATTEMPT claim demonstrated *something* (it was attempted, just didn't
+        -- clear full verification) — include it at a capped, low confidence instead of treating
+        -- it as entirely absent evidence the way an unattempted DECLARED claim would be.
+        'claimConfidence', CASE
+          WHEN sc.status = 'BEGINNER_REATTEMPT' THEN LEAST(COALESCE(sc.claim_confidence, 0.3), 0.3)
+          ELSE sc.claim_confidence
+        END
       )) AS skills
       FROM skill_claims sc
       JOIN skills sk ON sk.id = sc.skill_id
       WHERE sc.student_id = u.id
-        AND sc.status = 'VERIFIED'
+        AND sc.status IN ('VERIFIED', 'BEGINNER_REATTEMPT')
         AND (sc.verified_until IS NULL OR sc.verified_until > NOW())
     ) sc_agg ON true
     WHERE ${Prisma.join(conditions, ' AND ')}
@@ -1270,6 +1277,68 @@ export class MatchingService {
   }
 
   /**
+   * Stage 1 pre-filter for `searchStudents`. Prefers real pgvector cosine similarity between the
+   * scoped job's stored embedding (JobEmbeddingService) and each candidate's stored embedding
+   * (CandidateEmbeddingService) when the job has one. A candidate with no embedding of their own
+   * yet still appears in the pool (at a neutral 0 similarity) rather than being dropped — Stage 2
+   * (PJF) is what actually decides the score shown to the user; this only orders the pre-filter.
+   * Falls back to the original 6-dim domain-vector heuristic when the job has no embedding
+   * (not generated yet, no job scoped, or GOOGLE_AI_API_KEY unset in this environment).
+   */
+  private async buildStage1VectorMatches(
+    candidateProfiles: readonly CandidateVectorProfile[],
+    scopedJobId: string | undefined,
+    requiredSkillsForScoring: readonly { domainCode?: string | null; minProficiency?: string }[],
+  ): Promise<{ ranked: VectorMatchResult[] }> {
+    if (scopedJobId && candidateProfiles.length > 0) {
+      const jobEmbeddingRow = await this.prisma.$queryRaw<Array<{ hasEmbedding: boolean }>>`
+        SELECT (embedding IS NOT NULL) AS "hasEmbedding" FROM job_openings WHERE id = ${scopedJobId}::uuid
+      `;
+      if (jobEmbeddingRow[0]?.hasEmbedding) {
+        const studentIds = candidateProfiles.map((p) => p.studentId);
+        const simRows = await this.prisma.$queryRaw<
+          Array<{ student_id: string; similarity: number | null }>
+        >`
+          SELECT u.id AS student_id,
+            CASE WHEN cep.embedding IS NOT NULL
+              THEN 1 - (cep.embedding <=> (SELECT embedding FROM job_openings WHERE id = ${scopedJobId}::uuid))
+              ELSE NULL
+            END AS similarity
+          FROM users u
+          LEFT JOIN candidate_evidence_profiles cep ON cep.student_id = u.id
+          WHERE u.id = ANY(${studentIds}::uuid[])
+        `;
+        const simByStudent = new Map(simRows.map((r) => [r.student_id, r.similarity]));
+        const ranked: VectorMatchResult[] = candidateProfiles
+          .map((profile) => {
+            // Cosine similarity ranges [-1, 1]; clamp to [0, 1] so a genuinely dissimilar
+            // candidate reads as "0% similar", not a confusing negative percentage.
+            const sim = Math.max(0, simByStudent.get(profile.studentId) ?? 0);
+            return {
+              studentId: profile.studentId,
+              studentName: profile.studentName,
+              trackCode: profile.trackCode,
+              certificateId: profile.certificateId,
+              highestLevelCleared: profile.highestLevelCleared,
+              headlineTier: profile.headlineTier,
+              cosineSimilarity: sim,
+              fitScore: sim,
+              matchPercentage: Math.round(sim * 100),
+              radarBreakdown: [],
+              why: `Embedding similarity: ${Math.round(sim * 100)}% match on ${profile.trackCode} profile at ${profile.headlineTier} tier.`,
+              strongCompetencies: [],
+              gapCompetencies: [],
+            };
+          })
+          .sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
+        return { ranked };
+      }
+    }
+    const targetVector = buildJobVectorFromRequiredSkills(requiredSkillsForScoring);
+    return matchCandidatesWithVectorSimilarity(candidateProfiles, targetVector);
+  }
+
+  /**
    * Gap 2 Task 2A.3: Feature flag to enable PJF (Person-Job-Fit) scoring-engine path.
    * When enabled, matching uses calculatePersonJobFit with corroboration contradictions and claim confidence.
    * When disabled (default), uses legacy rankSkillCapabilityCandidates for backward compatibility.
@@ -1277,7 +1346,10 @@ export class MatchingService {
   private async usePjfScoring(institutionId: string): Promise<boolean> {
     const resolved = await this.institutions.resolveInstitutionEntitlements(institutionId);
     const PJF_SCORING_FLAG = 'matching.use_pjf_scoring' as const;
-    return resolved.flags.find((flag) => flag.key === PJF_SCORING_FLAG)?.enabled ?? false;
+    // Defaults to true: PJF (calculatePersonJobFit) is the standard scorer for every institution.
+    // The legacy skill-capability ranker stays available as a dormant fallback — an institution
+    // can still be opted OUT via an explicit disabled override, but opting IN is no longer required.
+    return resolved.flags.find((flag) => flag.key === PJF_SCORING_FLAG)?.enabled ?? true;
   }
 
   private async loadSkillCapabilityEvidence(studentIds: readonly string[]): Promise<{
@@ -1949,7 +2021,7 @@ export class MatchingService {
         SELECT 1 FROM applications a_scoped
         WHERE a_scoped.student_id = u.id
           AND a_scoped.opening_id = ${scopedOpeningId}::uuid
-          AND a_scoped.stage IN ('REJECTED', 'OFFER_DECLINED')
+          AND a_scoped.stage = 'REJECTED'
       )`);
       // I404 — job-relevant scoping: keep candidates with at least one verified skill
       // the opening requires (openings with no declared skills match everyone).
@@ -2014,12 +2086,17 @@ export class MatchingService {
           'domain', sk.domain,
           'domainCode', sk.domain_code,
           'proficiency', COALESCE(sc.final_proficiency::text, sc.proficiency::text),
-          'claimConfidence', sc.claim_confidence
+          -- See buildEligibleStudentsQuery above: a BEGINNER_REATTEMPT claim is included at a
+          -- capped, low confidence rather than being dropped as if no evidence existed.
+          'claimConfidence', CASE
+            WHEN sc.status = 'BEGINNER_REATTEMPT' THEN LEAST(COALESCE(sc.claim_confidence, 0.3), 0.3)
+            ELSE sc.claim_confidence
+          END
         )) AS skills
         FROM skill_claims sc
         JOIN skills sk ON sk.id = sc.skill_id
         WHERE sc.student_id = u.id
-          AND sc.status = 'VERIFIED'
+          AND sc.status IN ('VERIFIED', 'BEGINNER_REATTEMPT')
           AND (sc.verified_until IS NULL OR sc.verified_until > NOW())
       ) sc_agg ON true
       WHERE ${Prisma.join(conditions, ' AND ')}
@@ -2069,10 +2146,16 @@ export class MatchingService {
         }))
       : [];
 
-    // Stage 1: vector similarity narrows the (already SQL-filtered) pool down to a ranked
-    // shortlist. This is deliberately a rough pass — see Stage 2 below for the authoritative score.
-    const targetVector = buildJobVectorFromRequiredSkills(requiredSkillsForScoring);
-    const vectorMatches = matchCandidatesWithVectorSimilarity(candidateProfiles, targetVector);
+    // Stage 1: narrows the (already SQL-filtered) pool down to a ranked shortlist. This is
+    // deliberately a rough pass — see Stage 2 below for the authoritative score. Prefers real
+    // pgvector cosine similarity (job + candidate 1536-dim embeddings) when the scoped job has
+    // one stored; falls back to the in-memory 6-dim domain heuristic otherwise (job embedding
+    // not generated yet, no job scoped, or the embedding provider isn't configured).
+    const vectorMatches = await this.buildStage1VectorMatches(
+      candidateProfiles,
+      scopedJobId,
+      requiredSkillsForScoring,
+    );
 
     const profileById = new Map(candidateProfiles.map((profile) => [profile.studentId, profile]));
 

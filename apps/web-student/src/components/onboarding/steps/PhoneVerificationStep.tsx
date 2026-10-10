@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence } from 'motion/react';
-import { CheckCircle2, RefreshCw, Zap } from 'lucide-react';
+import { CheckCircle2, ChevronDown, RefreshCw, Zap } from 'lucide-react';
 import { isHireKiwiApiError } from '@hirekiwi/api-client';
 import type { AuthenticatedUser } from '@hirekiwi/contracts';
 import { api } from '@/lib/api';
 import type { OnboardingProfileForm } from '@/lib/onboarding-form';
-import { ErrorBanner, FieldLabel, PrimaryButton, StepHeading, TextInput } from '../wizard-ui';
+import { ErrorBanner, PrimaryButton, StepHeading, TextInput } from '../wizard-ui';
 
 interface PhoneVerificationStepProps {
   formData: OnboardingProfileForm;
@@ -18,6 +18,15 @@ interface PhoneVerificationStepProps {
   ) => void;
   onContinue: () => void;
   initialUser?: AuthenticatedUser | null;
+}
+
+function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <span className="mb-1.5 block text-[13px] font-medium text-foreground">
+      {children}
+      {required ? <span className="text-rose-500"> *</span> : null}
+    </span>
+  );
 }
 
 export default function PhoneVerificationStep({
@@ -212,44 +221,35 @@ export default function PhoneVerificationStep({
 
       <AnimatePresence>{error ? <ErrorBanner>{error}</ErrorBanner> : null}</AnimatePresence>
 
-      <AnimatePresence>
-        {successMessage ? (
-          <div className="mb-3 flex items-center justify-between rounded-[11px] border border-border bg-muted/60 px-3.5 py-2.5 text-xs sm:text-sm text-foreground">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-foreground" />
-              <span>{successMessage}</span>
-            </div>
-            <button
-              type="button"
-              onClick={handleFillDemoCreds}
-              className="inline-flex items-center gap-1 text-xs font-bold text-foreground underline hover:opacity-70"
-            >
-              <Zap className="h-3.5 w-3.5" />
-              Quick Fill Demo
-            </button>
-          </div>
-        ) : null}
-      </AnimatePresence>
+      {successMessage ? (
+        <p className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          <span>{successMessage}</span>
+          <button
+            type="button"
+            onClick={handleFillDemoCreds}
+            className="inline-flex items-center gap-1 font-semibold text-foreground underline underline-offset-2 hover:opacity-70"
+          >
+            <Zap className="h-3 w-3" />
+            Quick Fill Demo
+          </button>
+        </p>
+      ) : null}
 
-      <div className="space-y-3.5 sm:space-y-4">
+      <div className="space-y-6">
         {/* Email Verification Section */}
         {emailVerified ? (
           <div
             data-testid="email-verified-badge"
-            className="flex items-center justify-between rounded-[11px] border border-emerald-500/20 bg-emerald-500/10 p-3.5 text-xs sm:text-sm text-emerald-900 dark:text-emerald-200"
+            className="flex items-center justify-between gap-3 border-b border-border pb-4"
           >
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <div>
-                <p className="font-semibold">✓ Email verified</p>
-                {currentUser?.email ? (
-                  <p className="text-xs text-emerald-700/80 dark:text-emerald-300/80">
-                    {currentUser.email}
-                  </p>
-                ) : null}
-              </div>
+            <div className="min-w-0">
+              <p className="text-[13px] font-medium text-foreground">✓ Email verified</p>
+              {currentUser?.email ? (
+                <p className="truncate text-sm text-muted-foreground">{currentUser.email}</p>
+              ) : null}
             </div>
-            <span className="inline-flex items-center rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <CheckCircle2 className="h-3.5 w-3.5" />
               Verified
             </span>
           </div>
@@ -260,7 +260,7 @@ export default function PhoneVerificationStep({
           >
             <div className="flex items-center justify-between">
               <div>
-                <FieldLabel required>Email Verification</FieldLabel>
+                <Label required>Email verification</Label>
                 {currentUser?.email ? (
                   <p className="text-xs text-muted-foreground">{currentUser.email}</p>
                 ) : null}
@@ -297,7 +297,7 @@ export default function PhoneVerificationStep({
                   }}
                   placeholder="6-digit code"
                   maxLength={6}
-                  className="tracking-widest font-mono text-center py-2 text-sm"
+                  className="rounded-lg bg-white font-mono text-sm tracking-[0.25em] shadow-xs"
                 />
                 <button
                   type="button"
@@ -315,21 +315,27 @@ export default function PhoneVerificationStep({
 
         {/* Mobile Number with Country Code */}
         <div>
-          <FieldLabel required>Mobile Number</FieldLabel>
-          <div className="flex h-11 rounded-[11px] border border-border bg-background transition-[border-color,box-shadow] duration-150 focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:border-white dark:focus-within:ring-white/10">
-            <select
-              aria-label="Country code"
-              value={formData.phoneCountryCode || '+91'}
-              onChange={(e) => updateField('phoneCountryCode', e.target.value)}
-              className="cursor-pointer rounded-l-[11px] border-r border-border bg-transparent px-3 text-sm font-semibold text-foreground outline-none hover:bg-black/5 dark:hover:bg-white/5"
-            >
-              <option value="+91">IN +91</option>
-              <option value="+1">US +1</option>
-              <option value="+44">UK +44</option>
-              <option value="+65">SG +65</option>
-              <option value="+971">AE +971</option>
-              <option value="+61">AU +61</option>
-            </select>
+          <Label required>Mobile number</Label>
+          <div className="flex h-11 overflow-hidden rounded-[8px] border bg-white  duration-150 focus-within:ring-[3px] border-zinc-300 focus-within:border-zinc-900 focus-within:ring-zinc-900/10 dark:border-zinc-700 dark:focus-within:border-white dark:focus-within:ring-white/10">
+            <div className="relative flex shrink-0 items-center border-r border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
+              <select
+                aria-label="Country code"
+                value={formData.phoneCountryCode || '+91'}
+                onChange={(e) => updateField('phoneCountryCode', e.target.value)}
+                className="h-full cursor-pointer appearance-none rounded-none border-0 bg-transparent py-0 pr-7 pl-3.5 text-sm font-medium text-foreground outline-none"
+              >
+                <option value="+91">IN +91</option>
+                <option value="+1">US +1</option>
+                <option value="+44">UK +44</option>
+                <option value="+65">SG +65</option>
+                <option value="+971">AE +971</option>
+                <option value="+61">AU +61</option>
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-2.5 h-4 w-4 text-zinc-400"
+                aria-hidden
+              />
+            </div>
             <input
               data-testid="phone-number-input"
               type="tel"
@@ -342,16 +348,18 @@ export default function PhoneVerificationStep({
               }}
               placeholder="6381730716"
               maxLength={10}
-              className="w-full rounded-r-[11px] bg-transparent px-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none"
+              className="w-full min-w-0 bg-transparent px-3.5 text-sm text-foreground placeholder:text-zinc-400 outline-none"
             />
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Must be a 10-digit number.</p>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            10-digit number, without country code.
+          </p>
         </div>
 
         {/* 6-Digit OTP */}
         <div>
           <div className="flex items-center justify-between">
-            <FieldLabel required>6-Digit Mobile Verification Code</FieldLabel>
+            <Label required>Verification code</Label>
             {cooldown > 0 ? (
               <span className="text-xs text-muted-foreground">Resend code in {cooldown}s</span>
             ) : (
@@ -366,26 +374,36 @@ export default function PhoneVerificationStep({
               </button>
             )}
           </div>
-          <TextInput
-            data-testid="otp-code-input"
-            type="text"
-            inputMode="numeric"
-            value={otpCode}
-            onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
-              setOtpCode(digits);
-            }}
-            invalid={otpInvalid}
-            placeholder="123456"
-            maxLength={6}
-            className="tracking-widest text-lg font-mono text-center py-2"
-          />
+          <div
+            className={`flex h-11 overflow-hidden rounded-[8px] border bg-white transition-[border-color,box-shadow] duration-150 focus-within:ring-[3px] ${
+              otpInvalid
+                ? 'border-rose-500 focus-within:ring-rose-500/20'
+                : 'border-zinc-300 focus-within:border-zinc-900 focus-within:ring-zinc-900/10 dark:border-zinc-700 dark:focus-within:border-white dark:focus-within:ring-white/10'
+            }`}
+          >
+            <input
+              data-testid="otp-code-input"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={otpCode}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
+                setOtpCode(digits);
+              }}
+              aria-invalid={otpInvalid || undefined}
+              aria-label="Verification code"
+              placeholder="123456"
+              maxLength={6}
+              className="w-full min-w-0 bg-transparent px-3.5 font-mono text-sm tracking-[0.25em] text-foreground placeholder:text-zinc-400 outline-none"
+            />
+          </div>
         </div>
 
         {/* DPDP Consent */}
         <label
-          className={`flex cursor-pointer items-start gap-3 rounded-[11px] border p-3 sm:p-3.5 transition-colors ${
-            consentInvalid ? 'border-rose-500 bg-rose-500/10' : 'border-border bg-card'
+          className={`flex cursor-pointer items-start gap-3 rounded-lg ${
+            consentInvalid ? 'bg-rose-50 p-2 ring-1 ring-rose-300' : ''
           }`}
         >
           <input
@@ -393,16 +411,16 @@ export default function PhoneVerificationStep({
             type="checkbox"
             checked={formData.dpdpConsent}
             onChange={(e) => updateField('dpdpConsent', e.target.checked)}
-            className="mt-0.5 rounded border-border bg-muted text-black focus:ring-black dark:text-white dark:focus:ring-white"
+            className="mt-0.5 size-4 rounded border-border text-black accent-black focus:ring-black dark:accent-white"
           />
-          <span className="text-xs sm:text-[13px] text-foreground leading-snug">
+          <span className="text-[13px] leading-snug text-foreground/80">
             I consent to HireKiwi processing my personal data as described in the{' '}
             <Link
               href="/dpdp-policy"
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="rounded px-0.5 font-semibold text-foreground underline hover:text-black dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-black"
+              className="rounded font-medium text-foreground underline underline-offset-2 hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-black"
             >
               DPDP Act 2023 consent terms
             </Link>
@@ -411,7 +429,7 @@ export default function PhoneVerificationStep({
         </label>
       </div>
 
-      <div className="mt-5 sm:mt-6 flex flex-col items-center gap-3">
+      <div className="mt-6 flex flex-col items-center gap-3">
         <PrimaryButton
           data-testid="verify-phone-submit"
           onClick={handleVerify}

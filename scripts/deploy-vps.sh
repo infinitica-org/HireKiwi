@@ -36,43 +36,62 @@ test -f "$ENV_FILE" || {
 # only throttles non-build lifecycle ops, it does NOT limit bake concurrency.
 # Building 5 Next.js apps + the API at once can cause memory spikes. Build
 # every service strictly one at a time for deterministic memory boundaries.
-COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.yml)
+COMPOSE=(docker compose --env-file "$ENV_FILE" -f infra/docker/docker-compose.prod.yml)
 
 case "$ENV_NAME" in
   dev) PROFILES=(--profile apps --profile vps) ;;
   qa) PROFILES=(--profile apps --profile vps --profile obs) ;;
 esac
 
+SPECIFIC_SERVICES=("${@:2}")
+
 echo "==> ${ENV_NAME}: validate compose (${ENV_FILE})"
 "${COMPOSE[@]}" "${PROFILES[@]}" config >/dev/null
 
-BUILD_SERVICES=$("${COMPOSE[@]}" "${PROFILES[@]}" config --services)
-echo "==> ${ENV_NAME}: build (sequential — one service at a time)"
-while IFS= read -r svc; do
-  [[ -z "$svc" ]] && continue
-  echo "    building ${svc}..."
-  "${COMPOSE[@]}" "${PROFILES[@]}" build "$svc"
-done <<<"$BUILD_SERVICES"
+if [[ ${#SPECIFIC_SERVICES[@]} -gt 0 ]]; then
+  echo "==> ${ENV_NAME}: selective build for: ${SPECIFIC_SERVICES[*]}"
+  for svc in "${SPECIFIC_SERVICES[@]}"; do
+    echo "    building ${svc}..."
+    "${COMPOSE[@]}" "${PROFILES[@]}" build "$svc"
+  done
 
-echo "==> ${ENV_NAME}: start"
-"${COMPOSE[@]}" "${PROFILES[@]}" up -d --no-build
+  echo "==> ${ENV_NAME}: start selective services (${SPECIFIC_SERVICES[*]})"
+  "${COMPOSE[@]}" "${PROFILES[@]}" up -d --no-deps --no-build "${SPECIFIC_SERVICES[@]}"
+else
+  BUILD_SERVICES=$("${COMPOSE[@]}" "${PROFILES[@]}" config --services)
+  echo "==> ${ENV_NAME}: build (sequential — one service at a time)"
+  while IFS= read -r svc; do
+    [[ -z "$svc" ]] && continue
+    echo "    building ${svc}..."
+    "${COMPOSE[@]}" "${PROFILES[@]}" build "$svc"
+  done <<<"$BUILD_SERVICES"
 
-echo "==> ${ENV_NAME}: wait for api container to be healthy"
-for _ in $(seq 1 30); do
-  status="$("${COMPOSE[@]}" "${PROFILES[@]}" ps api --format '{{.Health}}' 2>/dev/null || true)"
-  [[ "$status" == "healthy" ]] && break
-  sleep 2
-done
+  echo "==> ${ENV_NAME}: start"
+  "${COMPOSE[@]}" "${PROFILES[@]}" up -d --no-build
+fi
 
-echo "==> ${ENV_NAME}: apply Prisma migrations (migrate deploy — no new migrations authored here)"
-"${COMPOSE[@]}" --profile apps exec -T api npx prisma migrate deploy
-"${COMPOSE[@]}" --profile apps exec -T credential-verifier npx prisma migrate deploy
+if [[ ${#SPECIFIC_SERVICES[@]} -eq 0 || " ${SPECIFIC_SERVICES[*]} " =~ " api " ]]; then
+  echo "==> ${ENV_NAME}: wait for api container to be healthy"
+  for _ in $(seq 1 30); do
+    status="$("${COMPOSE[@]}" "${PROFILES[@]}" ps api --format '{{.Health}}' 2>/dev/null || true)"
+    [[ "$status" == "healthy" ]] && break
+    sleep 2
+  done
 
-echo "==> ${ENV_NAME}: health check"
-"${COMPOSE[@]}" --profile apps exec -T api \
-  node -e "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-"${COMPOSE[@]}" --profile apps exec -T credential-verifier \
-  node -e "fetch('http://127.0.0.1:3100/api/docs-json').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  echo "==> ${ENV_NAME}: apply Prisma migrations (migrate deploy — no new migrations authored here)"
+  "${COMPOSE[@]}" --profile apps exec -T api npx prisma migrate deploy
+  "${COMPOSE[@]}" --profile apps exec -T credential-verifier npx prisma migrate deploy
+
+  echo "==> ${ENV_NAME}: api health check"
+  "${COMPOSE[@]}" --profile apps exec -T api \
+    node -e "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+fi
+
+if [[ ${#SPECIFIC_SERVICES[@]} -eq 0 || " ${SPECIFIC_SERVICES[*]} " =~ " credential-verifier " ]]; then
+  echo "==> ${ENV_NAME}: credential-verifier health check"
+  "${COMPOSE[@]}" --profile apps exec -T credential-verifier \
+    node -e "fetch('http://127.0.0.1:3100/api/docs-json').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+fi
 
 echo
 echo "Environment: ${ENV_NAME} — deployed, migrated, healthy."

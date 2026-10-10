@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import type { GithubRepoSummary, ProjectDto } from '@hirekiwi/contracts';
 import { Input } from '@hirekiwi/ui';
 import { ArrowLeft, ArrowRight, ChevronRight, GitBranch, Loader2, PenLine } from 'lucide-react';
-import { EvidenceFilesPicker } from '@/components/profile/EvidenceFilesPicker';
+import { EvidenceFilesPicker } from '@/components/profile/shared/EvidenceFilesPicker';
 import { GithubImportPanel } from '@/components/profile/projects/GithubImportPanel';
 import { parseStackTags } from '@/components/profile/projects/project-presenters';
 import type { ProjectSkillOption } from '@/lib/project-form-skills';

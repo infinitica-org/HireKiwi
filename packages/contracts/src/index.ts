@@ -79,6 +79,7 @@ export * from './dto/public-candidate-profile.dto.js';
 export * from './dto/resume-parse.dto.js';
 export * from './dto/notification.dto.js';
 export * from './dto/admin-active-users.dto.js';
+export * from './dto/admin-queue-monitor.dto.js';
 export * from './dto/project-verify.dto.js';
 export * from './dto/project-defense.dto.js';
 export * from './dto/work-experience.dto.js';

@@ -289,7 +289,7 @@ services:
   api:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.api
+      dockerfile: apps/api-core/Dockerfile
     restart: unless-stopped
     environment:
       <<: *app-env
@@ -347,7 +347,7 @@ services:
   credential-verifier:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.credential-verifier
+      dockerfile: apps/credential-verifier/Dockerfile
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-development}
@@ -410,9 +410,8 @@ services:
   web-student:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.web
+      dockerfile: apps/web-student/Dockerfile
       args:
-        APP: web-student
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
         NEXT_PUBLIC_AUTH_URL: ${AUTH_APP_URL:-http://localhost:3005}
         NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
@@ -436,9 +435,8 @@ services:
   web-tpo:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.web
+      dockerfile: apps/web-tpo/Dockerfile
       args:
-        APP: web-tpo
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
         NEXT_PUBLIC_AUTH_URL: ${AUTH_APP_URL:-http://localhost:3005}
         NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
@@ -462,9 +460,8 @@ services:
   web-admin:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.web
+      dockerfile: apps/web-admin/Dockerfile
       args:
-        APP: web-admin
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
         NEXT_PUBLIC_AUTH_URL: ${AUTH_APP_URL:-http://localhost:3005}
         NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
@@ -488,9 +485,8 @@ services:
   web-verify:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.web
+      dockerfile: apps/web-verify/Dockerfile
       args:
-        APP: web-verify
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
     restart: unless-stopped
     environment:
@@ -504,9 +500,8 @@ services:
   web-auth:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.web
+      dockerfile: apps/web-auth/Dockerfile
       args:
-        APP: web-auth
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
         NEXT_PUBLIC_AUTH_URL: ${AUTH_APP_URL:-http://localhost:3005}
         NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
@@ -531,9 +526,8 @@ services:
   web-company:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.web
+      dockerfile: apps/web-company/Dockerfile
       args:
-        APP: web-company
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
         NEXT_PUBLIC_AUTH_URL: ${AUTH_APP_URL:-http://localhost:3005}
         NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
@@ -557,9 +551,8 @@ services:
   web-landing:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.web
+      dockerfile: apps/web-landing/Dockerfile
       args:
-        APP: web-landing
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
         NEXT_PUBLIC_AUTH_URL: ${AUTH_APP_URL:-http://localhost:3005}
         NEXT_PUBLIC_STUDENT_URL: ${STUDENT_APP_URL:-http://localhost:3001}
@@ -583,9 +576,8 @@ services:
   web-docs:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile.web
+      dockerfile: apps/web-docs/Dockerfile
       args:
-        APP: web-docs
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
     restart: unless-stopped
     environment:

@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { isHireKiwiApiError } from '@hirekiwi/api-client';
+import { isHireKiwiApiError, portalSettingsForRole } from '@hirekiwi/api-client';
 import { EMAIL_NOT_VERIFIED_ERROR } from '@hirekiwi/contracts';
+import type { AuthTokenResponse } from '@hirekiwi/contracts';
 import { EyeIcon, EyeOffIcon } from '../../components/auth-icons';
 import {
   CompanyIllustration,
@@ -12,13 +13,20 @@ import {
   WelcomeIllustration,
 } from '../../components/auth-illustrations';
 import { ResendVerification } from '../../components/resend-verification';
-import { api, buildGoogleOauthUrl, redirectForRole, storeSession } from '../../lib/api';
+import {
+  api,
+  buildGoogleOauthUrl,
+  buildPortalRedirectUrl,
+  portalOrigins,
+  redirectForRole,
+  storeSession,
+} from '../../lib/api';
 import { oauthErrorMessage } from '../../lib/oauth-error-message';
 
 const inputClass =
   'w-full h-12 rounded-md border border-[#e5e7eb] bg-white px-3.5 text-sm text-[#111827] placeholder:text-[#9ca3af] transition-[border-color,box-shadow] duration-150 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10';
 
-type Stage = 'identify' | 'password' | 'mfa' | 'choose-signup';
+type Stage = 'identify' | 'password' | 'mfa' | 'offer-mfa' | 'choose-signup';
 
 export function LoginForm() {
   const searchParams = useSearchParams();
@@ -33,9 +41,40 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState('');
+  const [pendingSession, setPendingSession] = useState<AuthTokenResponse | null>(null);
 
   function onGoogleClick() {
     window.location.href = buildGoogleOauthUrl(searchParams.get('returnTo'));
+  }
+
+  /** After password/MFA succeeds: offer 2FA once if the account doesn't have it yet. */
+  function finishLogin(result: AuthTokenResponse) {
+    storeSession(result.accessToken);
+    if (!result.user.mfaEnabled) {
+      setPendingSession(result);
+      setStage('offer-mfa');
+      return;
+    }
+    redirectForRole(result.user.role, result.accessToken, searchParams.get('returnTo'));
+  }
+
+  function proceedToPortal(session: AuthTokenResponse) {
+    redirectForRole(session.user.role, session.accessToken, searchParams.get('returnTo'));
+  }
+
+  function onSkipMfaOffer() {
+    if (!pendingSession) return;
+    proceedToPortal(pendingSession);
+  }
+
+  function onEnableMfaOffer() {
+    if (!pendingSession) return;
+    const settingsUrl = portalSettingsForRole(pendingSession.user.role, portalOrigins);
+    if (!settingsUrl) {
+      proceedToPortal(pendingSession);
+      return;
+    }
+    window.location.href = buildPortalRedirectUrl(settingsUrl, pendingSession.accessToken);
   }
 
   async function onIdentifySubmit(event: React.FormEvent) {
@@ -64,8 +103,7 @@ export function LoginForm() {
         setStage('mfa');
         return;
       }
-      storeSession(result.accessToken);
-      redirectForRole(result.user.role, result.accessToken, searchParams.get('returnTo'));
+      finishLogin(result);
     } catch (err) {
       if (isHireKiwiApiError(err) && err.code === EMAIL_NOT_VERIFIED_ERROR) {
         setError(err.message);
@@ -90,6 +128,7 @@ export function LoginForm() {
     setPassword('');
     setMfaToken(null);
     setMfaCode('');
+    setPendingSession(null);
     setError(null);
     setUnverifiedEmail(null);
   }
@@ -101,8 +140,7 @@ export function LoginForm() {
     setError(null);
     try {
       const result = await api.auth.verifyMfaChallenge({ mfaToken, code: mfaCode.trim() });
-      storeSession(result.accessToken);
-      redirectForRole(result.user.role, result.accessToken, searchParams.get('returnTo'));
+      finishLogin(result);
     } catch (err) {
       setMfaCode('');
       setError(isHireKiwiApiError(err) ? err.message : 'That code is incorrect.');
@@ -125,7 +163,9 @@ export function LoginForm() {
             ? "Let's get you set up"
             : stage === 'mfa'
               ? 'Two-factor verification'
-              : 'Log in or sign up'}
+              : stage === 'offer-mfa'
+                ? 'Secure your account'
+                : 'Log in or sign up'}
         </h1>
 
         {error ? (
@@ -322,6 +362,31 @@ export function LoginForm() {
               Use a different account
             </button>
           </form>
+        ) : null}
+
+        {stage === 'offer-mfa' ? (
+          <div className="mt-8 w-full max-w-[420px] space-y-5 text-center mx-auto">
+            <p className="text-sm text-[#6b7280]">
+              Add a second step at login with an authenticator app, so your account stays protected
+              even if your password leaks.
+            </p>
+
+            <button
+              type="button"
+              onClick={onEnableMfaOffer}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-black px-5 text-md font-semibold text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98]"
+            >
+              Enable two-factor authentication
+            </button>
+
+            <button
+              type="button"
+              onClick={onSkipMfaOffer}
+              className="text-xs font-medium text-[#6b7280] underline-offset-4 hover:underline"
+            >
+              Skip for now
+            </button>
+          </div>
         ) : null}
 
         {stage === 'choose-signup' ? (

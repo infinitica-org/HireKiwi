@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { ProjectDto } from '@hirekiwi/contracts';
 import { Check, ExternalLink, GitBranch, Loader2, Lock, Mic } from 'lucide-react';
-import { projectDefenseInterviewHref } from '@/components/profile/ProjectDefenseInterviewDialog';
+import { projectDefenseInterviewHref } from '@/components/profile/projects/ProjectDefenseInterviewDialog';
 import { parseStackTags } from '@/components/profile/projects/project-presenters';
 import {
   isProcessingStatus,

@@ -143,23 +143,31 @@ Password for all: `ChangeMe!Dev`
 
 ---
 
-## 5. What Docker does _not_ start by default
+## 5. Dev vs Production Compose Architecture & Independent Containerization
 
-`pnpm infra:up` / plain `docker compose up` starts the **data plane** (Postgres, Redis, Redpanda, MinIO, Mailpit, **Prisma Studio**) with healthchecks.
+HireKiwi strictly decouples the local development environment from production VPS deployments:
 
-Observability (Prometheus :9090, Grafana :3100, Loki :3101) is behind Compose profile **`obs`**:
+1. **Lightweight Dev Compose (`infra/docker/docker-compose.dev.yml`):**
+   - Started via `pnpm infra:dev` (or `pnpm infra:up`).
+   - Runs **strictly the backing data plane**: PostgreSQL (pgvector), PgBouncer, Redis, Redpanda, MinIO, Mailpit, and Prisma Studio.
+   - Zero app images are compiled, keeping developer laptop memory usage under 1.5 GB and boot time under 10 seconds.
+   - Developers run the applications on their host with instant hot reloading (`pnpm dev:api`, `pnpm dev:web`).
 
-```powershell
-pnpm infra:obs     # Prometheus + Grafana + Loki
-```
+2. **Production & VPS Compose (`infra/docker/docker-compose.prod.yml`):**
+   - Managed separately through CI/CD workflows and deployment scripts (`scripts/deploy-vps.sh`, `scripts/blue-green-deploy.sh`).
+   - Contains production-grade multi-stage container configurations, Caddy TLS reverse proxy, automated off-site backups, and the complete observability stack (`obs` profile: Prometheus, Grafana, Loki, Tempo, Alloy, exporters).
 
-API + four webs live under Compose profile **`apps`** (heavier images, no Next HMR):
+3. **Independent Containerization & Selective Deployments:**
+   - Every application has its own dedicated Dockerfile (`apps/<app>/Dockerfile`), making each service self-contained and independently deployable.
+   - Deploying or updating a single service does not restart or disrupt the rest of the stack:
 
-```powershell
-pnpm infra:apps    # build/run containerized api + webs — VPS/integration style
-```
+     ```bash
+     # Deploy only the student portal on DEV VPS:
+     bash scripts/deploy-vps.sh dev web-student
 
-**Day-to-day:** data plane in Docker, API + frontends on the host (`dev:api` / `dev:web`). That is intentional.
+     # Direct single-service Docker Compose update:
+     docker compose --env-file .env.prod -f infra/docker/docker-compose.prod.yml up -d --no-deps --build web-student
+     ```
 
 | Tool              | URL                       | Notes                                                                                                            |
 | ----------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -203,15 +211,15 @@ Branch / commit / PR rules: `CONTRIBUTING.md` and `.cursor/rules/09-commits-and-
 
 ## 8. Common failures
 
-| Symptom                                    | Fix                                                                                             |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `ERR_PNPM_UNSUPPORTED_ENGINE` Got 9.x      | Pull latest; `infra:*`/`db:*` auto-reexec. For installs / permanent fix — §0                    |
-| `/ready` redis down / ioredis `ECONNRESET` | Confirm `REDIS_URL=…6380` and `pnpm infra:up`; don’t use host 6379 on Windows                   |
-| TPO / `:3002` “protocol violation”         | Another process on 3002 (e.g. misconfigured local Redis). Free the port.                        |
+| Symptom                                    | Fix                                                                                                |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `ERR_PNPM_UNSUPPORTED_ENGINE` Got 9.x      | Pull latest; `infra:*`/`db:*` auto-reexec. For installs / permanent fix — §0                       |
+| `/ready` redis down / ioredis `ECONNRESET` | Confirm `REDIS_URL=…6380` and `pnpm infra:up`; don’t use host 6379 on Windows                      |
+| TPO / `:3002` “protocol violation”         | Another process on 3002 (e.g. misconfigured local Redis). Free the port.                           |
 | Frontends unstyled                         | Pull latest (Tailwind `@source` for `@hirekiwi/ui`). Restart `pnpm dev:web`. Hard-refresh browser. |
-| `/health` 500 / Reflector undefined        | Pull latest API DI `@Inject` fixes; restart `pnpm dev:api`                                      |
-| `EADDRINUSE` on 3000–3004                  | Stop the other Node/Docker process using that port                                              |
-| `pnpm bootstrap` fails on Windows          | Use Git Bash/WSL **or** §3 manual steps                                                         |
+| `/health` 500 / Reflector undefined        | Pull latest API DI `@Inject` fixes; restart `pnpm dev:api`                                         |
+| `EADDRINUSE` on 3000–3004                  | Stop the other Node/Docker process using that port                                                 |
+| `pnpm bootstrap` fails on Windows          | Use Git Bash/WSL **or** §3 manual steps                                                            |
 
 Stop data plane:
 
