@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Briefcase, Clock, MapPin, Pencil, Plus, Search, Users } from 'lucide-react';
+import { Briefcase, Clock, MapPin, Pencil, Plus, Search, Sparkles, Users } from 'lucide-react';
 import { JobVisibilityCheck } from '../../../components/job-visibility-check';
 import { companyJobsApi, formatApiError } from '../../../lib/api';
 import type { EmployerJobDto, JobOpeningStatus } from '@hirekiwi/contracts';
@@ -315,6 +315,13 @@ export default function JobsPage() {
                       >
                         <Pencil className="size-3.5" />
                         Edit
+                      </Link>
+                      <Link
+                        href={`/jobs/${job.openingId}/candidates`}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-800 transition-colors hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300"
+                      >
+                        <Sparkles className="size-3.5" />
+                        AI Candidates
                       </Link>
                       <Link
                         href={`/jobs/${job.openingId}/applicants`}

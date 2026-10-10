@@ -7,6 +7,8 @@ import {
   ListSavedCandidatesResponseSchema,
   SavedCandidateDtoSchema,
   MatchFeedbackResponseSchema,
+  CreateMatchRunResponseSchema,
+  MatchRunDtoSchema,
   z,
   type CreateEmployerJobRequest,
   type CreateJobOpeningRequest,
@@ -16,6 +18,8 @@ import {
   type ListSavedCandidatesResponse,
   type SavedCandidateDto,
   type MatchFeedbackResponse,
+  type CreateMatchRunResponse,
+  type MatchRunDto,
 } from '@hirekiwi/contracts';
 import {
   HireKiwiApiClient,
@@ -110,6 +114,17 @@ export const companyJobsApi = {
     apiClient.request<void>({
       method: 'DELETE',
       path: `${API_PREFIX}/employer/jobs/${openingId}`,
+    }),
+  /** JOB-03 — trigger an AI-suggested-candidates run for this job. */
+  createMatchRun: (openingId: string): Promise<CreateMatchRunResponse> =>
+    apiClient.post(
+      `${API_PREFIX}/employer/jobs/${openingId}/match-runs`,
+      {},
+      { schema: CreateMatchRunResponseSchema },
+    ),
+  getMatchRun: (openingId: string, runId: string): Promise<MatchRunDto> =>
+    apiClient.get(`${API_PREFIX}/employer/jobs/${openingId}/match-runs/${runId}`, {
+      schema: MatchRunDtoSchema,
     }),
 };
 

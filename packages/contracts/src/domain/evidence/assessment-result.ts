@@ -29,6 +29,10 @@ export const AssessmentResultSchema = z.object({
   /** @deprecated Prefer assessmentComplete; kept for backward-compatible clients. */
   assessmentPassed: z.boolean().default(false),
   uncertainties: z.array(z.string().max(500)).max(30).default([]),
+  /** True only when every competency in the skill's model was tested, not just the target level's critical path. */
+  fullCompetencyCoverage: z.boolean().default(false),
+  /** Fraction (0-1) of the skill's competencies that are not NOT_TESTED. */
+  coverageRatio: z.number().min(0).max(1).default(0),
   recommendedNextStep: RecommendedNextStepSchema,
   requiresInterview: z.boolean().default(false),
   requiresEvidenceVerification: z.boolean().default(false),

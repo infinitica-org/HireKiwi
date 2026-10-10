@@ -154,16 +154,37 @@ export class AiGatewayService {
   }
 
   /**
-   * Real 1536-dim text embedding (S8-RM-XX), used by CandidateEmbeddingService for Stage 1
-   * matching. Only Google is wired to an actual embedding endpoint today — unlike `complete()`,
-   * there's no multi-provider fallback chain here, so this throws plainly when Google isn't
-   * configured rather than silently returning a degraded vector.
+   * Real 1536-dim text embedding (S8-RM-XX), used by CandidateEmbeddingService and
+   * JobEmbeddingService for Stage 1 matching. OpenRouter (openai/text-embedding-3-small) is the
+   * primary provider — cheap, already 1536-dim with no conversion, and this repo's main
+   * generation provider besides Anthropic. Falls back to Google (text-embedding-004) only if
+   * OpenRouter isn't configured or its call fails, so a key for either provider is enough.
    */
   async embedText(text: string): Promise<number[]> {
-    if (!this.google.isConfigured) {
-      throw new Error('No embedding provider is configured (missing GOOGLE_AI_API_KEY).');
+    const attemptedErrors: string[] = [];
+
+    if (this.openrouter.isConfigured) {
+      try {
+        return await this.openrouter.embedText(text);
+      } catch (err) {
+        attemptedErrors.push(`OPENROUTER: ${err instanceof Error ? err.message : String(err)}`);
+        this.logger.warn(`OpenRouter embedding failed, falling back: ${attemptedErrors.at(-1)}`);
+      }
     }
-    return this.google.embedText(text);
+
+    if (this.google.isConfigured) {
+      try {
+        return await this.google.embedText(text);
+      } catch (err) {
+        attemptedErrors.push(`GOOGLE: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    throw new Error(
+      attemptedErrors.length > 0
+        ? `All embedding providers failed: ${attemptedErrors.join('; ')}`
+        : 'No embedding provider is configured (set OPENROUTER_API_KEY or GOOGLE_AI_API_KEY).',
+    );
   }
 
   async complete(request: AiCompletionRequest): Promise<AiCompletionResponse> {

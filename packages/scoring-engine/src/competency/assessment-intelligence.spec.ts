@@ -114,6 +114,28 @@ describe('assessment-intelligence', () => {
     expect(output.assessmentComplete).toBe(true);
     expect(output.recommendedNextStep).toBe('NONE');
     expect(output.requiresEvidenceVerification).toBe(false);
+    // assessmentComplete only reflects the target level's critical path -- only 3 of the
+    // model's 6 competencies were tested here, so coverage must be reported as partial.
+    expect(output.fullCompetencyCoverage).toBe(false);
+    expect(output.coverageRatio).toBeCloseTo(3 / model.length);
+  });
+
+  it('reports full coverage only once every competency in the model has been tested', () => {
+    const items = model.map((row) => ({
+      competencyIds: [row.competencyId],
+      marksEarned: 10,
+      marksMax: 10,
+    }));
+    const output = Effect.runSync(
+      evaluateAssessmentIntelligence({
+        competencyModel: model,
+        proficiencyRequirements: requirements,
+        items,
+        targetProficiency: 'ADVANCED',
+      }),
+    );
+    expect(output.fullCompetencyCoverage).toBe(true);
+    expect(output.coverageRatio).toBe(1);
   });
 
   it('probes the next proficiency tier during diagnostic when critical comps are untested', () => {

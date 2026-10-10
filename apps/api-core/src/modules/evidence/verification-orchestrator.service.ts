@@ -25,6 +25,8 @@ export type VerificationGateInput = {
   recommendedNextStep: RecommendedNextStep;
   confidence: AssessmentConfidenceLevel;
   assessmentComplete?: boolean;
+  fullCompetencyCoverage?: boolean;
+  coverageRatio?: number;
   interviewPassed?: boolean;
   verificationFlags?: ProficiencyVerificationFlags;
 };
@@ -267,6 +269,8 @@ export class VerificationOrchestratorService {
       interviewRequired: gate.requiresInterview,
       interviewPassed: input.interviewPassed,
       reconciliationReviewRequired: reconciliation.reviewRequired,
+      fullCompetencyCoverage: input.fullCompetencyCoverage,
+      coverageRatio: input.coverageRatio,
     });
 
     if (!settlement) {
