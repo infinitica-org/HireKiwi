@@ -1,0 +1,77 @@
+[
+  {
+    "id": "CG-01",
+    "name": "Software Development",
+    "capability_id": "CAP-01"
+  },
+  {
+    "id": "CG-02",
+    "name": "Frontend & Mobile Engineering",
+    "capability_id": "CAP-01"
+  },
+  {
+    "id": "CG-03",
+    "name": "Backend & Integration Engineering",
+    "capability_id": "CAP-01"
+  },
+  {
+    "id": "CG-04",
+    "name": "Specialist Platform Engineering",
+    "capability_id": "CAP-01"
+  },
+  {
+    "id": "CG-05",
+    "name": "DevOps & Release Engineering",
+    "capability_id": "CAP-02"
+  },
+  {
+    "id": "CG-06",
+    "name": "Delivery & Collaboration",
+    "capability_id": "CAP-02"
+  },
+  {
+    "id": "CG-07",
+    "name": "Cloud Infrastructure Engineering",
+    "capability_id": "CAP-03"
+  },
+  {
+    "id": "CG-08",
+    "name": "Data Engineering",
+    "capability_id": "CAP-04"
+  },
+  {
+    "id": "CG-09",
+    "name": "Data Management & Databases",
+    "capability_id": "CAP-04"
+  },
+  {
+    "id": "CG-10",
+    "name": "Data Analytics & BI",
+    "capability_id": "CAP-05"
+  },
+  {
+    "id": "CG-11",
+    "name": "Machine Learning Engineering",
+    "capability_id": "CAP-06"
+  },
+  {
+    "id": "CG-12",
+    "name": "Generative AI & Agent Engineering",
+    "capability_id": "CAP-06"
+  },
+  {
+    "id": "CG-13",
+    "name": "Cybersecurity",
+    "capability_id": "CAP-07"
+  },
+  {
+    "id": "CG-14",
+    "name": "Responsible AI & Governance",
+    "capability_id": "CAP-07"
+  },
+  {
+    "id": "CG-15",
+    "name": "Quality Engineering",
+    "capability_id": "CAP-08"
+  }
+]

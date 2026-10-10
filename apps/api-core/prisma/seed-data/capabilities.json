@@ -1,0 +1,34 @@
+[
+  {
+    "id": "CAP-01",
+    "name": "Develop Software"
+  },
+  {
+    "id": "CAP-02",
+    "name": "Deliver and Maintain Production Systems"
+  },
+  {
+    "id": "CAP-03",
+    "name": "Operate Cloud Infrastructure"
+  },
+  {
+    "id": "CAP-04",
+    "name": "Build Data Pipelines"
+  },
+  {
+    "id": "CAP-05",
+    "name": "Analyse and Visualise Data"
+  },
+  {
+    "id": "CAP-06",
+    "name": "Deploy ML Systems"
+  },
+  {
+    "id": "CAP-07",
+    "name": "Secure Applications and Data"
+  },
+  {
+    "id": "CAP-08",
+    "name": "Assure Software Quality"
+  }
+]

@@ -1548,11 +1548,11 @@ model EducationSpecialization {
 }
 
 model Skill {
-  id                    String      @id @default(uuid()) @db.Uuid
+  id                    String      @id @default(uuid())
   code                  String      @unique
   name                  String
   /// Free-text taxonomy label (e.g. "SOFTWARE_IT"), kept for display/back-compat.
-  domain                String
+  domain                String      @default("GENERAL")
   /// Literal A-E radar axis (S8-RM-XX). Nullable: existing/unclassified skills fall back to
   /// the `domain` string in buildCandidateDomainVector until backfilled.
   domainCode            DomainCode? @map("domain_code")
@@ -1561,6 +1561,24 @@ model Skill {
   beginnerPassThreshold Decimal     @default(60) @map("beginner_pass_threshold") @db.Decimal(5, 2)
   active                Boolean     @default(true)
   createdAt             DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Taxonomy fields (attributes_v3_2 bundle)
+  type              String?
+  family            String?
+  toolCategory      String?           @map("tool_category")
+  sfiaCode          String?           @map("sfia_code")
+  importanceTier    String?           @map("importance_tier")
+  primaryWeight     Float?            @map("primary_weight")
+  l1Format          String?           @map("l1_format")
+  l2Mode            String?           @map("l2_mode")
+  l2Environment     String?           @map("l2_environment")
+  l2SandboxFit      String?           @map("l2_sandbox_fit")
+  l5Deliverable     String?           @map("l5_deliverable")
+  programmingInL2   Boolean           @default(false) @map("programming_in_l2")
+  notes             String?
+  primaryParentId   String?           @map("primary_parent_id")
+  primaryParent     ParentSkill?      @relation("PrimaryParent", fields: [primaryParentId], references: [id])
+  parents           SkillParentLink[]
 
   claims              SkillClaim[]
   openingRequirements JobOpeningSkill[]
@@ -1574,7 +1592,7 @@ model SkillClaim {
   id             String           @id @default(uuid()) @db.Uuid
   studentId      String           @map("student_id") @db.Uuid
   student        User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  skillId        String           @map("skill_id") @db.Uuid
+  skillId        String           @map("skill_id")
   skill          Skill            @relation(fields: [skillId], references: [id])
   proficiency    SkillProficiency
   status         SkillClaimStatus @default(DECLARED)
@@ -1845,7 +1863,7 @@ model JobOpeningSkill {
   id             String           @id @default(uuid()) @db.Uuid
   openingId      String           @map("opening_id") @db.Uuid
   opening        JobOpening       @relation(fields: [openingId], references: [id], onDelete: Cascade)
-  skillId        String           @map("skill_id") @db.Uuid
+  skillId        String           @map("skill_id")
   skill          Skill            @relation(fields: [skillId], references: [id])
   minProficiency SkillProficiency @map("min_proficiency")
 
@@ -3521,18 +3539,122 @@ model EventRegistration {
   @@map("event_registrations")
 }
 
+/// Skills & Competency Taxonomy (attributes_v3_2 bundle)
+model Capability {
+  id               String            @id
+  name             String            @unique
+  competencyGroups CompetencyGroup[]
+  parentSkills     ParentSkill[]
+
+  @@map("capabilities")
+}
+
+model CompetencyGroup {
+  id           String        @id
+  name         String        @unique
+  capabilityId String        @map("capability_id")
+  capability   Capability    @relation(fields: [capabilityId], references: [id])
+  parentSkills ParentSkill[]
+
+  @@map("competency_groups")
+}
+
+model SkillFamily {
+  id   String @id
+  name String @unique
+
+  @@map("skill_families")
+}
+
+model ToolCategory {
+  name     String  @id
+  examples String?
+
+  @@map("tool_categories")
+}
+
+model ParentSkill {
+  id                String            @id
+  name              String
+  definition        String?
+  l1ItemFormats     String?           @map("l1_item_formats")
+  l2DominantMode    String?           @map("l2_dominant_mode")
+  recommendedFamily String?           @map("recommended_family")
+  weightReliability String?           @map("weight_reliability")
+  primaryItemCount  Int               @default(0) @map("primary_item_count")
+  competencyGroupId String            @map("competency_group_id")
+  competencyGroup   CompetencyGroup   @relation(fields: [competencyGroupId], references: [id])
+  capabilityId      String            @map("capability_id")
+  capability        Capability        @relation(fields: [capabilityId], references: [id])
+  skills            SkillParentLink[]
+  primarySkills     Skill[]           @relation("PrimaryParent")
+
+  @@map("parent_skills")
+}
+
+model SkillParentLink {
+  skillId   String      @map("skill_id")
+  parentId  String      @map("parent_id")
+  role      String
+  tier      String?
+  tierScore Int?        @map("tier_score")
+  weight    Float
+  skill     Skill       @relation(fields: [skillId], references: [id])
+  parent    ParentSkill @relation(fields: [parentId], references: [id])
+
+  @@id([skillId, parentId, role])
+  @@map("skill_parent_links")
+}
+
+model AssessmentLevel {
+  level       String  @id
+  name        String
+  format      String?
+  measures    String?
+  delivery    String?
+  scoring     String?
+  unlocksWhen String? @map("unlocks_when")
+
+  @@map("assessment_levels")
+}
+
+model L2Mode {
+  mode          String  @id
+  description   String?
+  handsOnType   String? @map("hands_on_type")
+  environment   String?
+  autoGrading   String? @map("auto_grading")
+  l5Deliverable String? @map("l5_deliverable")
+
+  @@map("l2_modes")
+}
+
+model OntologyEdge {
+  id           String  @id
+  source       String
+  relation     String
+  target       String
+  weight       Float?
+  reviewStatus String? @map("review_status")
+  rationale    String?
+
+  @@index([source])
+  @@index([target])
+  @@map("ontology_edges")
+}
+
 /// Th6-607 - cache for the TPO cohort readiness dashboard (one row per student). Rebuilt per
 /// institution by ReadinessAnalyticsService.refreshInstitution; never the source of truth, so
 /// there are deliberately no foreign keys. `gradYear` 0 and `campus` '' mean "not set".
 model ReadinessAnalyticsStudent {
-  userId         String   @id @map("user_id") @db.Uuid
-  institutionId  String   @map("institution_id") @db.Uuid
-  campus         String   @default("")
-  department     String   @default("Unspecified")
-  gradYear       Int      @default(0) @map("grad_year")
+  userId        String   @id @map("user_id") @db.Uuid
+  institutionId String   @map("institution_id") @db.Uuid
+  campus        String   @default("")
+  department    String   @default("Unspecified")
+  gradYear      Int      @default(0) @map("grad_year")
   /// GOLD | SILVER | BRONZE | NEEDS_IMPROVEMENT
-  tier           String
-  computedAt     DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
+  tier          String
+  computedAt    DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
 
   @@index([institutionId, tier])
   @@index([institutionId, computedAt])

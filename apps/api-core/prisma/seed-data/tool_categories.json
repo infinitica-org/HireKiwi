@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Version control & source hosting",
+    "examples": "Git, GitHub, GitLab, Bitbucket, Gitea"
+  },
+  {
+    "name": "IDEs & code editors",
+    "examples": "Android Studio, Cursor, Eclipse, IntelliJ IDEA, NetBeans"
+  },
+  {
+    "name": "AI coding assistants",
+    "examples": "GitHub Copilot, Claude Code"
+  },
+  {
+    "name": "CI/CD & release automation",
+    "examples": "Jenkins, CircleCI, TeamCity, Travis CI, Drone CI"
+  },
+  {
+    "name": "Build & package management",
+    "examples": "Maven, Gradle, Apache Ant, Bazel, CMake"
+  },
+  {
+    "name": "Code quality & static analysis",
+    "examples": "ESLint, SonarQube, Coverity"
+  },
+  {
+    "name": "Testing & API testing",
+    "examples": "Postman, Newman, Selenium, Cypress, Playwright"
+  },
+  {
+    "name": "Security & penetration testing",
+    "examples": "Burp Suite, OWASP ZAP, Wireshark, Nmap, Metasploit"
+  },
+  {
+    "name": "Monitoring & observability",
+    "examples": "Datadog, Dynatrace, New Relic, Grafana, Prometheus"
+  },
+  {
+    "name": "BI & data visualisation",
+    "examples": "Tableau, Power BI, Looker, Qlik Sense, QlikView"
+  },
+  {
+    "name": "Collaboration, work management & design",
+    "examples": "Jira, Confluence, Slack, Microsoft Teams, Figma"
+  },
+  {
+    "name": "Local dev & environment tooling",
+    "examples": "Docker Compose, Vagrant, Packer, Minikube"
+  },
+  {
+    "name": "Other tool (review)",
+    "examples": null
+  },
+  {
+    "name": "Total tools",
+    "examples": null
+  },
+  {
+    "name": "Check: Item Type = Tool",
+    "examples": null
+  }
+]

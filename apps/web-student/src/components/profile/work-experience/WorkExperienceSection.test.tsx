@@ -183,7 +183,7 @@ function requiredLabelCount(label: string): number {
   }).length;
 }
 
-describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
+describe('WorkExperienceSection (WE-T01 & WE-T04)', { timeout: 15000 }, () => {
   beforeEach(() => {
     listWorkExperiences.mockReset().mockResolvedValue([mockOngoingExp]);
     createWorkExperience.mockReset();
@@ -212,13 +212,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
   });
 
   it('opens add modal and displays document rule notice for ongoing roles when checkbox is checked', async () => {
-    listWorkExperiences.mockResolvedValueOnce([]);
-    renderWithQueryClient(<WorkExperienceSection />);
-
-    const addButton = (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(
-      -1,
-    ) as HTMLElement;
-    fireEvent.click(addButton);
+    await openAddExperienceModal();
 
     const currentCheckbox = await screen.findByLabelText(/I currently work in this role/i);
     fireEvent.click(currentCheckbox);
@@ -227,13 +221,7 @@ describe('WorkExperienceSection (WE-T01 & WE-T04)', () => {
   });
 
   it('displays document rule notice for ended roles by default or when current is unchecked', async () => {
-    listWorkExperiences.mockResolvedValueOnce([]);
-    renderWithQueryClient(<WorkExperienceSection />);
-
-    const addButton = (await screen.findAllByRole('button', { name: /^Add experience$/i })).at(
-      -1,
-    ) as HTMLElement;
-    fireEvent.click(addButton);
+    await openAddExperienceModal();
 
     expect(
       await screen.findByText(

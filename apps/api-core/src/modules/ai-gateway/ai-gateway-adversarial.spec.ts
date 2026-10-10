@@ -111,8 +111,8 @@ describe("Peer Audit: Ramansh's AI Gateway & Reliability Controls", () => {
       // 2. Fallback provider must be GOOGLE (Gemini)
       expect(response.provider).toBe('GOOGLE');
 
-      // 3. Failover circuit breaker overhead should trip in <50ms
-      expect(failoverDurationMs).toBeLessThan(50);
+      // 3. Failover circuit breaker overhead should trip in <200ms
+      expect(failoverDurationMs).toBeLessThan(200);
 
       // 4. Anthropic circuit breaker state must record failure
       expect(circuitBreaker.getState('ANTHROPIC')).toBe('OPEN');

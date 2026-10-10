@@ -107,7 +107,7 @@ describe('ProfilePhotoEditControl', () => {
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['bytes'], 'photo.png', { type: 'image/png' });
     fireEvent.change(input, { target: { files: [file] } });
-    fireEvent.click(await screen.findByRole('button', { name: 'Confirm crop' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Confirm Crop/i }));
 
     const confirmCrop = document.querySelector('[data-testid="mock-confirm-crop"]');
     if (confirmCrop) fireEvent.click(confirmCrop);

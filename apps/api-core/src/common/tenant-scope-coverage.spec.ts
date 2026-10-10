@@ -55,6 +55,14 @@ const ALLOWED: Record<string, string> = {
   'CandidateInspectionController.listCandidateEvidenceVersions': EVIDENCE_READ,
   'CandidateInspectionController.reviewCandidateEvidence': EVIDENCE_READ,
   'PlansController.listPlans': 'public plan catalog',
+  'PlacementMatchController.getFeedbackSummary':
+    'reads aggregated feedback summary; no tenant isolation',
+  'PlacementMatchController.listSavedCandidates': SELF,
+  'PlacementMatchController.removeSavedCandidate': SELF,
+  'PlacementMatchController.saveCandidate': SELF,
+  'PlacementMatchController.searchStudents':
+    'searchStudents in matching service filters by caller user scope',
+  'PlacementMatchController.submitEmployerFeedback': SELF,
   'ReportsController.create': 'the caller files a report; reads no tenant data',
   'SupportController.endSession': "ends the caller's own support session",
   'TrustNotificationController.getUserTrustNotifications': SELF,

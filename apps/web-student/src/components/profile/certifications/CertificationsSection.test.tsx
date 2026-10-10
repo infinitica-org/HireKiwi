@@ -165,7 +165,9 @@ describe('CertificationsSection (certificates and credentials together)', () => 
     fireEvent.change(screen.getByLabelText(/^Name/), { target: { value: 'Advocate license' } });
     listCredentials.mockResolvedValue([license]);
     // The popup's save button is the last "Add" on the page.
-    fireEvent.click(screen.getAllByRole('button', { name: /^Add$/ }).at(-1) as HTMLElement);
+    fireEvent.click(
+      (await screen.findAllByRole('button', { name: /^Add/i })).at(-1) as HTMLElement,
+    );
 
     await waitFor(() => expect(createCredential).toHaveBeenCalledTimes(1));
     expect(createCredential.mock.calls[0]?.[0]).toMatchObject({
